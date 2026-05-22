@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a reproducible bug in Archivum Null
+about: Report a reproducible bug in the Diet App Android app
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -12,6 +12,13 @@ assignees: ''
 ## Bug Description
 A clear and concise description of what the bug is.
 
+## Affected Area
+- [ ] UI / screen rendering
+- [ ] API sync / networking
+- [ ] Offline cache (Room) — stale or missing data
+- [ ] Authentication / token handling
+- [ ] Other:
+
 ## Steps to Reproduce
 1. 
 2. 
@@ -21,31 +28,25 @@ A clear and concise description of what the bug is.
 What you expected to happen.
 
 ## Actual Behavior
-What actually happens. Include any error messages or unexpected output.
+What actually happens. Include any error messages or stack traces.
 
 ## Environment
 
 | Field | Value |
 |---|---|
-| Node.js version | e.g. 24.x |
-| Operating System | e.g. Ubuntu 24.04 |
-| Deployment method | Docker / direct Node.js |
-| Browser (if frontend bug) | e.g. Firefox 135, Chrome 133 |
-| Reverse proxy | nginx / Caddy / none |
-| Turnstile enabled | yes / no |
-
-## Vault Configuration (if relevant)
-- TTL: 
-- Max downloads: 
-- Max file size (`MAX_FILE_SIZE`): 
+| App version / commit | e.g. v0.1.0 or `abc1234` |
+| Android version | e.g. Android 15 (API 35) |
+| Device | e.g. Pixel 8, Samsung Galaxy S24 |
+| Connectivity | online / offline / intermittent |
+| Backend version | the Diet App platform version this app talked to |
 
 ## Logs
 ```
-Paste relevant backend log fragments here (remove any sensitive values)
+Paste relevant logcat output here (remove any auth tokens or personal data)
 ```
 
 ## Screenshots
-If applicable, add screenshots to help explain the problem.
+If applicable, add screenshots or a screen recording.
 
 ## Additional Context
 Anything else that may help reproduce or diagnose the issue.
