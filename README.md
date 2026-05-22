@@ -14,6 +14,12 @@ a sync layer.
 > architecture and integration contract. Feature screens are not yet implemented — see
 > [docs/architecture.md](docs/architecture.md) and the platform roadmap.
 
+> [!WARNING]
+> **Early development — not production ready.** This app and the Diet App
+> platform are under active development. The API contract, data model and
+> module structure may change without notice, and the project has not had a
+> security review. Build it to experiment, not for anything you depend on yet.
+
 ## Stack
 
 - **Kotlin** + **Jetpack Compose** + **Material 3**
@@ -44,6 +50,26 @@ See [docs/architecture.md](docs/architecture.md), the offline
 
 The app talks to a running Diet App backend — set `API_BASE_URL` in
 `app/build.gradle.kts` (defaults to `http://10.0.2.2:4000/api/` for the emulator).
+
+## Development with AI Assistance
+
+> [!NOTE]
+> **This project was developed with AI assistance.**
+>
+> AI-generated code can contain subtle bugs, insecure patterns, or
+> plausible-looking nonsense ("AI slop"). Here is what keeps the bar high — and
+> what to check when auditing:
+>
+> - **The backend is the source of truth.** This app renders and caches API
+>   data — it never computes nutrition, calorie targets or meal plans itself.
+>   That boundary was a design decision, not an AI default.
+> - **Architecture is human-driven.** The offline-first MVVM structure and the
+>   DTO/`domain` split were specified explicitly.
+> - **The wire contract is reviewed.** `data/remote/Dtos.kt` mirrors the
+>   platform's `packages/shared` contract and is checked against it by hand.
+>
+> If you find a slop pattern, a logical bug, or a security issue, please open an
+> issue or see [SECURITY.md](SECURITY.md).
 
 ## Contributing
 
