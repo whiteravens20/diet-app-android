@@ -1,7 +1,7 @@
 # Version catalogue. Pin newest-stable; verify against a real Android build
 # environment when the app is built out (Phase 3).
 [versions]
-agp = "8.7.3"
+agp = "9.2.1"
 kotlin = "2.3.21"
 ksp = "2.3.8"
 coreKtx = "1.18.0"
