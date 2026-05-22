@@ -1,0 +1,5 @@
+# diet-app-android — code owners
+* @pavlojs
+/.github/ @pavlojs
+/app/src/main/java/net/whiteravens/dietapp/data/ @pavlojs
+

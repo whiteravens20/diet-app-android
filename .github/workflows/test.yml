@@ -1,0 +1,39 @@
+# ── CI ────────────────────────────────────────────────────────────────────────
+# Structural check for the Phase-3 scaffold: verifies the Gradle project and
+# Kotlin sources are well-formed. When the app is built out, replace the `build`
+# job body with a real `./gradlew assembleDebug lintDebug` (Android SDK runners).
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify project structure
+        run: |
+          set -e
+          test -f settings.gradle.kts
+          test -f build.gradle.kts
+          test -f app/build.gradle.kts
+          test -f gradle/libs.versions.toml
+          test -f app/src/main/AndroidManifest.xml
+          kt=$(find app/src/main -name '*.kt' | wc -l)
+          echo "Kotlin source files: $kt"
+          test "$kt" -ge 1
+      - name: Validate Kotlin files are non-empty and package-scoped
+        run: |
+          set -e
+          for f in $(find app/src/main -name '*.kt'); do
+            grep -q '^package net.whiteravens.dietapp' "$f" || { echo "missing package: $f"; exit 1; }
+          done
+          echo "All Kotlin sources carry the expected package."
