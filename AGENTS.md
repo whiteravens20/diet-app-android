@@ -6,8 +6,9 @@ Quick reference for AI coding agents (and humans). Full onboarding:
 ## What this repo is
 
 The Android companion app for the [Diet App platform](https://github.com/whiteravens20/diet-app).
-Kotlin + Jetpack Compose + Material 3, offline-first. **Phase 3 scaffold** — structure
-and contracts only; feature screens are not yet implemented.
+Kotlin + Jetpack Compose + Material 3, offline-first. **Data layer wired, screens next** —
+API binding, DTOs, auth and offline-first repositories are in place; feature screens are
+not yet implemented.
 
 ## The rule
 
@@ -36,5 +37,8 @@ computes nutrition, calorie targets or meal plans itself.
 ## Build
 
 ```bash
-./gradlew assembleDebug      # Android SDK + JDK 17
+./gradlew assembleDebug      # Android SDK + JDK 17+
 ```
+
+Local loop, backend, on-device testing: [docs/running-locally.md](docs/running-locally.md).
+CI runs a real `assembleDebug`; the **Build APK** workflow publishes the APK on demand.

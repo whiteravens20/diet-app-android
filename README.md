@@ -10,8 +10,9 @@ self-hostable diet & meal-planning platform. It reuses the platform's authentica
 profiles, meal plans and shopping lists, and adds **offline viewing** of cached data with
 a sync layer.
 
-> **Status: Phase 3 scaffold.** This repository contains the project structure,
-> architecture and integration contract. Feature screens are not yet implemented — see
+> **Status: data layer wired, screens next.** The API binding, DTO mirror, auth
+> plumbing (token store + refresh) and offline-first repositories are in place and
+> the app compiles to an installable APK. Feature screens are not yet built — see
 > [docs/architecture.md](docs/architecture.md) and the platform roadmap.
 
 > [!WARNING]
@@ -41,15 +42,27 @@ di/        Hilt modules
 See [docs/architecture.md](docs/architecture.md), the offline
 [sync strategy](docs/sync-strategy.md), and the [API contract](docs/contracts/api-contract.md).
 
-## Build
+## Build & run
 
 ```bash
-# Requires Android Studio (latest) or the Android SDK + JDK 17.
-./gradlew assembleDebug
+# Requires Android Studio (latest) or the Android SDK + JDK 17+.
+./gradlew assembleDebug            # -> app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The app talks to a running Diet App backend — set `API_BASE_URL` in
-`app/build.gradle.kts` (defaults to `http://10.0.2.2:4000/api/` for the emulator).
+The app talks to a running Diet App backend. The base URL is a build config
+value defaulting to `http://10.0.2.2:4000/api/` (the emulator's host loopback).
+Override it without editing sources:
+
+```bash
+./gradlew assembleDebug -PapiBaseUrl=http://192.168.1.20:4000/api/   # a LAN IP for a real device
+```
+
+To build the APK on demand in the cloud, run the **Build APK** workflow
+(`workflow_dispatch`) and download the `diet-app-debug-apk` artifact.
+
+See [docs/running-locally.md](docs/running-locally.md) for the full local loop —
+running the backend, installing on a physical device, and why the Android
+emulator needs hardware virtualization (KVM).
 
 ## Development with AI Assistance
 

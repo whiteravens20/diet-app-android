@@ -29,7 +29,7 @@ di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
 3. In the background it calls the API; on success it updates the cache and re-emits.
 4. On network failure the cached copy stands; the UI shows an "offline" indicator.
 
-See [sync-strategy.md](sync-strategy.md) for write-sync (Phase 3+).
+See [sync-strategy.md](sync-strategy.md) for write-sync (next).
 
 ## Tech choices
 
@@ -49,7 +49,6 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 ## Roadmap
 
 The API binding, DTO mirror, auth plumbing (interceptor + token refresh) and
-offline-first repositories are wired. Phase 3 builds the screen set (dashboard,
-profile, meal plans, recipes, shopping list) over these repositories, then adds
-the write-sync outbox and push notifications. The structural CI check is
-replaced by a real Gradle build then.
+offline-first repositories are wired, and CI now runs a real Gradle build. Next
+is the screen set (dashboard, profile, meal plans, recipes, shopping list) over
+these repositories, then the write-sync outbox and push notifications.

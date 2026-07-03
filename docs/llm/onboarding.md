@@ -5,8 +5,9 @@ Read this first if you are about to work on the Diet App Android companion.
 ## What this is
 
 The Android companion to the [Diet App platform](https://github.com/whiteravens20/diet-app).
-Offline-first; consumes the platform's REST API. **Phase 3 scaffold** — structure and
-contracts are in place; feature screens are not yet built.
+Offline-first; consumes the platform's REST API. **Data layer wired, screens next** — the
+API binding, DTOs, auth plumbing and offline-first repositories are in place; feature
+screens are not yet built.
 
 ## The rule
 
@@ -52,9 +53,11 @@ docs/        Architecture, sync strategy, API contract
 ## Build & verify
 
 ```bash
-./gradlew assembleDebug      # needs the Android SDK + JDK 17
+./gradlew assembleDebug      # needs the Android SDK + JDK 17+
 ./gradlew lintDebug
 ```
 
-CI currently runs a structural check (`.github/workflows/test.yml`); it becomes a real
-Gradle build when the app is built out in Phase 3.
+CI (`.github/workflows/test.yml`, job `build`) runs a real `assembleDebug` on every push
+and PR to `main`/`dev`. The **Build APK** workflow (`.github/workflows/build-apk.yml`) is
+a manual `workflow_dispatch` that publishes the debug APK as an artifact. Local setup and
+on-device testing: [../running-locally.md](../running-locally.md).

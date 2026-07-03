@@ -6,7 +6,7 @@ The phone is a **cache + view** of the backend. The backend owns all state and a
 nutrition computation. The app must be useful with no connection, and reconcile cleanly
 when one returns.
 
-## Read sync (Phase 3)
+## Read sync (implemented)
 
 - Every API read is mirrored into the Room cache (`CachedMealPlan`, `CachedShoppingList`),
   stored as the raw response JSON with a `syncedAt` timestamp.
@@ -14,7 +14,7 @@ when one returns.
 - Offline → the cached copy is shown with an "offline / last synced …" indicator.
 - A pull-to-refresh forces a network fetch.
 
-## Write sync (Phase 3+)
+## Write sync (next)
 
 Most actions (generate a plan, swap a meal, edit a shopping item) are backend operations.
 Offline writes are queued and replayed:
