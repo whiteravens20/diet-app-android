@@ -36,7 +36,7 @@ class MealPlanRepository @Inject constructor(
     /** Fetch from the API and mirror into the cache. Throws when offline. */
     suspend fun refresh(profileId: String): List<MealPlan> {
         val plans = apiCall(json) { api.mealPlans(profileId) }
-        plans.forEach(::mirror)
+        plans.forEach { mirror(it) }
         return plans.map { it.toDomain() }
     }
 

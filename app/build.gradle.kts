@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
@@ -9,16 +8,21 @@ plugins {
 
 android {
     namespace = "net.whiteravens.dietapp"
-    compileSdk = 35
+    // androidx.core 1.19 / compose-bom 2026.05 require compileSdk >= 37.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "net.whiteravens.dietapp"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "0.0.0"
-        // Backend base URL — overridden per build type.
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:4000/api/\"")
+        // Backend base URL. Default targets the emulator's host loopback; for a
+        // physical device pass -PapiBaseUrl=http://<host-lan-ip>:4000/api/ (or
+        // set apiBaseUrl in ~/.gradle/gradle.properties).
+        val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
+            .getOrElse("http://10.0.2.2:4000/api/")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {
@@ -37,8 +41,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 }
+
+kotlin { jvmToolchain(17) }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
