@@ -12,11 +12,14 @@ ui/        Jetpack Compose screens + Material 3 theme + components.
            Each screen has a Hilt ViewModel exposing UI state as a StateFlow.
 domain/    Plain app models, decoupled from the wire format.
 data/
-  remote/  Retrofit `DietApiService` + DTOs — the Kotlin mirror of the
-           platform's `packages/shared` contract.
+  remote/  Retrofit `DietApiService` (authenticated) + `AuthApiService`
+           (token-free) + DTOs — the Kotlin mirror of the platform's
+           `packages/shared` contract. `ApiException` types the error envelope.
+  auth/    `TokenStore` (DataStore) + OkHttp interceptor/authenticator pair —
+           attaches the bearer token and transparently refreshes it on 401.
   local/   Room `CacheDatabase` — offline copies of meal plans / shopping lists.
   repository/  Offline-first repositories: serve the cache, refresh from the API.
-di/        Hilt modules wiring networking, JSON, the cache DB.
+di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
 ```
 
 ## Offline-first flow
@@ -45,6 +48,8 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 
 ## Roadmap
 
-Phase 3 builds the screen set (dashboard, profile, meal plans, recipes, shopping list)
-over these repositories, adds the auth interceptor + token refresh, the write-sync layer
-and push notifications. The structural CI check is replaced by a real Gradle build then.
+The API binding, DTO mirror, auth plumbing (interceptor + token refresh) and
+offline-first repositories are wired. Phase 3 builds the screen set (dashboard,
+profile, meal plans, recipes, shopping list) over these repositories, then adds
+the write-sync outbox and push notifications. The structural CI check is
+replaced by a real Gradle build then.

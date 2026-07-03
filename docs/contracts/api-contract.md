@@ -17,7 +17,7 @@ A contract change in the platform is a coordinated change here.
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/auth/register`, `/auth/login`, `/auth/refresh` | Authentication. |
+| POST | `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout` | Authentication + refresh-token revocation. |
 | GET·PATCH | `/users/me` | Session user incl. `locale` (`en` \| `pl` …) and `theme` (`light` \| `dark` \| `system`); patch settings. |
 | POST | `/users/me/password` | Change password (requires current). |
 | DELETE | `/users/me` | Hard-delete account + cascade. Body: `{ currentPassword }`. |
@@ -37,7 +37,8 @@ itself returns one string per ingredient / recipe name and the Android client
 just renders it. The client tells the server which locale to serve via:
 
 - The signed-in `user.locale` (the API resolves it from `/users/me`).
-- A `NEXT_LOCALE` cookie (web) or an `Accept-Language` header (Android, future).
+- A `NEXT_LOCALE` cookie (web) or an `Accept-Language` header — Android sends
+  the device locale on every authenticated request (`AuthInterceptor`).
 
 Backend translation tables (`IngredientTranslation`, `RecipeTranslation`) are an
 implementation detail — Android never queries them directly. The `Locale` enum
