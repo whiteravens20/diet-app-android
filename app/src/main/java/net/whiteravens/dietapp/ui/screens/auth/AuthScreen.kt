@@ -33,12 +33,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 
 /**
  * Login / registration — the mobile twin of the web `AuthForm`: centered
@@ -51,7 +52,17 @@ fun AuthScreen(viewModel: AuthViewModel = hiltViewModel()) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
+    var showServerDialog by rememberSaveable { mutableStateOf(false) }
     val state by viewModel.state.collectAsState()
+    val serverUrl by viewModel.serverUrl.collectAsState()
+
+    if (showServerDialog) {
+        ServerUrlDialog(
+            current = serverUrl,
+            onSave = viewModel::saveServerUrl,
+            onDismiss = { showServerDialog = false },
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -157,6 +168,13 @@ fun AuthScreen(viewModel: AuthViewModel = hiltViewModel()) {
                 stringResource(
                     if (registerMode) R.string.auth_has_account else R.string.auth_no_account,
                 ),
+            )
+        }
+        TextButton(onClick = { showServerDialog = true }) {
+            Text(
+                stringResource(R.string.server_label, serverUrl),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

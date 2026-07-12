@@ -14,6 +14,16 @@
     <string name="common_retry">Spróbuj ponownie</string>
     <string name="common_cancel">Anuluj</string>
     <string name="common_back">Wstecz</string>
+    <string name="common_save">Zapisz</string>
+    <string name="common_edit">Edytuj</string>
+
+    <!-- Server setting -->
+    <string name="server_title">Serwer</string>
+    <string name="server_label">Serwer: %1$s</string>
+    <string name="server_dialog_title">Adres serwera</string>
+    <string name="server_placeholder">http://192.168.1.20:4000/api/</string>
+    <string name="server_invalid">Podaj prawidłowy adres http(s).</string>
+    <string name="server_change_signs_out">Zmiana serwera wyloguje Cię na tym urządzeniu i wyczyści pamięć offline.</string>
 
     <!-- Auth -->
     <string name="auth_welcome_back">Witaj ponownie</string>

@@ -19,14 +19,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.R
@@ -36,6 +40,7 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.ScreenHeader
+import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
 import java.util.Locale
 
@@ -43,6 +48,17 @@ import java.util.Locale
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
+    var showServerDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showServerDialog) {
+        ServerUrlDialog(
+            current = serverUrl,
+            onSave = viewModel::changeServer,
+            onDismiss = { showServerDialog = false },
+            warning = stringResource(R.string.server_change_signs_out),
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -129,6 +145,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.padding(vertical = 10.dp),
                     )
+                    ServerRow(serverUrl, onEdit = { showServerDialog = true })
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(vertical = 10.dp),
+                    )
                     SettingRow(stringResource(R.string.profile_app_version), BuildConfig.VERSION_NAME)
                     Text(
                         stringResource(R.string.profile_settings_hint),
@@ -160,6 +181,25 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                 Text(stringResource(R.string.profile_sign_out))
             }
         }
+    }
+}
+
+@Composable
+private fun ServerRow(url: String, onEdit: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.server_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(url, style = MaterialTheme.typography.bodySmall)
+        }
+        TextButton(onClick = onEdit) { Text(stringResource(R.string.common_edit)) }
     }
 }
 
