@@ -34,6 +34,8 @@ data class Nutrition(
 
 data class CalorieTarget(
     val maintenance: Double,
+    /** kcal/day subtracted from maintenance — engine-computed, rendered as-is. */
+    val dailyDeficit: Double,
     val dailyTarget: Double,
     val targetMacros: Nutrition,
     /** `calculated` | `manual_override` — lets the UI explain the number. */
@@ -77,6 +79,37 @@ data class MealPlan(
     val averageDailyNutrition: Nutrition,
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
+)
+
+data class RecipeIngredient(
+    val name: String,
+    val quantity: Double,
+    /** `g` | `ml` | `piece`. */
+    val unit: String,
+    val note: String?,
+)
+
+data class Recipe(
+    val id: String,
+    val title: String,
+    val description: String,
+    val servings: Int,
+    /** Meal slots this recipe fits (`breakfast`, `lunch`, …). */
+    val mealTypes: List<String>,
+    val dietTags: List<String>,
+    val ingredients: List<RecipeIngredient>,
+    val steps: List<String>,
+    val totalMinutes: Int,
+    /** `easy` | `medium` | `hard`. */
+    val difficulty: String,
+    val nutritionPerServing: Nutrition,
+)
+
+/** One page of recipe search results. */
+data class RecipePage(
+    val items: List<Recipe>,
+    val page: Int,
+    val totalPages: Int,
 )
 
 data class ShoppingItem(

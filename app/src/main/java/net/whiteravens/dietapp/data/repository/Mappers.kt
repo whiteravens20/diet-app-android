@@ -6,6 +6,9 @@ import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.PlannedMealDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
+import net.whiteravens.dietapp.data.remote.RecipeDto
+import net.whiteravens.dietapp.data.remote.RecipeIngredientDto
+import net.whiteravens.dietapp.data.remote.RecipeSearchPageDto
 import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
@@ -16,6 +19,9 @@ import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.domain.RecipeIngredient
+import net.whiteravens.dietapp.domain.RecipePage
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
@@ -48,6 +54,7 @@ fun NutritionDto.toDomain() = Nutrition(
 
 fun CalorieCalculationDto.toDomain() = CalorieTarget(
     maintenance = maintenance,
+    dailyDeficit = dailyDeficit,
     dailyTarget = dailyTarget,
     targetMacros = Nutrition(
         calories = dailyTarget,
@@ -57,6 +64,33 @@ fun CalorieCalculationDto.toDomain() = CalorieTarget(
     ),
     source = source,
     safetyFloorApplied = safetyFloorApplied,
+)
+
+fun RecipeIngredientDto.toDomain() = RecipeIngredient(
+    name = name,
+    quantity = quantity,
+    unit = unit,
+    note = note,
+)
+
+fun RecipeDto.toDomain() = Recipe(
+    id = id,
+    title = title,
+    description = description,
+    servings = servings,
+    mealTypes = mealTypes,
+    dietTags = dietTags,
+    ingredients = ingredients.map(RecipeIngredientDto::toDomain),
+    steps = steps,
+    totalMinutes = prepMinutes + cookMinutes,
+    difficulty = difficulty,
+    nutritionPerServing = nutritionPerServing.toDomain(),
+)
+
+fun RecipeSearchPageDto.toDomain() = RecipePage(
+    items = items.map(RecipeDto::toDomain),
+    page = page,
+    totalPages = totalPages,
 )
 
 fun PlannedMealDto.toDomain() = Meal(

@@ -33,6 +33,19 @@ class MealPlanRepository @Inject constructor(
             json.decodeFromString<MealPlanDto>(row.json).toDomain(syncedAt = row.syncedAt)
         }
 
+    /** One cached plan by id, or null before it was ever fetched. */
+    suspend fun cachedPlan(id: String): MealPlan? =
+        cache.mealPlan(id)?.let { row ->
+            json.decodeFromString<MealPlanDto>(row.json).toDomain(syncedAt = row.syncedAt)
+        }
+
+    /** Fetch one plan from the API and mirror it. Throws when offline. */
+    suspend fun refreshPlan(id: String): MealPlan {
+        val plan = apiCall(json) { api.mealPlan(id) }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
     /** Fetch from the API and mirror into the cache. Throws when offline. */
     suspend fun refresh(profileId: String): List<MealPlan> {
         val plans = apiCall(json) { api.mealPlans(profileId) }

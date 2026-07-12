@@ -71,6 +71,12 @@ interface DietApiService {
 
     // ── Shopping lists ──────────────────────────────────────────────────────
 
+    @GET("shopping-lists")
+    suspend fun shoppingLists(@Query("planId") planId: String): List<ShoppingListDto>
+
+    @POST("shopping-lists/generate")
+    suspend fun generateShoppingList(@Body body: GenerateShoppingListRequest): ShoppingListDto
+
     @GET("shopping-lists/{id}")
     suspend fun shoppingList(@Path("id") id: String): ShoppingListDto
 

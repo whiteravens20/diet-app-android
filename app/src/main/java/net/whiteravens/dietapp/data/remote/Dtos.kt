@@ -384,6 +384,14 @@ data class ShoppingListDto(
     val createdAt: String,
 )
 
+/** POST `/shopping-lists/generate` — dates default to the plan's full range. */
+@Serializable
+data class GenerateShoppingListRequest(
+    val planId: String,
+    val fromDate: String? = null,
+    val toDate: String? = null,
+)
+
 /**
  * PATCH `/shopping-lists/:id/items/:itemId`. Values >= totalQuantity auto-check
  * the row server-side. Note: the platform accepts an explicit `purchasedQuantity:

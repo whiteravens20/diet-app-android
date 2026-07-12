@@ -39,11 +39,17 @@ interface CacheDao {
     @Query("SELECT * FROM cached_meal_plan WHERE profileId = :profileId ORDER BY syncedAt DESC")
     suspend fun mealPlans(profileId: String): List<CachedMealPlan>
 
+    @Query("SELECT * FROM cached_meal_plan WHERE id = :id")
+    suspend fun mealPlan(id: String): CachedMealPlan?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertShoppingList(list: CachedShoppingList)
 
     @Query("SELECT * FROM cached_shopping_list WHERE id = :id")
     suspend fun shoppingList(id: String): CachedShoppingList?
+
+    @Query("SELECT * FROM cached_shopping_list WHERE planId = :planId ORDER BY syncedAt DESC")
+    suspend fun shoppingListsForPlan(planId: String): List<CachedShoppingList>
 }
 
 @Database(

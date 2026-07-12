@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.GenerateShoppingListRequest
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.UpdateShoppingItemRequest
 import net.whiteravens.dietapp.data.remote.apiCall
@@ -30,6 +31,26 @@ class ShoppingListRepository @Inject constructor(
         cache.shoppingList(id)?.let { row ->
             json.decodeFromString<ShoppingListDto>(row.json).toDomain(syncedAt = row.syncedAt)
         }
+
+    /** Cached lists for a plan, newest sync first; empty until first fetch. */
+    suspend fun cachedForPlan(planId: String): List<ShoppingList> =
+        cache.shoppingListsForPlan(planId).map { row ->
+            json.decodeFromString<ShoppingListDto>(row.json).toDomain(syncedAt = row.syncedAt)
+        }
+
+    /** Fetch a plan's lists from the API and mirror them. Throws when offline. */
+    suspend fun refreshForPlan(planId: String): List<ShoppingList> {
+        val lists = apiCall(json) { api.shoppingLists(planId) }
+        lists.forEach { mirror(it) }
+        return lists.map { it.toDomain() }
+    }
+
+    /** Generate a list from a plan (backend operation; may consume pantry stock). */
+    suspend fun generate(planId: String): ShoppingList {
+        val list = apiCall(json) { api.generateShoppingList(GenerateShoppingListRequest(planId)) }
+        mirror(list)
+        return list.toDomain()
+    }
 
     /** Fetch from the API and mirror into the cache. Throws when offline. */
     suspend fun refresh(id: String): ShoppingList {
