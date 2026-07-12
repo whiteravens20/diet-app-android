@@ -40,6 +40,11 @@ host's LAN IP:
 The debug build allows cleartext HTTP so a plain `http://…:4000` backend works during
 development; release builds do not.
 
+The baked-in value is only the default: the server address is editable **in the app**
+— the **Server** button on the login screen, or Profile → Server once signed in. The
+value persists on the device; changing it while signed in signs you out, since tokens
+and the offline cache belong to the old instance.
+
 ## 3. Install on a device
 
 ```bash
@@ -72,3 +77,36 @@ to full software emulation (`-no-accel`), which is far too slow to boot a modern
 image in practice. On such a host, **use a physical device** (steps above) or a cloud
 device farm (e.g. Firebase Test Lab). Enabling nested virtualization on the hypervisor,
 or building on bare metal, restores emulator support.
+
+## Emulating on a Windows machine
+
+Any bare-metal Windows 10/11 PC with virtualization enabled in the BIOS/UEFI can run
+the emulator:
+
+1. Install [Android Studio](https://developer.android.com/studio) (bundles the SDK,
+   a JDK and the emulator).
+2. Make sure virtualization is on: Task Manager → Performance → CPU →
+   *Virtualization: Enabled*. If it's off, enable Intel VT-x / AMD-V in the BIOS.
+   Android Studio uses **WHPX** (Windows Hypervisor Platform) or AEHD automatically;
+   enable "Windows Hypervisor Platform" under *Turn Windows features on or off* if
+   the emulator complains.
+3. Clone the repo and open it in Android Studio — the Gradle sync uses the committed
+   wrapper; no other setup.
+4. Device Manager → **Create virtual device** → any Pixel profile → a recent system
+   image (API 34+) → finish, then press ▶ to run the `app` configuration on it.
+5. Backend reachability from the emulator: `http://10.0.2.2:4000/api/` (the default)
+   reaches the Windows host's `localhost`. If the backend runs on another machine on
+   the LAN, set that machine's address in-app (login screen → **Server**).
+
+Command-line equivalent (PowerShell, from the repo root):
+
+```powershell
+.\gradlew.bat assembleDebug          # -> app\build\outputs\apk\debug\app-debug.apk
+```
+
+## Just build the APK (no local toolchain at all)
+
+Trigger the **Build APK** workflow (Actions tab → *Build APK* → *Run workflow*) and
+download the `diet-app-debug-apk` artifact — a ready-to-install debug APK. Install it
+on a phone with `adb install -r app-debug.apk` (or copy it over and open it), then
+point it at your backend from the login screen's **Server** button.

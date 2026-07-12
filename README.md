@@ -57,6 +57,10 @@ Override it without editing sources:
 ./gradlew assembleDebug -PapiBaseUrl=http://192.168.1.20:4000/api/   # a LAN IP for a real device
 ```
 
+That's only the default — the server address is also editable in the app itself
+(the **Server** button on the login screen, or Profile → Server) and persists on
+the device, so one APK can point at any instance.
+
 To build the APK on demand in the cloud, run the **Build APK** workflow
 (`workflow_dispatch`) and download the `diet-app-debug-apk` artifact.
 
