@@ -3,21 +3,24 @@ package net.whiteravens.dietapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import net.whiteravens.dietapp.ui.screens.DashboardScreen
-import net.whiteravens.dietapp.ui.theme.DietAppTheme
+import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
+import net.whiteravens.dietapp.ui.navigation.DietAppRoot
+import net.whiteravens.dietapp.ui.theme.DietAppTheme
 
-/** Single-activity host. Navigation is Compose-based (see ui/). */
+/** Single-activity host; all navigation is Compose-based (ui/navigation). */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             DietAppTheme {
-                Surface {
-                    // Phase 3: replace with a NavHost across the screen set.
-                    DashboardScreen()
+                Surface(Modifier.fillMaxSize()) {
+                    DietAppRoot()
                 }
             }
         }

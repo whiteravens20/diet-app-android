@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wording mirrors the web app's messages/pl.json wherever a key exists there. -->
+<resources>
+    <string name="app_name">Diet App</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Panel</string>
+    <string name="nav_meal_plans">Plany posiłków</string>
+    <string name="nav_recipes">Przepisy</string>
+    <string name="nav_shopping">Zakupy</string>
+    <string name="nav_profile">Profil</string>
+
+    <!-- Common -->
+    <string name="common_retry">Spróbuj ponownie</string>
+    <string name="common_cancel">Anuluj</string>
+    <string name="common_back">Wstecz</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_back">Witaj ponownie</string>
+    <string name="auth_create_account">Załóż konto</string>
+    <string name="auth_name">Imię</string>
+    <string name="auth_email">E-mail</string>
+    <string name="auth_password">Hasło</string>
+    <string name="auth_password_rules">Co najmniej 12 znaków, wielka i mała litera oraz cyfra.</string>
+    <string name="auth_sign_in_button">Zaloguj się</string>
+    <string name="auth_create_account_button">Załóż konto</string>
+    <string name="auth_no_account">Nie masz konta? Załóż je</string>
+    <string name="auth_has_account">Masz już konto? Zaloguj się</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_welcome">Witaj w Diet App</string>
+    <string name="dashboard_no_profiles">Utwórz pierwszy profil w aplikacji webowej — telefon wyświetla jego cel kaloryczny i plany.</string>
+    <plurals name="dashboard_subtitle">
+        <item quantity="one">Twój cel kaloryczny i podział makro.</item>
+        <item quantity="few">Cele kaloryczne dla %d profili.</item>
+        <item quantity="many">Cele kaloryczne dla %d profili.</item>
+        <item quantity="other">Cele kaloryczne dla %d profili.</item>
+    </plurals>
+    <string name="dashboard_daily_target">Cel dzienny</string>
+    <string name="dashboard_manual_hint">Ustawione ręcznie</string>
+    <string name="dashboard_calculated_hint">Wyliczone</string>
+    <string name="dashboard_maintenance">Zapotrzebowanie</string>
+    <string name="dashboard_daily_deficit">Deficyt dzienny</string>
+    <string name="dashboard_meals_per_day">Posiłków dziennie</string>
+    <string name="dashboard_macro_split">Docelowy podział makro</string>
+    <string name="dashboard_kcal_per_day">kcal/dzień</string>
+
+    <!-- Macros & units -->
+    <string name="macro_protein">Białko</string>
+    <string name="macro_fat">Tłuszcz</string>
+    <string name="macro_carbs">Węglowodany</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_piece">szt.</string>
+
+    <!-- Offline -->
+    <string name="offline_cached">Offline — dane z synchronizacji %1$s</string>
+    <string name="offline_readonly">Offline — wyświetlana jest kopia z pamięci; zmiany są wyłączone.</string>
+
+    <!-- Meal plans -->
+    <string name="plans_subtitle">Plany dopasowane do celu kalorycznego każdego profilu.</string>
+    <string name="plans_no_profile">Brak profilu</string>
+    <string name="plans_no_profile_body">Najpierw utwórz profil w aplikacji webowej — plan posiłków jest generowany względem jego celu kalorycznego.</string>
+    <string name="plans_generate">Wygeneruj plan</string>
+    <string name="plans_empty">Brak planów</string>
+    <string name="plans_empty_body">Wygeneruj pierwszy plan posiłków dla tego profilu.</string>
+    <string name="plans_card_title">%1$s · %2$d dni</string>
+    <string name="plans_avg_kcal">śr. %1$d kcal/dzień</string>
+    <string name="plans_duration">Długość</string>
+    <string name="plans_days">%1$d dni</string>
+    <string name="plans_meals_per_day">Posiłków dziennie</string>
+    <string name="plans_day_skipped">Ten dzień jest pominięty.</string>
+    <string name="plans_day_total">%1$d / %2$d kcal</string>
+    <string name="plans_day_macros">B %1$d g · T %2$d g · W %3$d g</string>
+    <string name="plans_delta_kcal">%1$d kcal</string>
+    <string name="plans_off_diet">Poza dietą</string>
+    <string name="plans_eaten">Zjedzone</string>
+    <string name="plans_meal_nutrition">%1$d kcal · B %2$d g · T %3$d g · W %4$d g</string>
+    <string name="plans_swap">Wymień posiłek</string>
+
+    <!-- Recipes -->
+    <string name="recipes_subtitle">Wyselekcjonowana biblioteka przepisów — każda kaloria wyliczana przez backend.</string>
+    <string name="recipes_search_placeholder">Tytuł przepisu…</string>
+    <string name="recipes_empty">Brak przepisów</string>
+    <string name="recipes_empty_body">Spróbuj innego wyszukiwania.</string>
+    <string name="recipes_kcal_per_serving">%1$d kcal/porcję</string>
+    <string name="recipes_minutes">%1$d min</string>
+    <string name="recipes_servings">Porcje: %1$d</string>
+    <string name="recipes_nutrition_per_serving">Wartości odżywcze na porcję</string>
+    <string name="recipes_ingredients">Składniki</string>
+    <string name="recipes_steps">Kroki</string>
+
+    <!-- Shopping -->
+    <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
+    <string name="shopping_no_profile">Brak profilu</string>
+    <string name="shopping_no_profile_body">Najpierw utwórz profil i wygeneruj plan posiłków — lista zakupów powstaje z planu.</string>
+    <string name="shopping_no_plans">Brak planów dla tego profilu</string>
+    <string name="shopping_no_plans_body">Najpierw wygeneruj plan posiłków — lista zakupów powstaje z niego.</string>
+    <string name="shopping_no_list">Brak listy zakupów</string>
+    <string name="shopping_no_list_body">Wygeneruj listę z tego planu. Pozycje w pełni pokryte spiżarnią odhaczają się same.</string>
+    <string name="shopping_generate">Wygeneruj listę</string>
+    <string name="shopping_from_pantry">ze spiżarni: %1$s %2$s</string>
+
+    <!-- Profile -->
+    <string name="profile_verified">Zweryfikowany</string>
+    <string name="profile_unverified">E-mail niezweryfikowany</string>
+    <string name="profile_language">Język</string>
+    <string name="profile_theme">Motyw</string>
+    <string name="profile_theme_light">Jasny</string>
+    <string name="profile_theme_dark">Ciemny</string>
+    <string name="profile_theme_system">Systemowy</string>
+    <string name="profile_app_version">Wersja aplikacji</string>
+    <string name="profile_settings_hint">Ustawienia konta, preferencje i profile dietetyczne zarządzane są w aplikacji webowej.</string>
+    <string name="profile_sign_out">Wyloguj się</string>
+
+    <!-- Enum labels (platform wire values) -->
+    <string name="diet_balanced">Zbilansowana</string>
+    <string name="diet_high_protein">Wysokobiałkowa</string>
+    <string name="diet_low_carb">Niskowęglowodanowa</string>
+    <string name="diet_vegetarian">Wegetariańska</string>
+    <string name="diet_vegan">Wegańska</string>
+    <string name="diet_keto">Keto</string>
+    <string name="diet_mediterranean">Śródziemnomorska</string>
+    <string name="diet_custom">Własna</string>
+
+    <string name="meal_breakfast">Śniadanie</string>
+    <string name="meal_second_breakfast">Drugie śniadanie</string>
+    <string name="meal_lunch">Obiad</string>
+    <string name="meal_snack">Przekąska</string>
+    <string name="meal_dinner">Kolacja</string>
+
+    <string name="category_vegetables">Warzywa</string>
+    <string name="category_fruits">Owoce</string>
+    <string name="category_dairy">Nabiał</string>
+    <string name="category_meat">Mięso</string>
+    <string name="category_fish">Ryby</string>
+    <string name="category_grains">Zboża</string>
+    <string name="category_legumes">Rośliny strączkowe</string>
+    <string name="category_nuts_seeds">Orzechy i nasiona</string>
+    <string name="category_fats_oils">Tłuszcze i oleje</string>
+    <string name="category_spices">Przyprawy</string>
+    <string name="category_pantry">Spiżarnia</string>
+    <string name="category_beverages">Napoje</string>
+    <string name="category_other">Inne</string>
+
+    <string name="difficulty_easy">Łatwy</string>
+    <string name="difficulty_medium">Średni</string>
+    <string name="difficulty_hard">Trudny</string>
+
+    <!-- API error codes (same wording as the web client) -->
+    <string name="error_generic">Coś poszło nie tak. Spróbuj ponownie.</string>
+    <string name="error_network">Nie można połączyć się z serwerem. Sprawdź połączenie.</string>
+    <string name="error_validation">Niektóre pola wymagają poprawy.</string>
+    <string name="error_invalid_credentials">Nieprawidłowy e-mail lub hasło.</string>
+    <string name="error_email_taken">Ten adres e-mail jest już zarejestrowany.</string>
+    <string name="error_session_expired">Sesja wygasła. Zaloguj się ponownie.</string>
+    <string name="error_no_alternative">Nie znaleziono alternatywnego przepisu.</string>
+    <string name="error_no_eligible_recipe">Żaden przepis nie spełnia obecnych ograniczeń.</string>
+    <string name="error_custom_meal_not_swappable">Własnych posiłków nie można wymieniać.</string>
+</resources>
