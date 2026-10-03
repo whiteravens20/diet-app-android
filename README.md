@@ -2,7 +2,7 @@
 
 > Offline-first Android companion for the Diet App platform.
 
-[![License](https://img.shields.io/badge/license-PolyForm--NC--1.0.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/whiteravens20/diet-app-android/actions/workflows/test.yml/badge.svg)](https://github.com/whiteravens20/diet-app-android/actions)
 
 The companion app for [**Diet App**](https://github.com/whiteravens20/diet-app) — the
@@ -98,4 +98,10 @@ See [SECURITY.md](SECURITY.md).
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE) — © 2026 White Ravens.
+[GNU Affero General Public License, version 3](LICENSE) (AGPL-3.0-only), with one
+additional term in [NOTICE](NOTICE) — © 2026 White Ravens.
+
+You are free to use, change and share the app. Anyone who distributes it, or a version
+based on it, has to do so under the same licence with the source code available, and has
+to keep the attribution "Diet App Android Companion by White Ravens" together with the
+address of this repository.
