@@ -4,8 +4,9 @@ Thank you for considering a contribution. Read this before opening a PR.
 
 ## Status
 
-This is a **Phase 3 scaffold**. The current focus is the project structure, the
-offline-first architecture and the integration contract — not feature screens.
+The main screens are built and read from the offline-first repositories. What is still
+missing is listed under Roadmap in [docs/architecture.md](docs/architecture.md): queued
+offline changes, automated tests and push notifications.
 
 ## Setup
 

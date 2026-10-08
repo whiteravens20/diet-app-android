@@ -68,7 +68,8 @@ app against a backend is described in [running-locally.md](running-locally.md).
 
 ## Roadmap
 
-The API binding, DTO mirror, auth plumbing (interceptor + token refresh) and
-offline-first repositories are wired, and CI now runs a real Gradle build. Next
-is the screen set (dashboard, profile, meal plans, recipes, shopping list) over
-these repositories, then the write-sync outbox and push notifications.
+The API binding, the DTO mirror, the auth plumbing and the offline-first repositories
+are in place, and the screens for signing in, the dashboard, meal plans, recipes, the
+shopping list and the profile are built on them. CI builds the app on every push. Next
+are the write-sync outbox described in [sync-strategy.md](sync-strategy.md), automated
+tests and push notifications.
