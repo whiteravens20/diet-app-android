@@ -68,26 +68,6 @@ See [docs/running-locally.md](docs/running-locally.md) for the full local loop �
 running the backend, installing on a physical device, and why the Android
 emulator needs hardware virtualization (KVM).
 
-## Development with AI Assistance
-
-> [!NOTE]
-> **This project was developed with AI assistance.**
->
-> AI-generated code can contain subtle bugs, insecure patterns, or
-> plausible-looking nonsense ("AI slop"). Here is what keeps the bar high — and
-> what to check when auditing:
->
-> - **The backend is the source of truth.** This app renders and caches API
->   data — it never computes nutrition, calorie targets or meal plans itself.
->   That boundary was a design decision, not an AI default.
-> - **Architecture is human-driven.** The offline-first MVVM structure and the
->   DTO/`domain` split were specified explicitly.
-> - **The wire contract is reviewed.** `data/remote/Dtos.kt` mirrors the
->   platform's `packages/shared` contract and is checked against it by hand.
->
-> If you find a slop pattern, a logical bug, or a security issue, please open an
-> issue or see [SECURITY.md](SECURITY.md).
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -95,6 +75,37 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT
 ## Security
 
 See [SECURITY.md](SECURITY.md).
+
+## How the code is written and checked
+
+This app is built by one maintainer using AI coding tools. The tools write most of the
+code and documentation; the maintainer decides what gets built and is responsible for
+everything that lands here. The app is in early development: there is no release yet and
+no independent security review.
+
+**What a change goes through**
+
+- Every push and pull request has to compile into a debug APK
+  ([test.yml](.github/workflows/test.yml)). There are no automated tests yet, so that is
+  all CI proves.
+- Commits are signed.
+
+**What the maintainer decided and read**
+
+- The backend is the source of truth. The app shows and caches what the API returns and
+  never computes nutrition, calorie targets or meal plans itself.
+- The offline-first MVVM structure and the split between wire DTOs and `domain` models
+  were specified by the maintainer.
+- `data/remote/Dtos.kt` mirrors the platform's shared contract and is compared with it
+  by hand.
+
+**Before a release**
+
+- There is no release yet. Until the app has tests of its own, the maintainer checks
+  each build by installing it and using it against a running Diet App backend.
+
+If something looks wrong, open an issue. For a vulnerability, follow
+[SECURITY.md](SECURITY.md).
 
 ## License
 
