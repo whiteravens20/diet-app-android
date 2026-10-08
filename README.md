@@ -5,68 +5,101 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/whiteravens20/diet-app-android/actions/workflows/test.yml/badge.svg)](https://github.com/whiteravens20/diet-app-android/actions)
 
-The companion app for [**Diet App**](https://github.com/whiteravens20/diet-app) — the
-self-hostable diet & meal-planning platform. It reuses the platform's authentication,
-profiles, meal plans and shopping lists, and adds **offline viewing** of cached data with
-a sync layer.
+The companion app for [**Diet App**](https://github.com/whiteravens20/diet-app), the
+self-hostable diet and meal-planning platform. It signs in to your own Diet App server,
+shows what the platform computed and lets you do the day-to-day things on a phone:
+generate a plan, swap a meal, tick off the shopping list.
 
-> **Status: data layer wired, screens next.** The API binding, DTO mirror, auth
-> plumbing (token store + refresh) and offline-first repositories are in place and
-> the app compiles to an installable APK. Feature screens are not yet built — see
-> [docs/architecture.md](docs/architecture.md) and the platform roadmap.
+> **Status: the main screens work; nothing is released yet.** Signing in, the dashboard,
+> meal plans, recipes, the shopping list and the profile are built and talk to the
+> backend. Meal plans and shopping lists stay readable offline. Changes made offline are
+> not queued yet, and the app has no automated tests.
 
 > [!WARNING]
 > **Early development — not production ready.** This app and the Diet App
 > platform are under active development. The API contract, data model and
-> module structure may change without notice, and the project has not had a
-> security review. Build it to experiment, not for anything you depend on yet.
+> module structure may change without notice, and the project has not had an
+> independent security review. Build it to experiment, not for anything you depend on yet.
 
-## Stack
+## Features
 
-- **Kotlin** + **Jetpack Compose** + **Material 3**
-- **Offline-first** — MVVM + repository, Room cache, Retrofit/OkHttp, Hilt DI
-- Targets Android 8.0 (API 26)+; built with the latest stable AGP/Kotlin
+- **Your own server.** Sign in or create an account on the Diet App instance you run. The
+  server address can be changed in the app, so one build works with any instance.
+- **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
+  meals per day and the target macro split.
+- **Meal plans.** The plans of a profile, a new plan generated from the phone, each plan
+  day by day with its totals, and a meal swapped for another recipe.
+- **Recipes.** Search in the recipe library; a recipe with its nutrition per serving,
+  ingredients and steps.
+- **Shopping list.** Generated from a plan, grouped by store section, with what the
+  pantry already covers, and items ticked off as you shop.
+- **Profile.** The account's e-mail status, language and theme, the app's version, the
+  server address and sign-out. Account settings and diet profiles are edited in the web
+  app.
+- **Offline.** Meal plans and shopping lists you have opened stay readable without a
+  connection, marked with the time they were last synced. Offline they are read-only.
+- **English and Polish.**
 
-## Architecture
+The app never computes nutrition, calorie targets or meal plans. Every number on the
+screen comes from the backend.
 
-```
-ui/        Compose screens, theme, components — Hilt ViewModels
-domain/    App models, decoupled from the wire format
-data/
-  remote/  Retrofit API binding + DTOs (mirror of the platform contract)
-  local/   Room offline cache
-  repository/  Offline-first repositories: cache first, refresh in background
-di/        Hilt modules
-```
+## Install
 
-See [docs/architecture.md](docs/architecture.md), the offline
-[sync strategy](docs/sync-strategy.md), and the [API contract](docs/contracts/api-contract.md).
-
-## Build & run
+There is no published build yet, so the APK is built from source. You need Android
+Studio, or the Android SDK with JDK 17 or newer, and a device or emulator with Android
+8.0 (API 26) or newer.
 
 ```bash
-# Requires Android Studio (latest) or the Android SDK + JDK 17+.
+git clone https://github.com/whiteravens20/diet-app-android
+cd diet-app-android
 ./gradlew assembleDebug            # -> app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The app talks to a running Diet App backend. The base URL is a build config
-value defaulting to `http://10.0.2.2:4000/api/` (the emulator's host loopback).
-Override it without editing sources:
+Without a local toolchain, run the **Build APK** workflow in your fork and download the
+`diet-app-debug-apk` artifact.
+
+## Run
+
+The app needs a running [Diet App](https://github.com/whiteravens20/diet-app) backend.
+Its address is `http://10.0.2.2:4000/api/` by default, which is the host machine as the
+Android emulator sees it. For a phone on your network, set another one at build time:
 
 ```bash
-./gradlew assembleDebug -PapiBaseUrl=http://192.168.1.20:4000/api/   # a LAN IP for a real device
+./gradlew assembleDebug -PapiBaseUrl=http://192.168.1.20:4000/api/
 ```
 
-That's only the default — the server address is also editable in the app itself
-(the **Server** button on the login screen, or Profile → Server) and persists on
-the device, so one APK can point at any instance.
+or change it in the app, with the **Server** button on the sign-in screen or under
+Profile. Changing the server signs you out and clears the offline cache.
 
-To build the APK on demand in the cloud, run the **Build APK** workflow
-(`workflow_dispatch`) and download the `diet-app-debug-apk` artifact.
+A debug build accepts a plain `http://` address, which a backend on your own network
+usually has. A release build accepts HTTPS only.
 
-See [docs/running-locally.md](docs/running-locally.md) for the full local loop —
-running the backend, installing on a physical device, and why the Android
-emulator needs hardware virtualization (KVM).
+[docs/running-locally.md](docs/running-locally.md) covers the whole local loop: starting
+the backend, installing on a physical device and what the emulator needs.
+
+## Architecture
+
+The phone is a cache and a view of the backend: the backend owns all state and all
+nutrition maths. The app is written in Kotlin with Jetpack Compose and Material 3, and
+its code is split by what each part may know:
+
+- `ui/` holds the Compose screens, the theme and the shared components. Each screen has
+  a Hilt ViewModel that exposes its state as a `StateFlow`.
+- `domain/` holds the app's own models, which do not depend on the wire format.
+- `data/remote/` holds the Retrofit services and the DTOs, a Kotlin mirror of the
+  platform's shared contract.
+- `data/auth/` keeps the access and refresh tokens in DataStore and attaches them to
+  requests; a request answered with 401 is retried with a refreshed token.
+- `data/config/` keeps the server address chosen in the app.
+- `data/local/` is the Room cache of meal plans and shopping lists.
+- `data/repository/` joins them: a repository serves the cache first and refreshes it
+  from the API.
+- `di/` wires it together with Hilt.
+
+`ui` and `data` depend on `domain`, and `domain` on nothing; a DTO never reaches a
+screen. More in [docs/architecture.md](docs/architecture.md), the
+[sync strategy](docs/sync-strategy.md) and the
+[API contract](docs/contracts/api-contract.md).
 
 ## Contributing
 
