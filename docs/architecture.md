@@ -46,6 +46,26 @@ See [sync-strategy.md](sync-strategy.md) for write-sync (next).
 `ui` depends on `domain`; `data` depends on `domain`; `domain` depends on nothing. DTOs
 never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 
+## Where a change starts
+
+| Change | Start here |
+|---|---|
+| New screen | `ui/screens/`, with a Hilt ViewModel and a repository behind it |
+| New API call | `data/remote/DietApiService.kt` and `Dtos.kt` |
+| Caching or offline behaviour | `data/local/` and `data/repository/` |
+| Dependency wiring | `di/AppModule.kt` |
+| Contract change | `Dtos.kt` and [contracts/api-contract.md](contracts/api-contract.md), coordinated with the platform repository |
+
+Check a change before sending it:
+
+```bash
+./gradlew assembleDebug      # needs the Android SDK and JDK 17+
+./gradlew lintDebug
+```
+
+CI builds the debug APK on every push and pull request to `main` and `dev`. Running the
+app against a backend is described in [running-locally.md](running-locally.md).
+
 ## Roadmap
 
 The API binding, DTO mirror, auth plumbing (interceptor + token refresh) and
