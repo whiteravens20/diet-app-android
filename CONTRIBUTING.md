@@ -33,7 +33,6 @@ cd diet-app-android
   be too. Do not submit AI output that you cannot explain and defend in review: read it,
   test it and take responsibility for it.
 - **Commits** — [Conventional Commits](https://www.conventionalcommits.org/), signed.
-  No `Co-Authored-By` trailers.
 - **Branches** — branch off `dev`; PR into `dev`.
 
 ## Security
