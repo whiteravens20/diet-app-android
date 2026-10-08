@@ -28,6 +28,10 @@ cd diet-app-android
 - **API DTOs** mirror the platform contract — see
   [docs/contracts/api-contract.md](docs/contracts/api-contract.md). A contract change is
   coordinated with the [`diet-app`](https://github.com/whiteravens20/diet-app) repo.
+- **AI-assisted code** — most of this project is written with AI coding tools, as the
+  [README](README.md#how-the-code-is-written-and-checked) describes, and contributions may
+  be too. Do not submit AI output that you cannot explain and defend in review: read it,
+  test it and take responsibility for it.
 - **Commits** — [Conventional Commits](https://www.conventionalcommits.org/), signed.
   No `Co-Authored-By` trailers.
 - **Branches** — branch off `dev`; PR into `dev`.
