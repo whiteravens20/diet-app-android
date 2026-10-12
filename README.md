@@ -136,6 +136,8 @@ independent security review.
 
 - There is no release yet. Until the app has tests of its own, the maintainer checks
   each build by installing it and using it against a running Diet App backend.
+- Before a release is published, a group of human testers will try the release candidate
+  at the maintainer's request and report what they find.
 
 If something looks wrong, open an issue. For a vulnerability, follow
 [SECURITY.md](SECURITY.md).
