@@ -114,7 +114,8 @@ See [SECURITY.md](SECURITY.md).
 This app is built using AI coding tools. The tools write most of the code and
 documentation; the maintainer decides what gets built and is responsible for everything
 that lands here. The app is in early development: there is no release yet and no
-independent security review.
+independent security review. Before the first release is published, a group of human
+testers will try the release candidate at the maintainer's request.
 
 **What a change goes through**
 
@@ -131,13 +132,6 @@ independent security review.
   were specified by the maintainer.
 - `data/remote/Dtos.kt` mirrors the platform's shared contract and is compared with it
   by hand.
-
-**Before a release**
-
-- There is no release yet. Until the app has tests of its own, the maintainer checks
-  each build by installing it and using it against a running Diet App backend.
-- Before a release is published, a group of human testers will try the release candidate
-  at the maintainer's request and report what they find.
 
 If something looks wrong, open an issue. For a vulnerability, follow
 [SECURITY.md](SECURITY.md).
