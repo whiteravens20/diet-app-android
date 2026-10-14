@@ -41,7 +41,8 @@ generate a plan, swap a meal, tick off the shopping list.
   app.
 - **Offline.** Meal plans and shopping lists you have opened stay readable without a
   connection, marked with the time they were last synced. Offline they are read-only.
-- **English and Polish.**
+- **English and Polish**, refusals of the server included: a request the server refuses is
+  explained in the app's language, in the words the web application uses.
 
 The app never computes nutrition, calorie targets or meal plans. Every number on the
 screen comes from the backend.
@@ -125,11 +126,11 @@ testers will try the release candidate at the maintainer's request.
 - Every push and pull request has to compile into a debug APK, pass Android Lint without
   an error and pass the unit tests, which run on the JVM without a device: every call of
   the client against a copy of the contract the API publishes
-  ([contract/](contract/README.md)), the wire classes against answers a running backend
-  gave, the network stack against a local server, and the screens' view models
-  ([test.yml](.github/workflows/test.yml)). A defect the tests found that the code does
-  not fix yet stays in the suite as a test that passes while the defect is there and fails
-  once it is gone.
+  ([contract/](contract/README.md)), a text for every code the API refuses a request with,
+  the wire classes against answers a running backend gave, the network stack against a
+  local server, and the screens' view models ([test.yml](.github/workflows/test.yml)). A
+  defect the tests found that the code does not fix yet stays in the suite as a test that
+  passes while the defect is there and fails once it is gone.
 - The screens' tests run on an Android emulator on every push and pull request, against
   a diet-app instance started in the same job from the image of the version `contract/`
   was copied from, pinned by its digest, with its catalogue loaded. Their report, the

@@ -13,16 +13,22 @@ version in `contract/API_VERSION` ([contract/README.md](../../contract/README.md
 tests compare every call of the client with it (`ContractTest`): the route exists, the query
 and the body are ones the API takes, and the class an answer is read into can read what the
 API answers. A call that does not fit yet is listed in that test with the reason; the change
-that fixes it takes it off the list. Once a week CI compares the copy with diet-app's `dev`
-([contract.yml](../../.github/workflows/contract.yml)) and fails when the two differ.
+that fixes it takes it off the list.
+
+[`contract/errors.md`](../../contract/errors.md) is a copy of the list of codes, from the same
+version. The build writes the app's texts for refusals from it, in English and in Polish, and
+a unit test (`ErrorTextsTest`) checks that every code of the list has its text. Once a week CI
+compares both copies with diet-app's `dev` ([contract.yml](../../.github/workflows/contract.yml))
+and fails when they differ.
 
 ## Moving to another version of the API
 
-1. Copy `docs/api/openapi.json` of the diet-app version the client is to work with into
-   `contract/`, and write that version into `contract/API_VERSION`. Write its commit and
+1. Copy `docs/api/openapi.json` and `docs/api/errors.md` of the diet-app version the client
+   is to work with into `contract/`, and write that version into `contract/API_VERSION`. Write its commit and
    the digest of its image into `contract/diet-app.env`, read from the registry
    (`docker buildx imagetools inspect ghcr.io/whiteravens20/diet-app:<tag>`), never typed.
-2. Run `./gradlew testDebugUnitTest`: `ContractTest` names every call that no longer fits.
+2. Run `./gradlew testDebugUnitTest`: `ContractTest` names every call that no longer fits,
+   and the texts of a code that is new or gone change with the build.
 3. Change the classes in `data/remote/`, and their mapping into `domain/`, until it passes.
 
 ## What the client sends
@@ -36,6 +42,18 @@ that fixes it takes it off the list. Once a week CI compares the copy with diet-
   and one whose answer the app cannot read, or that has no such route, is shown as running
   a version the app does not support; the app talks to the server either way.
 
-A refusal carries a stable code in `error` (`INVALID_CREDENTIALS`, `EMAIL_TAKEN`, …), which the
-client translates from, never from the English `message`; `issues` names the fields a request
-failed on.
+## What a person reads when a request fails
+
+A refusal carries a stable code in `error` (`INVALID_CREDENTIALS`, `EMAIL_TAKEN`, …), and the
+app words it as the web application does, from the code and never from the English `message`:
+
+- a 429 with `Retry-After` says how long to wait, in seconds, or in minutes past a minute and
+  a half;
+- `VALIDATION_FAILED` names the fields its `issues` name, and the sign-in form marks them;
+- `NO_ELIGIBLE_RECIPE` names the meal and the diet its `details` name, and tells a catalogue
+  without a recipe for them from a profile that rules out every one there is;
+- any other code reads as its sentence in `contract/errors.md`, in the language of the app;
+- a code the copy does not have yet, from a newer server, is shown in the words the API sent,
+  which are English;
+- an answer that is not the API's, such as a proxy's error page, is named by its status, and no
+  answer at all is a connection that failed.

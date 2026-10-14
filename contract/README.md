@@ -6,10 +6,14 @@ copied from diet-app at the version in `API_VERSION` (from commit `4289e7f`, the
 client with it: the route exists, the body is one the API takes, and the class an answer is
 read into can read what the API answers.
 
+`errors.md` is diet-app's list of every code a refusal can carry (`docs/api/errors.md`), with
+its sentence in English and in Polish, from the same commit. The build writes the app's texts
+for refusals from it, and a unit test checks that every code of the list has one.
+
 `diet-app.env` names that version's commit and its image, by digest: the screens' tests run
 against an instance of it.
 
-It is moved on purpose, never by itself: copy the file from the version of diet-app the
+It is moved on purpose, never by itself: copy both files from the version of diet-app the
 client is to work with, change `API_VERSION` and `diet-app.env`, and make the tests pass. Once a week CI
 compares this copy with diet-app's `dev` and fails when they differ, so that a change of
 the backend is seen within a week.
