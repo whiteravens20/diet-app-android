@@ -35,6 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Collections
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -123,6 +124,23 @@ class NetworkStackTest {
 
     private fun aRunOutSession() = Held(Session("run-out", "refresh-1"))
 
+    /**
+     * [backend], holding back the answers to the run-out token until [requests] of them have
+     * arrived: the requests meet the run-out token together, however the threads are scheduled.
+     */
+    private fun together(requests: Int, backend: Dispatcher): Dispatcher {
+        val arrived = CountDownLatch(requests)
+        return object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.getHeader("Authorization") == "Bearer run-out") {
+                    arrived.countDown()
+                    arrived.await(10, TimeUnit.SECONDS)
+                }
+                return backend.dispatch(request)
+            }
+        }
+    }
+
     @Test
     fun `a request whose access token ran out is answered after one refresh, with the new pair kept`() {
         val held = aRunOutSession()
@@ -198,7 +216,7 @@ class NetworkStackTest {
     @Test
     fun `four requests at once with a run-out token cause one refresh and are all answered`() {
         val refreshes = AtomicInteger()
-        server.dispatcher = backend({ answer("auth-refresh") }, refreshes)
+        server.dispatcher = together(4, backend({ answer("auth-refresh") }, refreshes))
         val api = stack(aRunOutSession()).api
 
         val answered = runBlocking {
@@ -213,7 +231,7 @@ class NetworkStackTest {
     fun `five requests at once with a run-out token are all answered`() = knownDefect(
         "the authenticator holds the dispatcher's five slots for one host while the refresh waits for one of them",
     ) {
-        server.dispatcher = backend({ answer("auth-refresh") })
+        server.dispatcher = together(5, backend({ answer("auth-refresh") }))
         val api = stack(aRunOutSession()).api
 
         // Not children of the test: a call that never ends must not keep the test from ending.
