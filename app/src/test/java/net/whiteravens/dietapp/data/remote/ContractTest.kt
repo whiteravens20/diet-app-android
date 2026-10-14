@@ -212,7 +212,6 @@ class ContractTest(private val call: Call) {
         /** Calls that do not fit the contract yet, each with why; the change that fixes one removes it here. */
         val KNOWN_DEFECTS = mapOf(
             "POST auth/login" to "an account with two-step sign-in is answered with a challenge, which the client's class cannot read",
-            "POST meal-plans/swap-meal" to "the client sends a strategy where the API takes the recipe offered and the plan's revision",
         )
 
         val CONTRACT: JsonObject = Json.parseToJsonElement(

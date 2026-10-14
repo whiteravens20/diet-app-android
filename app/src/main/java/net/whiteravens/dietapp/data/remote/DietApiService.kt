@@ -59,8 +59,13 @@ interface DietApiService {
     @POST("meal-plans/generate")
     suspend fun generatePlan(@Body body: GeneratePlanRequest): MealPlanDto
 
+    /** A recipe offered in the place of a meal, with what the swap would do; nothing is written. */
+    @POST("meal-plans/swap-meal/preview")
+    suspend fun offerSwap(@Body body: SwapOfferRequest): MealSwapPreviewDto
+
+    /** Takes an offer: the meal gets the recipe, if the plan is still at the offer's revision. */
     @POST("meal-plans/swap-meal")
-    suspend fun swapMeal(@Body body: SwapMealRequest): RebalanceResultDto
+    suspend fun swapMeal(@Body body: ApplyMealSwapRequest): RebalanceResultDto
 
     // ── Recipes ─────────────────────────────────────────────────────────────
 

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -25,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
@@ -48,6 +51,7 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.Skeleton
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -60,6 +64,16 @@ fun PlanDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val plan = state.plan
+
+    state.offer?.let { offer ->
+        SwapOfferDialog(
+            offer = offer,
+            busy = state.taking || state.offering != null,
+            onTake = viewModel::takeOffer,
+            onAnother = viewModel::anotherOffer,
+            onDismiss = viewModel::dismissOffer,
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -140,9 +154,9 @@ fun PlanDetailScreen(
         itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
             MealCard(
                 meal = meal,
-                swapping = meal.id in state.swapping,
+                swapping = meal.id == state.offering,
                 readOnly = state.offline,
-                onSwap = { viewModel.swapMeal(meal.id) },
+                onSwap = { viewModel.offerSwap(meal.id) },
                 onOpen = meal.recipeId?.let { id -> { onOpenRecipe(id) } },
             )
         }
@@ -252,3 +266,58 @@ private fun MealCard(
         }
     }
 }
+
+/** The recipe offered in the place of a meal, and what taking it does to the meal and to its day. */
+@Composable
+private fun SwapOfferDialog(
+    offer: SwapOffer,
+    busy: Boolean,
+    onTake: () -> Unit,
+    onAnother: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.plans_swap_offer_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(offer.recipeTitle, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    stringResource(R.string.plans_swap_servings, formatServings(offer.servings)),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    stringResource(
+                        R.string.plans_swap_meal_kcal,
+                        offer.before.calories.roundToInt(),
+                        offer.after.calories.roundToInt(),
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    stringResource(
+                        R.string.plans_swap_day_kcal,
+                        offer.dayBefore.calories.roundToInt(),
+                        offer.dayAfter.calories.roundToInt(),
+                        offer.calorieTarget.roundToInt(),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onTake, enabled = !busy) { Text(stringResource(R.string.plans_swap_take)) }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onAnother, enabled = !busy) { Text(stringResource(R.string.plans_swap_another)) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+            }
+        },
+    )
+}
+
+/** `1.0` → `1`, `1.5` → `1.5`: servings as a person writes them. */
+private fun formatServings(servings: Double): String =
+    if (servings % 1.0 == 0.0) servings.toLong().toString() else "%.1f".format(Locale.getDefault(), servings)

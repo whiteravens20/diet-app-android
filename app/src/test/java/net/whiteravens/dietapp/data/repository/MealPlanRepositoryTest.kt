@@ -5,6 +5,10 @@ package net.whiteravens.dietapp.data.repository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
@@ -77,5 +81,31 @@ class MealPlanRepositoryTest {
         assertEquals("/api/meal-plans?profileId=profile-1&page=2&pageSize=20", server.takeRequest().path)
         assertEquals(listOf("profile-1"), cache.planLists.map { it.profileId })
         assertEquals(first.plans, runBlocking { plans.cachedPlans("profile-1") }!!.plans)
+    }
+
+    @Test
+    fun `a swap is offered without the recipes offered before, and taken with the recipe and the plan's revision`() {
+        server.enqueue(answer("meal-plan-swap-preview"))
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val plans = repository(Cache())
+
+        val offer = runBlocking { plans.offerSwap("plan-1", "meal-1", seen = listOf("recipe-0")) }
+        runBlocking { plans.takeSwap(offer) }
+
+        val offered = server.takeRequest()
+        assertEquals("/api/meal-plans/swap-meal/preview", offered.path)
+        val asked = json.parseToJsonElement(offered.body.readUtf8()).jsonObject
+        assertEquals("plan-1", asked.getValue("planId").jsonPrimitive.content)
+        assertEquals("meal-1", asked.getValue("plannedMealId").jsonPrimitive.content)
+        assertEquals("random", asked.getValue("strategy").jsonPrimitive.content)
+        assertEquals(listOf("recipe-0"), asked.getValue("skip").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("recipe-0", offer.recipeId), offer.seen)
+
+        val taken = server.takeRequest()
+        assertEquals("/api/meal-plans/swap-meal", taken.path)
+        val sent = json.parseToJsonElement(taken.body.readUtf8()).jsonObject
+        assertEquals(offer.recipeId, sent.getValue("recipeId").jsonPrimitive.content)
+        assertEquals(offer.revision, sent.getValue("revision").jsonPrimitive.int)
+        assertEquals("random", sent.getValue("strategy").jsonPrimitive.content)
     }
 }

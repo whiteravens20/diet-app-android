@@ -9,14 +9,16 @@ import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.readOrDrop
+import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
-import net.whiteravens.dietapp.data.remote.SwapMealRequest
+import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
+import net.whiteravens.dietapp.domain.SwapOffer
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,10 +88,32 @@ class MealPlanRepository @Inject constructor(
         return plan.toDomain()
     }
 
-    /** Swap one planned meal for a random same-diet alternative. */
-    suspend fun swapMeal(planId: String, plannedMealId: String): MealPlan {
+    /**
+     * A recipe of the plan's diet for the meal, other than those offered for it already ([seen]).
+     * Nothing is written.
+     */
+    suspend fun offerSwap(planId: String, mealId: String, seen: List<String> = emptyList()): SwapOffer {
+        val preview = apiCall(json) {
+            api.offerSwap(SwapOfferRequest(planId = planId, plannedMealId = mealId, strategy = SWAP_STRATEGY, skip = seen))
+        }
+        return preview.toDomain(planId, mealId, seen + preview.recipe.id)
+    }
+
+    /**
+     * Takes [offer]: the meal gets its recipe, and the plan, balanced around it, is kept for offline
+     * use. A plan changed since the offer is refused with `PLAN_CHANGED`.
+     */
+    suspend fun takeSwap(offer: SwapOffer): MealPlan {
         val result = apiCall(json) {
-            api.swapMeal(SwapMealRequest(planId = planId, plannedMealId = plannedMealId, strategy = "random"))
+            api.swapMeal(
+                ApplyMealSwapRequest(
+                    planId = offer.planId,
+                    plannedMealId = offer.mealId,
+                    recipeId = offer.recipeId,
+                    revision = offer.revision,
+                    strategy = SWAP_STRATEGY,
+                ),
+            )
         }
         mirror(result.plan)
         return result.plan.toDomain()
@@ -98,6 +122,9 @@ class MealPlanRepository @Inject constructor(
     private companion object {
         /** The API's own page, as many plans as the web application lists at a time. */
         const val PAGE_SIZE = 20
+
+        /** Any recipe of the plan's diet that fits the meal; swaps from favourites come with them. */
+        const val SWAP_STRATEGY = "random"
     }
 
     private suspend fun mirror(plan: MealPlanDto) {

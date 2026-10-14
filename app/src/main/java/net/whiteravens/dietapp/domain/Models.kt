@@ -83,6 +83,26 @@ data class MealPlan(
     val syncedAt: Long?,
 )
 
+/**
+ * A recipe offered in the place of a meal, and what taking it would do. Nothing is written until
+ * it is taken; [revision] is the plan's at the time of the offer, and [seen] the recipes offered
+ * for the meal so far, which the next offer leaves out.
+ */
+data class SwapOffer(
+    val planId: String,
+    val mealId: String,
+    val recipeId: String,
+    val recipeTitle: String,
+    val servings: Double,
+    val before: Nutrition,
+    val after: Nutrition,
+    val dayBefore: Nutrition,
+    val dayAfter: Nutrition,
+    val calorieTarget: Double,
+    val revision: Int,
+    val seen: List<String>,
+)
+
 /** One plan in a profile's list: what the list shows, without the days. */
 data class MealPlanSummary(
     val id: String,

@@ -7,6 +7,7 @@ import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.MealPlanSummaryDto
+import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.PlannedMealDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
@@ -32,6 +33,7 @@ import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.domain.SwapOffer
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
 
@@ -144,6 +146,21 @@ fun MealPlanPageDto.toDomain(syncedAt: Long? = null) = MealPlanPage(
     page = page,
     totalPages = totalPages,
     syncedAt = syncedAt,
+)
+
+fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, seen: List<String>) = SwapOffer(
+    planId = planId,
+    mealId = mealId,
+    recipeId = recipe.id,
+    recipeTitle = recipe.title,
+    servings = servings,
+    before = before.toDomain(),
+    after = after.toDomain(),
+    dayBefore = dayBefore.toDomain(),
+    dayAfter = dayAfter.toDomain(),
+    calorieTarget = calorieTarget,
+    revision = revision,
+    seen = seen,
 )
 
 /** What the list of plans shows of a plan that was just made. */

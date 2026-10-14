@@ -63,9 +63,10 @@ class WireClassesTest {
     }
 
     @Test
-    fun `reads a plan, a plan just made, and the plan after a swap`() {
+    fun `reads a plan, a plan just made, a swap offered and the plan after it was taken`() {
         assertTrue(read<MealPlanDto>("meal-plan").days.isNotEmpty())
         read<MealPlanDto>("meal-plan-generate")
+        read<MealSwapPreviewDto>("meal-plan-swap-preview")
         read<RebalanceResultDto>("meal-plan-swap-apply")
     }
 

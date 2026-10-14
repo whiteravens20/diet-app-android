@@ -344,8 +344,9 @@ data class GeneratePlanRequest(
     val maxRepeatsPerRecipe: Int? = null,
 )
 
+/** POST `/meal-plans/swap-meal/preview`: ask for a recipe to put in the place of a meal. Nothing is written. */
 @Serializable
-data class SwapMealRequest(
+data class SwapOfferRequest(
     val planId: String,
     val plannedMealId: String,
     /** `random` | `favorite` | `favorite_ingredients`. */
@@ -353,6 +354,40 @@ data class SwapMealRequest(
     /** Required when strategy is `favorite`. */
     val favoriteRecipeId: String? = null,
     val respectInventory: Boolean = true,
+    val allowOffDiet: Boolean = false,
+    /** Recipes offered already for the meal, which the next offer leaves out. */
+    val skip: List<String> = emptyList(),
+)
+
+/** A recipe offered in the place of a meal, with what the swap would do to the meal and to its day. */
+@Serializable
+data class MealSwapPreviewDto(
+    val recipe: RecipeDto,
+    /** Servings of the recipe the meal would be: as many as come nearest to what the meal holds now. */
+    val servings: Double,
+    val before: NutritionDto,
+    val after: NutritionDto,
+    /** The day now and with the new meal, before its other meals are balanced around it. */
+    val dayBefore: NutritionDto,
+    val dayAfter: NutritionDto,
+    /** What the day aims at, in kilocalories. */
+    val calorieTarget: Double,
+    /** The revision of the plan the offer was made from: sent back to take it. */
+    val revision: Int,
+)
+
+/**
+ * POST `/meal-plans/swap-meal`: take an offer. A plan changed since the offer's revision is
+ * refused with `PLAN_CHANGED`, and the client reloads it.
+ */
+@Serializable
+data class ApplyMealSwapRequest(
+    val planId: String,
+    val plannedMealId: String,
+    val recipeId: String,
+    val revision: Int,
+    /** The strategy the offer was asked with. */
+    val strategy: String,
     val allowOffDiet: Boolean = false,
 )
 

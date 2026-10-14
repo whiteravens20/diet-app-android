@@ -88,6 +88,7 @@ fun errorMessage(error: Throwable): String = when (error) {
         "NO_ALTERNATIVE" -> stringResource(R.string.error_no_alternative)
         "NO_ELIGIBLE_RECIPE" -> stringResource(R.string.error_no_eligible_recipe)
         "CUSTOM_MEAL_NOT_SWAPPABLE" -> stringResource(R.string.error_custom_meal_not_swappable)
+        "PLAN_CHANGED" -> stringResource(R.string.error_plan_changed)
         else -> error.message.ifBlank { stringResource(R.string.error_generic) }
     }
     is IOException -> stringResource(R.string.error_network)
