@@ -91,6 +91,8 @@ data class SessionUserDto(
     val palette: String,
     /** `none` | `admin` | `byok`. */
     val aiMode: String,
+    /** `kg` | `lb`, or null for the unit of the account's language. */
+    val weightUnit: String? = null,
 )
 
 /** PATCH `/users/me` — every field optional; omitted fields are left untouched. */
@@ -133,6 +135,8 @@ data class CalorieCalculationDto(
     val maintenance: Double,
     /** `0.25` | `0.5` | `0.75` | `1.0`, or null when maintaining. */
     val weeklyLossTarget: String? = null,
+    /** kcal a day the chosen pace asks for, before any limit. */
+    val requestedDeficit: Double,
     /** kcal/day subtracted from maintenance. */
     val dailyDeficit: Double,
     /** Final daily calorie target. */
@@ -140,8 +144,21 @@ data class CalorieCalculationDto(
     val targetMacros: MacrosDto,
     /** `calculated` | `manual_override`. */
     val source: String,
-    /** True when the target was clamped to a safe minimum. */
+    /** The lowest a calculated target goes for this profile. */
+    val safetyFloor: Double,
+    /** The pace asked for more than a quarter of maintenance, and was slowed to that. */
+    val deficitCapped: Boolean,
+    /** The target was raised to the floor. */
     val safetyFloorApplied: Boolean,
+    /** Maintenance itself is under the floor: no loss is planned, the target is maintenance. */
+    val maintenanceUnderFloor: Boolean,
+    /**
+     * The profile asks to lose weight, is under 18 or underweight, and has not said it
+     * understands the risk: the target is held at maintenance until it does.
+     */
+    val goalHeld: Boolean,
+    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
+    val warnings: List<String>,
 )
 
 // ── Profiles (packages/shared/src/profile.ts) ───────────────────────────────
@@ -151,12 +168,22 @@ data class ProfilePreferencesDto(
     val favoriteIngredientIds: List<String> = emptyList(),
     val excludedIngredientIds: List<String> = emptyList(),
     val allergens: List<String> = emptyList(),
-    val dislikedFoods: List<String> = emptyList(),
+    /**
+     * Ingredients the profile would rather not eat: a recipe holding one is taken only where
+     * every recipe left for the meal does. To rule one out there is [excludedIngredientIds].
+     */
+    val dislikedIngredientIds: List<String> = emptyList(),
     val preferredCuisines: List<String> = emptyList(),
     val maxConsecutiveDaysSameMeal: Int = 2,
     val maxTimesPerWeekSameMeal: Int = 3,
+    /** The most of one ingredient, in g or ml, the meals of any seven days of a plan hold together. */
+    val maxWeeklyAmountPerIngredient: Int = 3000,
     val inventoryBiasResetEvery: Int = 5,
 )
+
+/** The split of a day's energy a profile on the `custom` diet aims at, in percent. */
+@Serializable
+data class MacroSplitDto(val protein: Int, val fat: Int, val carbs: Int)
 
 @Serializable
 data class ProfileDto(
@@ -168,6 +195,8 @@ data class ProfileDto(
     val sex: String? = null,
     val heightCm: Double,
     val weightKg: Double,
+    /** The weight the profile works towards, in kg; null when it named none. */
+    val targetWeightKg: Double? = null,
     /** `sedentary` | `light` | `moderate` | `active` | `very_active`. */
     val activityLevel: String,
     /** Platform `DietType` enum, e.g. `balanced` | `high_protein` | `keto` | `custom` … */
@@ -178,27 +207,39 @@ data class ProfileDto(
     val manualCalorieTarget: Int? = null,
     /** Default meal count (2-5) for new plans. */
     val mealCount: Int,
-    /** F19 weight-log nudge cadence, e.g. `weekly`. */
+    /** How often the profile is reminded to log its weight: `off` | `daily` | `weekly`. */
     val weightReminderCadence: String,
+    /** The split of energy on the `custom` diet; null on another diet that kept none. */
+    val customMacroSplit: MacroSplitDto? = null,
     val preferences: ProfilePreferencesDto = ProfilePreferencesDto(),
+    /** When the profile said it understands the risk of a target held at maintenance, or null. */
+    val riskAcknowledgedAt: String? = null,
     val createdAt: String,
     val updatedAt: String,
 )
 
 // ── Recipes (packages/shared/src/recipe.ts) ─────────────────────────────────
 
+/** An amount as it is shown: rounded, in `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
+@Serializable
+data class DisplayAmountDto(val quantity: Double, val unit: String)
+
 @Serializable
 data class RecipeIngredientDto(
     val ingredientId: String,
-    /** Display name, already resolved to the requested locale (F14). */
+    /** The ingredient's name in the language the request asked for. */
     val name: String,
     val quantity: Double,
     /** `g` | `ml` | `piece`. */
     val unit: String,
-    /** g per piece — when present, UIs render the line in grams. */
-    val gramsPerPiece: Double? = null,
+    /** The quantity as it is shown. */
+    val display: DisplayAmountDto,
     val note: String? = null,
 )
+
+/** Where a recipe taken in from somewhere else is from, and the licence it may be passed on under. */
+@Serializable
+data class RecipeSourceDto(val url: String? = null, val license: String)
 
 @Serializable
 data class RecipeDto(
@@ -215,11 +256,20 @@ data class RecipeDto(
     val cookMinutes: Int,
     /** `easy` | `medium` | `hard`. */
     val difficulty: String,
+    /** The cuisine the recipe belongs to, when it belongs to one. */
+    val cuisine: String? = null,
     val allergens: List<String>,
     /** Per-serving nutrition, engine-computed. */
     val nutritionPerServing: NutritionDto,
     /** `seed` | `ai` | `user` | `curated`. */
     val origin: String,
+    /**
+     * `written`: a recipe of the user's a model wrote; `changed`: one in which a model chose the
+     * ingredient swapped in, or reworded the text around it; null otherwise.
+     */
+    val byModel: String? = null,
+    /** To be shown with a recipe taken in from somewhere else; null for one written here. */
+    val source: RecipeSourceDto? = null,
 )
 
 /** Paginated recipe list — returned by `GET /recipes`. */
@@ -234,24 +284,58 @@ data class RecipeSearchPageDto(
 
 // ── Meal plans (packages/shared/src/meal-plan.ts) ───────────────────────────
 
+/** A line of a meal: what the meal takes of an ingredient, scaled and rounded to the meal. */
+@Serializable
+data class PlannedIngredientDto(
+    val ingredientId: String,
+    val name: String,
+    val quantity: Double,
+    /** `g` | `ml` | `piece`. */
+    val unit: String,
+    val display: DisplayAmountDto,
+    val note: String? = null,
+)
+
+/** Set when a model chose the recipe of a meal: the reason it gave, when it gave one. */
+@Serializable
+data class ModelPickDto(val reason: String? = null)
+
 /** A single scheduled meal within a plan day. */
 @Serializable
 data class PlannedMealDto(
     val id: String,
     val mealType: String,
-    /** Null for an F22 user-authored custom meal. */
+    /** Null for a meal of the user's own. */
     val recipe: RecipeDto? = null,
+    /**
+     * What this meal takes of each ingredient, scaled to the meal, where [recipe] holds the
+     * recipe as written for its own servings. Empty for a meal of the user's own.
+     */
+    val ingredients: List<PlannedIngredientDto>,
     /** `CATALOGUE` | `USER_CUSTOM`. */
     val source: String,
     /** Display name for a custom meal (null for catalogue meals). */
     val customName: String? = null,
     val servings: Double,
-    /** F22 rebalancer multiplier; effective amount = servings * quantityScale. */
+    /** The multiplier a rebalance gave the meal; the amount eaten is servings * quantityScale. */
     val quantityScale: Double,
     /** Mark-eaten timestamp, or null. */
     val eatenAt: String? = null,
     /** True when a swapped-in favourite is off the plan's diet type. */
     val dietOverride: Boolean,
+    /**
+     * What the profile has ruled out since the meal was planned (`allergen` |
+     * `excluded_ingredient` | `avoided`): the meal stays, and says so.
+     */
+    val restrictionConflicts: List<String>,
+    /** The meal's ingredients the profile would rather not eat, as the profile has them now. */
+    val dislikedIngredientIds: List<String>,
+    val modelPick: ModelPickDto? = null,
+    /**
+     * In a plan made for cooking ahead: `cook` on the meal cooked for the next one as well,
+     * `cooked` on the meal eaten from it; null otherwise.
+     */
+    val cookAhead: String? = null,
     /** Effective: per-serving macros * servings * quantityScale. */
     val nutrition: NutritionDto,
 )
@@ -259,7 +343,7 @@ data class PlannedMealDto(
 @Serializable
 data class LockedSlotDto(val mealType: String, val recipeId: String)
 
-/** F17 per-day overrides as surfaced on a generated day; null for basic-flow days. */
+/** What was asked of one day of a plan, where it differs from the plan; null on a day asked nothing of. */
 @Serializable
 data class MealPlanDayOverridesDto(
     val mealCount: Int? = null,
@@ -280,8 +364,16 @@ data class MealPlanDayDto(
     /** Sum of meal nutrition. */
     val dayNutrition: NutritionDto,
     val calorieTarget: Double,
+    /** What the day aims at of protein, fat and carbohydrate, in grams. */
+    val targetMacros: MacrosDto,
     /** Signed delta vs. target — positive means over budget. */
     val calorieDelta: Double,
+    /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
+    val offTarget: String? = null,
+    /** The user skips the day: no meals, no shortfall, left out of the plan's averages. */
+    val skipped: Boolean,
+    /** A target somebody typed has put the day under the lowest a calculated plan goes. */
+    val belowSafetyFloor: Boolean,
     val overrides: MealPlanDayOverridesDto? = null,
 )
 
@@ -297,9 +389,68 @@ data class MealPlanDto(
     val targetMacros: MacrosDto,
     /** 0-1 optimiser reuse score. */
     val ingredientReuseScore: Double,
+    /** What the menu, as it is now, buys and uses of packs that do not keep. */
+    val packs: PlanPacksDto,
     /** `deterministic` | `ai_assisted`. */
     val generationMode: String,
+    /** What the plan was asked for. */
+    val options: PlanOptionsDto,
+    /** What its generation had to do; null on a plan made before that was kept. */
+    val report: GenerationReportDto? = null,
+    /** How many times the plan has been changed; a change from an older one is refused with `PLAN_CHANGED`. */
+    val revision: Int,
     val createdAt: String,
+)
+
+/** A pack the menu opens and does not finish. */
+@Serializable
+data class PlanOpenPackDto(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`: what the pack and what is left of it are counted in. */
+    val unit: String,
+    val packSize: Double,
+    /** How many packs the menu takes of the ingredient. */
+    val packs: Int,
+    /** What the menu leaves of the last of them. */
+    val left: Int,
+    /** More of it is left than the fifth of a pack a plan accepts. */
+    val wasted: Boolean,
+)
+
+@Serializable
+data class PlanPacksDto(val bought: Double, val used: Double, val open: List<PlanOpenPackDto>)
+
+/** What a plan was asked for when it was made. */
+@Serializable
+data class PlanOptionsDto(
+    val dietType: String? = null,
+    val mealCount: Int? = null,
+    val calorieTargetOverride: Int? = null,
+    val mealPrepFriendly: Boolean,
+    val respectExclusions: Boolean,
+    val respectFavorites: Boolean,
+    val respectInventory: Boolean,
+    val maxRepeatsPerRecipe: Int? = null,
+    /** The limits the plan may give way on when no recipe is left inside them. */
+    val allowRelaxations: List<String>,
+)
+
+/** A meal outside a limit, because no recipe was left inside it, and the limits it gave way on. */
+@Serializable
+data class RelaxedMealDto(val date: String, val slot: String, val gaveWay: List<String>)
+
+/** A meal for which the diet and the meal left one recipe to choose from. */
+@Serializable
+data class SingleCandidateDto(val date: String, val slot: String)
+
+/** What the generation of a plan had to do to fill it, as far as it still holds. */
+@Serializable
+data class GenerationReportDto(
+    val relaxations: List<RelaxedMealDto>,
+    val singleCandidate: List<SingleCandidateDto>,
+    /** `counted` | `left_out` | `unused` | `empty` | `not_asked`. */
+    val pantry: String,
 )
 
 /** One plan in the list of a profile's plans: what the list shows, without its days. */
@@ -324,11 +475,7 @@ data class MealPlanPageDto(
     val totalPages: Int,
 )
 
-/**
- * POST `/meal-plans/generate`. The F17 `dayOverrides` advanced flow is not yet
- * used by the app — the field is sparse-optional on the platform, so omitting
- * it is contract-safe.
- */
+/** POST `/meal-plans/generate`. What one day asks for differently (`dayOverrides`) is left out. */
 @Serializable
 data class GeneratePlanRequest(
     val profileId: String,
@@ -401,11 +548,13 @@ data class RebalanceSummaryDto(
     /** `in-window` | `best-effort`. */
     val feasibility: String,
     val changes: List<RebalanceChangeDto>,
+    /** What the balancing could not take back into the day or the week, in kilocalories. */
+    val unabsorbedKcal: Double,
     val macrosBefore: NutritionDto,
     val macrosAfter: NutritionDto,
 )
 
-/** Envelope returned by every F22 edit that may rebalance (swap, custom-add, eaten toggle …). */
+/** What a change of a plan that may balance it answers: a swap, a meal of one's own, a meal marked eaten. */
 @Serializable
 data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null)
 
@@ -415,7 +564,7 @@ data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSum
 data class ShoppingListItemDto(
     val id: String,
     val ingredientId: String,
-    /** Locale-resolved display name (F14). */
+    /** The ingredient's name in the language the request asked for. */
     val name: String,
     /** Platform `ProductCategory` value, e.g. `vegetables` | `dairy` | `pantry` … */
     val category: String,
@@ -423,21 +572,34 @@ data class ShoppingListItemDto(
     val totalQuantity: Double,
     /** `g` | `ml` | `piece`. */
     val unit: String,
+    /** What to call [unit] when showing the row: `slice` for bread, `clove` for garlic. */
+    val displayUnit: String,
     /** Pantry coverage snapshot at generation time (the "from pantry" chip). */
     val alreadyHaveQuantity: Double = 0.0,
     /** totalQuantity - alreadyHaveQuantity, floored at 0. */
     val toBuyQuantity: Double,
-    /** F15.1 user-entered obtained quantity, incl. pantry pre-credit. Null until first edit. */
+    /** What the user has obtained, the pantry's share included; null until the row is first edited. */
     val purchasedQuantity: Double? = null,
     /** Earliest best-before among contributing pantry rows, or null. */
     val pantryBestBefore: String? = null,
     /** Estimated calories contributed by this line (informational). */
     val estimatedCalories: Double,
+    /** How the row is bought in packs; null for an ingredient not sold in packs, or nothing left to buy. */
+    val packs: ShoppingPacksDto? = null,
     val checked: Boolean = false,
 )
 
+/** [count] packs of [size] [sizeUnit], which come to [quantity] in the row's unit. */
 @Serializable
-data class ShoppingListGroupDto(val category: String, val items: List<ShoppingListItemDto>)
+data class ShoppingPacksDto(val count: Int, val size: Double, val sizeUnit: String, val quantity: Double)
+
+@Serializable
+data class ShoppingListGroupDto(
+    val category: String,
+    val items: List<ShoppingListItemDto>,
+    /** What the entries of the group come to in kilocalories, an estimate as each of theirs is. */
+    val estimatedCalories: Double,
+)
 
 @Serializable
 data class ShoppingListDto(
@@ -447,6 +609,11 @@ data class ShoppingListDto(
     val toDate: String,
     val groups: List<ShoppingListGroupDto>,
     val totalEstimatedCalories: Double,
+    /**
+     * The plan's menu for these dates no longer needs what the list says: a meal was swapped or
+     * resized after the list was made. Generating a list for the same dates again replaces it.
+     */
+    val stale: Boolean,
     val createdAt: String,
 )
 
