@@ -16,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.Lifecycle
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
 import net.whiteravens.dietapp.R
@@ -53,12 +55,16 @@ fun ComposeTestRule.waitForEnabled(label: String, timeoutMillis: Long = 20_000) 
 
 /**
  * Whether the activity's saved state, which the system may write to disk, holds [text] anywhere:
- * the state is written out as the system writes it, and the bytes are searched.
+ * the state is written out as the system writes it, and the bytes are searched. Saving marks the
+ * activity as stopped, so it is then taken through a stop and back, as when a person leaves the
+ * app and returns to it, and the screen can be used on.
  */
-fun <A : ComponentActivity> AndroidComposeTestRule<*, A>.savedStateHolds(text: String): Boolean {
+fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.savedStateHolds(text: String): Boolean {
     waitForIdle()
     val saved = Bundle()
     runOnUiThread { InstrumentationRegistry.getInstrumentation().callActivityOnSaveInstanceState(activity, saved) }
+    activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+    activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
     val parcel = Parcel.obtain()
     try {
         saved.writeToParcel(parcel, 0)
