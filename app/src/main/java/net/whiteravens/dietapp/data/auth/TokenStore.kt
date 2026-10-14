@@ -3,6 +3,8 @@
 package net.whiteravens.dietapp.data.auth
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -22,25 +24,30 @@ data class Session(val accessToken: String, val refreshToken: String)
 /**
  * DataStore-backed home of the token pair (see docs/sync-strategy.md — Auth).
  * The pair is written atomically on login/refresh and cleared on sign-out;
- * observers of [session] see sign-in state reactively.
+ * observers of [session] see sign-in state reactively. Every token is kept
+ * sealed ([Sealer]): the file holds none of them, and a pair that cannot be
+ * opened again is no session.
  */
 @Singleton
-class TokenStore @Inject constructor(@ApplicationContext context: Context) {
+class TokenStore internal constructor(
+    private val store: DataStore<Preferences>,
+    private val sealer: Sealer,
+) {
+    @Inject
+    constructor(@ApplicationContext context: Context, sealer: Sealer) : this(context.authDataStore, sealer)
 
-    private val store = context.authDataStore
+    /** The sealed pair last opened, and what it held: every request reads the session. */
+    @Volatile
+    private var opened: Pair<Pair<String, String>, Session?>? = null
 
-    val session: Flow<Session?> = store.data.map { prefs ->
-        val access = prefs[ACCESS_TOKEN] ?: return@map null
-        val refresh = prefs[REFRESH_TOKEN] ?: return@map null
-        Session(access, refresh)
-    }
+    val session: Flow<Session?> = store.data.map(::open)
 
     suspend fun current(): Session? = session.first()
 
     suspend fun save(tokens: AuthTokens) {
         store.edit { prefs ->
-            prefs[ACCESS_TOKEN] = tokens.accessToken
-            prefs[REFRESH_TOKEN] = tokens.refreshToken
+            prefs[ACCESS_TOKEN] = sealer.seal(ACCESS_TOKEN.name, tokens.accessToken)
+            prefs[REFRESH_TOKEN] = sealer.seal(REFRESH_TOKEN.name, tokens.refreshToken)
         }
     }
 
@@ -52,12 +59,27 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
     }
 
     /** The refresh token of a session signed out of that the server has not revoked yet, or null. */
-    suspend fun pendingRevocation(): String? = store.data.first()[PENDING_REVOCATION]
+    suspend fun pendingRevocation(): String? =
+        store.data.first()[PENDING_REVOCATION]?.let { sealer.open(PENDING_REVOCATION.name, it) }
 
     suspend fun setPendingRevocation(refreshToken: String?) {
         store.edit { prefs ->
-            if (refreshToken == null) prefs.remove(PENDING_REVOCATION) else prefs[PENDING_REVOCATION] = refreshToken
+            if (refreshToken == null) {
+                prefs.remove(PENDING_REVOCATION)
+            } else {
+                prefs[PENDING_REVOCATION] = sealer.seal(PENDING_REVOCATION.name, refreshToken)
+            }
         }
+    }
+
+    private fun open(prefs: Preferences): Session? {
+        val sealed = (prefs[ACCESS_TOKEN] ?: return null) to (prefs[REFRESH_TOKEN] ?: return null)
+        opened?.let { (pair, session) -> if (pair == sealed) return session }
+        val access = sealer.open(ACCESS_TOKEN.name, sealed.first)
+        val refresh = sealer.open(REFRESH_TOKEN.name, sealed.second)
+        val session = if (access != null && refresh != null) Session(access, refresh) else null
+        opened = sealed to session
+        return session
     }
 
     private companion object {

@@ -93,8 +93,9 @@ its code is split by what each part may know:
 - `domain/` holds the app's own models, which do not depend on the wire format.
 - `data/remote/` holds the Retrofit services and the DTOs, a Kotlin mirror of the
   platform's shared contract.
-- `data/auth/` keeps the access and refresh tokens in DataStore and attaches them to
-  requests; a request answered with 401 is retried with a refreshed token.
+- `data/auth/` keeps the access and refresh tokens in DataStore, sealed under a key of the
+  Android Keystore, and attaches them to requests; a request answered with 401 is retried
+  with a refreshed token.
 - `data/config/` keeps the server address chosen in the app.
 - `data/local/` is the Room cache of meal plans and shopping lists.
 - `data/repository/` joins them: a repository serves the cache first and refreshes it

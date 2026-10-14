@@ -29,9 +29,9 @@ Offline writes are queued and replayed:
 
 ## Auth
 
-Access + refresh tokens live in `DataStore`. An OkHttp interceptor attaches the access
-token and transparently refreshes it on a 401 — the same contract as the web client.
-Sign-out clears tokens and the cache.
+Access + refresh tokens live in `DataStore`, sealed with AES-GCM under a key the Android
+Keystore holds. An OkHttp interceptor attaches the access token and transparently refreshes
+it on a 401 — the same contract as the web client. Sign-out clears tokens and the cache.
 
 ## What is never synced
 

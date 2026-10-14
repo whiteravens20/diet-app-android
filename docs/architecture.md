@@ -39,7 +39,7 @@ See [sync-strategy.md](sync-strategy.md) for write-sync (next).
 - **Retrofit + OkHttp + kotlinx.serialization** — typed networking; DTOs mirror the
   platform contract.
 - **Room** — the offline cache; plans/lists stored as the raw API JSON keyed by id.
-- **DataStore** — auth tokens (wrap with the Android Keystore on capable devices).
+- **DataStore** — auth tokens, sealed under a key of the Android Keystore.
 
 ## Module boundaries
 

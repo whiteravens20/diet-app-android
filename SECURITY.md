@@ -10,8 +10,10 @@ or email the maintainer (`@pavlojs` on GitHub). Do not open a public issue.
 
 The companion app holds an authenticated session and cached personal data.
 
-- **Tokens** — access/refresh tokens are stored in `DataStore`; on devices with a
-  hardware keystore, wrap them with `EncryptedSharedPreferences` / the Android Keystore.
+- **Tokens** — the access and refresh tokens are kept in `DataStore` sealed with AES-GCM
+  under a key the Android Keystore holds and never lets out, so the file holds none of
+  them. A key that is gone, after a restore or a reset of the keystore, opens nothing, and
+  the user signs in again.
 - **Transport** — a release build talks HTTPS only, and trusts the system's certificate
   authorities and those the user installed on the phone, since a self-hosted server often
   has a certificate from its owner's own authority. A debug build also talks plain `http`,

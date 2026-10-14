@@ -13,6 +13,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.data.auth.AuthInterceptor
+import net.whiteravens.dietapp.data.auth.KeystoreSealer
+import net.whiteravens.dietapp.data.auth.Sealer
 import net.whiteravens.dietapp.data.auth.TokenAuthenticator
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.AuthApiService
@@ -105,6 +107,10 @@ object AppModule {
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
+
+    /** The tokens are kept sealed under a key of the device's keystore. */
+    @Provides
+    fun sealer(keystore: KeystoreSealer): Sealer = keystore
 
     @Provides
     @Singleton
