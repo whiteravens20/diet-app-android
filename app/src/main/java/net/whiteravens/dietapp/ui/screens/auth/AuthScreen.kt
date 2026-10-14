@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.AntiAbuseCheckDialog
@@ -61,6 +62,8 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
     val state by viewModel.state.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
     val checkSiteKey by viewModel.checkSiteKey.collectAsState()
+    // The fields a refused form named are marked where they are typed.
+    val refused = (state.error as? ApiException)?.refusedFields.orEmpty()
 
     val siteKey = checkSiteKey
     if (state.awaitingCheck != null && siteKey != null) {
@@ -131,6 +134,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                     value = displayName,
                     onValueChange = { displayName = it },
                     label = { Text(stringResource(R.string.auth_name)) },
+                    isError = "displayName" in refused,
                     singleLine = true,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
@@ -140,6 +144,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 value = email,
                 onValueChange = { email = it },
                 label = { Text(stringResource(R.string.auth_email)) },
+                isError = "email" in refused,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 shape = MaterialTheme.shapes.medium,
@@ -149,6 +154,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(stringResource(R.string.auth_password)) },
+                isError = "password" in refused,
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -236,6 +242,7 @@ private fun SecondStepCard(
             value = code,
             onValueChange = { code = it },
             label = { Text(stringResource(R.string.auth_code)) },
+            isError = "code" in (error as? ApiException)?.refusedFields.orEmpty(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
             shape = MaterialTheme.shapes.medium,
