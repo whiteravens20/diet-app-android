@@ -39,7 +39,9 @@ services:
 YAML
 
 compose() { docker compose --env-file .env -f docker-compose.yml -f api-port.yml "$@"; }
-compose up -d api worker
+# The API first, with what it waits for, and the worker once the API is up: the two created at
+# once over the same data volume have failed in Docker with "mkdir …/recipes: file exists".
+compose up -d api
 
 # localhost rather than 127.0.0.1: curl sends the admin session's cookie over plain HTTP
 # to localhost only.
@@ -54,6 +56,7 @@ if ! curl -fsS "$api/health" > /dev/null; then
   echo "::error::The API did not come up."
   exit 1
 fi
+compose up -d worker
 
 # The admin API takes requests only from the application's own origin.
 origin="Origin: $(sed -n 's/^APP_URL=//p' .env)"
