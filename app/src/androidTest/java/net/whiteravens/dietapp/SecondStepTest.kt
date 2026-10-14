@@ -12,8 +12,10 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.savedStateHolds
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +41,7 @@ class SecondStepTest {
         screen.waitForText(text(R.string.error_code_invalid_second_factor_code))
 
         screen.onNodeWithText(text(R.string.auth_code)).performTextReplacement(recoveryCodes.first())
+        assertFalse("the recovery code is in the saved state", screen.savedStateHolds(recoveryCodes.first()))
         screen.onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
         screen.waitForText(text(R.string.dashboard_welcome))
         screen.onNodeWithText(text(R.string.dashboard_no_profiles)).assertIsDisplayed()

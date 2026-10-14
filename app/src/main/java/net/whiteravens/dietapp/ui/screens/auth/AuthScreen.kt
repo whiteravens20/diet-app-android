@@ -56,12 +56,13 @@ import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltViewModel()) {
     var registerMode by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     val state by viewModel.state.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
     val checkSiteKey by viewModel.checkSiteKey.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val secondStepCode by viewModel.secondStepCode.collectAsState()
     // The fields a refused form named are marked where they are typed.
     val refused = (state.error as? ApiException)?.refusedFields.orEmpty()
 
@@ -115,6 +116,8 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
 
         if (state.secondStep != null) {
             SecondStepCard(
+                code = secondStepCode,
+                onCodeChange = viewModel::typeSecondStepCode,
                 busy = state.busy,
                 error = state.error,
                 onSubmit = viewModel::answerSecondStep,
@@ -152,7 +155,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
             )
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = viewModel::typePassword,
                 label = { Text(stringResource(R.string.auth_password)) },
                 isError = "password" in refused,
                 singleLine = true,
@@ -220,12 +223,13 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
 /** The second step of a sign-in: a code from the authenticator app, or a recovery code. */
 @Composable
 private fun SecondStepCard(
+    code: String,
+    onCodeChange: (String) -> Unit,
     busy: Boolean,
     error: Throwable?,
     onSubmit: (String) -> Unit,
     onBack: () -> Unit,
 ) {
-    var code by rememberSaveable { mutableStateOf("") }
     AppCard(Modifier.fillMaxWidth()) {
         Text(
             stringResource(R.string.auth_second_step_title),
@@ -240,7 +244,7 @@ private fun SecondStepCard(
         )
         OutlinedTextField(
             value = code,
-            onValueChange = { code = it },
+            onValueChange = onCodeChange,
             label = { Text(stringResource(R.string.auth_code)) },
             isError = "code" in (error as? ApiException)?.refusedFields.orEmpty(),
             singleLine = true,

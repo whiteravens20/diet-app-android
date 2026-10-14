@@ -3,9 +3,13 @@
 package net.whiteravens.dietapp.testing
 
 import android.graphics.Bitmap
+import android.os.Bundle
+import android.os.Parcel
+import androidx.activity.ComponentActivity
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -46,6 +50,27 @@ fun ComposeTestRule.keepScreenshot(name: String) {
 fun ComposeTestRule.waitForEnabled(label: String, timeoutMillis: Long = 20_000) {
     waitUntil(timeoutMillis) { onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
 }
+
+/**
+ * Whether the activity's saved state, which the system may write to disk, holds [text] anywhere:
+ * the state is written out as the system writes it, and the bytes are searched.
+ */
+fun <A : ComponentActivity> AndroidComposeTestRule<*, A>.savedStateHolds(text: String): Boolean {
+    waitForIdle()
+    val saved = Bundle()
+    runOnUiThread { InstrumentationRegistry.getInstrumentation().callActivityOnSaveInstanceState(activity, saved) }
+    val parcel = Parcel.obtain()
+    try {
+        saved.writeToParcel(parcel, 0)
+        val written = parcel.marshall()
+        return listOf(Charsets.UTF_16LE, Charsets.UTF_8).any { charset -> written.contains(text.toByteArray(charset)) }
+    } finally {
+        parcel.recycle()
+    }
+}
+
+private fun ByteArray.contains(part: ByteArray): Boolean =
+    (0..size - part.size).any { start -> part.indices.all { this[start + it] == part[it] } }
 
 /** Signs [account] in on the sign-in screen, as a person would, and waits for the dashboard. */
 fun ComposeTestRule.signIn(account: Account) {

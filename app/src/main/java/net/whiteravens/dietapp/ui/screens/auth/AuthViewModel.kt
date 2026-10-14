@@ -54,6 +54,22 @@ class AuthViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    // The password and the second step's code as typed. They are held here and not in the screen's
+    // saved state, which the system may write to disk, and are forgotten once they have been sent.
+    private val _password = MutableStateFlow("")
+    val password: StateFlow<String> = _password.asStateFlow()
+
+    private val _secondStepCode = MutableStateFlow("")
+    val secondStepCode: StateFlow<String> = _secondStepCode.asStateFlow()
+
+    fun typePassword(value: String) {
+        _password.value = value
+    }
+
+    fun typeSecondStepCode(value: String) {
+        _secondStepCode.value = value
+    }
+
     /** Effective API base URL; empty only until the first DataStore emission. */
     val serverUrl: StateFlow<String> = server.baseUrl
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
@@ -88,11 +104,15 @@ class AuthViewModel @Inject constructor(
     /** Answers the second step with a code from the authenticator app or a recovery code. */
     fun answerSecondStep(code: String) {
         val challenge = _state.value.secondStep ?: return
-        busyWhile { auth.answerSecondStep(challenge, code) }
+        busyWhile {
+            auth.answerSecondStep(challenge, code)
+            _secondStepCode.value = ""
+        }
     }
 
     /** Back to the password, from a second step not taken. */
     fun leaveSecondStep() {
+        _secondStepCode.value = ""
         _state.update { it.copy(secondStep = null, error = null) }
     }
 
@@ -113,6 +133,8 @@ class AuthViewModel @Inject constructor(
             }
             is Submission.Register -> auth.register(submission.email, submission.password, submission.displayName, checkToken)
         }
+        // The password was taken: a second step, if any, asks for a code instead.
+        _password.value = ""
     }
 
     /** Runs [block] with the screen busy, and puts what it throws on the screen. */
