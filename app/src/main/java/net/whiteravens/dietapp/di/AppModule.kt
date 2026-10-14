@@ -26,6 +26,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -60,6 +61,8 @@ object AppModule {
         OkHttpClient.Builder()
             .addInterceptor(baseUrlInterceptor)
             .addInterceptor(clientHeaders)
+            // A call that takes longer is given up, so that nothing waits on a server for ever.
+            .callTimeout(30, TimeUnit.SECONDS)
             .apply {
                 if (BuildConfig.DEBUG) {
                     // BASIC, not BODY — response bodies and auth headers carry tokens.
