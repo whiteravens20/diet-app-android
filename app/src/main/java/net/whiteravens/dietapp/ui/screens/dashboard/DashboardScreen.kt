@@ -133,6 +133,8 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats) {
             )
         }
 
+        stats.targetError?.let { ErrorBanner(errorMessage(it)) }
+
         val notes = target?.notes().orEmpty()
         if (notes.isNotEmpty()) {
             AppCard {

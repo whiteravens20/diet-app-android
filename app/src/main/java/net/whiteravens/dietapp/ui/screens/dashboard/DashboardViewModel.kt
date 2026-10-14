@@ -23,7 +23,8 @@ class DashboardViewModel @Inject constructor(
     private val users: UserRepository,
 ) : ViewModel() {
 
-    data class ProfileStats(val profile: Profile, val target: CalorieTarget?)
+    /** A profile, and its calorie target or why there is none to show. */
+    data class ProfileStats(val profile: Profile, val target: CalorieTarget?, val targetError: Throwable? = null)
 
     data class UiState(
         val loading: Boolean = true,
@@ -46,8 +47,9 @@ class DashboardViewModel @Inject constructor(
                     users.profiles()
                         .map { profile ->
                             async {
-                                // A failed calorie fetch degrades one card, not the screen.
-                                ProfileStats(profile, attempt { users.calorieTarget(profile.id) }.getOrNull())
+                                // A failed calorie fetch degrades one card, not the screen, and the card says why.
+                                val target = attempt { users.calorieTarget(profile.id) }
+                                ProfileStats(profile, target.getOrNull(), target.exceptionOrNull())
                             }
                         }
                         .map { it.await() }
