@@ -31,3 +31,8 @@ jobs:
 
       - name: Build
         run: ./gradlew assembleDebug
+
+      # The wire classes against answers a running backend gave, the network stack against a
+      # local server, the screens' view models: on the JVM, no device needed.
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest
