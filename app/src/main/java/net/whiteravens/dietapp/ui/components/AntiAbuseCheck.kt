@@ -3,9 +3,6 @@
 package net.whiteravens.dietapp.ui.components
 
 import android.annotation.SuppressLint
-import android.os.Handler
-import android.os.Looper
-import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -63,29 +60,26 @@ private fun origin(serverUrl: String): String {
     return url.newBuilder().encodedPath("/").query(null).build().toString()
 }
 
-@SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
+@SuppressLint("SetJavaScriptEnabled")
 private fun WebView.showCheck(siteKey: String, origin: String, onToken: (String) -> Unit, onFailed: () -> Unit) {
-    val main = Handler(Looper.getMainLooper())
+    // The check runs Cloudflare's script, which reaches no file and no content of the phone.
     settings.javaScriptEnabled = true
     settings.domStorageEnabled = true
-    // The check stays on its page: a link it might show is not followed.
+    settings.allowFileAccess = false
+    settings.allowContentAccess = false
+    // Its answer comes back as a navigation to an address of the app's own scheme, which goes
+    // nowhere, so no object of the app is open to the page's scripts. Any other navigation, a link
+    // the check might show, is not followed.
     webViewClient = object : WebViewClient() {
-        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = true
+        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            val answer = request.url.takeIf { request.isForMainFrame && it.scheme == ANSWER_SCHEME }
+            when (answer?.host) {
+                "solved" -> answer?.fragment?.takeIf { it.isNotEmpty() }?.let(onToken) ?: onFailed()
+                "failed" -> onFailed()
+            }
+            return true
+        }
     }
-    addJavascriptInterface(
-        object {
-            @JavascriptInterface
-            fun solved(token: String) {
-                main.post { onToken(token) }
-            }
-
-            @JavascriptInterface
-            fun failed() {
-                main.post { onFailed() }
-            }
-        },
-        "DietApp",
-    )
     val key = JsonPrimitive(siteKey).toString()
     val page = """
         <!doctype html>
@@ -94,8 +88,8 @@ private fun WebView.showCheck(siteKey: String, origin: String, onToken: (String)
           function shown() {
             turnstile.render('#check', {
               sitekey: $key,
-              callback: function (token) { DietApp.solved(token); },
-              'error-callback': function () { DietApp.failed(); }
+              callback: function (token) { location.href = '$ANSWER_SCHEME://solved#' + encodeURIComponent(token); },
+              'error-callback': function () { location.href = '$ANSWER_SCHEME://failed'; }
             });
           }
         </script>
@@ -104,3 +98,6 @@ private fun WebView.showCheck(siteKey: String, origin: String, onToken: (String)
     """.trimIndent()
     loadDataWithBaseURL(origin, page, "text/html", "utf-8", null)
 }
+
+/** The scheme of the address the check's answer comes back to: it names no place. */
+private const val ANSWER_SCHEME = "dietapp-check"

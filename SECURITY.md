@@ -20,6 +20,10 @@ The companion app holds an authenticated session and cached personal data.
   for a backend on the developer's own network.
 - **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
   It is cleared on sign-out.
+- **Anti-abuse check** — where a server asks for Cloudflare Turnstile, its script runs in
+  a WebView that reaches no file and no content of the phone and has no bridge into the
+  app: the answer comes back as a navigation to an address of the app's own scheme, which
+  the app reads and never loads.
 - **Backups** — nothing the app keeps goes into a backup or onto another device: the
   manifest allows no backup, and the data extraction rules of Android 12 and later
   exclude every file from both the cloud backup and a device transfer.
