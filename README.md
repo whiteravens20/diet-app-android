@@ -123,14 +123,15 @@ testers will try the release candidate at the maintainer's request.
 
 **What a change goes through**
 
-- Every push and pull request has to compile into a debug APK, pass Android Lint without
-  an error and pass the unit tests, which run on the JVM without a device: every call of
-  the client against a copy of the contract the API publishes
-  ([contract/](contract/README.md)), a text for every code the API refuses a request with,
-  the wire classes against answers a running backend gave, the network stack against a
-  local server, and the screens' view models ([test.yml](.github/workflows/test.yml)). A
-  defect the tests found that the code does not fix yet stays in the suite as a test that
-  passes while the defect is there and fails once it is gone.
+- Every push and pull request has to compile into a debug APK and into the release
+  variant, which R8 shrinks, pass Android Lint without an error and pass the unit tests,
+  which run on the JVM without a device: every call of the client against a copy of the
+  contract the API publishes ([contract/](contract/README.md)), a text for every code the
+  API refuses a request with, the wire classes against answers a running backend gave, the
+  network stack against a local server, and the screens' view models
+  ([test.yml](.github/workflows/test.yml)). A defect the tests found that the code does
+  not fix yet stays in the suite as a test that passes while the defect is there and fails
+  once it is gone.
 - The screens' tests run on an Android emulator on every push and pull request, against
   a diet-app instance started in the same job from the image of the version `contract/`
   was copied from, pinned by its digest, with its catalogue loaded. Their report, the

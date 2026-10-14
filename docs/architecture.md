@@ -66,7 +66,8 @@ Check a change before sending it:
 ./gradlew connectedDebugAndroidTest  # the screens, on an emulator or a phone
 ```
 
-CI builds the debug APK, runs the unit tests and Android Lint on every push and pull
+CI builds the debug APK and the release variant, shrunk by R8 with the rules in
+`app/proguard-rules.pro`, runs the unit tests and Android Lint on every push and pull
 request to `main` and `dev`, and the screens' tests on an emulator against a diet-app
 instance it starts for them. Running the app against a backend is described in
 [running-locally.md](running-locally.md).
