@@ -1,0 +1,60 @@
+# ── Contract ──────────────────────────────────────────────────────────────────
+# Once a week, compares the copy of diet-app's contract in contract/ with the one
+# on diet-app's dev branch. When they differ, the client's calls are checked
+# against dev's to show what the change breaks, and the run fails: a change of the
+# backend is seen within a week, and the copy is moved on purpose
+# (contract/README.md).
+name: Contract
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: Compare with diet-app dev
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Fetch the contract of diet-app's dev
+        run: |
+          mkdir -p build/dev-contract
+          curl -fsSL https://raw.githubusercontent.com/whiteravens20/diet-app/dev/docs/api/openapi.json \
+            -o build/dev-contract/openapi.json
+
+      - name: Compare it with the copy
+        id: compare
+        run: |
+          if cmp -s contract/openapi.json build/dev-contract/openapi.json; then
+            echo "moved=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "moved=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 21
+        if: steps.compare.outputs.moved == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        if: steps.compare.outputs.moved == 'true'
+        uses: gradle/actions/setup-gradle@v6
+
+      # A report of what the change breaks, read in the log; the next step fails the run.
+      - name: Check the client's calls against diet-app's dev
+        if: steps.compare.outputs.moved == 'true'
+        continue-on-error: true
+        run: ./gradlew testDebugUnitTest --tests '*ContractTest*' -PcontractDir=build/dev-contract
+
+      - name: Say that the contract moved
+        if: steps.compare.outputs.moved == 'true'
+        run: |
+          echo "::error::diet-app's contract on dev ($(jq -r .info.version build/dev-contract/openapi.json)) differs from the copy in contract/ ($(cat contract/API_VERSION)). Move the copy on purpose: contract/README.md."
+          exit 1
