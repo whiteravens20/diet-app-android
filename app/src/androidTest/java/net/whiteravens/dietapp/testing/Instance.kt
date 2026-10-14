@@ -88,6 +88,15 @@ object Instance {
         return (0 until meals.length()).map { meals.getJSONObject(it).optJSONObject("recipe")?.getString("id") }
     }
 
+    /** The title of the first meal of a plan's first day, and the names of its lines as planned. */
+    fun firstMeal(account: Account, planId: String): Pair<String, List<String>> {
+        val meal = call("GET", "meal-plans/$planId", token = account.accessToken)
+            .getJSONArray("days").getJSONObject(0).getJSONArray("meals").getJSONObject(0)
+        val lines = meal.getJSONArray("ingredients")
+        return meal.getJSONObject("recipe").getString("title") to
+            (0 until lines.length()).map { lines.getJSONObject(it).getString("name") }
+    }
+
     private fun call(method: String, path: String, body: JSONObject? = null, token: String? = null, expect: Int = 200): JSONObject {
         val request = Request.Builder()
             .url(BuildConfig.API_BASE_URL + path)

@@ -17,6 +17,8 @@
     <string name="common_back">Wstecz</string>
     <string name="common_save">Zapisz</string>
     <string name="common_edit">Edytuj</string>
+    <string name="common_close">Zamknij</string>
+    <string name="plans_open_recipe">Przepis</string>
 
     <!-- Server setting -->
     <string name="server_title">Serwer</string>
@@ -185,4 +187,49 @@
     <string name="error_no_alternative">Nie znaleziono alternatywnego przepisu.</string>
     <string name="error_no_eligible_recipe">Żaden przepis nie spełnia obecnych ograniczeń.</string>
     <string name="error_custom_meal_not_swappable">Własnych posiłków nie można wymieniać.</string>
+
+    <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
+    <string name="plans_day_over">Ponad cel</string>
+    <string name="plans_day_under">Poniżej celu</string>
+    <string name="plans_day_over_hint">Ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel, a dopasowanie porcji nie wystarczyło, by to wyrównać. Zamień posiłek albo usuń jeden, żeby wrócić do celu.</string>
+    <string name="plans_day_under_hint">Ten dzień ma o ponad jedną dziesiątą mniej kalorii niż jego cel, a dopasowanie porcji nie wystarczyło, by to wyrównać. Zamień posiłek albo dodaj jeden, żeby wrócić do celu.</string>
+    <string name="plans_day_below_floor">Cel tego dnia jest niższy niż najniższy, jaki wylicza plan.</string>
+    <string name="plans_conflict_allergen">Alergen</string>
+    <string name="plans_conflict_allergen_hint">Ten przepis zawiera alergen, którego profil teraz unika. Zamień posiłek.</string>
+    <string name="plans_conflict_excluded_ingredient">Pomijany składnik</string>
+    <string name="plans_conflict_excluded_ingredient_hint">Ten przepis zawiera składnik, który profil teraz pomija. Zamień posiłek albo składnik.</string>
+    <string name="plans_conflict_avoided">Do unikania</string>
+    <string name="plans_conflict_avoided_hint">Ten przepis jest w profilu oznaczony do unikania. Zamień posiłek.</string>
+    <string name="plans_disliked">Nielubiane</string>
+    <string name="plans_disliked_hint">Zawiera: %1$s. Ten profil woli tego nie jeść: przy układaniu nic innego nie pasowało do posiłku albo profil dodał to później. Zamień posiłek, żeby to zmienić.</string>
+    <string name="amount_g">%1$s g</string>
+    <string name="amount_ml">%1$s ml</string>
+    <string name="unit_name_piece">szt.</string>
+    <string name="unit_name_slice">kromki</string>
+    <string name="unit_name_clove">ząbki</string>
+    <string name="unit_name_handful">garście</string>
+    <plurals name="amount_piece">
+        <item quantity="one">%1$s sztuka</item>
+        <item quantity="few">%1$s sztuki</item>
+        <item quantity="many">%1$s sztuk</item>
+        <item quantity="other">%1$s sztuki</item>
+    </plurals>
+    <plurals name="amount_slice">
+        <item quantity="one">%1$s kromka</item>
+        <item quantity="few">%1$s kromki</item>
+        <item quantity="many">%1$s kromek</item>
+        <item quantity="other">%1$s kromki</item>
+    </plurals>
+    <plurals name="amount_clove">
+        <item quantity="one">%1$s ząbek</item>
+        <item quantity="few">%1$s ząbki</item>
+        <item quantity="many">%1$s ząbków</item>
+        <item quantity="other">%1$s ząbka</item>
+    </plurals>
+    <plurals name="amount_handful">
+        <item quantity="one">%1$s garść</item>
+        <item quantity="few">%1$s garście</item>
+        <item quantity="many">%1$s garści</item>
+        <item quantity="other">%1$s garści</item>
+    </plurals>
 </resources>

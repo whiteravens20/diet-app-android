@@ -18,6 +18,8 @@
     <string name="common_back">Back</string>
     <string name="common_save">Save</string>
     <string name="common_edit">Edit</string>
+    <string name="common_close">Close</string>
+    <string name="plans_open_recipe">Recipe</string>
 
     <!-- Server setting -->
     <string name="server_title">Server</string>
@@ -184,4 +186,41 @@
     <string name="error_no_alternative">No alternative recipe found.</string>
     <string name="error_no_eligible_recipe">No recipe matches the current constraints.</string>
     <string name="error_custom_meal_not_swappable">Custom meals can’t be swapped.</string>
+
+    <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
+    <string name="plans_day_over">Over target</string>
+    <string name="plans_day_under">Under target</string>
+    <string name="plans_day_over_hint">This day holds more than a tenth over its target, and sizing its meals could not close the gap. Swap a meal, or take one out, to bring it back.</string>
+    <string name="plans_day_under_hint">This day holds more than a tenth under its target, and sizing its meals could not close the gap. Swap a meal, or add one, to bring it back.</string>
+    <string name="plans_day_below_floor">The target of this day is under the lowest a calculated plan goes.</string>
+    <string name="plans_conflict_allergen">Allergen</string>
+    <string name="plans_conflict_allergen_hint">This recipe holds an allergen the profile now avoids. Swap the meal.</string>
+    <string name="plans_conflict_excluded_ingredient">Skipped ingredient</string>
+    <string name="plans_conflict_excluded_ingredient_hint">This recipe uses an ingredient the profile now skips. Swap the meal or the ingredient.</string>
+    <string name="plans_conflict_avoided">Marked to avoid</string>
+    <string name="plans_conflict_avoided_hint">This recipe is marked to avoid for the profile. Swap the meal.</string>
+    <string name="plans_disliked">Rather not</string>
+    <string name="plans_disliked_hint">Holds %1$s, which this profile would rather not eat: nothing else fit the meal when it was planned, or the profile came to dislike it since. Swap the meal to change it.</string>
+    <string name="amount_g">%1$s g</string>
+    <string name="amount_ml">%1$s ml</string>
+    <string name="unit_name_piece">pieces</string>
+    <string name="unit_name_slice">slices</string>
+    <string name="unit_name_clove">cloves</string>
+    <string name="unit_name_handful">handfuls</string>
+    <plurals name="amount_piece">
+        <item quantity="one">%1$s piece</item>
+        <item quantity="other">%1$s pieces</item>
+    </plurals>
+    <plurals name="amount_slice">
+        <item quantity="one">%1$s slice</item>
+        <item quantity="other">%1$s slices</item>
+    </plurals>
+    <plurals name="amount_clove">
+        <item quantity="one">%1$s clove</item>
+        <item quantity="other">%1$s cloves</item>
+    </plurals>
+    <plurals name="amount_handful">
+        <item quantity="one">%1$s handful</item>
+        <item quantity="other">%1$s handfuls</item>
+    </plurals>
 </resources>

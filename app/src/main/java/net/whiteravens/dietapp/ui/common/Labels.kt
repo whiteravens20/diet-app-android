@@ -3,10 +3,13 @@
 package net.whiteravens.dietapp.ui.common
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
 import java.io.IOException
+import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -120,3 +123,25 @@ fun formatSyncedAt(epochMillis: Long): String =
 fun formatQuantity(value: Double): String =
     if (value % 1.0 == 0.0) value.roundToInt().toString()
     else String.format(Locale.getDefault(), "%.1f", value)
+
+/** An amount as the server rounds it and names its unit: `120 g`, `2 slices`, `0.5 pieces`. */
+@Composable
+fun amountLabel(quantity: Double, unit: String): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val number = NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 2 }.format(quantity)
+    return when (unit) {
+        "g" -> stringResource(R.string.amount_g, number)
+        "ml" -> stringResource(R.string.amount_ml, number)
+        else -> {
+            val (counted, named) = when (unit) {
+                "slice" -> R.plurals.amount_slice to R.string.unit_name_slice
+                "clove" -> R.plurals.amount_clove to R.string.unit_name_clove
+                "handful" -> R.plurals.amount_handful to R.string.unit_name_handful
+                else -> R.plurals.amount_piece to R.string.unit_name_piece
+            }
+            // A part of a piece takes the unit's name; whole ones are counted in the language's own forms.
+            if (quantity % 1.0 == 0.0) pluralStringResource(counted, quantity.toInt(), number)
+            else "$number ${stringResource(named)}"
+        }
+    }
+}

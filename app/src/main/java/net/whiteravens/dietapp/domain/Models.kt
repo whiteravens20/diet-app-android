@@ -57,6 +57,22 @@ data class Meal(
     /** Off the plan's diet type (swapped-in favourite) — render the chip. */
     val offDiet: Boolean,
     val nutrition: Nutrition,
+    /** What the meal takes of each ingredient, as planned; empty for a meal of the user's own. */
+    val lines: List<MealLine>,
+    /** The allergens of the meal's recipe. */
+    val allergens: List<String>,
+    /** What the profile has ruled out since the meal was planned: `allergen` | `excluded_ingredient` | `avoided`. */
+    val conflicts: List<String>,
+    /** The names of the meal's ingredients the profile would rather not eat. */
+    val disliked: List<String>,
+)
+
+/** A line of a meal: an ingredient and its amount as the server rounds it and names its unit. */
+data class MealLine(
+    val name: String,
+    val quantity: Double,
+    /** `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
+    val unit: String,
 )
 
 data class PlanDay(
@@ -69,6 +85,10 @@ data class PlanDay(
     /** Signed; positive = over budget. */
     val calorieDelta: Double,
     val skipped: Boolean,
+    /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
+    val offTarget: String?,
+    /** A target somebody typed puts the day under the lowest a calculated plan goes. */
+    val belowSafetyFloor: Boolean,
 )
 
 data class MealPlan(

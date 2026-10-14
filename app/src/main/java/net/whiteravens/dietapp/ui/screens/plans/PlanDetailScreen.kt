@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -29,6 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,6 +45,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
@@ -64,6 +70,15 @@ fun PlanDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val plan = state.plan
+    var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == openMealId }?.let { meal ->
+        MealDialog(
+            meal = meal,
+            onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id) } },
+            onDismiss = { openMealId = null },
+        )
+    }
 
     state.offer?.let { offer ->
         SwapOfferDialog(
@@ -157,7 +172,7 @@ fun PlanDetailScreen(
                 swapping = meal.id == state.offering,
                 readOnly = state.offline,
                 onSwap = { viewModel.offerSwap(meal.id) },
-                onOpen = meal.recipeId?.let { id -> { onOpenRecipe(id) } },
+                onOpen = { openMealId = meal.id },
             )
         }
     }
@@ -194,6 +209,34 @@ private fun DaySummary(day: PlanDay) {
             }
             DeltaChip(day.calorieDelta)
         }
+        val standing = day.offTarget.takeUnless { day.skipped }
+        if (standing != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                LabelChip(
+                    text = stringResource(if (standing == "over") R.string.plans_day_over else R.string.plans_day_under),
+                    container = MaterialTheme.colorScheme.tertiaryContainer,
+                    content = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
+            Text(
+                stringResource(if (standing == "over") R.string.plans_day_over_hint else R.string.plans_day_under_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        if (day.belowSafetyFloor) {
+            Text(
+                stringResource(R.string.plans_day_below_floor),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
     }
 }
 
@@ -215,7 +258,7 @@ private fun MealCard(
     swapping: Boolean,
     readOnly: Boolean,
     onSwap: () -> Unit,
-    onOpen: (() -> Unit)?,
+    onOpen: () -> Unit,
 ) {
     AppCard(onClick = onOpen) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -223,6 +266,8 @@ private fun MealCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     LabelChip(mealTypeLabel(meal.slot))
                     if (meal.offDiet) AccentChip(stringResource(R.string.plans_off_diet))
+                    meal.conflicts.forEach { conflict -> WarningChip(conflictLabel(conflict)) }
+                    if (meal.disliked.isNotEmpty()) WarningChip(stringResource(R.string.plans_disliked))
                     if (meal.eaten) {
                         Icon(
                             Icons.Default.Check,
@@ -321,3 +366,87 @@ private fun SwapOfferDialog(
 /** `1.0` → `1`, `1.5` → `1.5`: servings as a person writes them. */
 private fun formatServings(servings: Double): String =
     if (servings % 1.0 == 0.0) servings.toLong().toString() else "%.1f".format(Locale.getDefault(), servings)
+
+/** A meal as planned: its own lines, in the amounts the plan gives it, and what stands against it. */
+@Composable
+private fun MealDialog(meal: Meal, onOpenRecipe: (() -> Unit)?, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(meal.name) },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    stringResource(
+                        R.string.plans_meal_nutrition,
+                        meal.nutrition.calories.roundToInt(),
+                        meal.nutrition.protein.roundToInt(),
+                        meal.nutrition.fat.roundToInt(),
+                        meal.nutrition.carbs.roundToInt(),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                meal.lines.forEach { line ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(line.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        Text(
+                            amountLabel(line.quantity, line.unit),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 12.dp),
+                        )
+                    }
+                }
+                meal.conflicts.forEach { conflict ->
+                    Text(
+                        conflictHint(conflict),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                if (meal.disliked.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.plans_disliked_hint, meal.disliked.joinToString()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (onOpenRecipe != null) {
+                Button(onClick = onOpenRecipe) { Text(stringResource(R.string.plans_open_recipe)) }
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) } },
+    )
+}
+
+@Composable
+private fun WarningChip(text: String) {
+    LabelChip(
+        text = text,
+        container = MaterialTheme.colorScheme.errorContainer,
+        content = MaterialTheme.colorScheme.onErrorContainer,
+    )
+}
+
+@Composable
+private fun conflictLabel(conflict: String): String = stringResource(
+    when (conflict) {
+        "excluded_ingredient" -> R.string.plans_conflict_excluded_ingredient
+        "avoided" -> R.string.plans_conflict_avoided
+        else -> R.string.plans_conflict_allergen
+    },
+)
+
+@Composable
+private fun conflictHint(conflict: String): String = stringResource(
+    when (conflict) {
+        "excluded_ingredient" -> R.string.plans_conflict_excluded_ingredient_hint
+        "avoided" -> R.string.plans_conflict_avoided_hint
+        else -> R.string.plans_conflict_allergen_hint
+    },
+)

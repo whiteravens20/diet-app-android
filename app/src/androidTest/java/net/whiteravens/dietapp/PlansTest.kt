@@ -65,5 +65,15 @@ class PlansTest {
 
         assertNotEquals(before.first(), Instance.firstDayRecipes(account, planId).first())
         screen.keepScreenshot("plans-after-the-swap")
+
+        // The meal as planned opens on a tap: its own lines, and its recipe a tap further.
+        val (title, lines) = Instance.firstMeal(account, planId)
+        screen.waitForText(title)
+        screen.onAllNodesWithText(title)[0].performClick()
+        screen.waitForText(lines.first())
+        screen.keepScreenshot("plans-a-meal-as-planned")
+        screen.onNodeWithText(text(R.string.plans_open_recipe)).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }
+        screen.waitForText(title)
     }
 }

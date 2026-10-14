@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
@@ -110,6 +111,10 @@ fun PlannedMealDto.toDomain() = Meal(
     eaten = eatenAt != null,
     offDiet = dietOverride,
     nutrition = nutrition.toDomain(),
+    lines = ingredients.map { MealLine(name = it.name, quantity = it.display.quantity, unit = it.display.unit) },
+    allergens = recipe?.allergens.orEmpty(),
+    conflicts = restrictionConflicts,
+    disliked = ingredients.filter { it.ingredientId in dislikedIngredientIds }.map { it.name }.distinct(),
 )
 
 fun MealPlanDayDto.toDomain() = PlanDay(
@@ -119,7 +124,9 @@ fun MealPlanDayDto.toDomain() = PlanDay(
     nutrition = dayNutrition.toDomain(),
     calorieTarget = calorieTarget,
     calorieDelta = calorieDelta,
-    skipped = overrides?.skip == true,
+    skipped = skipped,
+    offTarget = offTarget,
+    belowSafetyFloor = belowSafetyFloor,
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
