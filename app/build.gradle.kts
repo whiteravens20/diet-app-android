@@ -28,6 +28,12 @@ android {
         val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
             .getOrElse("http://10.0.2.2:4000/api/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+
+        // The screens' tests run against a diet-app instance at that address
+        // (.github/workflows/test.yml starts one for them), each test on an app with
+        // no data of its own.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 
     buildTypes {
@@ -50,6 +56,9 @@ android {
     testOptions {
         // The tests run on the JVM: an Android call they do not stand in for answers its default.
         unitTests.isReturnDefaultValues = true
+        // Every test of the screens in an instrumentation of its own, so that clearPackageData
+        // can wipe what the one before it left.
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
 }
 
@@ -110,4 +119,13 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.mockk)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.services.storage)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    androidTestUtil(libs.androidx.test.orchestrator)
+    androidTestUtil(libs.androidx.test.services)
 }
