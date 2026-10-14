@@ -6,7 +6,7 @@ Thank you for considering a contribution. Read this before opening a PR.
 
 The main screens are built and read from the offline-first repositories. What is still
 missing is listed under Roadmap in [docs/architecture.md](docs/architecture.md): queued
-offline changes, automated tests and push notifications.
+offline changes and push notifications.
 
 ## Setup
 
@@ -17,6 +17,7 @@ offline changes, automated tests and push notifications.
 git clone https://github.com/whiteravens20/diet-app-android
 cd diet-app-android
 ./gradlew assembleDebug
+./gradlew testDebugUnitTest    # the unit tests, on the JVM
 ```
 
 ## Guidelines

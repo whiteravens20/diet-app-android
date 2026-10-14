@@ -60,10 +60,12 @@ Check a change before sending it:
 
 ```bash
 ./gradlew assembleDebug      # needs the Android SDK and JDK 17+
+./gradlew testDebugUnitTest  # the unit tests, on the JVM
 ./gradlew lintDebug
 ```
 
-CI builds the debug APK on every push and pull request to `main` and `dev`. Running the
+CI builds the debug APK and runs the unit tests on every push and pull request to `main`
+and `dev`. Running the
 app against a backend is described in [running-locally.md](running-locally.md).
 
 ## Roadmap

@@ -13,7 +13,7 @@ generate a plan, swap a meal, tick off the shopping list.
 > **Status: the main screens work; nothing is released yet.** Signing in, the dashboard,
 > meal plans, recipes, the shopping list and the profile are built and talk to the
 > backend. Meal plans and shopping lists stay readable offline. Changes made offline are
-> not queued yet, and the app has no automated tests.
+> not queued yet.
 
 > [!WARNING]
 > **Early development — not production ready.** This app and the Diet App
@@ -119,9 +119,12 @@ testers will try the release candidate at the maintainer's request.
 
 **What a change goes through**
 
-- Every push and pull request has to compile into a debug APK
-  ([test.yml](.github/workflows/test.yml)). There are no automated tests yet, so that is
-  all CI proves.
+- Every push and pull request has to compile into a debug APK and pass the unit tests,
+  which run on the JVM without a device: the wire classes against answers a running
+  backend gave, the network stack against a local server, and the screens' view models
+  ([test.yml](.github/workflows/test.yml)). A defect the tests found that the code does
+  not fix yet stays in the suite as a test that passes while the defect is there and
+  fails once it is gone.
 - Commits are signed.
 
 **What the maintainer decided and read**
