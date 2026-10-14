@@ -24,6 +24,8 @@
     <string name="server_placeholder">http://192.168.1.20:4000/api/</string>
     <string name="server_invalid">Enter a valid http(s) URL.</string>
     <string name="server_change_signs_out">Changing the server signs you out on this device and clears the offline cache.</string>
+    <string name="server_other_version">This server runs diet-app %1$s, and this app was checked against %2$s: some screens may not work as they should.</string>
+    <string name="server_unsupported">This server\'s version is not supported.</string>
 
     <!-- Auth -->
     <string name="auth_welcome_back">Welcome back</string>

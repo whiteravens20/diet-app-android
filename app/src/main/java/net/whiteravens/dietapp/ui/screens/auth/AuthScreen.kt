@@ -37,11 +37,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
+import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 
 /**
  * Login / registration — the mobile twin of the web `AuthForm`: centered
@@ -49,7 +51,7 @@ import net.whiteravens.dietapp.ui.components.ServerUrlDialog
  * composable; a successful submit flips the root auth state instead.
  */
 @Composable
-fun AuthScreen(viewModel: AuthViewModel = hiltViewModel()) {
+fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltViewModel()) {
     var registerMode by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -93,6 +95,7 @@ fun AuthScreen(viewModel: AuthViewModel = hiltViewModel()) {
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
         )
+        ServerVersionNotice(serverVersion, Modifier.padding(bottom = 16.dp))
 
         AppCard(Modifier.fillMaxWidth()) {
             Text(

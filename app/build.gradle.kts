@@ -28,6 +28,12 @@ android {
         val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
             .getOrElse("http://10.0.2.2:4000/api/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        // The version of diet-app's API this build was checked against (contract/API_VERSION):
+        // a server that answers another one is named on the screen.
+        val checkedApiVersion = providers
+            .fileContents(rootProject.layout.projectDirectory.file("contract/API_VERSION"))
+            .asText.get().trim()
+        buildConfigField("String", "API_VERSION", "\"$checkedApiVersion\"")
 
         // The screens' tests run against a diet-app instance at that address
         // (.github/workflows/test.yml starts one for them), each test on an app with

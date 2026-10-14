@@ -17,7 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.ServerVersion
 
 /** Inline error strip (destructive tint), matching the web's error notices. */
 @Composable
@@ -70,6 +73,42 @@ fun OfflineBanner(text: String, modifier: Modifier = Modifier) {
                 text,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/**
+ * Names a server whose version this build was not checked against, or says that its
+ * version is not supported; shows nothing for the version the build was checked against.
+ */
+@Composable
+fun ServerVersionNotice(version: ServerVersion, modifier: Modifier = Modifier) {
+    val text = when (version) {
+        is ServerVersion.Other -> stringResource(R.string.server_other_version, version.server, version.checkedAgainst)
+        ServerVersion.Unsupported -> stringResource(R.string.server_unsupported)
+        ServerVersion.Checked, ServerVersion.Unknown -> return
+    }
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
     }

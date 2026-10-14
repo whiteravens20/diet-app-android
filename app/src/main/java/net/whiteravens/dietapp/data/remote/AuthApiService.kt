@@ -3,14 +3,20 @@
 package net.whiteravens.dietapp.data.remote
 
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 /**
- * Unauthenticated auth endpoints. Bound to the plain OkHttp client — no bearer
- * interceptor, no authenticator — so a token refresh can never recurse into
- * itself. Everything session-scoped lives on [DietApiService] instead.
+ * Endpoints that take no session: signing in and out, and what the instance tells
+ * anybody. Bound to the plain OkHttp client — no bearer interceptor, no
+ * authenticator — so a token refresh can never recurse into itself. Everything
+ * session-scoped lives on [DietApiService] instead.
  */
 interface AuthApiService {
+
+    /** What the instance tells anybody before signing in, its version among it. */
+    @GET("config")
+    suspend fun config(): PublicConfigDto
 
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): AuthResponse

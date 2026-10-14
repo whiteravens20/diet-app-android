@@ -4,8 +4,11 @@ package net.whiteravens.dietapp.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -22,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,12 +40,19 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.repository.AuthRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
+import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
@@ -63,12 +74,27 @@ import kotlin.reflect.KClass
 @Serializable object ShoppingRoute
 @Serializable object ProfileRoute
 
-/** Signed-in state for the root switch; null while the token store loads. */
+/**
+ * Signed-in state for the root switch (null while the token store loads), and the version
+ * of the server, asked when the app starts and again whenever the server's address changes.
+ */
 @HiltViewModel
-class RootViewModel @Inject constructor(auth: AuthRepository) : ViewModel() {
+class RootViewModel @Inject constructor(
+    auth: AuthRepository,
+    serverConfig: ServerConfigStore,
+    private val server: ServerRepository,
+) : ViewModel() {
     val isSignedIn: StateFlow<Boolean?> = auth.isSignedIn
         .map { it as Boolean? }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val serverVersion: StateFlow<ServerVersion> = server.version
+
+    init {
+        viewModelScope.launch {
+            serverConfig.baseUrl.distinctUntilChanged().collectLatest { server.refresh() }
+        }
+    }
 }
 
 /**
@@ -79,10 +105,11 @@ class RootViewModel @Inject constructor(auth: AuthRepository) : ViewModel() {
 @Composable
 fun DietAppRoot(viewModel: RootViewModel = hiltViewModel()) {
     val signedIn by viewModel.isSignedIn.collectAsStateWithLifecycle()
+    val serverVersion by viewModel.serverVersion.collectAsStateWithLifecycle()
     when (signedIn) {
         null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
-        false -> AuthScreen()
-        true -> MainScaffold()
+        false -> AuthScreen(serverVersion = serverVersion)
+        true -> MainScaffold(serverVersion)
     }
 }
 
@@ -104,7 +131,7 @@ private val topLevelDestinations = listOf(
 )
 
 @Composable
-private fun MainScaffold() {
+private fun MainScaffold(serverVersion: ServerVersion) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -114,6 +141,12 @@ private fun MainScaffold() {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            ServerVersionNotice(
+                serverVersion,
+                Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        },
         bottomBar = {
             if (onTopLevel) {
                 NavigationBar {

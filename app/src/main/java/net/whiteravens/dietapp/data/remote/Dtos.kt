@@ -30,6 +30,15 @@ data class ApiErrorDto(
     val issues: List<ApiErrorIssueDto>? = null,
 )
 
+// ── Config (GET /config) ────────────────────────────────────────────────────
+
+/** What the instance tells anybody, signed in or not; the app reads its version from it. */
+@Serializable
+data class PublicConfigDto(val instance: InstanceDto)
+
+@Serializable
+data class InstanceDto(val version: String)
+
 // ── Auth (packages/shared/src/auth.ts) ──────────────────────────────────────
 
 @Serializable

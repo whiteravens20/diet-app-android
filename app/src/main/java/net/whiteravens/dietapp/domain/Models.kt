@@ -141,3 +141,18 @@ data class ShoppingList(
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
 )
+
+/** What the app knows of the version of the server it talks to. */
+sealed interface ServerVersion {
+    /** Not asked yet, or no answer: nothing to say. */
+    data object Unknown : ServerVersion
+
+    /** The version this build was checked against. */
+    data object Checked : ServerVersion
+
+    /** A version this build was not checked against; the app talks to it all the same. */
+    data class Other(val server: String, val checkedAgainst: String) : ServerVersion
+
+    /** An answer the app cannot read: a version it does not support. */
+    data object Unsupported : ServerVersion
+}
