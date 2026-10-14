@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.SessionUser
+import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
 /** Session account details, the server setting and sign-out. */
@@ -61,7 +62,7 @@ class ProfileViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            runCatching { users.me() }
+            attempt { users.me() }
                 .onSuccess { _state.value = UiState(loading = false, user = it) }
                 .onFailure { _state.value = UiState(loading = false, error = it) }
         }

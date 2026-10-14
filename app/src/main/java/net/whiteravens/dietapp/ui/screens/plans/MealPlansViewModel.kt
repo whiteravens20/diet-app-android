@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.toSummary
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import java.time.LocalDate
 import javax.inject.Inject
@@ -62,7 +63,7 @@ class MealPlansViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            runCatching { users.profiles() }
+            attempt { users.profiles() }
                 .onSuccess { profiles ->
                     _state.value = UiState(loading = false, profiles = profiles)
                     profiles.firstOrNull()?.let { selectProfile(it.id) }
@@ -86,7 +87,7 @@ class MealPlansViewModel @Inject constructor(
                     offline = false,
                 )
             }
-            runCatching { plans.plans(profileId) }
+            attempt { plans.plans(profileId) }
                 .onSuccess { fresh ->
                     ifStillSelected(profileId) {
                         it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = null, refreshing = false)
@@ -111,7 +112,7 @@ class MealPlansViewModel @Inject constructor(
         if (!current.hasMore || current.loadingMore) return
         viewModelScope.launch {
             _state.update { it.copy(loadingMore = true, error = null) }
-            runCatching { plans.plans(profileId, current.page + 1) }
+            attempt { plans.plans(profileId, current.page + 1) }
                 .onSuccess { next ->
                     ifStillSelected(profileId) {
                         val shown = it.plans.map { plan -> plan.id }.toSet()
@@ -135,7 +136,7 @@ class MealPlansViewModel @Inject constructor(
         val profileId = _state.value.selectedProfileId ?: return
         viewModelScope.launch {
             _state.update { it.copy(generating = true, error = null) }
-            runCatching {
+            attempt {
                 plans.generate(
                     profileId = profileId,
                     startDate = LocalDate.now().toString(),

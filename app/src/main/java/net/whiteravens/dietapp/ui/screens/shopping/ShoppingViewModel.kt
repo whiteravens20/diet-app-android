@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import javax.inject.Inject
 
@@ -57,7 +58,7 @@ class ShoppingViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            runCatching { users.profiles() }
+            attempt { users.profiles() }
                 .onSuccess { profiles ->
                     _state.value = UiState(loading = false, profiles = profiles)
                     profiles.firstOrNull()?.let { selectProfile(it.id) }
@@ -79,7 +80,7 @@ class ShoppingViewModel @Inject constructor(
         viewModelScope.launch {
             val cached = plans.cachedPlans(profileId)?.plans.orEmpty()
             applyPlans(profileId, cached)
-            runCatching { plans.plans(profileId) }
+            attempt { plans.plans(profileId) }
                 .onSuccess { fresh -> applyPlans(profileId, fresh.plans) }
                 .onFailure { e ->
                     if (e !is IOException) _state.update { it.copy(error = e) }
@@ -96,7 +97,7 @@ class ShoppingViewModel @Inject constructor(
             if (cached != null) {
                 _state.update { if (it.selectedPlanId == planId) it.copy(list = cached, listLoading = false) else it }
             }
-            runCatching { lists.refreshForPlan(planId) }
+            attempt { lists.refreshForPlan(planId) }
                 .onSuccess { fresh ->
                     _state.update {
                         if (it.selectedPlanId == planId) {
@@ -118,7 +119,7 @@ class ShoppingViewModel @Inject constructor(
         val planId = _state.value.selectedPlanId ?: return
         viewModelScope.launch {
             _state.update { it.copy(generating = true, error = null) }
-            runCatching { lists.generate(planId) }
+            attempt { lists.generate(planId) }
                 .onSuccess { list -> _state.update { it.copy(generating = false, list = list) } }
                 .onFailure { e -> _state.update { it.copy(generating = false, error = e) } }
         }
@@ -128,7 +129,7 @@ class ShoppingViewModel @Inject constructor(
         val listId = _state.value.list?.id ?: return
         viewModelScope.launch {
             _state.update { it.copy(updating = it.updating + itemId, error = null) }
-            runCatching { lists.setChecked(listId, itemId, checked) }
+            attempt { lists.setChecked(listId, itemId, checked) }
                 .onSuccess { updated -> _state.update { it.copy(list = updated, updating = it.updating - itemId) } }
                 .onFailure { e ->
                     _state.update {

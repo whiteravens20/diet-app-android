@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
 /** Server-paginated recipe search with a debounced query. */
@@ -56,7 +57,7 @@ class RecipesViewModel @Inject constructor(
         if (s.loadingMore || s.loading || !s.hasMore) return
         _state.update { it.copy(loadingMore = true) }
         searchJob = viewModelScope.launch {
-            runCatching { recipes.search(query.value, page = s.page + 1) }
+            attempt { recipes.search(query.value, page = s.page + 1) }
                 .onSuccess { pageResult ->
                     _state.update {
                         it.copy(
@@ -75,7 +76,7 @@ class RecipesViewModel @Inject constructor(
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             if (reset) _state.value = UiState(loading = true)
-            runCatching { recipes.search(query.value, page = 1) }
+            attempt { recipes.search(query.value, page = 1) }
                 .onSuccess { pageResult ->
                     _state.value = UiState(
                         loading = false,

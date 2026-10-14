@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.RecipeDetailRoute
 import javax.inject.Inject
 
@@ -41,7 +42,7 @@ class RecipeDetailViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            runCatching { recipes.byId(recipeId) }
+            attempt { recipes.byId(recipeId) }
                 .onSuccess { _state.value = UiState(loading = false, recipe = it) }
                 .onFailure { _state.value = UiState(loading = false, error = it) }
         }

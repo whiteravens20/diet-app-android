@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
 /** Profiles with their engine-computed calorie targets, fetched in parallel. */
@@ -40,13 +41,13 @@ class DashboardViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            runCatching {
+            attempt {
                 coroutineScope {
                     users.profiles()
                         .map { profile ->
                             async {
                                 // A failed calorie fetch degrades one card, not the screen.
-                                ProfileStats(profile, runCatching { users.calorieTarget(profile.id) }.getOrNull())
+                                ProfileStats(profile, attempt { users.calorieTarget(profile.id) }.getOrNull())
                             }
                         }
                         .map { it.await() }

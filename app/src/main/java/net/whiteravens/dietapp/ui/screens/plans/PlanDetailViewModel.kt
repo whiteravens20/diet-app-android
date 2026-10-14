@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
 import javax.inject.Inject
@@ -59,7 +60,7 @@ class PlanDetailViewModel @Inject constructor(
             _state.value = UiState(loading = true)
             val cached = plans.cachedPlan(planId)
             if (cached != null) _state.value = UiState(loading = false, plan = cached)
-            runCatching { plans.refreshPlan(planId) }
+            attempt { plans.refreshPlan(planId) }
                 .onSuccess { fresh -> _state.update { it.copy(loading = false, plan = fresh) } }
                 .onFailure { e ->
                     _state.update {
@@ -95,7 +96,7 @@ class PlanDetailViewModel @Inject constructor(
         if (_state.value.taking) return
         viewModelScope.launch {
             _state.update { it.copy(taking = true, error = null) }
-            runCatching { plans.takeSwap(offer) }
+            attempt { plans.takeSwap(offer) }
                 .onSuccess { fresh -> _state.update { it.copy(plan = fresh, offer = null, taking = false) } }
                 .onFailure { e ->
                     // The offer was for the plan as it was: it does not outlive a refusal.
@@ -109,7 +110,7 @@ class PlanDetailViewModel @Inject constructor(
         if (_state.value.offering != null) return
         viewModelScope.launch {
             _state.update { it.copy(offering = mealId, error = null) }
-            runCatching { plans.offerSwap(planId, mealId, seen) }
+            attempt { plans.offerSwap(planId, mealId, seen) }
                 .onSuccess { offer -> _state.update { it.copy(offering = null, offer = offer) } }
                 .onFailure { e ->
                     _state.update { it.copy(offering = null, offer = null, error = e) }
@@ -121,7 +122,7 @@ class PlanDetailViewModel @Inject constructor(
     /** Another request changed the plan first: the plan on screen is the server's again. */
     private fun reload() {
         viewModelScope.launch {
-            runCatching { plans.refreshPlan(planId) }
+            attempt { plans.refreshPlan(planId) }
                 .onSuccess { fresh -> _state.update { it.copy(plan = fresh) } }
         }
     }

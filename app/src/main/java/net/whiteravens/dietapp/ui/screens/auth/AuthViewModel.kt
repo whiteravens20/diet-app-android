@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.SignInResult
+import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
 /**
@@ -119,7 +120,7 @@ class AuthViewModel @Inject constructor(
         if (_state.value.busy) return
         viewModelScope.launch {
             _state.update { it.copy(busy = true, error = null, checkFailed = false) }
-            runCatching { block() }
+            attempt { block() }
                 .onSuccess { _state.update { it.copy(busy = false) } }
                 .onFailure { e -> _state.update { it.copy(busy = false, error = e) } }
             // A finished sign-in needs no state change — the auth flow unmounts this screen.
