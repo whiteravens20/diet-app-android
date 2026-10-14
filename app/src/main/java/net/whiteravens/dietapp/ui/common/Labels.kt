@@ -8,6 +8,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.domain.TargetNote
 import java.io.IOException
 import java.text.NumberFormat
 import java.time.Instant
@@ -144,4 +145,20 @@ fun amountLabel(quantity: Double, unit: String): String {
             else "$number ${stringResource(named)}"
         }
     }
+}
+
+/** What a note of the calorie target says, as the web application's profile summary says it. */
+@Composable
+fun noteText(note: TargetNote): String = when (note) {
+    TargetNote.GoalHeld -> stringResource(R.string.target_note_goal_held)
+    TargetNote.Minor -> stringResource(R.string.target_note_minor)
+    TargetNote.Underweight -> stringResource(R.string.target_note_underweight)
+    is TargetNote.MaintenanceUnderFloor ->
+        stringResource(R.string.target_note_maintenance_under_floor, note.floor.roundToInt())
+    is TargetNote.SafetyFloorApplied ->
+        stringResource(R.string.target_note_safety_floor_applied, note.floor.roundToInt(), note.deficit.roundToInt())
+    is TargetNote.DeficitCapped ->
+        stringResource(R.string.target_note_deficit_capped, note.requested.roundToInt(), note.deficit.roundToInt())
+    is TargetNote.BelowFloor -> stringResource(R.string.target_note_below_floor, note.floor.roundToInt())
+    is TargetNote.BelowBmr -> stringResource(R.string.target_note_below_bmr, note.bmr.roundToInt())
 }

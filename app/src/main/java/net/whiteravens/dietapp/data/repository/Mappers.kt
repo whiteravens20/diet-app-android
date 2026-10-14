@@ -62,8 +62,10 @@ fun NutritionDto.toDomain() = Nutrition(
 )
 
 fun CalorieCalculationDto.toDomain() = CalorieTarget(
+    bmr = bmr,
     maintenance = maintenance,
     dailyDeficit = dailyDeficit,
+    requestedDeficit = requestedDeficit,
     dailyTarget = dailyTarget,
     targetMacros = Nutrition(
         calories = dailyTarget,
@@ -72,7 +74,12 @@ fun CalorieCalculationDto.toDomain() = CalorieTarget(
         carbs = targetMacros.carbs,
     ),
     source = source,
+    safetyFloor = safetyFloor,
     safetyFloorApplied = safetyFloorApplied,
+    deficitCapped = deficitCapped,
+    maintenanceUnderFloor = maintenanceUnderFloor,
+    goalHeld = goalHeld,
+    warnings = warnings,
 )
 
 fun RecipeIngredientDto.toDomain() = RecipeIngredient(

@@ -35,14 +35,24 @@ data class Nutrition(
 )
 
 data class CalorieTarget(
+    val bmr: Double,
     val maintenance: Double,
     /** kcal/day subtracted from maintenance — engine-computed, rendered as-is. */
     val dailyDeficit: Double,
+    /** What the chosen pace asks for, before any limit. */
+    val requestedDeficit: Double,
     val dailyTarget: Double,
     val targetMacros: Nutrition,
     /** `calculated` | `manual_override` — lets the UI explain the number. */
     val source: String,
+    /** The lowest a calculated target goes for the profile. */
+    val safetyFloor: Double,
     val safetyFloorApplied: Boolean,
+    val deficitCapped: Boolean,
+    val maintenanceUnderFloor: Boolean,
+    val goalHeld: Boolean,
+    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
+    val warnings: List<String>,
 )
 
 /** One scheduled meal. [name] is the recipe title or the custom-meal name. */

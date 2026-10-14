@@ -188,6 +188,14 @@
     <string name="error_custom_meal_not_swappable">Custom meals can’t be swapped.</string>
 
     <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
+    <string name="target_note_goal_held">Your goal to lose weight is on hold: plans follow your maintenance until you confirm on your profile that you understand the risk.</string>
+    <string name="target_note_minor">You are under 18. These figures come from an equation for adults and are an approximation for you; losing weight at your age is something to do with a doctor.</string>
+    <string name="target_note_underweight">Your body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
+    <string name="target_note_maintenance_under_floor">Your maintenance is under %1$d kcal, the lowest a calculated plan goes, so no loss is planned: the target is your maintenance.</string>
+    <string name="target_note_safety_floor_applied">The target was raised to %1$d kcal, the lowest a calculated plan goes. The deficit that leaves is %2$d kcal a day.</string>
+    <string name="target_note_deficit_capped">The pace you chose asks for %1$d kcal a day less. That is more than a quarter of your maintenance, so the plan takes %2$d.</string>
+    <string name="target_note_below_floor">The target you typed is under %1$d kcal, the lowest a calculated plan would go.</string>
+    <string name="target_note_below_bmr">The target you typed is under what your body uses at rest (%1$d kcal).</string>
     <string name="plans_day_over">Over target</string>
     <string name="plans_day_under">Under target</string>
     <string name="plans_day_over_hint">This day holds more than a tenth over its target, and sizing its meals could not close the gap. Swap a meal, or take one out, to bring it back.</string>

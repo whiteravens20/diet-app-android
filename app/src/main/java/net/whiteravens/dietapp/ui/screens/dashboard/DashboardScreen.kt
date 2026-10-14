@@ -21,12 +21,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.notes
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.noteText
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
@@ -128,6 +131,23 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats) {
                 icon = AppIcons.Restaurant,
                 modifier = Modifier.weight(1f),
             )
+        }
+
+        val notes = target?.notes().orEmpty()
+        if (notes.isNotEmpty()) {
+            AppCard {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    notes.forEach { note ->
+                        Text(
+                            noteText(note),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = if (note.strong) FontWeight.Medium else null,
+                            color = if (note.strong) MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         }
 
         if (target != null) {

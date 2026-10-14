@@ -189,6 +189,14 @@
     <string name="error_custom_meal_not_swappable">Własnych posiłków nie można wymieniać.</string>
 
     <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
+    <string name="target_note_goal_held">Twój cel redukcji jest wstrzymany: plany trzymają się zapotrzebowania, dopóki w profilu nie potwierdzisz, że rozumiesz ryzyko.</string>
+    <string name="target_note_minor">Masz mniej niż 18 lat. Te wartości pochodzą ze wzoru dla dorosłych i są dla Ciebie przybliżeniem; odchudzanie w tym wieku to sprawa do omówienia z lekarzem.</string>
+    <string name="target_note_underweight">Twój wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może Ci zaszkodzić.</string>
+    <string name="target_note_maintenance_under_floor">Twoje zapotrzebowanie jest niższe niż %1$d kcal, czyli najniższy cel, jaki wylicza plan, więc redukcja nie jest planowana: celem jest Twoje zapotrzebowanie.</string>
+    <string name="target_note_safety_floor_applied">Cel podniesiono do %1$d kcal, czyli najniższego, jaki wylicza plan. Deficyt, który z tego wynika, to %2$d kcal dziennie.</string>
+    <string name="target_note_deficit_capped">Wybrane tempo wymaga %1$d kcal dziennie mniej. To więcej niż jedna czwarta Twojego zapotrzebowania, więc plan odejmuje %2$d.</string>
+    <string name="target_note_below_floor">Wpisany cel jest niższy niż %1$d kcal, czyli najniższy, jaki wyliczyłby plan.</string>
+    <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
     <string name="plans_day_over">Ponad cel</string>
     <string name="plans_day_under">Poniżej celu</string>
     <string name="plans_day_over_hint">Ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel, a dopasowanie porcji nie wystarczyło, by to wyrównać. Zamień posiłek albo usuń jeden, żeby wrócić do celu.</string>
