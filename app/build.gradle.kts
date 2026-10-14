@@ -83,6 +83,79 @@ tasks.withType<Test>().configureEach {
 // nothing is downloaded that the build has not pinned.
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
+/**
+ * Writes the API's own words for every code it refuses a request with, in English and Polish, from
+ * the copy of its list of codes (contract/errors.md, beside the contract): string resources named
+ * `error_code_<code>` and a map from each code to its text, which `errorMessage` reads.
+ */
+abstract class WriteErrorTexts : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val codes: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val resources: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val kotlin: DirectoryProperty
+
+    @TaskAction
+    fun write() {
+        val rows = codes.get().asFile.readLines().filter { it.startsWith("| `") }.map { line ->
+            val cells = line.split("|").map(String::trim)
+            check(cells.size == 6) { "contract/errors.md: a row of other than four cells: $line" }
+            Triple(cells[1].trim('`'), cells[3], cells[4])
+        }
+        check(rows.isNotEmpty()) { "contract/errors.md lists no code" }
+        fun xml(text: String) = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            .replace("\\", "\\\\").replace("'", "\\'").replace("\"", "\\\"")
+            .let { if (it.startsWith("@") || it.startsWith("?")) "\\$it" else it }
+        fun name(code: String) = "error_code_" + code.lowercase()
+        for ((folder, column) in listOf("values" to 1, "values-pl" to 2)) {
+            val file = resources.get().dir(folder).file("errors.xml").asFile
+            file.parentFile.mkdirs()
+            file.writeText(
+                buildString {
+                    appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+                    appendLine("<!-- Written by the build from contract/errors.md. -->")
+                    appendLine("<resources>")
+                    rows.forEach { row ->
+                        val text = if (column == 1) row.second else row.third
+                        appendLine("    <string name=\"${name(row.first)}\" formatted=\"false\">${xml(text)}</string>")
+                    }
+                    appendLine("</resources>")
+                },
+            )
+        }
+        val source = kotlin.get().file("net/whiteravens/dietapp/ui/common/ErrorTexts.kt").asFile
+        source.parentFile.mkdirs()
+        source.writeText(
+            buildString {
+                appendLine("// Written by the build from contract/errors.md.")
+                appendLine("package net.whiteravens.dietapp.ui.common")
+                appendLine()
+                appendLine("import net.whiteravens.dietapp.R")
+                appendLine()
+                appendLine("/** The text of every code the API refuses a request with, in the API's own words. */")
+                appendLine("internal val ERROR_TEXTS: Map<String, Int> = mapOf(")
+                rows.forEach { row -> appendLine("    \"${row.first}\" to R.string.${name(row.first)},") }
+                appendLine(")")
+            },
+        )
+    }
+}
+
+val writeErrorTexts = tasks.register<WriteErrorTexts>("writeErrorTexts") {
+    codes.set(rootProject.layout.projectDirectory.file("contract/errors.md"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.res?.addGeneratedSourceDirectory(writeErrorTexts, WriteErrorTexts::resources)
+        variant.sources.kotlin?.addGeneratedSourceDirectory(writeErrorTexts, WriteErrorTexts::kotlin)
+    }
+}
+
 // Every version the build resolves, transitive ones included, is written in gradle.lockfile:
 // a build that would resolve another fails, and a change to one shows in the pull request.
 dependencyLocking {

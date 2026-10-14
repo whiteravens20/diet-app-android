@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.remote
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Wire DTOs: what the client sends to the API and reads from it. `ContractTest`
@@ -28,6 +29,8 @@ data class ApiErrorDto(
     val error: String,
     val message: String,
     val issues: List<ApiErrorIssueDto>? = null,
+    /** What the code has more to say, where it has any (the meal no recipe was left for, …). */
+    val details: JsonObject? = null,
 )
 
 // ── Config (GET /config) ────────────────────────────────────────────────────

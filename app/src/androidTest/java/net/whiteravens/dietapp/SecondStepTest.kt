@@ -36,7 +36,7 @@ class SecondStepTest {
         screen.keepScreenshot("sign-in-second-step")
         screen.onNodeWithText(text(R.string.auth_code)).performTextInput("000000")
         screen.onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
-        screen.waitForText(text(R.string.error_invalid_second_factor_code))
+        screen.waitForText(text(R.string.error_code_invalid_second_factor_code))
 
         screen.onNodeWithText(text(R.string.auth_code)).performTextReplacement(recoveryCodes.first())
         screen.onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()

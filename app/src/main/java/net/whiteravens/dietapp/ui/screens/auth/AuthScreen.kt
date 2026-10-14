@@ -165,7 +165,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
             }
             state.error?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 12.dp)) }
             if (state.checkFailed) {
-                ErrorBanner(stringResource(R.string.error_turnstile_failed), Modifier.padding(top = 12.dp))
+                ErrorBanner(stringResource(R.string.error_code_turnstile_failed), Modifier.padding(top = 12.dp))
             }
             Button(
                 onClick = {

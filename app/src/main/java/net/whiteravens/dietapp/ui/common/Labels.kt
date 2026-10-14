@@ -6,6 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.TargetNote
@@ -77,31 +80,35 @@ fun difficultyLabel(code: String): String = when (code) {
 }
 
 /**
- * Human message for a failed operation. [ApiException] codes the app can
- * actually trigger get proper translations (same wording as the web client);
- * anything else falls back to the server's message, and transport failures
- * to the offline message.
+ * What a person is shown for a failure, worded as the web application words it. A request held up
+ * says for how long, where the server said; a refused form names the fields it refused; a refusal
+ * is said in the API's own words for its code, in the language of the app's texts
+ * (contract/errors.md, written into resources by the build); a code this version has no words for
+ * is shown as the API put it, which is English but says something; an answer that is not the API's
+ * own, such as a proxy's page, is named as that; no answer at all is a connection that failed.
  */
 @Composable
 fun errorMessage(error: Throwable): String = when (error) {
-    is ApiException -> when (error.code) {
-        "INVALID_CREDENTIALS" -> stringResource(R.string.error_invalid_credentials)
-        "EMAIL_TAKEN" -> stringResource(R.string.error_email_taken)
-        "VALIDATION", "VALIDATION_FAILED" -> stringResource(R.string.error_validation)
-        "INVALID_REFRESH", "INVALID_ACCESS_TOKEN" -> stringResource(R.string.error_session_expired)
-        "NO_ALTERNATIVE" -> stringResource(R.string.error_no_alternative)
-        "NO_ELIGIBLE_RECIPE" -> stringResource(R.string.error_no_eligible_recipe)
-        "CUSTOM_MEAL_NOT_SWAPPABLE" -> stringResource(R.string.error_custom_meal_not_swappable)
-        "PLAN_CHANGED" -> stringResource(R.string.error_plan_changed)
-        "INVALID_SECOND_FACTOR_CODE" -> stringResource(R.string.error_invalid_second_factor_code)
-        "TOO_MANY_ATTEMPTS" -> error.retryAfterSeconds
-            ?.let { stringResource(R.string.error_too_many_attempts_wait, it) }
-            ?: stringResource(R.string.error_too_many_attempts)
-        "TURNSTILE_FAILED" -> stringResource(R.string.error_turnstile_failed)
-        else -> error.message.ifBlank { stringResource(R.string.error_generic) }
-    }
+    is ApiException -> refusalText(error)
     is IOException -> stringResource(R.string.error_network)
     else -> stringResource(R.string.error_generic)
+}
+
+@Composable
+private fun refusalText(error: ApiException): String {
+    val wait = error.retryAfterSeconds?.takeIf { error.statusCode == 429 && it > 0 }
+    if (wait != null) {
+        if (wait <= 90) return pluralStringResource(R.plurals.error_held_up_seconds, wait, wait)
+        val minutes = (wait + 59) / 60
+        return pluralStringResource(R.plurals.error_held_up_minutes, minutes, minutes)
+    }
+    if (error.refusedFields.isNotEmpty()) {
+        return stringResource(R.string.error_validation_failed_fields, error.refusedFields.joinToString(", "))
+    }
+    unfilledMeal(error)?.let { return it }
+    ERROR_TEXTS[error.code]?.let { return stringResource(it) }
+    if (error.code.startsWith(ApiException.NOT_THE_API)) return stringResource(R.string.error_not_the_api, error.statusCode)
+    return error.message.ifBlank { stringResource(R.string.error_generic) }
 }
 
 // ── Value formatting ─────────────────────────────────────────────────────────
@@ -162,3 +169,27 @@ fun noteText(note: TargetNote): String = when (note) {
     is TargetNote.BelowFloor -> stringResource(R.string.target_note_below_floor, note.floor.roundToInt())
     is TargetNote.BelowBmr -> stringResource(R.string.target_note_below_bmr, note.bmr.roundToInt())
 }
+
+/**
+ * A plan that could not be made names the meal no recipe was left for (`NO_ELIGIBLE_RECIPE` with its
+ * `details`), and tells a catalogue without one from a profile that rules out what there is.
+ */
+@Composable
+private fun unfilledMeal(error: ApiException): String? {
+    if (error.code != "NO_ELIGIBLE_RECIPE") return null
+    val details = error.details ?: return null
+    val slot = details["slot"]?.jsonPrimitive?.contentOrNull ?: return null
+    val diet = details["dietType"]?.jsonPrimitive?.contentOrNull ?: return null
+    val ruledOut = details["ruledOut"]?.jsonPrimitive?.intOrNull ?: return null
+    val meal = mealTypeLabel(slot)
+    val dietName = dietTypeLabel(diet)
+    return when {
+        ruledOut > 0 -> pluralStringResource(R.plurals.plans_no_recipe_left, ruledOut, ruledOut, meal, dietName)
+        // Fewer meals a day help only with a meal that the shortest day does not have.
+        slot !in SHORTEST_DAY -> stringResource(R.string.plans_no_recipe_in_catalogue_fewer, meal, dietName)
+        else -> stringResource(R.string.plans_no_recipe_in_catalogue, meal, dietName)
+    }
+}
+
+/** The meals of a day of two meals, the fewest a plan has. */
+private val SHORTEST_DAY = setOf("breakfast", "dinner")
