@@ -18,6 +18,8 @@ import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.RefreshApiService
+import okhttp3.Dispatcher
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -80,6 +82,12 @@ object AppModule {
     @Singleton
     fun authApi(@Unauthenticated client: OkHttpClient, json: Json): AuthApiService =
         retrofit(client, json).create(AuthApiService::class.java)
+
+    /** The refresh, on a client of its own, so that it never waits for the requests that wait for it. */
+    @Provides
+    @Singleton
+    fun refreshApi(@Unauthenticated client: OkHttpClient, json: Json): RefreshApiService =
+        retrofit(client.newBuilder().dispatcher(Dispatcher()).build(), json).create(RefreshApiService::class.java)
 
     @Provides
     @Singleton

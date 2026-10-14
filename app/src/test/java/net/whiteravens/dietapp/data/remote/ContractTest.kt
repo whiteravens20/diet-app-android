@@ -223,7 +223,9 @@ class ContractTest(private val call: Call) {
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
         fun calls(): List<Array<Any>> =
-            (callsOf(AuthApiService::class.java) + callsOf(DietApiService::class.java)).map { arrayOf(it) }
+            listOf(AuthApiService::class.java, RefreshApiService::class.java, DietApiService::class.java)
+                .flatMap(::callsOf)
+                .map { arrayOf(it) }
 
         fun callsOf(service: Class<*>): List<Call> = service.declaredMethods
             .filterNot { it.isSynthetic }
@@ -250,12 +252,15 @@ class ContractTest(private val call: Call) {
                         }
                     }
                 }
-                // A suspending function's answer is the type its continuation is resumed with.
+                // A suspending function's answer is the type its continuation is resumed with, and a
+                // call made synchronously answers the type of its `Call`.
                 val continuation = types.lastOrNull() as? ParameterizedType
-                val answer = if (continuation?.rawType == Continuation::class.java) {
-                    continuation.actualTypeArguments.single().let { (it as? WildcardType)?.lowerBounds?.firstOrNull() ?: it }
-                } else {
-                    method.genericReturnType
+                val returned = method.genericReturnType as? ParameterizedType
+                val answer = when {
+                    continuation?.rawType == Continuation::class.java ->
+                        continuation.actualTypeArguments.single().let { (it as? WildcardType)?.lowerBounds?.firstOrNull() ?: it }
+                    returned?.rawType == retrofit2.Call::class.java -> returned.actualTypeArguments.single()
+                    else -> method.genericReturnType
                 }
                 Call(verb, route, method.name, queries, body, answer.takeUnless { it == Unit::class.java || it == Void.TYPE })
             }

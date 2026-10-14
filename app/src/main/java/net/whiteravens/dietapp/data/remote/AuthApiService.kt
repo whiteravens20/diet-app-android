@@ -9,8 +9,8 @@ import retrofit2.http.POST
 /**
  * Endpoints that take no session: signing in and out, and what the instance tells
  * anybody. Bound to the plain OkHttp client — no bearer interceptor, no
- * authenticator — so a token refresh can never recurse into itself. Everything
- * session-scoped lives on [DietApiService] instead.
+ * authenticator. The refresh is [RefreshApiService]'s; everything session-scoped
+ * lives on [DietApiService].
  */
 interface AuthApiService {
 
@@ -23,10 +23,6 @@ interface AuthApiService {
 
     @POST("auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
-
-    /** Rotates the token pair; the old refresh token is invalidated server-side. */
-    @POST("auth/refresh")
-    suspend fun refresh(@Body body: RefreshRequest): AuthResponse
 
     /** Revokes the refresh token. 204; the access token simply expires. */
     @POST("auth/logout")

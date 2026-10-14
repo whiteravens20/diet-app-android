@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import net.whiteravens.dietapp.data.config.ServerConfigStore
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.AuthTokens
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
@@ -20,7 +21,6 @@ import net.whiteravens.dietapp.data.remote.RegisterRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.fixture
-import net.whiteravens.dietapp.testing.knownDefect
 import okhttp3.Dispatcher as CallDispatcher
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -77,7 +77,8 @@ class NetworkStackTest {
     /** The session as the token store holds it; null is signed out. */
     private class Held(var session: Session?)
 
-    private class Stack(val api: DietApiService, val auth: AuthApiService)
+    /** The clients as the application wires them; [ended] counts the sessions the stack ended. */
+    private class Stack(val api: DietApiService, val auth: AuthApiService, val ended: AtomicInteger)
 
     private fun stack(held: Held): Stack {
         val tokens = mockk<TokenStore>()
@@ -87,16 +88,21 @@ class NetworkStackTest {
             held.session = Session(pair.accessToken, pair.refreshToken)
         }
         coEvery { tokens.clear() } answers { held.session = null }
+        val ended = AtomicInteger()
+        val sessionEnd = mockk<SessionEnd>()
+        coEvery { sessionEnd.end() } answers {
+            ended.incrementAndGet()
+            held.session = null
+        }
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
 
         val plain = AppModule.baseOkHttp(BaseUrlInterceptor(config)).newBuilder()
             .dispatcher(CallDispatcher(threads))
             .build()
-        lateinit var auth: AuthApiService
-        val authed = AppModule.authedOkHttp(plain, AuthInterceptor(tokens), TokenAuthenticator(tokens) { auth })
-        auth = AppModule.authApi(plain, json)
-        return Stack(AppModule.api(authed, json), auth)
+        val authenticator = TokenAuthenticator(tokens, sessionEnd, AppModule.refreshApi(plain, json), json)
+        val authed = AppModule.authedOkHttp(plain, AuthInterceptor(tokens), authenticator)
+        return Stack(AppModule.api(authed, json), AppModule.authApi(plain, json), ended)
     }
 
     private fun answer(name: String, status: Int = 200) = MockResponse()
@@ -154,13 +160,36 @@ class NetworkStackTest {
     }
 
     @Test
-    fun `a refresh answered 401 ends the session`() {
+    fun `a refresh answered 401 ends the session, the cached copies with it`() {
         val held = aRunOutSession()
         server.dispatcher = backend({ refused(401, "INVALID_REFRESH") })
+        val stack = stack(held)
 
-        runBlocking { runCatching { apiCall(json) { stack(held).api.me() } } }
+        runBlocking { runCatching { apiCall(json) { stack.api.me() } } }
 
         assertNull(held.session)
+        assertEquals(1, stack.ended.get())
+    }
+
+    @Test
+    fun `a 401 that is not about the access token is the request's own answer, with no refresh`() {
+        val held = aRunOutSession()
+        val refreshes = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
+                "/api/auth/refresh" -> {
+                    refreshes.incrementAndGet()
+                    answer("auth-refresh")
+                }
+                else -> refused(401, "INVALID_PASSWORD")
+            }
+        }
+
+        val failure = runBlocking { runCatching { apiCall(json) { stack(held).api.me() } }.exceptionOrNull() }
+
+        assertEquals("INVALID_PASSWORD", (failure as ApiException).code)
+        assertEquals(0, refreshes.get())
+        assertEquals(Session("run-out", "refresh-1"), held.session)
     }
 
     @Test
@@ -174,9 +203,7 @@ class NetworkStackTest {
     }
 
     @Test
-    fun `a refresh answered with anything but 401 keeps the session`() = knownDefect(
-        "every HTTP error of a refresh clears the tokens",
-    ) {
+    fun `a refresh answered with anything but 401 keeps the session`() {
         val answers = listOf(
             "409 SESSION_JUST_REFRESHED" to { answer("auth-refresh-used-token-at-once", 409) },
             "429 with Retry-After" to { refused(429, "RATE_LIMITED").setHeader("Retry-After", "30") },
@@ -193,9 +220,7 @@ class NetworkStackTest {
     }
 
     @Test
-    fun `a refresh answered 200 with something other than a token pair leaves the application running`() = knownDefect(
-        "the answer is decoded inside OkHttp, where the exception it throws reaches the thread's handler",
-    ) {
+    fun `a refresh answered 200 with something other than a token pair leaves the application running`() {
         val escaped = Collections.synchronizedList(mutableListOf<Throwable>())
         val before = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { _, e -> escaped += e }
@@ -203,7 +228,9 @@ class NetworkStackTest {
             server.dispatcher = backend({
                 MockResponse().setHeader("Content-Type", "text/html").setBody("<html>Sign in to the network</html>")
             })
-            runBlocking { runCatching { apiCall(json) { stack(aRunOutSession()).api.me() } } }
+            val held = aRunOutSession()
+            runBlocking { runCatching { apiCall(json) { stack(held).api.me() } } }
+            assertNotNull("the session after a refresh answered with a page", held.session)
             // An exception thrown on one of OkHttp's threads arrives after the call has returned.
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
             while (escaped.isEmpty() && System.nanoTime() < deadline) Thread.sleep(20)
@@ -228,17 +255,21 @@ class NetworkStackTest {
     }
 
     @Test
-    fun `five requests at once with a run-out token are all answered`() = knownDefect(
-        "the authenticator holds the dispatcher's five slots for one host while the refresh waits for one of them",
-    ) {
-        server.dispatcher = together(5, backend({ answer("auth-refresh") }))
-        val api = stack(aRunOutSession()).api
+    fun `five and eight requests at once with a run-out token cause one refresh and are all answered`() {
+        // OkHttp sends a host as many requests at a time as this; the rest wait for a slot.
+        val inFlight = CallDispatcher().maxRequestsPerHost
+        for (requests in listOf(5, 8)) {
+            val refreshes = AtomicInteger()
+            server.dispatcher = together(minOf(requests, inFlight), backend({ answer("auth-refresh") }, refreshes))
+            val api = stack(aRunOutSession()).api
 
-        // Not children of the test: a call that never ends must not keep the test from ending.
-        val calls = (1..5).map { GlobalScope.async { runCatching { api.me() }.isSuccess } }
-        val answered = runBlocking { withTimeoutOrNull(10_000) { calls.awaitAll() } }
+            // Not children of the test: a call that never ends must not keep the test from ending.
+            val calls = (1..requests).map { GlobalScope.async { runCatching { api.me() }.isSuccess } }
+            val answered = runBlocking { withTimeoutOrNull(10_000) { calls.awaitAll() } }
 
-        assertEquals(List(5) { true }, answered)
+            assertEquals("$requests at once", List(requests) { true }, answered)
+            assertEquals("$requests at once", 1, refreshes.get())
+        }
     }
 
     @Test
