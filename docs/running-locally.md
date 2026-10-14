@@ -10,6 +10,9 @@ How to build the app, point it at a backend, and run it on a device.
   `ANDROID_HOME` env var. `local.properties` is gitignored.
 - The committed **Gradle wrapper** (`./gradlew`) pins the Gradle version — no separate
   install needed.
+- Every dependency Gradle downloads is checked against `gradle/verification-metadata.xml`.
+  A build that stops on a failed dependency verification after a dependency was changed
+  needs the metadata written again ([CONTRIBUTING.md](../CONTRIBUTING.md#dependencies)).
 
 ## 1. Run the backend
 

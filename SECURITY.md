@@ -17,6 +17,9 @@ The companion app holds an authenticated session and cached personal data.
 - **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
   It is cleared on sign-out.
 - **No secrets in the repo** — keystores and signing config are git-ignored.
+- **Build** — every dependency and plugin is checked against the signing keys and
+  checksums in `gradle/verification-metadata.xml`, and the versions are locked
+  ([CONTRIBUTING.md](CONTRIBUTING.md#dependencies)).
 
 The backend remains the security authority; the app never performs nutrition
 calculations itself — it renders what the API returns.

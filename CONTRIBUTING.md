@@ -37,6 +37,40 @@ cd diet-app-android
 - **Commits** — [Conventional Commits](https://www.conventionalcommits.org/), signed.
 - **Branches** — branch off `dev`; PR into `dev`.
 
+## Dependencies
+
+The build checks every dependency and plugin it downloads, and resolves only the versions
+written down in the repository:
+
+- `gradle/verification-metadata.xml` names, for each group, the keys whose signatures the
+  build accepts, and holds a SHA-256 checksum for every file that is not signed by one of
+  them. The keys are in `gradle/verification-keyring.keys`, so no key server is asked
+  during a build. A file that matches neither stops the build.
+- `app/gradle.lockfile`, `buildscript-gradle.lockfile` (the plugins) and
+  `settings-gradle.lockfile` hold every version the build resolves, transitive ones
+  included.
+- `gradle/wrapper/gradle-wrapper.properties` carries the checksum of the Gradle
+  distribution.
+
+Changing a dependency, or adding one, means writing the metadata and the lockfiles again:
+
+```bash
+./gradlew --write-verification-metadata sha256,pgp --export-keys --write-locks \
+  assembleDebug testDebugUnitTest lintDebug
+```
+
+Read the diff before you commit it. A new entry under `trusted-keys`, or a new key in the
+keyring, means the build will accept whatever that key signs for those groups: find out
+who holds it, from its fingerprint and the project's own pages, first. Entries no longer
+used stay in the file; to drop them, delete the `trusted-keys` and `components` elements
+and run the command again.
+
+A Dependabot update gets both written by the
+[Dependency metadata](.github/workflows/dependency-metadata.yml) workflow, which commits
+them to the pull request's branch. It does not commit a change to the signing keys: that
+run fails and shows the change, and the workflow commits it when it is started by hand
+with the pull request's number and `accept-keys`.
+
 ## Security
 
 Never commit keystores or signing config. Report vulnerabilities privately — see

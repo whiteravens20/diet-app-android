@@ -54,6 +54,7 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 | New API call | `data/remote/DietApiService.kt` and `Dtos.kt` |
 | Caching or offline behaviour | `data/local/` and `data/repository/` |
 | Dependency wiring | `di/AppModule.kt` |
+| A library or plugin, or its version | `gradle/libs.versions.toml`, then the verification metadata and the lockfiles ([CONTRIBUTING.md](../CONTRIBUTING.md#dependencies)) |
 | Contract change | `contract/`, then `Dtos.kt` until `ContractTest` passes ([contracts/api-contract.md](contracts/api-contract.md)) |
 
 Check a change before sending it:

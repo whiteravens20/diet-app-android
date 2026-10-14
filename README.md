@@ -126,6 +126,13 @@ testers will try the release candidate at the maintainer's request.
   screens' view models ([test.yml](.github/workflows/test.yml)). A defect the tests found
   that the code does not fix yet stays in the suite as a test that passes while the defect
   is there and fails once it is gone.
+- Every dependency and plugin the build downloads is checked against the signing keys and
+  checksums in `gradle/verification-metadata.xml`, the Gradle distribution against its
+  checksum, and only the versions in the lockfiles resolve. For a Dependabot update a
+  workflow writes the metadata and the lockfiles again: it builds the update without write
+  access and commits the result to the pull request, except a change to the signing keys,
+  which it commits only when started by hand
+  ([dependency-metadata.yml](.github/workflows/dependency-metadata.yml)).
 - Once a week the copy of the contract is compared with diet-app's `dev`, and the run
   fails when they differ ([contract.yml](.github/workflows/contract.yml)).
 - Commits are signed.
