@@ -56,19 +56,15 @@ class WireClassesTest {
     }
 
     @Test
-    fun `reads what the recipe library answers`() = knownDefect(
-        "the class of a recipe requires reuseScore, which the backend no longer sends",
-    ) {
-        read<RecipeSearchPageDto>("recipes")
+    fun `reads what the recipe library answers`() {
+        assertTrue(read<RecipeSearchPageDto>("recipes").items.isNotEmpty())
         read<RecipeSearchPageDto>("recipes-search")
         read<RecipeDto>("recipe")
     }
 
     @Test
-    fun `reads a plan, a plan just made, and the plan after a swap`() = knownDefect(
-        "the meals of a plan hold recipes, and the class of a recipe requires reuseScore",
-    ) {
-        read<MealPlanDto>("meal-plan")
+    fun `reads a plan, a plan just made, and the plan after a swap`() {
+        assertTrue(read<MealPlanDto>("meal-plan").days.isNotEmpty())
         read<MealPlanDto>("meal-plan-generate")
         read<RebalanceResultDto>("meal-plan-swap-apply")
     }

@@ -213,11 +213,7 @@ class ContractTest(private val call: Call) {
         val KNOWN_DEFECTS = mapOf(
             "POST auth/login" to "an account with two-step sign-in is answered with a challenge, which the client's class cannot read",
             "GET meal-plans" to "the client reads an array of whole plans, and the API answers a page of summaries",
-            "GET meal-plans/{id}" to "the class of a recipe in a plan requires reuseScore, which the API no longer sends",
-            "POST meal-plans/generate" to "the class of a recipe in a plan requires reuseScore, which the API no longer sends",
             "POST meal-plans/swap-meal" to "the client sends a strategy where the API takes the recipe offered and the plan's revision",
-            "GET recipes" to "the class of a recipe requires reuseScore, which the API no longer sends",
-            "GET recipes/{id}" to "the class of a recipe requires reuseScore, which the API no longer sends",
         )
 
         val CONTRACT: JsonObject = Json.parseToJsonElement(

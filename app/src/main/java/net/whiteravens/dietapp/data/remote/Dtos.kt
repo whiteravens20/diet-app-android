@@ -218,8 +218,6 @@ data class RecipeDto(
     val allergens: List<String>,
     /** Per-serving nutrition, engine-computed. */
     val nutritionPerServing: NutritionDto,
-    /** 0-1: how reusable this recipe's ingredients are across a plan. */
-    val reuseScore: Double,
     /** `seed` | `ai` | `user` | `curated`. */
     val origin: String,
 )
