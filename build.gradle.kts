@@ -1,5 +1,12 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
+// The versions the plugins bring with them are locked as well, in buildscript-gradle.lockfile.
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+}
+
 // Root build file — plugins are declared here and applied per-module.
 plugins {
     alias(libs.plugins.android.application) apply false

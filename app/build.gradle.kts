@@ -68,6 +68,12 @@ tasks.withType<Test>().configureEach {
 // nothing is downloaded that the build has not pinned.
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
+// Every version the build resolves, transitive ones included, is written in gradle.lockfile:
+// a build that would resolve another fails, and a change to one shows in the pull request.
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
