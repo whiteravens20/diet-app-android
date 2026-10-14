@@ -20,8 +20,8 @@ import javax.inject.Singleton
 /**
  * Offline-first shopping-list access. Same cache-mirror pattern as
  * [MealPlanRepository]. Item edits call the API directly and mirror the full
- * updated list the server returns; the offline outbox/replay queue from
- * docs/sync-strategy.md is Phase 3+ and not built yet.
+ * updated list the server returns; the queue of changes made offline, which
+ * docs/sync-strategy.md describes, is not built yet.
  */
 @Singleton
 class ShoppingListRepository @Inject constructor(

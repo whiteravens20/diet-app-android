@@ -11,8 +11,9 @@ import javax.inject.Singleton
 
 /**
  * Attaches `Authorization: Bearer <accessToken>` plus `Accept-Language`, the
- * header the platform's F14 locale resolution reads for non-web clients. Runs
- * only on the authenticated client — auth endpoints stay token-free.
+ * header the platform reads the language of names and texts from for a client
+ * that is not the web application. Runs only on the authenticated client — auth
+ * endpoints stay token-free.
  */
 @Singleton
 class AuthInterceptor @Inject constructor(private val tokens: TokenStore) : Interceptor {
