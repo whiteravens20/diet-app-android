@@ -4,14 +4,11 @@ package net.whiteravens.dietapp.testing
 
 import android.graphics.Bitmap
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
@@ -27,9 +24,18 @@ fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000) {
     waitUntil(timeoutMillis) { onAllNodesWithText(shown).fetchSemanticsNodes().isNotEmpty() }
 }
 
-/** Keeps a picture of the screen among the run's artefacts, under `screenshots/`. */
+/**
+ * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
+ * `screenshots/`. A picture the device does not give is left out with a line in the log: it is
+ * a record of the run, not something the test checks.
+ */
 fun ComposeTestRule.keepScreenshot(name: String) {
-    val picture = onRoot().captureToImage().asAndroidBitmap()
+    waitForIdle()
+    val picture = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+    if (picture == null) {
+        println("No screenshot for $name: the device gave none")
+        return
+    }
     TestStorage().openOutputFile("screenshots/$name.png").use { out ->
         picture.compress(Bitmap.CompressFormat.PNG, 100, out)
     }
