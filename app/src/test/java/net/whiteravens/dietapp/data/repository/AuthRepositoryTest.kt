@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.auth.Session
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.local.CacheDatabase
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.di.AppModule
@@ -114,5 +115,26 @@ class AuthRepositoryTest {
             cache.clearAllTables()
             tokens.clear()
         }
+    }
+
+    @Test
+    fun `a refusal says how long to wait where the server said`() {
+        val refusal = HttpException(
+            Response.error<Any>(
+                """{"statusCode":429,"error":"TOO_MANY_ATTEMPTS","message":"Wait."}""".toResponseBody("application/json".toMediaType()),
+                okhttp3.Response.Builder()
+                    .request(okhttp3.Request.Builder().url("http://localhost/api/auth/login").build())
+                    .protocol(okhttp3.Protocol.HTTP_1_1)
+                    .code(429)
+                    .message("Too Many Requests")
+                    .header("Retry-After", "42")
+                    .build(),
+            ),
+        )
+
+        val failure = ApiException.from(refusal, json)
+
+        assertEquals("TOO_MANY_ATTEMPTS", failure.code)
+        assertEquals(42, failure.retryAfterSeconds)
     }
 }

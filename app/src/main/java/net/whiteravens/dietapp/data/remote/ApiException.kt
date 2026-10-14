@@ -16,6 +16,8 @@ class ApiException(
     val code: String,
     override val message: String,
     val issues: List<ApiErrorIssueDto> = emptyList(),
+    /** How many seconds to wait before asking again, where the refusal said (`Retry-After`). */
+    val retryAfterSeconds: Int? = null,
 ) : Exception(message) {
 
     companion object {
@@ -24,10 +26,11 @@ class ApiException(
             val parsed = runCatching {
                 e.response()?.errorBody()?.string()?.let { json.decodeFromString<ApiErrorDto>(it) }
             }.getOrNull()
+            val wait = e.response()?.headers()?.get("Retry-After")?.trim()?.toIntOrNull()
             return if (parsed != null) {
-                ApiException(parsed.statusCode, parsed.error, parsed.message, parsed.issues.orEmpty())
+                ApiException(parsed.statusCode, parsed.error, parsed.message, parsed.issues.orEmpty(), wait)
             } else {
-                ApiException(e.code(), "HTTP_${e.code()}", e.message())
+                ApiException(e.code(), "HTTP_${e.code()}", e.message(), retryAfterSeconds = wait)
             }
         }
     }
