@@ -12,10 +12,20 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
 /**
- * Offline cache. Meal plans and shopping lists are stored as the raw JSON the
- * API returned, so the UI can render them without a network connection. The
- * `syncedAt` timestamp drives staleness and the Phase-3 sync layer.
+ * Offline cache. The first page of a profile's plans, the plans opened, and
+ * shopping lists are stored as the raw JSON the API returned, so the UI can
+ * render them without a network connection. `syncedAt` says how old a copy is.
+ * The cache holds nothing the server does not, so a version of the app that
+ * changes its tables starts it empty (see `AppModule.database`).
  */
+
+/** The first page of a profile's plans, as `GET /meal-plans` answered it. */
+@Entity(tableName = "cached_plan_list")
+data class CachedPlanList(
+    @PrimaryKey val profileId: String,
+    val json: String,
+    val syncedAt: Long,
+)
 
 @Entity(tableName = "cached_meal_plan")
 data class CachedMealPlan(
@@ -36,10 +46,16 @@ data class CachedShoppingList(
 @Dao
 interface CacheDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertMealPlan(plan: CachedMealPlan)
+    suspend fun upsertPlanList(list: CachedPlanList)
 
-    @Query("SELECT * FROM cached_meal_plan WHERE profileId = :profileId ORDER BY syncedAt DESC")
-    suspend fun mealPlans(profileId: String): List<CachedMealPlan>
+    @Query("SELECT * FROM cached_plan_list WHERE profileId = :profileId")
+    suspend fun planList(profileId: String): CachedPlanList?
+
+    @Query("DELETE FROM cached_plan_list WHERE profileId = :profileId")
+    suspend fun deletePlanList(profileId: String)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMealPlan(plan: CachedMealPlan)
 
     @Query("SELECT * FROM cached_meal_plan WHERE id = :id")
     suspend fun mealPlan(id: String): CachedMealPlan?
@@ -61,9 +77,9 @@ interface CacheDao {
 }
 
 @Database(
-    entities = [CachedMealPlan::class, CachedShoppingList::class],
-    version = 1,
-    exportSchema = true,
+    entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class],
+    version = 2,
+    exportSchema = false,
 )
 abstract class CacheDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao

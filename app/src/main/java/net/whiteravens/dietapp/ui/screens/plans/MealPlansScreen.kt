@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
-import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
@@ -110,7 +110,7 @@ fun MealPlansScreen(
                     OfflineBanner(
                         stringResource(
                             R.string.offline_cached,
-                            state.plans.firstOrNull()?.syncedAt?.let(::formatSyncedAt) ?: "—",
+                            state.syncedAt?.let(::formatSyncedAt) ?: "—",
                         ),
                     )
                 }
@@ -146,12 +146,21 @@ fun MealPlansScreen(
             items(state.plans, key = { it.id }) { plan ->
                 PlanCard(plan, onClick = { onOpenPlan(plan.id) })
             }
+            if (state.hasMore) {
+                item {
+                    OutlinedButton(
+                        onClick = viewModel::showMore,
+                        enabled = !state.loadingMore,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.plans_show_more)) }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun PlanCard(plan: MealPlan, onClick: () -> Unit) {
+private fun PlanCard(plan: MealPlanSummary, onClick: () -> Unit) {
     AppCard(onClick = onClick) {
         Text(
             stringResource(R.string.plans_card_title, formatDate(plan.startDate), plan.durationDays),

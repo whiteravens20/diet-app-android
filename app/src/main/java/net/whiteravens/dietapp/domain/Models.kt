@@ -83,6 +83,23 @@ data class MealPlan(
     val syncedAt: Long?,
 )
 
+/** One plan in a profile's list: what the list shows, without the days. */
+data class MealPlanSummary(
+    val id: String,
+    val startDate: String,
+    val durationDays: Int,
+    val dietType: String,
+    val averageDailyNutrition: Nutrition,
+)
+
+/** A page of a profile's plans, the newest first; [syncedAt] is set when it came from the cache. */
+data class MealPlanPage(
+    val plans: List<MealPlanSummary>,
+    val page: Int,
+    val totalPages: Int,
+    val syncedAt: Long?,
+)
+
 data class RecipeIngredient(
     val name: String,
     val quantity: Double,

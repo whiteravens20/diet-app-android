@@ -45,8 +45,13 @@ interface DietApiService {
 
     // ── Meal plans ──────────────────────────────────────────────────────────
 
+    /** A page of a profile's plans, as summaries; a plan with its days is [mealPlan]. */
     @GET("meal-plans")
-    suspend fun mealPlans(@Query("profileId") profileId: String): List<MealPlanDto>
+    suspend fun mealPlans(
+        @Query("profileId") profileId: String,
+        @Query("page") page: Int,
+        @Query("pageSize") pageSize: Int,
+    ): MealPlanPageDto
 
     @GET("meal-plans/{id}")
     suspend fun mealPlan(@Path("id") id: String): MealPlanDto

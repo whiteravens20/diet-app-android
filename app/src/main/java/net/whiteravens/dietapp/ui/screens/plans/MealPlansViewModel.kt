@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
-import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.data.repository.toSummary
+import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import java.io.IOException
 import java.time.LocalDate
@@ -33,12 +34,20 @@ class MealPlansViewModel @Inject constructor(
         val loading: Boolean = true,
         val profiles: List<Profile> = emptyList(),
         val selectedProfileId: String? = null,
-        val plans: List<MealPlan> = emptyList(),
+        val plans: List<MealPlanSummary> = emptyList(),
+        /** The last page of the list fetched, and how many there are. */
+        val page: Int = 1,
+        val totalPages: Int = 1,
+        /** When the list on screen was fetched, if it came from the cache. */
+        val syncedAt: Long? = null,
         val refreshing: Boolean = false,
+        val loadingMore: Boolean = false,
         val offline: Boolean = false,
         val generating: Boolean = false,
         val error: Throwable? = null,
-    )
+    ) {
+        val hasMore: Boolean get() = page < totalPages
+    }
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -63,13 +72,25 @@ class MealPlansViewModel @Inject constructor(
     }
 
     fun selectProfile(profileId: String) {
-        _state.update { it.copy(selectedProfileId = profileId, plans = emptyList(), error = null) }
+        _state.update {
+            it.copy(selectedProfileId = profileId, plans = emptyList(), page = 1, totalPages = 1, syncedAt = null, error = null)
+        }
         viewModelScope.launch {
             val cached = plans.cachedPlans(profileId)
-            _state.update { it.copy(plans = cached, refreshing = true, offline = false) }
-            runCatching { plans.refresh(profileId) }
+            _state.update {
+                it.copy(
+                    plans = cached?.plans.orEmpty(),
+                    totalPages = cached?.totalPages ?: 1,
+                    syncedAt = cached?.syncedAt,
+                    refreshing = true,
+                    offline = false,
+                )
+            }
+            runCatching { plans.plans(profileId) }
                 .onSuccess { fresh ->
-                    ifStillSelected(profileId) { it.copy(plans = fresh, refreshing = false) }
+                    ifStillSelected(profileId) {
+                        it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = null, refreshing = false)
+                    }
                 }
                 .onFailure { e ->
                     ifStillSelected(profileId) {
@@ -78,6 +99,33 @@ class MealPlansViewModel @Inject constructor(
                             offline = e is IOException,
                             error = e.takeIf { _ -> e !is IOException },
                         )
+                    }
+                }
+        }
+    }
+
+    /** The next page of the list, below what is shown. */
+    fun showMore() {
+        val current = _state.value
+        val profileId = current.selectedProfileId ?: return
+        if (!current.hasMore || current.loadingMore) return
+        viewModelScope.launch {
+            _state.update { it.copy(loadingMore = true, error = null) }
+            runCatching { plans.plans(profileId, current.page + 1) }
+                .onSuccess { next ->
+                    ifStillSelected(profileId) {
+                        val shown = it.plans.map { plan -> plan.id }.toSet()
+                        it.copy(
+                            plans = it.plans + next.plans.filter { plan -> plan.id !in shown },
+                            page = next.page,
+                            totalPages = next.totalPages,
+                            loadingMore = false,
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    ifStillSelected(profileId) {
+                        it.copy(loadingMore = false, offline = e is IOException, error = e.takeIf { _ -> e !is IOException })
                     }
                 }
         }
@@ -97,7 +145,7 @@ class MealPlansViewModel @Inject constructor(
             }
                 .onSuccess { plan ->
                     ifStillSelected(profileId) {
-                        it.copy(generating = false, plans = listOf(plan) + it.plans.filter { p -> p.id != plan.id })
+                        it.copy(generating = false, plans = listOf(plan.toSummary()) + it.plans.filter { p -> p.id != plan.id })
                     }
                 }
                 .onFailure { e -> _state.update { it.copy(generating = false, error = e) } }

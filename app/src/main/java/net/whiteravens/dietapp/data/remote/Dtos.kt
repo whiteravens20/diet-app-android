@@ -302,6 +302,28 @@ data class MealPlanDto(
     val createdAt: String,
 )
 
+/** One plan in the list of a profile's plans: what the list shows, without its days. */
+@Serializable
+data class MealPlanSummaryDto(
+    val id: String,
+    val profileId: String,
+    val startDate: String,
+    val durationDays: Int,
+    val dietType: String,
+    val averageDailyNutrition: NutritionDto,
+    val createdAt: String,
+)
+
+/** `GET /meal-plans`: a page of a profile's plans. A plan's days come with `GET /meal-plans/:id`. */
+@Serializable
+data class MealPlanPageDto(
+    val items: List<MealPlanSummaryDto>,
+    val page: Int,
+    val pageSize: Int,
+    val total: Int,
+    val totalPages: Int,
+)
+
 /**
  * POST `/meal-plans/generate`. The F17 `dayOverrides` advanced flow is not yet
  * used by the app — the field is sparse-optional on the platform, so omitting

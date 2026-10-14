@@ -7,13 +7,16 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
+import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.readOrDrop
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.MealPlanDto
+import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.SwapMealRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.MealPlanPage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,9 +33,13 @@ class MealPlanRepository @Inject constructor(
     private val cache: CacheDao,
     private val json: Json,
 ) {
-    /** Cached plans, newest sync first; empty until the first [refresh]. */
-    suspend fun cachedPlans(profileId: String): List<MealPlan> =
-        cache.mealPlans(profileId).mapNotNull { row -> read(row) }
+    /** The first page of a profile's plans as it was last fetched, or null before the first [plans]. */
+    suspend fun cachedPlans(profileId: String): MealPlanPage? =
+        cache.planList(profileId)?.let { row ->
+            readOrDrop({ json.decodeFromString<MealPlanPageDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
+                cache.deletePlanList(profileId)
+            }
+        }
 
     /** One cached plan by id, or null before it was ever fetched. */
     suspend fun cachedPlan(id: String): MealPlan? = cache.mealPlan(id)?.let { row -> read(row) }
@@ -49,11 +56,13 @@ class MealPlanRepository @Inject constructor(
         return plan.toDomain()
     }
 
-    /** Fetch from the API and mirror into the cache. Throws when offline. */
-    suspend fun refresh(profileId: String): List<MealPlan> {
-        val plans = apiCall(json) { api.mealPlans(profileId) }
-        plans.forEach { mirror(it) }
-        return plans.map { it.toDomain() }
+    /** A page of a profile's plans from the API; the first is kept for offline use. Throws when offline. */
+    suspend fun plans(profileId: String, page: Int = 1): MealPlanPage {
+        val answer = apiCall(json) { api.mealPlans(profileId, page, PAGE_SIZE) }
+        if (page == 1) {
+            cache.upsertPlanList(CachedPlanList(profileId, json.encodeToString(answer), System.currentTimeMillis()))
+        }
+        return answer.toDomain()
     }
 
     /** Generate a new plan for a profile (deterministic engine, backend-side). */
@@ -84,6 +93,11 @@ class MealPlanRepository @Inject constructor(
         }
         mirror(result.plan)
         return result.plan.toDomain()
+    }
+
+    private companion object {
+        /** The API's own page, as many plans as the web application lists at a time. */
+        const val PAGE_SIZE = 20
     }
 
     private suspend fun mirror(plan: MealPlanDto) {

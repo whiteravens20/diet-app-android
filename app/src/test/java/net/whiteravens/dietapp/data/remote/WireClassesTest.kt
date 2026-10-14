@@ -70,11 +70,9 @@ class WireClassesTest {
     }
 
     @Test
-    fun `reads the plans of a profile`() = knownDefect(
-        "the client reads an array of whole plans, and the backend answers a page of summaries",
-    ) {
-        read<List<MealPlanDto>>("meal-plans-none")
-        read<List<MealPlanDto>>("meal-plans")
+    fun `reads the plans of a profile, a page of summaries`() {
+        assertEquals(emptyList<MealPlanSummaryDto>(), read<MealPlanPageDto>("meal-plans-none").items)
+        assertTrue(read<MealPlanPageDto>("meal-plans").items.isNotEmpty())
     }
 
     @Test

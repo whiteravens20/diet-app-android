@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.data.repository
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
+import net.whiteravens.dietapp.data.remote.MealPlanPageDto
+import net.whiteravens.dietapp.data.remote.MealPlanSummaryDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.PlannedMealDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
@@ -18,6 +20,8 @@ import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.MealPlanPage
+import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.Profile
@@ -125,6 +129,30 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     days = days.map(MealPlanDayDto::toDomain),
     averageDailyNutrition = averageDailyNutrition.toDomain(),
     syncedAt = syncedAt,
+)
+
+fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
+    id = id,
+    startDate = startDate,
+    durationDays = durationDays,
+    dietType = dietType,
+    averageDailyNutrition = averageDailyNutrition.toDomain(),
+)
+
+fun MealPlanPageDto.toDomain(syncedAt: Long? = null) = MealPlanPage(
+    plans = items.map(MealPlanSummaryDto::toDomain),
+    page = page,
+    totalPages = totalPages,
+    syncedAt = syncedAt,
+)
+
+/** What the list of plans shows of a plan that was just made. */
+fun MealPlan.toSummary() = MealPlanSummary(
+    id = id,
+    startDate = startDate,
+    durationDays = durationDays,
+    dietType = dietType,
+    averageDailyNutrition = averageDailyNutrition,
 )
 
 fun ShoppingListItemDto.toDomain() = ShoppingItem(

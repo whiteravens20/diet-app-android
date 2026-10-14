@@ -96,7 +96,10 @@ object AppModule {
     @Provides
     @Singleton
     fun database(@ApplicationContext context: Context): CacheDatabase =
-        Room.databaseBuilder(context, CacheDatabase::class.java, "diet-app-cache.db").build()
+        Room.databaseBuilder(context, CacheDatabase::class.java, "diet-app-cache.db")
+            // The cache holds copies of what the server has: a version with other tables starts it empty.
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .build()
 
     @Provides
     fun cacheDao(db: CacheDatabase) = db.cacheDao()

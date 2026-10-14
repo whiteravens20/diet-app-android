@@ -75,6 +75,7 @@
     <string name="plans_generate">Wygeneruj plan</string>
     <string name="plans_empty">Brak planów</string>
     <string name="plans_empty_body">Wygeneruj pierwszy plan posiłków dla tego profilu.</string>
+    <string name="plans_show_more">Pokaż więcej planów</string>
     <string name="plans_card_title">%1$s · %2$d dni</string>
     <string name="plans_avg_kcal">śr. %1$d kcal/dzień</string>
     <string name="plans_duration">Długość</string>

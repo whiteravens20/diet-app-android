@@ -10,13 +10,14 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
+import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.di.AppModule
-import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.testing.fixture
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -36,15 +37,17 @@ class MealPlansViewModelTest {
     @After
     fun reset() = Dispatchers.resetMain()
 
-    /** The cache as it is on the device: the plans of [plans], and no lists. It keeps what was dropped. */
-    private class Cache(private val plans: List<CachedMealPlan>) : CacheDao {
+    /** The cache as it is on the device: the list of plans [list], and nothing else. It keeps what was dropped. */
+    private class Cache(private val list: CachedPlanList?) : CacheDao {
         val dropped = mutableListOf<String>()
-        override suspend fun upsertMealPlan(plan: CachedMealPlan) = Unit
-        override suspend fun mealPlans(profileId: String) = plans
-        override suspend fun mealPlan(id: String) = plans.firstOrNull { it.id == id }
-        override suspend fun deleteMealPlan(id: String) {
-            dropped += id
+        override suspend fun upsertPlanList(list: CachedPlanList) = Unit
+        override suspend fun planList(profileId: String) = list?.takeIf { it.profileId == profileId }
+        override suspend fun deletePlanList(profileId: String) {
+            dropped += profileId
         }
+        override suspend fun upsertMealPlan(plan: CachedMealPlan) = Unit
+        override suspend fun mealPlan(id: String): CachedMealPlan? = null
+        override suspend fun deleteMealPlan(id: String) = Unit
         override suspend fun upsertShoppingList(list: CachedShoppingList) = Unit
         override suspend fun shoppingList(id: String): CachedShoppingList? = null
         override suspend fun shoppingListsForPlan(planId: String) = emptyList<CachedShoppingList>()
@@ -57,13 +60,12 @@ class MealPlansViewModelTest {
      * all the screen has.
      */
     @Test
-    fun `a cached plan the classes cannot read is left out, and the screen goes on without it`() {
+    fun `a cached list of plans the classes cannot read is left out, and the screen goes on without it`() {
         val profile = json.decodeFromString<List<ProfileDto>>(fixture("profiles")).first()
         val api = mockk<DietApiService>()
         coEvery { api.profiles() } returns listOf(profile)
-        coEvery { api.mealPlans(any()) } throws IOException("no network")
-        val unreadable = CachedMealPlan("plan", profile.id, """{"id":"plan"}""", 1L)
-        val cache = Cache(listOf(unreadable))
+        coEvery { api.mealPlans(any(), any(), any()) } throws IOException("no network")
+        val cache = Cache(CachedPlanList(profile.id, """[{"id":"plan"}]""", 1L))
 
         var escaped: Throwable? = null
         val before = Thread.getDefaultUncaughtExceptionHandler()
@@ -76,7 +78,7 @@ class MealPlansViewModelTest {
 
         assertNull(escaped)
         assertFalse(model.state.value.loading)
-        assertEquals(emptyList<MealPlan>(), model.state.value.plans)
-        assertEquals(listOf("plan"), cache.dropped)
+        assertEquals(emptyList<MealPlanSummary>(), model.state.value.plans)
+        assertEquals(listOf(profile.id), cache.dropped)
     }
 }

@@ -73,6 +73,7 @@
     <string name="plans_generate">Generate plan</string>
     <string name="plans_empty">No plans yet</string>
     <string name="plans_empty_body">Generate the first meal plan for this profile.</string>
+    <string name="plans_show_more">Show more plans</string>
     <string name="plans_card_title">%1$s · %2$d days</string>
     <string name="plans_avg_kcal">%1$d kcal/day avg</string>
     <string name="plans_duration">Duration</string>

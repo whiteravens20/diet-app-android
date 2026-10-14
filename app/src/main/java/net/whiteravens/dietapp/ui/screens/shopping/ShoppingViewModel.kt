@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
-import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ShoppingList
 import java.io.IOException
@@ -36,7 +36,7 @@ class ShoppingViewModel @Inject constructor(
         val loading: Boolean = true,
         val profiles: List<Profile> = emptyList(),
         val selectedProfileId: String? = null,
-        val plans: List<MealPlan> = emptyList(),
+        val plans: List<MealPlanSummary> = emptyList(),
         val selectedPlanId: String? = null,
         val list: ShoppingList? = null,
         val listLoading: Boolean = false,
@@ -77,10 +77,10 @@ class ShoppingViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            val cached = plans.cachedPlans(profileId)
+            val cached = plans.cachedPlans(profileId)?.plans.orEmpty()
             applyPlans(profileId, cached)
-            runCatching { plans.refresh(profileId) }
-                .onSuccess { fresh -> applyPlans(profileId, fresh) }
+            runCatching { plans.plans(profileId) }
+                .onSuccess { fresh -> applyPlans(profileId, fresh.plans) }
                 .onFailure { e ->
                     if (e !is IOException) _state.update { it.copy(error = e) }
                     else if (cached.isEmpty()) _state.update { it.copy(offline = true) }
@@ -142,7 +142,7 @@ class ShoppingViewModel @Inject constructor(
         }
     }
 
-    private fun applyPlans(profileId: String, planList: List<MealPlan>) {
+    private fun applyPlans(profileId: String, planList: List<MealPlanSummary>) {
         _state.update {
             if (it.selectedProfileId != profileId) return@update it
             it.copy(plans = planList)
