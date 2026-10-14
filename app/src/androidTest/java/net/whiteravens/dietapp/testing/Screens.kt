@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
@@ -50,6 +51,7 @@ fun ComposeTestRule.waitForEnabled(label: String, timeoutMillis: Long = 20_000) 
 fun ComposeTestRule.signIn(account: Account) {
     onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
     onNodeWithText(text(R.string.auth_password)).performTextInput(account.password)
-    onNodeWithText(text(R.string.auth_sign_in_button)).performClick()
+    // Above the keyboard the field leaves open.
+    onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
     waitForText(text(R.string.nav_dashboard))
 }

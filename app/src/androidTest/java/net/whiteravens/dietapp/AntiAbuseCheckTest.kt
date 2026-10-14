@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -74,11 +75,11 @@ class AntiAbuseCheckTest {
         screen.onNodeWithText(text(R.string.common_save)).performClick()
         screen.waitForText(text(R.string.server_other_version, VERSION, BuildConfig.API_VERSION))
 
-        screen.onNodeWithText(text(R.string.auth_no_account)).performClick()
+        screen.onNodeWithText(text(R.string.auth_no_account)).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.auth_name)).performTextInput("Check")
         screen.onNodeWithText(text(R.string.auth_email)).performTextInput("check@example.test")
         screen.onNodeWithText(text(R.string.auth_password)).performTextInput("Check-Test-Passw0rd")
-        screen.onNodeWithText(text(R.string.auth_create_account_button)).performClick()
+        screen.onNodeWithText(text(R.string.auth_create_account_button)).performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_check_title))
         screen.keepScreenshot("sign-up-the-check")
 
