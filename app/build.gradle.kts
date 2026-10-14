@@ -1,5 +1,6 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.time.Duration
 
 plugins {
@@ -63,7 +64,9 @@ tasks.withType<Test>().configureEach {
     systemProperty("contract.dir", contract.asFile.absolutePath)
 }
 
-kotlin { jvmToolchain(17) }
+// Compiled for Java 17 by whichever JDK runs Gradle (17 or newer): no toolchain, so
+// nothing is downloaded that the build has not pinned.
+kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
 dependencies {
     implementation(libs.androidx.core.ktx)

@@ -4,7 +4,7 @@ How to build the app, point it at a backend, and run it on a device.
 
 ## Prerequisites
 
-- **JDK 17+** (the build targets a JDK 17 toolchain; 21 is fine to run Gradle with).
+- **JDK 17 or newer.** The code is compiled for Java 17 by whichever JDK runs Gradle; no JDK is downloaded.
 - **Android SDK** with `platform-tools`, `platforms;android-37`, `build-tools;36.0.0`.
   Point Gradle at it via `local.properties` (`sdk.dir=/path/to/Android/Sdk`) or the
   `ANDROID_HOME` env var. `local.properties` is gitignored.
