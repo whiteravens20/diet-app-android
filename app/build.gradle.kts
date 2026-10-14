@@ -52,9 +52,15 @@ android {
     }
 }
 
-// A test that waits for something that never comes ends the build instead of holding it.
+// The copy of the API's contract the client is checked against (contract/README.md);
+// `-PcontractDir=<dir>` checks it against another, as the weekly comparison does.
+val contract = rootProject.layout.projectDirectory.dir(providers.gradleProperty("contractDir").getOrElse("contract"))
+
 tasks.withType<Test>().configureEach {
+    // A test that waits for something that never comes ends the build instead of holding it.
     timeout.set(Duration.ofMinutes(10))
+    inputs.dir(contract)
+    systemProperty("contract.dir", contract.asFile.absolutePath)
 }
 
 kotlin { jvmToolchain(17) }
