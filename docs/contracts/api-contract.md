@@ -29,8 +29,12 @@ that fixes it takes it off the list. Once a week CI compares the copy with diet-
 
 - Every request goes to the address the user chose, which ends in `/api/`.
 - Registering, signing in, refreshing and signing out go through a client without the access
-  token. Every other call carries `Authorization: Bearer <access token>` and
-  `Accept-Language` with the device's language.
+  token, and so does `GET /config`. Every other call carries `Authorization: Bearer <access
+  token>` and `Accept-Language` with the device's language.
+- `GET /config` is asked when the app starts and whenever the server's address changes. A
+  server that answers another version than `contract/API_VERSION` is named on the screen,
+  and one whose answer the app cannot read, or that has no such route, is shown as running
+  a version the app does not support; the app talks to the server either way.
 
 A refusal carries a stable code in `error` (`INVALID_CREDENTIALS`, `EMAIL_TAKEN`, …), which the
 client translates from, never from the English `message`; `issues` names the fields a request

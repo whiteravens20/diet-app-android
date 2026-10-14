@@ -26,7 +26,8 @@ generate a plan, swap a meal, tick off the shopping list.
 ## Features
 
 - **Your own server.** Sign in or create an account on the Diet App instance you run. The
-  server address can be changed in the app, so one build works with any instance.
+  server address can be changed in the app, so one build works with any instance, and a
+  server whose version the app was not checked against is named on the screen.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
   meals per day and the target macro split.
 - **Meal plans.** The plans of a profile, a new plan generated from the phone, each plan
