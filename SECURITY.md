@@ -12,8 +12,10 @@ The companion app holds an authenticated session and cached personal data.
 
 - **Tokens** — access/refresh tokens are stored in `DataStore`; on devices with a
   hardware keystore, wrap them with `EncryptedSharedPreferences` / the Android Keystore.
-- **Transport** — HTTPS for any non-local backend; cleartext is allowed only for
-  `10.0.2.2` / LAN development hosts.
+- **Transport** — a release build talks HTTPS only, and trusts the system's certificate
+  authorities and those the user installed on the phone, since a self-hosted server often
+  has a certificate from its owner's own authority. A debug build also talks plain `http`,
+  for a backend on the developer's own network.
 - **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
   It is cleared on sign-out.
 - **Backups** — nothing the app keeps goes into a backup or onto another device: the

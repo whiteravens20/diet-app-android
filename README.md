@@ -76,7 +76,8 @@ or change it in the app, with the **Server** button on the sign-in screen or und
 Profile. Changing the server signs you out and clears the offline cache.
 
 A debug build accepts a plain `http://` address, which a backend on your own network
-usually has. A release build accepts HTTPS only.
+usually has. A release build accepts HTTPS only, and trusts a certificate from an authority
+you installed on the phone as well as the usual public ones.
 
 [docs/running-locally.md](docs/running-locally.md) covers the whole local loop: starting
 the backend, installing on a physical device and what the emulator needs.

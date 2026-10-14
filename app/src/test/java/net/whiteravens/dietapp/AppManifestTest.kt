@@ -9,7 +9,7 @@ import org.w3c.dom.Element
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
-/** What the app lets out of the phone, as its manifest and the resources it names say it. */
+/** What the app lets out of the phone and whom it trusts, as its manifest and the resources it names say it. */
 class AppManifestTest {
     private fun xml(path: String): Document =
         DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }.newDocumentBuilder().parse(File(path))
@@ -36,6 +36,24 @@ class AppManifestTest {
             assertEquals(kind, DOMAINS, excluded.toSet())
             assertEquals(kind, emptyList<Element>(), section.elements("include"))
         }
+    }
+
+    @Test
+    fun `a release build talks HTTPS only and trusts the authorities of the system and of the user`() {
+        assertEquals("@xml/network_security_config", application.getAttributeNS(ANDROID, "networkSecurityConfig"))
+
+        val release = xml("src/main/res/xml/network_security_config.xml")
+        assertEquals("false", release.elements("base-config").single().getAttribute("cleartextTrafficPermitted"))
+        assertEquals(listOf("system", "user"), release.elements("certificates").map { it.getAttribute("src") })
+        assertEquals(emptyList<Element>(), release.elements("domain-config"))
+    }
+
+    @Test
+    fun `a debug build also talks plain http and trusts what a release build trusts`() {
+        val debug = xml("src/debug/res/xml/network_security_config.xml")
+
+        assertEquals("true", debug.elements("base-config").single().getAttribute("cleartextTrafficPermitted"))
+        assertEquals(listOf("system", "user"), debug.elements("certificates").map { it.getAttribute("src") })
     }
 
     private companion object {
