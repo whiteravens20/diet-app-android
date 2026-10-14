@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -61,7 +62,7 @@ class MealPlanRepositoryTest {
     private fun repository(cache: CacheDao): MealPlanRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return MealPlanRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config)), json), cache, json)
+        return MealPlanRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), cache, json)
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))

@@ -2,6 +2,7 @@
 <!-- Wording mirrors the web app's messages/pl.json wherever a key exists there. -->
 <resources>
     <string name="app_name">Diet App</string>
+    <string name="api_language">pl</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Panel</string>

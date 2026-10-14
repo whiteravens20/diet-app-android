@@ -17,6 +17,7 @@ import net.whiteravens.dietapp.data.auth.TokenAuthenticator
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
+import net.whiteravens.dietapp.data.remote.ClientHeaders
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.RefreshApiService
 import okhttp3.Dispatcher
@@ -55,9 +56,10 @@ object AppModule {
     @Provides
     @Singleton
     @Unauthenticated
-    fun baseOkHttp(baseUrlInterceptor: BaseUrlInterceptor): OkHttpClient =
+    fun baseOkHttp(baseUrlInterceptor: BaseUrlInterceptor, clientHeaders: ClientHeaders): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(baseUrlInterceptor)
+            .addInterceptor(clientHeaders)
             .apply {
                 if (BuildConfig.DEBUG) {
                     // BASIC, not BODY — response bodies and auth headers carry tokens.

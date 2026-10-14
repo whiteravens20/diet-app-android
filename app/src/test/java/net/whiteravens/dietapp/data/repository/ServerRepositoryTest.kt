@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.ServerVersion
+import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -45,7 +46,7 @@ class ServerRepositoryTest {
     private fun repository(): ServerRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return ServerRepository(AppModule.authApi(AppModule.baseOkHttp(BaseUrlInterceptor(config)), json))
+        return ServerRepository(AppModule.authApi(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json))
     }
 
     private fun asked(): ServerVersion {

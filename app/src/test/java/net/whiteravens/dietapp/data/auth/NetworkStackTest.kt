@@ -2,7 +2,9 @@
 
 package net.whiteravens.dietapp.data.auth
 
+import android.content.Context
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -10,11 +12,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.AuthTokens
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
+import net.whiteravens.dietapp.data.remote.ClientHeaders
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
@@ -34,6 +38,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.SynchronousQueue
@@ -96,8 +101,10 @@ class NetworkStackTest {
         }
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
+        val context = mockk<Context>()
+        every { context.getString(R.string.api_language) } returns "pl"
 
-        val plain = AppModule.baseOkHttp(BaseUrlInterceptor(config)).newBuilder()
+        val plain = AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context)).newBuilder()
             .dispatcher(CallDispatcher(threads))
             .build()
         val authenticator = TokenAuthenticator(tokens, sessionEnd, AppModule.refreshApi(plain, json), json)
@@ -269,6 +276,34 @@ class NetworkStackTest {
 
             assertEquals("$requests at once", List(requests) { true }, answered)
             assertEquals("$requests at once", 1, refreshes.get())
+        }
+    }
+
+    @Test
+    fun `every request says which app it is, its language and the user's day, signing in and refreshing included`() {
+        val asked = Collections.synchronizedList(mutableListOf<RecordedRequest>())
+        val refreshing = backend({ answer("auth-refresh") })
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                asked += request
+                return when (request.path) {
+                    "/api/auth/login" -> answer("auth-login")
+                    else -> refreshing.dispatch(request)
+                }
+            }
+        }
+        val stack = stack(aRunOutSession())
+
+        runBlocking {
+            apiCall(json) { stack.auth.login(LoginRequest("ala@example.test", "A-long-password-1")) }
+            apiCall(json) { stack.api.me() }
+        }
+
+        assertEquals(setOf("/api/auth/login", "/api/users/me", "/api/auth/refresh"), asked.map { it.path }.toSet())
+        for (request in asked) {
+            assertEquals(request.path, ClientHeaders.USER_AGENT, request.getHeader("User-Agent"))
+            assertEquals(request.path, "pl", request.getHeader("Accept-Language"))
+            assertEquals(request.path, LocalDate.now().toString(), request.getHeader("X-Client-Date"))
         }
     }
 
