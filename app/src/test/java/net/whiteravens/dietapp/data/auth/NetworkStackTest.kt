@@ -301,7 +301,8 @@ class NetworkStackTest {
 
         assertEquals(setOf("/api/auth/login", "/api/users/me", "/api/auth/refresh"), asked.map { it.path }.toSet())
         for (request in asked) {
-            assertEquals(request.path, ClientHeaders.USER_AGENT, request.getHeader("User-Agent"))
+            assertEquals(request.path, ClientHeaders.userAgent, request.getHeader("User-Agent"))
+            assertTrue(request.path, request.getHeader("User-Agent")!!.startsWith("DietApp-Android/"))
             assertEquals(request.path, "pl", request.getHeader("Accept-Language"))
             assertEquals(request.path, LocalDate.now().toString(), request.getHeader("X-Client-Date"))
         }
