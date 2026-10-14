@@ -7,6 +7,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
+import net.whiteravens.dietapp.data.local.readOrDrop
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.MealPlanDto
@@ -31,14 +32,14 @@ class MealPlanRepository @Inject constructor(
 ) {
     /** Cached plans, newest sync first; empty until the first [refresh]. */
     suspend fun cachedPlans(profileId: String): List<MealPlan> =
-        cache.mealPlans(profileId).map { row ->
-            json.decodeFromString<MealPlanDto>(row.json).toDomain(syncedAt = row.syncedAt)
-        }
+        cache.mealPlans(profileId).mapNotNull { row -> read(row) }
 
     /** One cached plan by id, or null before it was ever fetched. */
-    suspend fun cachedPlan(id: String): MealPlan? =
-        cache.mealPlan(id)?.let { row ->
-            json.decodeFromString<MealPlanDto>(row.json).toDomain(syncedAt = row.syncedAt)
+    suspend fun cachedPlan(id: String): MealPlan? = cache.mealPlan(id)?.let { row -> read(row) }
+
+    private suspend fun read(row: CachedMealPlan): MealPlan? =
+        readOrDrop({ json.decodeFromString<MealPlanDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
+            cache.deleteMealPlan(row.id)
         }
 
     /** Fetch one plan from the API and mirror it. Throws when offline. */

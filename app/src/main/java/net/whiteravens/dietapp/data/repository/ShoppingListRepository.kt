@@ -7,6 +7,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedShoppingList
+import net.whiteravens.dietapp.data.local.readOrDrop
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GenerateShoppingListRequest
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
@@ -29,15 +30,15 @@ class ShoppingListRepository @Inject constructor(
     private val json: Json,
 ) {
     /** The cached copy, or null before the first [refresh]. */
-    suspend fun cached(id: String): ShoppingList? =
-        cache.shoppingList(id)?.let { row ->
-            json.decodeFromString<ShoppingListDto>(row.json).toDomain(syncedAt = row.syncedAt)
-        }
+    suspend fun cached(id: String): ShoppingList? = cache.shoppingList(id)?.let { row -> read(row) }
 
     /** Cached lists for a plan, newest sync first; empty until first fetch. */
     suspend fun cachedForPlan(planId: String): List<ShoppingList> =
-        cache.shoppingListsForPlan(planId).map { row ->
-            json.decodeFromString<ShoppingListDto>(row.json).toDomain(syncedAt = row.syncedAt)
+        cache.shoppingListsForPlan(planId).mapNotNull { row -> read(row) }
+
+    private suspend fun read(row: CachedShoppingList): ShoppingList? =
+        readOrDrop({ json.decodeFromString<ShoppingListDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
+            cache.deleteShoppingList(row.id)
         }
 
     /** Fetch a plan's lists from the API and mirror them. Throws when offline. */

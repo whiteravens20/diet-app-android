@@ -16,9 +16,10 @@ import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.testing.fixture
-import net.whiteravens.dietapp.testing.knownDefect
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -35,14 +36,19 @@ class MealPlansViewModelTest {
     @After
     fun reset() = Dispatchers.resetMain()
 
-    /** The cache as it is on the device: the plans of [plans], and no lists. */
+    /** The cache as it is on the device: the plans of [plans], and no lists. It keeps what was dropped. */
     private class Cache(private val plans: List<CachedMealPlan>) : CacheDao {
+        val dropped = mutableListOf<String>()
         override suspend fun upsertMealPlan(plan: CachedMealPlan) = Unit
         override suspend fun mealPlans(profileId: String) = plans
         override suspend fun mealPlan(id: String) = plans.firstOrNull { it.id == id }
+        override suspend fun deleteMealPlan(id: String) {
+            dropped += id
+        }
         override suspend fun upsertShoppingList(list: CachedShoppingList) = Unit
         override suspend fun shoppingList(id: String): CachedShoppingList? = null
         override suspend fun shoppingListsForPlan(planId: String) = emptyList<CachedShoppingList>()
+        override suspend fun deleteShoppingList(id: String) = Unit
     }
 
     /**
@@ -51,25 +57,26 @@ class MealPlansViewModelTest {
      * all the screen has.
      */
     @Test
-    fun `a cached plan the classes cannot read is left out, and the screen goes on without it`() = knownDefect(
-        "a cached row is decoded outside the error handling, and what it throws stops the application",
-    ) {
+    fun `a cached plan the classes cannot read is left out, and the screen goes on without it`() {
         val profile = json.decodeFromString<List<ProfileDto>>(fixture("profiles")).first()
         val api = mockk<DietApiService>()
         coEvery { api.profiles() } returns listOf(profile)
         coEvery { api.mealPlans(any()) } throws IOException("no network")
         val unreadable = CachedMealPlan("plan", profile.id, """{"id":"plan"}""", 1L)
+        val cache = Cache(listOf(unreadable))
 
         var escaped: Throwable? = null
         val before = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { _, e -> escaped = e }
         val model = try {
-            MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, Cache(listOf(unreadable)), json))
+            MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, cache, json))
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(before)
         }
 
         assertNull(escaped)
         assertFalse(model.state.value.loading)
+        assertEquals(emptyList<MealPlan>(), model.state.value.plans)
+        assertEquals(listOf("plan"), cache.dropped)
     }
 }
