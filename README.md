@@ -51,7 +51,7 @@ screen comes from the backend.
 
 There is no published build yet, so the APK is built from source. You need Android
 Studio, or the Android SDK with JDK 17 or newer, and a device or emulator with Android
-8.0 (API 26) or newer.
+10 (API 29) or newer.
 
 ```bash
 git clone https://github.com/whiteravens20/diet-app-android

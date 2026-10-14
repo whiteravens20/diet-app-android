@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "net.whiteravens.dietapp"
-        minSdk = 26
+        minSdk = 29
         targetSdk = 36
         versionCode = 1
         versionName = "0.0.0"
