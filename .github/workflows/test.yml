@@ -39,3 +39,16 @@ jobs:
       # local server, the screens' view models: on the JVM, no device needed.
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
+
+      # Android Lint fails the job on an error; its warnings are in the report.
+      - name: Lint
+        run: ./gradlew lintDebug
+
+      - name: Upload the lint report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 14
