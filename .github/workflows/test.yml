@@ -9,6 +9,9 @@ on:
     branches: [main, dev]
   pull_request:
     branches: [main, dev]
+  # Started by dependency-metadata.yml on the commit it adds to a pull request, which
+  # starts no workflow by itself.
+  workflow_dispatch:
 
 permissions:
   contents: read
