@@ -12,9 +12,9 @@ import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
 
-/** A text of the app's, in the language the device runs in. */
-fun text(@StringRes id: Int): String =
-    InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
+/** A text of the app's, in the language the device runs in, with [args] put in. */
+fun text(@StringRes id: Int, vararg args: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
 /** Waits until something on the screen shows [shown], as a person waits for a screen to load. */
 fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000) {
