@@ -2,32 +2,33 @@
 
 package net.whiteravens.dietapp.data.repository
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
-import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Session lifecycle. Sign-in persists the token pair; from then on the
  * authenticated client attaches and refreshes tokens transparently. Sign-out
- * revokes the refresh token (best-effort), then clears tokens and the offline
- * cache — cached plans belong to the account, not the device.
+ * ends the session on the device at once ([SessionEnd]: the offline cache, then
+ * the tokens) and revokes it on the server; a revocation that cannot reach the
+ * server is kept and tried again at the next start ([retryRevocation]).
  */
 @Singleton
 class AuthRepository @Inject constructor(
     private val authApi: AuthApiService,
     private val tokens: TokenStore,
-    private val db: CacheDatabase,
+    private val sessionEnd: SessionEnd,
     private val json: Json,
 ) {
     /** Reactive sign-in state — drives the auth vs. main navigation graph. */
@@ -44,11 +45,23 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun signOut() {
-        tokens.current()?.let { session ->
-            // Best-effort revocation; a dead network must not block local sign-out.
-            runCatching { authApi.logout(RefreshRequest(session.refreshToken)) }
+        // Kept before anything else, so that a revocation cut short is still tried again.
+        tokens.current()?.let { session -> tokens.setPendingRevocation(session.refreshToken) }
+        sessionEnd.end()
+        retryRevocation()
+    }
+
+    /** Revokes on the server a session signed out of on this device, if one is still waiting for it. */
+    suspend fun retryRevocation() {
+        val refreshToken = tokens.pendingRevocation() ?: return
+        try {
+            authApi.logout(RefreshRequest(refreshToken))
+            tokens.setPendingRevocation(null)
+        } catch (e: HttpException) {
+            // The server refused it: the token is no good any more, which is what was wanted.
+            tokens.setPendingRevocation(null)
+        } catch (e: IOException) {
+            // Still no server: tried again at the next start.
         }
-        tokens.clear()
-        withContext(Dispatchers.IO) { db.clearAllTables() }
     }
 }

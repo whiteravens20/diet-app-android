@@ -77,6 +77,7 @@ import kotlin.reflect.KClass
 /**
  * Signed-in state for the root switch (null while the token store loads), and the version
  * of the server, asked when the app starts and again whenever the server's address changes.
+ * At the start, a session signed out of offline is revoked on the server if it can be now.
  */
 @HiltViewModel
 class RootViewModel @Inject constructor(
@@ -94,6 +95,7 @@ class RootViewModel @Inject constructor(
         viewModelScope.launch {
             serverConfig.baseUrl.distinctUntilChanged().collectLatest { server.refresh() }
         }
+        viewModelScope.launch { auth.retryRevocation() }
     }
 }
 

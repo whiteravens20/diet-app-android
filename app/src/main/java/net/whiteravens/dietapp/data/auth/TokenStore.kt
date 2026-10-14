@@ -51,8 +51,18 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
+    /** The refresh token of a session signed out of that the server has not revoked yet, or null. */
+    suspend fun pendingRevocation(): String? = store.data.first()[PENDING_REVOCATION]
+
+    suspend fun setPendingRevocation(refreshToken: String?) {
+        store.edit { prefs ->
+            if (refreshToken == null) prefs.remove(PENDING_REVOCATION) else prefs[PENDING_REVOCATION] = refreshToken
+        }
+    }
+
     private companion object {
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        val PENDING_REVOCATION = stringPreferencesKey("pending_revocation")
     }
 }
