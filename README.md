@@ -4,6 +4,8 @@
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/whiteravens20/diet-app-android/actions/workflows/test.yml/badge.svg)](https://github.com/whiteravens20/diet-app-android/actions)
+[![CodeQL](https://github.com/whiteravens20/diet-app-android/actions/workflows/codeql.yml/badge.svg)](https://github.com/whiteravens20/diet-app-android/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/whiteravens20/diet-app-android/badge)](https://scorecard.dev/viewer/?uri=github.com/whiteravens20/diet-app-android)
 
 The companion app for [**Diet App**](https://github.com/whiteravens20/diet-app), the
 self-hostable diet and meal-planning platform. It signs in to your own Diet App server,
@@ -119,13 +121,26 @@ testers will try the release candidate at the maintainer's request.
 
 **What a change goes through**
 
-- Every push and pull request has to compile into a debug APK and pass the unit tests,
-  which run on the JVM without a device: every call of the client against a copy of the
-  contract the API publishes ([contract/](contract/README.md)), the wire classes against
-  answers a running backend gave, the network stack against a local server, and the
-  screens' view models ([test.yml](.github/workflows/test.yml)). A defect the tests found
-  that the code does not fix yet stays in the suite as a test that passes while the defect
-  is there and fails once it is gone.
+- Every push and pull request has to compile into a debug APK, pass Android Lint without
+  an error and pass the unit tests, which run on the JVM without a device: every call of
+  the client against a copy of the contract the API publishes
+  ([contract/](contract/README.md)), the wire classes against answers a running backend
+  gave, the network stack against a local server, and the screens' view models
+  ([test.yml](.github/workflows/test.yml)). A defect the tests found that the code does
+  not fix yet stays in the suite as a test that passes while the defect is there and fails
+  once it is gone.
+- CodeQL and a Trivy scan of the repository run on every push and pull request, and again
+  every week; Trivy fails the run on a high or critical vulnerability in a version the
+  release build ships. Every action a workflow uses is pinned to a commit: a run fails
+  when a pin is not the commit its version tag names, and the pinned versions are looked
+  up in GitHub's advisory database ([codeql.yml](.github/workflows/codeql.yml),
+  [security.yml](.github/workflows/security.yml)).
+- The graph of every Gradle dependency, the build's own tools included, is handed to
+  GitHub on every push and pull request, so that Dependabot's alerts cover them
+  ([dependency-graph.yml](.github/workflows/dependency-graph.yml)). On a pull request, a
+  dependency review fails when the change brings in a library the release build ships
+  that has a known high-severity vulnerability, or whose licence is not on the list of
+  licences that combine with AGPL-3.0 ([security.yml](.github/workflows/security.yml)).
 - Every dependency and plugin the build downloads is checked against the signing keys and
   checksums in `gradle/verification-metadata.xml`, the Gradle distribution against its
   checksum, and only the versions in the lockfiles resolve. For a Dependabot update a
@@ -135,7 +150,9 @@ testers will try the release candidate at the maintainer's request.
   ([dependency-metadata.yml](.github/workflows/dependency-metadata.yml)).
 - Once a week the copy of the contract is compared with diet-app's `dev`, and the run
   fails when they differ ([contract.yml](.github/workflows/contract.yml)).
-- Commits are signed.
+- Commits are signed, and the [OpenSSF
+  Scorecard](https://scorecard.dev/viewer/?uri=github.com/whiteravens20/diet-app-android)
+  results are public.
 
 **What the maintainer decided and read**
 

@@ -65,9 +65,9 @@ Check a change before sending it:
 ./gradlew lintDebug
 ```
 
-CI builds the debug APK and runs the unit tests on every push and pull request to `main`
-and `dev`. Running the
-app against a backend is described in [running-locally.md](running-locally.md).
+CI builds the debug APK, runs the unit tests and Android Lint on every push and pull
+request to `main` and `dev`. Running the app against a backend is described in
+[running-locally.md](running-locally.md).
 
 ## Roadmap
 
