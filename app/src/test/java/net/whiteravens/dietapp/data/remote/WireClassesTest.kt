@@ -1,0 +1,90 @@
+// Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
+
+package net.whiteravens.dietapp.data.remote
+
+import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.testing.knownDefect
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * What a running backend answered each call of the client, read with the class the client reads it
+ * into and with the application's own JSON settings. An answer the client cannot read is a screen
+ * that shows an error instead of what was asked for.
+ */
+class WireClassesTest {
+    private val json = AppModule.json()
+
+    private inline fun <reified T> read(name: String): T = json.decodeFromString<T>(fixture(name))
+
+    @Test
+    fun `reads what registering, signing in and refreshing answer`() {
+        read<AuthResponse>("auth-register")
+        read<AuthResponse>("auth-login")
+        read<AuthResponse>("auth-refresh")
+    }
+
+    @Test
+    fun `reads the account, its profiles and a profile's calorie target`() {
+        read<SessionUserDto>("users-me")
+        assertEquals(emptyList<ProfileDto>(), read<List<ProfileDto>>("profiles-none"))
+        assertTrue(read<List<ProfileDto>>("profiles").isNotEmpty())
+        read<ProfileDto>("profile")
+        read<CalorieCalculationDto>("profile-calories")
+    }
+
+    @Test
+    fun `reads shopping lists, and a row ticked and unticked`() {
+        assertEquals(emptyList<ShoppingListDto>(), read<List<ShoppingListDto>>("shopping-lists-none"))
+        assertTrue(read<List<ShoppingListDto>>("shopping-lists").isNotEmpty())
+        read<ShoppingListDto>("shopping-list")
+        read<ShoppingListDto>("shopping-list-generate")
+        read<ShoppingListDto>("shopping-item-ticked")
+        read<ShoppingListDto>("shopping-item-unticked")
+    }
+
+    @Test
+    fun `reads a refusal by the code it names, with the fields that failed`() {
+        assertEquals("INVALID_CREDENTIALS", read<ApiErrorDto>("auth-login-wrong-password").error)
+        assertEquals("SESSION_JUST_REFRESHED", read<ApiErrorDto>("auth-refresh-used-token-at-once").error)
+        assertEquals("UNAUTHORIZED", read<ApiErrorDto>("without-a-token").error)
+        val refused = read<ApiErrorDto>("auth-register-weak-password")
+        assertEquals("VALIDATION_FAILED", refused.error)
+        assertTrue(refused.issues.orEmpty().isNotEmpty())
+    }
+
+    @Test
+    fun `reads what the recipe library answers`() = knownDefect(
+        "the class of a recipe requires reuseScore, which the backend no longer sends",
+    ) {
+        read<RecipeSearchPageDto>("recipes")
+        read<RecipeSearchPageDto>("recipes-search")
+        read<RecipeDto>("recipe")
+    }
+
+    @Test
+    fun `reads a plan, a plan just made, and the plan after a swap`() = knownDefect(
+        "the meals of a plan hold recipes, and the class of a recipe requires reuseScore",
+    ) {
+        read<MealPlanDto>("meal-plan")
+        read<MealPlanDto>("meal-plan-generate")
+        read<RebalanceResultDto>("meal-plan-swap-apply")
+    }
+
+    @Test
+    fun `reads the plans of a profile`() = knownDefect(
+        "the client reads an array of whole plans, and the backend answers a page of summaries",
+    ) {
+        read<List<MealPlanDto>>("meal-plans-none")
+        read<List<MealPlanDto>>("meal-plans")
+    }
+
+    @Test
+    fun `reads what signing in answers for an account with two-step sign-in`() = knownDefect(
+        "the client knows no second step: such an account is answered with a challenge, not a session",
+    ) {
+        read<AuthResponse>("auth-login-two-step-account")
+    }
+}
