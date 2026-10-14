@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -79,7 +80,8 @@ class AntiAbuseCheckTest {
         screen.onNodeWithText(text(R.string.auth_name)).performTextInput("Check")
         screen.onNodeWithText(text(R.string.auth_email)).performTextInput("check@example.test")
         screen.onNodeWithText(text(R.string.auth_password)).performTextInput("Check-Test-Passw0rd")
-        screen.onNodeWithText(text(R.string.auth_create_account_button)).performScrollTo().performClick()
+        // The card's title reads the same as its button.
+        screen.onNode(hasText(text(R.string.auth_create_account_button)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_check_title))
         screen.keepScreenshot("sign-up-the-check")
 
