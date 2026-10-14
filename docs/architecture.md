@@ -54,7 +54,7 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 | New API call | `data/remote/DietApiService.kt` and `Dtos.kt` |
 | Caching or offline behaviour | `data/local/` and `data/repository/` |
 | Dependency wiring | `di/AppModule.kt` |
-| Contract change | `Dtos.kt` and [contracts/api-contract.md](contracts/api-contract.md), coordinated with the platform repository |
+| Contract change | `contract/`, then `Dtos.kt` until `ContractTest` passes ([contracts/api-contract.md](contracts/api-contract.md)) |
 
 Check a change before sending it:
 

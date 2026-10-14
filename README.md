@@ -120,11 +120,14 @@ testers will try the release candidate at the maintainer's request.
 **What a change goes through**
 
 - Every push and pull request has to compile into a debug APK and pass the unit tests,
-  which run on the JVM without a device: the wire classes against answers a running
-  backend gave, the network stack against a local server, and the screens' view models
-  ([test.yml](.github/workflows/test.yml)). A defect the tests found that the code does
-  not fix yet stays in the suite as a test that passes while the defect is there and
-  fails once it is gone.
+  which run on the JVM without a device: every call of the client against a copy of the
+  contract the API publishes ([contract/](contract/README.md)), the wire classes against
+  answers a running backend gave, the network stack against a local server, and the
+  screens' view models ([test.yml](.github/workflows/test.yml)). A defect the tests found
+  that the code does not fix yet stays in the suite as a test that passes while the defect
+  is there and fails once it is gone.
+- Once a week the copy of the contract is compared with diet-app's `dev`, and the run
+  fails when they differ ([contract.yml](.github/workflows/contract.yml)).
 - Commits are signed.
 
 **What the maintainer decided and read**
@@ -133,8 +136,6 @@ testers will try the release candidate at the maintainer's request.
   never computes nutrition, calorie targets or meal plans itself.
 - The offline-first MVVM structure and the split between wire DTOs and `domain` models
   were specified by the maintainer.
-- `data/remote/Dtos.kt` mirrors the platform's shared contract and is compared with it
-  by hand.
 
 If something looks wrong, open an issue. For a vulnerability, follow
 [SECURITY.md](SECURITY.md).

@@ -5,9 +5,9 @@ package net.whiteravens.dietapp.data.remote
 import kotlinx.serialization.Serializable
 
 /**
- * Wire DTOs — the Kotlin mirror of the platform's `packages/shared` Zod schemas.
- * Keep these in sync with docs/contracts/api-contract.md; a contract change in
- * the platform repo is a coordinated change here.
+ * Wire DTOs: what the client sends to the API and reads from it. `ContractTest`
+ * holds every call to the copy of the API's contract in contract/; moving to
+ * another version of the API is described in docs/contracts/api-contract.md.
  *
  * Enum-like fields are deliberately kept as `String` (allowed values documented
  * per field) so a value added on the platform never breaks deserialisation —

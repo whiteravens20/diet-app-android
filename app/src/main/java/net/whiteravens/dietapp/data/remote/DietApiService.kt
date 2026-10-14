@@ -11,9 +11,9 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * Retrofit binding for the authenticated Diet App API surface. Endpoints and
- * payload shapes mirror the web platform's contract — see
- * docs/contracts/api-contract.md. Auth endpoints live on [AuthApiService].
+ * Retrofit binding for the authenticated Diet App API surface. Every call is
+ * held to the copy of the API's contract in contract/ (docs/contracts/api-contract.md).
+ * Auth endpoints live on [AuthApiService].
  */
 interface DietApiService {
 

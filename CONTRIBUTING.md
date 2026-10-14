@@ -27,9 +27,9 @@ cd diet-app-android
   repository that reads the Room cache first and refreshes from the API.
 - **The backend is the authority.** The app renders API data; it never computes
   nutrition itself.
-- **API DTOs** mirror the platform contract — see
-  [docs/contracts/api-contract.md](docs/contracts/api-contract.md). A contract change is
-  coordinated with the [`diet-app`](https://github.com/whiteravens20/diet-app) repo.
+- **API DTOs** are checked against a copy of the contract the
+  [`diet-app`](https://github.com/whiteravens20/diet-app) API publishes; moving to another
+  version of it is described in [docs/contracts/api-contract.md](docs/contracts/api-contract.md).
 - **AI-assisted code** — most of this project is written with AI coding tools, as the
   [README](README.md#how-the-code-is-written-and-checked) describes, and contributions may
   be too. Do not submit AI output that you cannot explain and defend in review: read it,
