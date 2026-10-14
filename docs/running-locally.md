@@ -60,7 +60,7 @@ backend host are on the same network and any host firewall allows port 4000.
 
 ## On-demand cloud build
 
-No local toolchain? Trigger the **Build APK** workflow
+No local toolchain? Trigger the **Build debug APK** workflow
 (`.github/workflows/build-apk.yml`, `workflow_dispatch`) from the Actions tab and
 download the `diet-app-debug-apk` artifact.
 
@@ -109,7 +109,9 @@ Command-line equivalent (PowerShell, from the repo root):
 
 ## Just build the APK (no local toolchain at all)
 
-Trigger the **Build APK** workflow (Actions tab → *Build APK* → *Run workflow*) and
+Trigger the **Build debug APK** workflow (Actions tab → *Build debug APK* → *Run workflow*) and
 download the `diet-app-debug-apk` artifact — a ready-to-install debug APK. Install it
 on a phone with `adb install -r app-debug.apk` (or copy it over and open it), then
-point it at your backend from the login screen's **Server** button.
+point it at your backend from the login screen's **Server** button. Each run signs the
+APK with a debug key of its own, so a copy from another run does not install over it:
+uninstall the app first.

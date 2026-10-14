@@ -55,7 +55,7 @@ cd diet-app-android
 ./gradlew assembleDebug            # -> app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Without a local toolchain, run the **Build APK** workflow in your fork and download the
+Without a local toolchain, run the **Build debug APK** workflow in your fork and download the
 `diet-app-debug-apk` artifact.
 
 ## Run

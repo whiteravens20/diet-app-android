@@ -1,8 +1,11 @@
-# ── On-demand APK build ───────────────────────────────────────────────────────
-# Manually triggered (Actions → "Build APK" → Run workflow, pick the branch —
-# normally `dev`). Produces an unsigned debug APK as a workflow artifact.
-# Release signing is out of scope until a signing key exists (see SECURITY.md).
-name: Build APK
+# ── Debug APK on demand ───────────────────────────────────────────────────────
+# Manually triggered (Actions → "Build debug APK" → Run workflow, pick the branch —
+# normally `dev`). Hands out the debug build as a workflow artifact, for trying the
+# app: it is debuggable, talks to a server over plain HTTP as well as HTTPS, logs
+# the line of every request it sends, and is signed with a debug key made for this
+# run, so it does not install over a copy that another run built. A release build
+# comes once a signing key exists (see SECURITY.md).
+name: Build debug APK
 
 on:
   workflow_dispatch:
