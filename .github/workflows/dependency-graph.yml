@@ -1,0 +1,46 @@
+# ── Dependency graph ──────────────────────────────────────────────────────────
+# GitHub learns the app's Gradle dependencies only from a graph the build hands
+# it: without one, Dependabot raises no alert for a library of the app and the
+# dependency review of a pull request sees none. This workflow resolves every
+# configuration and keeps the graph as an artifact; Dependency graph submission
+# sends it on, so that nothing here runs with a token that can write.
+#
+# What the release build ships is marked runtime, everything else (the build's
+# own tools, the tests) development. The plugin that writes the graph is added
+# by the action and is not in gradle/verification-metadata.xml, so a failed
+# verification is reported here rather than stopping the run: nothing is built
+# but the graph, and CI checks every download strictly.
+name: Dependency graph
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  graph:
+    name: Write the dependency graph
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Write the dependency graph
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        env:
+          DEPENDENCY_GRAPH_RUNTIME_INCLUDE_CONFIGURATIONS: releaseRuntimeClasspath
+        with:
+          dependency-graph: generate-and-upload
+          additional-arguments: --dependency-verification=lenient
