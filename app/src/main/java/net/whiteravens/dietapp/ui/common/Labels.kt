@@ -89,6 +89,11 @@ fun errorMessage(error: Throwable): String = when (error) {
         "NO_ELIGIBLE_RECIPE" -> stringResource(R.string.error_no_eligible_recipe)
         "CUSTOM_MEAL_NOT_SWAPPABLE" -> stringResource(R.string.error_custom_meal_not_swappable)
         "PLAN_CHANGED" -> stringResource(R.string.error_plan_changed)
+        "INVALID_SECOND_FACTOR_CODE" -> stringResource(R.string.error_invalid_second_factor_code)
+        "TOO_MANY_ATTEMPTS" -> error.retryAfterSeconds
+            ?.let { stringResource(R.string.error_too_many_attempts_wait, it) }
+            ?: stringResource(R.string.error_too_many_attempts)
+        "TURNSTILE_FAILED" -> stringResource(R.string.error_turnstile_failed)
         else -> error.message.ifBlank { stringResource(R.string.error_generic) }
     }
     is IOException -> stringResource(R.string.error_network)

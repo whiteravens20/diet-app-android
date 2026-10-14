@@ -38,6 +38,27 @@ object Instance {
         return Account(email, password, displayName, accessToken)
     }
 
+    /**
+     * Switches two-step sign-in on for [account], as the web application's settings do, with the
+     * code an authenticator app would show; answers the recovery codes the API gives once.
+     */
+    fun switchSecondStepOn(account: Account): List<String> {
+        val setup = call(
+            "POST",
+            "users/me/second-factor/setup",
+            JSONObject().put("currentPassword", account.password),
+            token = account.accessToken,
+        )
+        val codes = call(
+            "POST",
+            "users/me/second-factor",
+            JSONObject().put("enrolment", setup.getString("enrolment")).put("code", totp(setup.getString("secret"))),
+            token = account.accessToken,
+            expect = 201,
+        ).getJSONArray("recoveryCodes")
+        return (0 until codes.length()).map { codes.getString(it) }
+    }
+
     /** A profile of [account] with what the web application's form asks for, and the rest left to the API. */
     fun newProfile(account: Account, name: String = "Me"): String =
         call(

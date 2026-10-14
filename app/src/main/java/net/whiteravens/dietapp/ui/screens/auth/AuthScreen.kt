@@ -39,6 +39,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.components.AntiAbuseCheckDialog
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -59,6 +60,18 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     val state by viewModel.state.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
+    val checkSiteKey by viewModel.checkSiteKey.collectAsState()
+
+    val siteKey = checkSiteKey
+    if (state.awaitingCheck != null && siteKey != null) {
+        AntiAbuseCheckDialog(
+            siteKey = siteKey,
+            serverUrl = serverUrl,
+            onToken = viewModel::checkSolved,
+            onFailed = viewModel::checkFailed,
+            onDismiss = viewModel::checkDismissed,
+        )
+    }
 
     if (showServerDialog) {
         ServerUrlDialog(
@@ -96,6 +109,16 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
             modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
         )
         ServerVersionNotice(serverVersion, Modifier.padding(bottom = 16.dp))
+
+        if (state.secondStep != null) {
+            SecondStepCard(
+                busy = state.busy,
+                error = state.error,
+                onSubmit = viewModel::answerSecondStep,
+                onBack = viewModel::leaveSecondStep,
+            )
+            return@Column
+        }
 
         AppCard(Modifier.fillMaxWidth()) {
             Text(
@@ -141,6 +164,9 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 )
             }
             state.error?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 12.dp)) }
+            if (state.checkFailed) {
+                ErrorBanner(stringResource(R.string.error_turnstile_failed), Modifier.padding(top = 12.dp))
+            }
             Button(
                 onClick = {
                     if (registerMode) viewModel.register(email, password, displayName)
@@ -181,6 +207,59 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+/** The second step of a sign-in: a code from the authenticator app, or a recovery code. */
+@Composable
+private fun SecondStepCard(
+    busy: Boolean,
+    error: Throwable?,
+    onSubmit: (String) -> Unit,
+    onBack: () -> Unit,
+) {
+    var code by rememberSaveable { mutableStateOf("") }
+    AppCard(Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.auth_second_step_title),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        Text(
+            stringResource(R.string.auth_second_step_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
+        OutlinedTextField(
+            value = code,
+            onValueChange = { code = it },
+            label = { Text(stringResource(R.string.auth_code)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        error?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 12.dp)) }
+        Button(
+            onClick = { onSubmit(code) },
+            enabled = !busy && code.isNotBlank(),
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        ) {
+            if (busy) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            } else {
+                Text(stringResource(R.string.auth_sign_in_button))
+            }
+        }
+        TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
+            Text(stringResource(R.string.common_back))
         }
     }
 }

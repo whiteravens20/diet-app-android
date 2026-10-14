@@ -50,7 +50,10 @@ class ServerVersionTest {
         elsewhere.enqueue(
             MockResponse()
                 .setHeader("Content-Type", "application/json")
-                .setBody("""{"instance":{"supportUrl":null,"operatorContact":null,"version":"0.0.1"}}"""),
+                .setBody(
+                    """{"instance":{"supportUrl":null,"operatorContact":null,"version":"0.0.1"},""" +
+                        """"turnstile":{"enabled":false,"siteKey":null}}""",
+                ),
         )
         elsewhere.start()
 

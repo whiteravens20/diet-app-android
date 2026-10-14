@@ -18,8 +18,13 @@ interface AuthApiService {
     @GET("config")
     suspend fun config(): PublicConfigDto
 
+    /** A session, or for an account with two-step sign-in a challenge for [loginSecondFactor]. */
     @POST("auth/login")
-    suspend fun login(@Body body: LoginRequest): AuthResponse
+    suspend fun login(@Body body: LoginRequest): LoginResponseDto
+
+    /** The second step of signing in: the challenge [login] answered, with a code. */
+    @POST("auth/login/second-factor")
+    suspend fun loginSecondFactor(@Body body: SecondFactorSignInRequest): AuthResponse
 
     @POST("auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse

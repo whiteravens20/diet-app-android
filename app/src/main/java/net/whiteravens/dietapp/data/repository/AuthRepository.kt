@@ -11,7 +11,9 @@ import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
+import net.whiteravens.dietapp.data.remote.SecondFactorSignInRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.domain.SignInResult
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -34,13 +36,27 @@ class AuthRepository @Inject constructor(
     /** Reactive sign-in state — drives the auth vs. main navigation graph. */
     val isSignedIn: Flow<Boolean> = tokens.session.map { it != null }
 
-    suspend fun signIn(email: String, password: String) {
-        val response = apiCall(json) { authApi.login(LoginRequest(email, password)) }
+    /**
+     * Signs in with a password, and with [checkToken], the anti-abuse check's answer, where the
+     * server asks for the check. An account with two-step sign-in is answered with a second step.
+     */
+    suspend fun signIn(email: String, password: String, checkToken: String? = null): SignInResult {
+        val answer = apiCall(json) { authApi.login(LoginRequest(email, password, checkToken)) }
+        answer.secondFactor?.let { return SignInResult.SecondStep(it.challenge) }
+        tokens.save(checkNotNull(answer.tokens) { "A sign-in answered neither a session nor a second step" })
+        return SignInResult.SignedIn
+    }
+
+    /** Answers a sign-in's second step with a code from the authenticator app or a recovery code. */
+    suspend fun answerSecondStep(challenge: String, code: String) {
+        val response = apiCall(json) {
+            authApi.loginSecondFactor(SecondFactorSignInRequest(challenge, code.filterNot(Char::isWhitespace)))
+        }
         tokens.save(response.tokens)
     }
 
-    suspend fun register(email: String, password: String, displayName: String) {
-        val response = apiCall(json) { authApi.register(RegisterRequest(email, password, displayName)) }
+    suspend fun register(email: String, password: String, displayName: String, checkToken: String? = null) {
+        val response = apiCall(json) { authApi.register(RegisterRequest(email, password, displayName, checkToken)) }
         tokens.save(response.tokens)
     }
 

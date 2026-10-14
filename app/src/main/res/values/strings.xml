@@ -37,6 +37,10 @@
     <string name="auth_password">Password</string>
     <string name="auth_password_rules">At least 12 characters, with upper- and lowercase letters and a digit.</string>
     <string name="auth_sign_in_button">Sign in</string>
+    <string name="auth_second_step_title">Two-step sign-in</string>
+    <string name="auth_second_step_body">Enter the code your authenticator app shows, or one of your recovery codes.</string>
+    <string name="auth_code">Code</string>
+    <string name="auth_check_title">A quick check</string>
     <string name="auth_create_account_button">Create account</string>
     <string name="auth_no_account">No account yet? Create one</string>
     <string name="auth_has_account">Already have an account? Sign in</string>
@@ -168,6 +172,10 @@
     <!-- API error codes (same wording as the web client) -->
     <string name="error_generic">Something unexpected happened. Please try again.</string>
     <string name="error_network">Could not reach the server. Check your connection.</string>
+    <string name="error_invalid_second_factor_code">That code is not right. Codes change every half a minute, and each works once.</string>
+    <string name="error_too_many_attempts">Too many failed sign-ins. Wait a moment before you try again.</string>
+    <string name="error_too_many_attempts_wait">Too many failed sign-ins. Try again in %1$d s.</string>
+    <string name="error_turnstile_failed">Anti-abuse check failed. Please try again.</string>
     <string name="error_plan_changed">The plan changed in the meantime and was loaded again.</string>
     <string name="error_validation">Some fields need attention.</string>
     <string name="error_invalid_credentials">Email or password is incorrect.</string>

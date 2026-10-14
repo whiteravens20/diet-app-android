@@ -4,8 +4,9 @@ package net.whiteravens.dietapp.data.remote
 
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.fixture
-import net.whiteravens.dietapp.testing.knownDefect
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -22,7 +23,7 @@ class WireClassesTest {
     @Test
     fun `reads what registering, signing in and refreshing answer`() {
         read<AuthResponse>("auth-register")
-        read<AuthResponse>("auth-login")
+        assertNotNull(read<LoginResponseDto>("auth-login").tokens)
         read<AuthResponse>("auth-refresh")
     }
 
@@ -77,9 +78,9 @@ class WireClassesTest {
     }
 
     @Test
-    fun `reads what signing in answers for an account with two-step sign-in`() = knownDefect(
-        "the client knows no second step: such an account is answered with a challenge, not a session",
-    ) {
-        read<AuthResponse>("auth-login-two-step-account")
+    fun `reads what signing in answers for an account with two-step sign-in, a challenge and no session`() {
+        val answer = read<LoginResponseDto>("auth-login-two-step-account")
+        assertNotNull(answer.secondFactor)
+        assertNull(answer.tokens)
     }
 }

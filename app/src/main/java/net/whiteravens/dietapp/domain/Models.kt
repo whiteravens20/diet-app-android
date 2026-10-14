@@ -193,3 +193,11 @@ sealed interface ServerVersion {
     /** An answer the app cannot read: a version it does not support. */
     data object Unsupported : ServerVersion
 }
+
+/** What a sign-in came to: a session, or the second step an account with two-step sign-in asks for. */
+sealed interface SignInResult {
+    data object SignedIn : SignInResult
+
+    /** [challenge] is answered with a code from the authenticator app or a recovery code. */
+    data class SecondStep(val challenge: String) : SignInResult
+}

@@ -32,20 +32,38 @@ data class ApiErrorDto(
 
 // ── Config (GET /config) ────────────────────────────────────────────────────
 
-/** What the instance tells anybody, signed in or not; the app reads its version from it. */
+/** What the instance tells anybody, signed in or not: its version, and whether it asks for the anti-abuse check. */
 @Serializable
-data class PublicConfigDto(val instance: InstanceDto)
+data class PublicConfigDto(val instance: InstanceDto, val turnstile: TurnstileDto)
+
+/** Cloudflare Turnstile: on or off, and the site key a page shows the check with. */
+@Serializable
+data class TurnstileDto(val enabled: Boolean, val siteKey: String? = null)
 
 @Serializable
 data class InstanceDto(val version: String)
 
 // ── Auth (packages/shared/src/auth.ts) ──────────────────────────────────────
 
+/** [turnstileToken]: the anti-abuse check's answer, where the instance has the check on. */
 @Serializable
-data class LoginRequest(val email: String, val password: String)
+data class LoginRequest(val email: String, val password: String, val turnstileToken: String? = null)
 
 @Serializable
-data class RegisterRequest(val email: String, val password: String, val displayName: String)
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val displayName: String,
+    val turnstileToken: String? = null,
+)
+
+/** POST `/auth/login/second-factor`: the sign-in's challenge, with a code from the authenticator app or a recovery code. */
+@Serializable
+data class SecondFactorSignInRequest(val challenge: String, val code: String)
+
+/** The second step of a sign-in: the challenge to answer, and for how many seconds it holds. */
+@Serializable
+data class SecondFactorChallengeDto(val challenge: String, val expiresIn: Double)
 
 @Serializable
 data class RefreshRequest(val refreshToken: String)
@@ -53,9 +71,10 @@ data class RefreshRequest(val refreshToken: String)
 @Serializable
 data class AuthTokens(
     val accessToken: String,
+    /** Always in the answer to a client that does not ask for it as a cookie, as this one never does. */
     val refreshToken: String,
     /** Access-token TTL, seconds. */
-    val expiresIn: Int,
+    val expiresIn: Double,
 )
 
 @Serializable
@@ -68,9 +87,20 @@ data class AuthUser(
     val emailVerified: Boolean,
 )
 
-/** Returned by login / register / refresh alike. */
+/** Returned by register, refresh and the second step of a sign-in. */
 @Serializable
 data class AuthResponse(val user: AuthUser, val tokens: AuthTokens)
+
+/**
+ * `POST /auth/login` answers one of two shapes: a session ([user] and [tokens]), or, for an
+ * account with two-step sign-in, a challenge ([secondFactor]) to answer with a code.
+ */
+@Serializable
+data class LoginResponseDto(
+    val user: AuthUser? = null,
+    val tokens: AuthTokens? = null,
+    val secondFactor: SecondFactorChallengeDto? = null,
+)
 
 // ── Session user & settings (packages/shared/src/settings.ts) ───────────────
 

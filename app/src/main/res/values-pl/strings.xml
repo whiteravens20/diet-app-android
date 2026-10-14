@@ -36,6 +36,10 @@
     <string name="auth_password">Hasło</string>
     <string name="auth_password_rules">Co najmniej 12 znaków, wielka i mała litera oraz cyfra.</string>
     <string name="auth_sign_in_button">Zaloguj się</string>
+    <string name="auth_second_step_title">Logowanie dwuetapowe</string>
+    <string name="auth_second_step_body">Wpisz kod z aplikacji uwierzytelniającej albo jeden z kodów odzyskiwania.</string>
+    <string name="auth_code">Kod</string>
+    <string name="auth_check_title">Krótkie sprawdzenie</string>
     <string name="auth_create_account_button">Załóż konto</string>
     <string name="auth_no_account">Nie masz konta? Załóż je</string>
     <string name="auth_has_account">Masz już konto? Zaloguj się</string>
@@ -169,6 +173,10 @@
     <!-- API error codes (same wording as the web client) -->
     <string name="error_generic">Coś poszło nie tak. Spróbuj ponownie.</string>
     <string name="error_network">Nie można połączyć się z serwerem. Sprawdź połączenie.</string>
+    <string name="error_invalid_second_factor_code">Ten kod jest nieprawidłowy. Kody zmieniają się co pół minuty, a każdy działa tylko raz.</string>
+    <string name="error_too_many_attempts">Zbyt wiele nieudanych prób logowania. Odczekaj chwilę, zanim spróbujesz ponownie.</string>
+    <string name="error_too_many_attempts_wait">Zbyt wiele nieudanych prób logowania. Spróbuj ponownie za %1$d s.</string>
+    <string name="error_turnstile_failed">Weryfikacja chroniąca przed nadużyciami nie powiodła się. Spróbuj ponownie.</string>
     <string name="error_plan_changed">Plan zmienił się w międzyczasie i został wczytany ponownie.</string>
     <string name="error_validation">Niektóre pola wymagają poprawy.</string>
     <string name="error_invalid_credentials">Nieprawidłowy e-mail lub hasło.</string>

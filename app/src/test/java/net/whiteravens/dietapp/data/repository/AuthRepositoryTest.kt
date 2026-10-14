@@ -15,8 +15,13 @@ import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
+import net.whiteravens.dietapp.data.remote.AuthTokens
+import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RefreshRequest
+import net.whiteravens.dietapp.data.remote.SecondFactorSignInRequest
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.SignInResult
+import net.whiteravens.dietapp.testing.fixture
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
@@ -115,6 +120,27 @@ class AuthRepositoryTest {
             cache.clearAllTables()
             tokens.clear()
         }
+    }
+
+    @Test
+    fun `an account with two-step sign-in is asked for a second step, which a code answers with a session`() {
+        val held = Tokens(session = null)
+        val tokens = tokens(held)
+        val saved = mutableListOf<AuthTokens>()
+        coEvery { tokens.save(capture(saved)) } returns Unit
+        val api = mockk<AuthApiService>()
+        coEvery { api.login(any()) } returns json.decodeFromString(fixture("auth-login-two-step-account"))
+        coEvery { api.loginSecondFactor(any()) } returns json.decodeFromString(fixture("auth-login-after"))
+        val auth = AuthRepository(api, tokens, mockk(), json)
+
+        val result = runBlocking { auth.signIn("ala@example.test", "A-long-password-1", checkToken = "check-1") }
+        val challenge = (result as SignInResult.SecondStep).challenge
+        assertEquals(emptyList<AuthTokens>(), saved)
+        runBlocking { auth.answerSecondStep(challenge, " 123 456 ") }
+
+        coVerify { api.login(LoginRequest("ala@example.test", "A-long-password-1", "check-1")) }
+        coVerify { api.loginSecondFactor(SecondFactorSignInRequest(challenge, "123456")) }
+        assertEquals(1, saved.size)
     }
 
     @Test
