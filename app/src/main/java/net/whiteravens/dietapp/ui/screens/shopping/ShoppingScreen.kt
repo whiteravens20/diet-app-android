@@ -160,6 +160,23 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
             }
 
             else -> state.list?.let { list ->
+                if (list.stale) {
+                    item(key = "stale") {
+                        AppCard {
+                            Text(
+                                stringResource(R.string.shopping_stale),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (!state.offline) {
+                                Button(
+                                    onClick = viewModel::generate,
+                                    enabled = !state.generating,
+                                    modifier = Modifier.padding(top = 8.dp),
+                                ) { Text(stringResource(R.string.shopping_stale_update)) }
+                            }
+                        }
+                    }
+                }
                 list.groups.forEach { group ->
                     item(key = "header-${group.category}") {
                         Text(

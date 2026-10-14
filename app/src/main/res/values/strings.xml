@@ -209,6 +209,8 @@
     <string name="plans_conflict_avoided_hint">This recipe is marked to avoid for the profile. Swap the meal.</string>
     <string name="plans_disliked">Rather not</string>
     <string name="plans_disliked_hint">Holds %1$s, which this profile would rather not eat: nothing else fit the meal when it was planned, or the profile came to dislike it since. Swap the meal to change it.</string>
+    <string name="shopping_stale">The plan\'s menu changed after this list was made, so it no longer matches what the plan needs.</string>
+    <string name="shopping_stale_update">Update the list</string>
     <string name="amount_g">%1$s g</string>
     <string name="amount_ml">%1$s ml</string>
     <string name="unit_name_piece">pieces</string>

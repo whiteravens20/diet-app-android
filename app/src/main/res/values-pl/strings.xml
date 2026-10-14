@@ -210,6 +210,8 @@
     <string name="plans_conflict_avoided_hint">Ten przepis jest w profilu oznaczony do unikania. Zamień posiłek.</string>
     <string name="plans_disliked">Nielubiane</string>
     <string name="plans_disliked_hint">Zawiera: %1$s. Ten profil woli tego nie jeść: przy układaniu nic innego nie pasowało do posiłku albo profil dodał to później. Zamień posiłek, żeby to zmienić.</string>
+    <string name="shopping_stale">Jadłospis planu zmienił się po utworzeniu tej listy, więc nie odpowiada już temu, czego plan potrzebuje.</string>
+    <string name="shopping_stale_update">Zaktualizuj listę</string>
     <string name="amount_g">%1$s g</string>
     <string name="amount_ml">%1$s ml</string>
     <string name="unit_name_piece">szt.</string>

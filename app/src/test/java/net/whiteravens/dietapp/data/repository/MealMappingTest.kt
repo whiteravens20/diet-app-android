@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.repository
 
 import net.whiteravens.dietapp.data.remote.MealPlanDto
+import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.testing.fixture
@@ -46,10 +47,12 @@ class MealMappingTest {
     }
 
     @Test
-    fun `a day says where it stands against its target`() {
+    fun `a day says where it stands against its target, and a list says when the plan has changed under it`() {
         val day = plan.days.first().copy(offTarget = "over", belowSafetyFloor = true).toDomain()
+        val list = json.decodeFromString<ShoppingListDto>(fixture("shopping-list")).copy(stale = true).toDomain()
 
         assertEquals("over", day.offTarget)
         assertTrue(day.belowSafetyFloor)
+        assertTrue(list.stale)
     }
 }

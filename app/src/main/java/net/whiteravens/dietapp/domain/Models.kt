@@ -205,6 +205,8 @@ data class ShoppingList(
     val fromDate: String,
     val toDate: String,
     val groups: List<ShoppingGroup>,
+    /** The plan's menu changed after the list was made, so it no longer matches what the plan needs. */
+    val stale: Boolean,
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
 )

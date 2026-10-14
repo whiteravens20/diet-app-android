@@ -207,5 +207,6 @@ fun ShoppingListDto.toDomain(syncedAt: Long? = null) = ShoppingList(
     fromDate = fromDate,
     toDate = toDate,
     groups = groups.map(ShoppingListGroupDto::toDomain),
+    stale = stale,
     syncedAt = syncedAt,
 )
