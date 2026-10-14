@@ -19,7 +19,9 @@ that fixes it takes it off the list. Once a week CI compares the copy with diet-
 ## Moving to another version of the API
 
 1. Copy `docs/api/openapi.json` of the diet-app version the client is to work with into
-   `contract/`, and write that version into `contract/API_VERSION`.
+   `contract/`, and write that version into `contract/API_VERSION`. Write its commit and
+   the digest of its image into `contract/diet-app.env`, read from the registry
+   (`docker buildx imagetools inspect ghcr.io/whiteravens20/diet-app:<tag>`), never typed.
 2. Run `./gradlew testDebugUnitTest`: `ContractTest` names every call that no longer fits.
 3. Change the classes in `data/remote/`, and their mapping into `domain/`, until it passes.
 

@@ -6,7 +6,10 @@ copied from diet-app at the version in `API_VERSION` (from commit `4289e7f`, the
 client with it: the route exists, the body is one the API takes, and the class an answer is
 read into can read what the API answers.
 
+`diet-app.env` names that version's commit and its image, by digest: the screens' tests run
+against an instance of it.
+
 It is moved on purpose, never by itself: copy the file from the version of diet-app the
-client is to work with, change `API_VERSION`, and make the tests pass. Once a week CI
+client is to work with, change `API_VERSION` and `diet-app.env`, and make the tests pass. Once a week CI
 compares this copy with diet-app's `dev` and fails when they differ, so that a change of
 the backend is seen within a week.
