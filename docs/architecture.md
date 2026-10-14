@@ -63,10 +63,12 @@ Check a change before sending it:
 ./gradlew assembleDebug      # needs the Android SDK and JDK 17+
 ./gradlew testDebugUnitTest  # the unit tests, on the JVM
 ./gradlew lintDebug
+./gradlew connectedDebugAndroidTest  # the screens, on an emulator or a phone
 ```
 
 CI builds the debug APK, runs the unit tests and Android Lint on every push and pull
-request to `main` and `dev`. Running the app against a backend is described in
+request to `main` and `dev`, and the screens' tests on an emulator against a diet-app
+instance it starts for them. Running the app against a backend is described in
 [running-locally.md](running-locally.md).
 
 ## Roadmap

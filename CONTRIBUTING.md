@@ -20,6 +20,17 @@ cd diet-app-android
 ./gradlew testDebugUnitTest    # the unit tests, on the JVM
 ```
 
+The screens' tests (`app/src/androidTest/`) open the app on an emulator or a phone and
+sign in to the diet-app instance at the app's address, which they need with its
+catalogue loaded; each test makes the accounts it uses there.
+[`start-diet-app.sh`](.github/scripts/start-diet-app.sh) starts such an instance of the
+version in `contract/diet-app.env`, as CI does, on a machine with Docker. With an emulator
+running beside it:
+
+```bash
+./gradlew connectedDebugAndroidTest
+```
+
 ## Guidelines
 
 - **Kotlin**, official code style; Jetpack Compose for UI; Material 3 for theming.
