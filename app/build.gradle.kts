@@ -1,5 +1,7 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
+import java.time.Duration
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -43,6 +45,16 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        // The tests run on the JVM: an Android call they do not stand in for answers its default.
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
+// A test that waits for something that never comes ends the build instead of holding it.
+tasks.withType<Test>().configureEach {
+    timeout.set(Duration.ofMinutes(10))
 }
 
 kotlin { jvmToolchain(17) }
@@ -78,4 +90,9 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.datastore.preferences)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.mockk)
 }
