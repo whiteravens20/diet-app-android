@@ -35,6 +35,10 @@ jobs:
       - name: Build
         run: ./gradlew assembleDebug
 
+      # The variant a release is made from, shrunk by R8 with the rules in app/proguard-rules.pro.
+      - name: Build the release variant
+        run: ./gradlew assembleRelease
+
       # The wire classes against answers a running backend gave, the network stack against a
       # local server, the screens' view models: on the JVM, no device needed.
       - name: Unit tests
