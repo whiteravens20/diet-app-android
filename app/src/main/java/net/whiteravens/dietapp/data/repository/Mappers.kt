@@ -178,15 +178,6 @@ fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, seen: List<Strin
     seen = seen,
 )
 
-/** What the list of plans shows of a plan that was just made. */
-fun MealPlan.toSummary() = MealPlanSummary(
-    id = id,
-    startDate = startDate,
-    durationDays = durationDays,
-    dietType = dietType,
-    averageDailyNutrition = averageDailyNutrition,
-)
-
 fun ShoppingListItemDto.toDomain() = ShoppingItem(
     id = id,
     name = name,
