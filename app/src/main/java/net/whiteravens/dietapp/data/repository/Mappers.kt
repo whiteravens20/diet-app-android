@@ -118,6 +118,11 @@ fun RecipeDto.toDomain() = Recipe(
     totalMinutes = prepMinutes + cookMinutes,
     difficulty = difficulty,
     nutritionPerServing = nutritionPerServing.toDomain(),
+    byModel = when (byModel) {
+        "written" -> ModelPart.Written
+        "changed" -> ModelPart.Changed
+        else -> null
+    },
 )
 
 fun RecipeSearchPageDto.toDomain() = RecipePage(

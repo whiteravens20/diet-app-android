@@ -506,6 +506,8 @@ data class Recipe(
     /** `easy` | `medium` | `hard`. */
     val difficulty: String,
     val nutritionPerServing: Nutrition,
+    /** What a model had to do with the recipe: wrote it, or changed it; null where nothing. */
+    val byModel: ModelPart?,
 )
 
 /** One page of recipe search results. */

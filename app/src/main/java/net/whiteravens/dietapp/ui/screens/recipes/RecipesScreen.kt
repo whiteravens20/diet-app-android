@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.ui.screens.recipes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,9 +39,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.difficultyLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.EmptyState
@@ -47,6 +51,7 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.modelPartText
 import kotlin.math.roundToInt
 
 /** Searchable, endlessly scrolling recipe catalogue. */
@@ -130,6 +135,8 @@ fun RecipesScreen(
     }
 }
 
+/** A recipe of the list: what it is, what a serving holds and takes, a model's part, its diets. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
     AppCard(onClick = onClick) {
@@ -144,20 +151,24 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
-        Row(
-            modifier = Modifier.padding(top = 8.dp),
+        Text(
+            stringResource(
+                R.string.recipes_card_meta,
+                formatNumber(recipe.nutritionPerServing.calories.roundToInt()),
+                difficultyLabel(recipe.difficulty),
+                formatNumber(recipe.totalMinutes),
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        FlowRow(
+            modifier = Modifier.padding(top = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            LabelChip(
-                stringResource(
-                    R.string.recipes_kcal_per_serving,
-                    recipe.nutritionPerServing.calories.roundToInt(),
-                ),
-            )
-            LabelChip(stringResource(R.string.recipes_minutes, recipe.totalMinutes))
-            LabelChip(difficultyLabel(recipe.difficulty))
-            recipe.mealTypes.firstOrNull()?.let { LabelChip(mealTypeLabel(it)) }
+            recipe.byModel?.let { AiMark(modelPartText(it)) }
+            recipe.dietTags.forEach { LabelChip(dietTypeLabel(it)) }
         }
     }
 }

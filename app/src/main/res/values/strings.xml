@@ -443,9 +443,9 @@
     <!-- Recipes -->
     <string name="recipes_subtitle">A curated recipe library — every calorie computed by the backend.</string>
     <string name="recipes_search_placeholder">Recipe title…</string>
+    <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
     <string name="recipes_empty">No recipes found</string>
     <string name="recipes_empty_body">Try a different search.</string>
-    <string name="recipes_kcal_per_serving">%1$d kcal/serving</string>
     <string name="recipes_minutes">%1$d min</string>
     <string name="recipes_servings">%1$d servings</string>
     <string name="recipes_nutrition_per_serving">Nutrition per serving</string>

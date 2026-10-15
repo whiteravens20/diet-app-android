@@ -480,9 +480,9 @@
     <!-- Recipes -->
     <string name="recipes_subtitle">Wyselekcjonowana biblioteka przepisów — każda kaloria wyliczana przez backend.</string>
     <string name="recipes_search_placeholder">Tytuł przepisu…</string>
+    <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
     <string name="recipes_empty">Brak przepisów</string>
     <string name="recipes_empty_body">Spróbuj innego wyszukiwania.</string>
-    <string name="recipes_kcal_per_serving">%1$d kcal/porcję</string>
     <string name="recipes_minutes">%1$d min</string>
     <string name="recipes_servings">Porcje: %1$d</string>
     <string name="recipes_nutrition_per_serving">Wartości odżywcze na porcję</string>
