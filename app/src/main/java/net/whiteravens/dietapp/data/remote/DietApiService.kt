@@ -37,6 +37,15 @@ interface DietApiService {
     @HTTP(method = "DELETE", path = "users/me", hasBody = true)
     suspend fun deleteAccount(@Body body: DeleteAccountRequest)
 
+    // ── Favourites ──────────────────────────────────────────────────────────
+
+    /** The recipes a profile marked, each with its recipe. */
+    @GET("favorites")
+    suspend fun favorites(@Query("profileId") profileId: String): List<MarkedRecipeDto>
+
+    @GET("favorite-sets")
+    suspend fun favoriteSets(@Query("profileId") profileId: String): List<FavoriteSetDto>
+
     // ── Profiles ────────────────────────────────────────────────────────────
 
     @GET("profiles")

@@ -89,6 +89,7 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
             _rules.value = InstanceRules(
                 maxProfiles = config.accounts.maxProfiles,
                 mailsSent = config.email.enabled,
+                maxRepeatsPerRecipe = config.plans.maxRepeatsPerRecipe,
                 catalogueDepth = config.catalogue.depth.mapValues { (_, byCount) ->
                     byCount.mapNotNull { (count, recipes) -> count.toIntOrNull()?.let { it to recipes } }.toMap()
                 },

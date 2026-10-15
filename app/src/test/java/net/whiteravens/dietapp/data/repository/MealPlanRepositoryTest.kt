@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.data.repository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -14,17 +15,24 @@ import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 /** The plans of a profile, a page at a time, from a local server answering what the backend answered. */
 class MealPlanRepositoryTest {
@@ -108,5 +116,47 @@ class MealPlanRepositoryTest {
         assertEquals(offer.recipeId, sent.getValue("recipeId").jsonPrimitive.content)
         assertEquals(offer.revision, sent.getValue("revision").jsonPrimitive.int)
         assertEquals("random", sent.getValue("strategy").jsonPrimitive.content)
+    }
+
+    @Test
+    fun `a plan is asked for with what differs from the profile alone, its days as the form chose them`() {
+        server.enqueue(answer("meal-plan").setResponseCode(201))
+        val monday = LocalDate.of(2026, 10, 12)
+        val ask = PlanAsk(
+            profileId = "p",
+            startDate = monday,
+            durationDays = 3,
+            mealCount = 4,
+            mealPrepFriendly = true,
+            days = listOf(DayAsk(monday, dayType = "rest", locks = mapOf("breakfast" to "oats")), DayAsk(monday.plusDays(1), skip = true)),
+        )
+
+        runBlocking { repository(Cache()).generate(ask) }
+
+        val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("2026-10-12", body.getValue("startDate").jsonPrimitive.content)
+        assertEquals("4", body.getValue("mealCount").jsonPrimitive.content)
+        assertEquals("true", body.getValue("mealPrepFriendly").jsonPrimitive.content)
+        // Left to the profile: nothing is sent for them.
+        assertFalse("dietType" in body || "calorieTargetOverride" in body || "allowRelaxations" in body)
+        val days = body.getValue("dayOverrides").jsonArray.map { it.jsonObject }
+        assertEquals(setOf("date", "dayType", "lockedSlots"), days[0].keys)
+        assertEquals("oats", days[0].getValue("lockedSlots").jsonArray[0].jsonObject.getValue("recipeId").jsonPrimitive.content)
+        assertEquals(setOf("date", "skip"), days[1].keys)
+    }
+
+    @Test
+    fun `a refusal for limits names them and the meals that would go outside, and no other refusal does`() {
+        val plans = repository(Cache())
+        val details = json.parseToJsonElement(
+            """{"needs":["cook_time","weekly_cap"],"meals":[{"date":"2026-10-12","slot":"lunch","gaveWay":["weekly_cap"]}]}""",
+        ).jsonObject
+
+        val needed = plans.relaxationNeeded(ApiException(422, "PLAN_NEEDS_RELAXATION", "Limits.", details = details))
+
+        assertEquals(listOf("cook_time", "weekly_cap"), needed?.needs)
+        assertEquals(RelaxedMeal(LocalDate.of(2026, 10, 12), "lunch", listOf("weekly_cap")), needed?.meals?.single())
+        assertNull(plans.relaxationNeeded(ApiException(400, "NO_ELIGIBLE_RECIPE", "None.", details = details)))
+        assertNull(plans.relaxationNeeded(ApiException(422, "PLAN_NEEDS_RELAXATION", "Limits.", details = JsonObject(emptyMap()))))
     }
 }

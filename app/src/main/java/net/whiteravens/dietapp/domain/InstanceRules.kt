@@ -12,6 +12,8 @@ data class InstanceRules(
     val catalogueDepth: Map<String, Map<Int, Int>>,
     /** Whether the instance sends mail: a confirmation or a link to set a new password needs it. */
     val mailsSent: Boolean = false,
+    /** The most a recipe repeats in a plan that names no number, where the instance sets one. */
+    val maxRepeatsPerRecipe: Int? = null,
 ) {
     /**
      * How well the catalogue serves [diet] at [mealCount] meals a day, by the meal it has the fewest

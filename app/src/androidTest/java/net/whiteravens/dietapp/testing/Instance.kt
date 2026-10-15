@@ -90,6 +90,10 @@ object Instance {
         return (0 until items.length()).map { items.getJSONObject(it).getString("id") }
     }
 
+    /** What a plan was made with: its options as the API keeps them. */
+    fun planOptions(account: Account, planId: String): JSONObject =
+        call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("options")
+
     /** A plan's first day and how long the plan is: what its card in the list is titled with. */
     fun planStart(account: Account, planId: String): Pair<String, Int> {
         val plan = call("GET", "meal-plans/$planId", token = account.accessToken)

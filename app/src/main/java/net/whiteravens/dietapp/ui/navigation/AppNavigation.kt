@@ -63,6 +63,7 @@ import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
+import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
 import net.whiteravens.dietapp.ui.screens.profiles.CalculatorScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileFormScreen
@@ -87,6 +88,7 @@ import kotlin.reflect.KClass
 @Serializable object ProfilesRoute
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object CalculatorRoute
+@Serializable data class NewPlanRoute(val profileId: String)
 
 /**
  * Signed-in state for the root switch (null while the token store loads), and the version
@@ -220,7 +222,17 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             composable<PlansRoute> {
                 MealPlansScreen(
                     onOpenPlan = { navController.navigate(PlanDetailRoute(it)) },
+                    onNewPlan = { navController.navigate(NewPlanRoute(it)) },
                     onCreateProfile = { navController.navigate(ProfilesRoute) },
+                )
+            }
+            composable<NewPlanRoute> {
+                NewPlanScreen(
+                    onBack = { navController.popBackStack() },
+                    // The plan made opens in place of the form.
+                    onMade = { planId ->
+                        navController.navigate(PlanDetailRoute(planId)) { popUpTo<NewPlanRoute> { inclusive = true } }
+                    },
                 )
             }
             composable<PlanDetailRoute> {

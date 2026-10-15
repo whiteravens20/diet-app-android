@@ -405,7 +405,7 @@ internal fun DietFields(form: ProfileForm, problems: Set<ProfileField>, rules: I
  * only: a recipe of the account's own can fill a gap, and the planner counts it.
  */
 @Composable
-private fun SupplyNote(rules: InstanceRules?, diet: String, mealCount: Int) {
+internal fun SupplyNote(rules: InstanceRules?, diet: String, mealCount: Int) {
     val found = rules?.supplyOf(diet, mealCount) ?: return
     val name = dietTypeLabel(diet)
     val text = when (found.level) {

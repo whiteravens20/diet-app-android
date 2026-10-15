@@ -109,16 +109,13 @@
     <string name="plans_subtitle">Plans built against each profile’s calorie target.</string>
     <string name="plans_no_profile">No profile</string>
     <string name="plans_no_profile_body">Create a profile first — a meal plan is generated against its calorie target.</string>
-    <string name="plans_no_profile_cta">Create profile</string>
     <string name="plans_generate">Generate plan</string>
     <string name="plans_empty">No plans yet</string>
     <string name="plans_empty_body">Generate the first meal plan for this profile.</string>
     <string name="plans_show_more">Show more plans</string>
     <string name="plans_card_title">%1$s · %2$d days</string>
     <string name="plans_avg_kcal">%1$d kcal/day avg</string>
-    <string name="plans_duration">Duration</string>
     <string name="plans_days">%1$d days</string>
-    <string name="plans_meals_per_day">Meals per day</string>
     <string name="plans_day_skipped">This day is skipped.</string>
     <string name="plans_day_total">%1$d / %2$d kcal</string>
     <string name="plans_day_macros">P %1$d g · F %2$d g · C %3$d g</string>
@@ -435,4 +432,78 @@
     <string name="cuisine_mexican">Mexican</string>
     <string name="cuisine_american">American</string>
     <string name="cuisine_indian">Indian</string>
+    <!-- A new plan: its days, its choices, its limits and each day's options, worded as the web application words them. -->
+    <string name="plans_generate_for">Generate a plan for %1$s</string>
+    <string name="plans_start_date">Start date</string>
+    <string name="plans_duration_days">Duration (days)</string>
+    <string name="plans_meal_prep">Cook ahead</string>
+    <string name="plans_meal_prep_hint">A dish is cooked once for two days running.</string>
+    <string name="plans_diet">Diet</string>
+    <string name="plans_as_in_profile">As in the profile (%1$s)</string>
+    <string name="plans_diet_custom">Custom (%1$s %% protein, %2$s %% fat, %3$s %% carbohydrate)</string>
+    <string name="plans_meals_a_day">Meals a day</string>
+    <string name="plans_calorie_target">Daily calorie target (kcal)</string>
+    <string name="plans_choices_hint">Diet, meals a day and calorie target hold for this plan only. The profile stays as it is.</string>
+    <string name="plans_calorie_target_hint">Empty: the profile’s target, %1$s kcal a day.</string>
+    <string name="plans_apply_prefs">Apply preferences</string>
+    <string name="plans_apply_prefs_hint">They work independently — tick any of them, or none. Allergens are always honoured.</string>
+    <string name="plans_honour_avoid">Honour my avoid list</string>
+    <string name="plans_prefer_favorites">Prefer my favourite ingredients</string>
+    <string name="plans_prefer_inventory">Prefer recipes that use my pantry</string>
+    <string name="plans_generating">Generating…</string>
+    <string name="plans_generate_button">Generate plan</string>
+    <plurals name="plans_limits_in_the_way">
+        <item quantity="one">This plan cannot be filled inside its limits. One meal would go outside: %2$s.</item>
+        <item quantity="other">This plan cannot be filled inside its limits. %1$d meals would go outside: %2$s.</item>
+    </plurals>
+    <plurals name="plans_limits_in_the_way_more">
+        <item quantity="one">and one more meal</item>
+        <item quantity="other">and %1$d more meals</item>
+    </plurals>
+    <plurals name="plans_let_give_way">
+        <item quantity="one">Make the plan and let this limit give way</item>
+        <item quantity="other">Make the plan and let these limits give way</item>
+    </plurals>
+    <string name="plans_limit_variety_floor">repeats of a recipe in the plan</string>
+    <string name="plans_limit_cook_time">cooking time of the day</string>
+    <string name="plans_limit_same_day">a recipe once a day</string>
+    <string name="plans_limit_consecutive_days">days in a row with one recipe</string>
+    <string name="plans_limit_weekly_cap">times a week for one recipe</string>
+    <string name="plans_limit_ingredient_cap">the most of one ingredient in a week</string>
+    <string name="plans_advanced_toggle">Show advanced options</string>
+    <string name="plans_advanced_hint">Shape each day individually. Untouched days follow the plan defaults.</string>
+    <string name="plans_advanced_legend_title">What these do</string>
+    <string name="plans_advanced_legend_day_kind">Day: Rest targets ~15% fewer calories, Training ~15% more, Skip leaves the day empty (and off the shopping list).</string>
+    <string name="plans_advanced_legend_meals">Meals: how many meals that day, overriding the plan default.</string>
+    <string name="plans_advanced_legend_calories">Calories: an exact target for that day — overrides the rest/training adjustment.</string>
+    <string name="plans_advanced_legend_cook_time">Max cook time: only pick recipes whose prep + cook time fits the limit.</string>
+    <string name="plans_advanced_legend_use_up_by">Use up expiring food: prefer recipes using ingredients that expire by that date.</string>
+    <string name="plans_advanced_legend_set">Favourite set: fill the meals of the day from one of your sets; the rest of the day is built around them, and a meal locked by hand goes before the set’s.</string>
+    <string name="plans_advanced_legend_lock">Lock a meal: pin one of your favourites to a slot; the rest of the day is built around it.</string>
+    <string name="plans_advanced_variety_floor">Max times one recipe can repeat</string>
+    <string name="plans_advanced_may_give_way">If no recipe is left inside a limit, these may give way</string>
+    <string name="plans_advanced_may_give_way_hint">With none ticked the plan is not made then, and you are told which limits stand in the way.</string>
+    <string name="plans_advanced_per_day">Per-day options</string>
+    <string name="plans_advanced_meal_count">Meals</string>
+    <string name="plans_advanced_use_default">Default</string>
+    <string name="plans_advanced_calories">Calories</string>
+    <string name="plans_advanced_day_kind">Day</string>
+    <string name="plans_advanced_kind_normal">Normal</string>
+    <string name="plans_advanced_kind_rest">Rest</string>
+    <string name="plans_advanced_kind_training">Training</string>
+    <string name="plans_advanced_kind_skip">Skip</string>
+    <string name="plans_advanced_cook_time">Max cook (min)</string>
+    <string name="plans_advanced_use_up_by">Use up expiring food</string>
+    <string name="plans_advanced_favorite_set">Favourite set</string>
+    <string name="plans_advanced_favorite_set_none">None</string>
+    <string name="plans_advanced_lock_slot">Lock a meal</string>
+    <string name="plans_advanced_lock_none">None</string>
+    <string name="plans_advanced_lock_recipe">to recipe</string>
+    <string name="plans_advanced_lock_recipe_placeholder">Pick a favourite</string>
+    <string name="plans_advanced_no_favorites_for_lock">No favourites for this meal yet.</string>
+    <string name="plans_no_profile_cta">Create profile</string>
+    <string name="plans_advanced_legend_variety_none">Max repeats: caps how many times one recipe can appear across the whole plan — added on top of your profile\'s variety limits, not instead of them. Blank = no extra limit.</string>
+    <string name="plans_advanced_legend_variety_most">Max repeats: caps how many times one recipe can appear across the whole plan — added on top of your profile\'s variety limits, not instead of them. Blank = %1$s, the number set for this instance.</string>
+    <string name="plans_advanced_variety_floor_hint_none">Across the whole plan, on top of your profile\'s variety limits (it doesn\'t replace them). Leave blank for no extra limit.</string>
+    <string name="plans_advanced_variety_floor_hint_most">Across the whole plan, on top of your profile\'s variety limits (it doesn\'t replace them). Left blank, the number set for this instance applies: %1$s.</string>
 </resources>

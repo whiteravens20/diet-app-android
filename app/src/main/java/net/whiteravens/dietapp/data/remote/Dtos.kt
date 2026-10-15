@@ -43,7 +43,12 @@ data class PublicConfigDto(
     val accounts: AccountsConfigDto = AccountsConfigDto(),
     val email: EmailConfigDto = EmailConfigDto(),
     val catalogue: CatalogueConfigDto = CatalogueConfigDto(),
+    val plans: PlansConfigDto = PlansConfigDto(),
 )
+
+/** The most a recipe repeats in a plan that names no number, where the instance sets one. */
+@Serializable
+data class PlansConfigDto(val maxRepeatsPerRecipe: Int? = null)
 
 /** How many profiles an account may have on the instance; two where it does not say, as the API's default. */
 @Serializable
@@ -663,7 +668,45 @@ data class GeneratePlanRequest(
     val respectFavorites: Boolean = true,
     val respectInventory: Boolean = true,
     val maxRepeatsPerRecipe: Int? = null,
+    /** The limits that may give way when no recipe is left inside them, in the order they do. */
+    val allowRelaxations: List<String>? = null,
+    val dayOverrides: List<DayOverrideDto>? = null,
 )
+
+/** What one day of a new plan is made with where it differs from the plan; a day that differs in nothing is not sent. */
+@Serializable
+data class DayOverrideDto(
+    val date: String,
+    val mealCount: Int? = null,
+    val skip: Boolean? = null,
+    val calorieTarget: Int? = null,
+    /** `rest` | `training`; a normal day says nothing. */
+    val dayType: String? = null,
+    val cookTimeBudgetMinutes: Int? = null,
+    val useUpBy: Boolean? = null,
+    val lockedSlots: List<LockedSlotDto>? = null,
+)
+
+/**
+ * What a refusal with the code `PLAN_NEEDS_RELAXATION` carries in its details: the limits that
+ * would have to give way, in the order they do, and the meals that would go outside them.
+ */
+@Serializable
+data class RelaxationNeededDto(val needs: List<String>, val meals: List<RelaxedMealDto>)
+
+/** A recipe a profile marked (`marked`, `often` or `avoid`), with the recipe itself. */
+@Serializable
+data class MarkedRecipeDto(
+    val id: String,
+    val tags: List<String> = emptyList(),
+    val sentiment: String,
+    val markedAt: String,
+    val recipe: RecipeDto,
+)
+
+/** A profile's favourite set: a recipe for each meal it names. */
+@Serializable
+data class FavoriteSetDto(val id: String, val profileId: String, val label: String, val slots: Map<String, String>)
 
 /** POST `/meal-plans/swap-meal/preview`: ask for a recipe to put in the place of a meal. Nothing is written. */
 @Serializable

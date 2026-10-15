@@ -12,12 +12,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
-import net.whiteravens.dietapp.data.repository.toSummary
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
-import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -44,7 +42,6 @@ class MealPlansViewModel @Inject constructor(
         val refreshing: Boolean = false,
         val loadingMore: Boolean = false,
         val offline: Boolean = false,
-        val generating: Boolean = false,
         val error: Throwable? = null,
     ) {
         val hasMore: Boolean get() = page < totalPages
@@ -129,27 +126,6 @@ class MealPlansViewModel @Inject constructor(
                         it.copy(loadingMore = false, offline = e is IOException, error = e.takeIf { _ -> e !is IOException })
                     }
                 }
-        }
-    }
-
-    fun generate(durationDays: Int, mealCount: Int) {
-        val profileId = _state.value.selectedProfileId ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(generating = true, error = null) }
-            attempt {
-                plans.generate(
-                    profileId = profileId,
-                    startDate = LocalDate.now().toString(),
-                    durationDays = durationDays,
-                    mealCount = mealCount,
-                )
-            }
-                .onSuccess { plan ->
-                    ifStillSelected(profileId) {
-                        it.copy(generating = false, plans = listOf(plan.toSummary()) + it.plans.filter { p -> p.id != plan.id })
-                    }
-                }
-                .onFailure { e -> _state.update { it.copy(generating = false, error = e) } }
         }
     }
 

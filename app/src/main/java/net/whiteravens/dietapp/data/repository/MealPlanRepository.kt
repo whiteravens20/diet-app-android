@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.data.repository
 
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -9,16 +10,25 @@ import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.readOrDrop
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
+import net.whiteravens.dietapp.data.remote.DayOverrideDto
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
+import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
+import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
+import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.RelaxationNeeded
+import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.SwapOffer
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -67,26 +77,58 @@ class MealPlanRepository @Inject constructor(
         return answer.toDomain()
     }
 
-    /** Generate a new plan for a profile (deterministic engine, backend-side). */
-    suspend fun generate(
-        profileId: String,
-        startDate: String,
-        durationDays: Int,
-        mealCount: Int? = null,
-    ): MealPlan {
+    /**
+     * Makes a plan as [ask] asks for it (the engine fills it on the server). A plan that cannot be
+     * filled inside its limits is refused with `PLAN_NEEDS_RELAXATION`: [relaxationNeeded] reads it.
+     */
+    suspend fun generate(ask: PlanAsk): MealPlan {
         val plan = apiCall(json) {
             api.generatePlan(
                 GeneratePlanRequest(
-                    profileId = profileId,
-                    startDate = startDate,
-                    durationDays = durationDays,
-                    mealCount = mealCount,
+                    profileId = ask.profileId,
+                    startDate = ask.startDate.toString(),
+                    durationDays = ask.durationDays,
+                    dietType = ask.dietType,
+                    mealCount = ask.mealCount,
+                    calorieTargetOverride = ask.calorieTarget,
+                    mealPrepFriendly = ask.mealPrepFriendly,
+                    respectExclusions = ask.respectExclusions,
+                    respectFavorites = ask.respectFavorites,
+                    respectInventory = ask.respectInventory,
+                    maxRepeatsPerRecipe = ask.maxRepeatsPerRecipe,
+                    allowRelaxations = ask.allowRelaxations.takeIf { it.isNotEmpty() },
+                    dayOverrides = ask.days.map { it.toDto() }.takeIf { it.isNotEmpty() },
                 ),
             )
         }
         mirror(plan)
         return plan.toDomain()
     }
+
+    /** What stands in the way of a plan, read from a refusal with `PLAN_NEEDS_RELAXATION`; null for any other. */
+    fun relaxationNeeded(error: Throwable): RelaxationNeeded? {
+        if (error !is ApiException || error.code != "PLAN_NEEDS_RELAXATION") return null
+        val details = error.details ?: return null
+        val read = try {
+            json.decodeFromJsonElement(RelaxationNeededDto.serializer(), details)
+        } catch (e: SerializationException) {
+            return null
+        } catch (e: IllegalArgumentException) {
+            return null
+        }
+        return RelaxationNeeded(read.needs, read.meals.map { RelaxedMeal(LocalDate.parse(it.date), it.slot, it.gaveWay) })
+    }
+
+    private fun DayAsk.toDto() = DayOverrideDto(
+        date = date.toString(),
+        mealCount = mealCount,
+        skip = skip.takeIf { it },
+        calorieTarget = calorieTarget,
+        dayType = dayType,
+        cookTimeBudgetMinutes = cookTimeMinutes,
+        useUpBy = useUpBy.takeIf { it },
+        lockedSlots = locks.map { (meal, recipe) -> LockedSlotDto(meal, recipe) }.takeIf { it.isNotEmpty() },
+    )
 
     /**
      * A recipe of the plan's diet for the meal, other than those offered for it already ([seen]).
