@@ -12,7 +12,17 @@ set -euo pipefail
 name="$(openssl x509 -subject_hash_old -noout -in "$TEST_AUTHORITY/authority.pem").0"
 store=/data/misc/user/0/cacerts-added
 
-adb root > /dev/null
+# adbd answers `root` only once it is up, which a freshly booted emulator does not promise: it is
+# asked again a few times before the run gives up.
+for attempt in $(seq 1 10); do
+  adb root > /dev/null 2>&1 && break
+  if [ "$attempt" = 10 ]; then
+    echo "::error::adbd did not restart as root"
+    exit 1
+  fi
+  sleep 3
+  adb wait-for-device
+done
 adb wait-for-device
 adb shell mkdir -p "$store"
 adb push "$TEST_AUTHORITY/authority.pem" "$store/$name" > /dev/null
