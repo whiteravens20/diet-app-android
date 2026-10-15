@@ -151,7 +151,8 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
                 subtitle = stringResource(R.string.shopping_subtitle),
             )
         }
-        item {
+        // The profiles to choose among, where there is more than one.
+        if (state.profiles.size > 1) item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.profiles, key = { it.id }) { profile ->
                     FilterChip(
