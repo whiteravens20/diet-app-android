@@ -165,6 +165,13 @@ testers will try the release candidate at the maintainer's request.
   ([dependency-metadata.yml](.github/workflows/dependency-metadata.yml)).
 - Once a week the copy of the contract is compared with diet-app's `dev`, and the run
   fails when they differ ([contract.yml](.github/workflows/contract.yml)).
+- `dev` and `main` are protected: a change has to pass the build, the screens' tests and
+  the check of the pinned actions (on `main` also CodeQL and the Trivy scan), commits have
+  to be signed, and nothing is force-pushed or deleted. Until the first release the
+  maintainer can still push past the checks. The protection of `main` is checked for
+  drift every day ([branch-protection-audit.yml](.github/workflows/branch-protection-audit.yml)).
+- Dependabot's patch updates are merged by a workflow once the required checks pass
+  ([dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)).
 - Commits are signed, and the [OpenSSF
   Scorecard](https://scorecard.dev/viewer/?uri=github.com/whiteravens20/diet-app-android)
   results are public.
