@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
@@ -25,6 +27,7 @@ class ProfileViewModel @Inject constructor(
     private val users: UserRepository,
     private val auth: AuthRepository,
     private val server: ServerConfigStore,
+    @ApplicationScope private val application: CoroutineScope,
 ) : ViewModel() {
 
     data class UiState(
@@ -48,12 +51,14 @@ class ProfileViewModel @Inject constructor(
     /**
      * Points the app at a different server. Tokens and the offline cache
      * belong to the old instance, so this signs out first (revoking there),
-     * then saves — the root auth switch drops back to the login screen.
+     * then saves — the root auth switch drops back to the login screen. The
+     * sign-out takes this screen away, so the change runs in the application's
+     * scope, where it is finished.
      */
     fun changeServer(url: String) {
         if (url == serverUrl.value) return
-        viewModelScope.launch {
-            _state.update { it.copy(signingOut = true) }
+        _state.update { it.copy(signingOut = true) }
+        application.launch {
             auth.signOut()
             server.save(url)
         }
