@@ -92,6 +92,7 @@
     <string name="dashboard_calculated_hint">Calculated</string>
     <string name="dashboard_maintenance">Maintenance</string>
     <string name="dashboard_daily_deficit">Daily deficit</string>
+    <string name="dashboard_daily_surplus">Daily surplus</string>
     <string name="dashboard_meals_per_day">Meals per day</string>
     <string name="dashboard_macro_split">Target macro split</string>
     <string name="dashboard_kcal_per_day">kcal/day</string>

@@ -93,6 +93,7 @@
     <string name="dashboard_calculated_hint">Wyliczone</string>
     <string name="dashboard_maintenance">Zapotrzebowanie</string>
     <string name="dashboard_daily_deficit">Deficyt dzienny</string>
+    <string name="dashboard_daily_surplus">Dzienna nadwyżka</string>
     <string name="dashboard_meals_per_day">Posiłków dziennie</string>
     <string name="dashboard_macro_split">Docelowy podział makro</string>
     <string name="dashboard_kcal_per_day">kcal/dzień</string>

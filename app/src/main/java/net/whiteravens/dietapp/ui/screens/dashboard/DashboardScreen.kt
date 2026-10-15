@@ -41,6 +41,7 @@ import net.whiteravens.dietapp.ui.components.MacroRing
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /** Calorie target, deficit and macro split for every profile — the web dashboard. */
@@ -130,9 +131,10 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats) {
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Under maintenance a deficit, above it a surplus: the label says which, the number how much.
             StatCard(
-                label = stringResource(R.string.dashboard_daily_deficit),
-                value = target?.let { "${it.dailyDeficit.roundToInt()} $kcal" } ?: "—",
+                label = stringResource(if (target != null && target.dailyDeficit < 0) R.string.dashboard_daily_surplus else R.string.dashboard_daily_deficit),
+                value = target?.let { "${abs(it.dailyDeficit).roundToInt()} $kcal" } ?: "—",
                 icon = AppIcons.Schedule,
                 modifier = Modifier.weight(1f),
             )
