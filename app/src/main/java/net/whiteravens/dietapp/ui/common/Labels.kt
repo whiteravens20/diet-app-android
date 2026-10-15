@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.common
 
+import android.icu.text.ListFormatter
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
@@ -13,6 +14,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.TargetNote
 import java.io.IOException
+import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -170,6 +172,15 @@ private fun refusalText(error: ApiException): String {
 @Composable
 fun formatNumber(value: Number, fractionDigits: Int = 0): String =
     NumberFormat.getNumberInstance(LocalConfiguration.current.locales[0]).apply { maximumFractionDigits = fractionDigits }.format(value)
+
+/** A whole number that always says which way it goes: `+120`, `-80`, `+0`. */
+@Composable
+fun formatSigned(value: Double): String =
+    (NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]) as DecimalFormat).apply { positivePrefix = "+" }.format(value.roundToInt())
+
+/** Several things named one after another, as the language joins them: `rice, oats and tofu`. */
+@Composable
+fun formatList(items: List<String>): String = ListFormatter.getInstance(LocalConfiguration.current.locales[0]).format(items)
 
 /** A weight kept in kilograms, in [unit] (`kg` or `lb`) to at most [fractionDigits] decimals: `64.5 kg`. */
 @Composable

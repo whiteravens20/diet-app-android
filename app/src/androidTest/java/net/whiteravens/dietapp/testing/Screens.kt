@@ -6,8 +6,10 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Parcel
 import androidx.activity.ComponentActivity
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
@@ -16,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -28,10 +31,28 @@ import java.io.IOException
 fun text(@StringRes id: Int, vararg args: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
-/** Waits until something on the screen shows [shown], as a person waits for a screen to load. */
-fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000) {
-    waitUntil(timeoutMillis) { onAllNodesWithText(shown).fetchSemanticsNodes().isNotEmpty() }
+/** A text of the app's that is counted, in the form the language gives [count], with [args] put in. */
+fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(id, count, *args)
+
+/** Waits until something on the screen shows [shown], or a text holding it where [substring], as a person waits for a screen to load. */
+fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000, substring: Boolean = false) {
+    waitUntil(timeoutMillis) { onAllNodesWithText(shown, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 }
+
+/**
+ * Scrolls the screen's list until it shows what [sought] matches, once the list has it, as a person
+ * scrolls to what they look for: a list composes only what is in view.
+ */
+fun ComposeTestRule.scrollTo(sought: SemanticsMatcher, timeoutMillis: Long = 20_000) {
+    waitUntil(timeoutMillis) {
+        runCatching { onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(sought) }.isSuccess
+    }
+}
+
+/** [scrollTo] what shows [shown], or a text holding it where [substring]. */
+fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
+    scrollTo(hasText(shown, substring = substring), timeoutMillis)
 
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under

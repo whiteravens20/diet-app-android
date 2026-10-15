@@ -641,6 +641,10 @@ data class MealPlanSummaryDto(
     val durationDays: Int,
     val dietType: String,
     val averageDailyNutrition: NutritionDto,
+    /** 0-1 optimiser reuse score. */
+    val ingredientReuseScore: Double,
+    /** `deterministic` | `ai_assisted`. */
+    val generationMode: String,
     val createdAt: String,
 )
 
@@ -654,7 +658,7 @@ data class MealPlanPageDto(
     val totalPages: Int,
 )
 
-/** POST `/meal-plans/generate`. What one day asks for differently (`dayOverrides`) is left out. */
+/** POST `/meal-plans/generate`: a plan asked for, and the days that differ from it (`dayOverrides`). */
 @Serializable
 data class GeneratePlanRequest(
     val profileId: String,
@@ -672,6 +676,30 @@ data class GeneratePlanRequest(
     val allowRelaxations: List<String>? = null,
     val dayOverrides: List<DayOverrideDto>? = null,
 )
+
+/** The days of a profile's plans in a span of days: those no plan holds are left out. */
+@Serializable
+data class PlanCalendarDto(val days: List<PlanCalendarDayDto>)
+
+/**
+ * A day a plan holds: the plan made last that holds it, how many plans hold it, what it holds and
+ * aims at in kcal, whether it is more than a tenth off (`over` | `under`), its meals eaten out of
+ * its meals, and whether the plan skips it.
+ */
+@Serializable
+data class PlanCalendarDayDto(
+    val date: String,
+    val planId: String,
+    val plans: Int,
+    val calories: Double,
+    val target: Double,
+    val offTarget: String? = null,
+    val eaten: EatenMealsDto,
+    val skipped: Boolean,
+)
+
+@Serializable
+data class EatenMealsDto(val meals: Int, val of: Int)
 
 /** What one day of a new plan is made with where it differs from the plan; a day that differs in nothing is not sent. */
 @Serializable
@@ -774,6 +802,25 @@ data class RebalanceSummaryDto(
 /** What a change of a plan that may balance it answers: a swap, a meal of one's own, a meal marked eaten. */
 @Serializable
 data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null)
+
+/** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
+@Serializable
+data class SetMealEatenRequest(val eaten: Boolean)
+
+/** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
+@Serializable
+data class AddCustomMealRequest(val name: String, val mealType: String, val nutrition: NutritionDto, val servings: Double)
+
+/** A meal's scale put back as it was. */
+@Serializable
+data class RestoreScaleDto(val mealId: String, val scale: Double)
+
+/**
+ * POST `/meal-plans/:id/rebalance`: `day` balances [date], or puts back the scales of [restore];
+ * `week` balances the days from [date], today where it is left out, to the end of that week of the plan.
+ */
+@Serializable
+data class RebalanceRequest(val scope: String, val date: String? = null, val restore: List<RestoreScaleDto>? = null)
 
 // ── Shopping lists (packages/shared/src/shopping-list.ts) ───────────────────
 

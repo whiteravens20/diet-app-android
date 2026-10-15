@@ -85,13 +85,27 @@ interface DietApiService {
 
     // ── Meal plans ──────────────────────────────────────────────────────────
 
-    /** A page of a profile's plans, as summaries; a plan with its days is [mealPlan]. */
+    /**
+     * A page of a profile's plans, as summaries, narrowed to those [status] names and those holding
+     * a day from [from] to [to]; a plan with its days is [mealPlan].
+     */
     @GET("meal-plans")
     suspend fun mealPlans(
         @Query("profileId") profileId: String,
         @Query("page") page: Int,
         @Query("pageSize") pageSize: Int,
+        @Query("status") status: String? = null,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null,
     ): MealPlanPageDto
+
+    /** The days of a profile's plans from [from] to [to], for a calendar. */
+    @GET("meal-plans/calendar")
+    suspend fun planCalendar(
+        @Query("profileId") profileId: String,
+        @Query("from") from: String,
+        @Query("to") to: String,
+    ): PlanCalendarDto
 
     @GET("meal-plans/{id}")
     suspend fun mealPlan(@Path("id") id: String): MealPlanDto
@@ -106,6 +120,21 @@ interface DietApiService {
     /** Takes an offer: the meal gets the recipe, if the plan is still at the offer's revision. */
     @POST("meal-plans/swap-meal")
     suspend fun swapMeal(@Body body: ApplyMealSwapRequest): RebalanceResultDto
+
+    /** Marks a meal eaten or not; the day is balanced again around it. */
+    @PATCH("meal-plans/{id}/meals/{mealId}/eaten")
+    suspend fun setMealEaten(@Path("id") id: String, @Path("mealId") mealId: String, @Body body: SetMealEatenRequest): RebalanceResultDto
+
+    /** Adds a meal of the user's own to the day of [date]; a day the plan skipped is skipped no longer. */
+    @POST("meal-plans/{id}/days/{date}/custom-meal")
+    suspend fun addCustomMeal(@Path("id") id: String, @Path("date") date: String, @Body body: AddCustomMealRequest): RebalanceResultDto
+
+    @POST("meal-plans/{id}/rebalance")
+    suspend fun rebalancePlan(@Path("id") id: String, @Body body: RebalanceRequest): RebalanceResultDto
+
+    /** Deletes a plan, and its shopping lists with it. */
+    @DELETE("meal-plans/{id}")
+    suspend fun deletePlan(@Path("id") id: String)
 
     // ── Recipes ─────────────────────────────────────────────────────────────
 

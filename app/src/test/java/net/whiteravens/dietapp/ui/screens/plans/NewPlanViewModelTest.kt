@@ -148,4 +148,21 @@ class NewPlanViewModelTest {
         assertSame(refusal, model.state.value.error)
         assertNull(model.state.value.inTheWay)
     }
+
+    @Test
+    fun `a plan begun from a day of the calendar starts on that day`() {
+        val day = LocalDate.of(2026, 11, 2)
+        val model = NewPlanViewModel(
+            SavedStateHandle(mapOf(NewPlanViewModel.PROFILE_ID to profile.id, NewPlanViewModel.START_DATE to day.toString())),
+            profiles,
+            users,
+            favorites,
+            plans,
+            server,
+        )
+
+        assertEquals(day, model.state.value.form.startDate)
+        assertEquals(LocalDate.now(), model().state.value.form.startDate)
+    }
 }
+

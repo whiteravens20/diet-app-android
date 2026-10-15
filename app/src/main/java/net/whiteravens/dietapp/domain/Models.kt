@@ -137,6 +137,16 @@ data class Nutrition(
     val carbs: Double,
 )
 
+/** Grams of protein, fat and carbohydrate: what a plan or a day aims at under its diet's split. */
+data class Macros(val protein: Double, val fat: Double, val carbs: Double)
+
+/** What a model had to do with a meal: it chose the meal's recipe (and may have said why), or it wrote or changed the recipe. */
+sealed interface ModelPart {
+    data class Picked(val reason: String?) : ModelPart
+    data object Written : ModelPart
+    data object Changed : ModelPart
+}
+
 data class CalorieTarget(
     val bmr: Double,
     val maintenance: Double,
@@ -178,6 +188,18 @@ data class Meal(
     val conflicts: List<String>,
     /** The names of the meal's ingredients the profile would rather not eat. */
     val disliked: List<String>,
+    /** A meal of the user's own, with the macros they typed; [name] is empty where they gave it none. */
+    val custom: Boolean,
+    /** The multiplier a rebalance gave the meal; 1 where none did. */
+    val quantityScale: Double,
+    /** In a plan made for cooking ahead: `cook` on the meal cooked for the next one too, `cooked` on the one eaten from it. */
+    val cookAhead: String?,
+    /** What a model had to do with the meal, if anything. */
+    val byModel: ModelPart?,
+    /** The limits the meal went outside of when it was planned, because no recipe was left inside them. */
+    val outsideLimits: List<String>,
+    /** For this meal on the plan's diet the profile left one recipe to choose from. */
+    val onlyRecipe: Boolean,
 )
 
 /** A line of a meal: an ingredient and its amount as the server rounds it and names its unit. */
@@ -202,6 +224,8 @@ data class PlanDay(
     val offTarget: String?,
     /** A target somebody typed puts the day under the lowest a calculated plan goes. */
     val belowSafetyFloor: Boolean,
+    /** What the day aims at in grams under the diet's split. */
+    val targetMacros: Macros,
 )
 
 data class MealPlan(
@@ -214,6 +238,63 @@ data class MealPlan(
     val averageDailyNutrition: Nutrition,
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
+    /** What a day of the plan aims at on average, in grams. */
+    val targetMacros: Macros,
+    /** 0-1: the share of the plan's ingredients that more than one of its recipes uses. */
+    val ingredientReuse: Double,
+    /** What the menu buys and uses of the packs that do not keep once opened. */
+    val packs: PlanPacks,
+    /** Parts of the plan were chosen with a model's help. */
+    val byModel: Boolean,
+    /** The limits the plan was let go outside of, in the order they give way. */
+    val mayGiveWay: List<String>,
+    /** What the pantry had to do with the choice of recipes: `counted` | `left_out` | `unused` | `empty` | `not_asked`; null on a plan from before it was kept. */
+    val pantry: String?,
+    /** How many times the plan has been changed; a change made from an older one is refused. */
+    val revision: Int,
+) {
+    /** The meals that hold something the profile has ruled out since the plan was made. */
+    val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }
+}
+
+/**
+ * What a change of a plan did to the servings of its meals to keep the day, or the week, on its
+ * target: each meal scaled, from what to what, what the day held before and after, whether the day
+ * is still outside its window ([bestEffort]), and what the week could not take back, in kcal (over
+ * where it is above nought).
+ */
+data class Rebalance(
+    /** `day` | `week`. */
+    val scope: String,
+    val bestEffort: Boolean,
+    val changes: List<ScaleChange>,
+    val unabsorbedKcal: Double,
+    val caloriesBefore: Double,
+    val caloriesAfter: Double,
+)
+
+/** A meal's servings scaled by a rebalance: [before] and [after] are its scales. */
+data class ScaleChange(val mealId: String, val before: Double, val after: Double)
+
+/** A plan as a change left it, and what the change rebalanced, if it did. */
+data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?)
+
+/** A meal of the user's own: its name, its time of day, what one serving holds, and how many servings it is. */
+data class CustomMeal(val name: String, val slot: String, val perServing: Nutrition, val servings: Double)
+
+/** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
+data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
+
+/** A pack the menu opens and does not finish: what is left of the last one, and whether that is more than a fifth of it. */
+data class OpenPack(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`. */
+    val unit: String,
+    val packSize: Double,
+    val packs: Int,
+    val left: Int,
+    val wasted: Boolean,
 )
 
 /**
@@ -243,6 +324,10 @@ data class MealPlanSummary(
     val durationDays: Int,
     val dietType: String,
     val averageDailyNutrition: Nutrition,
+    /** 0-1: the share of the plan's ingredients that more than one of its recipes uses. */
+    val ingredientReuse: Double,
+    /** Parts of the plan were chosen with a model's help. */
+    val byModel: Boolean,
 )
 
 /** A page of a profile's plans, the newest first; [syncedAt] is set when it came from the cache. */

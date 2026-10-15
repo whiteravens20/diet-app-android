@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -18,9 +19,14 @@ import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.data.remote.MealPlanDto
+import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
+import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
@@ -50,21 +56,28 @@ class MealPlanRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    /** Keeps what is written to it. */
-    private class Cache : CacheDao {
+    /** Keeps what is written to it, and what is taken out of it. */
+    private class Cache(private val listsOfPlan: List<CachedShoppingList> = emptyList()) : CacheDao {
         val planLists = mutableListOf<CachedPlanList>()
+        val dropped = mutableListOf<String>()
         override suspend fun upsertPlanList(list: CachedPlanList) {
             planLists += list
         }
         override suspend fun planList(profileId: String) = planLists.lastOrNull { it.profileId == profileId }
-        override suspend fun deletePlanList(profileId: String) = Unit
+        override suspend fun deletePlanList(profileId: String) {
+            dropped += "list of $profileId"
+        }
         override suspend fun upsertMealPlan(plan: CachedMealPlan) = Unit
         override suspend fun mealPlan(id: String): CachedMealPlan? = null
-        override suspend fun deleteMealPlan(id: String) = Unit
+        override suspend fun deleteMealPlan(id: String) {
+            dropped += "plan $id"
+        }
         override suspend fun upsertShoppingList(list: CachedShoppingList) = Unit
         override suspend fun shoppingList(id: String): CachedShoppingList? = null
-        override suspend fun shoppingListsForPlan(planId: String) = emptyList<CachedShoppingList>()
-        override suspend fun deleteShoppingList(id: String) = Unit
+        override suspend fun shoppingListsForPlan(planId: String) = listsOfPlan.filter { it.planId == planId }
+        override suspend fun deleteShoppingList(id: String) {
+            dropped += "shopping list $id"
+        }
     }
 
     private fun repository(cache: CacheDao): MealPlanRepository {
@@ -159,4 +172,74 @@ class MealPlanRepositoryTest {
         assertNull(plans.relaxationNeeded(ApiException(400, "NO_ELIGIBLE_RECIPE", "None.", details = details)))
         assertNull(plans.relaxationNeeded(ApiException(422, "PLAN_NEEDS_RELAXATION", "Limits.", details = JsonObject(emptyMap()))))
     }
+
+    @Test
+    fun `a rebalance taken back puts each meal it scaled back as it was`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val scaled = Rebalance("day", false, listOf(ScaleChange("meal-1", 1.0, 0.8), ScaleChange("meal-2", 1.0, 1.2)), 0.0, 2300.0, 2000.0)
+
+        runBlocking { repository(Cache()).undo("plan-1", scaled) }
+
+        val undone = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/rebalance", undone.path)
+        val back = json.parseToJsonElement(undone.body.readUtf8()).jsonObject
+        assertEquals("day", back.getValue("scope").jsonPrimitive.content)
+        assertEquals(
+            listOf("meal-1" to 1.0, "meal-2" to 1.0),
+            back.getValue("restore").jsonArray.map { it.jsonObject.getValue("mealId").jsonPrimitive.content to it.jsonObject.getValue("scale").jsonPrimitive.double },
+        )
+    }
+
+    @Test
+    fun `a meal is marked eaten with what it is to be, not flipped`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).setEaten("plan-1", "meal-1", eaten = true) }
+
+        val eaten = server.takeRequest()
+        assertEquals("PATCH", eaten.method)
+        assertEquals("/api/meal-plans/plan-1/meals/meal-1/eaten", eaten.path)
+        assertEquals("""{"eaten":true}""", eaten.body.readUtf8())
+    }
+
+    @Test
+    fun `a meal of one's own is sent with what one serving holds and how many servings it is, named without the spaces around it`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).addCustomMeal("plan-1", "2026-10-13", CustomMeal(" Soup ", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.5)) }
+
+        val own = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/days/2026-10-13/custom-meal", own.path)
+        val meal = json.parseToJsonElement(own.body.readUtf8()).jsonObject
+        assertEquals("Soup", meal.getValue("name").jsonPrimitive.content)
+        assertEquals("lunch", meal.getValue("mealType").jsonPrimitive.content)
+        assertEquals(300.0, meal.getValue("nutrition").jsonObject.getValue("calories").jsonPrimitive.double, 0.0)
+        assertEquals(1.5, meal.getValue("servings").jsonPrimitive.double, 0.0)
+    }
+
+    @Test
+    fun `the rest of the week is balanced from the day it is for the phone`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).rebalanceWeek("plan-1") }
+
+        val asked = server.takeRequest()
+        assertEquals("""{"scope":"week"}""", asked.body.readUtf8())
+        assertEquals(LocalDate.now().toString(), asked.getHeader("X-Client-Date"))
+    }
+
+    @Test
+    fun `a deleted plan leaves no copy on the phone of itself, of its shopping lists or of its profile's list`() {
+        server.enqueue(MockResponse().setResponseCode(204))
+        val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan")).toDomain()
+        val cache = Cache(listOf(CachedShoppingList("list-1", plan.id, "{}", 1L), CachedShoppingList("list-2", "another plan", "{}", 1L)))
+
+        runBlocking { repository(cache).delete(plan) }
+
+        val deleted = server.takeRequest()
+        assertEquals("DELETE", deleted.method)
+        assertEquals("/api/meal-plans/${plan.id}", deleted.path)
+        assertEquals(setOf("shopping list list-1", "plan ${plan.id}", "list of ${plan.profileId}"), cache.dropped.toSet())
+    }
 }
+

@@ -3,6 +3,8 @@
 package net.whiteravens.dietapp.data.repository
 
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.GenerationReportDto
+import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
@@ -13,23 +15,30 @@ import net.whiteravens.dietapp.data.remote.PlannedMealDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.data.remote.RecipeDto
 import net.whiteravens.dietapp.data.remote.RecipeIngredientDto
+import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
 import net.whiteravens.dietapp.data.remote.RecipeSearchPageDto
 import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
+import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipePage
+import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
@@ -110,31 +119,57 @@ fun RecipeSearchPageDto.toDomain() = RecipePage(
     totalPages = totalPages,
 )
 
-fun PlannedMealDto.toDomain() = Meal(
-    id = id,
-    slot = mealType,
-    name = recipe?.title ?: customName.orEmpty(),
-    recipeId = recipe?.id,
-    servings = servings * quantityScale,
-    eaten = eatenAt != null,
-    offDiet = dietOverride,
-    nutrition = nutrition.toDomain(),
-    lines = ingredients.map { MealLine(name = it.name, quantity = it.display.quantity, unit = it.display.unit) },
-    allergens = recipe?.allergens.orEmpty(),
-    conflicts = restrictionConflicts,
-    disliked = ingredients.filter { it.ingredientId in dislikedIngredientIds }.map { it.name }.distinct(),
-)
+/**
+ * A model's part in a planned meal: that it chose the meal's recipe comes first, since that is
+ * about this meal; what it had to do with the recipe itself after.
+ */
+private fun PlannedMealDto.modelPart(): ModelPart? = when {
+    modelPick != null -> ModelPart.Picked(modelPick.reason)
+    recipe?.byModel == "written" -> ModelPart.Written
+    recipe?.byModel == "changed" -> ModelPart.Changed
+    else -> null
+}
 
-fun MealPlanDayDto.toDomain() = PlanDay(
+/** A meal of the day of [date], with what the generation [report] said of it. */
+fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
+    val custom = source == "USER_CUSTOM" || recipe == null
+    // The report speaks of the recipes the generation placed: a meal of one's own was none of them.
+    fun said(day: String, slot: String) = !custom && day == date && slot == mealType
+    return Meal(
+        id = id,
+        slot = mealType,
+        name = recipe?.title ?: customName.orEmpty(),
+        recipeId = recipe?.id,
+        servings = servings * quantityScale,
+        eaten = eatenAt != null,
+        offDiet = dietOverride,
+        nutrition = nutrition.toDomain(),
+        lines = ingredients.map { MealLine(name = it.name, quantity = it.display.quantity, unit = it.display.unit) },
+        allergens = recipe?.allergens.orEmpty(),
+        conflicts = restrictionConflicts,
+        disliked = ingredients.filter { it.ingredientId in dislikedIngredientIds }.map { it.name }.distinct(),
+        custom = custom,
+        quantityScale = quantityScale,
+        cookAhead = cookAhead,
+        byModel = modelPart(),
+        outsideLimits = report?.relaxations?.firstOrNull { said(it.date, it.slot) }?.gaveWay.orEmpty(),
+        onlyRecipe = report?.singleCandidate?.any { said(it.date, it.slot) } == true,
+    )
+}
+
+fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
+
+fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     id = id,
     date = date,
-    meals = meals.map(PlannedMealDto::toDomain),
+    meals = meals.map { it.toDomain(date, report) },
     nutrition = dayNutrition.toDomain(),
     calorieTarget = calorieTarget,
     calorieDelta = calorieDelta,
     skipped = skipped,
     offTarget = offTarget,
     belowSafetyFloor = belowSafetyFloor,
+    targetMacros = targetMacros.toDomain(),
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
@@ -143,9 +178,29 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     startDate = startDate,
     durationDays = durationDays,
     dietType = dietType,
-    days = days.map(MealPlanDayDto::toDomain),
+    days = days.map { it.toDomain(report) },
     averageDailyNutrition = averageDailyNutrition.toDomain(),
     syncedAt = syncedAt,
+    targetMacros = targetMacros.toDomain(),
+    ingredientReuse = ingredientReuseScore,
+    packs = PlanPacks(
+        bought = packs.bought,
+        used = packs.used,
+        open = packs.open.map { OpenPack(it.ingredientId, it.name, it.unit, it.packSize, it.packs, it.left, it.wasted) },
+    ),
+    byModel = generationMode == "ai_assisted",
+    mayGiveWay = options.allowRelaxations,
+    pantry = report?.pantry,
+    revision = revision,
+)
+
+fun RebalanceSummaryDto.toDomain() = Rebalance(
+    scope = scope,
+    bestEffort = feasibility == "best-effort",
+    changes = changes.map { ScaleChange(it.mealId, it.before, it.after) },
+    unabsorbedKcal = unabsorbedKcal,
+    caloriesBefore = macrosBefore.calories,
+    caloriesAfter = macrosAfter.calories,
 )
 
 fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
@@ -154,6 +209,8 @@ fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
     durationDays = durationDays,
     dietType = dietType,
     averageDailyNutrition = averageDailyNutrition.toDomain(),
+    ingredientReuse = ingredientReuseScore,
+    byModel = generationMode == "ai_assisted",
 )
 
 fun MealPlanPageDto.toDomain(syncedAt: Long? = null) = MealPlanPage(
@@ -176,15 +233,6 @@ fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, seen: List<Strin
     calorieTarget = calorieTarget,
     revision = revision,
     seen = seen,
-)
-
-/** What the list of plans shows of a plan that was just made. */
-fun MealPlan.toSummary() = MealPlanSummary(
-    id = id,
-    startDate = startDate,
-    durationDays = durationDays,
-    dietType = dietType,
-    averageDailyNutrition = averageDailyNutrition,
 )
 
 fun ShoppingListItemDto.toDomain() = ShoppingItem(

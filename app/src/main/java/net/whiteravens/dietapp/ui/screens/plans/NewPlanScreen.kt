@@ -7,7 +7,6 @@ package net.whiteravens.dietapp.ui.screens.plans
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,23 +18,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,11 +51,11 @@ import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -71,9 +64,7 @@ import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
 import net.whiteravens.dietapp.ui.screens.profiles.SupplyNote
 import net.whiteravens.dietapp.ui.screens.profiles.WarningBox
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 
 /** How many of the meals that stand in the way of a plan are named one by one. */
 private const val MEALS_NAMED = 6
@@ -89,7 +80,6 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
     val state by viewModel.state.collectAsStateWithLifecycle()
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     LaunchedEffect(state.made) { state.made?.let(onMade) }
-    var pickingDate by rememberSaveable { mutableStateOf(false) }
     val profile = state.profile
 
     Column(
@@ -118,7 +108,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                 val dayProblems = if (state.showProblems) form.dayProblems() else emptyMap()
                 AppCard {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DateField(stringResource(R.string.plans_start_date), formatDate(form.startDate.toString())) { pickingDate = true }
+                        DateField(stringResource(R.string.plans_start_date), form.startDate, onPick = { day -> viewModel.edit { it.copy(startDate = day) } })
                         FormField(
                             value = form.durationDays,
                             onValueChange = { typed -> viewModel.edit { it.copy(durationDays = typed) } },
@@ -218,55 +208,11 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
             }
         }
     }
-
-    if (pickingDate) {
-        val picker = rememberDatePickerState(initialSelectedDateMillis = state.form.startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
-        DatePickerDialog(
-            onDismissRequest = { pickingDate = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        picker.selectedDateMillis?.let { millis ->
-                            val day = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
-                            viewModel.edit { it.copy(startDate = day) }
-                        }
-                        pickingDate = false
-                    },
-                ) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = { TextButton(onClick = { pickingDate = false }) { Text(stringResource(R.string.common_cancel)) } },
-        ) { DatePicker(state = picker) }
-    }
 }
 
 @Composable
 private fun between(range: IntRange): String =
     stringResource(R.string.profile_field_between, formatNumber(range.first), formatNumber(range.last))
-
-/** A field that shows a day and opens a calendar to choose another. */
-@Composable
-private fun DateField(label: String, value: String, onClick: () -> Unit) {
-    Box(Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            enabled = false,
-            label = { Text(label) },
-            trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
-            singleLine = true,
-            shape = MaterialTheme.shapes.medium,
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Box(Modifier.matchParentSize().clickable(role = Role.Button, onClickLabel = label, onClick = onClick))
-    }
-}
 
 /** A box to tick, with what it does said beside it. */
 @Composable
@@ -282,20 +228,6 @@ private fun CheckRow(label: String, hint: String? = null, checked: Boolean, onCh
         }
     }
 }
-
-@Composable
-private fun limitName(limit: String): String = when (limit) {
-    "variety_floor" -> stringResource(R.string.plans_limit_variety_floor)
-    "cook_time" -> stringResource(R.string.plans_limit_cook_time)
-    "same_day" -> stringResource(R.string.plans_limit_same_day)
-    "consecutive_days" -> stringResource(R.string.plans_limit_consecutive_days)
-    "weekly_cap" -> stringResource(R.string.plans_limit_weekly_cap)
-    "ingredient_cap" -> stringResource(R.string.plans_limit_ingredient_cap)
-    else -> limit
-}
-
-@Composable
-private fun limitNames(limits: List<String>): String = limits.map { limitName(it) }.joinToString(", ")
 
 /**
  * What stands in the way of a plan that could only be filled outside its limits: how many meals

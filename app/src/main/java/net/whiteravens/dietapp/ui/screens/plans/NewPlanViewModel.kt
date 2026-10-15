@@ -30,10 +30,11 @@ import javax.inject.Inject
 import kotlin.math.roundToInt
 
 /**
- * A new plan for the profile of the route ([PROFILE_ID]): its days, what it is made for where that
- * differs from the profile, the preferences it applies and each day's own options. A plan that
- * could only be filled outside its limits is not made: what stands in the way is said, and the
- * same plan is asked for again once the user lets those limits give way.
+ * A new plan for the profile of the route ([PROFILE_ID]), from the day the route names
+ * ([START_DATE]) or from today: its days, what it is made for where that differs from the
+ * profile, the preferences it applies and each day's own options. A plan that could only be
+ * filled outside its limits is not made: what stands in the way is said, and the same plan is
+ * asked for again once the user lets those limits give way.
  */
 @HiltViewModel
 class NewPlanViewModel @Inject constructor(
@@ -71,7 +72,10 @@ class NewPlanViewModel @Inject constructor(
 
     private val profileId: String = checkNotNull(savedStateHandle[PROFILE_ID]) { "A new plan is made for a profile" }
 
-    private val _state = MutableStateFlow(UiState())
+    /** The day the plan begins on, where the route names one: the calendar's free day that was chosen. */
+    private val startDate: LocalDate = savedStateHandle.get<String>(START_DATE)?.let(LocalDate::parse) ?: LocalDate.now()
+
+    private val _state = MutableStateFlow(UiState(form = NewPlanForm(startDate = startDate)))
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     /** What the instance's catalogue holds and the most a recipe repeats where it sets one; null until it has said. */
@@ -153,5 +157,8 @@ class NewPlanViewModel @Inject constructor(
     companion object {
         /** The route's argument naming the profile the plan is made for. */
         const val PROFILE_ID = "profileId"
+
+        /** The route's argument naming the day the plan begins on, if it is not today. */
+        const val START_DATE = "startDate"
     }
 }
