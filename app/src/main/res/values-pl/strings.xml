@@ -207,7 +207,7 @@
     <string name="plans_options">Opcje planu</string>
     <string name="plans_export_csv">Zapisz jako CSV</string>
     <string name="plans_export_print">Drukuj lub zapisz jako PDF</string>
-    <string name="plans_export_failed">Nie udało się zapisać pliku.</string>
+    <string name="export_failed">Nie udało się zapisać pliku.</string>
     <string name="plans_export_date">Data</string>
     <string name="plans_export_meal">Posiłek</string>
     <string name="plans_export_dish">Danie</string>

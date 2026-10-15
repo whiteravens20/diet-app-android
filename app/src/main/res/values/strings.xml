@@ -196,7 +196,7 @@
     <string name="plans_options">Plan options</string>
     <string name="plans_export_csv">Save as CSV</string>
     <string name="plans_export_print">Print or save as PDF</string>
-    <string name="plans_export_failed">The file could not be saved.</string>
+    <string name="export_failed">The file could not be saved.</string>
     <string name="plans_export_date">Date</string>
     <string name="plans_export_meal">Meal</string>
     <string name="plans_export_dish">Dish</string>

@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import net.whiteravens.dietapp.ui.common.escaped
+
 /**
  * A plan as a sheet of paper, every text of it in the reader's language already: what it is, what
  * a day of it holds on average, and its days one under another.
@@ -71,17 +73,3 @@ private const val SHEET_STYLE =
         ".n{text-align:right;font-variant-numeric:tabular-nums}" +
         ".dish{font-weight:500}" +
         ".lines{display:block;font-size:8pt;line-height:1.3}"
-
-/** A text as markup shows it, every sign that markup reads written as the sign itself. */
-private fun escaped(text: String): String = buildString(text.length) {
-    for (sign in text) {
-        when (sign) {
-            '&' -> append("&amp;")
-            '<' -> append("&lt;")
-            '>' -> append("&gt;")
-            '"' -> append("&quot;")
-            '\'' -> append("&#39;")
-            else -> append(sign)
-        }
-    }
-}

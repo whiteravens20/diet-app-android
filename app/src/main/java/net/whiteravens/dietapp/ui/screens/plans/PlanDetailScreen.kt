@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -90,8 +91,10 @@ import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
+import net.whiteravens.dietapp.ui.common.CsvDialect
 import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.amountLabel
+import net.whiteravens.dietapp.ui.common.csvOf
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.emphasized
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -101,6 +104,7 @@ import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSigned
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.common.rememberTextSaver
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
@@ -134,7 +138,8 @@ fun PlanDetailScreen(
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
     // The plan taken out of the app: as a table for a spreadsheet, or as a sheet for the printer.
     val words = planWords()
-    val saveTable = rememberPlanTableSaver(plan, words)
+    val saveText = rememberTextSaver("text/csv")
+    val dialect = CsvDialect.of(LocalConfiguration.current.locales[0].language)
     var printing by remember { mutableStateOf(false) }
     if (printing && plan != null) PlanPrinter(plan, words, onDone = { printing = false })
     val readOnly = state.offline
@@ -268,7 +273,7 @@ fun PlanDetailScreen(
                 Header(
                     plan,
                     onBack,
-                    onSaveTable = { plan?.let(saveTable) },
+                    onSaveTable = { plan?.let { saveText("${exportName(it)}.csv", csvOf(planTable(it, words), dialect)) } },
                     onPrint = { printing = true },
                     onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
                 )
