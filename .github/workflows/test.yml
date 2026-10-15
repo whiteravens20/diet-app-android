@@ -145,9 +145,11 @@ jobs:
           emulator-boot-timeout: ${{ matrix.boot-timeout }}
           arch: x86_64
           target: google_apis
-          disable-animations: true
+          # Turned off by settle-emulator.sh, once the settings service answers.
+          disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
+            .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT connected${{ matrix.variant }}AndroidTest
 
