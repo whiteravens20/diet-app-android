@@ -44,6 +44,15 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: manual
           queries: security-extended,security-and-quality
+          # The project has no Java of its own, and in its Kotlin these two queries find only what
+          # the compilers write: the equality of a `data object` and the `$stable` field the
+          # Compose compiler gives a class.
+          config: |
+            query-filters:
+              - exclude:
+                  id: java/local-variable-is-never-read
+              - exclude:
+                  id: java/field-masks-super-field
 
       # CodeQL reads the code as the compilers see it, so every compilation runs here, in
       # Gradle's own process, with nothing taken from a cache.
