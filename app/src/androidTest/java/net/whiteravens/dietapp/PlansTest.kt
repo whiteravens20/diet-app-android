@@ -76,18 +76,22 @@ class PlansTest {
         screen.waitForText(plural(R.plurals.plans_plan_summary, 3, 3, text(R.string.diet_balanced)))
         screen.keepScreenshot("plans-a-plan-made")
 
-        // The first meal of the first day is swapped: one offer is put away for another, which is taken.
-        val swap = text(R.string.plans_swap)
-        screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(swap).fetchSemanticsNodes().isNotEmpty() }
+        // The first meal of the first day is swapped from the ways to change it, named by the meal:
+        // one offer is put away for another, which is taken.
         val before = Instance.firstDayRecipes(account, planId)
-        screen.onAllNodesWithContentDescription(swap)[0].performClick()
-        screen.waitForEnabled(text(R.string.plans_swap_take))
+        val change = text(R.string.plans_action_for, text(R.string.plans_change_meal), Instance.firstMeal(account, planId).first)
+        screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(change).fetchSemanticsNodes().isNotEmpty() }
+        screen.onAllNodesWithContentDescription(change)[0].performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_tooltip_swap_by_fav))
+        screen.keepScreenshot("plans-the-ways-to-change-a-meal")
+        screen.onNodeWithText(text(R.string.plans_swap)).performClick()
+        screen.waitForEnabled(text(R.string.plans_offer_take))
         screen.keepScreenshot("plans-a-swap-offered")
-        screen.onNodeWithText(text(R.string.plans_swap_another)).performClick()
-        screen.waitForEnabled(text(R.string.plans_swap_take))
-        screen.onNodeWithText(text(R.string.plans_swap_take)).performClick()
+        screen.onNodeWithText(text(R.string.plans_offer_another)).performClick()
+        screen.waitForEnabled(text(R.string.plans_offer_take))
+        screen.onNodeWithText(text(R.string.plans_offer_take)).performClick()
         screen.waitUntil(20_000) {
-            screen.onAllNodesWithText(text(R.string.plans_swap_offer_title)).fetchSemanticsNodes().isEmpty()
+            screen.onAllNodesWithText(text(R.string.plans_offer_title)).fetchSemanticsNodes().isEmpty()
         }
 
         assertNotEquals(before.first(), Instance.firstDayRecipes(account, planId).first())
@@ -97,8 +101,8 @@ class PlansTest {
 
         // The meal as planned opens on a tap: its own lines, and its recipe a tap further.
         val (title, lines) = Instance.firstMeal(account, planId)
-        screen.waitForText(title)
-        screen.onAllNodesWithText(title)[0].performClick()
+        screen.scrollToText(title)
+        screen.onAllNodesWithText(title)[0].performScrollTo().performClick()
         screen.waitForText(lines.first())
         screen.keepScreenshot("plans-a-meal-as-planned")
         screen.onNodeWithText(text(R.string.plans_open_recipe)).performClick()

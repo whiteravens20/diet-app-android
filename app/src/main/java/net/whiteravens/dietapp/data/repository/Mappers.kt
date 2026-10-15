@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.data.repository
 
+import net.whiteravens.dietapp.data.remote.AiMealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
@@ -43,6 +44,7 @@ import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
@@ -55,6 +57,7 @@ fun SessionUserDto.toDomain() = SessionUser(
     locale = locale,
     theme = theme,
     weightUnit = weightUnit,
+    aiMode = aiMode,
 )
 
 fun ProfileDto.toDomain() = Profile(
@@ -220,9 +223,10 @@ fun MealPlanPageDto.toDomain(syncedAt: Long? = null) = MealPlanPage(
     syncedAt = syncedAt,
 )
 
-fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, seen: List<String>) = SwapOffer(
+fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, ask: SwapAsk, seen: List<String>) = SwapOffer(
     planId = planId,
     mealId = mealId,
+    ask = ask,
     recipeId = recipe.id,
     recipeTitle = recipe.title,
     servings = servings,
@@ -233,6 +237,29 @@ fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, seen: List<Strin
     calorieTarget = calorieTarget,
     revision = revision,
     seen = seen,
+    pick = null,
+    reason = null,
+    fallbackReason = null,
+)
+
+/** An offer a model was asked for: the note and the sentence of the model's pick, or why the engine picked instead. */
+fun AiMealSwapPreviewDto.toDomain(planId: String, mealId: String, ask: SwapAsk, seen: List<String>) = SwapOffer(
+    planId = planId,
+    mealId = mealId,
+    ask = ask,
+    recipeId = recipe.id,
+    recipeTitle = recipe.title,
+    servings = servings,
+    before = before.toDomain(),
+    after = after.toDomain(),
+    dayBefore = dayBefore.toDomain(),
+    dayAfter = dayAfter.toDomain(),
+    calorieTarget = calorieTarget,
+    revision = revision,
+    seen = seen,
+    pick = pick,
+    reason = aiMeta.reason.takeIf { pick != null },
+    fallbackReason = aiMeta.fallbackReason,
 )
 
 fun ShoppingListItemDto.toDomain() = ShoppingItem(

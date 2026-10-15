@@ -12,11 +12,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
+import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
@@ -25,8 +29,9 @@ import javax.inject.Inject
 
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
- * swaps one: a recipe is offered, another can be asked for, and nothing is written until the
- * offer is taken. A meal is marked eaten or not, a meal of one's own is added to a day, and a
+ * swaps one: a recipe is offered (any of the plan's diet, a favourite picked by hand, one with the
+ * profile's favourite ingredients, or a model's pick), another can be asked for, and nothing is
+ * written until the offer is taken. A meal is marked eaten or not, a meal of one's own is added to a day, and a
  * change that balanced the day again says how, with the way back and the rest of the week to
  * balance as well. The plan can be deleted.
  */
@@ -34,6 +39,8 @@ import javax.inject.Inject
 class PlanDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val plans: MealPlanRepository,
+    private val favorites: FavoriteRepository,
+    private val users: UserRepository,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -53,6 +60,10 @@ class PlanDetailViewModel @Inject constructor(
         /** A recipe offered in the place of a meal, until it is taken or put away. */
         val offer: SwapOffer? = null,
         val taking: Boolean = false,
+        /** The recipes the profile marked and did not mark to avoid: the favourites a meal can be swapped to. */
+        val liked: List<MarkedRecipe> = emptyList(),
+        /** Whether the account has a model to ask; null until that is known. */
+        val aiOn: Boolean? = null,
         /** An eaten mark, a meal of one's own, a rebalance or the plan's deletion is on its way. */
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
@@ -77,6 +88,7 @@ class PlanDetailViewModel @Inject constructor(
             attempt { plans.refreshPlan(planId) }
                 .onSuccess { fresh ->
                     _state.update { it.copy(loading = false, plan = fresh, selectedDay = if (it.plan == null) dayOf(fresh) else it.selectedDay) }
+                    readSwapChoices(fresh.profileId)
                 }
                 .onFailure { e ->
                     _state.update {
@@ -97,14 +109,27 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(selectedDay = index) }
     }
 
-    /** Asks for a recipe to put in the place of [mealId]. */
-    fun offerSwap(mealId: String) = ask(mealId, seen = emptyList())
+    /**
+     * The favourites a meal can be swapped to, and whether a model can be asked: what fails to come
+     * leaves the picker empty and the model's ask off, nothing more.
+     */
+    private fun readSwapChoices(profileId: String) {
+        viewModelScope.launch {
+            val liked = attempt { favorites.marked(profileId) }.getOrDefault(emptyList()).filter { it.sentiment != "avoid" }
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            _state.update { it.copy(liked = liked, aiOn = aiOn) }
+        }
+    }
+
+    /** Asks for a recipe to put in the place of [mealId], as [how] says. */
+    fun offerSwap(mealId: String, how: SwapAsk = SwapAsk("random")) = ask(mealId, how, seen = emptyList())
 
     /** Another recipe for the meal of the offer on screen, than those offered for it so far. */
     fun anotherOffer() {
         val offer = _state.value.offer ?: return
-        ask(offer.mealId, offer.seen)
+        ask(offer.mealId, offer.ask, offer.seen)
     }
+
 
     fun dismissOffer() {
         _state.update { it.copy(offer = null) }
@@ -176,11 +201,11 @@ class PlanDetailViewModel @Inject constructor(
     /** A rebalance is said where it scaled a meal. */
     private fun Rebalance?.shown(): Rebalance? = this?.takeIf { it.changes.isNotEmpty() }
 
-    private fun ask(mealId: String, seen: List<String>) {
+    private fun ask(mealId: String, how: SwapAsk, seen: List<String>) {
         if (_state.value.offering != null) return
         viewModelScope.launch {
             _state.update { it.copy(offering = mealId, error = null) }
-            attempt { plans.offerSwap(planId, mealId, seen) }
+            attempt { plans.offerSwap(planId, mealId, how, seen) }
                 .onSuccess { offer -> _state.update { it.copy(offering = null, offer = offer) } }
                 .onFailure { e ->
                     _state.update { it.copy(offering = null, offer = null, error = e) }

@@ -67,8 +67,14 @@ data class RelaxationNeeded(val needs: List<String>, val meals: List<RelaxedMeal
 /** A meal that would go outside limits of its plan, and which. */
 data class RelaxedMeal(val date: LocalDate, val slot: String, val gaveWay: List<String>)
 
-/** A recipe a profile marked (`marked`, `often` or `avoid`), as a form offers it for a meal. */
-data class MarkedRecipe(val recipeId: String, val title: String, val mealTypes: List<String>, val sentiment: String)
+/** A recipe a profile marked (`marked`, `often` or `avoid`), as a form or a swap offers it for a meal. */
+data class MarkedRecipe(val recipeId: String, val title: String, val mealTypes: List<String>, val sentiment: String, val dietTags: List<String>)
+
+/** The diets that are tags of recipes: a plan on one of them takes only recipes that carry it, a plan on any other takes all. */
+val RECIPE_DIET_TAGS = setOf("vegetarian", "vegan", "mediterranean", "low_carb", "keto")
+
+/** Whether a recipe with [dietTags] may be planned for somebody on [diet]. */
+fun fitsDiet(dietTags: List<String>, diet: String): Boolean = diet !in RECIPE_DIET_TAGS || diet in dietTags
 
 /** A profile's favourite set: the recipe it has for each meal it names. */
 data class FavoriteSet(val id: String, val label: String, val slots: Map<String, String>)

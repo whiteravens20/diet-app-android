@@ -27,11 +27,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,22 +67,31 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.fitsDiet
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -92,6 +103,7 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
@@ -99,7 +111,6 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
-import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -156,6 +167,21 @@ fun PlanDetailScreen(
             dietType = plan.dietType,
             onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id) } },
             onDismiss = { openMealId = null },
+        )
+    }
+
+    // The meal a favourite is being picked for, while the picker is open.
+    var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
+    plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == pickingFor }?.let { meal ->
+        FavoritePicker(
+            meal = meal,
+            planDiet = plan.dietType,
+            liked = state.liked,
+            onPick = { recipeId, showingAll ->
+                pickingFor = null
+                viewModel.offerSwap(meal.id, SwapAsk("favorite", favoriteRecipeId = recipeId, allowOffDiet = showingAll))
+            },
+            onDismiss = { pickingFor = null },
         )
     }
 
@@ -231,8 +257,10 @@ fun PlanDetailScreen(
                     swapping = meal.id == state.offering,
                     readOnly = readOnly,
                     busy = busy,
+                    aiOn = state.aiOn == true,
                     onEaten = { eaten -> viewModel.setEaten(meal.id, eaten) },
-                    onSwap = { viewModel.offerSwap(meal.id) },
+                    onChange = { how -> viewModel.offerSwap(meal.id, how) },
+                    onPickFavorite = { pickingFor = meal.id },
                     onOpen = { openMealId = meal.id },
                 )
             }
@@ -445,8 +473,10 @@ private fun MealCard(
     swapping: Boolean,
     readOnly: Boolean,
     busy: Boolean,
+    aiOn: Boolean,
     onEaten: (Boolean) -> Unit,
-    onSwap: () -> Unit,
+    onChange: (SwapAsk) -> Unit,
+    onPickFavorite: () -> Unit,
     onOpen: () -> Unit,
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
@@ -491,13 +521,7 @@ private fun MealCard(
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else if (!readOnly && !meal.eaten && !meal.custom) {
-                IconButton(onClick = onSwap, enabled = !busy) {
-                    Icon(
-                        Icons.Default.Refresh,
-                        contentDescription = stringResource(R.string.plans_swap),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                MealChanges(meal, busy, aiOn, onChange, onPickFavorite)
             }
         }
     }
@@ -670,6 +694,138 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
     )
 }
 
+/**
+ * The ways to change a meal, behind one button named by the meal, as the web folds them on a narrow
+ * screen: any recipe of the plan's diet, a favourite picked by hand, a model's pick (off, and saying
+ * why, on an account without a model), or one with the profile's favourite ingredients.
+ */
+@Composable
+private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (SwapAsk) -> Unit, onPickFavorite: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }, enabled = !busy) {
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.plans_action_for, stringResource(R.string.plans_change_meal), mealName(meal)),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            fun pick(action: () -> Unit) {
+                open = false
+                action()
+            }
+            Change(stringResource(R.string.plans_swap), null) { pick { onChange(SwapAsk("random")) } }
+            Change("${stringResource(R.string.plans_swap_to_fav)} ★", stringResource(R.string.plans_tooltip_swap_to_fav)) { pick(onPickFavorite) }
+            Change(
+                stringResource(R.string.plans_ai_swap),
+                stringResource(if (aiOn) R.string.plans_tooltip_ai_swap else R.string.ai_off_note),
+                enabled = aiOn,
+            ) { pick { onChange(SwapAsk("ai")) } }
+            Change(stringResource(R.string.plans_swap_fav_ingr), stringResource(R.string.plans_tooltip_swap_by_fav)) { pick { onChange(SwapAsk("favorite_ingredients")) } }
+        }
+    }
+}
+
+/** A way to change a meal, with what it does under its name where the name alone does not say it. */
+@Composable
+private fun Change(label: String, hint: String?, enabled: Boolean = true, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = {
+            Column {
+                Text(label)
+                hint?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        },
+        onClick = onClick,
+        enabled = enabled,
+    )
+}
+
+/**
+ * The profile's favourites a meal can be swapped to: those of the meal's time of day and the plan's
+ * diet, or all of them where the user asks, each saying where it is of another time of day or off
+ * the diet. Allergens, skipped ingredients and the mark to avoid hold either way; the API sees to it.
+ */
+@Composable
+private fun FavoritePicker(meal: Meal, planDiet: String, liked: List<MarkedRecipe>, onPick: (recipeId: String, showingAll: Boolean) -> Unit, onDismiss: () -> Unit) {
+    var showingAll by rememberSaveable { mutableStateOf(false) }
+    val offered = liked.filter { showingAll || (meal.slot in it.mealTypes && fitsDiet(it.dietTags, planDiet)) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.plans_tooltip_swap_to_fav)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                CheckRow(label = stringResource(R.string.plans_show_all_favorites), checked = showingAll, onChange = { showingAll = it })
+                if (offered.isEmpty()) {
+                    Hint(
+                        if (showingAll) stringResource(R.string.plans_no_favorites)
+                        else stringResource(R.string.plans_no_favorites_for_slot, mealTypeLabel(meal.slot)),
+                    )
+                }
+                offered.forEach { favorite ->
+                    val times = favorite.mealTypes.map { mealTypeLabel(it) }
+                    @OptIn(ExperimentalLayoutApi::class)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Button) { onPick(favorite.recipeId, showingAll) }
+                            .padding(vertical = 8.dp),
+                    ) {
+                        Text(favorite.title, style = MaterialTheme.typography.bodyMedium)
+                        if (meal.slot !in favorite.mealTypes) LabelChip(times.joinToString(" · "))
+                        if (!fitsDiet(favorite.dietTags, planDiet)) CautionChip(stringResource(R.string.plans_off_diet_tag))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } },
+    )
+}
+
+/** Why the engine picked where a model was asked; null for a reason this version does not know. */
+@Composable
+private fun fallbackText(reason: String): String? = when (reason) {
+    "quota_exhausted" -> stringResource(R.string.ai_fallback_quota_exhausted)
+    "instance_quota_exhausted" -> stringResource(R.string.ai_fallback_instance_quota_exhausted)
+    "no_provider" -> stringResource(R.string.ai_fallback_no_provider)
+    "all_providers_failed" -> stringResource(R.string.ai_fallback_all_providers_failed)
+    "provider_timeout" -> stringResource(R.string.ai_fallback_provider_timeout)
+    "key_unreadable" -> stringResource(R.string.ai_fallback_key_unreadable)
+    "invalid_output" -> stringResource(R.string.ai_fallback_invalid_output)
+    else -> null
+}
+
+/** What an offer is, as the web says it: the recipe in bold, its servings, and its kcal in place of the meal's. */
+@Composable
+private fun offerLine(offer: SwapOffer): AnnotatedString {
+    val servings = if (offer.servings % 1.0 == 0.0) {
+        pluralStringResource(R.plurals.plans_offer_servings, offer.servings.toInt(), formatNumber(offer.servings))
+    } else {
+        // A count with a fraction takes the form the languages give fractions.
+        stringResource(R.string.plans_offer_servings_fraction, formatNumber(offer.servings, fractionDigits = 2))
+    }
+    val line = stringResource(
+        R.string.plans_offer_line,
+        TITLE_MARK,
+        servings,
+        formatNumber(offer.after.calories.roundToInt()),
+        formatNumber(offer.before.calories.roundToInt()),
+    )
+    val (head, tail) = line.split(TITLE_MARK, limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+    return buildAnnotatedString {
+        append(head)
+        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(offer.recipeTitle) }
+        append(tail)
+    }
+}
+
+/** Where the title goes in a line, to be set apart: no text holds it. */
+private const val TITLE_MARK = "\u0000"
+
 /** The recipe offered in the place of a meal, and what taking it does to the meal and to its day. */
 @Composable
 private fun SwapOfferDialog(
@@ -681,49 +837,39 @@ private fun SwapOfferDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.plans_swap_offer_title)) },
+        title = { Text(stringResource(R.string.plans_offer_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(offer.recipeTitle, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(R.string.plans_swap_servings, formatServings(offer.servings)),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
+                // A model's own pick says so, with its reason, before it is taken; where a model was asked
+                // and the engine picked, the offer says why.
+                if (offer.pick != null) AiMark(modelPartText(ModelPart.Picked(offer.reason)), spelledOut = true)
+                offer.fallbackReason?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
+                Text(offerLine(offer), style = MaterialTheme.typography.bodyMedium)
+                Hint(
                     stringResource(
-                        R.string.plans_swap_meal_kcal,
-                        offer.before.calories.roundToInt(),
-                        offer.after.calories.roundToInt(),
+                        R.string.plans_offer_macros,
+                        formatNumber(offer.after.protein.roundToInt()),
+                        formatNumber(offer.after.fat.roundToInt()),
+                        formatNumber(offer.after.carbs.roundToInt()),
                     ),
-                    style = MaterialTheme.typography.bodyMedium,
                 )
-                Text(
-                    stringResource(
-                        R.string.plans_swap_day_kcal,
-                        offer.dayBefore.calories.roundToInt(),
-                        offer.dayAfter.calories.roundToInt(),
-                        offer.calorieTarget.roundToInt(),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Hint(stringResource(R.string.plans_offer_day, formatNumber(offer.dayAfter.calories.roundToInt()), formatNumber(offer.calorieTarget.roundToInt())))
             }
         },
         confirmButton = {
-            Button(onClick = onTake, enabled = !busy) { Text(stringResource(R.string.plans_swap_take)) }
+            Button(onClick = onTake, enabled = !busy) { Text(stringResource(R.string.plans_offer_take)) }
         },
         dismissButton = {
             Row {
-                TextButton(onClick = onAnother, enabled = !busy) { Text(stringResource(R.string.plans_swap_another)) }
+                // A favourite picked by hand is the one the user asked for: there is no other to offer.
+                if (offer.ask.strategy != "favorite") {
+                    TextButton(onClick = onAnother, enabled = !busy) { Text(stringResource(R.string.plans_offer_another)) }
+                }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
             }
         },
     )
 }
-
-/** `1.0` → `1`, `1.5` → `1.5`: servings as a person writes them. */
-private fun formatServings(servings: Double): String =
-    if (servings % 1.0 == 0.0) servings.toLong().toString() else "%.1f".format(Locale.getDefault(), servings)
 
 /**
  * A meal as planned: its own lines, in the amounts the plan gives it, what stands against it, and

@@ -17,7 +17,7 @@ class FavoriteRepository @Inject constructor(
     private val json: Json,
 ) {
     suspend fun marked(profileId: String): List<MarkedRecipe> =
-        apiCall(json) { api.favorites(profileId) }.map { MarkedRecipe(it.recipe.id, it.recipe.title, it.recipe.mealTypes, it.sentiment) }
+        apiCall(json) { api.favorites(profileId) }.map { MarkedRecipe(it.recipe.id, it.recipe.title, it.recipe.mealTypes, it.sentiment, it.recipe.dietTags) }
 
     suspend fun sets(profileId: String): List<FavoriteSet> =
         apiCall(json) { api.favoriteSets(profileId) }.map { FavoriteSet(it.id, it.label, it.slots) }

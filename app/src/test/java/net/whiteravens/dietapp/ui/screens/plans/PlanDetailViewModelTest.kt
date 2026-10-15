@@ -17,6 +17,8 @@ import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
+import net.whiteravens.dietapp.data.remote.AiGenerationMetaDto
+import net.whiteravens.dietapp.data.remote.AiMealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
@@ -30,9 +32,14 @@ import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
+import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.ScaleChange
+import net.whiteravens.dietapp.domain.SessionUser
+import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -80,8 +87,17 @@ class PlanDetailViewModelTest {
         override suspend fun deleteShoppingList(id: String) = Unit
     }
 
-    private fun model(api: DietApiService) =
-        PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, NoCache, json))
+    private val liked = listOf(
+        MarkedRecipe("oats", "Oats", listOf("breakfast"), "marked", emptyList()),
+        MarkedRecipe("liver", "Liver", listOf("lunch"), "avoid", emptyList()),
+    )
+    private val favorites = mockk<FavoriteRepository>().also { coEvery { it.marked(plan.profileId) } returns liked }
+    private val users = mockk<UserRepository>().also { coEvery { it.me() } returns account("admin") }
+
+    private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", "system", aiMode = aiMode)
+
+    private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id)) =
+        PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, NoCache, json), favorites, users)
 
     private fun refused(status: Int, code: String) = HttpException(
         Response.error<Any>(
@@ -136,7 +152,7 @@ class PlanDetailViewModelTest {
         coEvery { api.mealPlan(plan.id) } returns plan
         val day = plan.days[3]
 
-        val atDay = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id, "day" to day.date)), MealPlanRepository(api, NoCache, json))
+        val atDay = model(api, mapOf("planId" to plan.id, "day" to day.date))
         val fromList = model(api)
 
         assertEquals(3, atDay.state.value.selectedDay)
@@ -234,6 +250,68 @@ class PlanDetailViewModelTest {
         assertEquals("PLAN_CHANGED", (model.state.value.error as ApiException).code)
         assertNull(model.state.value.rebalance)
         coVerify(exactly = 2) { api.mealPlan(plan.id) }
+    }
+
+    @Test
+    fun `the favourites a meal can be swapped to leave out those marked to avoid, and an account without a model says so`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { users.me() } returns account("none")
+
+        val model = model(api)
+
+        assertEquals(listOf("oats"), model.state.value.liked.map { it.recipeId })
+        assertEquals(false, model.state.value.aiOn)
+    }
+
+    @Test
+    fun `a favourite picked by hand is asked for with its recipe, the diet no bar where all favourites were shown`() {
+        val api = mockk<DietApiService>()
+        val offers = mutableListOf<SwapOfferRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(capture(offers)) } returns preview
+        val model = model(api)
+
+        model.offerSwap(meal.id, SwapAsk("favorite", favoriteRecipeId = "oats", allowOffDiet = true))
+
+        val asked = offers.single()
+        assertEquals("favorite", asked.strategy)
+        assertEquals("oats", asked.favoriteRecipeId)
+        assertTrue(asked.allowOffDiet)
+        assertEquals("favorite", model.state.value.offer?.ask?.strategy)
+    }
+
+    @Test
+    fun `an offer a model was asked for says why the engine picked, or that the model did and why`() {
+        val api = mockk<DietApiService>()
+        val byEngine = AiMealSwapPreviewDto(
+            recipe = preview.recipe,
+            servings = preview.servings,
+            before = preview.before,
+            after = preview.after,
+            dayBefore = preview.dayBefore,
+            dayAfter = preview.dayAfter,
+            calorieTarget = preview.calorieTarget,
+            revision = preview.revision,
+            aiMeta = AiGenerationMetaDto(usedDeterministicFallback = true, fallbackReason = "quota_exhausted"),
+            pick = null,
+        )
+        val byModel = byEngine.copy(aiMeta = AiGenerationMetaDto(provider = "openrouter", usedDeterministicFallback = false, reason = "Lighter."), pick = "note")
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.aiOfferSwap(any()) } returns byEngine andThen byModel
+        val model = model(api)
+
+        model.offerSwap(meal.id, SwapAsk("ai"))
+
+        assertEquals("quota_exhausted", model.state.value.offer?.fallbackReason)
+        assertNull(model.state.value.offer?.pick)
+
+        model.anotherOffer()
+
+        assertNull(model.state.value.offer?.fallbackReason)
+        assertEquals("note", model.state.value.offer?.pick)
+        assertEquals("Lighter.", model.state.value.offer?.reason)
+        assertEquals("ai", model.state.value.offer?.ask?.strategy)
     }
 }
 
