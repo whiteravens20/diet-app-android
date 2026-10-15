@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
@@ -75,6 +76,14 @@ class ShoppingTest {
         screen.keepScreenshot("shopping-the-amounts-of-a-row")
         screen.onNodeWithText(text(R.string.common_save)).performClick()
         screen.waitUntil(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
+
+        // The entries are found by a part of the name: fewer rows are shown, the one looked for among them.
+        list.performScrollToNode(hasText(text(R.string.shopping_find_entry)))
+        val toggles = screen.onAllNodes(isToggleable()).fetchSemanticsNodes().size
+        screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextInput(other)
+        screen.waitUntil(20_000) { screen.onAllNodes(isToggleable()).fetchSemanticsNodes().size < toggles }
+        screen.onNode(hasText(other) and isToggleable()).assertExists()
+        screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextReplacement("")
 
         // A list made again from the window that asks for the plan's days stands in the place of the first.
         val first = Instance.shoppingListIds(account, planId)

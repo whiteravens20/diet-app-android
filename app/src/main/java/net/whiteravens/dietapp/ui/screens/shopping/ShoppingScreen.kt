@@ -48,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -91,6 +92,8 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
     var choosingDays by rememberSaveable { mutableStateOf(false) }
     // The list to delete, while that waits for a yes.
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
+    // What somebody in a shop is looking for on the list: the entries whose name holds the words.
+    var find by rememberSaveable { mutableStateOf("") }
 
     if (state.loading) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -266,18 +269,39 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
                         }
                     }
                 }
+                item(key = "find") {
+                    OutlinedTextField(
+                        value = find,
+                        onValueChange = { find = it },
+                        label = { Text(stringResource(R.string.shopping_find_entry)) },
+                        placeholder = { Text(stringResource(R.string.shopping_find_entry_placeholder)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 val everyItem = list.groups.flatMap { it.items }
                 if (everyItem.any { it.packsStand }) {
                     item(key = "packs") {
                         Text(stringResource(R.string.shopping_packs_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                list.groups.forEach { group ->
+                val wanted = find.trim().lowercase()
+                val groups = if (wanted.isEmpty()) list.groups
+                else list.groups.map { group -> group.copy(items = group.items.filter { wanted in it.name.lowercase() }) }.filter { it.items.isNotEmpty() }
+                if (groups.isEmpty()) {
+                    item(key = "none") {
+                        Text(stringResource(R.string.shopping_find_entry_none, find.trim()), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                groups.forEach { group ->
                     item(key = "header-${group.category}") {
                         Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
                             Text(categoryLabel(group.category), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                            // What the whole aisle comes to, whatever part of it is looked for.
+                            val aisle = list.groups.first { it.category == group.category }
                             Text(
-                                stringResource(R.string.shopping_aisle_energy, formatNumber(group.estimatedCalories.roundToInt())),
+                                stringResource(R.string.shopping_aisle_energy, formatNumber(aisle.estimatedCalories.roundToInt())),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

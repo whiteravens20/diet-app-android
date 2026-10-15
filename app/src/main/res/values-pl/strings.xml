@@ -463,6 +463,9 @@
     <string name="shopping_summary">Odhaczone %1$s/%2$s · łącznie %3$s kcal</string>
     <string name="shopping_delete_confirm">Usunąć tę listę zakupów?</string>
     <string name="shopping_aisle_energy">około %1$s kcal</string>
+    <string name="shopping_find_entry">Znajdź pozycję</string>
+    <string name="shopping_find_entry_placeholder">Nazwa składnika…</string>
+    <string name="shopping_find_entry_none">Żadna pozycja tej listy nie ma „%1$s” w nazwie.</string>
     <string name="shopping_packs_hint">Przy tym, co sprzedaje się w opakowaniach, wiersz podaje, ile ich trzeba. Po zakupie naciśnij tę liczbę: to, czego plan z nich nie potrzebuje, trafi do spiżarni.</string>
     <string name="shopping_at_home">w domu</string>
     <string name="shopping_bought">kupione</string>
