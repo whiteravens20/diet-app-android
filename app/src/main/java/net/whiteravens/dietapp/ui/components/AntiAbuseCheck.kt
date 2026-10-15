@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.components
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -44,9 +45,7 @@ fun AntiAbuseCheckDialog(
         text = {
             AndroidView(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                factory = { context ->
-                    WebView(context).apply { showCheck(siteKey, origin(serverUrl), { token(it) }, { failed() }) }
-                },
+                factory = { context -> checkView(context, siteKey, origin(serverUrl), { token(it) }, { failed() }) },
             )
         },
         confirmButton = {},
@@ -60,9 +59,18 @@ private fun origin(serverUrl: String): String {
     return url.newBuilder().encodedPath("/").query(null).build().toString()
 }
 
+/** The WebView the check runs in, its page loading. */
 @SuppressLint("SetJavaScriptEnabled")
-private fun WebView.showCheck(siteKey: String, origin: String, onToken: (String) -> Unit, onFailed: () -> Unit) {
+private fun checkView(
+    context: Context,
+    siteKey: String,
+    origin: String,
+    onToken: (String) -> Unit,
+    onFailed: () -> Unit,
+): WebView {
+    val view = WebView(context)
     // The check runs Cloudflare's script, which reaches no file and no content of the phone.
+    val settings = view.settings
     settings.javaScriptEnabled = true
     settings.domStorageEnabled = true
     settings.allowFileAccess = false
@@ -70,7 +78,7 @@ private fun WebView.showCheck(siteKey: String, origin: String, onToken: (String)
     // Its answer comes back as a navigation to an address of the app's own scheme, which goes
     // nowhere, so no object of the app is open to the page's scripts. Any other navigation, a link
     // the check might show, is not followed.
-    webViewClient = object : WebViewClient() {
+    view.webViewClient = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val answer = request.url.takeIf { request.isForMainFrame && it.scheme == ANSWER_SCHEME }
             when (answer?.host) {
@@ -96,7 +104,8 @@ private fun WebView.showCheck(siteKey: String, origin: String, onToken: (String)
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=shown" async defer></script>
         </head><body style="margin:0"><div id="check"></div></body></html>
     """.trimIndent()
-    loadDataWithBaseURL(origin, page, "text/html", "utf-8", null)
+    view.loadDataWithBaseURL(origin, page, "text/html", "utf-8", null)
+    return view
 }
 
 /** The scheme of the address the check's answer comes back to: it names no place. */
