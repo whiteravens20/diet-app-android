@@ -75,6 +75,7 @@ jobs:
             ram-size: ''
             disk-size: ''
             boot-timeout: 600
+            emulator-features: ''
             build-type: debug
             variant: Debug
             test-authority: false
@@ -89,6 +90,11 @@ jobs:
             ram-size: 4096M
             disk-size: 6G
             boot-timeout: 1200
+            # Its graphics driver reads the screen back from the emulator only by DMA, which the
+            # emulator offers with direct memory and its shared-slots allocator on; without them
+            # surfaceflinger stops on `!hasReadColorBufferDma` and the system starts again under
+            # the tests.
+            emulator-features: -feature GLDirectMem,HasSharedSlotsHostMemoryAllocator
             build-type: debug
             variant: Debug
             # The instance served over HTTPS as well, with a certificate from an authority made
@@ -103,6 +109,7 @@ jobs:
             ram-size: ''
             disk-size: ''
             boot-timeout: 600
+            emulator-features: ''
             build-type: minified
             variant: Minified
             test-authority: false
@@ -152,7 +159,7 @@ jobs:
           target: google_apis
           # Turned off by settle-emulator.sh, once the settings service answers.
           disable-animations: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
