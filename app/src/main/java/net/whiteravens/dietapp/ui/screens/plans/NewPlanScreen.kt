@@ -229,20 +229,6 @@ private fun CheckRow(label: String, hint: String? = null, checked: Boolean, onCh
     }
 }
 
-@Composable
-private fun limitName(limit: String): String = when (limit) {
-    "variety_floor" -> stringResource(R.string.plans_limit_variety_floor)
-    "cook_time" -> stringResource(R.string.plans_limit_cook_time)
-    "same_day" -> stringResource(R.string.plans_limit_same_day)
-    "consecutive_days" -> stringResource(R.string.plans_limit_consecutive_days)
-    "weekly_cap" -> stringResource(R.string.plans_limit_weekly_cap)
-    "ingredient_cap" -> stringResource(R.string.plans_limit_ingredient_cap)
-    else -> limit
-}
-
-@Composable
-private fun limitNames(limits: List<String>): String = limits.map { limitName(it) }.joinToString(", ")
-
 /**
  * What stands in the way of a plan that could only be filled outside its limits: how many meals
  * would go outside and which limits, the first few meals by day, and the plan made once those
