@@ -12,17 +12,20 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The sign-in screen names the version of the server the app is pointed at, when the build
- * was not checked against it. The server here is a local one in the test, answering what a
- * server of another version, or something that is not the API, would answer.
+ * The sign-in screen's server dialog names what is wrong with an address, and the screen names
+ * the version of the server the app is pointed at, when the build was not checked against it.
+ * The server here is a local one in the test, answering what a server of another version, or
+ * something that is not the API, would answer.
  */
 @RunWith(AndroidJUnit4::class)
 class ServerVersionTest {
@@ -45,17 +48,38 @@ class ServerVersionTest {
         screen.onNodeWithText(text(R.string.common_save)).performClick()
     }
 
+    /** Answers [config] at the config route, and an API's health at the health route. */
+    private fun serve(config: () -> MockResponse, health: () -> MockResponse = ::healthUp) {
+        elsewhere.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
+                "/api/health" -> health()
+                "/api/config" -> config()
+                else -> MockResponse().setResponseCode(404)
+            }
+        }
+        elsewhere.start()
+    }
+
+    private fun healthUp() = MockResponse()
+        .setHeader("Content-Type", "application/json")
+        .setBody("""{"status":"ok","db":"up","time":"2026-10-15T00:00:00.000Z"}""")
+
+    private fun notTheApi() = MockResponse()
+        .setHeader("Content-Type", "text/html")
+        .setBody("<!doctype html><title>Not the API</title>")
+
     @Test
     fun aServerOfAnotherVersionIsNamedBesideTheVersionTheAppWasCheckedAgainst() {
-        elsewhere.enqueue(
-            MockResponse()
-                .setHeader("Content-Type", "application/json")
-                .setBody(
-                    """{"instance":{"supportUrl":null,"operatorContact":null,"version":"0.0.1"},""" +
-                        """"turnstile":{"enabled":false,"siteKey":null}}""",
-                ),
+        serve(
+            config = {
+                MockResponse()
+                    .setHeader("Content-Type", "application/json")
+                    .setBody(
+                        """{"instance":{"supportUrl":null,"operatorContact":null,"version":"0.0.1"},""" +
+                            """"turnstile":{"enabled":false,"siteKey":null}}""",
+                    )
+            },
         )
-        elsewhere.start()
 
         useServer(elsewhere.url("/api/").toString())
 
@@ -64,17 +88,23 @@ class ServerVersionTest {
     }
 
     @Test
-    fun aServerWhoseAnswerCannotBeReadRunsAVersionTheAppDoesNotSupport() {
-        elsewhere.enqueue(
-            MockResponse()
-                .setHeader("Content-Type", "text/html")
-                .setBody("<!doctype html><title>Not the API</title>"),
-        )
-        elsewhere.start()
+    fun anAddressWhereSomethingElseAnswersIsNamedAndKeptOnlyWhenAskedAgainAsAVersionTheAppDoesNotSupport() {
+        serve(config = ::notTheApi, health = ::notTheApi)
 
         useServer(elsewhere.url("/api/").toString())
 
+        screen.waitForText(text(R.string.server_not_the_api))
+        screen.keepScreenshot("sign-in-server-not-the-api")
+        screen.onNodeWithText(text(R.string.server_save_anyway)).performClick()
         screen.waitForText(text(R.string.server_unsupported))
-        screen.keepScreenshot("sign-in-server-not-supported")
+    }
+
+    @Test
+    fun anAddressWithAPasswordInItIsNotKept() {
+        useServer("https://ala:secret@diet.example.org")
+
+        screen.waitForText(text(R.string.server_credentials))
+        screen.onNodeWithText(text(R.string.common_cancel)).performClick()
+        screen.waitForText(text(R.string.server_label, BuildConfig.API_BASE_URL))
     }
 }

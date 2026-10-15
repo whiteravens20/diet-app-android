@@ -46,6 +46,12 @@ data class TurnstileDto(val enabled: Boolean, val siteKey: String? = null)
 @Serializable
 data class InstanceDto(val version: String)
 
+// ── Health (GET /health) ────────────────────────────────────────────────────
+
+/** Whether the API is up and reaches its database (`db`: `up` or `down`). */
+@Serializable
+data class HealthDto(val status: String, val db: String)
+
 // ── Auth (packages/shared/src/auth.ts) ──────────────────────────────────────
 
 /** [turnstileToken]: the anti-abuse check's answer, where the instance has the check on. */

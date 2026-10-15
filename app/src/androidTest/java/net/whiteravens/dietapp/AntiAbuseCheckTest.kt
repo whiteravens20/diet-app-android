@@ -55,6 +55,7 @@ class AntiAbuseCheckTest {
         val signUps = LinkedBlockingQueue<RecordedRequest>()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
+                "/api/health" -> json(HEALTH)
                 "/api/config" -> json(CONFIG)
                 "/api/auth/register" -> {
                     signUps += request
@@ -95,6 +96,8 @@ class AntiAbuseCheckTest {
 
     private companion object {
         const val VERSION = "0.0.1-check"
+
+        const val HEALTH = """{"status":"ok","db":"up","time":"2026-10-15T00:00:00.000Z"}"""
 
         val CONFIG = """
             {"instance":{"supportUrl":null,"operatorContact":null,"version":"$VERSION"},

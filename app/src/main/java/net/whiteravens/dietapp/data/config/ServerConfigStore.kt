@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import net.whiteravens.dietapp.BuildConfig
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,23 +34,12 @@ class ServerConfigStore @Inject constructor(@ApplicationContext context: Context
 
     suspend fun current(): String = baseUrl.first()
 
-    /** Persists a base URL previously validated with [normalize]. */
+    /** Persists a base URL, as [readAddress] reads one from what a person typed. */
     suspend fun save(url: String) {
         store.edit { prefs -> prefs[BASE_URL] = url }
     }
 
-    companion object {
-        private val BASE_URL = stringPreferencesKey("base_url")
-
-        /**
-         * Validates user input into a canonical base URL (trailing slash so
-         * Retrofit's relative paths resolve under it), or null when it is not
-         * an http(s) URL.
-         */
-        fun normalize(input: String): String? {
-            val trimmed = input.trim().let { if (it.endsWith("/")) it else "$it/" }
-            val url = trimmed.toHttpUrlOrNull() ?: return null
-            return url.toString()
-        }
+    private companion object {
+        val BASE_URL = stringPreferencesKey("base_url")
     }
 }

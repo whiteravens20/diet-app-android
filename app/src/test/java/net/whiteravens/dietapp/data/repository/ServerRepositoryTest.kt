@@ -10,8 +10,10 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.data.config.ServerConfigStore
+import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -21,6 +23,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import javax.net.ssl.SSLHandshakeException
 
 /**
  * The server's version as the app asks for it, with `GET /config` through the client the app
@@ -46,7 +49,7 @@ class ServerRepositoryTest {
     private fun repository(): ServerRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return ServerRepository(AppModule.authApi(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json))
+        return ServerRepository(AppModule.authApi(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json)
     }
 
     private fun asked(): ServerVersion {
@@ -118,5 +121,58 @@ class ServerRepositoryTest {
         runBlocking { repository.refresh() }
 
         assertEquals(ServerVersion.Unknown, repository.version.value)
+    }
+
+    private fun probed(address: String = server.url("/api/").toString()): ServerProbe = runBlocking { repository().probe(address) }
+
+    @Test
+    fun `an address where the API is up answers, asked at its health route`() {
+        server.enqueue(answer(HEALTH_UP))
+
+        assertEquals(ServerProbe.Answers, probed())
+        assertEquals("/api/health", server.takeRequest().path)
+    }
+
+    @Test
+    fun `an API whose database is down is named for it`() {
+        server.enqueue(answer(HEALTH_DOWN, status = 503))
+
+        assertEquals(ServerProbe.DatabaseDown, probed())
+    }
+
+    @Test
+    fun `something that answers but is not the API is named for it`() {
+        server.enqueue(answer("<!doctype html><title>Not found</title>", status = 404).setHeader("Content-Type", "text/html"))
+        server.enqueue(answer("<!doctype html><title>A website</title>").setHeader("Content-Type", "text/html"))
+        server.enqueue(answer("""{"status":"UP"}"""))
+        server.enqueue(answer("<!doctype html><title>Bad gateway</title>", status = 503).setHeader("Content-Type", "text/html"))
+
+        assertEquals(ServerProbe.NotTheApi, probed())
+        assertEquals(ServerProbe.NotTheApi, probed())
+        assertEquals(ServerProbe.NotTheApi, probed())
+        assertEquals(ServerProbe.NotTheApi, probed())
+    }
+
+    @Test
+    fun `an address where nothing answers, or a name no server has, is named for what it is`() {
+        val gone = MockWebServer().apply { start() }
+        val address = gone.url("/api/").toString()
+        gone.shutdown()
+
+        assertEquals(ServerProbe.NoAnswer, probed(address))
+        assertEquals(ServerProbe.UnknownHost, probed("https://no-such-server.invalid/api/"))
+    }
+
+    @Test
+    fun `a server whose certificate the phone does not trust is named for it`() {
+        val api = mockk<AuthApiService>()
+        coEvery { api.health(any()) } throws SSLHandshakeException("Trust anchor for certification path not found.")
+
+        assertEquals(ServerProbe.Untrusted, runBlocking { ServerRepository(api, json).probe("https://diet.example.test/api/") })
+    }
+
+    private companion object {
+        const val HEALTH_UP = """{"status":"ok","db":"up","time":"2026-10-15T00:00:00.000Z"}"""
+        const val HEALTH_DOWN = """{"status":"degraded","db":"down","time":"2026-10-15T00:00:00.000Z"}"""
     }
 }

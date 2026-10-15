@@ -226,6 +226,27 @@ sealed interface ServerVersion {
     data object Unsupported : ServerVersion
 }
 
+/** What answers at an address typed for the server, asked before the address is kept. */
+sealed interface ServerProbe {
+    /** A Diet App API answers there. */
+    data object Answers : ServerProbe
+
+    /** Its API answers there, but its database is down. */
+    data object DatabaseDown : ServerProbe
+
+    /** Something answers there that is not a Diet App API: a website, a proxy's page, another service. */
+    data object NotTheApi : ServerProbe
+
+    /** No server has that name. */
+    data object UnknownHost : ServerProbe
+
+    /** Nothing answers there, or not in time. */
+    data object NoAnswer : ServerProbe
+
+    /** The server's certificate is not one the phone trusts. */
+    data object Untrusted : ServerProbe
+}
+
 /** What a sign-in came to: a session, or the second step an account with two-step sign-in asks for. */
 sealed interface SignInResult {
     data object SignedIn : SignInResult

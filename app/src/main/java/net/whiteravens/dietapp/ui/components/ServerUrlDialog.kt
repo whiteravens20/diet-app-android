@@ -13,6 +13,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,13 +24,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
-import net.whiteravens.dietapp.data.config.ServerConfigStore
+import net.whiteravens.dietapp.data.config.AddressProblem
+import net.whiteravens.dietapp.domain.ServerProbe
+import net.whiteravens.dietapp.ui.components.ServerAddressViewModel.State
 
 /**
- * Edit the API base URL. Validates to an http(s) URL and hands the normalized
- * value (trailing slash included) to [onSave]; shows [warning] above the field
- * when the caller needs a consequence spelled out (e.g. "this signs you out").
+ * Edit the server's address. What is typed is read into the base of the server's API and asked
+ * what answers there ([ServerAddressViewModel]); an address where a Diet App API answers goes to
+ * [onSave], one where none does is named and goes there only when asked again. Shows [warning]
+ * above the field when the caller needs a consequence spelled out (e.g. "this signs you out").
  */
 @Composable
 fun ServerUrlDialog(
@@ -35,9 +42,20 @@ fun ServerUrlDialog(
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
     warning: String? = null,
+    model: ServerAddressViewModel = hiltViewModel(),
 ) {
     var value by rememberSaveable { mutableStateOf(current) }
-    var invalid by rememberSaveable { mutableStateOf(false) }
+    val state by model.state.collectAsState()
+
+    // A dialog opened again starts from what is typed in it.
+    DisposableEffect(model) { onDispose { model.typing() } }
+    val answers = state as? State.Answers
+    LaunchedEffect(answers) {
+        if (answers != null) {
+            onSave(answers.url)
+            onDismiss()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -51,15 +69,18 @@ fun ServerUrlDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                val note = addressNote(state)
                 OutlinedTextField(
                     value = value,
-                    onValueChange = { value = it; invalid = false },
+                    onValueChange = {
+                        value = it
+                        model.typing()
+                    },
                     placeholder = { Text(stringResource(R.string.server_placeholder)) },
                     singleLine = true,
-                    isError = invalid,
-                    supportingText = if (invalid) {
-                        { Text(stringResource(R.string.server_invalid)) }
-                    } else null,
+                    enabled = state !is State.Checking,
+                    isError = state is State.Wrong || state is State.Doubtful,
+                    supportingText = note?.let { { Text(it) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth(),
@@ -67,19 +88,47 @@ fun ServerUrlDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    val normalized = ServerConfigStore.normalize(value)
-                    if (normalized == null) invalid = true
-                    else {
-                        onSave(normalized)
+            val doubtful = state as? State.Doubtful
+            if (doubtful != null) {
+                Button(
+                    onClick = {
+                        onSave(doubtful.url)
                         onDismiss()
-                    }
-                },
-            ) { Text(stringResource(R.string.common_save)) }
+                    },
+                ) { Text(stringResource(R.string.server_save_anyway)) }
+            } else {
+                Button(onClick = { model.check(value) }, enabled = state !is State.Checking) {
+                    Text(stringResource(R.string.common_save))
+                }
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        },
+    )
+}
+
+/** What the dialog says under the address, or nothing. */
+@Composable
+private fun addressNote(state: State): String? = when (state) {
+    State.Typing, is State.Answers -> null
+    State.Checking -> stringResource(R.string.server_checking)
+    is State.Wrong -> stringResource(
+        when (state.problem) {
+            AddressProblem.NOT_AN_ADDRESS -> R.string.server_not_an_address
+            AddressProblem.PLAIN_HTTP -> R.string.server_plain_http
+            AddressProblem.CREDENTIALS -> R.string.server_credentials
+            AddressProblem.QUERY_OR_FRAGMENT -> R.string.server_query_or_fragment
+            AddressProblem.PAST_THE_API -> R.string.server_past_the_api
+        },
+    )
+    is State.Doubtful -> stringResource(
+        when (state.probe) {
+            ServerProbe.Answers, ServerProbe.NotTheApi -> R.string.server_not_the_api
+            ServerProbe.DatabaseDown -> R.string.server_database_down
+            ServerProbe.UnknownHost -> R.string.server_unknown_host
+            ServerProbe.NoAnswer -> R.string.server_no_answer
+            ServerProbe.Untrusted -> R.string.server_untrusted
         },
     )
 }

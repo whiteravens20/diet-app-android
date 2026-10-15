@@ -8,9 +8,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.SerializationException
 import net.whiteravens.dietapp.BuildConfig
+import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AuthApiService
+import net.whiteravens.dietapp.data.remote.HealthDto
+import net.whiteravens.dietapp.data.remote.ServerAddress
+import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import retrofit2.HttpException
+import java.io.IOException
+import java.net.UnknownHostException
+import javax.net.ssl.SSLException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,7 +29,7 @@ import javax.inject.Singleton
  * No answer at all says nothing about the version.
  */
 @Singleton
-class ServerRepository @Inject constructor(private val api: AuthApiService) {
+class ServerRepository @Inject constructor(private val api: AuthApiService, private val json: Json) {
     private val _version = MutableStateFlow<ServerVersion>(ServerVersion.Unknown)
     val version: StateFlow<ServerVersion> = _version.asStateFlow()
 
@@ -34,6 +41,39 @@ class ServerRepository @Inject constructor(private val api: AuthApiService) {
     suspend fun refresh() {
         _version.value = ask()
     }
+
+    /**
+     * What answers at [baseUrl], an address typed for the server, with `GET /health`: asked before
+     * the address is kept, so that a wrong one is named at once. Its version is asked with
+     * `GET /config` once it is kept, as for every server.
+     */
+    suspend fun probe(baseUrl: String): ServerProbe =
+        try {
+            api.health(ServerAddress(baseUrl))
+            ServerProbe.Answers
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: HttpException) {
+            // The API answers 503 with its health when its database is down; anything else is not the API's.
+            val health = e.response()?.errorBody()?.string()?.let { body ->
+                try {
+                    json.decodeFromString<HealthDto>(body)
+                } catch (e: SerializationException) {
+                    null
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }
+            if (e.code() == 503 && health?.db == "down") ServerProbe.DatabaseDown else ServerProbe.NotTheApi
+        } catch (e: SerializationException) {
+            ServerProbe.NotTheApi
+        } catch (e: UnknownHostException) {
+            ServerProbe.UnknownHost
+        } catch (e: SSLException) {
+            ServerProbe.Untrusted
+        } catch (e: IOException) {
+            ServerProbe.NoAnswer
+        }
 
     private suspend fun ask(): ServerVersion =
         try {

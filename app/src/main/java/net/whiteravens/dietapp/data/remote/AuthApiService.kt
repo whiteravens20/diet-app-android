@@ -19,6 +19,10 @@ interface AuthApiService {
     @GET("config")
     suspend fun config(): PublicConfigDto
 
+    /** Whether the API at [server], an address typed for it, is up and reaches its database. */
+    @GET("health")
+    suspend fun health(@Tag server: ServerAddress): HealthDto
+
     /** A session, or for an account with two-step sign-in a challenge for [loginSecondFactor]. */
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): LoginResponseDto

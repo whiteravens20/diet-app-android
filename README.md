@@ -26,8 +26,9 @@ generate a plan, swap a meal, tick off the shopping list.
 ## Features
 
 - **Your own server.** Sign in or create an account on the Diet App instance you run. The
-  server address can be changed in the app, so one build works with any instance, and a
-  server whose version the app was not checked against is named on the screen.
+  server address can be changed in the app, so one build works with any instance; it is
+  checked before it is kept, and a server whose version the app was not checked against
+  is named on the screen.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
   meals per day and the target macro split.
 - **Meal plans.** The plans of a profile, a new plan generated from the phone, each plan
@@ -73,7 +74,10 @@ Android emulator sees it. For a phone on your network, set another one at build 
 ```
 
 or change it in the app, with the **Server** button on the sign-in screen or under
-Profile. Changing the server signs you out and clears the offline cache.
+Profile. The app adds `/api/` and `https://` where you leave them out, refuses an address
+with a user name or a password in it, and asks the server at once whether a Diet App API
+answers there; one where none does is named, and kept only if you save it anyway.
+Changing the server signs you out and clears the offline cache.
 
 A debug build accepts a plain `http://` address, which a backend on your own network
 usually has. A release build accepts HTTPS only, and trusts a certificate from an authority
