@@ -18,7 +18,10 @@ import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
+import net.whiteravens.dietapp.data.remote.RebalanceRequest
+import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
+import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.DayAsk
@@ -27,6 +30,8 @@ import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.PlanFilter
+import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.SwapOffer
@@ -168,8 +173,8 @@ class MealPlanRepository @Inject constructor(
      * Takes [offer]: the meal gets its recipe, and the plan, balanced around it, is kept for offline
      * use. A plan changed since the offer is refused with `PLAN_CHANGED`.
      */
-    suspend fun takeSwap(offer: SwapOffer): MealPlan {
-        val result = apiCall(json) {
+    suspend fun takeSwap(offer: SwapOffer): Rebalanced = kept(
+        apiCall(json) {
             api.swapMeal(
                 ApplyMealSwapRequest(
                     planId = offer.planId,
@@ -179,9 +184,24 @@ class MealPlanRepository @Inject constructor(
                     strategy = SWAP_STRATEGY,
                 ),
             )
-        }
+        },
+    )
+
+    /** Balances the days from today to the end of their week of the plan, each around its own meals. */
+    suspend fun rebalanceWeek(planId: String): Rebalanced =
+        kept(apiCall(json) { api.rebalancePlan(planId, RebalanceRequest(scope = "week")) })
+
+    /** Puts the meals [rebalance] scaled back as they were. */
+    suspend fun undo(planId: String, rebalance: Rebalance): Rebalanced = kept(
+        apiCall(json) {
+            api.rebalancePlan(planId, RebalanceRequest(scope = "day", restore = rebalance.changes.map { RestoreScaleDto(it.mealId, it.before) }))
+        },
+    )
+
+    /** A plan as a change left it, kept for offline use, with what the change rebalanced. */
+    private suspend fun kept(result: RebalanceResultDto): Rebalanced {
         mirror(result.plan)
-        return result.plan.toDomain()
+        return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain())
     }
 
     private companion object {

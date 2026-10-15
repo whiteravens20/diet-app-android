@@ -803,6 +803,17 @@ data class RebalanceSummaryDto(
 @Serializable
 data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null)
 
+/** A meal's scale put back as it was. */
+@Serializable
+data class RestoreScaleDto(val mealId: String, val scale: Double)
+
+/**
+ * POST `/meal-plans/:id/rebalance`: `day` balances [date], or puts back the scales of [restore];
+ * `week` balances the days from [date], today where it is left out, to the end of that week of the plan.
+ */
+@Serializable
+data class RebalanceRequest(val scope: String, val date: String? = null, val restore: List<RestoreScaleDto>? = null)
+
 // ── Shopping lists (packages/shared/src/shopping-list.ts) ───────────────────
 
 @Serializable

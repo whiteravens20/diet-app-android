@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -20,7 +21,9 @@ import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
+import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
@@ -159,4 +162,33 @@ class MealPlanRepositoryTest {
         assertNull(plans.relaxationNeeded(ApiException(400, "NO_ELIGIBLE_RECIPE", "None.", details = details)))
         assertNull(plans.relaxationNeeded(ApiException(422, "PLAN_NEEDS_RELAXATION", "Limits.", details = JsonObject(emptyMap()))))
     }
+
+    @Test
+    fun `a rebalance taken back puts each meal it scaled back as it was`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val scaled = Rebalance("day", false, listOf(ScaleChange("meal-1", 1.0, 0.8), ScaleChange("meal-2", 1.0, 1.2)), 0.0, 2300.0, 2000.0)
+
+        runBlocking { repository(Cache()).undo("plan-1", scaled) }
+
+        val undone = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/rebalance", undone.path)
+        val back = json.parseToJsonElement(undone.body.readUtf8()).jsonObject
+        assertEquals("day", back.getValue("scope").jsonPrimitive.content)
+        assertEquals(
+            listOf("meal-1" to 1.0, "meal-2" to 1.0),
+            back.getValue("restore").jsonArray.map { it.jsonObject.getValue("mealId").jsonPrimitive.content to it.jsonObject.getValue("scale").jsonPrimitive.double },
+        )
+    }
+
+    @Test
+    fun `the rest of the week is balanced from the day it is for the phone`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).rebalanceWeek("plan-1") }
+
+        val asked = server.takeRequest()
+        assertEquals("""{"scope":"week"}""", asked.body.readUtf8())
+        assertEquals(LocalDate.now().toString(), asked.getHeader("X-Client-Date"))
+    }
 }
+

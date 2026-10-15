@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.PlannedMealDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.data.remote.RecipeDto
 import net.whiteravens.dietapp.data.remote.RecipeIngredientDto
+import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
 import net.whiteravens.dietapp.data.remote.RecipeSearchPageDto
 import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
@@ -33,9 +34,11 @@ import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipePage
+import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
@@ -189,6 +192,15 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     mayGiveWay = options.allowRelaxations,
     pantry = report?.pantry,
     revision = revision,
+)
+
+fun RebalanceSummaryDto.toDomain() = Rebalance(
+    scope = scope,
+    bestEffort = feasibility == "best-effort",
+    changes = changes.map { ScaleChange(it.mealId, it.before, it.after) },
+    unabsorbedKcal = unabsorbedKcal,
+    caloriesBefore = macrosBefore.calories,
+    caloriesAfter = macrosAfter.calories,
 )
 
 fun MealPlanSummaryDto.toDomain() = MealPlanSummary(

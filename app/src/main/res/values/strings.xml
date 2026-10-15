@@ -185,6 +185,14 @@
     <string name="plans_packs_left_much">%1$s: %2$s left of a pack of %3$s, more than a fifth of it</string>
     <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>
     <string name="plans_packs_explain">Counted from the menu alone; what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
+    <string name="plans_rebalance_title">Day macros updated</string>
+    <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
+    <string name="plans_rebalance_best_effort">Day still over target — consider editing.</string>
+    <string name="plans_rebalance_left_over">The week is still %1$s kcal over: the other days have no more room inside their own targets.</string>
+    <string name="plans_rebalance_left_under">The week is still %1$s kcal short: the other days have no more room inside their own targets.</string>
+    <string name="plans_rebalance_undo">Undo last rebalance</string>
+    <string name="plans_rebalance_week">Rebalance the rest of the week</string>
+    <string name="plans_rebalance_dismiss">Dismiss</string>
     <string name="ai_mark_label">AI-assisted</string>
     <string name="ai_mark_picked">A model chose this recipe for the meal, from the recipes that fit your plan.</string>
     <string name="ai_mark_picked_why">A model chose this recipe for the meal: “%1$s”</string>

@@ -2,8 +2,10 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -33,33 +35,45 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.expand
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
+import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
@@ -93,6 +107,8 @@ fun PlanDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val plan = state.plan
     var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
+    val readOnly = state.offline
+    val busy = state.changing || state.taking
 
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == openMealId }?.let { meal ->
         MealDialog(
@@ -113,64 +129,81 @@ fun PlanDetailScreen(
         )
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { Header(plan, onBack) }
+    // The card of a rebalance stands over the end of the list: the list ends that much higher, so
+    // that nothing of it stays under the card.
+    var cardHeight by remember { mutableIntStateOf(0) }
+    val underCard = if (state.rebalance != null) with(LocalDensity.current) { cardHeight.toDp() + 16.dp } else 0.dp
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item { Header(plan, onBack) }
 
-        state.error?.let {
-            item {
-                Column {
-                    ErrorBanner(errorMessage(it))
-                    if (plan == null) {
-                        Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
-                            Text(stringResource(R.string.common_retry))
+            state.error?.let {
+                item {
+                    Column {
+                        ErrorBanner(errorMessage(it))
+                        if (plan == null) {
+                            Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
+                                Text(stringResource(R.string.common_retry))
+                            }
                         }
                     }
                 }
             }
-        }
-        if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly)) }
+            if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly)) }
 
-        if (plan == null) {
-            if (state.loading) {
-                item { Skeleton(Modifier.fillMaxWidth().height(40.dp)) }
-                items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
+            if (plan == null) {
+                if (state.loading) {
+                    item { Skeleton(Modifier.fillMaxWidth().height(40.dp)) }
+                    items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
+                }
+                return@LazyColumn
             }
-            return@LazyColumn
-        }
 
-        item { PlanFacts(plan) }
-        if (plan.conflicts > 0) {
-            item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
-        }
+            item { PlanFacts(plan) }
+            if (plan.conflicts > 0) {
+                item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
+            }
 
-        item {
-            val chips = rememberLazyListState()
-            // The day the plan opened at is in sight, however far into the plan it lies.
-            LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
-            LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
-                    FilterChip(
-                        selected = index == state.selectedDay,
-                        onClick = { viewModel.selectDay(index) },
-                        label = { Text(formatDayDate(day.date)) },
-                    )
+            item {
+                val chips = rememberLazyListState()
+                // The day the plan opened at is in sight, however far into the plan it lies.
+                LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
+                LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
+                        FilterChip(
+                            selected = index == state.selectedDay,
+                            onClick = { viewModel.selectDay(index) },
+                            label = { Text(formatDayDate(day.date)) },
+                        )
+                    }
                 }
             }
-        }
 
-        val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
-        item(key = "summary-${day.id}") { DaySummary(day) }
-        itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
-            MealCard(
-                meal = meal,
-                swapping = meal.id == state.offering,
-                readOnly = state.offline,
-                onSwap = { viewModel.offerSwap(meal.id) },
-                onOpen = { openMealId = meal.id },
+            val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
+            item(key = "summary-${day.id}") { DaySummary(day) }
+            itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
+                MealCard(
+                    meal = meal,
+                    swapping = meal.id == state.offering,
+                    readOnly = readOnly,
+                    busy = busy,
+                    onSwap = { viewModel.offerSwap(meal.id) },
+                    onOpen = { openMealId = meal.id },
+                )
+            }
+        }
+        state.rebalance?.let { rebalance ->
+            RebalanceCard(
+                rebalance = rebalance,
+                busy = busy,
+                onUndo = viewModel::undoRebalance,
+                onWeek = viewModel::rebalanceWeek,
+                onDismiss = viewModel::dismissRebalance,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
     }
@@ -360,6 +393,7 @@ private fun MealCard(
     meal: Meal,
     swapping: Boolean,
     readOnly: Boolean,
+    busy: Boolean,
     onSwap: () -> Unit,
     onOpen: () -> Unit,
 ) {
@@ -405,7 +439,7 @@ private fun MealCard(
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else if (!readOnly && !meal.eaten && !meal.custom) {
-                IconButton(onClick = onSwap) {
+                IconButton(onClick = onSwap, enabled = !busy) {
                     Icon(
                         Icons.Default.Refresh,
                         contentDescription = stringResource(R.string.plans_swap),
@@ -416,6 +450,71 @@ private fun MealCard(
         }
     }
 }
+
+/**
+ * What the last change rebalanced: the day's kcal before and after and how many meals were scaled,
+ * whether the day is still off its target and what the week could not take back; the way back, the
+ * rest of the week, and away. It goes by itself after a while, later where the phone is set to give
+ * more time to act.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RebalanceCard(
+    rebalance: Rebalance,
+    busy: Boolean,
+    onUndo: () -> Unit,
+    onWeek: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dismiss by rememberUpdatedState(onDismiss)
+    val timeout = LocalAccessibilityManager.current
+        ?.calculateRecommendedTimeoutMillis(REBALANCE_SHOWN_MILLIS, containsIcons = false, containsText = true, containsControls = true)
+        ?: REBALANCE_SHOWN_MILLIS
+    LaunchedEffect(rebalance) {
+        delay(timeout)
+        dismiss()
+    }
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shadowElevation = 6.dp,
+        modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
+            Hint(
+                stringResource(
+                    R.string.plans_rebalance_summary,
+                    formatNumber(rebalance.caloriesBefore.roundToInt()),
+                    formatNumber(rebalance.caloriesAfter.roundToInt()),
+                    formatNumber(rebalance.changes.size),
+                ),
+            )
+            if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
+            if (rebalance.unabsorbedKcal != 0.0) {
+                Hint(
+                    stringResource(
+                        if (rebalance.unabsorbedKcal > 0) R.string.plans_rebalance_left_over else R.string.plans_rebalance_left_under,
+                        formatNumber(abs(rebalance.unabsorbedKcal).roundToInt()),
+                    ),
+                    MaterialTheme.colorScheme.tertiary,
+                )
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
+                if (rebalance.scope == "day") {
+                    OutlinedButton(onClick = onWeek, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_week)) }
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.plans_rebalance_dismiss)) }
+            }
+        }
+    }
+}
+
+/** How long the card of a rebalance stays, where the phone asks for no longer. */
+private const val REBALANCE_SHOWN_MILLIS = 10_000L
 
 /** The recipe offered in the place of a meal, and what taking it does to the meal and to its day. */
 @Composable

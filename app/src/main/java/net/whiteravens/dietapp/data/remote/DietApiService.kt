@@ -121,6 +121,9 @@ interface DietApiService {
     @POST("meal-plans/swap-meal")
     suspend fun swapMeal(@Body body: ApplyMealSwapRequest): RebalanceResultDto
 
+    @POST("meal-plans/{id}/rebalance")
+    suspend fun rebalancePlan(@Path("id") id: String, @Body body: RebalanceRequest): RebalanceResultDto
+
     // ── Recipes ─────────────────────────────────────────────────────────────
 
     @GET("recipes")

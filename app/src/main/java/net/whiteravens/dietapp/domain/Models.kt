@@ -257,6 +257,28 @@ data class MealPlan(
     val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }
 }
 
+/**
+ * What a change of a plan did to the servings of its meals to keep the day, or the week, on its
+ * target: each meal scaled, from what to what, what the day held before and after, whether the day
+ * is still outside its window ([bestEffort]), and what the week could not take back, in kcal (over
+ * where it is above nought).
+ */
+data class Rebalance(
+    /** `day` | `week`. */
+    val scope: String,
+    val bestEffort: Boolean,
+    val changes: List<ScaleChange>,
+    val unabsorbedKcal: Double,
+    val caloriesBefore: Double,
+    val caloriesAfter: Double,
+)
+
+/** A meal's servings scaled by a rebalance: [before] and [after] are its scales. */
+data class ScaleChange(val mealId: String, val before: Double, val after: Double)
+
+/** A plan as a change left it, and what the change rebalanced, if it did. */
+data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?)
+
 /** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
 data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
 

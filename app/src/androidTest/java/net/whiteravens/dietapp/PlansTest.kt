@@ -89,6 +89,8 @@ class PlansTest {
 
         assertNotEquals(before.first(), Instance.firstDayRecipes(account, planId).first())
         screen.keepScreenshot("plans-after-the-swap")
+        // A swap that balanced its day says so in a card over the meals.
+        putAwayRebalance()
 
         // The meal as planned opens on a tap: its own lines, and its recipe a tap further.
         val (title, lines) = Instance.firstMeal(account, planId)
@@ -159,6 +161,12 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.common_clear)).performClick()
         screen.scrollToText(card, substring = true)
         assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
+    }
+
+    /** Puts away the card that says how a change balanced its day, where the change left one. */
+    private fun putAwayRebalance() {
+        val dismiss = text(R.string.plans_rebalance_dismiss)
+        if (screen.onAllNodesWithText(dismiss).fetchSemanticsNodes().isNotEmpty()) runCatching { screen.onNodeWithText(dismiss).performClick() }
     }
 
     /** The cell of [date] in the calendar: what it says begins with the day's name. */

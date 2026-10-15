@@ -20,10 +20,16 @@ import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
+import net.whiteravens.dietapp.data.remote.NutritionDto
+import net.whiteravens.dietapp.data.remote.RebalanceChangeDto
+import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
+import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
+import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -130,6 +136,57 @@ class PlanDetailViewModelTest {
 
         assertEquals(3, atDay.state.value.selectedDay)
         assertEquals(0, fromList.state.value.selectedDay)
+    }
+
+    /** A day balanced around a meal: one meal scaled down, and the day still over its target. */
+    private val scaled = RebalanceSummaryDto(
+        scope = "day",
+        feasibility = "best-effort",
+        changes = listOf(RebalanceChangeDto(meal.id, before = 1.0, after = 0.8)),
+        unabsorbedKcal = 0.0,
+        macrosBefore = NutritionDto(2300.0, 100.0, 80.0, 250.0),
+        macrosAfter = NutritionDto(2100.0, 95.0, 75.0, 230.0),
+    )
+
+    @Test
+    fun `a swap taken says how its day was balanced, until that is put away`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(any()) } returns preview
+        coEvery { api.swapMeal(any()) } returns swapped.copy(rebalance = scaled)
+        val model = model(api)
+
+        model.offerSwap(meal.id)
+        model.takeOffer()
+
+        assertEquals(listOf(ScaleChange(meal.id, 1.0, 0.8)), model.state.value.rebalance?.changes)
+
+        model.dismissRebalance()
+
+        assertNull(model.state.value.rebalance)
+    }
+
+    @Test
+    fun `the rest of the week is balanced from the card, and the way back puts each meal it scaled back as it was, saying nothing of itself`() {
+        val api = mockk<DietApiService>()
+        val asked = mutableListOf<RebalanceRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(any()) } returns preview
+        coEvery { api.swapMeal(any()) } returns swapped.copy(rebalance = scaled)
+        coEvery { api.rebalancePlan(plan.id, capture(asked)) } returns swapped.copy(rebalance = scaled.copy(scope = "week")) andThen swapped
+        val model = model(api)
+
+        model.offerSwap(meal.id)
+        model.takeOffer()
+        model.rebalanceWeek()
+
+        assertEquals(RebalanceRequest(scope = "week"), asked[0])
+        assertEquals("week", model.state.value.rebalance?.scope)
+
+        model.undoRebalance()
+
+        assertEquals(RebalanceRequest(scope = "day", restore = listOf(RestoreScaleDto(meal.id, 1.0))), asked[1])
+        assertNull(model.state.value.rebalance)
     }
 }
 

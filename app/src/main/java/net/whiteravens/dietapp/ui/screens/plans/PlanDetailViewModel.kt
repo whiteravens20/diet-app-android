@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
@@ -23,7 +25,9 @@ import javax.inject.Inject
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
  * swaps one: a recipe is offered, another can be asked for, and nothing is written until the
- * offer is taken.
+ * offer is taken. A change
+ * that balanced the day again says how, with the way back and the rest of the week to
+ * balance as well.
  */
 @HiltViewModel
 class PlanDetailViewModel @Inject constructor(
@@ -48,6 +52,10 @@ class PlanDetailViewModel @Inject constructor(
         /** A recipe offered in the place of a meal, until it is taken or put away. */
         val offer: SwapOffer? = null,
         val taking: Boolean = false,
+        /** An eaten mark, a meal of one's own, a rebalance or the plan's deletion is on its way. */
+        val changing: Boolean = false,
+        /** What the last change rebalanced, until it is put away. */
+        val rebalance: Rebalance? = null,
         val error: Throwable? = null,
     )
 
@@ -105,7 +113,7 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(taking = true, error = null) }
             attempt { plans.takeSwap(offer) }
-                .onSuccess { fresh -> _state.update { it.copy(plan = fresh, offer = null, taking = false) } }
+                .onSuccess { taken -> _state.update { it.copy(plan = taken.plan, offer = null, taking = false, rebalance = taken.rebalance.shown()) } }
                 .onFailure { e ->
                     // The offer was for the plan as it was: it does not outlive a refusal.
                     _state.update { it.copy(offer = null, taking = false, error = e) }
@@ -113,6 +121,41 @@ class PlanDetailViewModel @Inject constructor(
                 }
         }
     }
+
+    /** Puts the meals the last change scaled back as they were. */
+    fun undoRebalance() {
+        val rebalance = _state.value.rebalance ?: return
+        change(said = false) { plans.undo(planId, rebalance) }
+    }
+
+    /** Balances the rest of the week, from today, each day around its own meals. */
+    fun rebalanceWeek() = change { plans.rebalanceWeek(planId) }
+
+    fun dismissRebalance() {
+        _state.update { it.copy(rebalance = null) }
+    }
+
+    /**
+     * A change of the plan, one at a time: the plan it leaves is shown, and what it rebalanced is
+     * said where [said]. The way back says nothing of itself.
+     */
+    private fun change(said: Boolean = true, block: suspend () -> Rebalanced) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { block() }
+                .onSuccess { changed ->
+                    _state.update { it.copy(plan = changed.plan, changing = false, rebalance = if (said) changed.rebalance.shown() else null) }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
+
+    /** A rebalance is said where it scaled a meal. */
+    private fun Rebalance?.shown(): Rebalance? = this?.takeIf { it.changes.isNotEmpty() }
 
     private fun ask(mealId: String, seen: List<String>) {
         if (_state.value.offering != null) return
