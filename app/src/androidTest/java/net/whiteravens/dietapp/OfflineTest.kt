@@ -68,7 +68,7 @@ class OfflineTest {
         val card = formatDate(startDate)
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
-        screen.waitForText(title)
+        screen.scrollToText(title)
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
         screen.scrollToText(card, substring = true)
 
@@ -76,7 +76,7 @@ class OfflineTest {
         airplaneMode(true)
         screen.onNodeWithText(card, substring = true).performClick()
         screen.waitForText(text(R.string.offline_readonly), timeoutMillis = 40_000)
-        screen.waitForText(title)
+        screen.scrollToText(title)
         screen.keepScreenshot("offline-a-plan-from-the-copy")
     }
 }

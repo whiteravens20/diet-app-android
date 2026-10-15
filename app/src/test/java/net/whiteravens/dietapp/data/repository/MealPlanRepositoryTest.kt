@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -27,6 +28,7 @@ import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.ScaleChange
+import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
@@ -111,7 +113,7 @@ class MealPlanRepositoryTest {
         server.enqueue(answer("meal-plan-swap-apply"))
         val plans = repository(Cache())
 
-        val offer = runBlocking { plans.offerSwap("plan-1", "meal-1", seen = listOf("recipe-0")) }
+        val offer = runBlocking { plans.offerSwap("plan-1", "meal-1", SwapAsk("random"), seen = listOf("recipe-0")) }
         runBlocking { plans.takeSwap(offer) }
 
         val offered = server.takeRequest()
@@ -240,6 +242,45 @@ class MealPlanRepositoryTest {
         assertEquals("DELETE", deleted.method)
         assertEquals("/api/meal-plans/${plan.id}", deleted.path)
         assertEquals(setOf("shopping list list-1", "plan ${plan.id}", "list of ${plan.profileId}"), cache.dropped.toSet())
+    }
+
+    @Test
+    fun `a model is asked for a pick, and its pick is taken as the engine's own, with its note`() {
+        // A captured offer, with what an answer of a model adds to it.
+        val offered = json.parseToJsonElement(fixture("meal-plan-swap-preview")).jsonObject
+        val picked = JsonObject(
+            offered + mapOf(
+                "aiMeta" to json.parseToJsonElement("""{"provider":"openrouter","model":"m","failoverChain":[],"usedDeterministicFallback":false,"fallbackReason":null,"reason":"Lighter."}"""),
+                "pick" to JsonPrimitive("signed-note"),
+            ),
+        )
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(picked.toString()))
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val plans = repository(Cache())
+
+        val offer = runBlocking { plans.offerSwap("plan-1", "meal-1", SwapAsk("ai")) }
+        runBlocking { plans.takeSwap(offer) }
+
+        assertEquals("/api/meal-plans/ai-swap-meal/preview", server.takeRequest().path)
+        assertEquals("Lighter.", offer.reason)
+        val taken = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("random", taken.getValue("strategy").jsonPrimitive.content)
+        assertEquals("signed-note", taken.getValue("pick").jsonPrimitive.content)
+    }
+
+    @Test
+    fun `an offer leaves the pantry out of the choice only where it is asked to`() {
+        repeat(2) { server.enqueue(answer("meal-plan-swap-preview")) }
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.offerSwap("plan-1", "meal-1", SwapAsk("random"))
+            plans.offerSwap("plan-1", "meal-1", SwapAsk("random"), respectInventory = false)
+        }
+
+        // Left out, the API's own default holds: the pantry first.
+        assertFalse("respectInventory" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
+        assertEquals("false", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("respectInventory").jsonPrimitive.content)
     }
 }
 

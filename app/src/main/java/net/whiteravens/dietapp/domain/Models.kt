@@ -20,6 +20,8 @@ data class SessionUser(
     val theme: String,
     /** `kg` | `lb`, or null for the unit of where the phone is. */
     val weightUnit: String? = null,
+    /** `none` | `admin` | `byok`: whether the account has a model to ask, and whose. */
+    val aiMode: String,
 )
 
 data class Profile(
@@ -298,13 +300,24 @@ data class OpenPack(
 )
 
 /**
+ * How a recipe is asked for in the place of a meal: [strategy] is `random` (any recipe of the
+ * plan's diet for the meal), `favorite` (the favourite [favoriteRecipeId] picked by hand),
+ * `favorite_ingredients` (one that uses most of the profile's favourite ingredients) or `ai` (a
+ * model picks among those the engine puts first). [allowOffDiet] is "show all my favourites":
+ * the plan's diet is no bar, nor, for a favourite picked by hand, the meal's time of day.
+ */
+data class SwapAsk(val strategy: String, val favoriteRecipeId: String? = null, val allowOffDiet: Boolean = false)
+
+/**
  * A recipe offered in the place of a meal, and what taking it would do. Nothing is written until
  * it is taken; [revision] is the plan's at the time of the offer, and [seen] the recipes offered
- * for the meal so far, which the next offer leaves out.
+ * for the meal so far, which the next offer leaves out. An offer a model was asked for carries the
+ * note of the model's [pick] with its [reason], or why the engine picked instead ([fallbackReason]).
  */
 data class SwapOffer(
     val planId: String,
     val mealId: String,
+    val ask: SwapAsk,
     val recipeId: String,
     val recipeTitle: String,
     val servings: Double,
@@ -315,6 +328,9 @@ data class SwapOffer(
     val calorieTarget: Double,
     val revision: Int,
     val seen: List<String>,
+    val pick: String?,
+    val reason: String?,
+    val fallbackReason: String?,
 )
 
 /** One plan in a profile's list: what the list shows, without the days. */

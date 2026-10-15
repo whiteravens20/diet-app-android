@@ -778,9 +778,48 @@ data class ApplyMealSwapRequest(
     val plannedMealId: String,
     val recipeId: String,
     val revision: Int,
-    /** The strategy the offer was asked with. */
+    /** The strategy the offer was asked with; `random` for one a model picked. */
     val strategy: String,
     val allowOffDiet: Boolean = false,
+    /** The note that came with an offer a model picked: the meal then says that a model chose its recipe. */
+    val pick: String? = null,
+)
+
+/** POST `/meal-plans/ai-swap-meal/preview`: a model asked which of the recipes the engine puts first to take. */
+@Serializable
+data class AiSwapOfferRequest(
+    val planId: String,
+    val plannedMealId: String,
+    val respectInventory: Boolean = true,
+    val skip: List<String> = emptyList(),
+)
+
+/** Who picked an offer a model was asked for: the model, or the engine and why. */
+@Serializable
+data class AiGenerationMetaDto(
+    val provider: String? = null,
+    val model: String? = null,
+    val failoverChain: List<String> = emptyList(),
+    val usedDeterministicFallback: Boolean,
+    /** Why the engine picked; null when the model did. */
+    val fallbackReason: String? = null,
+    /** The model's own sentence on its pick. */
+    val reason: String? = null,
+)
+
+/** An offer a model was asked for: the offer, who picked it, and the note of a model's pick (null when the engine picked). */
+@Serializable
+data class AiMealSwapPreviewDto(
+    val recipe: RecipeDto,
+    val servings: Double,
+    val before: NutritionDto,
+    val after: NutritionDto,
+    val dayBefore: NutritionDto,
+    val dayAfter: NutritionDto,
+    val calorieTarget: Double,
+    val revision: Int,
+    val aiMeta: AiGenerationMetaDto,
+    val pick: String? = null,
 )
 
 @Serializable

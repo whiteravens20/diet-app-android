@@ -211,6 +211,39 @@
     <string name="plans_custom_total_pending">What the meal adds to the day shows here once one serving and the number of servings are filled in.</string>
     <string name="plans_custom_submit">Add meal</string>
     <string name="plans_custom_name_problem">Type a name of up to %1$d characters.</string>
+    <string name="plans_change_meal">Change</string>
+    <string name="plans_swap">Swap</string>
+    <string name="plans_swap_to_fav">Swap from</string>
+    <string name="plans_ai_swap">AI swap</string>
+    <string name="plans_swap_fav_ingr">Swap ★ ingr.</string>
+    <string name="plans_tooltip_swap_to_fav">Swap to one of my favourited recipes</string>
+    <string name="plans_tooltip_ai_swap">Let AI pick the best alternative for this slot</string>
+    <string name="plans_tooltip_swap_by_fav">Swap to a recipe that uses my favourite ingredients</string>
+    <string name="plans_show_all_favorites">Show all my favourites (any diet &amp; meal time)</string>
+    <string name="plans_no_favorites">No favorited recipes yet — open a recipe to favorite it.</string>
+    <string name="plans_no_favorites_for_slot">No favorited recipes for %1$s yet — open a recipe to favorite it.</string>
+    <string name="plans_off_diet_tag">off-diet</string>
+    <string name="plans_offer_title">A recipe in the place of this meal</string>
+    <string name="plans_offer_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g</string>
+    <string name="plans_offer_day">The day would hold %1$s of %2$s kcal before its other meals are balanced around this one.</string>
+    <string name="plans_offer_take">Swap it in</string>
+    <string name="plans_offer_another">Another</string>
+    <string name="plans_swap_with_pantry">Bias swaps toward what\'s in my pantry</string>
+    <string name="plans_swap_with_pantry_hint">When on, every swap and AI-swap below prefers recipes (or substitute ingredients) the pantry can cover.</string>
+    <string name="ai_fallback_quota_exhausted">Your monthly AI requests are used up — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_instance_quota_exhausted">This instance\'s shared AI requests for the month are used up — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_no_provider">No AI provider is configured for your account — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_all_providers_failed">AI provider didn\'t respond — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_provider_timeout">AI provider was too slow — try a smaller model or a cloud provider. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_key_unreadable">Your saved AI key can no longer be read — enter it again in Settings. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_invalid_output">The AI\'s answer could not be used — the rule-based engine picked instead.</string>
+    <string name="plans_offer_line">Instead: %1$s, %2$s: %3$s kcal in place of %4$s.</string>
+    <plurals name="plans_offer_servings">
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
+    </plurals>
+    <string name="plans_offer_servings_fraction">%1$s servings</string>
+    <string name="ai_off_note">AI is turned off for this account, so the actions that ask a model are switched off. Turn AI on in Settings to use them.</string>
     <string name="ai_mark_label">AI-assisted</string>
     <string name="ai_mark_picked">A model chose this recipe for the meal, from the recipes that fit your plan.</string>
     <string name="ai_mark_picked_why">A model chose this recipe for the meal: “%1$s”</string>
@@ -222,13 +255,6 @@
     <string name="macros_carbs">Carbs</string>
     <string name="plans_off_diet">Off-diet</string>
     <string name="plans_eaten">Eaten</string>
-    <string name="plans_swap">Swap meal</string>
-    <string name="plans_swap_offer_title">Swap for this recipe?</string>
-    <string name="plans_swap_servings">Servings: %1$s</string>
-    <string name="plans_swap_meal_kcal">This meal: %1$d → %2$d kcal</string>
-    <string name="plans_swap_day_kcal">The day: %1$d → %2$d kcal, aiming at %3$d</string>
-    <string name="plans_swap_take">Swap</string>
-    <string name="plans_swap_another">Another recipe</string>
 
     <!-- Recipes -->
     <string name="recipes_subtitle">A curated recipe library — every calorie computed by the backend.</string>

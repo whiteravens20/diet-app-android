@@ -58,7 +58,7 @@ class ProfileFormViewModelTest {
     private val answer = CaloriePreview(target, List(5) { target })
     private val profiles = mockk<ProfileRepository>()
     private val users = mockk<UserRepository>().also {
-        coEvery { it.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", weightUnit = "kg")
+        coEvery { it.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", weightUnit = "kg", aiMode = "none")
     }
     private val server = mockk<ServerRepository>().also {
         every { it.rules } returns MutableStateFlow<InstanceRules?>(null)
@@ -253,7 +253,7 @@ class ProfileFormViewModelTest {
     @Test
     fun `the calculator begins with a profile's figures once the unit to show them in is known`() = runTest(main) {
         val kept = json.decodeFromString<ProfileDto>(fixture("profile")).toDetails()
-        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", weightUnit = "lb")
+        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", weightUnit = "lb", aiMode = "none")
         coEvery { profiles.preview(any()) } returns answer
         val model = model()
 
