@@ -74,6 +74,8 @@ jobs:
             cores: 2
             ram-size: ''
             boot-timeout: 600
+            build-type: debug
+            variant: Debug
           # Android 17, whose rules the app targets: a server on the local network, such as
           # the emulator's host, needs the permission for nearby devices.
           - name: Screens on Android 17
@@ -83,6 +85,18 @@ jobs:
             cores: 4
             ram-size: 4096M
             boot-timeout: 1200
+            build-type: debug
+            variant: Debug
+          # The release build as R8 shrinks it (the `minified` build type): what R8 takes out
+          # shows here rather than on a tester's phone.
+          - name: Screens on the release build
+            api-level: 34
+            artifact: screens-release-build
+            cores: 2
+            ram-size: ''
+            boot-timeout: 600
+            build-type: minified
+            variant: Minified
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -99,7 +113,9 @@ jobs:
         run: .github/scripts/start-diet-app.sh "$RUNNER_TEMP/diet-app"
 
       - name: Build the app and its tests
-        run: ./gradlew assembleDebug assembleDebugAndroidTest
+        run: >-
+          ./gradlew -PtestBuildType=${{ matrix.build-type }}
+          assemble${{ matrix.variant }} assemble${{ matrix.variant }}AndroidTest
 
       - name: Let the emulator use KVM
         run: |
@@ -119,7 +135,7 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: ./gradlew connectedDebugAndroidTest
+          script: ./gradlew -PtestBuildType=${{ matrix.build-type }} connected${{ matrix.variant }}AndroidTest
 
       - name: Keep what diet-app logged
         if: always()
