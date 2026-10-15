@@ -30,8 +30,10 @@ interface AuthApiService {
     @POST("auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
 
-    /** Revokes the refresh token. 204; the access token simply expires. */
-    /** Revokes a session on [server], the one that issued it, which may no longer be the one in use. */
+    /**
+     * Revokes the refresh token on [server], the one that issued it, which may no longer be the
+     * one in use. 204; the access token simply expires.
+     */
     @POST("auth/logout")
     suspend fun logout(@Tag server: ServerAddress, @Body body: RefreshRequest)
 }
