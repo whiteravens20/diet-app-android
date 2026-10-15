@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Starts a diet-app instance for the screens' tests on an emulator: the API and the worker
 # of the version contract/diet-app.env names (its image by digest; the compose file and the
-# settings template of its commit), or of the commit and the image tag given, with secrets
-# made for this run and the API published on 127.0.0.1:4000, which an emulator reaches as
-# 10.0.2.2:4000. Then it loads the catalogue through the admin API, as an administrator does
-# after an installation, so that plans can be made.
+# settings template of its commit), or of the commit given with an image built here under the
+# tag given, with secrets made for this run and the API published on 127.0.0.1:4000, which an
+# emulator reaches as 10.0.2.2:4000. Then it loads the catalogue through the admin API, as an
+# administrator does after an installation, so that plans can be made.
 #
-# Usage: .github/scripts/start-diet-app.sh <empty directory> [<commit> <image tag>]
+# Usage: .github/scripts/start-diet-app.sh <empty directory> [<commit> <tag of an image built here>]
 # `docker compose --env-file .env -f docker-compose.yml -f api-port.yml logs` in that
 # directory shows what the instance did.
 set -euo pipefail
@@ -40,7 +40,16 @@ services:
       - '127.0.0.1:4000:4000'
 YAML
 
-compose() { docker compose --env-file .env -f docker-compose.yml -f api-port.yml "$@"; }
+files=(-f docker-compose.yml -f api-port.yml)
+if [ -n "${3:-}" ]; then
+  # The compose file pulls the application's image every time; one built here is not in the
+  # registry, so the services that run it take it as it is.
+  docker compose --env-file .env -f docker-compose.yml config --format json |
+    jq '{services: (.services | with_entries(select(.value.image // "" | startswith("ghcr.io/whiteravens20/diet-app:")) | .value = {pull_policy: "never"}))}' \
+    > local-image.yml
+  files+=(-f local-image.yml)
+fi
+compose() { docker compose --env-file .env "${files[@]}" "$@"; }
 # The API first, with what it waits for, and the worker once the API is up: the two created at
 # once over the same data volume have failed in Docker with "mkdir …/recipes: file exists".
 compose up -d api
