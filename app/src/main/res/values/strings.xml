@@ -119,6 +119,7 @@
     <string name="overview_days">Day by day</string>
     <string name="overview_series_planned">Planned</string>
     <string name="overview_series_target">Target</string>
+    <string name="dashboard_generate_plan">Generate meal plan</string>
     <string name="dashboard_daily_surplus">Daily surplus</string>
     <string name="overview_eaten_hint">%1$s of the %2$s that were due by today.</string>
     <string name="overview_on_diet_hint">%1$s of %2$s fit the diet of the plan (%3$s).</string>

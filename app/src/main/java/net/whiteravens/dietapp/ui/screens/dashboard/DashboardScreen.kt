@@ -4,6 +4,8 @@ package net.whiteravens.dietapp.ui.screens.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -106,6 +109,7 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (planId: String) -> Unit, onNewPlan: () -> Unit) {
     val profile = stats.profile
@@ -113,9 +117,14 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (
     val kcal = stringResource(R.string.unit_kcal)
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(profile.name, style = MaterialTheme.typography.titleMedium)
             AccentChip(dietTypeLabel(profile.dietType))
+            OutlinedButton(onClick = onNewPlan) { Text(stringResource(R.string.dashboard_generate_plan)) }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
