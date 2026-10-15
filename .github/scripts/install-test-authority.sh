@@ -21,3 +21,15 @@ adb shell chmod 755 "$store"
 adb shell chmod 644 "$store/$name"
 adb shell restorecon -R "$store"
 echo "The test authority is on the emulator as one the user installed: $store/$name"
+
+# adbd started again as root: the tests start once the system says it has booted and its
+# package manager answers.
+adb wait-for-device
+for _ in $(seq 1 60); do
+  if [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && adb shell pm path android > /dev/null 2>&1; then
+    exit 0
+  fi
+  sleep 5
+done
+echo "::error::The emulator did not come back after adbd started as root"
+exit 1
