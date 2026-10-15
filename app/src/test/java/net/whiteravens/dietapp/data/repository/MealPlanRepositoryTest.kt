@@ -267,4 +267,20 @@ class MealPlanRepositoryTest {
         assertEquals("random", taken.getValue("strategy").jsonPrimitive.content)
         assertEquals("signed-note", taken.getValue("pick").jsonPrimitive.content)
     }
+
+    @Test
+    fun `an offer leaves the pantry out of the choice only where it is asked to`() {
+        repeat(2) { server.enqueue(answer("meal-plan-swap-preview")) }
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.offerSwap("plan-1", "meal-1", SwapAsk("random"))
+            plans.offerSwap("plan-1", "meal-1", SwapAsk("random"), respectInventory = false)
+        }
+
+        // Left out, the API's own default holds: the pantry first.
+        assertFalse("respectInventory" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
+        assertEquals("false", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("respectInventory").jsonPrimitive.content)
+    }
 }
+

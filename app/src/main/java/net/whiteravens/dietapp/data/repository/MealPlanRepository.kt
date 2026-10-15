@@ -165,13 +165,19 @@ class MealPlanRepository @Inject constructor(
     )
 
     /**
-     * A recipe for the meal as [ask] asks for one, other than those offered for it already ([seen]).
-     * Nothing is written.
+     * A recipe for the meal as [ask] asks for one, other than those offered for it already ([seen]),
+     * those the pantry covers first where [respectInventory]. Nothing is written.
      */
-    suspend fun offerSwap(planId: String, mealId: String, ask: SwapAsk, seen: List<String> = emptyList()): SwapOffer {
+    suspend fun offerSwap(
+        planId: String,
+        mealId: String,
+        ask: SwapAsk,
+        seen: List<String> = emptyList(),
+        respectInventory: Boolean = true,
+    ): SwapOffer {
         if (ask.strategy == AI_STRATEGY) {
             val preview = apiCall(json) {
-                api.aiOfferSwap(AiSwapOfferRequest(planId = planId, plannedMealId = mealId, skip = seen))
+                api.aiOfferSwap(AiSwapOfferRequest(planId = planId, plannedMealId = mealId, respectInventory = respectInventory, skip = seen))
             }
             return preview.toDomain(planId, mealId, ask, seen + preview.recipe.id)
         }
@@ -182,6 +188,7 @@ class MealPlanRepository @Inject constructor(
                     plannedMealId = mealId,
                     strategy = ask.strategy,
                     favoriteRecipeId = ask.favoriteRecipeId,
+                    respectInventory = respectInventory,
                     allowOffDiet = ask.allowOffDiet,
                     skip = seen,
                 ),

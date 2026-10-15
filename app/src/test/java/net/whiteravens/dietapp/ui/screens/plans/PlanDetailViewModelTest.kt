@@ -282,6 +282,22 @@ class PlanDetailViewModelTest {
     }
 
     @Test
+    fun `swaps put first what the pantry covers until the user says not to`() {
+        val api = mockk<DietApiService>()
+        val offers = mutableListOf<SwapOfferRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(capture(offers)) } returns preview
+        val model = model(api)
+
+        model.offerSwap(meal.id)
+        model.dismissOffer()
+        model.setSwapWithPantry(false)
+        model.offerSwap(meal.id)
+
+        assertEquals(listOf(true, false), offers.map { it.respectInventory })
+    }
+
+    @Test
     fun `an offer a model was asked for says why the engine picked, or that the model did and why`() {
         val api = mockk<DietApiService>()
         val byEngine = AiMealSwapPreviewDto(

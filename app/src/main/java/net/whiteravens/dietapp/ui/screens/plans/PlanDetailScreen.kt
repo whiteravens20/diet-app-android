@@ -268,6 +268,15 @@ fun PlanDetailScreen(
                 item(key = "add-${day.id}") {
                     TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
                 }
+                // What every swap of the plan puts first: under the meals, out of their way.
+                item(key = "pantry") {
+                    CheckRow(
+                        label = stringResource(R.string.plans_swap_with_pantry),
+                        hint = stringResource(R.string.plans_swap_with_pantry_hint),
+                        checked = state.swapWithPantry,
+                        onChange = viewModel::setSwapWithPantry,
+                    )
+                }
             }
         }
         state.rebalance?.let { rebalance ->

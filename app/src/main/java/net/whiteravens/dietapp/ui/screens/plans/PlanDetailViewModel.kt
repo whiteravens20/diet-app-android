@@ -60,6 +60,8 @@ class PlanDetailViewModel @Inject constructor(
         /** A recipe offered in the place of a meal, until it is taken or put away. */
         val offer: SwapOffer? = null,
         val taking: Boolean = false,
+        /** Offers put first what the pantry covers. */
+        val swapWithPantry: Boolean = true,
         /** The recipes the profile marked and did not mark to avoid: the favourites a meal can be swapped to. */
         val liked: List<MarkedRecipe> = emptyList(),
         /** Whether the account has a model to ask; null until that is known. */
@@ -128,6 +130,10 @@ class PlanDetailViewModel @Inject constructor(
     fun anotherOffer() {
         val offer = _state.value.offer ?: return
         ask(offer.mealId, offer.ask, offer.seen)
+    }
+
+    fun setSwapWithPantry(on: Boolean) {
+        _state.update { it.copy(swapWithPantry = on) }
     }
 
 
@@ -205,7 +211,7 @@ class PlanDetailViewModel @Inject constructor(
         if (_state.value.offering != null) return
         viewModelScope.launch {
             _state.update { it.copy(offering = mealId, error = null) }
-            attempt { plans.offerSwap(planId, mealId, how, seen) }
+            attempt { plans.offerSwap(planId, mealId, how, seen, _state.value.swapWithPantry) }
                 .onSuccess { offer -> _state.update { it.copy(offering = null, offer = offer) } }
                 .onFailure { e ->
                     _state.update { it.copy(offering = null, offer = null, error = e) }
