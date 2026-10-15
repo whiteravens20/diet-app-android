@@ -15,6 +15,12 @@
 
 # The libraries the tests drive the app with, whose copy in the app they use.
 -keep class androidx.activity.** { *; }
+-keep class androidx.arch.core.** { *; }
+-keep class androidx.concurrent.** { *; }
+-keep class androidx.core.** { *; }
+-keep class androidx.savedstate.** { *; }
+-keep class androidx.tracing.** { *; }
+-keep class com.google.common.util.concurrent.** { *; }
 -keep class androidx.compose.** { *; }
 -keep class androidx.datastore.** { *; }
 -keep class androidx.lifecycle.** { *; }
