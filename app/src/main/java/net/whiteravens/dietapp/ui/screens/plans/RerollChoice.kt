@@ -86,11 +86,11 @@ object Rerolls {
                     var replaced = 0
                     for (meal in day.meals) {
                         val locked = meal.recipeId != null && day.locks[meal.slot] == meal.recipeId
-                        outcome = when {
-                            meal.custom && !choice.replaceCustom -> outcome.copy(keptCustom = outcome.keptCustom + 1)
-                            meal.eaten && !choice.replaceEaten -> outcome.copy(keptEaten = outcome.keptEaten + 1)
-                            locked -> outcome.copy(keptLocked = outcome.keptLocked + 1)
-                            else -> outcome.also { replaced += 1 }
+                        when {
+                            meal.custom && !choice.replaceCustom -> outcome = outcome.copy(keptCustom = outcome.keptCustom + 1)
+                            meal.eaten && !choice.replaceEaten -> outcome = outcome.copy(keptEaten = outcome.keptEaten + 1)
+                            locked -> outcome = outcome.copy(keptLocked = outcome.keptLocked + 1)
+                            else -> replaced += 1
                         }
                     }
                     // A day whose every meal stays is not changed by being asked for.
