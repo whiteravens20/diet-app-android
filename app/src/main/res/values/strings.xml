@@ -147,7 +147,6 @@
     </plurals>
     <string name="plans_card_title">%1$s · %2$d days</string>
     <string name="plans_avg_kcal">%1$d kcal/day avg</string>
-    <string name="plans_days">%1$d days</string>
     <string name="plans_day_skipped">This day is skipped.</string>
     <string name="plans_day_total">%1$d / %2$d kcal</string>
     <string name="plans_day_macros">P %1$d g · F %2$d g · C %3$d g</string>
