@@ -11,6 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -295,3 +300,29 @@ private fun unfilledMeal(error: ApiException): String? {
 
 /** The meals of a day of two meals, the fewest a plan has. */
 private val SHORTEST_DAY = setOf("breakfast", "dinner")
+
+/** Where a value goes in a line, to be set apart in it: no text holds it. */
+const val MARK = "\u0000"
+
+/** [line], made with [MARK] in the place of [value], with [value] set apart in it. */
+fun emphasized(line: String, value: String): AnnotatedString {
+    val (head, tail) = line.split(MARK, limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+    return buildAnnotatedString {
+        append(head)
+        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(value) }
+        append(tail)
+    }
+}
+
+/** Why the engine stood in where a model was asked; null for a reason this version does not know. */
+@Composable
+fun fallbackText(reason: String): String? = when (reason) {
+    "quota_exhausted" -> stringResource(R.string.ai_fallback_quota_exhausted)
+    "instance_quota_exhausted" -> stringResource(R.string.ai_fallback_instance_quota_exhausted)
+    "no_provider" -> stringResource(R.string.ai_fallback_no_provider)
+    "all_providers_failed" -> stringResource(R.string.ai_fallback_all_providers_failed)
+    "provider_timeout" -> stringResource(R.string.ai_fallback_provider_timeout)
+    "key_unreadable" -> stringResource(R.string.ai_fallback_key_unreadable)
+    "invalid_output" -> stringResource(R.string.ai_fallback_invalid_output)
+    else -> null
+}

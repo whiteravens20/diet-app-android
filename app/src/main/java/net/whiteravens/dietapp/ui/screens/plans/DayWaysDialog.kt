@@ -39,6 +39,7 @@ import net.whiteravens.dietapp.domain.DayWay
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel

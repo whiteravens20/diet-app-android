@@ -38,8 +38,11 @@ import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.SubstitutionPreview
+import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.amountLabel
+import net.whiteravens.dietapp.ui.common.emphasized
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard

@@ -90,9 +90,12 @@ import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
+import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
+import net.whiteravens.dietapp.ui.common.emphasized
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
