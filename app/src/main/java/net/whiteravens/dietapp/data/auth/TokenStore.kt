@@ -21,6 +21,9 @@ private val Context.authDataStore by preferencesDataStore(name = "auth")
 /** The persisted session: both tokens present, or no session at all. */
 data class Session(val accessToken: String, val refreshToken: String)
 
+/** A session signed out of on this device that is not revoked yet: its refresh token, and the server that issued it. */
+data class PendingRevocation(val refreshToken: String, val server: String)
+
 /**
  * DataStore-backed home of the token pair (see docs/sync-strategy.md — Auth).
  * The pair is written atomically on login/refresh and cleared on sign-out;
@@ -58,16 +61,22 @@ class TokenStore internal constructor(
         }
     }
 
-    /** The refresh token of a session signed out of that the server has not revoked yet, or null. */
-    suspend fun pendingRevocation(): String? =
-        store.data.first()[PENDING_REVOCATION]?.let { sealer.open(PENDING_REVOCATION.name, it) }
+    /** The session signed out of that its server has not revoked yet, or null. */
+    suspend fun pendingRevocation(): PendingRevocation? {
+        val prefs = store.data.first()
+        val refreshToken = prefs[PENDING_REVOCATION]?.let { sealer.open(PENDING_REVOCATION.name, it) } ?: return null
+        val server = prefs[PENDING_REVOCATION_SERVER] ?: return null
+        return PendingRevocation(refreshToken, server)
+    }
 
-    suspend fun setPendingRevocation(refreshToken: String?) {
+    suspend fun setPendingRevocation(pending: PendingRevocation?) {
         store.edit { prefs ->
-            if (refreshToken == null) {
+            if (pending == null) {
                 prefs.remove(PENDING_REVOCATION)
+                prefs.remove(PENDING_REVOCATION_SERVER)
             } else {
-                prefs[PENDING_REVOCATION] = sealer.seal(PENDING_REVOCATION.name, refreshToken)
+                prefs[PENDING_REVOCATION] = sealer.seal(PENDING_REVOCATION.name, pending.refreshToken)
+                prefs[PENDING_REVOCATION_SERVER] = pending.server
             }
         }
     }
@@ -86,5 +95,6 @@ class TokenStore internal constructor(
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
         val PENDING_REVOCATION = stringPreferencesKey("pending_revocation")
+        val PENDING_REVOCATION_SERVER = stringPreferencesKey("pending_revocation_server")
     }
 }

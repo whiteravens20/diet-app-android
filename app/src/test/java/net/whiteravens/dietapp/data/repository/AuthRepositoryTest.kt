@@ -9,9 +9,11 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
+import net.whiteravens.dietapp.data.auth.PendingRevocation
 import net.whiteravens.dietapp.data.auth.Session
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
@@ -19,6 +21,7 @@ import net.whiteravens.dietapp.data.remote.AuthTokens
 import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.SecondFactorSignInRequest
+import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.SignInResult
 import net.whiteravens.dietapp.testing.fixture
@@ -40,7 +43,16 @@ class AuthRepositoryTest {
     private val json = AppModule.json()
 
     /** The token store's pending revocation, kept in memory. */
-    private class Tokens(var session: Session?, var pending: String? = null)
+    private class Tokens(var session: Session?, var pending: PendingRevocation? = null)
+
+    /** The server the app talks to, [SERVER] unless a test changes it. */
+    private var current = SERVER
+
+    private fun servers(): ServerConfigStore {
+        val servers = mockk<ServerConfigStore>()
+        coEvery { servers.current() } answers { current }
+        return servers
+    }
 
     private fun tokens(held: Tokens): TokenStore {
         val tokens = mockk<TokenStore>()
@@ -63,14 +75,14 @@ class AuthRepositoryTest {
         val sessionEnd = mockk<SessionEnd>()
         coEvery { sessionEnd.end() } answers { held.session = null }
         val api = mockk<AuthApiService>()
-        coEvery { api.logout(any()) } returns Unit
+        coEvery { api.logout(any(), any()) } returns Unit
 
-        runBlocking { AuthRepository(api, tokens, sessionEnd, json).signOut() }
+        runBlocking { AuthRepository(api, tokens, sessionEnd, servers(), json).signOut() }
 
         coVerifyOrder {
-            tokens.setPendingRevocation("refresh-1")
+            tokens.setPendingRevocation(PendingRevocation("refresh-1", SERVER))
             sessionEnd.end()
-            api.logout(RefreshRequest("refresh-1"))
+            api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1"))
             tokens.setPendingRevocation(null)
         }
         assertNull(held.session)
@@ -83,28 +95,42 @@ class AuthRepositoryTest {
         val sessionEnd = mockk<SessionEnd>()
         coEvery { sessionEnd.end() } answers { held.session = null }
         val api = mockk<AuthApiService>()
-        coEvery { api.logout(any()) } throws IOException("no network")
-        val auth = AuthRepository(api, tokens(held), sessionEnd, json)
+        coEvery { api.logout(any(), any()) } throws IOException("no network")
+        val auth = AuthRepository(api, tokens(held), sessionEnd, servers(), json)
 
         runBlocking { auth.signOut() }
 
         assertNull(held.session)
-        assertEquals("refresh-1", held.pending)
+        assertEquals(PendingRevocation("refresh-1", SERVER), held.pending)
 
-        coEvery { api.logout(any()) } returns Unit
+        coEvery { api.logout(any(), any()) } returns Unit
         runBlocking { auth.retryRevocation() }
 
         assertNull(held.pending)
-        coVerify(exactly = 2) { api.logout(RefreshRequest("refresh-1")) }
+        coVerify(exactly = 2) { api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1")) }
+    }
+
+    @Test
+    fun `a revocation kept from before a change of server goes to the server of its session alone`() {
+        val held = Tokens(session = null, pending = PendingRevocation("refresh-1", SERVER))
+        val api = mockk<AuthApiService>()
+        coEvery { api.logout(any(), any()) } returns Unit
+        current = "https://another.example.test/api/"
+
+        runBlocking { AuthRepository(api, tokens(held), mockk(), servers(), json).retryRevocation() }
+
+        coVerify(exactly = 1) { api.logout(any(), any()) }
+        coVerify { api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1")) }
+        assertNull(held.pending)
     }
 
     @Test
     fun `a revocation the server refuses is not kept, the token being no good already`() {
-        val held = Tokens(session = null, pending = "refresh-1")
+        val held = Tokens(session = null, pending = PendingRevocation("refresh-1", SERVER))
         val api = mockk<AuthApiService>()
-        coEvery { api.logout(any()) } throws refused(401)
+        coEvery { api.logout(any(), any()) } throws refused(401)
 
-        runBlocking { AuthRepository(api, tokens(held), mockk(), json).retryRevocation() }
+        runBlocking { AuthRepository(api, tokens(held), mockk(), servers(), json).retryRevocation() }
 
         assertNull(held.pending)
     }
@@ -131,7 +157,7 @@ class AuthRepositoryTest {
         val api = mockk<AuthApiService>()
         coEvery { api.login(any()) } returns json.decodeFromString(fixture("auth-login-two-step-account"))
         coEvery { api.loginSecondFactor(any()) } returns json.decodeFromString(fixture("auth-login-after"))
-        val auth = AuthRepository(api, tokens, mockk(), json)
+        val auth = AuthRepository(api, tokens, mockk(), servers(), json)
 
         val result = runBlocking { auth.signIn("ala@example.test", "A-long-password-1", checkToken = "check-1") }
         val challenge = (result as SignInResult.SecondStep).challenge
@@ -162,5 +188,9 @@ class AuthRepositoryTest {
 
         assertEquals("TOO_MANY_ATTEMPTS", failure.code)
         assertEquals(42, failure.retryAfterSeconds)
+    }
+
+    private companion object {
+        const val SERVER = "https://diet.example.test/api/"
     }
 }

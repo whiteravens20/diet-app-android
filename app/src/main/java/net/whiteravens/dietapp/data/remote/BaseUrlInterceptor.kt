@@ -13,10 +13,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Re-targets every request at the server saved in [ServerConfigStore].
- * Retrofit is built against the compiled-in default base, so this swaps that
- * prefix for the stored one and keeps the endpoint path + query intact. Runs
- * on both OkHttp clients (it sits on the shared base client).
+ * The server a request goes to where that is not the one in use, given to Retrofit as the
+ * request's tag (`@Tag`): a session's own server, which revokes it after the server was changed.
+ */
+data class ServerAddress(val baseUrl: String)
+
+/**
+ * Re-targets every request at the server saved in [ServerConfigStore], or at the one its
+ * [ServerAddress] tag names. Retrofit is built against the compiled-in default base, so this
+ * swaps that prefix for the stored one and keeps the endpoint path + query intact. Runs on both
+ * OkHttp clients (it sits on the shared base client).
  */
 @Singleton
 class BaseUrlInterceptor @Inject constructor(
@@ -27,7 +33,7 @@ class BaseUrlInterceptor @Inject constructor(
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val stored = runBlocking { config.current() }
+        val stored = request.tag(ServerAddress::class.java)?.baseUrl ?: runBlocking { config.current() }
         if (stored == BuildConfig.API_BASE_URL) return chain.proceed(request)
         // A stored value that no longer parses falls back to the compiled base.
         val base = stored.toHttpUrlOrNull() ?: return chain.proceed(request)

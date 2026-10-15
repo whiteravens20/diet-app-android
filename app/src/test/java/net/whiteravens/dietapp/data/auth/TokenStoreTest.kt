@@ -85,13 +85,14 @@ class TokenStoreTest {
     }
 
     @Test
-    fun `the refresh token waiting to be revoked is kept sealed too`() = runBlocking {
+    fun `the refresh token waiting to be revoked is kept sealed too, with the server that issued it`() = runBlocking {
         val store = TokenStore(data, sealer)
+        val pending = PendingRevocation(REFRESH, "https://diet.example.test/api/")
 
-        store.setPendingRevocation(REFRESH)
+        store.setPendingRevocation(pending)
 
         assertFalse(file.holds(REFRESH))
-        assertEquals(REFRESH, store.pendingRevocation())
+        assertEquals(pending, store.pendingRevocation())
         val other = newKey()
         assertNull(TokenStore(data, AesGcmSealer({ other }, { other })).pendingRevocation())
         store.setPendingRevocation(null)

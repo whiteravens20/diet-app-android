@@ -21,7 +21,9 @@ import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.data.remote.ClientHeaders
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
+import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
+import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.fixture
@@ -343,5 +345,40 @@ class NetworkStackTest {
         assertNull(byPath.getValue("/api/auth/register").getHeader("Authorization"))
         assertNull(byPath.getValue("/api/auth/login").getHeader("Authorization"))
         assertEquals("Bearer held-access", byPath.getValue("/api/users/me").getHeader("Authorization"))
+    }
+
+    @Test
+    fun `a revocation goes to the server it names, not to the one in use`() {
+        val issuer = MockWebServer()
+        issuer.start()
+        try {
+            val revoked = SynchronousQueue<RecordedRequest>()
+            issuer.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    revoked.offer(request, 5, TimeUnit.SECONDS)
+                    return MockResponse().setResponseCode(204)
+                }
+            }
+            val inUse = Collections.synchronizedList(mutableListOf<RecordedRequest>())
+            server.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    inUse += request
+                    return MockResponse().setResponseCode(204)
+                }
+            }
+            val stack = stack(Held(session = null))
+
+            val call = GlobalScope.async {
+                stack.auth.logout(ServerAddress(issuer.url("/api/").toString()), RefreshRequest("refresh-1"))
+            }
+            val request = revoked.poll(10, TimeUnit.SECONDS)
+            runBlocking { call.await() }
+
+            assertEquals("/api/auth/logout", request?.path)
+            assertEquals("""{"refreshToken":"refresh-1"}""", request?.body?.readUtf8())
+            assertEquals(emptyList<RecordedRequest>(), inUse.toList())
+        } finally {
+            issuer.shutdown()
+        }
     }
 }

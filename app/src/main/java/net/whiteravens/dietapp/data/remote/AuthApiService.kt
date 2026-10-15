@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.data.remote
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Tag
 
 /**
  * Endpoints that take no session: signing in and out, and what the instance tells
@@ -30,6 +31,7 @@ interface AuthApiService {
     suspend fun register(@Body body: RegisterRequest): AuthResponse
 
     /** Revokes the refresh token. 204; the access token simply expires. */
+    /** Revokes a session on [server], the one that issued it, which may no longer be the one in use. */
     @POST("auth/logout")
-    suspend fun logout(@Body body: RefreshRequest)
+    suspend fun logout(@Tag server: ServerAddress, @Body body: RefreshRequest)
 }

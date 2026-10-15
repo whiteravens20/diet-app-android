@@ -5,13 +5,16 @@ package net.whiteravens.dietapp.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+import net.whiteravens.dietapp.data.auth.PendingRevocation
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
 import net.whiteravens.dietapp.data.remote.SecondFactorSignInRequest
+import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.SignInResult
 import retrofit2.HttpException
@@ -24,13 +27,15 @@ import javax.inject.Singleton
  * authenticated client attaches and refreshes tokens transparently. Sign-out
  * ends the session on the device at once ([SessionEnd]: the offline cache, then
  * the tokens) and revokes it on the server; a revocation that cannot reach the
- * server is kept and tried again at the next start ([retryRevocation]).
+ * server is kept and tried again at the next start ([retryRevocation]), on the
+ * server that issued the session, whichever the app talks to by then.
  */
 @Singleton
 class AuthRepository @Inject constructor(
     private val authApi: AuthApiService,
     private val tokens: TokenStore,
     private val sessionEnd: SessionEnd,
+    private val servers: ServerConfigStore,
     private val json: Json,
 ) {
     /** Reactive sign-in state — drives the auth vs. main navigation graph. */
@@ -62,16 +67,16 @@ class AuthRepository @Inject constructor(
 
     suspend fun signOut() {
         // Kept before anything else, so that a revocation cut short is still tried again.
-        tokens.current()?.let { session -> tokens.setPendingRevocation(session.refreshToken) }
+        tokens.current()?.let { session -> tokens.setPendingRevocation(PendingRevocation(session.refreshToken, servers.current())) }
         sessionEnd.end()
         retryRevocation()
     }
 
     /** Revokes on the server a session signed out of on this device, if one is still waiting for it. */
     suspend fun retryRevocation() {
-        val refreshToken = tokens.pendingRevocation() ?: return
+        val pending = tokens.pendingRevocation() ?: return
         try {
-            authApi.logout(RefreshRequest(refreshToken))
+            authApi.logout(ServerAddress(pending.server), RefreshRequest(pending.refreshToken))
             tokens.setPendingRevocation(null)
         } catch (e: HttpException) {
             // The server refused it: the token is no good any more, which is what was wanted.
