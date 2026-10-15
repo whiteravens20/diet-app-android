@@ -17,6 +17,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -49,16 +50,17 @@ class ShoppingTest {
         screen.waitForEnabled(text(R.string.shopping_make_list))
         screen.onNode(hasText(text(R.string.shopping_make_list)) and hasClickAction()).performClick()
 
-        // The list the server made, row by row.
-        screen.waitUntil(30_000) { screen.onAllNodes(isToggleable()).fetchSemanticsNodes().isNotEmpty() }
+        // The list the server made, row by row, under what the list says of itself: on a small screen
+        // the rows begin below its edge, where a list composes nothing until it is scrolled to.
+        // The list itself is scrolled, not the row of plans above it, which scrolls sideways.
+        val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(isToggleable()) }.isSuccess }
         val rows = Instance.shoppingRows(account, planId, language)
         val name = rows.keys.first()
         assertEquals(false, rows[name])
         screen.keepScreenshot("shopping-a-list-made")
 
         val row = hasText(name) and isToggleable()
-        // The list itself, not the rows of profiles and plans above it, which scroll sideways.
-        val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
         list.performScrollToNode(row)
         screen.onNode(row).performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(row and isOn()).fetchSemanticsNodes().isNotEmpty() }
@@ -74,14 +76,17 @@ class ShoppingTest {
         screen.onNode(amounts).performClick()
         screen.onNodeWithText(text(R.string.shopping_at_home)).performTextReplacement("1")
         screen.keepScreenshot("shopping-the-amounts-of-a-row")
-        screen.onNodeWithText(text(R.string.common_save)).performClick()
+        // The amounts open under the row, which may reach below the screen's edge.
+        screen.onNodeWithText(text(R.string.common_save)).performScrollTo().performClick()
         screen.waitUntil(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
 
-        // The entries are found by a part of the name: fewer rows are shown, the one looked for among them.
+        // The entries are found by a part of the name: the rows shown are those whose name holds it.
         list.performScrollToNode(hasText(text(R.string.shopping_find_entry)))
-        val toggles = screen.onAllNodes(isToggleable()).fetchSemanticsNodes().size
         screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextInput(other)
-        screen.waitUntil(20_000) { screen.onAllNodes(isToggleable()).fetchSemanticsNodes().size < toggles }
+        screen.waitUntil(20_000) {
+            val shown = screen.onAllNodes(isToggleable()).fetchSemanticsNodes()
+            shown.isNotEmpty() && shown.all { node -> node.config[SemanticsProperties.Text].any { other.lowercase() in it.text.lowercase() } }
+        }
         screen.onNode(hasText(other) and isToggleable()).assertExists()
         screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextReplacement("")
 
