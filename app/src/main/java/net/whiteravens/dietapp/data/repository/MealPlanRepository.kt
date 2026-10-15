@@ -222,6 +222,14 @@ class MealPlanRepository @Inject constructor(
         },
     )
 
+    /** Deletes a plan; the copies on the phone of it, of its shopping lists and of its profile's list go with it. */
+    suspend fun delete(plan: MealPlan) {
+        apiCall(json) { api.deletePlan(plan.id) }
+        cache.shoppingListsForPlan(plan.id).forEach { cache.deleteShoppingList(it.id) }
+        cache.deleteMealPlan(plan.id)
+        cache.deletePlanList(plan.profileId)
+    }
+
     /** A plan as a change left it, kept for offline use, with what the change rebalanced. */
     private suspend fun kept(result: RebalanceResultDto): Rebalanced {
         mirror(result.plan)

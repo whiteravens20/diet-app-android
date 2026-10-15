@@ -199,6 +199,7 @@
     <string name="plans_mark_eaten">Oznacz jako zjedzone</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Dodaj własny posiłek</string>
+    <string name="plans_delete_confirm">Usunąć ten plan? Tej operacji nie można cofnąć.</string>
     <string name="plans_rebalance_title">Zaktualizowano makro dnia</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
     <string name="plans_rebalance_best_effort">Dzień nadal przekracza cel — rozważ edycję.</string>

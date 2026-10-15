@@ -188,6 +188,7 @@
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Add custom meal</string>
+    <string name="plans_delete_confirm">Delete this plan? This cannot be undone.</string>
     <string name="plans_rebalance_title">Day macros updated</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
     <string name="plans_rebalance_best_effort">Day still over target — consider editing.</string>

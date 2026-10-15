@@ -19,6 +19,7 @@ import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.Nutrition
@@ -55,21 +56,28 @@ class MealPlanRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    /** Keeps what is written to it. */
-    private class Cache : CacheDao {
+    /** Keeps what is written to it, and what is taken out of it. */
+    private class Cache(private val listsOfPlan: List<CachedShoppingList> = emptyList()) : CacheDao {
         val planLists = mutableListOf<CachedPlanList>()
+        val dropped = mutableListOf<String>()
         override suspend fun upsertPlanList(list: CachedPlanList) {
             planLists += list
         }
         override suspend fun planList(profileId: String) = planLists.lastOrNull { it.profileId == profileId }
-        override suspend fun deletePlanList(profileId: String) = Unit
+        override suspend fun deletePlanList(profileId: String) {
+            dropped += "list of $profileId"
+        }
         override suspend fun upsertMealPlan(plan: CachedMealPlan) = Unit
         override suspend fun mealPlan(id: String): CachedMealPlan? = null
-        override suspend fun deleteMealPlan(id: String) = Unit
+        override suspend fun deleteMealPlan(id: String) {
+            dropped += "plan $id"
+        }
         override suspend fun upsertShoppingList(list: CachedShoppingList) = Unit
         override suspend fun shoppingList(id: String): CachedShoppingList? = null
-        override suspend fun shoppingListsForPlan(planId: String) = emptyList<CachedShoppingList>()
-        override suspend fun deleteShoppingList(id: String) = Unit
+        override suspend fun shoppingListsForPlan(planId: String) = listsOfPlan.filter { it.planId == planId }
+        override suspend fun deleteShoppingList(id: String) {
+            dropped += "shopping list $id"
+        }
     }
 
     private fun repository(cache: CacheDao): MealPlanRepository {
@@ -218,6 +226,20 @@ class MealPlanRepositoryTest {
         val asked = server.takeRequest()
         assertEquals("""{"scope":"week"}""", asked.body.readUtf8())
         assertEquals(LocalDate.now().toString(), asked.getHeader("X-Client-Date"))
+    }
+
+    @Test
+    fun `a deleted plan leaves no copy on the phone of itself, of its shopping lists or of its profile's list`() {
+        server.enqueue(MockResponse().setResponseCode(204))
+        val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan")).toDomain()
+        val cache = Cache(listOf(CachedShoppingList("list-1", plan.id, "{}", 1L), CachedShoppingList("list-2", "another plan", "{}", 1L)))
+
+        runBlocking { repository(cache).delete(plan) }
+
+        val deleted = server.takeRequest()
+        assertEquals("DELETE", deleted.method)
+        assertEquals("/api/meal-plans/${plan.id}", deleted.path)
+        assertEquals(setOf("shopping list list-1", "plan ${plan.id}", "list of ${plan.profileId}"), cache.dropped.toSet())
     }
 }
 

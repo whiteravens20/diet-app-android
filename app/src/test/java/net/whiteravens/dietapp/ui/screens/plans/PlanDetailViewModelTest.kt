@@ -5,7 +5,9 @@ package net.whiteravens.dietapp.ui.screens.plans
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -206,6 +208,18 @@ class PlanDetailViewModelTest {
 
         assertEquals(RebalanceRequest(scope = "day", restore = listOf(RestoreScaleDto(meal.id, 1.0))), asked[1])
         assertNull(model.state.value.rebalance)
+    }
+
+    @Test
+    fun `a deleted plan closes its screen`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.deletePlan(plan.id) } just runs
+        val model = model(api)
+
+        model.delete()
+
+        assertTrue(model.state.value.deleted)
     }
 
     @Test

@@ -24,6 +24,7 @@ import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
@@ -166,7 +167,7 @@ class PlansTest {
     }
 
     @Test
-    fun aMealIsMarkedEatenAndAMealOfOnesOwnAdded() {
+    fun aMealIsMarkedEatenAMealOfOnesOwnAddedAndThePlanDeleted() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
         val planId = Instance.newPlan(account, profileId)
@@ -204,6 +205,14 @@ class PlansTest {
         screen.waitUntil(20_000) { Instance.ownMeals(account, planId) == listOf("Grandma's soup") }
         screen.scrollToText("Grandma's soup")
         putAwayRebalance()
+
+        // The plan is deleted once that is confirmed, and the list is back.
+        screen.scrollTo(hasContentDescription(text(R.string.common_delete)))
+        screen.onNodeWithContentDescription(text(R.string.common_delete)).performClick()
+        screen.waitForText(text(R.string.plans_delete_confirm))
+        screen.onNodeWithText(text(R.string.common_delete)).performClick()
+        screen.waitUntil(20_000) { Instance.planIds(account, profileId).isEmpty() }
+        screen.waitForText(text(R.string.plans_calendar_title))
     }
 
     /** Puts away the card that says how a change balanced its day, where the change left one. */

@@ -132,6 +132,10 @@ interface DietApiService {
     @POST("meal-plans/{id}/rebalance")
     suspend fun rebalancePlan(@Path("id") id: String, @Body body: RebalanceRequest): RebalanceResultDto
 
+    /** Deletes a plan, and its shopping lists with it. */
+    @DELETE("meal-plans/{id}")
+    suspend fun deletePlan(@Path("id") id: String)
+
     // ── Recipes ─────────────────────────────────────────────────────────────
 
     @GET("recipes")

@@ -28,7 +28,7 @@ import javax.inject.Inject
  * swaps one: a recipe is offered, another can be asked for, and nothing is written until the
  * offer is taken. A meal is marked eaten or not, a meal of one's own is added to a day, and a
  * change that balanced the day again says how, with the way back and the rest of the week to
- * balance as well.
+ * balance as well. The plan can be deleted.
  */
 @HiltViewModel
 class PlanDetailViewModel @Inject constructor(
@@ -57,6 +57,8 @@ class PlanDetailViewModel @Inject constructor(
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
         val rebalance: Rebalance? = null,
+        /** The plan is gone: the screen is done. */
+        val deleted: Boolean = false,
         val error: Throwable? = null,
     )
 
@@ -139,6 +141,17 @@ class PlanDetailViewModel @Inject constructor(
 
     fun dismissRebalance() {
         _state.update { it.copy(rebalance = null) }
+    }
+
+    fun delete() {
+        val plan = _state.value.plan ?: return
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.delete(plan) }
+                .onSuccess { _state.update { it.copy(changing = false, deleted = true) } }
+                .onFailure { e -> _state.update { it.copy(changing = false, error = e) } }
+        }
     }
 
     /**

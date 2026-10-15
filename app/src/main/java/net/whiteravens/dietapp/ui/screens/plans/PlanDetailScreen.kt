@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
@@ -117,6 +118,8 @@ fun PlanDetailScreen(
     var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
     // The day a meal of one's own is being added to, while its form is open.
     var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
     val readOnly = state.offline
     val busy = state.changing || state.taking
 
@@ -128,6 +131,22 @@ fun PlanDetailScreen(
                 viewModel.addCustomMeal(date, meal)
             },
             onDismiss = { addingTo = null },
+        )
+    }
+
+    if (confirmingDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            text = { Text(stringResource(R.string.plans_delete_confirm)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmingDelete = false
+                        viewModel.delete()
+                    },
+                ) { Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 
@@ -160,7 +179,7 @@ fun PlanDetailScreen(
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Header(plan, onBack) }
+            item { Header(plan, onBack, onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy }) }
 
             state.error?.let {
                 item {
@@ -238,12 +257,12 @@ fun PlanDetailScreen(
 
 /** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it. */
 @Composable
-private fun Header(plan: MealPlan?, onBack: () -> Unit) {
+private fun Header(plan: MealPlan?, onBack: () -> Unit, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
         }
-        Column(Modifier.padding(start = 4.dp)) {
+        Column(Modifier.padding(start = 4.dp).weight(1f)) {
             Text(
                 if (plan != null) planSummary(plan.durationDays, plan.dietType) else stringResource(R.string.nav_meal_plans),
                 style = MaterialTheme.typography.titleLarge,
@@ -256,6 +275,11 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit) {
                     modifier = Modifier.padding(top = 2.dp),
                 )
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
+            }
+        }
+        if (plan != null) {
+            IconButton(onClick = { onDelete?.invoke() }, enabled = onDelete != null) {
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_delete))
             }
         }
     }

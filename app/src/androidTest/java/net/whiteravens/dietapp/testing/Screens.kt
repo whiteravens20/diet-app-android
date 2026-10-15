@@ -41,15 +41,18 @@ fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000, sub
 }
 
 /**
- * Scrolls the screen's list until it shows [shown] (or a text holding it, where [substring]), once
- * the list has it, as a person scrolls to what they look for: a list composes only what is in view.
+ * Scrolls the screen's list until it shows what [sought] matches, once the list has it, as a person
+ * scrolls to what they look for: a list composes only what is in view.
  */
-fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) {
-    val sought = hasText(shown, substring = substring)
+fun ComposeTestRule.scrollTo(sought: SemanticsMatcher, timeoutMillis: Long = 20_000) {
     waitUntil(timeoutMillis) {
         runCatching { onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(sought) }.isSuccess
     }
 }
+
+/** [scrollTo] what shows [shown], or a text holding it where [substring]. */
+fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
+    scrollTo(hasText(shown, substring = substring), timeoutMillis)
 
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
