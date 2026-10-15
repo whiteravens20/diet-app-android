@@ -1,0 +1,128 @@
+# ── Against diet-app dev ──────────────────────────────────────────────────────
+# Every night that diet-app's dev branch has moved, the screens' tests run on an
+# Android 14 emulator against an instance of that commit: its image is built in
+# the runner from the commit's source and never published, and the compose file
+# and settings template are the commit's own. What the contract does not say,
+# how the API behaves, is checked here, while test.yml holds the app to the
+# version contract/ was copied from. A commit that passed is not run again.
+name: Against diet-app dev
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  moved:
+    name: Has diet-app dev moved
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.head.outputs.commit }}
+      passed: ${{ steps.passed.outputs.cache-hit }}
+    steps:
+      - name: Read the commit of diet-app's dev
+        id: head
+        run: echo "commit=$(git ls-remote https://github.com/whiteravens20/diet-app refs/heads/dev | cut -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Look for a run that passed on it
+        id: passed
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: diet-app-dev-passed
+          key: diet-app-dev-passed-${{ steps.head.outputs.commit }}
+          lookup-only: true
+
+  screens:
+    name: Screens against diet-app dev
+    needs: moved
+    if: needs.moved.outputs.passed != 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DIET_APP_DEV: ${{ needs.moved.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check out diet-app's dev
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: whiteravens20/diet-app
+          ref: ${{ needs.moved.outputs.commit }}
+          path: diet-app-source
+          persist-credentials: false
+
+      # Tagged in the runner alone, under the name the compose file pulls: an image there is not pulled.
+      - name: Build diet-app's image
+        run: docker build -f diet-app-source/infra/docker/Dockerfile -t ghcr.io/whiteravens20/diet-app:dev-under-test diet-app-source
+
+      - name: Start diet-app
+        run: .github/scripts/start-diet-app.sh "$RUNNER_TEMP/diet-app" "$DIET_APP_DEV" dev-under-test
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Build the app and its tests
+        run: ./gradlew assembleDebug assembleDebugAndroidTest
+
+      - name: Let the emulator use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' |
+            sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run the screens' tests
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          cores: 2
+          emulator-boot-timeout: 600
+          arch: x86_64
+          target: google_apis
+          # Turned off by settle-emulator.sh, once the settings service answers.
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            .github/scripts/keep-emulator-log.sh
+            .github/scripts/settle-emulator.sh
+            .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
+            ./gradlew connectedDebugAndroidTest
+
+      - name: Keep what diet-app logged
+        if: always()
+        working-directory: ${{ runner.temp }}/diet-app
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/app/build"
+          docker compose --env-file .env -f docker-compose.yml -f api-port.yml logs --no-color \
+            > "$GITHUB_WORKSPACE/app/build/diet-app.log" 2>&1 || true
+
+      - name: Upload what the screens' tests left
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screens-against-diet-app-dev
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+            app/build/outputs/connected_android_test_additional_output/
+            app/build/emulator-logcat.txt
+            app/build/diet-app.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remember that this commit passed
+        run: mkdir -p diet-app-dev-passed && echo "$DIET_APP_DEV" > diet-app-dev-passed/commit
+
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: diet-app-dev-passed
+          key: diet-app-dev-passed-${{ needs.moved.outputs.commit }}

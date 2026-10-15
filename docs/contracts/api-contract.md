@@ -19,7 +19,9 @@ that fixes it takes it off the list.
 same version. The build writes the app's texts for refusals from it, in English and in Polish, and
 a unit test (`ErrorTextsTest`) checks that every code of the list has its text. Every day CI
 compares both copies with diet-app's `dev` ([contract.yml](../../.github/workflows/contract.yml))
-and fails when they differ.
+and fails when they differ. Every night that diet-app's `dev` has moved, the screens' tests also
+run against an instance of that commit
+([diet-app-dev.yml](../../.github/workflows/diet-app-dev.yml)).
 
 ## Moving to another version of the API
 

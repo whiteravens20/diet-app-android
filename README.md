@@ -168,7 +168,10 @@ testers will try the release candidate at the maintainer's request.
   which it commits only when started by hand
   ([dependency-metadata.yml](.github/workflows/dependency-metadata.yml)).
 - Every day the copy of the contract is compared with diet-app's `dev`, and the run fails
-  when they differ ([contract.yml](.github/workflows/contract.yml)).
+  when they differ ([contract.yml](.github/workflows/contract.yml)). Every night that
+  diet-app's `dev` has moved, the screens' tests also run on an Android 14 emulator against
+  an instance of that commit, its image built in the run from the commit's source
+  ([diet-app-dev.yml](.github/workflows/diet-app-dev.yml)).
 - `dev` and `main` are protected: a change has to pass the build, the screens' tests and
   the check of the pinned actions (on `main` also CodeQL and the Trivy scan), commits have
   to be signed, and nothing is force-pushed or deleted. Until the first release the

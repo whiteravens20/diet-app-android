@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Starts a diet-app instance for the screens' tests on an emulator: the API and the worker
 # of the version contract/diet-app.env names (its image by digest; the compose file and the
-# settings template of its commit), with secrets made for this run and the API published on
-# 127.0.0.1:4000, which an emulator reaches as 10.0.2.2:4000. Then it loads the catalogue
-# through the admin API, as an administrator does after an installation, so that plans can
-# be made.
+# settings template of its commit), or of the commit and the image tag given, with secrets
+# made for this run and the API published on 127.0.0.1:4000, which an emulator reaches as
+# 10.0.2.2:4000. Then it loads the catalogue through the admin API, as an administrator does
+# after an installation, so that plans can be made.
 #
-# Usage: .github/scripts/start-diet-app.sh <empty directory>
+# Usage: .github/scripts/start-diet-app.sh <empty directory> [<commit> <image tag>]
 # `docker compose --env-file .env -f docker-compose.yml -f api-port.yml logs` in that
 # directory shows what the instance did.
 set -euo pipefail
@@ -15,6 +15,8 @@ set -euo pipefail
 . "$(dirname "$0")/../../contract/diet-app.env"
 
 dir=$1
+DIET_APP_COMMIT=${2:-$DIET_APP_COMMIT}
+DIET_APP_IMAGE_TAG=${3:-$DIET_APP_IMAGE_TAG}
 mkdir -p "$dir"
 cd "$dir"
 
