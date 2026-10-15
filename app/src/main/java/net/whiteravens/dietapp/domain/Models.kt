@@ -516,6 +516,14 @@ data class ShoppingItem(
     val packsStand: Boolean get() = packs != null && !checked && have == atHome
 }
 
+/**
+ * What changes of a shopping row, null for a part that stays: its tick, what is at home, and
+ * everything the user has for it, the part at home included, 0 where that is cleared.
+ */
+data class RowChange(val checked: Boolean? = null, val atHome: Double? = null, val have: Double? = null) {
+    val isEmpty: Boolean get() = checked == null && atHome == null && have == null
+}
+
 /** [count] packs of [size] [sizeUnit] each, which give the row [quantity] in its own unit. */
 data class RowPacks(val count: Int, val size: Double, val sizeUnit: String, val quantity: Double)
 

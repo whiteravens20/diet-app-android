@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
@@ -64,6 +65,16 @@ class ShoppingTest {
         screen.onNode(row).assertIsOn()
         assertEquals(true, Instance.shoppingRows(account, planId, language)[name])
         screen.keepScreenshot("shopping-a-row-ticked")
+
+        // What is at home of another row is told in the amounts that open under it, and the server counts it.
+        val other = rows.keys.elementAt(1)
+        val amounts = hasContentDescription(text(R.string.shopping_amounts_of, other))
+        list.performScrollToNode(amounts)
+        screen.onNode(amounts).performClick()
+        screen.onNodeWithText(text(R.string.shopping_at_home)).performTextReplacement("1")
+        screen.keepScreenshot("shopping-the-amounts-of-a-row")
+        screen.onNodeWithText(text(R.string.common_save)).performClick()
+        screen.waitUntil(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
 
         // A list made again from the window that asks for the plan's days stands in the place of the first.
         val first = Instance.shoppingListIds(account, planId)

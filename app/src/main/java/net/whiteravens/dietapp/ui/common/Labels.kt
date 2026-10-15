@@ -246,6 +246,16 @@ fun amountLabel(quantity: Double, unit: String): String {
     }
 }
 
+/** What a unit is called beside a number somebody types: `g`, `ml`, `pieces`, `slices`. */
+@Composable
+fun unitName(unit: String): String = when (unit) {
+    "g", "ml" -> unit
+    "slice" -> stringResource(R.string.unit_name_slice)
+    "clove" -> stringResource(R.string.unit_name_clove)
+    "handful" -> stringResource(R.string.unit_name_handful)
+    else -> stringResource(R.string.unit_name_piece)
+}
+
 /** What a note of the calorie target says, as the web application's profile summary says it. */
 @Composable
 fun noteText(note: TargetNote): String = when (note) {

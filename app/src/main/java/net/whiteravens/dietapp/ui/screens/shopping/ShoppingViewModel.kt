@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
@@ -170,11 +171,13 @@ class ShoppingViewModel @Inject constructor(
         }
     }
 
-    fun setChecked(itemId: String, checked: Boolean) {
+    /** Changes a row of the list shown: its tick, what is at home, what was bought. */
+    fun change(itemId: String, change: RowChange) {
         val listId = _state.value.list?.id ?: return
+        if (change.isEmpty) return
         viewModelScope.launch {
             _state.update { it.copy(updating = it.updating + itemId, error = null) }
-            attempt { lists.setChecked(listId, itemId, checked) }
+            attempt { lists.change(listId, itemId, change) }
                 .onSuccess { updated -> _state.update { it.copy(lists = it.lists.map { list -> if (list.id == updated.id) updated else list }, updating = it.updating - itemId) } }
                 .onFailure { e ->
                     _state.update {

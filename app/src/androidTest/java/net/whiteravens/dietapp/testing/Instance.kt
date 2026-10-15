@@ -176,6 +176,14 @@ object Instance {
         return (0 until lists.length()).map { lists.getJSONObject(it).getString("id") }
     }
 
+    /** What is at home of the row called [name] on the newest shopping list of [planId] in [language]. */
+    fun shoppingRowAtHome(account: Account, planId: String, name: String, language: String): Double {
+        val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))
+        val groups = lists.getJSONObject(0).getJSONArray("groups")
+        return (0 until groups.length()).flatMap { g -> groups.getJSONObject(g).getJSONArray("items").let { items -> (0 until items.length()).map(items::getJSONObject) } }
+            .first { it.getString("name") == name }.getDouble("alreadyHaveQuantity")
+    }
+
     /** The rows of the shopping list of [planId] in [language], by name, and whether each is ticked. */
     fun shoppingRows(account: Account, planId: String, language: String): Map<String, Boolean> {
         val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))

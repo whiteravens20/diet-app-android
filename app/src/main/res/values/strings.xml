@@ -430,7 +430,13 @@
     <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
     <string name="shopping_delete_confirm">Delete this shopping list?</string>
     <string name="shopping_aisle_energy">about %1$s kcal</string>
-    <string name="shopping_from_pantry">from pantry: %1$s %2$s</string>
+    <string name="shopping_packs_hint">Where something is sold in packs, its row says how many it takes. Press that when you have bought them: what the plan does not need of them goes into the pantry.</string>
+    <string name="shopping_at_home">at home</string>
+    <string name="shopping_bought">bought</string>
+    <string name="shopping_of_total">(of %1$s)</string>
+    <string name="shopping_best_before">best before %1$s</string>
+    <string name="shopping_buy_packs">Bought in packs: %1$s of %2$s</string>
+    <string name="shopping_amounts_of">Amounts of %1$s</string>
 
     <!-- Profile -->
     <string name="account_title">Account settings</string>

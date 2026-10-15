@@ -16,10 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,6 +32,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,23 +43,29 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealPlanSummary
+import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatNumber
-import net.whiteravens.dietapp.ui.common.formatQuantity
 import net.whiteravens.dietapp.ui.common.formatSyncedAt
+import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
@@ -64,7 +74,9 @@ import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import java.text.NumberFormat
 import java.time.LocalDate
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -254,6 +266,12 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
                         }
                     }
                 }
+                val everyItem = list.groups.flatMap { it.items }
+                if (everyItem.any { it.packsStand }) {
+                    item(key = "packs") {
+                        Text(stringResource(R.string.shopping_packs_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
                 list.groups.forEach { group ->
                     item(key = "header-${group.category}") {
                         Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
@@ -272,7 +290,7 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
                                     item = item,
                                     busy = item.id in state.updating,
                                     readOnly = state.offline || busy,
-                                    onCheckedChange = { viewModel.setChecked(item.id, it) },
+                                    onChange = { change -> viewModel.change(item.id, change) },
                                 )
                             }
                         }
@@ -349,61 +367,141 @@ private fun ListDaysDialog(plan: MealPlanSummary, onMake: (from: String, to: Str
     )
 }
 
+/**
+ * A row of the list: what is still to be bought of it, ticked with a tap; the packs it takes, taken
+ * for bought with a tap; and what is at home and what was bought, told in a part that opens under
+ * it. The API keeps one number for everything the user has for a row; the row shows it as its two
+ * parts, and sends the part that changed. What is at home starts at what the pantry had when the
+ * list was made, and is the user's to correct: a pantry does not know everything in a kitchen.
+ */
 @Composable
 private fun ShoppingItemRow(
     item: ShoppingItem,
     busy: Boolean,
     readOnly: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    onChange: (RowChange) -> Unit,
 ) {
-    // The whole row is ticked with a tap, and is read out as one thing: its name, its amount, its tick.
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = item.checked,
-                enabled = !readOnly && !busy,
-                role = Role.Checkbox,
-                onValueChange = onCheckedChange,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (busy) {
-            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            }
-        } else {
-            Checkbox(checked = item.checked, onCheckedChange = null, enabled = !readOnly, modifier = Modifier.size(48.dp))
-        }
-        Column(Modifier.weight(1f).padding(start = 4.dp)) {
-            Text(
-                item.name,
-                style = MaterialTheme.typography.bodyMedium,
-                textDecoration = if (item.checked) TextDecoration.LineThrough else null,
-                color = if (item.checked) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface,
-            )
-            if (item.atHome > 0) {
-                LabelChip(
-                    stringResource(
-                        R.string.shopping_from_pantry,
-                        formatQuantity(item.atHome),
-                        unitLabel(item.unit),
+    val locale = LocalConfiguration.current.locales[0]
+    var editing by rememberSaveable(item.id) { mutableStateOf(false) }
+    // The two fields as typed, begun anew whenever the server's row changes.
+    val server = listOf(item.atHome, item.purchasedQuantity, item.checked)
+    var home by rememberSaveable(item.id, server) { mutableStateOf(fieldOf(item.atHome, locale)) }
+    var bought by rememberSaveable(item.id, server) { mutableStateOf(fieldOf(boughtOf(item), locale)) }
+    val homeNow = typed(home) ?: 0.0
+    val boughtNow = typed(bought) ?: 0.0
+    // What is left to buy follows the fields while they are typed in.
+    val remaining = (item.totalQuantity - homeNow - boughtNow).coerceAtLeast(0.0)
+    val pending = rowChange(item, homeNow, boughtNow)
+
+    Column(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // The tick, and with it what the fields hold that the server does not have yet.
+            Row(
+                Modifier
+                    .weight(1f)
+                    .toggleable(
+                        value = item.checked,
+                        enabled = !readOnly && !busy,
+                        role = Role.Checkbox,
+                        onValueChange = { checked -> onChange(pending.copy(checked = checked)) },
                     ),
-                    modifier = Modifier.padding(top = 2.dp),
-                )
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (busy) {
+                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    }
+                } else {
+                    Checkbox(checked = item.checked, onCheckedChange = null, enabled = !readOnly, modifier = Modifier.size(48.dp))
+                }
+                Column(Modifier.weight(1f).padding(start = 4.dp)) {
+                    Text(
+                        item.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textDecoration = if (item.checked) TextDecoration.LineThrough else null,
+                        color = if (item.checked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (homeNow > 0 || boughtNow > 0) {
+                        Text(
+                            listOfNotNull(
+                                "${stringResource(R.string.shopping_at_home)} ${amountLabel(homeNow, item.displayUnit)}".takeIf { homeNow > 0 },
+                                "${stringResource(R.string.shopping_bought)} ${amountLabel(boughtNow, item.displayUnit)}".takeIf { boughtNow > 0 },
+                            ).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    item.pantryBestBefore?.takeIf { item.atHome > 0 }?.let { day ->
+                        LabelChip(stringResource(R.string.shopping_best_before, formatDate(day)), modifier = Modifier.padding(top = 2.dp))
+                    }
+                }
+                Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {
+                    Text(amountLabel(remaining, item.displayUnit), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (homeNow > 0 || boughtNow > 0) {
+                        Text(
+                            stringResource(R.string.shopping_of_total, amountLabel(item.totalQuantity, item.displayUnit)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            IconButton(onClick = { editing = !editing }, enabled = !readOnly) {
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.shopping_amounts_of, item.name), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Text(
-            "${formatQuantity(item.toBuyQuantity)} ${unitLabel(item.unit)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // The packs are counted by the server from what it knows is at home: while that is typed anew, they are not said.
+        val packs = item.packs
+        if (packs != null && item.packsStand && !editing) {
+            val counted = "${packs.count} × ${amountLabel(packs.size, packs.sizeUnit)}"
+            val said = stringResource(R.string.shopping_buy_packs, counted, item.name)
+            AssistChip(
+                onClick = { packsBought(item)?.let(onChange) },
+                label = { Text(counted) },
+                enabled = !readOnly && !busy,
+                modifier = Modifier.padding(start = 52.dp).semantics { contentDescription = said },
+            )
+        }
+        if (editing) {
+            Column(Modifier.padding(start = 52.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AmountField(stringResource(R.string.shopping_at_home), home, item.displayUnit, enabled = !readOnly && !busy) { home = it }
+                AmountField(stringResource(R.string.shopping_bought), bought, item.displayUnit, enabled = !readOnly && !busy) { bought = it }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            home = fieldOf(item.atHome, locale)
+                            bought = fieldOf(boughtOf(item), locale)
+                            editing = false
+                        },
+                    ) { Text(stringResource(R.string.common_cancel)) }
+                    Button(
+                        onClick = {
+                            onChange(pending)
+                            editing = false
+                        },
+                        enabled = !readOnly && !busy && !pending.isEmpty,
+                    ) { Text(stringResource(R.string.common_save)) }
+                }
+            }
+        }
     }
 }
 
+/** A field of a row's amount, in the row's unit; a number under nothing is not taken, an empty field is. */
 @Composable
-private fun unitLabel(unit: String): String = when (unit) {
-    "piece" -> stringResource(R.string.unit_piece)
-    else -> unit
+private fun AmountField(label: String, value: String, unit: String, enabled: Boolean, onValue: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { typedNow -> if (typedNow.isBlank() || typedNow.trim().replace(',', '.').toDoubleOrNull()?.let { it >= 0 } == true) onValue(typedNow) },
+        label = { Text(label) },
+        suffix = { Text(unitName(unit)) },
+        singleLine = true,
+        enabled = enabled,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
+
+/** A field's text for an amount: empty for none, the number in the language's own way otherwise, without grouping. */
+private fun fieldOf(amount: Double, locale: Locale): String =
+    if (amount <= 0.0) "" else NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(amount)

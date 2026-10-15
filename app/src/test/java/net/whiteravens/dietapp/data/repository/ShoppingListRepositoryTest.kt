@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
@@ -109,5 +110,24 @@ class ShoppingListRepositoryTest {
         assertEquals("DELETE", deleted.method)
         assertEquals("/api/shopping-lists/list", deleted.path)
         assertEquals(setOf("other"), cache.lists.keys)
+    }
+
+    @Test
+    fun `a row sends what changed of it alone, its tick with what was typed, what is at home, and what the user has, cleared with a null`() {
+        repeat(3) { server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(fixture("shopping-item-ticked"))) }
+        val lists = repository(Cache(emptyList()))
+
+        runBlocking {
+            lists.change("list", "row", RowChange(checked = true, atHome = 100.0))
+            lists.change("list", "row", RowChange(have = 0.0))
+            lists.change("list", "row", RowChange(have = 350.0, checked = true))
+        }
+
+        val ticked = server.takeRequest()
+        assertEquals("PATCH", ticked.method)
+        assertEquals("/api/shopping-lists/list/items/row", ticked.path)
+        assertEquals("""{"checked":true,"alreadyHaveQuantity":100.0}""", ticked.body.readUtf8())
+        assertEquals("""{"purchasedQuantity":null}""", server.takeRequest().body.readUtf8())
+        assertEquals("""{"purchasedQuantity":350.0,"checked":true}""", server.takeRequest().body.readUtf8())
     }
 }

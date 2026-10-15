@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.data.repository
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.local.readOrDrop
@@ -13,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.GenerateShoppingListRequest
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.UpdateShoppingItemRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingList
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -76,20 +79,17 @@ class ShoppingListRepository @Inject constructor(
         return list.toDomain()
     }
 
-    /** Tick / untick an item. Server-authoritative; returns the updated list. */
-    suspend fun setChecked(listId: String, itemId: String, checked: Boolean): ShoppingList {
-        val list = apiCall(json) {
-            api.updateShoppingItem(listId, itemId, UpdateShoppingItemRequest(checked = checked))
-        }
-        mirror(list)
-        return list.toDomain()
-    }
-
-    /** Record how much of an item was obtained; >= total auto-checks server-side. */
-    suspend fun setPurchasedQuantity(listId: String, itemId: String, quantity: Double): ShoppingList {
-        val list = apiCall(json) {
-            api.updateShoppingItem(listId, itemId, UpdateShoppingItemRequest(purchasedQuantity = quantity))
-        }
+    /**
+     * Changes a row: its tick, what is at home, everything the user has for it (cleared where 0).
+     * The pantry follows on the server; the list as the server then has it is kept and given back.
+     */
+    suspend fun change(listId: String, itemId: String, change: RowChange): ShoppingList {
+        val request = UpdateShoppingItemRequest(
+            purchasedQuantity = change.have?.let { have -> if (have > 0) JsonPrimitive(have) else JsonNull },
+            checked = change.checked,
+            alreadyHaveQuantity = change.atHome,
+        )
+        val list = apiCall(json) { api.updateShoppingItem(listId, itemId, request) }
         mirror(list)
         return list.toDomain()
     }

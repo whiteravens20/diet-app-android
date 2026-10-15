@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.remote
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -1080,13 +1081,15 @@ data class GenerateShoppingListRequest(
 )
 
 /**
- * PATCH `/shopping-lists/:id/items/:itemId`. Values >= totalQuantity auto-check
- * the row server-side. Note: the platform accepts an explicit `purchasedQuantity:
- * null` to clear the field, but our Json encoder drops nulls (`explicitNulls =
- * false`) for PATCH semantics — clearing is not yet supported from Android.
+ * PATCH `/shopping-lists/:id/items/:itemId`: what changed of a row, nothing else. A
+ * `purchasedQuantity` that reaches the row's need ticks it; [JsonNull] clears it, which the
+ * encoder writes where a Kotlin null is left out.
  */
 @Serializable
 data class UpdateShoppingItemRequest(
-    val purchasedQuantity: Double? = null,
+    /** Everything the user has for the row, the part at home included: a number, or [JsonNull]. */
+    val purchasedQuantity: JsonElement? = null,
     val checked: Boolean? = null,
+    /** What is at home of the row, in the place of what the list took from the pantry. */
+    val alreadyHaveQuantity: Double? = null,
 )
