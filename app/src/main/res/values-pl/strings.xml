@@ -473,6 +473,26 @@
     <string name="shopping_best_before">najlepiej spożyć przed %1$s</string>
     <string name="shopping_buy_packs">Kupione w opakowaniach: %1$s, %2$s</string>
     <string name="shopping_amounts_of">Ilości: %1$s</string>
+    <string name="shopping_proposals_ask">Bez czego ta lista mogłaby się obejść?</string>
+    <string name="shopping_proposals_asking">Szukam…</string>
+    <string name="shopping_proposals_none">Nic: żaden wiersz nie zastąpi innego i z żadnego opakowania nie zostanie ponad jedna piąta.</string>
+    <string name="shopping_proposal_merge">%1$s (zamiast: %2$s) w %3$s — do kupienia %4$s mniej</string>
+    <plurals name="shopping_proposal_meals">
+        <item quantity="one">%d posiłku</item>
+        <item quantity="few">%d posiłkach</item>
+        <item quantity="many">%d posiłkach</item>
+        <item quantity="other">%d posiłku</item>
+    </plurals>
+    <plurals name="shopping_proposal_packs">
+        <item quantity="one">o %d opakowanie</item>
+        <item quantity="few">o %d opakowania</item>
+        <item quantity="many">o %d opakowań</item>
+        <item quantity="other">o %d opakowania</item>
+    </plurals>
+    <string name="shopping_proposal_merge_how">Zamień to w planie.</string>
+    <string name="shopping_proposal_merge_then">Ta lista powie wtedy, że nie odpowiada już planowi, i będzie można ją zaktualizować.</string>
+    <string name="shopping_proposal_leftover">%1$s: z opakowania %3$s zostanie %2$s, a po otwarciu szybko się psuje</string>
+    <string name="shopping_proposal_leftover_how">Zobacz w planie, co by to zużyło.</string>
 
     <!-- Profile -->
     <string name="account_title">Ustawienia konta</string>

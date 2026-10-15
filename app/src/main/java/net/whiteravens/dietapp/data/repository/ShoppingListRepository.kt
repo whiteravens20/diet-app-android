@@ -14,7 +14,11 @@ import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GenerateShoppingListRequest
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.UpdateShoppingItemRequest
+import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.domain.ListProposal
+import net.whiteravens.dietapp.domain.ListProposals
+import net.whiteravens.dietapp.domain.ProposalMeal
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingList
 import javax.inject.Inject
@@ -64,6 +68,32 @@ class ShoppingListRepository @Inject constructor(
         cachedForPlan(planId).filter { it.id != made.id && it.meets(made.fromDate, made.toDate) }.forEach { cache.deleteShoppingList(it.id) }
         mirror(answer)
         return made
+    }
+
+    /** What a list could do without, put in order by a model where [weigh]. Nothing is written; a kind of proposal this version does not know is left out. */
+    suspend fun proposals(listId: String, weigh: Boolean = false): ListProposals {
+        val answer = apiCall(json) { api.listProposals(listId, WeighRequest(weigh)) }
+        return ListProposals(
+            proposals = answer.proposals.mapNotNull { proposal ->
+                when (proposal.kind) {
+                    "merge" -> {
+                        val from = proposal.from ?: return@mapNotNull null
+                        val to = proposal.to ?: return@mapNotNull null
+                        ListProposal.Merge(from.name, to.name, proposal.meals.map { ProposalMeal(it.date, it.mealType, it.title) }, proposal.packsSaved ?: 0, proposal.reason)
+                    }
+                    "leftover" -> ListProposal.Leftover(
+                        name = proposal.name ?: return@mapNotNull null,
+                        unit = proposal.unit ?: return@mapNotNull null,
+                        left = proposal.left ?: return@mapNotNull null,
+                        packSize = proposal.packSize ?: return@mapNotNull null,
+                        reason = proposal.reason,
+                    )
+                    else -> null
+                }
+            },
+            weighed = answer.aiMeta != null && answer.aiMeta.fallbackReason == null,
+            fallbackReason = answer.aiMeta?.fallbackReason,
+        )
     }
 
     /** Deletes a list, and the copy kept of it. */

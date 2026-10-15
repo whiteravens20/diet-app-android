@@ -524,6 +524,26 @@ data class RowChange(val checked: Boolean? = null, val atHome: Double? = null, v
     val isEmpty: Boolean get() = checked == null && atHome == null && have == null
 }
 
+/**
+ * What a shopping list could do without: the proposals that save the most first, or in a model's
+ * order where one was asked and answered ([weighed]), or the engine's with why ([fallbackReason]).
+ */
+data class ListProposals(val proposals: List<ListProposal>, val weighed: Boolean, val fallbackReason: String?)
+
+/** Something a shopping list could do without, with a model's sentence on it where one was asked. */
+sealed interface ListProposal {
+    val reason: String?
+
+    /** [to] in the place of [from] in [meals] of the list's days: [packsSaved] fewer packs to buy. Made in the plan, meal by meal. */
+    data class Merge(val from: String, val to: String, val meals: List<ProposalMeal>, val packsSaved: Int, override val reason: String?) : ListProposal
+
+    /** [left] of a pack of [packSize] of [name] will be left, in [unit], and an opened pack of it does not keep. */
+    data class Leftover(val name: String, val unit: String, val left: Int, val packSize: Double, override val reason: String?) : ListProposal
+}
+
+/** A meal of a list's days that a proposal names. */
+data class ProposalMeal(val date: String, val slot: String, val title: String)
+
 /** [count] packs of [size] [sizeUnit] each, which give the row [quantity] in its own unit. */
 data class RowPacks(val count: Int, val size: Double, val sizeUnit: String, val quantity: Double)
 

@@ -176,6 +176,10 @@ object Instance {
         return (0 until lists.length()).map { lists.getJSONObject(it).getString("id") }
     }
 
+    /** How many things the API finds that the shopping list [listId] could do without; nothing is written by asking. */
+    fun listProposals(account: Account, listId: String): Int =
+        call("POST", "shopping-lists/$listId/proposals", JSONObject(), token = account.accessToken).getJSONArray("proposals").length()
+
     /** What is at home of the row called [name] on the newest shopping list of [planId] in [language]. */
     fun shoppingRowAtHome(account: Account, planId: String, name: String, language: String): Double {
         val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))

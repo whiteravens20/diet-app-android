@@ -15,6 +15,8 @@ import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.ListProposal
+import net.whiteravens.dietapp.domain.ProposalMeal
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -22,6 +24,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -129,5 +132,34 @@ class ShoppingListRepositoryTest {
         assertEquals("""{"checked":true,"alreadyHaveQuantity":100.0}""", ticked.body.readUtf8())
         assertEquals("""{"purchasedQuantity":null}""", server.takeRequest().body.readUtf8())
         assertEquals("""{"purchasedQuantity":350.0,"checked":true}""", server.takeRequest().body.readUtf8())
+    }
+
+    @Test
+    fun `what a list could do without is asked for unweighed unless a model is to weigh it, and a kind this version does not know is left out`() {
+        // The shape the API answers with, a model's order and sentences in it.
+        val proposals = """{"planId":"plan","proposals":[""" +
+            """{"kind":"merge","from":{"ingredientId":"butter","name":"Butter"},"to":{"ingredientId":"oil","name":"Olive oil"},""" +
+            """"meals":[{"plannedMealId":"meal-1","date":"2026-10-14","mealType":"lunch","title":"Soup"}],"packsSaved":1,"reason":"One bottle fewer."},""" +
+            """{"kind":"leftover","ingredientId":"feta","name":"Feta","unit":"g","left":80,"packSize":200,"reason":null},""" +
+            """{"kind":"another","name":"Unknown"}],""" +
+            """"aiMeta":{"provider":"openrouter","model":"m","failoverChain":[],"usedDeterministicFallback":false,"fallbackReason":null,"reason":null}}"""
+        repeat(2) { server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(proposals)) }
+        val lists = repository(Cache(emptyList()))
+
+        val found = runBlocking { lists.proposals("list") }
+        runBlocking { lists.proposals("list", weigh = true) }
+
+        assertEquals(
+            listOf(
+                ListProposal.Merge("Butter", "Olive oil", listOf(ProposalMeal("2026-10-14", "lunch", "Soup")), 1, "One bottle fewer."),
+                ListProposal.Leftover("Feta", "g", 80, 200.0, null),
+            ),
+            found.proposals,
+        )
+        assertTrue(found.weighed)
+        val first = server.takeRequest()
+        assertEquals("/api/shopping-lists/list/proposals", first.path)
+        assertEquals("{}", first.body.readUtf8())
+        assertEquals("""{"weigh":true}""", server.takeRequest().body.readUtf8())
     }
 }

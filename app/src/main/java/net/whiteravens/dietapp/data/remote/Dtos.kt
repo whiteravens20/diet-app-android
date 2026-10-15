@@ -1072,6 +1072,40 @@ data class ShoppingListDto(
     val createdAt: String,
 )
 
+/** An ingredient named by its id and its name. */
+@Serializable
+data class IngredientRefDto(val ingredientId: String, val name: String)
+
+/** A meal of a list's days, as a proposal of the list names it. */
+@Serializable
+data class ProposalMealDto(val plannedMealId: String, val date: String, val mealType: String, val title: String)
+
+/**
+ * Something a shopping list could do without, by its [kind]: `merge`, two rows one ingredient could
+ * stand for ([from], [to], the [meals] that use [from], [packsSaved]); or `leftover`, a row whose
+ * packs leave more than a fifth of one ([ingredientId], [name], [left] of [packSize] in [unit]).
+ * The fields of the other kind are absent.
+ */
+@Serializable
+data class ListProposalDto(
+    val kind: String,
+    val from: IngredientRefDto? = null,
+    val to: IngredientRefDto? = null,
+    val meals: List<ProposalMealDto> = emptyList(),
+    val packsSaved: Int? = null,
+    val ingredientId: String? = null,
+    val name: String? = null,
+    val unit: String? = null,
+    val left: Int? = null,
+    val packSize: Double? = null,
+    /** A model's sentence on it, where one was asked and said one. */
+    val reason: String? = null,
+)
+
+/** POST `/shopping-lists/:id/proposals`: what a list could do without; nothing is written. */
+@Serializable
+data class ListProposalsDto(val planId: String, val proposals: List<ListProposalDto>, val aiMeta: AiGenerationMetaDto? = null)
+
 /** POST `/shopping-lists/generate` — dates default to the plan's full range. */
 @Serializable
 data class GenerateShoppingListRequest(

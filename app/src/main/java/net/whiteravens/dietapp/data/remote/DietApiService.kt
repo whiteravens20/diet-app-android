@@ -201,6 +201,10 @@ interface DietApiService {
     @GET("shopping-lists/{id}")
     suspend fun shoppingList(@Path("id") id: String): ShoppingListDto
 
+    /** What a list could do without, weighed by a model where [WeighRequest.weigh]; nothing is written. */
+    @POST("shopping-lists/{id}/proposals")
+    suspend fun listProposals(@Path("id") id: String, @Body body: WeighRequest): ListProposalsDto
+
     /** Deletes a shopping list; what was obtained for days still ahead goes into the pantry. */
     @DELETE("shopping-lists/{id}")
     suspend fun deleteShoppingList(@Path("id") id: String)

@@ -440,6 +440,22 @@
     <string name="shopping_best_before">best before %1$s</string>
     <string name="shopping_buy_packs">Bought in packs: %1$s of %2$s</string>
     <string name="shopping_amounts_of">Amounts of %1$s</string>
+    <string name="shopping_proposals_ask">What could this list do without?</string>
+    <string name="shopping_proposals_asking">Looking…</string>
+    <string name="shopping_proposals_none">Nothing: no row could stand for another, and no pack would be left more than a fifth full.</string>
+    <string name="shopping_proposal_merge">%1$s in place of %2$s in %3$s: %4$s fewer to buy</string>
+    <plurals name="shopping_proposal_meals">
+        <item quantity="one">%d meal</item>
+        <item quantity="other">%d meals</item>
+    </plurals>
+    <plurals name="shopping_proposal_packs">
+        <item quantity="one">%d pack</item>
+        <item quantity="other">%d packs</item>
+    </plurals>
+    <string name="shopping_proposal_merge_how">Substitute it in the plan.</string>
+    <string name="shopping_proposal_merge_then">This list then says that it no longer matches the plan, and can be updated.</string>
+    <string name="shopping_proposal_leftover">%1$s: %2$s of a pack of %3$s will be left, and an opened pack of it does not keep</string>
+    <string name="shopping_proposal_leftover_how">See in the plan what would use it up.</string>
 
     <!-- Profile -->
     <string name="account_title">Account settings</string>

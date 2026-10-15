@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.ListProposals
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.RowChange
@@ -25,8 +26,9 @@ import javax.inject.Inject
  * Shopping lists as the web page has them: a profile, one of its plans, and the plan's lists, the
  * newest first. A list is made for the whole plan or for some of its days, and replaces the lists
  * that share a day with it; a list the plan's menu changed under is made again for its days; a list
- * is deleted. Reads are offline-first; a row ticked waits for the server (changes made offline are
- * not kept yet), so what changes a list is off while offline.
+ * is deleted. What a list could do without is asked of it, weighed by a model on request. Reads are
+ * offline-first; a row ticked waits for the server (changes made offline are not kept yet), so what
+ * changes a list is off while offline.
  */
 @HiltViewModel
 class ShoppingViewModel @Inject constructor(
@@ -51,12 +53,20 @@ class ShoppingViewModel @Inject constructor(
         val offline: Boolean = false,
         /** Ids of items with an update in flight. */
         val updating: Set<String> = emptySet(),
+        /** What a list could do without, as it was asked of the list (its id and when it was made). */
+        val proposals: Pair<String, ListProposals>? = null,
+        val askingProposals: Boolean = false,
+        /** Whether the account has a model to ask; null until that is known. */
+        val aiOn: Boolean? = null,
         val error: Throwable? = null,
     ) {
         val plan: MealPlanSummary? get() = plans.firstOrNull { it.id == selectedPlanId }
 
         /** The list shown: the one chosen, or the newest. */
         val list: ShoppingList? get() = lists.firstOrNull { it.id == selectedListId } ?: lists.firstOrNull()
+
+        /** What the list shown could do without, where it was asked of that list as it is: another list, or the list made anew, begins without. */
+        val shownProposals: ListProposals? get() = proposals?.takeIf { (asked, _) -> list?.let(::keyOf) == asked }?.second
     }
 
     private val _state = MutableStateFlow(UiState())
@@ -68,13 +78,17 @@ class ShoppingViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            _state.value = UiState(loading = true)
+            _state.update { UiState(loading = true, aiOn = it.aiOn) }
             attempt { users.profiles() }
                 .onSuccess { profiles ->
-                    _state.value = UiState(loading = false, profiles = profiles)
+                    _state.update { UiState(loading = false, profiles = profiles, aiOn = it.aiOn) }
                     profiles.firstOrNull()?.let { selectProfile(it.id) }
                 }
-                .onFailure { _state.value = UiState(loading = false, error = it) }
+                .onFailure { e -> _state.update { UiState(loading = false, error = e, aiOn = it.aiOn) } }
+        }
+        viewModelScope.launch {
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            _state.update { it.copy(aiOn = aiOn) }
         }
     }
 
@@ -171,6 +185,19 @@ class ShoppingViewModel @Inject constructor(
         }
     }
 
+    /** Asks what the list shown could do without, put in order by a model where [weigh] and the account has one. */
+    fun findProposals(weigh: Boolean = false) {
+        val current = _state.value
+        val list = current.list ?: return
+        if (current.askingProposals) return
+        viewModelScope.launch {
+            _state.update { it.copy(askingProposals = true, error = null) }
+            attempt { lists.proposals(list.id, weigh = weigh && current.aiOn == true) }
+                .onSuccess { found -> _state.update { it.copy(askingProposals = false, proposals = keyOf(list) to found) } }
+                .onFailure { e -> _state.update { it.copy(askingProposals = false, error = e) } }
+        }
+    }
+
     /** Changes a row of the list shown: its tick, what is at home, what was bought. */
     fun change(itemId: String, change: RowChange) {
         val listId = _state.value.list?.id ?: return
@@ -205,3 +232,6 @@ class ShoppingViewModel @Inject constructor(
 
     private fun List<ShoppingList>.newestFirst(): List<ShoppingList> = sortedByDescending { it.createdAt }
 }
+
+/** What tells a list apart from another, and from itself made anew. */
+private fun keyOf(list: ShoppingList): String = "${list.id}@${list.createdAt}"

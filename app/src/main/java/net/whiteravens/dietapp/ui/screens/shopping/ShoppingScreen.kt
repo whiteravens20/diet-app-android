@@ -83,10 +83,11 @@ import kotlin.math.roundToInt
 /**
  * The shopping lists of a plan: made for the whole plan or for some of its days, grouped by aisle,
  * ticked off while shopping; a list the plan's menu changed under is made again, and a list is
- * deleted from its menu.
+ * deleted from its menu. What a list could do without leads to the plan at the day it concerns,
+ * which [onOpenPlan] opens.
  */
 @Composable
-fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
+fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel: ShoppingViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // The window that makes a list for some of the plan's days, while it is open.
     var choosingDays by rememberSaveable { mutableStateOf(false) }
@@ -268,6 +269,17 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
                             }
                         }
                     }
+                }
+                item(key = "proposals") {
+                    ListProposalsPanel(
+                        found = state.shownProposals,
+                        asking = state.askingProposals,
+                        aiOn = state.aiOn,
+                        enabled = !state.offline && !busy,
+                        listFrom = list.fromDate,
+                        onAsk = viewModel::findProposals,
+                        onOpenPlanAt = { day -> onOpenPlan(list.planId, day) },
+                    )
                 }
                 item(key = "find") {
                     OutlinedTextField(

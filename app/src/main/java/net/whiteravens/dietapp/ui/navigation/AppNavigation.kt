@@ -247,7 +247,9 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             composable<RecipeDetailRoute> {
                 RecipeDetailScreen(onBack = { navController.popBackStack() })
             }
-            composable<ShoppingRoute> { ShoppingScreen() }
+            composable<ShoppingRoute> {
+                ShoppingScreen(onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) })
+            }
             composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
             composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
             composable<ProfilesRoute> {

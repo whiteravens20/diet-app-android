@@ -14,13 +14,17 @@ import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.ListProposal
+import net.whiteravens.dietapp.domain.ListProposals
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingList
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -89,5 +93,26 @@ class ShoppingViewModelTest {
         coVerify { lists.delete("later") }
         assertEquals(listOf(early), model.state.value.lists)
         assertEquals(early, model.state.value.list)
+    }
+
+    @Test
+    fun `what a list could do without is kept with the list it was asked of, and weighed only on an account with a model`() {
+        val found = ListProposals(listOf(ListProposal.Leftover("Feta", "g", 80, 200.0, null)), weighed = false, fallbackReason = null)
+        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", aiMode = "none")
+        coEvery { lists.proposals(any(), any()) } returns found
+        val model = ShoppingViewModel(users, plans, lists)
+
+        model.findProposals(weigh = true)
+
+        coVerify { lists.proposals("early", weigh = false) }
+        assertEquals(found, model.state.value.shownProposals)
+
+        model.selectList(later.id)
+
+        assertNull(model.state.value.shownProposals)
+
+        model.selectList(early.id)
+
+        assertEquals(found, model.state.value.shownProposals)
     }
 }

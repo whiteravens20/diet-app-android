@@ -85,6 +85,23 @@ class ShoppingTest {
         screen.onNode(hasText(other) and isToggleable()).assertExists()
         screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextReplacement("")
 
+        // What the list could do without is what the API finds for it, and each leads to the plan.
+        val proposals = Instance.listProposals(account, Instance.shoppingListIds(account, planId).first())
+        list.performScrollToNode(hasText(text(R.string.shopping_proposals_ask)))
+        screen.onNodeWithText(text(R.string.shopping_proposals_ask)).performClick()
+        val ways = hasText(text(R.string.shopping_proposal_merge_how)) or hasText(text(R.string.shopping_proposal_leftover_how))
+        if (proposals == 0) {
+            screen.waitUntil(30_000) { screen.onAllNodes(hasText(text(R.string.shopping_proposals_none))).fetchSemanticsNodes().isNotEmpty() }
+        } else {
+            screen.waitUntil(30_000) { screen.onAllNodes(ways).fetchSemanticsNodes().size == proposals }
+            screen.keepScreenshot("shopping-what-a-list-could-do-without")
+            list.performScrollToNode(ways)
+            screen.onAllNodes(ways)[0].performClick()
+            screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(text(R.string.plans_options))).fetchSemanticsNodes().isNotEmpty() }
+            screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+            screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(text(R.string.plans_options))).fetchSemanticsNodes().isEmpty() }
+        }
+
         // A list made again from the window that asks for the plan's days stands in the place of the first.
         val first = Instance.shoppingListIds(account, planId)
         list.performScrollToNode(hasText(text(R.string.shopping_generate_title)))
