@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -48,7 +50,9 @@ class ShoppingTest {
         screen.keepScreenshot("shopping-a-list-made")
 
         val row = hasText(name) and isToggleable()
-        screen.onNode(hasScrollToNodeAction()).performScrollToNode(row)
+        // The list itself, not the rows of profiles and plans above it, which scroll sideways.
+        screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+            .performScrollToNode(row)
         screen.onNode(row).performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(row and isOn()).fetchSemanticsNodes().isNotEmpty() }
 
