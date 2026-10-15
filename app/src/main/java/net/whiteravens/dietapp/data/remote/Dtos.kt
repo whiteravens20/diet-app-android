@@ -807,6 +807,10 @@ data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSum
 @Serializable
 data class SetMealEatenRequest(val eaten: Boolean)
 
+/** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
+@Serializable
+data class AddCustomMealRequest(val name: String, val mealType: String, val nutrition: NutritionDto, val servings: Double)
+
 /** A meal's scale put back as it was. */
 @Serializable
 data class RestoreScaleDto(val mealId: String, val scale: Double)

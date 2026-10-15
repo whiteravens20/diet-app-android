@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
@@ -25,7 +26,7 @@ import javax.inject.Inject
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
  * swaps one: a recipe is offered, another can be asked for, and nothing is written until the
- * offer is taken. A meal is marked eaten or not, and a
+ * offer is taken. A meal is marked eaten or not, a meal of one's own is added to a day, and a
  * change that balanced the day again says how, with the way back and the rest of the week to
  * balance as well.
  */
@@ -123,6 +124,9 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     fun setEaten(mealId: String, eaten: Boolean) = change { plans.setEaten(planId, mealId, eaten) }
+
+    /** Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd). */
+    fun addCustomMeal(date: String, meal: CustomMeal) = change { plans.addCustomMeal(planId, date, meal) }
 
     /** Puts the meals the last change scaled back as they were. */
     fun undoRebalance() {

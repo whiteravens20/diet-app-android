@@ -19,7 +19,9 @@ import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
@@ -190,6 +192,21 @@ class MealPlanRepositoryTest {
         assertEquals("PATCH", eaten.method)
         assertEquals("/api/meal-plans/plan-1/meals/meal-1/eaten", eaten.path)
         assertEquals("""{"eaten":true}""", eaten.body.readUtf8())
+    }
+
+    @Test
+    fun `a meal of one's own is sent with what one serving holds and how many servings it is, named without the spaces around it`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).addCustomMeal("plan-1", "2026-10-13", CustomMeal(" Soup ", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.5)) }
+
+        val own = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/days/2026-10-13/custom-meal", own.path)
+        val meal = json.parseToJsonElement(own.body.readUtf8()).jsonObject
+        assertEquals("Soup", meal.getValue("name").jsonPrimitive.content)
+        assertEquals("lunch", meal.getValue("mealType").jsonPrimitive.content)
+        assertEquals(300.0, meal.getValue("nutrition").jsonObject.getValue("calories").jsonPrimitive.double, 0.0)
+        assertEquals(1.5, meal.getValue("servings").jsonPrimitive.double, 0.0)
     }
 
     @Test

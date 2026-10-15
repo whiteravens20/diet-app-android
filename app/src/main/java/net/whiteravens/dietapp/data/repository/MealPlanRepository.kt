@@ -11,6 +11,7 @@ import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.readOrDrop
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.remote.AddCustomMealRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DayOverrideDto
 import net.whiteravens.dietapp.data.remote.DietApiService
@@ -18,6 +19,7 @@ import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
+import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
@@ -25,6 +27,7 @@ import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
@@ -191,6 +194,22 @@ class MealPlanRepository @Inject constructor(
     /** Marks a meal eaten or not; its day is balanced again around it. */
     suspend fun setEaten(planId: String, mealId: String, eaten: Boolean): Rebalanced =
         kept(apiCall(json) { api.setMealEaten(planId, mealId, SetMealEatenRequest(eaten)) })
+
+    /** Adds a meal of the user's own to the day of [date] (yyyy-MM-dd); the day is balanced around it. */
+    suspend fun addCustomMeal(planId: String, date: String, meal: CustomMeal): Rebalanced = kept(
+        apiCall(json) {
+            api.addCustomMeal(
+                planId,
+                date,
+                AddCustomMealRequest(
+                    name = meal.name.trim(),
+                    mealType = meal.slot,
+                    nutrition = NutritionDto(meal.perServing.calories, meal.perServing.protein, meal.perServing.fat, meal.perServing.carbs),
+                    servings = meal.servings,
+                ),
+            )
+        },
+    )
 
     /** Balances the days from today to the end of their week of the plan, each around its own meals. */
     suspend fun rebalanceWeek(planId: String): Rebalanced =

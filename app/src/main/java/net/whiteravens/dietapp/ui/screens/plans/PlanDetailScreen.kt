@@ -46,6 +46,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,12 +64,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Nutrition
@@ -92,6 +96,8 @@ import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
+import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
+import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -109,8 +115,21 @@ fun PlanDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val plan = state.plan
     var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
+    // The day a meal of one's own is being added to, while its form is open.
+    var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
     val readOnly = state.offline
     val busy = state.changing || state.taking
+
+    addingTo?.let { date ->
+        CustomMealDialog(
+            date = date,
+            onAdd = { meal ->
+                addingTo = null
+                viewModel.addCustomMeal(date, meal)
+            },
+            onDismiss = { addingTo = null },
+        )
+    }
 
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == openMealId }?.let { meal ->
         MealDialog(
@@ -197,6 +216,11 @@ fun PlanDetailScreen(
                     onSwap = { viewModel.offerSwap(meal.id) },
                     onOpen = { openMealId = meal.id },
                 )
+            }
+            if (!readOnly) {
+                item(key = "add-${day.id}") {
+                    TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
+                }
             }
         }
         state.rebalance?.let { rebalance ->
@@ -519,6 +543,108 @@ private fun RebalanceCard(
 
 /** How long the card of a rebalance stays, where the phone asks for no longer. */
 private const val REBALANCE_SHOWN_MILLIS = 10_000L
+
+/** The times of day a meal of one's own can be at, in the order the web application offers them. */
+private val CUSTOM_MEAL_SLOTS = listOf("breakfast", "lunch", "dinner", "snack", "second_breakfast")
+
+private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
+    save = { listOf(it.name, it.slot, it.calories, it.protein, it.fat, it.carbs, it.servings) },
+    restore = { CustomMealForm(it[0], it[1], it[2], it[3], it[4], it[5], it[6]) },
+)
+
+/**
+ * A meal of the user's own added to a day: its name, its time of day, what one serving holds and
+ * how many servings it is. What that adds to the day is shown before anything is sent, so that
+ * nobody types the whole meal as one serving of several.
+ */
+@Composable
+private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismiss: () -> Unit) {
+    var form by rememberSaveable(stateSaver = CustomMealFormSaver) { mutableStateOf(CustomMealForm()) }
+    var showProblems by rememberSaveable { mutableStateOf(false) }
+    val problems = if (showProblems) form.problems() else emptySet()
+    @Composable
+    fun between(range: ClosedFloatingPointRange<Double>): String =
+        stringResource(R.string.profile_field_between, formatNumber(range.start, fractionDigits = 2), formatNumber(range.endInclusive, fractionDigits = 2))
+
+    @Composable
+    fun Amount(value: String, label: String, field: CustomMealField, range: ClosedFloatingPointRange<Double>, change: (CustomMealForm, String) -> CustomMealForm, hint: String? = null) {
+        FormField(
+            value = value,
+            onValueChange = { typed -> form = change(form, typed) },
+            label = label,
+            hint = hint,
+            problem = if (field in problems) between(range) else null,
+            keyboardType = KeyboardType.Decimal,
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(stringResource(R.string.plans_custom_modal_title))
+                Text(formatDayDate(date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FormField(
+                    value = form.name,
+                    onValueChange = { typed -> form = form.copy(name = typed) },
+                    label = stringResource(R.string.plans_custom_name),
+                    problem = if (CustomMealField.NAME in problems) stringResource(R.string.plans_custom_name_problem, CustomMealBounds.NAME_LENGTH) else null,
+                    keyboardType = KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.Sentences,
+                )
+                ChoiceField(
+                    label = stringResource(R.string.plans_custom_meal_type),
+                    options = CUSTOM_MEAL_SLOTS,
+                    selected = form.slot,
+                    optionLabel = { mealTypeLabel(it) },
+                    onSelect = { slot -> form = form.copy(slot = slot) },
+                )
+                Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
+                Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, CustomMealBounds.CALORIES, { f, v -> f.copy(calories = v) })
+                Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, CustomMealBounds.PROTEIN, { f, v -> f.copy(protein = v) })
+                Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, CustomMealBounds.FAT, { f, v -> f.copy(fat = v) })
+                Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, CustomMealBounds.CARBS, { f, v -> f.copy(carbs = v) })
+                Amount(
+                    form.servings,
+                    stringResource(R.string.plans_custom_servings),
+                    CustomMealField.SERVINGS,
+                    CustomMealBounds.SERVINGS,
+                    { f, v -> f.copy(servings = v) },
+                    hint = stringResource(R.string.plans_custom_servings_hint),
+                )
+                val adds = form.adds()
+                Text(
+                    if (adds != null) {
+                        stringResource(
+                            R.string.plans_custom_total,
+                            formatNumber(adds.calories),
+                            formatNumber(adds.protein),
+                            formatNumber(adds.fat),
+                            formatNumber(adds.carbs),
+                        )
+                    } else {
+                        stringResource(R.string.plans_custom_total_pending)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val meal = form.meal()
+                    if (meal != null) onAdd(meal) else showProblems = true
+                },
+            ) { Text(stringResource(R.string.plans_custom_submit)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } },
+    )
+}
 
 /** The recipe offered in the place of a meal, and what taking it does to the meal and to its day. */
 @Composable

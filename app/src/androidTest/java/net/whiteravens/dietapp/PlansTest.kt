@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
@@ -165,7 +166,7 @@ class PlansTest {
     }
 
     @Test
-    fun aMealIsMarkedEaten() {
+    fun aMealIsMarkedEatenAndAMealOfOnesOwnAdded() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
         val planId = Instance.newPlan(account, profileId)
@@ -185,6 +186,23 @@ class PlansTest {
         screen.waitUntil(20_000) { Instance.firstMealEaten(account, planId) }
         screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(eaten) and isOn()).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("plans-a-meal-eaten")
+        putAwayRebalance()
+
+        // A meal of one's own: one serving and how many, and what that adds to the day before it is sent.
+        screen.scrollToText(text(R.string.plans_add_custom_meal))
+        screen.onNodeWithText(text(R.string.plans_add_custom_meal)).performClick()
+        screen.waitForText(text(R.string.plans_custom_modal_title))
+        screen.onNodeWithText(text(R.string.plans_custom_name)).performTextInput("Grandma's soup")
+        screen.onNodeWithText(text(R.string.plans_custom_calories)).performScrollTo().performTextInput("300")
+        screen.onNodeWithText(text(R.string.plans_custom_protein)).performScrollTo().performTextInput("12")
+        screen.onNodeWithText(text(R.string.plans_custom_fat)).performScrollTo().performTextInput("8")
+        screen.onNodeWithText(text(R.string.plans_custom_carbs)).performScrollTo().performTextInput("40")
+        screen.onNodeWithText(text(R.string.plans_custom_servings)).performScrollTo().performTextReplacement("2")
+        screen.waitForText(text(R.string.plans_custom_total, "600", "24", "16", "80"))
+        screen.keepScreenshot("plans-a-meal-of-ones-own")
+        screen.onNodeWithText(text(R.string.plans_custom_submit)).performClick()
+        screen.waitUntil(20_000) { Instance.ownMeals(account, planId) == listOf("Grandma's soup") }
+        screen.scrollToText("Grandma's soup")
         putAwayRebalance()
     }
 

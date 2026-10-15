@@ -279,6 +279,9 @@ data class ScaleChange(val mealId: String, val before: Double, val after: Double
 /** A plan as a change left it, and what the change rebalanced, if it did. */
 data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?)
 
+/** A meal of the user's own: its name, its time of day, what one serving holds, and how many servings it is. */
+data class CustomMeal(val name: String, val slot: String, val perServing: Nutrition, val servings: Double)
+
 /** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
 data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
 
