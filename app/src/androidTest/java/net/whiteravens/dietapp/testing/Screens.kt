@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.testing
 
+import android.accessibilityservice.AccessibilityService
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Parcel
@@ -121,4 +122,22 @@ fun ComposeTestRule.signIn(account: Account) {
     // Above the keyboard the field leaves open.
     onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
     waitForText(text(R.string.nav_dashboard))
+}
+
+/**
+ * Waits for the platform's print service to show itself over the app, and puts it away with the
+ * back key: once, and again only where it has not gone after a while, so that a key pressed while
+ * the app comes back does not leave the screen the app is on.
+ */
+fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.putAwayPrintService() {
+    waitUntil(20_000) { activityRule.scenario.state != Lifecycle.State.RESUMED }
+    var pressed = 0L
+    waitUntil(30_000) {
+        val back = activityRule.scenario.state == Lifecycle.State.RESUMED
+        if (!back && System.currentTimeMillis() - pressed > 5_000) {
+            pressed = System.currentTimeMillis()
+            InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+        }
+        back
+    }
 }

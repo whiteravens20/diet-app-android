@@ -9,9 +9,11 @@ import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.ui.common.CsvDialect
 import net.whiteravens.dietapp.ui.common.csvOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** A shopping list taken out of the app: as a text to send, and as a table for a spreadsheet. */
+/** A shopping list taken out of the app: as a text to send, as a table for a spreadsheet, and as a sheet for the printer. */
 class ListTakeOutTest {
     private fun item(id: String, name: String, total: Double, atHome: Double = 0.0, have: Double? = null, packs: RowPacks? = null, checked: Boolean = false) =
         ShoppingItem(id, name, total, total - atHome, "g", "g", atHome, have, null, total * 2, packs, checked)
@@ -66,5 +68,23 @@ class ListTakeOutTest {
             csvOf(listTable(list, words), CsvDialect.of("pl")),
         )
         assertEquals("shopping-list-2026-10-13_2026-10-19", exportName(list))
+    }
+
+    @Test
+    fun `the printed sheet writes every text as text, and a row done is filled in`() {
+        val sheet = ListSheet(
+            title = "Shopping list, 13–19 Oct 2026",
+            plan = "7-day plan · Balanced",
+            bought = "bought",
+            aisles = listOf(SheetAisle("Dairy", listOf(SheetRow("<b>Feta</b> & co", "have", "350 g", done = false), SheetRow("Butter", null, "0 g", done = true)))),
+        )
+
+        val page = sheet.html("pl-PL")
+
+        assertTrue(page.startsWith("<!doctype html><html lang=\"pl-PL\">"))
+        assertFalse("<b>" in page)
+        assertTrue("<span class=\"name\">&lt;b&gt;Feta&lt;/b&gt; &amp; co <small>(have)</small></span>" in page)
+        assertEquals(1, Regex("class=\"box done\"").findAll(page).count())
+        assertEquals(2, Regex("class=\"line\"").findAll(page).count())
     }
 }

@@ -429,8 +429,10 @@
     <string name="shopping_list_options">List options</string>
     <string name="shopping_share_text">Share as text</string>
     <string name="shopping_export_csv">Save as CSV</string>
+    <string name="shopping_export_print">Print or save as PDF</string>
     <string name="shopping_copy_title">Shopping list, %1$s</string>
     <string name="shopping_copy_nothing">Everything on this list is ticked off.</string>
+    <string name="shopping_have_short">have</string>
     <string name="shopping_csv_aisle">Aisle</string>
     <string name="shopping_csv_entry">Entry</string>
     <string name="shopping_csv_needed">Needed</string>

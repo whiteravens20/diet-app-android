@@ -462,8 +462,10 @@
     <string name="shopping_list_options">Opcje listy</string>
     <string name="shopping_share_text">Udostępnij jako tekst</string>
     <string name="shopping_export_csv">Zapisz jako CSV</string>
+    <string name="shopping_export_print">Drukuj lub zapisz jako PDF</string>
     <string name="shopping_copy_title">Lista zakupów, %1$s</string>
     <string name="shopping_copy_nothing">Wszystko z tej listy jest odhaczone.</string>
+    <string name="shopping_have_short">mam</string>
     <string name="shopping_csv_aisle">Dział</string>
     <string name="shopping_csv_entry">Pozycja</string>
     <string name="shopping_csv_needed">Potrzeba</string>

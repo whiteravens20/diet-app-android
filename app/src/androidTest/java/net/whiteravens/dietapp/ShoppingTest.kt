@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import android.print.PrintManager
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsOn
@@ -24,6 +25,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.putAwayPrintService
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -32,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
 
 @RunWith(AndroidJUnit4::class)
 class ShoppingTest {
@@ -106,6 +109,20 @@ class ShoppingTest {
             screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
             screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(text(R.string.plans_options))).fetchSemanticsNodes().isEmpty() }
         }
+
+        // The list goes from its menu to the platform's print service, which prints it or keeps it as a
+        // PDF named by its days; it is put away there, back to the list. Sending it as a text and saving
+        // it as a table are in the menu too.
+        val (start, days) = Instance.planStart(account, planId)
+        val sheet = "shopping-list-${start}_${LocalDate.parse(start).plusDays(days - 1L)}"
+        val printing = screen.activity.getSystemService(PrintManager::class.java)
+        list.performScrollToNode(hasContentDescription(text(R.string.shopping_list_options)))
+        screen.onNodeWithContentDescription(text(R.string.shopping_list_options)).performClick()
+        screen.onNodeWithText(text(R.string.shopping_share_text)).assertExists()
+        screen.onNodeWithText(text(R.string.shopping_export_csv)).assertExists()
+        screen.onNodeWithText(text(R.string.shopping_export_print)).performClick()
+        screen.waitUntil(30_000) { printing.printJobs.any { it.info.label == sheet } }
+        screen.putAwayPrintService()
 
         // A list made again from the window that asks for the plan's days stands in the place of the first.
         val first = Instance.shoppingListIds(account, planId)

@@ -2,7 +2,6 @@
 
 package net.whiteravens.dietapp
 
-import android.accessibilityservice.AccessibilityService
 import android.print.PrintManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -23,14 +22,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.putAwayPrintService
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
@@ -262,17 +260,7 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.plans_export_csv)).assertExists()
         screen.onNodeWithText(text(R.string.plans_export_print)).performClick()
         screen.waitUntil(30_000) { printing.printJobs.any { it.info.label == name } }
-        screen.waitUntil(20_000) { screen.activityRule.scenario.state != Lifecycle.State.RESUMED }
-        var pressed = 0L
-        screen.waitUntil(30_000) {
-            val back = screen.activityRule.scenario.state == Lifecycle.State.RESUMED
-            // Once, and again only where the print service has not gone after a while.
-            if (!back && System.currentTimeMillis() - pressed > 5_000) {
-                pressed = System.currentTimeMillis()
-                InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
-            }
-            back
-        }
+        screen.putAwayPrintService()
 
         // The plan is deleted from its menu once that is confirmed, and the list is back.
         screen.onNode(options).performClick()

@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.shopping
 
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.ui.common.escaped
 
 /** The words a shopping list is written out with, in the reader's language, with what each row comes to already in them. */
 data class ListWords(
@@ -61,3 +62,58 @@ fun listTable(list: ShoppingList, words: ListWords): List<List<Any?>> =
 
 /** The name a list taken out of the app is kept under: its first and its last day. */
 fun exportName(list: ShoppingList): String = "shopping-list-${list.fromDate}_${list.toDate}"
+
+/**
+ * A shopping list as a sheet of paper to take to the shop, every text of it in the reader's
+ * language already: its aisles in two columns, each row with a box to tick, what is to be bought
+ * of it and a line to write in what was.
+ */
+data class ListSheet(val title: String, val plan: String, val bought: String, val aisles: List<SheetAisle>)
+
+/** An aisle of the sheet and its rows. */
+data class SheetAisle(val name: String, val rows: List<SheetRow>)
+
+/**
+ * A row of the sheet: its name and, where something of it is at home, a word that says so ([have]);
+ * what is to be bought of it; and whether it is done, ticked or met by what is at home.
+ */
+data class SheetRow(val name: String, val have: String?, val amount: String, val done: Boolean)
+
+/** The sheet as a page for the platform's print service. Every text goes in as text, never as markup. */
+fun ListSheet.html(language: String): String = buildString {
+    append("<!doctype html><html lang=\"").append(escaped(language)).append("\"><head><meta charset=\"utf-8\">")
+    append("<title>").append(escaped(title)).append("</title><style>").append(SHEET_STYLE).append("</style></head><body>")
+    append("<header><h1>").append(escaped(title)).append("</h1><p>").append(escaped(plan)).append("</p></header>")
+    append("<main>")
+    for (aisle in aisles) {
+        append("<section><h2>").append(escaped(aisle.name)).append("</h2>")
+        for (row in aisle.rows) {
+            append("<div class=\"row\"><div class=\"top\"><span class=\"box").append(if (row.done) " done" else "").append("\"></span>")
+            append("<span class=\"name\">").append(escaped(row.name))
+            row.have?.let { append(" <small>(").append(escaped(it)).append(")</small>") }
+            append("</span><span class=\"amount\">").append(escaped(row.amount)).append("</span></div>")
+            append("<div class=\"write\">").append(escaped(bought)).append(":<span class=\"line\"></span></div></div>")
+        }
+        append("</section>")
+    }
+    append("</main></body></html>")
+}
+
+private const val SHEET_STYLE =
+    "@page{margin:12mm}" +
+        "body{margin:0;font-family:sans-serif;font-size:9.5pt;color:#000;background:#fff}" +
+        "header{display:flex;justify-content:space-between;align-items:flex-end;gap:12pt;padding-bottom:4pt;margin-bottom:8pt;border-bottom:1px solid #000}" +
+        "h1{margin:0;font-size:14pt;font-weight:600}" +
+        "header p{margin:0;font-size:8.5pt}" +
+        "main{columns:2;column-gap:16pt}" +
+        "section{break-inside:avoid;margin-bottom:10pt}" +
+        "h2{margin:0 0 3pt;font-size:8.5pt;font-weight:600;letter-spacing:.06em;text-transform:uppercase}" +
+        ".row{break-inside:avoid;padding:3pt 0;border-bottom:1px solid #ddd}" +
+        ".top{display:flex;align-items:baseline;gap:6pt}" +
+        ".box{flex:none;width:8pt;height:8pt;border:1px solid #000;align-self:center}" +
+        ".box.done{background:#000}" +
+        ".name{flex:1;overflow-wrap:anywhere}" +
+        ".name small{font-size:7.5pt;color:#444}" +
+        ".amount{flex:none;text-align:right;font-variant-numeric:tabular-nums}" +
+        ".write{display:flex;align-items:baseline;gap:4pt;margin:3pt 0 0 14pt;font-size:7.5pt;color:#444}" +
+        ".line{flex:1;border-bottom:1px dashed #888}"
