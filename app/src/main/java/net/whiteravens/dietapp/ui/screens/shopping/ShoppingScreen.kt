@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -95,6 +96,9 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     // What somebody in a shop is looking for on the list: the entries whose name holds the words.
     var find by rememberSaveable { mutableStateOf("") }
+    // The list taken out of the app as a text to send.
+    val context = LocalContext.current
+    val chooser = stringResource(R.string.shopping_share_text)
 
     if (state.loading) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -250,7 +254,14 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
                         }
                     }
                 }
-                item(key = "list") { ListHeader(list, onDelete = { deleting = list.id }.takeUnless { state.offline || busy }) }
+                item(key = "list") {
+                    val words = listWords(list)
+                    ListHeader(
+                        list,
+                        onShare = { shareText(context, words.title, listText(list, words), chooser) },
+                        onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
+                    )
+                }
                 if (list.stale) {
                     item(key = "stale") {
                         AppCard {
@@ -340,7 +351,7 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
 
 /** A list's days and how far it is ticked off, with what can be done with the list behind one button. */
 @Composable
-private fun ListHeader(list: ShoppingList, onDelete: (() -> Unit)?) {
+private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(formatDates(list.fromDate, list.toDate), style = MaterialTheme.typography.titleMedium)
@@ -350,27 +361,25 @@ private fun ListHeader(list: ShoppingList, onDelete: (() -> Unit)?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        ListActions(onDelete)
+        ListActions(onShare, onDelete)
     }
 }
 
-/** What can be done with a list as a whole. */
+/** What can be done with a list as a whole: sent as a text, or deleted. */
 @Composable
-private fun ListActions(onDelete: (() -> Unit)?) {
+private fun ListActions(onShare: () -> Unit, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.shopping_list_options))
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.common_delete)) },
-                onClick = {
-                    open = false
-                    onDelete?.invoke()
-                },
-                enabled = onDelete != null,
-            )
+            fun pick(action: () -> Unit) {
+                open = false
+                action()
+            }
+            DropdownMenuItem(text = { Text(stringResource(R.string.shopping_share_text)) }, onClick = { pick(onShare) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }
 }
@@ -490,7 +499,7 @@ private fun ShoppingItemRow(
         // The packs are counted by the server from what it knows is at home: while that is typed anew, they are not said.
         val packs = item.packs
         if (packs != null && item.packsStand && !editing) {
-            val counted = "${packs.count} × ${amountLabel(packs.size, packs.sizeUnit)}"
+            val counted = packsText(packs)
             val said = stringResource(R.string.shopping_buy_packs, counted, item.name)
             AssistChip(
                 onClick = { packsBought(item)?.let(onChange) },

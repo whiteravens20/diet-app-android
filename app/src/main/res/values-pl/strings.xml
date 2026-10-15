@@ -460,6 +460,9 @@
     <string name="shopping_from_date">Od</string>
     <string name="shopping_to_date">Do</string>
     <string name="shopping_list_options">Opcje listy</string>
+    <string name="shopping_share_text">Udostępnij jako tekst</string>
+    <string name="shopping_copy_title">Lista zakupów, %1$s</string>
+    <string name="shopping_copy_nothing">Wszystko z tej listy jest odhaczone.</string>
     <string name="shopping_summary">Odhaczone %1$s/%2$s · łącznie %3$s kcal</string>
     <string name="shopping_delete_confirm">Usunąć tę listę zakupów?</string>
     <string name="shopping_aisle_energy">około %1$s kcal</string>

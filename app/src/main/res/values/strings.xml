@@ -427,6 +427,9 @@
     <string name="shopping_from_date">From date</string>
     <string name="shopping_to_date">To date</string>
     <string name="shopping_list_options">List options</string>
+    <string name="shopping_share_text">Share as text</string>
+    <string name="shopping_copy_title">Shopping list, %1$s</string>
+    <string name="shopping_copy_nothing">Everything on this list is ticked off.</string>
     <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
     <string name="shopping_delete_confirm">Delete this shopping list?</string>
     <string name="shopping_aisle_energy">about %1$s kcal</string>
