@@ -7,8 +7,11 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
+import java.time.LocalDate
 import java.util.UUID
+import kotlin.math.roundToInt
 
 /** What an account signs in with, and the session its sign-up opened, for asking the API about it. */
 data class Account(val email: String, val password: String, val displayName: String, val accessToken: String)
@@ -97,16 +100,58 @@ object Instance {
             (0 until lines.length()).map { lines.getJSONObject(it).getString("name") }
     }
 
-    private fun call(method: String, path: String, body: JSONObject? = null, token: String? = null, expect: Int = 200): JSONObject {
+    /** A plan of [days] days for [profileId] from today, made as the app makes one. */
+    fun newPlan(account: Account, profileId: String, days: Int = 2): String =
+        call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", profileId).put("startDate", LocalDate.now().toString()).put("durationDays", days),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+
+    /** The daily calorie target the API computes for [profileId], in whole kilocalories. */
+    fun dailyTarget(account: Account, profileId: String): Int =
+        call("GET", "profiles/$profileId/calories", token = account.accessToken).getDouble("dailyTarget").roundToInt()
+
+    /** The first recipe of the catalogue in [language]: its title, and the name of its first ingredient. */
+    fun aRecipe(account: Account, language: String): Pair<String, String> {
+        val first = call("GET", "recipes?page=1", token = account.accessToken, language = language)
+            .getJSONArray("items").getJSONObject(0)
+        val recipe = call("GET", "recipes/${first.getString("id")}", token = account.accessToken, language = language)
+        return recipe.getString("title") to recipe.getJSONArray("ingredients").getJSONObject(0).getString("name")
+    }
+
+    /** The rows of the shopping list of [planId] in [language], by name, and whether each is ticked. */
+    fun shoppingRows(account: Account, planId: String, language: String): Map<String, Boolean> {
+        val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))
+        val groups = lists.getJSONObject(0).getJSONArray("groups")
+        return (0 until groups.length()).flatMap { g ->
+            val items = groups.getJSONObject(g).getJSONArray("items")
+            (0 until items.length()).map { items.getJSONObject(it).let { item -> item.getString("name") to item.getBoolean("checked") } }
+        }.toMap()
+    }
+
+    private fun call(
+        method: String,
+        path: String,
+        body: JSONObject? = null,
+        token: String? = null,
+        expect: Int = 200,
+        language: String? = null,
+    ): JSONObject = JSONObject(send(method, path, body, token, expect, language))
+
+    private fun send(method: String, path: String, body: JSONObject?, token: String?, expect: Int, language: String?): String {
         val request = Request.Builder()
             .url(BuildConfig.API_BASE_URL + path)
             .method(method, body?.toString()?.toRequestBody(json))
             .apply { if (token != null) header("Authorization", "Bearer $token") }
+            .apply { if (language != null) header("Accept-Language", language) }
             .build()
         client.newCall(request).execute().use { response ->
             val text = response.body.string()
             check(response.code == expect) { "$method $path answered ${response.code}: $text" }
-            return JSONObject(text)
+            return text
         }
     }
 }
