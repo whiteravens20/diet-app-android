@@ -27,8 +27,8 @@ import java.util.Locale
 
 /**
  * Profiles as an account holder makes and keeps them: the first one in three steps from the empty
- * dashboard, with the target the typed figures come to; and one edited and deleted. What the
- * screens say is checked against what the API keeps.
+ * dashboard, with the target the typed figures come to; and one edited, its preferences changed in
+ * place and deleted. What the screens say is checked against what the API keeps.
  */
 @RunWith(AndroidJUnit4::class)
 class ProfilesTest {
@@ -83,7 +83,7 @@ class ProfilesTest {
     }
 
     @Test
-    fun aProfileIsEditedAndDeleted() {
+    fun aProfileIsEditedItsPreferencesChangedInPlaceAndItIsDeleted() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account, name = "Ala")
         screen.signIn(account)
@@ -103,6 +103,16 @@ class ProfilesTest {
         assertEquals(31, edited.getInt("age"))
         // A weight shown in another unit and left as it was is kept to the hundredth it was.
         assertEquals(80.0, edited.getDouble("weightKg"), 0.0)
+
+        press(text(R.string.allergen_soy))
+        screen.waitUntil(20_000) {
+            Instance.profile(account, profileId).getJSONObject("preferences").getJSONArray("allergens").let { it.length() == 1 && it.getString(0) == "soy" }
+        }
+        press(text(R.string.cuisine_italian))
+        screen.waitUntil(20_000) {
+            Instance.profile(account, profileId).getJSONObject("preferences").getJSONArray("preferredCuisines").let { it.length() == 1 && it.getString(0) == "italian" }
+        }
+        screen.keepScreenshot("profiles-preferences")
 
         press(text(R.string.common_delete))
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()

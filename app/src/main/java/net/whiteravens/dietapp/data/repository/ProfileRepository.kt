@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
+import net.whiteravens.dietapp.domain.PreferencesChange
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfileFigures
@@ -109,9 +110,20 @@ class ProfileRepository @Inject constructor(
 
     suspend fun delete(id: String) = apiCall(json) { api.deleteProfile(id) }
 
-    /** Changes the preferences [patch] sets, and no other. */
-    suspend fun updatePreferences(id: String, patch: ProfilePreferencesPatchDto): ProfileDetails =
-        apiCall(json) { api.updatePreferences(id, patch) }.toDetails()
+    /** Changes the preferences [change] sets, and no other; the answer is the profile as it is now. */
+    suspend fun updatePreferences(id: String, change: PreferencesChange): ProfileDetails =
+        apiCall(json) {
+            api.updatePreferences(
+                id,
+                ProfilePreferencesPatchDto(
+                    favoriteIngredientIds = change.favoriteIngredientIds,
+                    excludedIngredientIds = change.excludedIngredientIds,
+                    allergens = change.allergens,
+                    dislikedIngredientIds = change.dislikedIngredientIds,
+                    preferredCuisines = change.preferredCuisines,
+                ),
+            )
+        }.toDetails()
 
     /** What the figures of [question] come to, and each pace of loss for the same body. Nothing is kept. */
     suspend fun preview(question: CalorieQuestion): CaloriePreview =
@@ -134,7 +146,12 @@ class ProfileRepository @Inject constructor(
 
     /** The catalogue's ingredients whose name holds [search], in the app's language. */
     suspend fun ingredients(search: String): List<IngredientChoice> =
-        apiCall(json) { api.ingredients(search) }.map { IngredientChoice(it.id, it.name, it.category) }
+        apiCall(json) { api.ingredients(search = search) }.map { IngredientChoice(it.id, it.name, it.category) }
+
+    /** The ingredients of [ids], to show by their names; none asked for, none asked. */
+    suspend fun ingredientsOf(ids: List<String>): List<IngredientChoice> =
+        if (ids.isEmpty()) emptyList()
+        else apiCall(json) { api.ingredients(ids = ids.joinToString(",")) }.map { IngredientChoice(it.id, it.name, it.category) }
 }
 
 private fun MacroSplit.toDto() = MacroSplitDto(protein = protein, fat = fat, carbs = carbs)

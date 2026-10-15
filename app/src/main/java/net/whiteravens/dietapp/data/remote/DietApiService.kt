@@ -63,9 +63,12 @@ interface DietApiService {
 
     // ── Ingredients ─────────────────────────────────────────────────────────
 
-    /** The catalogue's ingredients whose name holds [search], in the language of the request. */
+    /**
+     * The catalogue's ingredients whose name holds [search], or those [ids] names (comma-separated),
+     * in the language of the request.
+     */
     @GET("ingredients")
-    suspend fun ingredients(@Query("search") search: String): List<IngredientDto>
+    suspend fun ingredients(@Query("search") search: String? = null, @Query("ids") ids: String? = null): List<IngredientDto>
 
     // ── Meal plans ──────────────────────────────────────────────────────────
 

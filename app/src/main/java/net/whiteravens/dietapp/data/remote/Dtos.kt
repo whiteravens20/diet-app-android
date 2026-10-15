@@ -352,6 +352,7 @@ data class ProfilePreferencesUpdateDto(
 /** Some of a profile's preferences (`PATCH /profiles/:id/preferences`): the ones set, and no other. */
 @Serializable
 data class ProfilePreferencesPatchDto(
+    val favoriteIngredientIds: List<String>? = null,
     val excludedIngredientIds: List<String>? = null,
     val allergens: List<String>? = null,
     val dislikedIngredientIds: List<String>? = null,

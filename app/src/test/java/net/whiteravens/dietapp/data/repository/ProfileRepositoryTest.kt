@@ -13,7 +13,9 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.CalorieQuestion
+import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.PlanLimits
+import net.whiteravens.dietapp.domain.PreferencesChange
 import net.whiteravens.dietapp.domain.ProfileFigures
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -100,6 +102,32 @@ class ProfileRepositoryTest {
         assertEquals("/api/profiles", server.takeRequest().path)
         assertTrue(list.isNotEmpty())
         assertEquals(3000, list.first().preferences.maxWeeklyAmountPerIngredient)
+    }
+
+    @Test
+    fun `a change of preferences sends what it sets and nothing else`() {
+        server.enqueue(answer(fixture("profile")))
+
+        runBlocking { repository().updatePreferences("p", PreferencesChange(favoriteIngredientIds = listOf("a", "b"))) }
+
+        val sent = server.takeRequest()
+        assertEquals("PATCH", sent.method)
+        assertEquals("/api/profiles/p/preferences", sent.path)
+        val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
+        assertEquals(setOf("favoriteIngredientIds"), body.keys)
+    }
+
+    @Test
+    fun `ingredients are named by their ids in one call, and none are asked for when there are none`() {
+        server.enqueue(answer("""[{"id":"a","name":"Apple","category":"fruits"},{"id":"b","name":"Bean","category":"legumes"}]"""))
+
+        val none = runBlocking { repository().ingredientsOf(emptyList()) }
+        val named = runBlocking { repository().ingredientsOf(listOf("a", "b")) }
+
+        assertEquals(emptyList<IngredientChoice>(), none)
+        assertEquals(listOf("Apple", "Bean"), named.map { it.name })
+        assertEquals("/api/ingredients?ids=a%2Cb", server.takeRequest().path)
+        assertEquals(1, server.requestCount)
     }
 
     @Test

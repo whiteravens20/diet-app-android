@@ -104,6 +104,19 @@ fun allergenLabel(code: String): String = when (code) {
 }
 
 @Composable
+fun cuisineLabel(code: String): String = when (code) {
+    "polish" -> stringResource(R.string.cuisine_polish)
+    "italian" -> stringResource(R.string.cuisine_italian)
+    "asian" -> stringResource(R.string.cuisine_asian)
+    "mediterranean" -> stringResource(R.string.cuisine_mediterranean)
+    "middle_eastern" -> stringResource(R.string.cuisine_middle_eastern)
+    "mexican" -> stringResource(R.string.cuisine_mexican)
+    "american" -> stringResource(R.string.cuisine_american)
+    "indian" -> stringResource(R.string.cuisine_indian)
+    else -> humanise(code)
+}
+
+@Composable
 fun reminderCadenceLabel(code: String): String = when (code) {
     "off" -> stringResource(R.string.profile_reminder_off)
     "daily" -> stringResource(R.string.profile_reminder_daily)

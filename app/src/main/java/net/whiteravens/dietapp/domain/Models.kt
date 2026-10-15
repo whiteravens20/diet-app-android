@@ -78,6 +78,15 @@ data class ProfilePreferences(
     )
 }
 
+/** A change of some of a profile's preferences: what is set replaces what was there, and the rest stays. */
+data class PreferencesChange(
+    val allergens: List<String>? = null,
+    val favoriteIngredientIds: List<String>? = null,
+    val excludedIngredientIds: List<String>? = null,
+    val dislikedIngredientIds: List<String>? = null,
+    val preferredCuisines: List<String>? = null,
+)
+
 /**
  * How often a plan may repeat itself: the same recipe on days in a row and in any seven days, the
  * most of one ingredient in any seven days, and after how many plans that leaned on the pantry the

@@ -367,8 +367,18 @@
     <string name="profile_wizard_made">Profil „%1$s” jest gotowy</string>
     <string name="profile_wizard_made_next">Teraz pora na pierwszy plan posiłków. Ulubione produkty, kuchnie i produkty do unikania są niżej na tej stronie i mogą poczekać.</string>
     <string name="profile_wizard_made_cta">Ułóż mój pierwszy plan</string>
+    <string name="profile_preferences_title">Preferencje składników</string>
+    <string name="profile_preferences_subhead">Listy przypisane do profilu, które wpływają na układanie planów. Pozycje z listy „unikaj” są pomijane; ulubione i lubiane kuchnie są delikatnie preferowane, a to, czego wolisz nie jeść, trafia do planu tylko wtedy, gdy nic innego nie pasuje. Alergeny są zawsze respektowane — przy generowaniu, zamianach posiłków i zamiennikach składników.</string>
     <string name="profile_allergens">Alergeny</string>
     <string name="profile_allergens_hint">Przepisy zawierające którykolwiek z nich nie będą planowane, proponowane przy zamianach ani sugerowane dla tego profilu.</string>
+    <string name="profile_favourites">Ulubione składniki</string>
+    <string name="profile_favourites_hint">Planer preferuje przepisy z tymi składnikami.</string>
+    <string name="profile_cuisines">Kuchnie, które lubię</string>
+    <string name="profile_cuisines_hint">Planer chętniej sięga po przepisy z tych kuchni. Nic nie jest wykluczane, a wiele przepisów nie należy do żadnej konkretnej kuchni.</string>
+    <string name="profile_disliked">Produkty, których wolę nie jeść</string>
+    <string name="profile_disliked_hint">Planer i zamiany sięgają po przepis z którymś z nich tylko wtedy, gdy nic innego nie pasuje do posiłku. Żeby wykluczyć produkt całkowicie, dodaj go do „Unikanych składników”.</string>
+    <string name="profile_avoided">Unikane składniki</string>
+    <string name="profile_avoided_hint">Planer pomija przepisy zawierające te składniki.</string>
     <string name="profile_risk_minor">Poniżej 18 lat wartości w tej aplikacji są przybliżeniem, a odchudzanie to sprawa do omówienia z lekarzem.</string>
     <string name="profile_risk_underweight">Przy takim wzroście i masie wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może zaszkodzić.</string>
     <string name="profile_risk_held">Dopóki pole poniżej nie jest zaznaczone, cel jest zapisany, ale plany trzymają się zapotrzebowania.</string>
@@ -389,6 +399,10 @@
     <string name="calorie_preview_over">%1$s kcal dziennie powyżej Twojego zapotrzebowania.</string>
     <string name="calorie_preview_macros">Białko %1$s g · tłuszcz %2$s g · węglowodany %3$s g dziennie.</string>
     <string name="calorie_preview_said">Cel dzienny: %1$s kcal.</string>
+    <string name="pickers_ingredient_search">Szukaj składników…</string>
+    <string name="pickers_none_yet">Jeszcze nic.</string>
+    <string name="pickers_no_matches">Brak wyników.</string>
+    <string name="pickers_remove">Usuń %1$s</string>
     <string name="catalogue_none">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę.</string>
     <string name="catalogue_none_fewer">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę albo najwyżej %3$d posiłki dziennie.</string>
     <plurals name="catalogue_thin">
@@ -416,4 +430,12 @@
     <string name="allergen_fish">Ryby</string>
     <string name="allergen_shellfish">Skorupiaki</string>
     <string name="allergen_sesame">Sezam</string>
+    <string name="cuisine_polish">Polska</string>
+    <string name="cuisine_italian">Włoska</string>
+    <string name="cuisine_asian">Azjatycka</string>
+    <string name="cuisine_mediterranean">Śródziemnomorska</string>
+    <string name="cuisine_middle_eastern">Bliskowschodnia</string>
+    <string name="cuisine_mexican">Meksykańska</string>
+    <string name="cuisine_american">Amerykańska</string>
+    <string name="cuisine_indian">Indyjska</string>
 </resources>

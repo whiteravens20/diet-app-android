@@ -1,22 +1,34 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package net.whiteravens.dietapp.ui.screens.profiles
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,6 +44,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -40,6 +53,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ProfileDetails
+import net.whiteravens.dietapp.ui.common.cuisineLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatNumber
@@ -48,10 +62,12 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel.IngredientList
 
 /**
  * The account's profiles: each with what it is, to edit or delete; a new one up to what the
- * instance allows; and the first one set up in three steps when there is none.
+ * instance allows; the first one set up in three steps when there is none; and every profile's
+ * preferences, changed in place.
  */
 @Composable
 fun ProfilesScreen(
@@ -85,7 +101,7 @@ fun ProfilesScreen(
             subtitle = pluralStringResource(R.plurals.profiles_subhead, maxProfiles, maxProfiles),
             onBack = onBack,
         )
-        // A change refused outside a form (a profile that could not be deleted) is said here.
+        // A change refused outside a form (a preference, a profile that could not be deleted) is said here.
         state.error?.let { ErrorBanner(errorMessage(it)) }
 
         when {
@@ -122,6 +138,20 @@ fun ProfilesScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+
+                if (list.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.profile_preferences_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(top = 8.dp).semantics { heading() },
+                    )
+                    Text(
+                        stringResource(R.string.profile_preferences_subhead),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    list.forEach { profile -> PreferencesCard(profile, state, viewModel) }
                 }
             }
         }
@@ -287,6 +317,135 @@ private fun MadeCard(made: Profile, onFirstPlan: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(onClick = onFirstPlan, shape = MaterialTheme.shapes.medium) { Text(stringResource(R.string.profile_wizard_made_cta)) }
+        }
+    }
+}
+
+/**
+ * A profile's preferences, each changed in place: its allergens, the ingredients it favours, the
+ * cuisines it likes, what it would rather not eat and what it avoids. A change is shown from the
+ * moment it is chosen, and the choices wait while one is on its way.
+ */
+@Composable
+private fun PreferencesCard(profile: ProfileDetails, state: ProfilesViewModel.UiState, viewModel: ProfilesViewModel) {
+    val shown = state.preferencesOf(profile)
+    val enabled = state.sending == null
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(profile.figures.name, style = MaterialTheme.typography.titleMedium)
+            AllergenChoice(selected = shown.allergens, onChange = { viewModel.changeAllergens(profile, it) }, enabled = enabled)
+            IngredientPicker(profile, IngredientList.FAVOURITE, R.string.profile_favourites, R.string.profile_favourites_hint, shown, state, enabled, viewModel)
+            CuisineChoice(selected = shown.cuisines, onChange = { viewModel.changeCuisines(profile, it) }, enabled = enabled)
+            IngredientPicker(profile, IngredientList.DISLIKED, R.string.profile_disliked, R.string.profile_disliked_hint, shown, state, enabled, viewModel)
+            IngredientPicker(profile, IngredientList.AVOIDED, R.string.profile_avoided, R.string.profile_avoided_hint, shown, state, enabled, viewModel)
+        }
+    }
+}
+
+/** The cuisines a profile likes: a recipe of one of them scores a little higher. */
+@Composable
+private fun CuisineChoice(selected: List<String>, onChange: (List<String>) -> Unit, enabled: Boolean) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.profile_cuisines), style = MaterialTheme.typography.titleSmall)
+        Text(
+            stringResource(R.string.profile_cuisines_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ProfileBounds.CUISINES.forEach { cuisine ->
+                val on = cuisine in selected
+                FilterChip(
+                    selected = on,
+                    onClick = { onChange(ProfileBounds.CUISINES.filter { if (it == cuisine) !on else it in selected }) },
+                    label = { Text(cuisineLabel(cuisine)) },
+                    enabled = enabled,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A list of ingredients a profile keeps: the ones saved, each to remove, and a search of the
+ * catalogue that suggests others once two letters are typed.
+ */
+@Composable
+private fun IngredientPicker(
+    profile: ProfileDetails,
+    list: IngredientList,
+    label: Int,
+    hint: Int,
+    shown: ProfilesViewModel.Shown,
+    state: ProfilesViewModel.UiState,
+    enabled: Boolean,
+    viewModel: ProfilesViewModel,
+) {
+    val ids = shown.ids(list)
+    val search = state.searches[profile.id to list] ?: ProfilesViewModel.Search()
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(label), style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (ids.isEmpty()) {
+            Text(
+                stringResource(R.string.pickers_none_yet),
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ids.forEach { id ->
+                    val name = state.names[id] ?: "…"
+                    val remove = stringResource(R.string.pickers_remove, name)
+                    InputChip(
+                        selected = false,
+                        onClick = { viewModel.remove(profile, list, id) },
+                        label = { Text(name) },
+                        trailingIcon = { Icon(Icons.Default.Close, contentDescription = remove, modifier = Modifier.size(16.dp)) },
+                        enabled = enabled,
+                    )
+                }
+            }
+        }
+        OutlinedTextField(
+            value = search.text,
+            onValueChange = { viewModel.search(profile.id, list, it) },
+            placeholder = { Text(stringResource(R.string.pickers_ingredient_search)) },
+            label = { Text(stringResource(label)) },
+            singleLine = true,
+            enabled = enabled,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (search.text.trim().length >= ProfilesViewModel.SEARCH_FROM) {
+            val available = search.found.filter { it.id !in ids }.take(20)
+            if (available.isNotEmpty()) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column {
+                        available.forEach { ingredient ->
+                            Text(
+                                ingredient.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = enabled) { viewModel.add(profile, list, ingredient) }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                            )
+                        }
+                    }
+                }
+            } else if (search.searched) {
+                Text(
+                    stringResource(R.string.pickers_no_matches),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
