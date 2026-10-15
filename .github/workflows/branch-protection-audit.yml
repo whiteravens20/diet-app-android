@@ -1,0 +1,104 @@
+name: Branch Protection Audit
+
+# Asserts that branch protection on `main` still matches expectations.
+# Drift here (re-enabling a review gate, disabling signed commits, dropping a
+# required check) silently weakens the supply chain — this catches it within
+# a day.
+#
+# This repo is still pre-v1, so `enforce_admins` is off and the maintainer
+# pushes to `dev` and syncs `dev` -> `main` directly. What is asserted here is
+# the bar that holds today; `enforce_admins` becomes a hard assert at v1.
+
+on:
+  schedule:
+    # Daily at 07:00 UTC
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  audit:
+    name: Verify main branch protection
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # Reading branch-protection settings requires admin scope on the repo;
+      # provide a fine-grained PAT as `BRANCH_PROTECTION_READ_TOKEN` repo secret
+      # with `Administration: read` on this repo only. If absent, the job
+      # falls back to GITHUB_TOKEN and may report partial data.
+    steps:
+      - name: Fetch protection rules for main
+        env:
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_READ_TOKEN || github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          PROT=$(gh api "repos/${REPO}/branches/main/protection" 2>/dev/null) || PROT='{}'
+
+          if [ "$PROT" = "{}" ] || [ -z "$PROT" ] || ! echo "$PROT" | jq -e 'has("enforce_admins")' >/dev/null 2>&1; then
+            echo "::error::Could not fetch branch protection. Ensure the workflow has 'administration: read' permission or set BRANCH_PROTECTION_READ_TOKEN with 'Administration: read'."
+            exit 1
+          fi
+
+          echo "$PROT" | jq .
+
+          fail=0
+          assert() {
+            local label="$1"
+            local expr="$2"
+            if [ "$(echo "$PROT" | jq -r "$expr")" != "true" ]; then
+              echo "::error::Branch protection drift — expected: ${label}"
+              fail=1
+            else
+              echo "ok: ${label}"
+            fi
+          }
+
+          # --- merge gate ---
+          # `enforce_admins` is deliberately NOT asserted yet: before v1 the
+          # maintainer pushes the dev -> main sync directly.
+          #
+          # No human approval may be required: GitHub never lets anyone approve
+          # their own PR, so a review requirement on a one-person repo makes
+          # `main` unmergeable once admins are bound.
+          # (`dismiss_stale_reviews` is inert at zero required reviews and not asserted.)
+          assert "no approving review required"             '((.required_pull_request_reviews.required_approving_review_count // 0) == 0)'
+          assert "code-owner review not a merge gate"       '(.required_pull_request_reviews.require_code_owner_reviews // false) | not'
+          # A dev -> main release PR lands as a merge commit; linear history
+          # rejects merge commits outright, so it has to stay off.
+          assert "linear history not required"              '(.required_linear_history.enabled // false) | not'
+
+          # --- integrity ---
+          assert "signed commits required"                  '.required_signatures.enabled // false'
+          assert "status checks strict (branch up to date)" '.required_status_checks.strict // false'
+          assert "force pushes blocked"                     '(.allow_force_pushes.enabled // false) | not'
+          assert "branch deletions blocked"                 '(.allow_deletions.enabled // false) | not'
+
+          # Required CI contexts that must pass before merge. These are the
+          # check names GitHub actually reports, not the workflow job ids — a
+          # matrix job reports its name with the matrix value appended, so a
+          # name no job ever produces can never be satisfied and blocks every
+          # merge.
+          REQUIRED_CHECKS=$(echo "$PROT" | jq -r '.required_status_checks.contexts[]? // empty' | sort)
+          echo "Configured required checks:"
+          echo "$REQUIRED_CHECKS" | sed 's/^/  - /'
+
+          #   test.yml      -> "build", "Screens on an emulator"
+          #   codeql.yml    -> "Analyze" + matrix language
+          #   security.yml  -> "Trivy filesystem scan", "Pinned actions"
+          for must in "build" "Screens on an emulator" "Analyze (java-kotlin)" "Trivy filesystem scan" "Pinned actions"; do
+            if ! echo "$REQUIRED_CHECKS" | grep -Fxq "$must"; then
+              echo "::error::Required status check missing: '${must}'"
+              fail=1
+            fi
+          done
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Branch-protection audit FAILED — see annotations above."
+            exit 1
+          fi
+
+          echo "Branch-protection audit passed."
