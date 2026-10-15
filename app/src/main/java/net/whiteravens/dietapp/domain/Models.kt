@@ -439,6 +439,43 @@ data class MealPlanSummary(
     val byModel: Boolean,
 )
 
+/**
+ * What a profile's plan of the moment comes to: the plan under way, else the one that begins next,
+ * else the one that ended last ([status]). Every figure is the API's: what a day holds and aims at
+ * on average, the meals eaten of those due, those that fit the diet and those of favourites, the
+ * ingredients used again, how far the shopping is, and the days one by one.
+ */
+data class PlanOverview(
+    val planId: String,
+    val startDate: String,
+    val durationDays: Int,
+    val dietType: String,
+    /** `active` | `upcoming` | `past`. */
+    val status: String,
+    val energy: Double,
+    val energyTarget: Double,
+    val macros: Macros,
+    val macrosTarget: Macros,
+    val eaten: Share,
+    val onDiet: Share,
+    val favourites: Share,
+    /** 0-1: the share of the plan's ingredients that more than one of its recipes uses. */
+    val ingredientReuse: Double,
+    val shoppingLists: Int,
+    val shoppingEntries: Int,
+    val shoppingTicked: Int,
+    val days: List<OverviewDay>,
+)
+
+/** [meals] out of [of]. */
+data class Share(val meals: Int, val of: Int) {
+    /** The share as a part of one; none where there is nothing to count. */
+    val part: Double get() = if (of == 0) 0.0 else meals.toDouble() / of
+}
+
+/** A day of a plan of the moment: what it holds and aims at, in kilocalories, or that it is skipped. */
+data class OverviewDay(val date: String, val calories: Double, val target: Double, val skipped: Boolean)
+
 /** A page of a profile's plans, the newest first; [syncedAt] is set when it came from the cache. */
 data class MealPlanPage(
     val plans: List<MealPlanSummary>,

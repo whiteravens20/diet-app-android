@@ -187,6 +187,48 @@ data class DeleteAccountRequest(val currentPassword: String)
 @Serializable
 data class MacrosDto(val protein: Double, val fat: Double, val carbs: Double)
 
+/** What a plan holds and what it aims at. */
+@Serializable
+data class PlannedTargetDto(val planned: Double, val target: Double)
+
+/** The grams of each macro a plan holds and aims at. */
+@Serializable
+data class PlannedTargetMacrosDto(val planned: MacrosDto, val target: MacrosDto)
+
+/** A number of meals out of how many there are. */
+@Serializable
+data class ShareDto(val meals: Int, val of: Int)
+
+/** The plan an overview is of. */
+@Serializable
+data class OverviewPlanDto(val id: String, val startDate: String, val durationDays: Int, val dietType: String, val status: String)
+
+/** The shopping lists of a plan: how many, and how many of their entries are ticked. */
+@Serializable
+data class OverviewShoppingDto(val lists: Int, val entries: Int, val ticked: Int)
+
+/** A day of a plan as its overview counts it. */
+@Serializable
+data class OverviewDayDto(val date: String, val calories: Double, val target: Double, val skipped: Boolean)
+
+/** What a profile's plan of the moment comes to. */
+@Serializable
+data class PlanOverviewDto(
+    val plan: OverviewPlanDto,
+    val energy: PlannedTargetDto,
+    val macros: PlannedTargetMacrosDto,
+    val eaten: ShareDto,
+    val onDiet: ShareDto,
+    val favourites: ShareDto,
+    val ingredientReuse: Double,
+    val shopping: OverviewShoppingDto,
+    val days: List<OverviewDayDto>,
+)
+
+/** GET `/meal-plans/overview`: the overview, or none for a profile with no plan. */
+@Serializable
+data class PlanOverviewAnswerDto(val overview: PlanOverviewDto? = null)
+
 /** Full nutrition snapshot — calories plus macros. */
 @Serializable
 data class NutritionDto(

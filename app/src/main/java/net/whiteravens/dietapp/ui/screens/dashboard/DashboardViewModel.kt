@@ -11,20 +11,32 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
-/** Profiles with their engine-computed calorie targets, fetched in parallel. */
+/** Profiles with their engine-computed calorie targets and what their plan of the moment comes to, fetched in parallel. */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val users: UserRepository,
+    private val plans: MealPlanRepository,
 ) : ViewModel() {
 
-    /** A profile, and its calorie target or why there is none to show. */
-    data class ProfileStats(val profile: Profile, val target: CalorieTarget?, val targetError: Throwable? = null)
+    /**
+     * A profile, its calorie target or why there is none to show, and what its plan of the moment
+     * comes to (null where it has no plan) or why that could not be read.
+     */
+    data class ProfileStats(
+        val profile: Profile,
+        val target: CalorieTarget?,
+        val targetError: Throwable? = null,
+        val overview: PlanOverview? = null,
+        val overviewError: Throwable? = null,
+    )
 
     data class UiState(
         val loading: Boolean = true,
@@ -57,9 +69,16 @@ class DashboardViewModel @Inject constructor(
                     users.profiles()
                         .map { profile ->
                             async {
-                                // A failed calorie fetch degrades one card, not the screen, and the card says why.
-                                val target = attempt { users.calorieTarget(profile.id) }
-                                ProfileStats(profile, target.getOrNull(), target.exceptionOrNull())
+                                // A failed read degrades one card, not the screen, and the card says why.
+                                val target = async { attempt { users.calorieTarget(profile.id) } }
+                                val overview = async { attempt { plans.overview(profile.id) } }
+                                ProfileStats(
+                                    profile,
+                                    target.await().getOrNull(),
+                                    target.await().exceptionOrNull(),
+                                    overview.await().getOrNull(),
+                                    overview.await().exceptionOrNull(),
+                                )
                             }
                         }
                         .map { it.await() }

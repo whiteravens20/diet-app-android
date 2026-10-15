@@ -184,6 +184,11 @@ private fun refusalText(error: ApiException): String {
 fun formatNumber(value: Number, fractionDigits: Int = 0): String =
     NumberFormat.getNumberInstance(LocalConfiguration.current.locales[0]).apply { maximumFractionDigits = fractionDigits }.format(value)
 
+/** A part of one as the language writes a share of a hundred: `45%`, `45 %`. */
+@Composable
+fun formatPercent(part: Double): String =
+    NumberFormat.getPercentInstance(LocalConfiguration.current.locales[0]).apply { maximumFractionDigits = 0 }.format(part)
+
 /** A whole number that always says which way it goes: `+120`, `-80`, `+0`. */
 @Composable
 fun formatSigned(value: Double): String =

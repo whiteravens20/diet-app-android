@@ -92,9 +92,47 @@
     <string name="dashboard_calculated_hint">Calculated</string>
     <string name="dashboard_maintenance">Maintenance</string>
     <string name="dashboard_daily_deficit">Daily deficit</string>
-    <string name="dashboard_daily_surplus">Daily surplus</string>
     <string name="dashboard_meals_per_day">Meals per day</string>
     <string name="dashboard_macro_split">Target macro split</string>
+    <string name="overview_title_active">The plan under way</string>
+    <string name="overview_title_upcoming">The plan that begins next</string>
+    <string name="overview_title_past">The plan that ended last</string>
+    <string name="overview_span">%1$s · %2$s</string>
+    <string name="overview_open">Open the plan</string>
+    <string name="overview_none">No plan yet</string>
+    <string name="overview_none_body">Make a plan for this profile, and this is where it says how the plan stands against its target.</string>
+    <string name="overview_none_cta">Make a plan</string>
+    <string name="overview_failed">Could not read what the plan comes to.</string>
+    <string name="overview_energy">Energy a day</string>
+    <string name="overview_energy_value">%1$s kcal</string>
+    <string name="overview_energy_hint">On average, against a target of %1$s kcal.</string>
+    <string name="overview_eaten">Eaten</string>
+    <string name="overview_eaten_not_yet_hint">No day of the plan has come yet.</string>
+    <string name="overview_on_diet">On the diet</string>
+    <string name="overview_favourites">Favourites</string>
+    <string name="overview_reuse">Ingredients used again</string>
+    <string name="overview_reuse_hint">The share of the plan’s ingredients that more than one of its recipes uses.</string>
+    <string name="overview_shopping">Shopping</string>
+    <string name="overview_shopping_none_hint">The plan has no shopping list yet.</string>
+    <string name="overview_macros">What a day holds, against what it aims at</string>
+    <string name="overview_macro_value">%1$s of %2$s g</string>
+    <string name="overview_days">Day by day</string>
+    <string name="overview_series_planned">Planned</string>
+    <string name="overview_series_target">Target</string>
+    <string name="dashboard_daily_surplus">Daily surplus</string>
+    <string name="overview_eaten_hint">%1$s of the %2$s that were due by today.</string>
+    <string name="overview_on_diet_hint">%1$s of %2$s fit the diet of the plan (%3$s).</string>
+    <string name="overview_favourites_hint">%1$s of %2$s are of a recipe marked as a favourite or as eaten often.</string>
+    <string name="overview_shopping_hint">%1$s of %2$s ticked on the plan’s lists.</string>
+    <plurals name="overview_meals">
+        <item quantity="one">%d meal</item>
+        <item quantity="other">%d meals</item>
+    </plurals>
+    <plurals name="overview_entries">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <string name="overview_day_of">%1$s of %2$s kcal</string>
     <string name="dashboard_kcal_per_day">kcal/day</string>
 
     <!-- Macros & units -->

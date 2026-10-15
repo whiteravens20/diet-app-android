@@ -10,10 +10,10 @@ import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.readOrDrop
-import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AddCustomMealRequest
 import net.whiteravens.dietapp.data.remote.AiSuggestIngredientRequest
 import net.whiteravens.dietapp.data.remote.AiSwapOfferRequest
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DayOverrideDto
 import net.whiteravens.dietapp.data.remote.DietApiService
@@ -23,8 +23,8 @@ import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
-import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
+import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
@@ -40,14 +40,17 @@ import net.whiteravens.dietapp.domain.DayWays
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
+import net.whiteravens.dietapp.domain.OverviewDay
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.PlanFilter
+import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
-import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
+import net.whiteravens.dietapp.domain.Reroll
+import net.whiteravens.dietapp.domain.Share
 import net.whiteravens.dietapp.domain.Substitution
 import net.whiteravens.dietapp.domain.SubstitutionPreview
 import net.whiteravens.dietapp.domain.SuggestedSubstitute
@@ -112,6 +115,29 @@ class MealPlanRepository @Inject constructor(
     }
 
     /** The days a profile's plans hold from [from] to [to]: what a calendar of them shows. */
+    /** What the profile's plan of the moment comes to; null for a profile with no plan. */
+    suspend fun overview(profileId: String): PlanOverview? = apiCall(json) { api.planOverview(profileId) }.overview?.let {
+        PlanOverview(
+            planId = it.plan.id,
+            startDate = it.plan.startDate,
+            durationDays = it.plan.durationDays,
+            dietType = it.plan.dietType,
+            status = it.plan.status,
+            energy = it.energy.planned,
+            energyTarget = it.energy.target,
+            macros = it.macros.planned.toDomain(),
+            macrosTarget = it.macros.target.toDomain(),
+            eaten = Share(it.eaten.meals, it.eaten.of),
+            onDiet = Share(it.onDiet.meals, it.onDiet.of),
+            favourites = Share(it.favourites.meals, it.favourites.of),
+            ingredientReuse = it.ingredientReuse,
+            shoppingLists = it.shopping.lists,
+            shoppingEntries = it.shopping.entries,
+            shoppingTicked = it.shopping.ticked,
+            days = it.days.map { day -> OverviewDay(day.date, day.calories, day.target, day.skipped) },
+        )
+    }
+
     suspend fun calendar(profileId: String, from: LocalDate, to: LocalDate): List<PlanCalendarDay> =
         apiCall(json) { api.planCalendar(profileId, from.toString(), to.toString()) }.days.map {
             PlanCalendarDay(

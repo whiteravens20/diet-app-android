@@ -99,6 +99,10 @@ interface DietApiService {
         @Query("to") to: String? = null,
     ): MealPlanPageDto
 
+    /** What a profile's plan of the moment comes to: the one under way, else the next, else the last. */
+    @GET("meal-plans/overview")
+    suspend fun planOverview(@Query("profileId") profileId: String): PlanOverviewAnswerDto
+
     /** The days of a profile's plans from [from] to [to], for a calendar. */
     @GET("meal-plans/calendar")
     suspend fun planCalendar(

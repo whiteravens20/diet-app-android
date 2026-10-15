@@ -44,9 +44,17 @@ import net.whiteravens.dietapp.ui.components.StatCard
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/** Calorie target, deficit and macro split for every profile — the web dashboard. */
+/**
+ * Calorie target, deficit and macro split for every profile, and what its plan of the moment comes
+ * to — the web dashboard. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan].
+ */
 @Composable
-fun DashboardScreen(onCreateProfile: () -> Unit, viewModel: DashboardViewModel = hiltViewModel()) {
+fun DashboardScreen(
+    onCreateProfile: () -> Unit,
+    onOpenPlan: (planId: String) -> Unit,
+    onNewPlan: (profileId: String) -> Unit,
+    viewModel: DashboardViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Read again on coming back: a profile may have been made or changed in the meantime.
     LifecycleResumeEffect(viewModel) {
@@ -92,14 +100,14 @@ fun DashboardScreen(onCreateProfile: () -> Unit, viewModel: DashboardViewModel =
                 )
             }
             state.profiles.forEach { stats ->
-                item(key = stats.profile.id) { ProfileSummary(stats) }
+                item(key = stats.profile.id) { ProfileSummary(stats, onOpenPlan, onNewPlan = { onNewPlan(stats.profile.id) }) }
             }
         }
     }
 }
 
 @Composable
-private fun ProfileSummary(stats: DashboardViewModel.ProfileStats) {
+private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (planId: String) -> Unit, onNewPlan: () -> Unit) {
     val profile = stats.profile
     val target = stats.target
     val kcal = stringResource(R.string.unit_kcal)
@@ -164,6 +172,8 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats) {
                 }
             }
         }
+
+        PlanOverviewCard(stats.overview, stats.overviewError, onOpen = onOpenPlan, onNewPlan = onNewPlan)
 
         if (target != null) {
             AppCard {
