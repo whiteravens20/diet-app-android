@@ -113,6 +113,15 @@
     <string name="plans_empty">No plans yet</string>
     <string name="plans_empty_body">Generate the first meal plan for this profile.</string>
     <string name="plans_show_more">Show more plans</string>
+    <string name="common_clear">Clear</string>
+    <string name="plans_for">%1$s\'s plans</string>
+    <string name="plans_status_all">All</string>
+    <string name="plans_status_active">Active</string>
+    <string name="plans_status_upcoming">Upcoming</string>
+    <string name="plans_status_past">Past</string>
+    <string name="plans_from">From</string>
+    <string name="plans_to">To</string>
+    <string name="plans_none_filtered">No plans match the current filters.</string>
     <string name="plans_card_title">%1$s · %2$d days</string>
     <string name="plans_avg_kcal">%1$d kcal/day avg</string>
     <string name="plans_days">%1$d days</string>

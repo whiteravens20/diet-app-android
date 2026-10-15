@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
@@ -24,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.YearMonth
 
 @RunWith(AndroidJUnit4::class)
 class PlansTest {
@@ -85,4 +87,30 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }
         screen.waitForText(title)
     }
+
+    @Test
+    fun theListIsNarrowedToWhereAPlanStandsAndTheFilterCleared() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val next = YearMonth.now().plusMonths(1).atDay(10)
+        Instance.newPlan(account, profileId, days = 2, start = next)
+        screen.signIn(account)
+
+        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        val card = text(R.string.plans_card_title, formatDate(next.toString()), 2)
+        screen.waitForText(card)
+
+        // A plan of next month is still to come: it is among those to come, and none of those that are over.
+        screen.onNodeWithText(text(R.string.plans_status_past)).performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_none_filtered))
+        assertTrue(screen.onAllNodesWithText(card).fetchSemanticsNodes().isEmpty())
+        screen.keepScreenshot("plans-narrowed")
+        screen.onNodeWithText(text(R.string.plans_status_upcoming)).performScrollTo().performClick()
+        screen.waitForText(card)
+
+        screen.onNodeWithText(text(R.string.common_clear)).performScrollTo().performClick()
+        screen.waitForText(card)
+        assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
+    }
 }
+

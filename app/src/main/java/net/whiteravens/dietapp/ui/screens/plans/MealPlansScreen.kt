@@ -4,6 +4,8 @@ package net.whiteravens.dietapp.ui.screens.plans
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,23 +25,27 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealPlanSummary
+import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatSyncedAt
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
@@ -48,7 +54,10 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import kotlin.math.roundToInt
 
-/** Plans per profile: profile chips, a new plan, offline-first plan list. */
+/**
+ * Plans per profile: profile chips, a new plan, and the offline-first list of the profile's plans,
+ * narrowed by where a plan stands and by the days it holds.
+ */
 @Composable
 fun MealPlansScreen(
     onOpenPlan: (String) -> Unit,
@@ -105,10 +114,11 @@ fun MealPlansScreen(
                     )
                 }
             }
+            val profileId = state.selectedProfileId
             item {
                 Button(
-                    onClick = { state.selectedProfileId?.let(onNewPlan) },
-                    enabled = state.selectedProfileId != null,
+                    onClick = { profileId?.let(onNewPlan) },
+                    enabled = profileId != null,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -116,13 +126,31 @@ fun MealPlansScreen(
                     Text(stringResource(R.string.plans_generate), Modifier.padding(start = 8.dp))
                 }
             }
-            if (state.plans.isEmpty() && !state.refreshing && state.selectedProfileId != null) {
+            if (profileId != null) {
                 item {
-                    EmptyState(
-                        icon = Icons.Default.DateRange,
-                        title = stringResource(R.string.plans_empty),
-                        description = stringResource(R.string.plans_empty_body),
+                    Text(
+                        state.profiles.find { it.id == profileId }?.let { stringResource(R.string.plans_for, it.name) } ?: stringResource(R.string.nav_meal_plans),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp).semantics { heading() },
                     )
+                }
+                item { Filters(state.filter, onNarrow = viewModel::narrow) }
+            }
+            if (state.plans.isEmpty() && !state.refreshing && profileId != null) {
+                item {
+                    if (state.filter.isEmpty) {
+                        EmptyState(
+                            icon = Icons.Default.DateRange,
+                            title = stringResource(R.string.plans_empty),
+                            description = stringResource(R.string.plans_empty_body),
+                        )
+                    } else {
+                        Text(
+                            stringResource(R.string.plans_none_filtered),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             items(state.plans, key = { it.id }) { plan ->
@@ -137,6 +165,35 @@ fun MealPlansScreen(
                     ) { Text(stringResource(R.string.plans_show_more)) }
                 }
             }
+        }
+    }
+}
+
+/** Where the plans listed stand, and the days they hold; one button takes all of it away. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Filters(filter: PlanFilter, onNarrow: (PlanFilter) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                null to R.string.plans_status_all,
+                "active" to R.string.plans_status_active,
+                "upcoming" to R.string.plans_status_upcoming,
+                "past" to R.string.plans_status_past,
+            ).forEach { (status, label) ->
+                FilterChip(
+                    selected = filter.status == status,
+                    onClick = { onNarrow(filter.copy(status = status)) },
+                    label = { Text(stringResource(label)) },
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DateField(stringResource(R.string.plans_from), filter.from, onPick = { onNarrow(filter.copy(from = it)) }, Modifier.weight(1f))
+            DateField(stringResource(R.string.plans_to), filter.to, onPick = { onNarrow(filter.copy(to = it)) }, Modifier.weight(1f))
+        }
+        if (!filter.isEmpty) {
+            TextButton(onClick = { onNarrow(PlanFilter()) }) { Text(stringResource(R.string.common_clear)) }
         }
     }
 }

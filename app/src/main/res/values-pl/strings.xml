@@ -114,6 +114,15 @@
     <string name="plans_empty">Brak planów</string>
     <string name="plans_empty_body">Wygeneruj pierwszy plan posiłków dla tego profilu.</string>
     <string name="plans_show_more">Pokaż więcej planów</string>
+    <string name="common_clear">Wyczyść</string>
+    <string name="plans_for">Plany: %1$s</string>
+    <string name="plans_status_all">Wszystkie</string>
+    <string name="plans_status_active">Aktywne</string>
+    <string name="plans_status_upcoming">Nadchodzące</string>
+    <string name="plans_status_past">Zakończone</string>
+    <string name="plans_from">Od</string>
+    <string name="plans_to">Do</string>
+    <string name="plans_none_filtered">Żaden plan nie pasuje do bieżących filtrów.</string>
     <string name="plans_card_title">%1$s · %2$d dni</string>
     <string name="plans_avg_kcal">śr. %1$d kcal/dzień</string>
     <string name="plans_days">%1$d dni</string>

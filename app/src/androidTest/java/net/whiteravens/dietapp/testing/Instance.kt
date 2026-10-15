@@ -116,12 +116,12 @@ object Instance {
             (0 until lines.length()).map { lines.getJSONObject(it).getString("name") }
     }
 
-    /** A plan of [days] days for [profileId] from today, made as the app makes one. */
-    fun newPlan(account: Account, profileId: String, days: Int = 2): String =
+    /** A plan of [days] days for [profileId] from [start], made as the app makes one. */
+    fun newPlan(account: Account, profileId: String, days: Int = 2, start: LocalDate = LocalDate.now()): String =
         call(
             "POST",
             "meal-plans/generate",
-            JSONObject().put("profileId", profileId).put("startDate", LocalDate.now().toString()).put("durationDays", days),
+            JSONObject().put("profileId", profileId).put("startDate", start.toString()).put("durationDays", days),
             token = account.accessToken,
             expect = 201,
         ).getString("id")

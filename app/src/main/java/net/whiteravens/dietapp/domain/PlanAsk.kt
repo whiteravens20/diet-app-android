@@ -72,3 +72,12 @@ data class MarkedRecipe(val recipeId: String, val title: String, val mealTypes: 
 
 /** A profile's favourite set: the recipe it has for each meal it names. */
 data class FavoriteSet(val id: String, val label: String, val slots: Map<String, String>)
+
+/**
+ * What the list of plans is narrowed to: those [status] names (`active` | `upcoming` | `past`;
+ * null for all) and those holding a day from [from] to [to].
+ */
+data class PlanFilter(val status: String? = null, val from: LocalDate? = null, val to: LocalDate? = null) {
+    val isEmpty: Boolean get() = status == null && from == null && to == null
+}
+
