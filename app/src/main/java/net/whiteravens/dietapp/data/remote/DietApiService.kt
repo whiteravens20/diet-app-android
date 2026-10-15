@@ -27,6 +27,10 @@ interface DietApiService {
     @PATCH("users/me")
     suspend fun updateSettings(@Body body: UpdateUserSettingsRequest): SessionUserDto
 
+    /** Sends the mail that confirms the account's address again; answered 202. */
+    @POST("users/me/email/resend-verification")
+    suspend fun resendVerification()
+
     @POST("users/me/password")
     suspend fun changePassword(@Body body: ChangePasswordRequest)
 

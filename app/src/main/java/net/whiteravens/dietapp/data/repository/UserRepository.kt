@@ -29,6 +29,9 @@ class UserRepository @Inject constructor(
         api.updateSettings(UpdateUserSettingsRequest(displayName = displayName, locale = locale, theme = theme))
     }.toDomain()
 
+    /** Sends the mail that confirms the account's address again. */
+    suspend fun resendVerification() = apiCall(json) { api.resendVerification() }
+
     suspend fun profiles(): List<Profile> =
         apiCall(json) { api.profiles() }.map { it.toDomain() }
 

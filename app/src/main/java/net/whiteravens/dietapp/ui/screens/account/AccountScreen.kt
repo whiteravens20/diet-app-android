@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,6 +52,7 @@ import java.util.Locale
 fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
+    val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showServerDialog) {
@@ -119,6 +121,27 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
                                 }
                             }
                         }
+                    }
+                    // Sending the confirmation again means something only for an address not confirmed, on a server that sends mail.
+                    if (!user.emailVerified && mailsSent == true) {
+                        if (state.resent) {
+                            Text(
+                                stringResource(R.string.account_resend_sent),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 12.dp),
+                            )
+                        } else {
+                            OutlinedButton(
+                                onClick = viewModel::resendVerification,
+                                enabled = !state.resending,
+                                shape = MaterialTheme.shapes.medium,
+                                modifier = Modifier.padding(top = 12.dp),
+                            ) {
+                                Text(stringResource(if (state.resending) R.string.account_resend_sending else R.string.account_resend_verification))
+                            }
+                        }
+                        state.resendError?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 8.dp)) }
                     }
                 }
 

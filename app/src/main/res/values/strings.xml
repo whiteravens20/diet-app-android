@@ -160,6 +160,9 @@
     <string name="account_title">Account settings</string>
     <string name="account_verified">Verified</string>
     <string name="account_unverified">Email not verified</string>
+    <string name="account_resend_verification">Resend verification email</string>
+    <string name="account_resend_sending">Sending…</string>
+    <string name="account_resend_sent">Verification email sent.</string>
     <string name="account_language">Language</string>
     <string name="account_theme">Theme</string>
     <string name="account_theme_light">Light</string>

@@ -161,6 +161,9 @@
     <string name="account_title">Ustawienia konta</string>
     <string name="account_verified">Zweryfikowany</string>
     <string name="account_unverified">E-mail niezweryfikowany</string>
+    <string name="account_resend_verification">Wyślij ponownie e-mail weryfikacyjny</string>
+    <string name="account_resend_sending">Wysyłanie…</string>
+    <string name="account_resend_sent">Wysłano e-mail weryfikacyjny.</string>
     <string name="account_language">Język</string>
     <string name="account_theme">Motyw</string>
     <string name="account_theme_light">Jasny</string>
