@@ -3,12 +3,16 @@
 package net.whiteravens.dietapp.ui.screens.recipes
 
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -21,11 +25,12 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 
-/** The recipe library as the screen keeps it: narrowed, a page at a time. */
+/** The recipe library as the screen keeps it: narrowed, a page at a time, and one's own recipes with what can be done with them. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RecipesViewModelTest {
     @Before
@@ -73,5 +78,40 @@ class RecipesViewModelTest {
         assertEquals(RecipeFilter(dietType = "vegan", marked = "often", profileId = "ada"), asked[1])
         assertEquals(RecipeFilter(profileId = "ada"), asked.last())
         assertEquals(listOf("soup"), model.state.value.items.map { it.id })
+    }
+
+    @Test
+    fun `one's own recipes are a tab of their own, and one deleted leaves it`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.search(any(), any()) } returns RecipePage(emptyList(), 1, 0)
+        coEvery { recipes.mine(1) } returns RecipePage(listOf(recipe("mine"), recipe("kept")), 1, 1)
+        coEvery { recipes.delete("mine") } just runs
+        val model = RecipesViewModel(recipes, users, profiles)
+
+        model.selectTab(RecipesViewModel.Tab.MINE)
+        model.delete("mine")
+
+        coVerify { recipes.delete("mine") }
+        assertEquals(listOf("kept"), model.state.value.items.map { it.id })
+        assertNull(model.state.value.changing)
+    }
+
+    @Test
+    fun `a recipe suggested for the shared library says it was sent, or why not`() {
+        val recipes = mockk<RecipeRepository>()
+        val refusal = ApiException(403, "FORBIDDEN", "Not yours.")
+        coEvery { recipes.search(any(), any()) } returns RecipePage(emptyList(), 1, 0)
+        coEvery { recipes.mine(1) } returns RecipePage(listOf(recipe("mine")), 1, 1)
+        coEvery { recipes.submit("mine") } returns Unit andThenThrows refusal
+        val model = RecipesViewModel(recipes, users, profiles)
+        model.selectTab(RecipesViewModel.Tab.MINE)
+
+        model.submit("mine")
+
+        assertTrue(model.state.value.submitted!!.isSuccess)
+
+        model.submit("mine")
+
+        assertEquals(refusal, model.state.value.submitted!!.exceptionOrNull())
     }
 }

@@ -29,8 +29,9 @@ import javax.inject.Inject
 
 /**
  * The recipe library as the web's page has it: the shared recipes and the account's own, narrowed
- * by every filter the API takes, a page at a time; the words are looked for once typing pauses.
- * What a profile marked and favours narrows the library for the profile chosen.
+ * by every filter the API takes, a page at a time; the words are looked for once typing pauses. The
+ * account's own recipes are a tab of their own, each to be suggested for the shared library or
+ * deleted. What a profile marked and favours narrows the library for the profile chosen.
  */
 @HiltViewModel
 class RecipesViewModel @Inject constructor(
@@ -39,10 +40,13 @@ class RecipesViewModel @Inject constructor(
     private val profiles: ProfileRepository,
 ) : ViewModel() {
 
+    enum class Tab { LIBRARY, MINE }
+
     /** What the catalogue has for the words typed into the filter of ingredients. */
     data class IngredientSearch(val text: String = "", val found: List<IngredientChoice> = emptyList(), val searched: Boolean = false)
 
     data class UiState(
+        val tab: Tab = Tab.LIBRARY,
         val filter: RecipeFilter = RecipeFilter(),
         val loading: Boolean = true,
         val items: List<Recipe> = emptyList(),
@@ -54,6 +58,10 @@ class RecipesViewModel @Inject constructor(
         /** Whether the account has a model to ask; null until that is known. */
         val aiOn: Boolean? = null,
         val ingredientSearch: IngredientSearch = IngredientSearch(),
+        /** The recipe of one's own being suggested for the shared library or deleted. */
+        val changing: String? = null,
+        /** What came of suggesting a recipe for the shared library: sent, or why not. */
+        val submitted: Result<Unit>? = null,
         val error: Throwable? = null,
     )
 
@@ -86,6 +94,12 @@ class RecipesViewModel @Inject constructor(
     }
 
     fun retry() = load()
+
+    fun selectTab(tab: Tab) {
+        if (_state.value.tab == tab) return
+        _state.update { it.copy(tab = tab, submitted = null) }
+        load()
+    }
 
     /** Narrows the library as [filter] says, from its first page. */
     fun narrow(filter: RecipeFilter) {
@@ -127,6 +141,25 @@ class RecipesViewModel @Inject constructor(
         }
     }
 
+    /** Puts a recipe of one's own before the curators for the library everyone shares. */
+    fun submit(id: String) = change(id) {
+        val sent = attempt { recipes.submit(id) }
+        _state.update { it.copy(changing = null, submitted = sent.map { }) }
+    }
+
+    /** Deletes a recipe of one's own; the plans that hold it keep it. */
+    fun delete(id: String) = change(id) {
+        attempt { recipes.delete(id) }
+            .onSuccess { _state.update { it.copy(changing = null, items = it.items.filterNot { recipe -> recipe.id == id }) } }
+            .onFailure { e -> _state.update { it.copy(changing = null, error = e) } }
+    }
+
+    private fun change(id: String, block: suspend () -> Unit) {
+        if (_state.value.changing != null) return
+        _state.update { it.copy(changing = id, submitted = null, error = null) }
+        viewModelScope.launch { block() }
+    }
+
     private fun load() {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
@@ -146,7 +179,8 @@ class RecipesViewModel @Inject constructor(
         }
     }
 
-    private suspend fun page(state: UiState, page: Int): RecipePage = recipes.search(state.filter, page)
+    private suspend fun page(state: UiState, page: Int): RecipePage =
+        if (state.tab == Tab.MINE) recipes.mine(page) else recipes.search(state.filter, page)
 
     companion object {
         /** How many letters a search of the catalogue's ingredients starts at. */

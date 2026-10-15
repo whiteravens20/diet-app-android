@@ -54,7 +54,7 @@ class RecipesTest {
     }
 
     @Test
-    fun theLibraryIsNarrowedInItsWindowOfFilters() {
+    fun theLibraryIsNarrowedInItsWindowOfFiltersAndOnesOwnRecipesHaveATabOfTheirOwn() {
         val account = Instance.newAccount()
         Instance.newProfile(account)
         screen.signIn(account)
@@ -68,5 +68,9 @@ class RecipesTest {
         screen.waitForText(plural(R.plurals.recipes_filters_on, 1, 1))
         screen.onNodeWithText(text(R.string.recipes_clear_filters)).performClick()
         screen.waitForText(text(R.string.recipes_filters))
+
+        // A new account has no recipes of its own.
+        screen.onNodeWithText(text(R.string.recipes_tab_mine)).performClick()
+        screen.waitForText(text(R.string.recipes_mine_empty_title))
     }
 }

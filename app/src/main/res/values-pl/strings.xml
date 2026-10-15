@@ -480,6 +480,8 @@
     <!-- Recipes -->
     <string name="recipes_subtitle">Wyselekcjonowana biblioteka przepisów — każda kaloria wyliczana przez backend.</string>
     <string name="recipes_search_placeholder">Tytuł przepisu…</string>
+    <string name="recipes_tab_library">Biblioteka</string>
+    <string name="recipes_tab_mine">Moje przepisy</string>
     <string name="recipes_diet_type">Typ diety</string>
     <string name="recipes_meal_type">Pora posiłku</string>
     <string name="recipes_difficulty">Trudność</string>
@@ -514,6 +516,13 @@
     <string name="recipes_none_filtered">Żaden przepis nie pasuje do bieżących filtrów.</string>
     <string name="recipes_none_at_all">Brak przepisów.</string>
     <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
+    <string name="recipes_mine_empty_title">Nie masz jeszcze własnych przepisów</string>
+    <string name="recipes_mine_empty">Trafiają tu przepisy, które model przygotuje dla Ciebie, oraz warianty zachowane po zamianie składnika.</string>
+    <string name="recipes_delete_confirm">Usunąć ten przepis? Posiłki zaplanowane w przeszłości pozostaną, ale przepis zniknie z biblioteki i przyszłych planów.</string>
+    <string name="recipes_submit">Zgłoś do wspólnej biblioteki</string>
+    <string name="recipes_submit_confirm">Zgłosić ten przepis do biblioteki, z której korzystają wszyscy? Kuratorzy zobaczą jego treść i składniki, ale nie to, kto go wysłał. Jeśli go przyjmą, stanie się przepisem biblioteki.</string>
+    <string name="recipes_submit_done">Wysłano do kuratorów.</string>
+    <string name="recipes_submit_failed">Nie udało się wysłać przepisu.</string>
     <string name="recipes_filters">Filtry</string>
     <plurals name="recipes_filters_on">
         <item quantity="one">Filtry: %d aktywny</item>

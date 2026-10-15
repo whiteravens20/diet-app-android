@@ -20,7 +20,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-/** The recipe library asked for as narrowed, against a local server answering what the backend answered. */
+/** The recipe library asked for as narrowed, and one's own recipes, against a local server answering what the backend answered. */
 class RecipeRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
@@ -87,5 +87,27 @@ class RecipeRepositoryTest {
         val favourites = server.takeRequest().requestUrl!!
         assertEquals("true", favourites.queryParameter("favoriteIngredients"))
         assertNull(favourites.queryParameter("marked"))
+    }
+
+    @Test
+    fun `one's own recipes are listed at their own address, suggested for the shared library and deleted`() {
+        server.enqueue(page())
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(MockResponse().setResponseCode(204))
+        val recipes = repository()
+
+        runBlocking {
+            recipes.mine(page = 1)
+            recipes.submit("mine")
+            recipes.delete("mine")
+        }
+
+        assertEquals("/api/recipes/mine?page=1", server.takeRequest().path)
+        val submitted = server.takeRequest()
+        assertEquals("POST", submitted.method)
+        assertEquals("/api/recipes/mine/submit", submitted.path)
+        val deleted = server.takeRequest()
+        assertEquals("DELETE", deleted.method)
+        assertEquals("/api/recipes/mine", deleted.path)
     }
 }

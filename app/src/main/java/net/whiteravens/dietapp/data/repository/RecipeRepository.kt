@@ -46,5 +46,14 @@ class RecipeRepository @Inject constructor(
         }.toDomain()
     }
 
+    /** A page of the account's own recipes. */
+    suspend fun mine(page: Int = 1): RecipePage = apiCall(json) { api.myRecipes(page = page) }.toDomain()
+
+    /** Puts a recipe of one's own before the curators; asking again changes nothing. */
+    suspend fun submit(id: String) = apiCall(json) { api.submitRecipe(id) }
+
+    /** Deletes a recipe of one's own; deleting it again changes nothing. */
+    suspend fun delete(id: String) = apiCall(json) { api.deleteRecipe(id) }
+
     suspend fun byId(id: String): Recipe = apiCall(json) { api.recipe(id) }.toDomain()
 }

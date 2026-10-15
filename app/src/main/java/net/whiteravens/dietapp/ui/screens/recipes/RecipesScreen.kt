@@ -19,12 +19,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,6 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -51,6 +57,8 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.ScreenHeader
@@ -60,7 +68,8 @@ import kotlin.math.roundToInt
 
 /**
  * The recipe library: the shared recipes and the account's own, searched by words and narrowed by
- * every filter the API takes in a window of their own, scrolled without end.
+ * every filter the API takes in a window of their own, scrolled without end; and the account's own
+ * recipes in a tab of their own, each to be suggested for the shared library or deleted.
  */
 @Composable
 fun RecipesScreen(
@@ -71,6 +80,9 @@ fun RecipesScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     var filtering by rememberSaveable { mutableStateOf(false) }
+    // A recipe of one's own waiting for a yes: to be suggested for the shared library, or deleted.
+    var submitting by rememberSaveable { mutableStateOf<String?>(null) }
+    var deleting by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Fetch the next page when the scroll approaches the end of the list.
     LaunchedEffect(listState) {
@@ -96,7 +108,14 @@ fun RecipesScreen(
             onDismiss = { filtering = false },
         )
     }
+    submitting?.let { id ->
+        Confirm(stringResource(R.string.recipes_submit_confirm), stringResource(R.string.recipes_submit), onYes = { viewModel.submit(id) }, onDone = { submitting = null })
+    }
+    deleting?.let { id ->
+        Confirm(stringResource(R.string.recipes_delete_confirm), stringResource(R.string.common_delete), onYes = { viewModel.delete(id) }, onDone = { deleting = null })
+    }
 
+    val mine = state.tab == RecipesViewModel.Tab.MINE
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -110,6 +129,13 @@ fun RecipesScreen(
             )
         }
         item {
+            TabRow(selectedTabIndex = state.tab.ordinal) {
+                Tab(selected = !mine, onClick = { viewModel.selectTab(RecipesViewModel.Tab.LIBRARY) }, text = { Text(stringResource(R.string.recipes_tab_library)) })
+                Tab(selected = mine, onClick = { viewModel.selectTab(RecipesViewModel.Tab.MINE) }, text = { Text(stringResource(R.string.recipes_tab_mine)) })
+            }
+        }
+        if (!mine) {
+            item {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { viewModel.query.value = it },
@@ -129,6 +155,17 @@ fun RecipesScreen(
                     if (state.filter.narrowed) TextButton(onClick = viewModel::clearFilters) { Text(stringResource(R.string.recipes_clear_filters)) }
                 }
             }
+        }
+        state.submitted?.let { sent ->
+            item {
+                Text(
+                    sent.exceptionOrNull()?.let { stringResource(R.string.recipes_submit_failed) + " " + errorMessage(it) } ?: stringResource(R.string.recipes_submit_done),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (sent.isSuccess) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+        }
 
         when {
             state.loading -> items(4) { Skeleton(Modifier.fillMaxWidth().height(110.dp)) }
@@ -140,6 +177,14 @@ fun RecipesScreen(
                         Text(stringResource(R.string.common_retry))
                     }
                 }
+            }
+
+            state.items.isEmpty() && mine -> item {
+                EmptyState(
+                    icon = AppIcons.Restaurant,
+                    title = stringResource(R.string.recipes_mine_empty_title),
+                    description = stringResource(R.string.recipes_mine_empty),
+                )
             }
 
             state.items.isEmpty() -> item {
@@ -159,7 +204,14 @@ fun RecipesScreen(
             else -> {
                 state.error?.let { item { ErrorBanner(errorMessage(it)) } }
                 items(state.items, key = { it.id }) { recipe ->
-                    RecipeCard(recipe, onClick = { onOpenRecipe(recipe.id) })
+                    RecipeCard(
+                        recipe,
+                        onClick = { onOpenRecipe(recipe.id) },
+                        mine = mine,
+                        busy = state.changing != null,
+                        onSubmit = { submitting = recipe.id },
+                        onDelete = { deleting = recipe.id },
+                    )
                 }
                 if (state.loadingMore) {
                     item {
@@ -173,10 +225,10 @@ fun RecipesScreen(
     }
 }
 
-/** A recipe of the list: what it is, what a serving holds and takes, a model's part, its diets. */
+/** A recipe of the list: what it is, what a serving holds and takes, a model's part, its diets; and, of one's own, what can be done with it. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
+private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, mine: Boolean, busy: Boolean, onSubmit: () -> Unit, onDelete: () -> Unit) {
     AppCard(onClick = onClick) {
         Text(recipe.title, style = MaterialTheme.typography.titleMedium)
         if (recipe.description.isNotBlank()) {
@@ -208,5 +260,29 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
             recipe.byModel?.let { AiMark(modelPartText(it)) }
             recipe.dietTags.forEach { LabelChip(dietTypeLabel(it)) }
         }
+        if (mine) {
+            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onSubmit, enabled = !busy) { Text(stringResource(R.string.recipes_submit)) }
+                TextButton(onClick = onDelete, enabled = !busy) { Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error) }
+            }
+        }
     }
+}
+
+/** A question to say yes to before [onYes] is done; [onDone] closes it either way. */
+@Composable
+private fun Confirm(question: String, yes: String, onYes: () -> Unit, onDone: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDone,
+        text = { Text(question) },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDone()
+                    onYes()
+                },
+            ) { Text(yes) }
+        },
+        dismissButton = { TextButton(onClick = onDone) { Text(stringResource(R.string.common_cancel)) } },
+    )
 }

@@ -208,6 +208,18 @@ interface DietApiService {
         @Query("pageSize") pageSize: Int? = null,
     ): RecipeSearchPageDto
 
+    /** The account's own recipes, a page at a time: those a model wrote for it and those a substitution left. */
+    @GET("recipes/mine")
+    suspend fun myRecipes(@Query("page") page: Int? = null, @Query("pageSize") pageSize: Int? = null): RecipeSearchPageDto
+
+    /** Puts a recipe of one's own before the curators, for the library everyone shares. */
+    @POST("recipes/{id}/submit")
+    suspend fun submitRecipe(@Path("id") id: String)
+
+    /** Deletes a recipe of one's own; the plans that hold it keep it. */
+    @DELETE("recipes/{id}")
+    suspend fun deleteRecipe(@Path("id") id: String)
+
     @GET("recipes/{id}")
     suspend fun recipe(@Path("id") id: String): RecipeDto
 

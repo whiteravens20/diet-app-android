@@ -443,6 +443,8 @@
     <!-- Recipes -->
     <string name="recipes_subtitle">A curated recipe library — every calorie computed by the backend.</string>
     <string name="recipes_search_placeholder">Recipe title…</string>
+    <string name="recipes_tab_library">Library</string>
+    <string name="recipes_tab_mine">My recipes</string>
     <string name="recipes_diet_type">Diet type</string>
     <string name="recipes_meal_type">Meal type</string>
     <string name="recipes_difficulty">Difficulty</string>
@@ -475,6 +477,13 @@
     <string name="recipes_none_filtered">No recipes match the current filters.</string>
     <string name="recipes_none_at_all">No recipes.</string>
     <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
+    <string name="recipes_mine_empty_title">No recipes of your own yet</string>
+    <string name="recipes_mine_empty">Recipes a model drafts for you, and the variants you keep after swapping an ingredient, land here.</string>
+    <string name="recipes_delete_confirm">Delete this recipe? Past planned meals stay intact — but it won\'t appear in your library or new plans.</string>
+    <string name="recipes_submit">Suggest for the shared library</string>
+    <string name="recipes_submit_confirm">Suggest this recipe for the library everyone uses? The curators will see its text and ingredients, not who sent it. If they accept it, it becomes a recipe of the library.</string>
+    <string name="recipes_submit_done">Sent to the curators.</string>
+    <string name="recipes_submit_failed">Could not send the recipe.</string>
     <string name="recipes_filters">Filters</string>
     <plurals name="recipes_filters_on">
         <item quantity="one">Filters: %d at work</item>
