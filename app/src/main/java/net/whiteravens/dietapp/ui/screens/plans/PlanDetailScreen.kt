@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,22 +41,30 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.ui.common.amountLabel
-import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
+import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AccentChip
+import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
@@ -63,7 +74,10 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/** One plan: header, day switcher, the selected day's meals with swap. */
+/**
+ * One plan: what it is and what a day of it holds on average, its days, and the selected day's
+ * meals with swap.
+ */
 @Composable
 fun PlanDetailScreen(
     onBack: () -> Unit,
@@ -97,37 +111,7 @@ fun PlanDetailScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.common_back),
-                    )
-                }
-                Column(Modifier.padding(start = 4.dp)) {
-                    Text(
-                        if (plan != null) {
-                            stringResource(R.string.plans_card_title, formatDate(plan.startDate), plan.durationDays)
-                        } else {
-                            stringResource(R.string.nav_meal_plans)
-                        },
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    if (plan != null) {
-                        Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AccentChip(dietTypeLabel(plan.dietType))
-                            LabelChip(
-                                stringResource(
-                                    R.string.plans_avg_kcal,
-                                    plan.averageDailyNutrition.calories.roundToInt(),
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        item { Header(plan, onBack) }
 
         state.error?.let {
             item {
@@ -149,6 +133,11 @@ fun PlanDetailScreen(
                 items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
             }
             return@LazyColumn
+        }
+
+        item { PlanFacts(plan) }
+        if (plan.conflicts > 0) {
+            item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
         }
 
         item {
@@ -179,6 +168,108 @@ fun PlanDetailScreen(
                 onSwap = { viewModel.offerSwap(meal.id) },
                 onOpen = { openMealId = meal.id },
             )
+        }
+    }
+}
+
+/** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it. */
+@Composable
+private fun Header(plan: MealPlan?, onBack: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
+        }
+        Column(Modifier.padding(start = 4.dp)) {
+            Text(
+                if (plan != null) planSummary(plan.durationDays, plan.dietType) else stringResource(R.string.nav_meal_plans),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            if (plan != null) {
+                Text(
+                    planMeta(plan.startDate, plan.averageDailyNutrition.calories, plan.ingredientReuse),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
+            }
+        }
+    }
+}
+
+/**
+ * What a day of the plan holds against its targets, the packs its menu opens and does not finish,
+ * the limits it was let go outside of, and what the pantry had to do with it.
+ */
+@Composable
+private fun PlanFacts(plan: MealPlan) {
+    val average = plan.averageDailyNutrition
+    val target = plan.targetMacros
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Fact(
+                stringResource(
+                    R.string.plans_plan_macros,
+                    formatNumber(average.protein.roundToInt()),
+                    formatNumber(target.protein.roundToInt()),
+                    formatNumber(average.fat.roundToInt()),
+                    formatNumber(target.fat.roundToInt()),
+                    formatNumber(average.carbs.roundToInt()),
+                    formatNumber(target.carbs.roundToInt()),
+                ),
+            )
+            if (plan.packs.bought > 0) PacksLine(plan.packs)
+            if (plan.mayGiveWay.isNotEmpty()) Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
+            when (plan.pantry) {
+                "counted" -> Fact(stringResource(R.string.plans_pantry_counted))
+                "left_out" -> Fact(stringResource(R.string.plans_pantry_left_out))
+                "unused" -> Fact(stringResource(R.string.plans_pantry_unused))
+            }
+        }
+    }
+}
+
+@Composable
+private fun Fact(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = color, modifier = modifier)
+}
+
+/** What the menu uses of the packs that do not keep once opened, unfolding into the packs it does not finish. */
+@Composable
+private fun PacksLine(packs: PlanPacks) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val percent = formatNumber((packs.used / packs.bought * 100).roundToInt())
+    val wasted = packs.open.count { it.wasted }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button) { open = !open }
+                .semantics { if (open) collapse { open = false; true } else expand { open = true; true } },
+        ) {
+            Fact(
+                if (wasted == 0) stringResource(R.string.plans_packs_line, percent)
+                else pluralStringResource(R.plurals.plans_packs_line_wasted, wasted, wasted, percent),
+                Modifier.weight(1f),
+            )
+            Icon(
+                if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (open) {
+            Column(Modifier.padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (packs.open.isEmpty()) Fact(stringResource(R.string.plans_packs_all_finished))
+                packs.open.forEach { pack ->
+                    val left = amountLabel(pack.left.toDouble(), pack.unit)
+                    val size = amountLabel(pack.packSize, pack.unit)
+                    if (pack.wasted) Fact(stringResource(R.string.plans_packs_left_much, pack.name, left, size), color = MaterialTheme.colorScheme.tertiary)
+                    else Fact(stringResource(R.string.plans_packs_left, pack.name, left, size))
+                }
+                Fact(stringResource(R.string.plans_packs_explain))
+            }
         }
     }
 }

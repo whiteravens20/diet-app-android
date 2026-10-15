@@ -146,8 +146,32 @@
         <item quantity="other">, and %1$d more plans hold this day</item>
     </plurals>
     <string name="plans_card_title">%1$s · %2$d days</string>
-    <string name="plans_avg_kcal">%1$d kcal/day avg</string>
     <string name="plans_day_skipped">This day is skipped.</string>
+    <plurals name="plans_plan_summary">
+        <item quantity="one">%1$d-day plan · %2$s</item>
+        <item quantity="other">%1$d-day plan · %2$s</item>
+    </plurals>
+    <string name="plans_plan_meta">From %1$s · %2$s kcal/day avg · %3$s%% ingredient reuse</string>
+    <string name="plans_plan_macros">A day of this plan holds on average: protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g.</string>
+    <string name="plans_may_give_way">This plan may go outside: %1$s.</string>
+    <string name="plans_pantry_counted">The pantry counted in the choice of recipes.</string>
+    <string name="plans_pantry_left_out">The pantry was left out of this plan for variety: the plans before it leaned on it.</string>
+    <string name="plans_pantry_unused">Nothing that is in the pantry is used by a recipe this plan could choose.</string>
+    <plurals name="plans_conflicts_notice">
+        <item quantity="one">One meal of this plan holds something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
+        <item quantity="other">%1$d meals of this plan hold something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
+    </plurals>
+    <string name="plans_packs_line">Packs that do not keep once opened: the menu uses %1$s%% of what it buys.</string>
+    <plurals name="plans_packs_line_wasted">
+        <item quantity="one">Packs that do not keep once opened: the menu uses %2$s%% of what it buys, and leaves more than a fifth of %1$d pack.</item>
+        <item quantity="other">Packs that do not keep once opened: the menu uses %2$s%% of what it buys, and leaves more than a fifth of %1$d packs.</item>
+    </plurals>
+    <string name="plans_packs_left">%1$s: %2$s left of a pack of %3$s</string>
+    <string name="plans_packs_left_much">%1$s: %2$s left of a pack of %3$s, more than a fifth of it</string>
+    <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>
+    <string name="plans_packs_explain">Counted from the menu alone; what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
+    <string name="ai_mark_label">AI-assisted</string>
+    <string name="ai_mark_plan">Parts of this plan were chosen with the help of a model.</string>
     <string name="plans_day_total">%1$d / %2$d kcal</string>
     <string name="plans_day_macros">P %1$d g · F %2$d g · C %3$d g</string>
     <string name="plans_delta_kcal">%1$d kcal</string>

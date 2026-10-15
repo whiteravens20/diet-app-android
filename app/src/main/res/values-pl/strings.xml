@@ -151,8 +151,38 @@
         <item quantity="other">, a ten dzień obejmuje jeszcze %1$d planu</item>
     </plurals>
     <string name="plans_card_title">%1$s · %2$d dni</string>
-    <string name="plans_avg_kcal">śr. %1$d kcal/dzień</string>
     <string name="plans_day_skipped">Ten dzień jest pominięty.</string>
+    <plurals name="plans_plan_summary">
+        <item quantity="one">Plan na %1$d dzień · %2$s</item>
+        <item quantity="few">Plan na %1$d dni · %2$s</item>
+        <item quantity="many">Plan na %1$d dni · %2$s</item>
+        <item quantity="other">Plan na %1$d dnia · %2$s</item>
+    </plurals>
+    <string name="plans_plan_meta">Od %1$s · śr. %2$s kcal/dzień · %3$s%% ponownego użycia składników</string>
+    <string name="plans_plan_macros">Dzień tego planu ma średnio: białko %1$s z %2$s g · tłuszcz %3$s z %4$s g · węglowodany %5$s z %6$s g.</string>
+    <string name="plans_may_give_way">Ten plan może wychodzić poza limit: %1$s.</string>
+    <string name="plans_pantry_counted">Przy wyborze przepisów uwzględniono spiżarnię.</string>
+    <string name="plans_pantry_left_out">W tym planie spiżarnia została pominięta dla urozmaicenia: poprzednie plany się na niej opierały.</string>
+    <string name="plans_pantry_unused">Żaden przepis, który mógł trafić do tego planu, nie korzysta z tego, co jest w spiżarni.</string>
+    <plurals name="plans_conflicts_notice">
+        <item quantity="one">Jeden posiłek tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+        <item quantity="few">%1$d posiłki tego planu zawierają coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+        <item quantity="many">%1$d posiłków tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+        <item quantity="other">%1$d posiłku tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+    </plurals>
+    <string name="plans_packs_line">Produkty nietrwałe po otwarciu: jadłospis zużywa %1$s%% tego, co kupuje.</string>
+    <plurals name="plans_packs_line_wasted">
+        <item quantity="one">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
+        <item quantity="few">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
+        <item quantity="many">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
+        <item quantity="other">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
+    </plurals>
+    <string name="plans_packs_left">%1$s: zostaje %2$s z opakowania %3$s</string>
+    <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
+    <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>
+    <string name="plans_packs_explain">Policzone z samego jadłospisu; to, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>
+    <string name="ai_mark_label">Z pomocą AI</string>
+    <string name="ai_mark_plan">Części tego planu wybrano z pomocą modelu AI.</string>
     <string name="plans_day_total">%1$d / %2$d kcal</string>
     <string name="plans_day_macros">B %1$d g · T %2$d g · W %3$d g</string>
     <string name="plans_delta_kcal">%1$d kcal</string>

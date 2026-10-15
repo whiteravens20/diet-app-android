@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.repository
 
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
@@ -19,13 +20,16 @@ import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
@@ -137,6 +141,8 @@ fun MealPlanDayDto.toDomain() = PlanDay(
     belowSafetyFloor = belowSafetyFloor,
 )
 
+fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
+
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     id = id,
     profileId = profileId,
@@ -146,6 +152,17 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     days = days.map(MealPlanDayDto::toDomain),
     averageDailyNutrition = averageDailyNutrition.toDomain(),
     syncedAt = syncedAt,
+    targetMacros = targetMacros.toDomain(),
+    ingredientReuse = ingredientReuseScore,
+    packs = PlanPacks(
+        bought = packs.bought,
+        used = packs.used,
+        open = packs.open.map { OpenPack(it.ingredientId, it.name, it.unit, it.packSize, it.packs, it.left, it.wasted) },
+    ),
+    byModel = generationMode == "ai_assisted",
+    mayGiveWay = options.allowRelaxations,
+    pantry = report?.pantry,
+    revision = revision,
 )
 
 fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
@@ -154,6 +171,8 @@ fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
     durationDays = durationDays,
     dietType = dietType,
     averageDailyNutrition = averageDailyNutrition.toDomain(),
+    ingredientReuse = ingredientReuseScore,
+    byModel = generationMode == "ai_assisted",
 )
 
 fun MealPlanPageDto.toDomain(syncedAt: Long? = null) = MealPlanPage(

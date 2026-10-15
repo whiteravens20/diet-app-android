@@ -137,6 +137,9 @@ data class Nutrition(
     val carbs: Double,
 )
 
+/** Grams of protein, fat and carbohydrate: what a plan or a day aims at under its diet's split. */
+data class Macros(val protein: Double, val fat: Double, val carbs: Double)
+
 data class CalorieTarget(
     val bmr: Double,
     val maintenance: Double,
@@ -214,6 +217,38 @@ data class MealPlan(
     val averageDailyNutrition: Nutrition,
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
+    /** What a day of the plan aims at on average, in grams. */
+    val targetMacros: Macros,
+    /** 0-1: the share of the plan's ingredients that more than one of its recipes uses. */
+    val ingredientReuse: Double,
+    /** What the menu buys and uses of the packs that do not keep once opened. */
+    val packs: PlanPacks,
+    /** Parts of the plan were chosen with a model's help. */
+    val byModel: Boolean,
+    /** The limits the plan was let go outside of, in the order they give way. */
+    val mayGiveWay: List<String>,
+    /** What the pantry had to do with the choice of recipes: `counted` | `left_out` | `unused` | `empty` | `not_asked`; null on a plan from before it was kept. */
+    val pantry: String?,
+    /** How many times the plan has been changed; a change made from an older one is refused. */
+    val revision: Int,
+) {
+    /** The meals that hold something the profile has ruled out since the plan was made. */
+    val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }
+}
+
+/** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
+data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
+
+/** A pack the menu opens and does not finish: what is left of the last one, and whether that is more than a fifth of it. */
+data class OpenPack(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`. */
+    val unit: String,
+    val packSize: Double,
+    val packs: Int,
+    val left: Int,
+    val wasted: Boolean,
 )
 
 /**
@@ -243,6 +278,10 @@ data class MealPlanSummary(
     val durationDays: Int,
     val dietType: String,
     val averageDailyNutrition: Nutrition,
+    /** 0-1: the share of the plan's ingredients that more than one of its recipes uses. */
+    val ingredientReuse: Double,
+    /** Parts of the plan were chosen with a model's help. */
+    val byModel: Boolean,
 )
 
 /** A page of a profile's plans, the newest first; [syncedAt] is set when it came from the cache. */

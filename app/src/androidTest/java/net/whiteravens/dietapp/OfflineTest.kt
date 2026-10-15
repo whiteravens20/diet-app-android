@@ -57,22 +57,23 @@ class OfflineTest {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
         val planId = Instance.newPlan(account, profileId)
-        val (startDate, days) = Instance.planStart(account, planId)
+        val (startDate, _) = Instance.planStart(account, planId)
         val (title, _) = Instance.firstMeal(account, planId)
         screen.signIn(account)
 
         // Opened once with the network: the phone keeps a copy.
         screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
-        val card = text(R.string.plans_card_title, formatDate(startDate), days)
-        screen.waitForText(card)
-        screen.onNodeWithText(card).performClick()
+        // The plan's card names the day it begins on.
+        val card = formatDate(startDate)
+        screen.waitForText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
         screen.waitForText(title)
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
-        screen.waitForText(card)
+        screen.waitForText(card, substring = true)
 
         // Opened again without it: the copy, said to be one, with its meals.
         airplaneMode(true)
-        screen.onNodeWithText(card).performClick()
+        screen.onNodeWithText(card, substring = true).performClick()
         screen.waitForText(text(R.string.offline_readonly), timeoutMillis = 40_000)
         screen.waitForText(title)
         screen.keepScreenshot("offline-a-plan-from-the-copy")

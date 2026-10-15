@@ -95,7 +95,7 @@ class MealPlansViewModelTest {
 
     private val ada = Profile("ada", "Ada", "balanced", 3)
     private val bo = Profile("bo", "Bo", "vegan", 4)
-    private fun summary(id: String) = MealPlanSummary(id, "2026-10-12", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0))
+    private fun summary(id: String) = MealPlanSummary(id, "2026-10-12", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0), 0.4, false)
     private fun page(vararg ids: String, totalPages: Int = 1, syncedAt: Long? = null) = MealPlanPage(ids.map(::summary), 1, totalPages, syncedAt)
     private fun calendarDay(date: LocalDate, planId: String = "p1") = PlanCalendarDay(date, planId, 1, 1980.0, 2000.0, null, 0, 3, false)
 

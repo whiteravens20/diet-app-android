@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Parcel
 import androidx.activity.ComponentActivity
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
@@ -28,9 +29,13 @@ import java.io.IOException
 fun text(@StringRes id: Int, vararg args: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
-/** Waits until something on the screen shows [shown], as a person waits for a screen to load. */
-fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000) {
-    waitUntil(timeoutMillis) { onAllNodesWithText(shown).fetchSemanticsNodes().isNotEmpty() }
+/** A text of the app's that is counted, in the form the language gives [count], with [args] put in. */
+fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(id, count, *args)
+
+/** Waits until something on the screen shows [shown], or a text holding it where [substring], as a person waits for a screen to load. */
+fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000, substring: Boolean = false) {
+    waitUntil(timeoutMillis) { onAllNodesWithText(shown, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 }
 
 /**

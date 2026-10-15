@@ -29,7 +29,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -41,22 +40,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.PlanFilter
-import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatSyncedAt
-import net.whiteravens.dietapp.ui.components.AccentChip
+import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
-import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import java.time.LocalDate
 import java.time.YearMonth
-import kotlin.math.roundToInt
 
 /**
  * Plans per profile: profile chips, a new plan, the profile's plans as a calendar, and the
@@ -220,26 +215,18 @@ private fun Filters(filter: PlanFilter, onNarrow: (PlanFilter) -> Unit) {
     }
 }
 
+/** A plan in the list: what it is, when it begins, what a day of it holds on average, and a model's hand in it. */
 @Composable
 private fun PlanCard(plan: MealPlanSummary, onClick: () -> Unit) {
     AppCard(onClick = onClick) {
+        Text(planSummary(plan.durationDays, plan.dietType), style = MaterialTheme.typography.titleMedium)
         Text(
-            stringResource(R.string.plans_card_title, formatDate(plan.startDate), plan.durationDays),
-            style = MaterialTheme.typography.titleMedium,
+            planMeta(plan.startDate, plan.averageDailyNutrition.calories, plan.ingredientReuse),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
         )
-        Row(
-            modifier = Modifier.padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AccentChip(dietTypeLabel(plan.dietType))
-            LabelChip(
-                stringResource(
-                    R.string.plans_avg_kcal,
-                    plan.averageDailyNutrition.calories.roundToInt(),
-                ),
-            )
-        }
+        if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 8.dp))
     }
 }
 

@@ -641,6 +641,10 @@ data class MealPlanSummaryDto(
     val durationDays: Int,
     val dietType: String,
     val averageDailyNutrition: NutritionDto,
+    /** 0-1 optimiser reuse score. */
+    val ingredientReuseScore: Double,
+    /** `deterministic` | `ai_assisted`. */
+    val generationMode: String,
     val createdAt: String,
 )
 

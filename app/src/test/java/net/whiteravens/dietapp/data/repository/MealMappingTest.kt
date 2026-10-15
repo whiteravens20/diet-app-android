@@ -8,6 +8,7 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.testing.fixture
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -55,4 +56,25 @@ class MealMappingTest {
         assertTrue(day.belowSafetyFloor)
         assertTrue(list.stale)
     }
+
+    @Test
+    fun `a plan carries its targets, its packs, the limits it may go outside of, and how many of its meals the profile has ruled out since`() {
+        val day = plan.days.first()
+        val ruledOut = day.copy(meals = day.meals.mapIndexed { i, meal -> if (i < 2) meal.copy(restrictionConflicts = listOf("avoided")) else meal })
+
+        val mapped = plan.copy(days = listOf(ruledOut) + plan.days.drop(1), options = plan.options.copy(allowRelaxations = listOf("cook_time"))).toDomain()
+
+        assertEquals(2, mapped.conflicts)
+        assertEquals(listOf("cook_time"), mapped.mayGiveWay)
+        assertEquals(plan.targetMacros.protein, mapped.targetMacros.protein, 0.0)
+        assertEquals(plan.packs.open.map { it.name to it.wasted }, mapped.packs.open.map { it.name to it.wasted })
+        assertEquals(plan.ingredientReuseScore, mapped.ingredientReuse, 0.0)
+    }
+
+    @Test
+    fun `a plan made with a model's help says so`() {
+        assertTrue(plan.copy(generationMode = "ai_assisted").toDomain().byModel)
+        assertFalse(plan.toDomain().byModel)
+    }
 }
+
