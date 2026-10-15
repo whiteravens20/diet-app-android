@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.readOrDrop
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AddCustomMealRequest
+import net.whiteravens.dietapp.data.remote.AiSuggestIngredientRequest
 import net.whiteravens.dietapp.data.remote.AiSwapOfferRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DayOverrideDto
@@ -26,10 +27,12 @@ import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
+import net.whiteravens.dietapp.data.remote.SwapIngredientRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.PlanAsk
@@ -39,6 +42,9 @@ import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
+import net.whiteravens.dietapp.domain.Substitution
+import net.whiteravens.dietapp.domain.SubstitutionPreview
+import net.whiteravens.dietapp.domain.SuggestedSubstitute
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import java.time.LocalDate
@@ -257,10 +263,50 @@ class MealPlanRepository @Inject constructor(
         cache.deletePlanList(plan.profileId)
     }
 
+    /** The ingredients the catalogue's own rules name in the place of those of a meal, by the ingredient they would replace. */
+    suspend fun substitutes(planId: String, mealId: String): Map<String, IngredientChoice> =
+        apiCall(json) { api.substitutes(planId, mealId) }.associate { it.fromIngredientId to IngredientChoice(it.to.id, it.to.name, it.to.category) }
+
+    /** What [substitution] would do to its meal. Nothing is written. */
+    suspend fun previewSubstitution(substitution: Substitution): SubstitutionPreview =
+        apiCall(json) { api.previewSubstitution(substitution.toRequest()) }.toDomain()
+
+    /**
+     * Makes [substitution]: the meal gets a recipe of its own with the substitute in it, and the plan,
+     * balanced around it, is kept for offline use. Where a model was asked to reword the text and the
+     * engine's plain replacement stands instead, the answer says why.
+     */
+    suspend fun substitute(substitution: Substitution): Rebalanced {
+        val result = apiCall(json) { api.substitute(substitution.toRequest()) }
+        mirror(result.plan)
+        return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), result.aiMeta?.fallbackReason)
+    }
+
+    /** An ingredient a model picked for the line of [fromIngredientId], with the note of its pick, or why the engine picked. */
+    suspend fun suggestSubstitute(planId: String, mealId: String, fromIngredientId: String): SuggestedSubstitute {
+        val answer = apiCall(json) { api.suggestSubstitute(AiSuggestIngredientRequest(planId, mealId, fromIngredientId)) }
+        return SuggestedSubstitute(
+            ingredient = IngredientChoice(answer.toIngredient.id, answer.toIngredient.name, answer.toIngredient.category),
+            pick = answer.pick,
+            reason = answer.aiMeta.reason.takeIf { answer.pick != null },
+            fallbackReason = answer.aiMeta.fallbackReason,
+        )
+    }
+
+    private fun Substitution.toRequest() = SwapIngredientRequest(
+        planId = planId,
+        plannedMealId = mealId,
+        fromIngredientId = fromIngredientId,
+        toIngredientId = toIngredientId,
+        rewriteWithAi = rewriteWithAi,
+        acceptChange = acceptChange,
+        pick = pick,
+    )
+
     /** A plan as a change left it, kept for offline use, with what the change rebalanced. */
     private suspend fun kept(result: RebalanceResultDto): Rebalanced {
         mirror(result.plan)
-        return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain())
+        return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), fallbackReason = null)
     }
 
     private companion object {

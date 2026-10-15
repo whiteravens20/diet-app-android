@@ -37,7 +37,7 @@ class MealMappingTest {
 
         val lines = meal.toDomain(plan.days.first { meal in it.meals }.date, plan.report).lines
 
-        assertEquals(meal.ingredients.map { MealLine(it.name, it.display.quantity, it.display.unit) }, lines)
+        assertEquals(meal.ingredients.map { MealLine(it.ingredientId, it.name, it.display.quantity, it.display.unit) }, lines)
         assertNotEquals(meal.recipe!!.ingredients.map { it.display.quantity }, lines.map { it.quantity })
     }
 

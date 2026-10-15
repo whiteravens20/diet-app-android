@@ -842,6 +842,56 @@ data class RebalanceSummaryDto(
 @Serializable
 data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null)
 
+/** An ingredient the catalogue's own rules name in the place of one of a planned meal. */
+@Serializable
+data class SubstituteSuggestionDto(val fromIngredientId: String, val to: IngredientDto, val moved: List<String> = emptyList())
+
+/** POST `/meal-plans/swap-ingredient/preview` and `/apply`: the line that leaves and the ingredient that comes in its place. */
+@Serializable
+data class SwapIngredientRequest(
+    val planId: String,
+    val plannedMealId: String,
+    val fromIngredientId: String,
+    val toIngredientId: String,
+    /** A model rewords the recipe's text around the substitute: one of the account's AI requests. */
+    val rewriteWithAi: Boolean = false,
+    /** Made although it moves what a serving holds by more than a tenth. */
+    val acceptChange: Boolean = false,
+    /** The note that came with a substitute a model suggested. */
+    val pick: String? = null,
+)
+
+/** What a substitution would do to the meal it is made in, the portion on the plate, before anything is written. */
+@Serializable
+data class SwapPreviewDto(
+    val before: NutritionDto,
+    val after: NutritionDto,
+    /** What the meal takes of the ingredient that leaves, all its lines together. */
+    val from: PlannedIngredientDto,
+    /** What it would take of the one that comes in its place. */
+    val to: PlannedIngredientDto,
+    /** `energy` | `capped` | `mass`: how the amount of the substitute was decided. */
+    val sizing: String,
+    /** The recipe has the substitute already: its amount grows. */
+    val merged: Boolean,
+    /** `off_diet` | `allergen` | `excluded_ingredient`. */
+    val violations: List<String>,
+    /** `calories` | `protein` | `fat` | `carbs`: what of a serving moves by more than a tenth. */
+    val moved: List<String>,
+    val valid: Boolean,
+)
+
+/** POST `/meal-plans/swap-ingredient/ai-suggest`: a model asked which ingredient of the engine's pool to take. */
+@Serializable
+data class AiSuggestIngredientRequest(val planId: String, val plannedMealId: String, val fromIngredientId: String)
+
+@Serializable
+data class AiSuggestIngredientResponseDto(val toIngredient: IngredientDto, val aiMeta: AiGenerationMetaDto, val pick: String? = null)
+
+/** What a substitution answers: the plan, what it rebalanced, and who reworded the text where a model was asked to. */
+@Serializable
+data class SwapIngredientResponseDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null, val aiMeta: AiGenerationMetaDto? = null)
+
 /** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
 @Serializable
 data class SetMealEatenRequest(val eaten: Boolean)

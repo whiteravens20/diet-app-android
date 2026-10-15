@@ -121,6 +121,22 @@ interface DietApiService {
     @POST("meal-plans/swap-meal")
     suspend fun swapMeal(@Body body: ApplyMealSwapRequest): RebalanceResultDto
 
+    /** The ingredients the catalogue's own rules name in the place of those of a planned meal. */
+    @GET("meal-plans/{id}/meals/{mealId}/substitutes")
+    suspend fun substitutes(@Path("id") id: String, @Path("mealId") mealId: String): List<SubstituteSuggestionDto>
+
+    /** What a substitution would do to its meal; nothing is written. */
+    @POST("meal-plans/swap-ingredient/preview")
+    suspend fun previewSubstitution(@Body body: SwapIngredientRequest): SwapPreviewDto
+
+    /** Makes a substitution: the meal gets a recipe of its own with the substitute in it. */
+    @POST("meal-plans/swap-ingredient/apply")
+    suspend fun substitute(@Body body: SwapIngredientRequest): SwapIngredientResponseDto
+
+    /** An ingredient a model picked from the engine's pool for the line; nothing is written. */
+    @POST("meal-plans/swap-ingredient/ai-suggest")
+    suspend fun suggestSubstitute(@Body body: AiSuggestIngredientRequest): AiSuggestIngredientResponseDto
+
     /** A recipe for the meal that a model picked from those the engine puts first; nothing is written. */
     @POST("meal-plans/ai-swap-meal/preview")
     suspend fun aiOfferSwap(@Body body: AiSwapOfferRequest): AiMealSwapPreviewDto

@@ -121,6 +121,13 @@ object Instance {
         !call("GET", "meal-plans/$planId", token = account.accessToken)
             .getJSONArray("days").getJSONObject(0).getJSONArray("meals").getJSONObject(0).isNull("eatenAt")
 
+    /** A meal of a plan's first day that is the catalogue's and not eaten: its title, and the name of its first line. */
+    fun uneatenMeal(account: Account, planId: String): Pair<String, String> {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
+        val meal = (0 until meals.length()).map { meals.getJSONObject(it) }.first { it.getString("source") == "CATALOGUE" && it.isNull("eatenAt") }
+        return meal.getJSONObject("recipe").getString("title") to meal.getJSONArray("ingredients").getJSONObject(0).getString("name")
+    }
+
     /** The names of the meals of the user's own on a plan's first day. */
     fun ownMeals(account: Account, planId: String): List<String> {
         val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")

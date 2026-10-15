@@ -206,6 +206,7 @@ data class Meal(
 
 /** A line of a meal: an ingredient and its amount as the server rounds it and names its unit. */
 data class MealLine(
+    val ingredientId: String,
     val name: String,
     val quantity: Double,
     /** `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
@@ -278,8 +279,49 @@ data class Rebalance(
 /** A meal's servings scaled by a rebalance: [before] and [after] are its scales. */
 data class ScaleChange(val mealId: String, val before: Double, val after: Double)
 
-/** A plan as a change left it, and what the change rebalanced, if it did. */
-data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?)
+/**
+ * A plan as a change left it, what the change rebalanced, if it did, and why the engine stood in for
+ * a model where one was asked to do part of the change ([fallbackReason]).
+ */
+data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?, val fallbackReason: String?)
+
+/**
+ * A substitution of one ingredient of a meal for another: in [mealId] of [planId], the line of
+ * [fromIngredientId] takes [toIngredientId]; a model rewords the text where [rewriteWithAi], a
+ * substitution that moves what a serving holds by more than a tenth is made where [acceptChange],
+ * and [pick] is the note of a substitute a model suggested.
+ */
+data class Substitution(
+    val planId: String,
+    val mealId: String,
+    val fromIngredientId: String,
+    val toIngredientId: String,
+    val rewriteWithAi: Boolean = false,
+    val acceptChange: Boolean = false,
+    val pick: String? = null,
+)
+
+/**
+ * What a substitution would do to its meal, the portion on the plate: what the meal holds before
+ * and after, what it takes of the ingredient that leaves and of the one that comes, how the amount
+ * was decided (`energy` | `capped` | `mass`), whether the recipe has the substitute already, what
+ * stands in its way (`off_diet` | `allergen` | `excluded_ingredient`) and what of a serving it moves
+ * by more than a tenth.
+ */
+data class SubstitutionPreview(
+    val before: Nutrition,
+    val after: Nutrition,
+    val from: MealLine,
+    val to: MealLine,
+    val sizing: String,
+    val merged: Boolean,
+    val violations: List<String>,
+    val moved: List<String>,
+    val valid: Boolean,
+)
+
+/** A substitute a model was asked for: the ingredient, and the note and sentence of the model's pick, or why the engine picked. */
+data class SuggestedSubstitute(val ingredient: IngredientChoice, val pick: String?, val reason: String?, val fallbackReason: String?)
 
 /** A meal of the user's own: its name, its time of day, what one serving holds, and how many servings it is. */
 data class CustomMeal(val name: String, val slot: String, val perServing: Nutrition, val servings: Double)

@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.MealPlanSummaryDto
 import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
+import net.whiteravens.dietapp.data.remote.PlannedIngredientDto
 import net.whiteravens.dietapp.data.remote.PlannedMealDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.data.remote.RecipeDto
@@ -22,6 +23,7 @@ import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
+import net.whiteravens.dietapp.data.remote.SwapPreviewDto
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.Meal
@@ -41,6 +43,7 @@ import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipePage
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
+import net.whiteravens.dietapp.domain.SubstitutionPreview
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
@@ -147,7 +150,7 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         eaten = eatenAt != null,
         offDiet = dietOverride,
         nutrition = nutrition.toDomain(),
-        lines = ingredients.map { MealLine(name = it.name, quantity = it.display.quantity, unit = it.display.unit) },
+        lines = ingredients.map(PlannedIngredientDto::toLine),
         allergens = recipe?.allergens.orEmpty(),
         conflicts = restrictionConflicts,
         disliked = ingredients.filter { it.ingredientId in dislikedIngredientIds }.map { it.name }.distinct(),
@@ -161,6 +164,21 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
 }
 
 fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
+
+/** A planned amount as a meal shows it: rounded, in the unit its kind of food is counted in. */
+fun PlannedIngredientDto.toLine() = MealLine(ingredientId = ingredientId, name = name, quantity = display.quantity, unit = display.unit)
+
+fun SwapPreviewDto.toDomain() = SubstitutionPreview(
+    before = before.toDomain(),
+    after = after.toDomain(),
+    from = from.toLine(),
+    to = to.toLine(),
+    sizing = sizing,
+    merged = merged,
+    violations = violations,
+    moved = moved,
+    valid = valid,
+)
 
 fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     id = id,

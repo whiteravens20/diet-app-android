@@ -4,9 +4,11 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -209,6 +211,20 @@ class PlansTest {
         screen.waitUntil(20_000) { Instance.ownMeals(account, planId) == listOf("Grandma's soup") }
         screen.scrollToText("Grandma's soup")
         putAwayRebalance()
+
+        // An ingredient of a meal is substituted in a window of its own: its lines first, then what may replace the one chosen.
+        val (other, line) = Instance.uneatenMeal(account, planId)
+        val changeOther = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), other))
+        screen.scrollTo(changeOther)
+        screen.onAllNodes(changeOther)[0].performClick()
+        screen.onNodeWithText("${text(R.string.plans_substitute_ingr)} ⇄").performClick()
+        screen.waitForText(text(R.string.substitute_step_pick))
+        // Looked for in the window alone: a meal behind it may be called as an ingredient is.
+        screen.onNode(hasText(line) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForText(text(R.string.substitute_step_replace, line))
+        screen.keepScreenshot("plans-an-ingredient-to-substitute")
+        screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }
 
         // The plan is deleted once that is confirmed, and the list is back.
         screen.scrollTo(hasContentDescription(text(R.string.common_delete)))

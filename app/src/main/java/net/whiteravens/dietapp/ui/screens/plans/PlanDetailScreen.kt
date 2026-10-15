@@ -166,6 +166,20 @@ fun PlanDetailScreen(
         )
     }
 
+    // The meal an ingredient is being substituted in, while its window is open.
+    var substitutingIn by rememberSaveable { mutableStateOf<String?>(null) }
+    plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == substitutingIn }?.let { meal ->
+        SubstituteDialog(
+            planId = plan.id,
+            meal = meal,
+            onApplied = { result ->
+                substitutingIn = null
+                viewModel.substituted(result)
+            },
+            onDismiss = { substitutingIn = null },
+        )
+    }
+
     // The meal a favourite is being picked for, while the picker is open.
     var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == pickingFor }?.let { meal ->
@@ -194,7 +208,8 @@ fun PlanDetailScreen(
     // The card of a rebalance stands over the end of the list: the list ends that much higher, so
     // that nothing of it stays under the card.
     var cardHeight by remember { mutableIntStateOf(0) }
-    val underCard = if (state.rebalance != null) with(LocalDensity.current) { cardHeight.toDp() + 16.dp } else 0.dp
+    val shownCard = state.rebalance != null || state.notice != null
+    val underCard = if (shownCard) with(LocalDensity.current) { cardHeight.toDp() + 16.dp } else 0.dp
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -257,6 +272,7 @@ fun PlanDetailScreen(
                     onEaten = { eaten -> viewModel.setEaten(meal.id, eaten) },
                     onChange = { how -> viewModel.offerSwap(meal.id, how) },
                     onPickFavorite = { pickingFor = meal.id },
+                    onSubstitute = { substitutingIn = meal.id },
                     onOpen = { openMealId = meal.id },
                 )
             }
@@ -275,9 +291,10 @@ fun PlanDetailScreen(
                 }
             }
         }
-        state.rebalance?.let { rebalance ->
+        if (shownCard) {
             RebalanceCard(
-                rebalance = rebalance,
+                rebalance = state.rebalance,
+                notice = state.notice,
                 busy = busy,
                 onUndo = viewModel::undoRebalance,
                 onWeek = viewModel::rebalanceWeek,
@@ -482,6 +499,7 @@ private fun MealCard(
     onEaten: (Boolean) -> Unit,
     onChange: (SwapAsk) -> Unit,
     onPickFavorite: () -> Unit,
+    onSubstitute: () -> Unit,
     onOpen: () -> Unit,
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
@@ -526,7 +544,7 @@ private fun MealCard(
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else if (!readOnly && !meal.eaten && !meal.custom) {
-                MealChanges(meal, busy, aiOn, onChange, onPickFavorite)
+                MealChanges(meal, busy, aiOn, onChange, onPickFavorite, onSubstitute)
             }
         }
     }
@@ -541,7 +559,8 @@ private fun MealCard(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RebalanceCard(
-    rebalance: Rebalance,
+    rebalance: Rebalance?,
+    notice: String?,
     busy: Boolean,
     onUndo: () -> Unit,
     onWeek: () -> Unit,
@@ -552,7 +571,7 @@ private fun RebalanceCard(
     val timeout = LocalAccessibilityManager.current
         ?.calculateRecommendedTimeoutMillis(REBALANCE_SHOWN_MILLIS, containsIcons = false, containsText = true, containsControls = true)
         ?: REBALANCE_SHOWN_MILLIS
-    LaunchedEffect(rebalance) {
+    LaunchedEffect(rebalance, notice) {
         delay(timeout)
         dismiss()
     }
@@ -564,32 +583,44 @@ private fun RebalanceCard(
         modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
-            Hint(
-                stringResource(
-                    R.string.plans_rebalance_summary,
-                    formatNumber(rebalance.caloriesBefore.roundToInt()),
-                    formatNumber(rebalance.caloriesAfter.roundToInt()),
-                    formatNumber(rebalance.changes.size),
-                ),
-            )
-            if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
-            if (rebalance.unabsorbedKcal != 0.0) {
-                Hint(
-                    stringResource(
-                        if (rebalance.unabsorbedKcal > 0) R.string.plans_rebalance_left_over else R.string.plans_rebalance_left_under,
-                        formatNumber(abs(rebalance.unabsorbedKcal).roundToInt()),
-                    ),
-                    MaterialTheme.colorScheme.tertiary,
-                )
-            }
+            // Why the engine's plain replacement stands where a model was asked to reword the text.
+            notice?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
+            if (rebalance != null) RebalanceSaid(rebalance)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-                OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
-                if (rebalance.scope == "day") {
-                    OutlinedButton(onClick = onWeek, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_week)) }
+                if (rebalance != null) {
+                    OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
+                    if (rebalance.scope == "day") {
+                        OutlinedButton(onClick = onWeek, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_week)) }
+                    }
                 }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.plans_rebalance_dismiss)) }
             }
+        }
+    }
+}
+
+/** What a rebalance did: the day's kcal before and after, the meals scaled, and what it could not take back. */
+@Composable
+private fun RebalanceSaid(rebalance: Rebalance) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
+        Hint(
+            stringResource(
+                R.string.plans_rebalance_summary,
+                formatNumber(rebalance.caloriesBefore.roundToInt()),
+                formatNumber(rebalance.caloriesAfter.roundToInt()),
+                formatNumber(rebalance.changes.size),
+            ),
+        )
+        if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
+        if (rebalance.unabsorbedKcal != 0.0) {
+            Hint(
+                stringResource(
+                    if (rebalance.unabsorbedKcal > 0) R.string.plans_rebalance_left_over else R.string.plans_rebalance_left_under,
+                    formatNumber(abs(rebalance.unabsorbedKcal).roundToInt()),
+                ),
+                MaterialTheme.colorScheme.tertiary,
+            )
         }
     }
 }
@@ -702,10 +733,11 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
 /**
  * The ways to change a meal, behind one button named by the meal, as the web folds them on a narrow
  * screen: any recipe of the plan's diet, a favourite picked by hand, a model's pick (off, and saying
- * why, on an account without a model), or one with the profile's favourite ingredients.
+ * why, on an account without a model), one with the profile's favourite ingredients, or one of its
+ * ingredients substituted.
  */
 @Composable
-private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (SwapAsk) -> Unit, onPickFavorite: () -> Unit) {
+private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (SwapAsk) -> Unit, onPickFavorite: () -> Unit, onSubstitute: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }, enabled = !busy) {
@@ -728,6 +760,7 @@ private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (Swa
                 enabled = aiOn,
             ) { pick { onChange(SwapAsk("ai")) } }
             Change(stringResource(R.string.plans_swap_fav_ingr), stringResource(R.string.plans_tooltip_swap_by_fav)) { pick { onChange(SwapAsk("favorite_ingredients")) } }
+            Change("${stringResource(R.string.plans_substitute_ingr)} ⇄", stringResource(R.string.plans_tooltip_substitute)) { pick(onSubstitute) }
         }
     }
 }

@@ -28,6 +28,7 @@ import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.ScaleChange
+import net.whiteravens.dietapp.domain.Substitution
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -281,6 +282,45 @@ class MealPlanRepositoryTest {
         // Left out, the API's own default holds: the pantry first.
         assertFalse("respectInventory" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
         assertEquals("false", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("respectInventory").jsonPrimitive.content)
+    }
+
+    @Test
+    fun `a substitution is previewed with nothing taken, and made with a moved serving taken, a rewording asked for and a model's note`() {
+        val line = """{"ingredientId":"%s","name":"%s","quantity":20,"unit":"g","display":{"quantity":20,"unit":"g"}}"""
+        val nutrition = """{"calories":500,"protein":20,"fat":25,"carbs":40}"""
+        // The shape the API answers a preview with.
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "application/json").setBody(
+                """{"before":$nutrition,"after":$nutrition,"calorieDelta":0,"macroDelta":{"protein":0,"fat":0,"carbs":0},""" +
+                    """"from":${line.format("butter", "Butter")},"to":${line.format("oil", "Olive oil")},""" +
+                    """"sizing":"energy","merged":false,"violations":[],"moved":["fat"],"valid":true}""",
+            ),
+        )
+        // A captured change of a plan, with what a rewording a model was asked for adds to it.
+        val made = JsonObject(
+            json.parseToJsonElement(fixture("meal-plan-swap-apply")).jsonObject + mapOf(
+                "aiMeta" to json.parseToJsonElement("""{"provider":null,"model":null,"failoverChain":[],"usedDeterministicFallback":true,"fallbackReason":"quota_exhausted","reason":null}"""),
+            ),
+        )
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(made.toString()))
+        val plans = repository(Cache())
+
+        val preview = runBlocking { plans.previewSubstitution(Substitution("plan-1", "meal-1", "butter", "oil")) }
+        val done = runBlocking { plans.substitute(Substitution("plan-1", "meal-1", "butter", "oil", rewriteWithAi = true, acceptChange = true, pick = "note")) }
+
+        assertEquals(listOf("fat"), preview.moved)
+        assertEquals("Olive oil", preview.to.name)
+        val previewed = server.takeRequest()
+        assertEquals("/api/meal-plans/swap-ingredient/preview", previewed.path)
+        val asked = json.parseToJsonElement(previewed.body.readUtf8()).jsonObject
+        assertFalse("acceptChange" in asked || "rewriteWithAi" in asked || "pick" in asked)
+        val applied = server.takeRequest()
+        assertEquals("/api/meal-plans/swap-ingredient/apply", applied.path)
+        val sent = json.parseToJsonElement(applied.body.readUtf8()).jsonObject
+        assertEquals("true", sent.getValue("acceptChange").jsonPrimitive.content)
+        assertEquals("true", sent.getValue("rewriteWithAi").jsonPrimitive.content)
+        assertEquals("note", sent.getValue("pick").jsonPrimitive.content)
+        assertEquals("quota_exhausted", done.fallbackReason)
     }
 }
 

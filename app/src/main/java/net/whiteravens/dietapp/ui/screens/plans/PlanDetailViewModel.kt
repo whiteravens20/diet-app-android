@@ -70,6 +70,8 @@ class PlanDetailViewModel @Inject constructor(
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
         val rebalance: Rebalance? = null,
+        /** Why the engine stood in for a model in the last change, until it is put away. */
+        val notice: String? = null,
         /** The plan is gone: the screen is done. */
         val deleted: Boolean = false,
         val error: Throwable? = null,
@@ -171,7 +173,12 @@ class PlanDetailViewModel @Inject constructor(
     fun rebalanceWeek() = change { plans.rebalanceWeek(planId) }
 
     fun dismissRebalance() {
-        _state.update { it.copy(rebalance = null) }
+        _state.update { it.copy(rebalance = null, notice = null) }
+    }
+
+    /** An ingredient substituted in its window: the plan it left, what it rebalanced, and why a model did not reword the text where it was asked to. */
+    fun substituted(result: Rebalanced) {
+        _state.update { it.copy(plan = result.plan, rebalance = result.rebalance.shown(), notice = result.fallbackReason) }
     }
 
     fun delete() {
