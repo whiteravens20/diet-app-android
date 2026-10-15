@@ -76,6 +76,7 @@ jobs:
             boot-timeout: 600
             build-type: debug
             variant: Debug
+            test-authority: false
           # Android 17, whose rules the app targets: a server on the local network, such as
           # the emulator's host, needs the permission for nearby devices.
           - name: Screens on Android 17
@@ -87,6 +88,9 @@ jobs:
             boot-timeout: 1200
             build-type: debug
             variant: Debug
+            # The instance served over HTTPS as well, with a certificate from an authority made
+            # for the run and installed on the emulator as one the user installed.
+            test-authority: true
           # The release build as R8 shrinks it (the `minified` build type): what R8 takes out
           # shows here rather than on a tester's phone.
           - name: Screens on the release build
@@ -97,6 +101,7 @@ jobs:
             boot-timeout: 600
             build-type: minified
             variant: Minified
+            test-authority: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -111,6 +116,13 @@ jobs:
 
       - name: Start diet-app
         run: .github/scripts/start-diet-app.sh "$RUNNER_TEMP/diet-app"
+
+      - name: Serve diet-app over HTTPS with a certificate of a test authority
+        if: matrix.test-authority
+        run: |
+          .github/scripts/serve-with-test-authority.sh "$RUNNER_TEMP/authority"
+          echo "TEST_AUTHORITY=$RUNNER_TEMP/authority" >> "$GITHUB_ENV"
+          echo "AUTHORITY_ARGUMENT=-Pandroid.testInstrumentationRunnerArguments.userAuthorityServer=https://10.0.2.2:4443/api/" >> "$GITHUB_ENV"
 
       - name: Build the app and its tests
         run: >-
@@ -135,7 +147,9 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: ./gradlew -PtestBuildType=${{ matrix.build-type }} connected${{ matrix.variant }}AndroidTest
+          script: |
+            .github/scripts/install-test-authority.sh
+            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT connected${{ matrix.variant }}AndroidTest
 
       - name: Keep what diet-app logged
         if: always()
