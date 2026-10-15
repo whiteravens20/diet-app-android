@@ -129,9 +129,11 @@ fun PlanDetailScreen(
     var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
-    // The plan taken out of the app as a table for a spreadsheet.
+    // The plan taken out of the app: as a table for a spreadsheet, or as a sheet for the printer.
     val words = planWords()
     val saveTable = rememberPlanTableSaver(plan, words)
+    var printing by remember { mutableStateOf(false) }
+    if (printing && plan != null) PlanPrinter(plan, words, onDone = { printing = false })
     val readOnly = state.offline
     val busy = state.changing || state.taking
 
@@ -264,6 +266,7 @@ fun PlanDetailScreen(
                     plan,
                     onBack,
                     onSaveTable = { plan?.let(saveTable) },
+                    onPrint = { printing = true },
                     onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
                 )
             }
@@ -395,7 +398,7 @@ fun PlanDetailScreen(
 
 /** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it; and what can be done with it. */
 @Composable
-private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
+private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
@@ -415,13 +418,13 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit,
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
             }
         }
-        if (plan != null) PlanActions(onSaveTable, onDelete)
+        if (plan != null) PlanActions(onSaveTable, onPrint, onDelete)
     }
 }
 
-/** What can be done with the plan as a whole, behind one button: saved as a table, or deleted. */
+/** What can be done with the plan as a whole, behind one button: saved as a table, printed or kept as a PDF, or deleted. */
 @Composable
-private fun PlanActions(onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
+private fun PlanActions(onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -433,6 +436,7 @@ private fun PlanActions(onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
                 action()
             }
             DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_csv)) }, onClick = { pick(onSaveTable) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_print)) }, onClick = { pick(onPrint) })
             DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }

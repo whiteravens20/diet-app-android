@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp
 
+import android.accessibilityservice.AccessibilityService
+import android.print.PrintManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -21,7 +23,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
@@ -247,11 +251,31 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }
 
-        // The plan's menu saves it as a table for a spreadsheet, and deletes it once that is confirmed: the list is back.
+        // The plan goes from its menu to the platform's print service, which prints it or keeps it as
+        // a PDF named by its days; it is put away there, back to the plan.
+        val (start, days) = Instance.planStart(account, planId)
+        val name = "meal-plan-${start}_${LocalDate.parse(start).plusDays(days - 1L)}"
+        val printing = screen.activity.getSystemService(PrintManager::class.java)
         val options = hasContentDescription(text(R.string.plans_options))
         screen.scrollTo(options)
         screen.onNode(options).performClick()
         screen.onNodeWithText(text(R.string.plans_export_csv)).assertExists()
+        screen.onNodeWithText(text(R.string.plans_export_print)).performClick()
+        screen.waitUntil(30_000) { printing.printJobs.any { it.info.label == name } }
+        screen.waitUntil(20_000) { screen.activityRule.scenario.state != Lifecycle.State.RESUMED }
+        var pressed = 0L
+        screen.waitUntil(30_000) {
+            val back = screen.activityRule.scenario.state == Lifecycle.State.RESUMED
+            // Once, and again only where the print service has not gone after a while.
+            if (!back && System.currentTimeMillis() - pressed > 5_000) {
+                pressed = System.currentTimeMillis()
+                InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+            }
+            back
+        }
+
+        // The plan is deleted from its menu once that is confirmed, and the list is back.
+        screen.onNode(options).performClick()
         screen.onNodeWithText(text(R.string.common_delete)).performClick()
         screen.waitForText(text(R.string.plans_delete_confirm))
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()

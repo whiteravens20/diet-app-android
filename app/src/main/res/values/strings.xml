@@ -195,6 +195,7 @@
     <string name="plans_use_up_swap">%1$s in place of %2$s</string>
     <string name="plans_options">Plan options</string>
     <string name="plans_export_csv">Save as CSV</string>
+    <string name="plans_export_print">Print or save as PDF</string>
     <string name="plans_export_failed">The file could not be saved.</string>
     <string name="plans_export_date">Date</string>
     <string name="plans_export_meal">Meal</string>
@@ -205,6 +206,9 @@
     <string name="plans_export_fat">Fat (g)</string>
     <string name="plans_export_carbs">Carbohydrate (g)</string>
     <string name="plans_export_eaten">Eaten</string>
+    <string name="plans_export_sheet_title">Meal plan, %1$s · %2$s</string>
+    <string name="plans_export_sheet_average">A day on average: %1$s kcal · protein %2$s g · fat %3$s g · carbohydrate %4$s g.</string>
+    <string name="plans_export_sheet_day">%1$s of %2$s kcal</string>
     <string name="plans_skipped">Skipped</string>
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
