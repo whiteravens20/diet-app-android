@@ -13,22 +13,14 @@
 -keep class net.whiteravens.dietapp.data.auth.AesGcmSealer { *; }
 -keep class net.whiteravens.dietapp.data.auth.KeystoreSealer { *; }
 
-# The libraries the tests drive the app with, whose copy in the app they use.
--keep class androidx.activity.** { *; }
--keep class androidx.arch.core.** { *; }
--keep class androidx.collection.** { *; }
--keep class androidx.concurrent.** { *; }
--keep class androidx.core.** { *; }
--keep class androidx.customview.** { *; }
--keep class androidx.savedstate.** { *; }
--keep class androidx.tracing.** { *; }
--keep class com.google.common.util.concurrent.** { *; }
--keep class androidx.compose.** { *; }
--keep class androidx.datastore.** { *; }
--keep class androidx.lifecycle.** { *; }
--keep class androidx.test.** { *; }
+# The libraries the tests share with the app, whose copy in the app they use: AndroidX (Compose,
+# the test runner's own), Kotlin's, Guava's and the injection annotations Espresso builds on.
+# What stays under R8 is the app's own code, Retrofit and Dagger, where R8 breaks releases.
+-keep class androidx.** { *; }
+-keep class com.google.common.** { *; }
+-keep class javax.inject.** { *; }
 -keep class kotlin.** { *; }
--keep class kotlinx.coroutines.** { *; }
--keep class kotlinx.serialization.json.** { *; }
+-keep class kotlinx.** { *; }
 -keep class okhttp3.** { *; }
 -keep class okio.** { *; }
+-keep class org.jspecify.** { *; }
