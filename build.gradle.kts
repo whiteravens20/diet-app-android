@@ -4,6 +4,18 @@
 buildscript {
     configurations.classpath {
         resolutionStrategy.activateDependencyLocking()
+        // Libraries the plugins bring that have known vulnerabilities are lifted to the releases
+        // that fix them. None of them is in the app.
+        resolutionStrategy.eachDependency {
+            val fixed = when ("${requested.group}:${requested.name}") {
+                "org.bouncycastle:bcprov-jdk18on", "org.bouncycastle:bcpkix-jdk18on", "org.bouncycastle:bcutil-jdk18on" -> "1.86"
+                "org.jdom:jdom2" -> "2.0.6.1"
+                "org.bitbucket.b_c:jose4j" -> "0.9.6"
+                "org.apache.commons:commons-lang3" -> "3.18.0"
+                else -> null
+            }
+            if (fixed != null) useVersion(fixed)
+        }
     }
 }
 

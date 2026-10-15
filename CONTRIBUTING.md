@@ -65,6 +65,10 @@ written down in the repository:
   included.
 - `gradle/wrapper/gradle-wrapper.properties` carries the checksum of the Gradle
   distribution.
+- A library a build tool brings with a known vulnerability is lifted to the release that
+  fixes it: in `build.gradle.kts` for the plugins, in `app/build.gradle.kts` for the
+  Android plugin's test platform and Lint. A lift is removed once the tool brings that
+  release itself.
 
 Changing a dependency, or adding one, means writing the metadata and the lockfiles again:
 

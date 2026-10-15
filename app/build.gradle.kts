@@ -160,6 +160,22 @@ androidComponents {
     }
 }
 
+// The tools the Android plugin runs bring libraries with known vulnerabilities: its test platform
+// (netty) and Lint (Bouncy Castle, HttpClient). They are lifted to the releases that fix them.
+// None of them is in the app.
+configurations.matching { it.name.startsWith("unified-test-platform") || it.name.startsWith("androidLint") }.configureEach {
+    resolutionStrategy.eachDependency {
+        val fixed = when {
+            requested.group == "io.netty" && requested.version?.startsWith("4.1.") == true &&
+                !requested.name.startsWith("netty-tcnative") -> "4.1.139.Final"
+            requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") -> "1.86"
+            requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" -> "4.5.14"
+            else -> null
+        }
+        if (fixed != null) useVersion(fixed)
+    }
+}
+
 // Every version the build resolves, transitive ones included, is written in gradle.lockfile:
 // a build that would resolve another fails, and a change to one shows in the pull request.
 dependencyLocking {
