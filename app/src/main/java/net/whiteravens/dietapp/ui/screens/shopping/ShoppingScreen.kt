@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -210,13 +212,24 @@ private fun ShoppingItemRow(
     readOnly: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    // The whole row is ticked with a tap, and is read out as one thing: its name, its amount, its tick.
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = item.checked,
+                enabled = !readOnly && !busy,
+                role = Role.Checkbox,
+                onValueChange = onCheckedChange,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         if (busy) {
             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             }
         } else {
-            Checkbox(checked = item.checked, onCheckedChange = onCheckedChange, enabled = !readOnly)
+            Checkbox(checked = item.checked, onCheckedChange = null, enabled = !readOnly, modifier = Modifier.size(48.dp))
         }
         Column(Modifier.weight(1f).padding(start = 4.dp)) {
             Text(
