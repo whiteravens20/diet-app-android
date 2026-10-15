@@ -45,6 +45,7 @@ fun SessionUserDto.toDomain() = SessionUser(
     emailVerified = emailVerified,
     locale = locale,
     theme = theme,
+    weightUnit = weightUnit,
 )
 
 fun ProfileDto.toDomain() = Profile(

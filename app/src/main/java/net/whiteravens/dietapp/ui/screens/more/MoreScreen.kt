@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -24,6 +25,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
+import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
 
 /** A place of the app the bottom bar has no room for, as the "More" tab lists it. */
 data class MoreEntry(val route: Any, val icon: ImageVector, @StringRes val label: Int)
@@ -31,6 +33,7 @@ data class MoreEntry(val route: Any, val icon: ImageVector, @StringRes val label
 /** The places of the app beyond the four of the bottom bar, as the web application's menu has them. */
 val moreEntries: List<MoreEntry>
     get() = listOf(
+        MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
         MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
     )
 

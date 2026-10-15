@@ -14,8 +14,10 @@ import net.whiteravens.dietapp.data.remote.ProfilePreferencesUpdateDto
 import net.whiteravens.dietapp.data.remote.ProfileUpdateDto
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.CaloriePreview
+import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MacroSplit
+import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfileFigures
@@ -32,10 +34,16 @@ class ProfileRepository @Inject constructor(
     private val api: DietApiService,
     private val json: Json,
 ) {
+    /** The account's profiles, in the order the API keeps them. */
+    suspend fun profiles(): List<ProfileDetails> = apiCall(json) { api.profiles() }.map { it.toDetails() }
+
     suspend fun profile(id: String): ProfileDetails = apiCall(json) { api.profile(id) }.toDetails()
 
-    /** Makes a profile; [acknowledgeRisk] is said only by a form that showed the risk of its goal. */
-    suspend fun create(figures: ProfileFigures, acknowledgeRisk: Boolean?): Profile =
+    /**
+     * Makes a profile, with [limits] on how often its plans repeat themselves, or the API's own
+     * where they are null; [acknowledgeRisk] is said only by a form that showed the risk of its goal.
+     */
+    suspend fun create(figures: ProfileFigures, limits: PlanLimits?, acknowledgeRisk: Boolean?): Profile =
         apiCall(json) {
             api.createProfile(
                 NewProfileDto(
@@ -53,7 +61,13 @@ class ProfileRepository @Inject constructor(
                     weightReminderCadence = figures.weightReminderCadence,
                     customMacroSplit = figures.customMacroSplit?.toDto(),
                     acknowledgeRisk = acknowledgeRisk,
-                    preferences = NewProfilePreferencesDto(allergens = figures.allergens),
+                    preferences = NewProfilePreferencesDto(
+                        allergens = figures.allergens,
+                        maxConsecutiveDaysSameMeal = limits?.maxConsecutiveDaysSameMeal,
+                        maxTimesPerWeekSameMeal = limits?.maxTimesPerWeekSameMeal,
+                        maxWeeklyAmountPerIngredient = limits?.maxWeeklyAmountPerIngredient,
+                        inventoryBiasResetEvery = limits?.inventoryBiasResetEvery,
+                    ),
                 ),
             )
         }.toDomain()
@@ -99,21 +113,21 @@ class ProfileRepository @Inject constructor(
     suspend fun updatePreferences(id: String, patch: ProfilePreferencesPatchDto): ProfileDetails =
         apiCall(json) { api.updatePreferences(id, patch) }.toDetails()
 
-    /** What [figures] come to, and each pace of loss for the same body. Nothing is kept. */
-    suspend fun preview(figures: ProfileFigures, acknowledgeRisk: Boolean): CaloriePreview =
+    /** What the figures of [question] come to, and each pace of loss for the same body. Nothing is kept. */
+    suspend fun preview(question: CalorieQuestion): CaloriePreview =
         apiCall(json) {
             api.previewCalories(
                 CaloriePreviewRequestDto(
-                    age = figures.age,
-                    sex = figures.sex,
-                    heightCm = figures.heightCm,
-                    weightKg = figures.weightKg,
-                    activityLevel = figures.activityLevel,
-                    dietType = figures.dietType,
-                    customMacroSplit = figures.customMacroSplit?.toDto(),
-                    weeklyLossTarget = figures.weeklyLossTarget,
-                    manualCalorieTarget = figures.manualCalorieTarget,
-                    acknowledgeRisk = acknowledgeRisk,
+                    age = question.age,
+                    sex = question.sex,
+                    heightCm = question.heightCm,
+                    weightKg = question.weightKg,
+                    activityLevel = question.activityLevel,
+                    dietType = question.dietType,
+                    customMacroSplit = question.customMacroSplit?.toDto(),
+                    weeklyLossTarget = question.weeklyLossTarget,
+                    manualCalorieTarget = question.manualCalorieTarget,
+                    acknowledgeRisk = question.acknowledgeRisk,
                 ),
             )
         }.let { answer -> CaloriePreview(answer.calculation.toDomain(), answer.paces.map { it.toDomain() }) }

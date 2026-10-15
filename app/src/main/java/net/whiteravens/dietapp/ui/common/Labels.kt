@@ -72,6 +72,46 @@ fun categoryLabel(code: String): String = when (code) {
 }
 
 @Composable
+fun activityLevelLabel(code: String): String = when (code) {
+    "sedentary" -> stringResource(R.string.activity_sedentary)
+    "light" -> stringResource(R.string.activity_light)
+    "moderate" -> stringResource(R.string.activity_moderate)
+    "active" -> stringResource(R.string.activity_active)
+    "very_active" -> stringResource(R.string.activity_very_active)
+    else -> humanise(code)
+}
+
+@Composable
+fun sexLabel(code: String?): String = when (code) {
+    "male" -> stringResource(R.string.sex_male)
+    "female" -> stringResource(R.string.sex_female)
+    null -> stringResource(R.string.profile_prefer_not_to_say)
+    else -> humanise(code)
+}
+
+@Composable
+fun allergenLabel(code: String): String = when (code) {
+    "gluten" -> stringResource(R.string.allergen_gluten)
+    "dairy" -> stringResource(R.string.allergen_dairy)
+    "eggs" -> stringResource(R.string.allergen_eggs)
+    "nuts" -> stringResource(R.string.allergen_nuts)
+    "peanuts" -> stringResource(R.string.allergen_peanuts)
+    "soy" -> stringResource(R.string.allergen_soy)
+    "fish" -> stringResource(R.string.allergen_fish)
+    "shellfish" -> stringResource(R.string.allergen_shellfish)
+    "sesame" -> stringResource(R.string.allergen_sesame)
+    else -> humanise(code)
+}
+
+@Composable
+fun reminderCadenceLabel(code: String): String = when (code) {
+    "off" -> stringResource(R.string.profile_reminder_off)
+    "daily" -> stringResource(R.string.profile_reminder_daily)
+    "weekly" -> stringResource(R.string.profile_reminder_weekly)
+    else -> humanise(code)
+}
+
+@Composable
 fun difficultyLabel(code: String): String = when (code) {
     "easy" -> stringResource(R.string.difficulty_easy)
     "medium" -> stringResource(R.string.difficulty_medium)
@@ -112,6 +152,19 @@ private fun refusalText(error: ApiException): String {
 }
 
 // ── Value formatting ─────────────────────────────────────────────────────────
+
+/** A number in the language of the app's texts, to at most [fractionDigits] decimals: `2,150`, `0,25`. */
+@Composable
+fun formatNumber(value: Number, fractionDigits: Int = 0): String =
+    NumberFormat.getNumberInstance(LocalConfiguration.current.locales[0]).apply { maximumFractionDigits = fractionDigits }.format(value)
+
+/** A weight kept in kilograms, in [unit] (`kg` or `lb`) to at most [fractionDigits] decimals: `64.5 kg`. */
+@Composable
+fun weightLabel(kg: Double, unit: String, fractionDigits: Int = 1): String =
+    "${formatNumber(if (unit == "lb") kg / KG_PER_LB else kg, fractionDigits)} $unit"
+
+/** One pound in kilograms, as the pound is defined. */
+private const val KG_PER_LB = 0.45359237
 
 /** `2026-07-12` → `12 Jul 2026` in the device locale. */
 fun formatDate(iso: String): String =

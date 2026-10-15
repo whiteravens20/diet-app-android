@@ -302,9 +302,18 @@ data class NewProfileDto(
     val preferences: NewProfilePreferencesDto,
 )
 
-/** What a new profile is given of its preferences: the allergens; the API sets the rest. */
+/**
+ * What a new profile is given of its preferences: its allergens, and the limits on how often a plan
+ * repeats itself where the form asked for them; the API sets the rest.
+ */
 @Serializable
-data class NewProfilePreferencesDto(val allergens: List<String>)
+data class NewProfilePreferencesDto(
+    val allergens: List<String>,
+    val maxConsecutiveDaysSameMeal: Int? = null,
+    val maxTimesPerWeekSameMeal: Int? = null,
+    val maxWeeklyAmountPerIngredient: Int? = null,
+    val inventoryBiasResetEvery: Int? = null,
+)
 
 /** A profile as it is from now on (`PUT /profiles/:id`): every part of it, its preferences too. */
 @Serializable

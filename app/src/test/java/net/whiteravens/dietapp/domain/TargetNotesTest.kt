@@ -55,6 +55,13 @@ class TargetNotesTest {
     }
 
     @Test
+    fun `a form that gives the risk of a loss itself asks for the other notes alone`() {
+        val notes = target(*plain, "goalHeld" to true, "warnings" to listOf("minor", "underweight", "below_floor"), "safetyFloor" to 1200).notes(risk = false)
+
+        assertEquals(listOf(TargetNote.BelowFloor(1200.0)), notes)
+    }
+
+    @Test
     fun `a pace slowed to a quarter of maintenance is named with what was asked and what is taken`() {
         val notes = target(*plain, "deficitCapped" to true, "requestedDeficit" to 1100, "dailyDeficit" to 700).notes()
 

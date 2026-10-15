@@ -36,12 +36,14 @@ sealed interface TargetNote {
     data class BelowBmr(val bmr: Double) : TargetNote
 }
 
-fun CalorieTarget.notes(): List<TargetNote> = buildList {
-    if (goalHeld) add(TargetNote.GoalHeld)
+/** The notes of this target; a form that gives the risk of a loss itself, with the box that answers it, asks for the rest alone ([risk] false). */
+fun CalorieTarget.notes(risk: Boolean = true): List<TargetNote> = buildList {
+    if (risk && goalHeld) add(TargetNote.GoalHeld)
     for (warning in warnings) {
-        when (warning) {
-            "minor" -> add(TargetNote.Minor)
-            "underweight" -> add(TargetNote.Underweight)
+        when {
+            !risk -> Unit
+            warning == "minor" -> add(TargetNote.Minor)
+            warning == "underweight" -> add(TargetNote.Underweight)
         }
     }
     if (maintenanceUnderFloor) add(TargetNote.MaintenanceUnderFloor(safetyFloor))

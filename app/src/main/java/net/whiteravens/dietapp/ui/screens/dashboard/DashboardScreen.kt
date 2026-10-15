@@ -44,7 +44,7 @@ import kotlin.math.roundToInt
 
 /** Calorie target, deficit and macro split for every profile — the web dashboard. */
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
+fun DashboardScreen(onCreateProfile: () -> Unit, viewModel: DashboardViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     when {
@@ -61,6 +61,11 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
             icon = Icons.Default.Person,
             title = stringResource(R.string.dashboard_welcome),
             description = stringResource(R.string.dashboard_no_profiles),
+            cta = {
+                Button(onClick = onCreateProfile, shape = MaterialTheme.shapes.medium) {
+                    Text(stringResource(R.string.dashboard_create_first_profile_cta))
+                }
+            },
         )
 
         else -> LazyColumn(

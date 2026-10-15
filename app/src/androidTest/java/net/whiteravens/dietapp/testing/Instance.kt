@@ -72,6 +72,15 @@ object Instance {
             expect = 201,
         ).getString("id")
 
+    /** The profiles of [account], as the API keeps them. */
+    fun profiles(account: Account): List<JSONObject> {
+        val list = JSONArray(send("GET", "profiles", null, account.accessToken, 200, null))
+        return (0 until list.length()).map { list.getJSONObject(it) }
+    }
+
+    /** A profile of [account], as the API keeps it. */
+    fun profile(account: Account, profileId: String): JSONObject = call("GET", "profiles/$profileId", token = account.accessToken)
+
     /** The ids of a profile's plans, as the API lists them. */
     fun planIds(account: Account, profileId: String): List<String> {
         val items = call("GET", "meal-plans?profileId=$profileId", token = account.accessToken).getJSONArray("items")

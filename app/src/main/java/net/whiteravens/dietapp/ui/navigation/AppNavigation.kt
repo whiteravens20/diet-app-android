@@ -64,6 +64,8 @@ import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
+import net.whiteravens.dietapp.ui.screens.profiles.ProfileFormScreen
+import net.whiteravens.dietapp.ui.screens.profiles.ProfilesScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeDetailScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipesScreen
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreen
@@ -81,6 +83,8 @@ import kotlin.reflect.KClass
 @Serializable object ShoppingRoute
 @Serializable object MoreRoute
 @Serializable object AccountRoute
+@Serializable object ProfilesRoute
+@Serializable data class ProfileFormRoute(val profileId: String? = null)
 
 /**
  * Signed-in state for the root switch (null while the token store loads), and the version
@@ -210,7 +214,7 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             startDestination = DashboardRoute,
             modifier = Modifier.padding(padding),
         ) {
-            composable<DashboardRoute> { DashboardScreen() }
+            composable<DashboardRoute> { DashboardScreen(onCreateProfile = { navController.navigate(ProfilesRoute) }) }
             composable<PlansRoute> {
                 MealPlansScreen(onOpenPlan = { navController.navigate(PlanDetailRoute(it)) })
             }
@@ -229,6 +233,22 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             composable<ShoppingRoute> { ShoppingScreen() }
             composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
             composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
+            composable<ProfilesRoute> {
+                ProfilesScreen(
+                    onBack = { navController.popBackStack() },
+                    onAdd = { navController.navigate(ProfileFormRoute()) },
+                    onEdit = { navController.navigate(ProfileFormRoute(it)) },
+                    onFirstPlan = {
+                        navController.navigate(PlansRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            }
+            composable<ProfileFormRoute> {
+                ProfileFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
+            }
         }
     }
 }

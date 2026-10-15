@@ -18,6 +18,8 @@ data class SessionUser(
     val locale: String,
     /** `light` | `dark` | `system`. */
     val theme: String,
+    /** `kg` | `lb`, or null for the unit of where the phone is. */
+    val weightUnit: String? = null,
 )
 
 data class Profile(
@@ -64,6 +66,28 @@ data class ProfilePreferences(
     /** The most of one ingredient, in g or ml, any seven days of a plan hold together. */
     val maxWeeklyAmountPerIngredient: Int,
     val inventoryBiasResetEvery: Int,
+) {
+    val limits: PlanLimits
+        get() = PlanLimits(maxConsecutiveDaysSameMeal, maxTimesPerWeekSameMeal, maxWeeklyAmountPerIngredient, inventoryBiasResetEvery)
+
+    fun with(limits: PlanLimits) = copy(
+        maxConsecutiveDaysSameMeal = limits.maxConsecutiveDaysSameMeal,
+        maxTimesPerWeekSameMeal = limits.maxTimesPerWeekSameMeal,
+        maxWeeklyAmountPerIngredient = limits.maxWeeklyAmountPerIngredient,
+        inventoryBiasResetEvery = limits.inventoryBiasResetEvery,
+    )
+}
+
+/**
+ * How often a plan may repeat itself: the same recipe on days in a row and in any seven days, the
+ * most of one ingredient in any seven days, and after how many plans that leaned on the pantry the
+ * next one does not (0: never).
+ */
+data class PlanLimits(
+    val maxConsecutiveDaysSameMeal: Int,
+    val maxTimesPerWeekSameMeal: Int,
+    val maxWeeklyAmountPerIngredient: Int,
+    val inventoryBiasResetEvery: Int,
 )
 
 /** A profile as it is kept: its figures, its preferences, and whether it said it understands the risk of its goal. */
@@ -72,6 +96,23 @@ data class ProfileDetails(
     val figures: ProfileFigures,
     val preferences: ProfilePreferences,
     val riskAcknowledged: Boolean,
+)
+
+/**
+ * What a calorie target is worked out from: the parts of a profile the API's engine reads, and
+ * whether somebody under 18 or underweight who asks to lose weight has said they understand the risk.
+ */
+data class CalorieQuestion(
+    val age: Int,
+    val sex: String?,
+    val heightCm: Double,
+    val weightKg: Double,
+    val activityLevel: String,
+    val dietType: String,
+    val customMacroSplit: MacroSplit?,
+    val weeklyLossTarget: String?,
+    val manualCalorieTarget: Int?,
+    val acknowledgeRisk: Boolean,
 )
 
 /** What figures come to: their calculation, and the same body at each pace of loss, slowest first. */

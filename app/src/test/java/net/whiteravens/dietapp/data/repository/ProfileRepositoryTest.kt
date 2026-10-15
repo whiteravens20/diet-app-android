@@ -12,6 +12,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.CalorieQuestion
+import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.ProfileFigures
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -19,6 +21,8 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -58,7 +62,7 @@ class ProfileRepositoryTest {
     fun `a new profile is sent with its choices of none, and its allergens alone of the preferences`() {
         server.enqueue(answer(fixture("profile"), 201))
 
-        runBlocking { repository().create(figures, acknowledgeRisk = null) }
+        runBlocking { repository().create(figures, limits = null, acknowledgeRisk = null) }
 
         val sent = server.takeRequest()
         assertEquals("POST", sent.method)
@@ -66,7 +70,36 @@ class ProfileRepositoryTest {
         val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
         assertEquals(JsonNull, body["weeklyLossTarget"])
         assertEquals(JsonNull, body["sex"])
-        assertEquals(listOf("gluten"), body.getValue("preferences").jsonObject.getValue("allergens").jsonArray.map { it.jsonPrimitive.content })
+        assertFalse("acknowledgeRisk" in body)
+        val preferences = body.getValue("preferences").jsonObject
+        assertEquals(setOf("allergens"), preferences.keys)
+        assertEquals(listOf("gluten"), preferences.getValue("allergens").jsonArray.map { it.jsonPrimitive.content })
+    }
+
+    @Test
+    fun `a new profile made in the form is sent with the limits on repeats it chose`() {
+        server.enqueue(answer(fixture("profile"), 201))
+
+        runBlocking { repository().create(figures, PlanLimits(1, 2, 2500, 0), acknowledgeRisk = true) }
+
+        val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("true", body.getValue("acknowledgeRisk").jsonPrimitive.content)
+        val preferences = body.getValue("preferences").jsonObject
+        assertEquals("1", preferences.getValue("maxConsecutiveDaysSameMeal").jsonPrimitive.content)
+        assertEquals("2", preferences.getValue("maxTimesPerWeekSameMeal").jsonPrimitive.content)
+        assertEquals("2500", preferences.getValue("maxWeeklyAmountPerIngredient").jsonPrimitive.content)
+        assertEquals("0", preferences.getValue("inventoryBiasResetEvery").jsonPrimitive.content)
+    }
+
+    @Test
+    fun `the account's profiles are read whole, their preferences with them`() {
+        server.enqueue(answer(fixture("profiles")))
+
+        val list = runBlocking { repository().profiles() }
+
+        assertEquals("/api/profiles", server.takeRequest().path)
+        assertTrue(list.isNotEmpty())
+        assertEquals(3000, list.first().preferences.maxWeeklyAmountPerIngredient)
     }
 
     @Test
@@ -90,9 +123,18 @@ class ProfileRepositoryTest {
         val calculation = fixture("profile-calories")
         server.enqueue(answer("""{"calculation":$calculation,"paces":[$calculation,$calculation,$calculation,$calculation,$calculation]}"""))
 
-        val preview = runBlocking { repository().preview(figures, acknowledgeRisk = false) }
+        val question = CalorieQuestion(
+            age = 30, sex = null, heightCm = 168.0, weightKg = 64.5, activityLevel = "light", dietType = "balanced",
+            customMacroSplit = null, weeklyLossTarget = null, manualCalorieTarget = null, acknowledgeRisk = false,
+        )
 
-        assertEquals("/api/profiles/calories", server.takeRequest().path)
+        val preview = runBlocking { repository().preview(question) }
+
+        val sent = server.takeRequest()
+        assertEquals("/api/profiles/calories", sent.path)
+        val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
+        assertEquals(JsonNull, body["weeklyLossTarget"])
+        assertEquals("false", body.getValue("acknowledgeRisk").jsonPrimitive.content)
         assertEquals(5, preview.paces.size)
         assertEquals(preview.calculation.dailyTarget, preview.paces.first().dailyTarget, 0.0)
     }
