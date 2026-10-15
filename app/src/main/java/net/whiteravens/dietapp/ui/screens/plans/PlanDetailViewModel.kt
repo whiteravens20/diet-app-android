@@ -25,8 +25,8 @@ import javax.inject.Inject
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
  * swaps one: a recipe is offered, another can be asked for, and nothing is written until the
- * offer is taken. A change
- * that balanced the day again says how, with the way back and the rest of the week to
+ * offer is taken. A meal is marked eaten or not, and a
+ * change that balanced the day again says how, with the way back and the rest of the week to
  * balance as well.
  */
 @HiltViewModel
@@ -121,6 +121,8 @@ class PlanDetailViewModel @Inject constructor(
                 }
         }
     }
+
+    fun setEaten(mealId: String, eaten: Boolean) = change { plans.setEaten(planId, mealId, eaten) }
 
     /** Puts the meals the last change scaled back as they were. */
     fun undoRebalance() {

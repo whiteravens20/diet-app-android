@@ -196,6 +196,8 @@
     <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
     <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>
     <string name="plans_packs_explain">Policzone z samego jadłospisu; to, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>
+    <string name="plans_mark_eaten">Oznacz jako zjedzone</string>
+    <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_rebalance_title">Zaktualizowano makro dnia</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
     <string name="plans_rebalance_best_effort">Dzień nadal przekracza cel — rozważ edycję.</string>

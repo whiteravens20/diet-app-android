@@ -116,6 +116,11 @@ object Instance {
             (0 until lines.length()).map { lines.getJSONObject(it).getString("name") }
     }
 
+    /** Whether the first meal of a plan's first day is marked eaten. */
+    fun firstMealEaten(account: Account, planId: String): Boolean =
+        !call("GET", "meal-plans/$planId", token = account.accessToken)
+            .getJSONArray("days").getJSONObject(0).getJSONArray("meals").getJSONObject(0).isNull("eatenAt")
+
     /** A plan of [days] days for [profileId] from [start], made as the app makes one. */
     fun newPlan(account: Account, profileId: String, days: Int = 2, start: LocalDate = LocalDate.now()): String =
         call(

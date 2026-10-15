@@ -181,6 +181,18 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a meal is marked eaten with what it is to be, not flipped`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).setEaten("plan-1", "meal-1", eaten = true) }
+
+        val eaten = server.takeRequest()
+        assertEquals("PATCH", eaten.method)
+        assertEquals("/api/meal-plans/plan-1/meals/meal-1/eaten", eaten.path)
+        assertEquals("""{"eaten":true}""", eaten.body.readUtf8())
+    }
+
+    @Test
     fun `the rest of the week is balanced from the day it is for the phone`() {
         server.enqueue(answer("meal-plan-swap-apply"))
 

@@ -26,6 +26,7 @@ import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
+import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.di.AppModule
@@ -35,8 +36,10 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
@@ -149,6 +152,22 @@ class PlanDetailViewModelTest {
     )
 
     @Test
+    fun `a meal marked eaten shows the plan it left, and says how its day was balanced`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setMealEaten(plan.id, meal.id, SetMealEatenRequest(true)) } returns swapped.copy(rebalance = scaled)
+        val model = model(api)
+
+        model.setEaten(meal.id, true)
+
+        assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
+        val said = model.state.value.rebalance!!
+        assertEquals(listOf(ScaleChange(meal.id, 1.0, 0.8)), said.changes)
+        assertTrue(said.bestEffort)
+        assertFalse(model.state.value.changing)
+    }
+
+    @Test
     fun `a swap taken says how its day was balanced, until that is put away`() {
         val api = mockk<DietApiService>()
         coEvery { api.mealPlan(plan.id) } returns plan
@@ -187,6 +206,20 @@ class PlanDetailViewModelTest {
 
         assertEquals(RebalanceRequest(scope = "day", restore = listOf(RestoreScaleDto(meal.id, 1.0))), asked[1])
         assertNull(model.state.value.rebalance)
+    }
+
+    @Test
+    fun `an eaten mark refused because the plan changed meanwhile loads the plan again and says why`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setMealEaten(any(), any(), any()) } throws refused(409, "PLAN_CHANGED")
+        val model = model(api)
+
+        model.setEaten(meal.id, true)
+
+        assertEquals("PLAN_CHANGED", (model.state.value.error as ApiException).code)
+        assertNull(model.state.value.rebalance)
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
     }
 }
 

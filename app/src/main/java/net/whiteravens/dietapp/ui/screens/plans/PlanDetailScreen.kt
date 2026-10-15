@@ -24,12 +24,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -59,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -83,6 +84,7 @@ import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSigned
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -191,6 +193,7 @@ fun PlanDetailScreen(
                     swapping = meal.id == state.offering,
                     readOnly = readOnly,
                     busy = busy,
+                    onEaten = { eaten -> viewModel.setEaten(meal.id, eaten) },
                     onSwap = { viewModel.offerSwap(meal.id) },
                     onOpen = { openMealId = meal.id },
                 )
@@ -394,11 +397,19 @@ private fun MealCard(
     swapping: Boolean,
     readOnly: Boolean,
     busy: Boolean,
+    onEaten: (Boolean) -> Unit,
     onSwap: () -> Unit,
     onOpen: () -> Unit,
 ) {
+    val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
     AppCard(onClick = onOpen) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = meal.eaten,
+                onCheckedChange = onEaten,
+                enabled = !readOnly && !busy,
+                modifier = Modifier.semantics { contentDescription = markEaten },
+            )
             Column(Modifier.weight(1f)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     LabelChip(mealTypeLabel(meal.slot))
@@ -413,14 +424,7 @@ private fun MealCard(
                         PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
                     }
                     meal.cookAhead?.let { PlainChip(stringResource(if (it == "cook") R.string.plans_cook_once_chip else R.string.plans_cooked_chip)) }
-                    if (meal.eaten) {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = stringResource(R.string.plans_eaten),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
+                    if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                 }
                 Text(
                     mealName(meal),

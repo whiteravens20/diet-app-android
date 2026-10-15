@@ -7,6 +7,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -161,6 +162,30 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.common_clear)).performClick()
         screen.scrollToText(card, substring = true)
         assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun aMealIsMarkedEaten() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId)
+        val (title, _) = Instance.firstMeal(account, planId)
+        screen.signIn(account)
+
+        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The first meal is eaten: the box beside it, named by the meal, says so to the API.
+        val eaten = text(R.string.plans_action_for, text(R.string.plans_mark_eaten), title)
+        screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(eaten).fetchSemanticsNodes().isNotEmpty() }
+        // The meals are below the plan's facts and its day: on a small screen the box may be at its edge.
+        screen.onAllNodesWithContentDescription(eaten)[0].performScrollTo().performClick()
+        screen.waitUntil(20_000) { Instance.firstMealEaten(account, planId) }
+        screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(eaten) and isOn()).fetchSemanticsNodes().isNotEmpty() }
+        screen.keepScreenshot("plans-a-meal-eaten")
+        putAwayRebalance()
     }
 
     /** Puts away the card that says how a change balanced its day, where the change left one. */

@@ -803,6 +803,10 @@ data class RebalanceSummaryDto(
 @Serializable
 data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null)
 
+/** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
+@Serializable
+data class SetMealEatenRequest(val eaten: Boolean)
+
 /** A meal's scale put back as it was. */
 @Serializable
 data class RestoreScaleDto(val mealId: String, val scale: Double)

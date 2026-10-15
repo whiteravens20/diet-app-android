@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
+import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.DayAsk
@@ -186,6 +187,10 @@ class MealPlanRepository @Inject constructor(
             )
         },
     )
+
+    /** Marks a meal eaten or not; its day is balanced again around it. */
+    suspend fun setEaten(planId: String, mealId: String, eaten: Boolean): Rebalanced =
+        kept(apiCall(json) { api.setMealEaten(planId, mealId, SetMealEatenRequest(eaten)) })
 
     /** Balances the days from today to the end of their week of the plan, each around its own meals. */
     suspend fun rebalanceWeek(planId: String): Rebalanced =

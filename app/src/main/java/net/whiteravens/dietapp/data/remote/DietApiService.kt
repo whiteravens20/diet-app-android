@@ -121,6 +121,10 @@ interface DietApiService {
     @POST("meal-plans/swap-meal")
     suspend fun swapMeal(@Body body: ApplyMealSwapRequest): RebalanceResultDto
 
+    /** Marks a meal eaten or not; the day is balanced again around it. */
+    @PATCH("meal-plans/{id}/meals/{mealId}/eaten")
+    suspend fun setMealEaten(@Path("id") id: String, @Path("mealId") mealId: String, @Body body: SetMealEatenRequest): RebalanceResultDto
+
     @POST("meal-plans/{id}/rebalance")
     suspend fun rebalancePlan(@Path("id") id: String, @Body body: RebalanceRequest): RebalanceResultDto
 
