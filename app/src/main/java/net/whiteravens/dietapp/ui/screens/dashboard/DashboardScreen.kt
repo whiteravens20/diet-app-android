@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.notes
@@ -46,6 +47,11 @@ import kotlin.math.roundToInt
 @Composable
 fun DashboardScreen(onCreateProfile: () -> Unit, viewModel: DashboardViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Read again on coming back: a profile may have been made or changed in the meantime.
+    LifecycleResumeEffect(viewModel) {
+        viewModel.refresh()
+        onPauseOrDispose {}
+    }
 
     when {
         state.loading -> DashboardSkeleton()

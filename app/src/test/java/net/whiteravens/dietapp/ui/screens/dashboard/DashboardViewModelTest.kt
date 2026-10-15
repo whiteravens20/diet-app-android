@@ -21,6 +21,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
@@ -50,5 +51,25 @@ class DashboardViewModelTest {
         assertSame(refusal, state.profiles[0].targetError)
         assertEquals(target, state.profiles[1].target)
         assertNull(state.profiles[1].targetError)
+    }
+
+    @Test
+    fun `the dashboard read again on coming back shows a profile made in the meantime, and a failed reading leaves what was shown`() {
+        val users = mockk<UserRepository>()
+        val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
+        val made = Profile("a", "Ala", "balanced", 4)
+        coEvery { users.profiles() } returns emptyList()
+        val model = DashboardViewModel(users)
+        assertEquals(emptyList<DashboardViewModel.ProfileStats>(), model.state.value.profiles)
+
+        coEvery { users.profiles() } returns listOf(made)
+        coEvery { users.calorieTarget(made.id) } returns target
+        model.refresh()
+        assertEquals(listOf(made), model.state.value.profiles.map { it.profile })
+
+        coEvery { users.profiles() } throws IOException("unreachable")
+        model.refresh()
+        assertEquals(listOf(made), model.state.value.profiles.map { it.profile })
+        assertNull(model.state.value.error)
     }
 }

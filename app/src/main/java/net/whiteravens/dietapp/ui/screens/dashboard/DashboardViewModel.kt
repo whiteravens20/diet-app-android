@@ -39,9 +39,19 @@ class DashboardViewModel @Inject constructor(
         load()
     }
 
-    fun load() {
+    fun load() = read(showLoading = true)
+
+    /**
+     * Reads the profiles again when the screen comes back, from a profile made or changed elsewhere,
+     * keeping what is shown until the answer is there; nothing while the first reading runs.
+     */
+    fun refresh() {
+        if (!_state.value.loading) read(showLoading = false)
+    }
+
+    private fun read(showLoading: Boolean) {
         viewModelScope.launch {
-            _state.value = UiState(loading = true)
+            if (showLoading) _state.value = UiState(loading = true)
             attempt {
                 coroutineScope {
                     users.profiles()
@@ -56,7 +66,7 @@ class DashboardViewModel @Inject constructor(
                 }
             }
                 .onSuccess { _state.value = UiState(loading = false, profiles = it) }
-                .onFailure { _state.value = UiState(loading = false, error = it) }
+                .onFailure { e -> if (showLoading || _state.value.profiles.isEmpty()) _state.value = UiState(loading = false, error = e) }
         }
     }
 }
