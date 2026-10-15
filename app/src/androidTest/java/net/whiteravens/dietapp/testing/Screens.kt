@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -36,6 +38,17 @@ fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
 /** Waits until something on the screen shows [shown], or a text holding it where [substring], as a person waits for a screen to load. */
 fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000, substring: Boolean = false) {
     waitUntil(timeoutMillis) { onAllNodesWithText(shown, substring = substring).fetchSemanticsNodes().isNotEmpty() }
+}
+
+/**
+ * Scrolls the screen's list until it shows [shown] (or a text holding it, where [substring]), once
+ * the list has it, as a person scrolls to what they look for: a list composes only what is in view.
+ */
+fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) {
+    val sought = hasText(shown, substring = substring)
+    waitUntil(timeoutMillis) {
+        runCatching { onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(sought) }.isSuccess
+    }
 }
 
 /**

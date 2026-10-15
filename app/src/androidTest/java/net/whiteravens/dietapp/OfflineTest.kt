@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -63,13 +64,13 @@ class OfflineTest {
 
         // Opened once with the network: the phone keeps a copy.
         screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
-        // The plan's card names the day it begins on.
+        // The plan's card names the day it begins on; the list is below the calendar.
         val card = formatDate(startDate)
-        screen.waitForText(card, substring = true)
+        screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
         screen.waitForText(title)
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
-        screen.waitForText(card, substring = true)
+        screen.scrollToText(card, substring = true)
 
         // Opened again without it: the copy, said to be one, with its meals.
         airplaneMode(true)

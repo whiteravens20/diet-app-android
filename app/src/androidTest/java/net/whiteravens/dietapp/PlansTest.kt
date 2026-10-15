@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -142,18 +143,21 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
         // The plan's card names the day it begins on.
         val card = formatDate(next.toString())
-        screen.waitForText(card, substring = true)
+        // The list is below the calendar.
+        screen.scrollToText(card, substring = true)
 
         // A plan of next month is still to come: it is among those to come, and none of those that are over.
-        screen.onNodeWithText(text(R.string.plans_status_past)).performScrollTo().performClick()
-        screen.waitForText(text(R.string.plans_none_filtered))
+        screen.scrollToText(text(R.string.plans_status_past))
+        screen.onNodeWithText(text(R.string.plans_status_past)).performClick()
+        screen.scrollToText(text(R.string.plans_none_filtered))
         assertTrue(screen.onAllNodesWithText(card, substring = true).fetchSemanticsNodes().isEmpty())
         screen.keepScreenshot("plans-narrowed")
-        screen.onNodeWithText(text(R.string.plans_status_upcoming)).performScrollTo().performClick()
-        screen.waitForText(card, substring = true)
+        screen.onNodeWithText(text(R.string.plans_status_upcoming)).performClick()
+        screen.scrollToText(card, substring = true)
 
-        screen.onNodeWithText(text(R.string.common_clear)).performScrollTo().performClick()
-        screen.waitForText(card, substring = true)
+        screen.scrollToText(text(R.string.common_clear))
+        screen.onNodeWithText(text(R.string.common_clear)).performClick()
+        screen.scrollToText(card, substring = true)
         assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
     }
 
