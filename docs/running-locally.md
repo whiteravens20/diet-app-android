@@ -30,8 +30,9 @@ npm run dev                                             # API on :4000
 ./gradlew assembleDebug        # -> app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The backend base URL is baked in as a build config value, defaulting to
-`http://10.0.2.2:4000/api/` (an emulator's alias for the host loopback). For a
+The backend base URL is baked in as a build config value: in a debug build it defaults to
+`http://10.0.2.2:4000/api/` (an emulator's alias for the host loopback), and a release build
+has none, so its first screen asks for the address. For a
 **physical device** the phone must reach the backend over the network, so pass your
 host's LAN IP:
 

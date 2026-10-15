@@ -25,6 +25,9 @@
     <string name="server_title">Server</string>
     <string name="server_label">Server: %1$s</string>
     <string name="server_dialog_title">Server address</string>
+    <string name="server_first_title">Which Diet App server do you use?</string>
+    <string name="server_first_body">Diet App runs on servers that people and organisations host themselves. Enter the address of yours: whoever runs it can tell you what it is.</string>
+    <string name="server_first_button">Enter its address</string>
     <string name="server_placeholder">https://diet.example.org</string>
     <string name="server_checking">Checking what answers at this address…</string>
     <string name="server_save_anyway">Save anyway</string>

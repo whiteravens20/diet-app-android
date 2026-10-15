@@ -24,6 +24,9 @@
     <string name="server_title">Serwer</string>
     <string name="server_label">Serwer: %1$s</string>
     <string name="server_dialog_title">Adres serwera</string>
+    <string name="server_first_title">Z którego serwera Diet App korzystasz?</string>
+    <string name="server_first_body">Diet App działa na serwerach, które ludzie i organizacje utrzymują sami. Podaj adres swojego: zna go osoba, która go prowadzi.</string>
+    <string name="server_first_button">Podaj jego adres</string>
     <string name="server_placeholder">https://diet.example.org</string>
     <string name="server_checking">Sprawdzanie, co odpowiada pod tym adresem…</string>
     <string name="server_save_anyway">Zapisz mimo to</string>

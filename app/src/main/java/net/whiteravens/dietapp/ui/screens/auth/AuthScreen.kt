@@ -59,7 +59,8 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
     var displayName by rememberSaveable { mutableStateOf("") }
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     val state by viewModel.state.collectAsState()
-    val serverUrl by viewModel.serverUrl.collectAsState()
+    val server by viewModel.serverUrl.collectAsState()
+    val serverUrl = server.orEmpty()
     val checkSiteKey by viewModel.checkSiteKey.collectAsState()
     val password by viewModel.password.collectAsState()
     val secondStepCode by viewModel.secondStepCode.collectAsState()
@@ -113,6 +114,13 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
             modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
         )
         ServerVersionNotice(serverVersion, Modifier.padding(bottom = 16.dp))
+
+        // Nothing to sign in to before a server is chosen: a release build starts so.
+        if (server == null) return@Column
+        if (serverUrl.isEmpty()) {
+            ChooseServerCard(onChoose = { showServerDialog = true })
+            return@Column
+        }
 
         if (state.secondStep != null) {
             SecondStepCard(
@@ -272,5 +280,27 @@ private fun SecondStepCard(
         TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
             Text(stringResource(R.string.common_back))
         }
+    }
+}
+
+/** The first thing a build that starts with no server asks: which one to talk to. */
+@Composable
+private fun ChooseServerCard(onChoose: () -> Unit) {
+    AppCard(Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.server_first_title),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        Text(
+            stringResource(R.string.server_first_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Button(
+            onClick = onChoose,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        ) { Text(stringResource(R.string.server_first_button)) }
     }
 }

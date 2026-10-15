@@ -3,12 +3,12 @@
 package net.whiteravens.dietapp.data.remote
 
 import kotlinx.coroutines.runBlocking
-import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.Response
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,28 +18,30 @@ import javax.inject.Singleton
  */
 data class ServerAddress(val baseUrl: String)
 
+/** The base Retrofit builds every request on, which [BaseUrlInterceptor] replaces: it names no place. */
+const val PLACEHOLDER_BASE = "https://server.invalid/api/"
+
 /**
  * Re-targets every request at the server saved in [ServerConfigStore], or at the one its
- * [ServerAddress] tag names. Retrofit is built against the compiled-in default base, so this
- * swaps that prefix for the stored one and keeps the endpoint path + query intact. Runs on both
- * OkHttp clients (it sits on the shared base client).
+ * [ServerAddress] tag names. Retrofit builds requests on [PLACEHOLDER_BASE], so this swaps that
+ * prefix for the server's and keeps the endpoint path + query intact; with no server chosen yet,
+ * a request goes nowhere and fails as a connection would. Runs on both OkHttp clients (it sits on
+ * the shared base client).
  */
 @Singleton
 class BaseUrlInterceptor @Inject constructor(
     private val config: ServerConfigStore,
 ) : Interceptor {
 
-    private val compiledBase = BuildConfig.API_BASE_URL.toHttpUrl()
+    private val placeholder = PLACEHOLDER_BASE.toHttpUrl()
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val stored = request.tag(ServerAddress::class.java)?.baseUrl ?: runBlocking { config.current() }
-        if (stored == BuildConfig.API_BASE_URL) return chain.proceed(request)
-        // A stored value that no longer parses falls back to the compiled base.
-        val base = stored.toHttpUrlOrNull() ?: return chain.proceed(request)
+        val base = stored.toHttpUrlOrNull() ?: throw IOException("No server is chosen")
 
         val endpointSegments = request.url.pathSegments
-            .drop(compiledBase.pathSegments.count { it.isNotEmpty() })
+            .drop(placeholder.pathSegments.count { it.isNotEmpty() })
         val rewritten = base.newBuilder()
             .apply { endpointSegments.forEach { addPathSegment(it) } }
             .encodedQuery(request.url.encodedQuery)

@@ -19,8 +19,9 @@ private val Context.serverDataStore by preferencesDataStore(name = "server")
 /**
  * The API base URL as a device setting. The compiled-in default
  * (`BuildConfig.API_BASE_URL`) applies until the user saves an override —
- * set once from the login screen or later from the profile screen. All
- * traffic follows it via [net.whiteravens.dietapp.data.remote.BaseUrlInterceptor].
+ * set once from the login screen or later from the profile screen. A release
+ * build has none, and an empty address is no server chosen yet. All traffic
+ * follows it via [net.whiteravens.dietapp.data.remote.BaseUrlInterceptor].
  */
 @Singleton
 class ServerConfigStore @Inject constructor(@ApplicationContext context: Context) {

@@ -22,12 +22,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.0.0"
-        // Backend base URL. Default targets the emulator's host loopback; for a
-        // physical device pass -PapiBaseUrl=http://<host-lan-ip>:4000/api/ (or
-        // set apiBaseUrl in ~/.gradle/gradle.properties).
-        val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
-            .getOrElse("http://10.0.2.2:4000/api/")
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         // The version of diet-app's API this build was checked against (contract/API_VERSION):
         // a server that answers another one is named on the screen.
         val checkedApiVersion = providers
@@ -35,17 +29,25 @@ android {
             .asText.get().trim()
         buildConfigField("String", "API_VERSION", "\"$checkedApiVersion\"")
 
-        // The screens' tests run against a diet-app instance at that address
+        // The screens' tests run against a diet-app instance at the debug build's address
         // (.github/workflows/test.yml starts one for them), each test on an app with
         // no data of its own.
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 
+    // The server a build starts with: the emulator's host in a debug build, and none in a release
+    // build, whose first screen asks for one. `-PapiBaseUrl=<address>` gives another, such as a
+    // backend on a phone's own network: http://<host-lan-ip>:4000/api/.
+    val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.getOrElse("http://10.0.2.2:4000/api/")}\"")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.getOrElse("")}\"")
         }
     }
 

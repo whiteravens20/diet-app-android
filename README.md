@@ -66,8 +66,9 @@ Without a local toolchain, run the **Build debug APK** workflow in your fork and
 ## Run
 
 The app needs a running [Diet App](https://github.com/whiteravens20/diet-app) backend.
-Its address is `http://10.0.2.2:4000/api/` by default, which is the host machine as the
-Android emulator sees it. For a phone on your network, set another one at build time:
+A debug build's address is `http://10.0.2.2:4000/api/` by default, which is the host
+machine as the Android emulator sees it; a release build starts with none and asks for one
+on its first screen. For a phone on your network, set another one at build time:
 
 ```bash
 ./gradlew assembleDebug -PapiBaseUrl=http://192.168.1.20:4000/api/

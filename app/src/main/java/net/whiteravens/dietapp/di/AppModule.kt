@@ -24,6 +24,7 @@ import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.data.remote.ClientHeaders
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.PLACEHOLDER_BASE
 import net.whiteravens.dietapp.data.remote.RefreshApiService
 import okhttp3.Dispatcher
 import okhttp3.MediaType.Companion.toMediaType
@@ -114,7 +115,7 @@ object AppModule {
 
     private fun retrofit(client: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
-            .baseUrl(BuildConfig.API_BASE_URL)
+            .baseUrl(PLACEHOLDER_BASE)
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

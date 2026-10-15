@@ -70,9 +70,9 @@ class AuthViewModel @Inject constructor(
         _secondStepCode.value = value
     }
 
-    /** Effective API base URL; empty only until the first DataStore emission. */
-    val serverUrl: StateFlow<String> = server.baseUrl
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+    /** Effective API base URL: null until it is read, empty while no server is chosen. */
+    val serverUrl: StateFlow<String?> = server.baseUrl
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** The site key of the anti-abuse check the server asks for, or null. */
     val checkSiteKey: StateFlow<String?> = instance.checkSiteKey

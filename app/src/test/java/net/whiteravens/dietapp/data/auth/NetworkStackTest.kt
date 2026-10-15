@@ -40,6 +40,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.LocalDate
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
@@ -380,5 +381,19 @@ class NetworkStackTest {
         } finally {
             issuer.shutdown()
         }
+    }
+
+    @Test
+    fun `with no server chosen a request goes nowhere and fails as a missing connection does`() {
+        val config = mockk<ServerConfigStore>()
+        coEvery { config.current() } returns ""
+        val context = mockk<Context>()
+        every { context.getString(R.string.api_language) } returns "pl"
+        val api = AppModule.authApi(AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context)), json)
+
+        val failure = runCatching { runBlocking { api.config() } }.exceptionOrNull()
+
+        assertTrue("$failure", failure is IOException)
+        assertEquals(0, server.requestCount)
     }
 }
