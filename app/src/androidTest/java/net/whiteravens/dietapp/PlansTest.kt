@@ -78,6 +78,15 @@ class PlansTest {
         screen.waitForText(plural(R.plurals.plans_plan_summary, 3, 3, text(R.string.diet_balanced)))
         screen.keepScreenshot("plans-a-plan-made")
 
+        // The plan is made again from its facts: what would change is said before it is asked for.
+        val made = Instance.planRevision(account, planId)
+        screen.scrollToText(text(R.string.plans_recalculate))
+        screen.onNodeWithText(text(R.string.plans_recalculate)).performClick()
+        screen.waitForText(text(R.string.plans_reroll_title))
+        screen.keepScreenshot("plans-make-again")
+        screen.onNodeWithText(text(R.string.plans_reroll_confirm)).performClick()
+        screen.waitUntil(60_000) { Instance.planRevision(account, planId) > made }
+
         // The first meal of the first day is swapped from the ways to change it, named by the meal:
         // one offer is put away for another, which is taken.
         val before = Instance.firstDayRecipes(account, planId)

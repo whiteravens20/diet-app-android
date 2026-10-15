@@ -229,6 +229,8 @@ data class PlanDay(
     val belowSafetyFloor: Boolean,
     /** What the day aims at in grams under the diet's split. */
     val targetMacros: Macros,
+    /** The recipe each meal of the day was locked to when the plan was made, by meal. */
+    val locks: Map<String, String>,
 )
 
 data class MealPlan(

@@ -103,3 +103,21 @@ data class PlanCalendarDay(
     val meals: Int,
     val skipped: Boolean,
 )
+
+/**
+ * A plan made again, or a part of it: one day ([dayId]), or the days from [from] to [to] (the whole
+ * plan where all three are left out). Days that have passed, meals marked as eaten and the user's
+ * own meals stay unless they are let go; a lock whose recipe may no longer go into the plan is
+ * dropped where [dropIneligibleLocks]; [allowRelaxations] are the limits that may give way this
+ * time, those the plan may already let give way where it is null.
+ */
+data class Reroll(
+    val dayId: String? = null,
+    val from: String? = null,
+    val to: String? = null,
+    val includePast: Boolean = false,
+    val replaceEaten: Boolean = false,
+    val replaceCustom: Boolean = false,
+    val dropIneligibleLocks: Boolean = false,
+    val allowRelaxations: List<String>? = null,
+)

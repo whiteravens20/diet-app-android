@@ -274,6 +274,69 @@
     <string name="substitute_rewrite_with_ai">Reword the recipe text with AI</string>
     <string name="substitute_rewrite_with_ai_hint">Uses one AI request. Without it, the name of the new ingredient simply replaces the old one in the text.</string>
     <string name="substitute_step_replace">2. Replace %1$s with…</string>
+    <string name="plans_recalculate">Make again…</string>
+    <string name="plans_change_day">Change day…</string>
+    <string name="plans_hold_limits">Make it again inside every limit…</string>
+    <string name="plans_include_past_and_retry">Make the days that have passed again too</string>
+    <string name="plans_drop_lock_and_retry">Drop that lock and try again</string>
+    <string name="plans_reroll_title">Make the plan again</string>
+    <string name="plans_reroll_scope">What gets other meals</string>
+    <string name="plans_reroll_whole">The whole plan</string>
+    <string name="plans_reroll_whole_hint">Made again the way it was asked for, with the profile as it is now: a diet and a calorie target the plan left to the profile follow the profile.</string>
+    <string name="plans_reroll_from_today">From today on</string>
+    <string name="plans_reroll_from_today_not_begun">The plan has not begun, so that is the whole of it.</string>
+    <string name="plans_reroll_from_today_over">Every day of this plan has passed.</string>
+    <string name="plans_reroll_range">From one day to another</string>
+    <string name="plans_reroll_range_from">First day</string>
+    <string name="plans_reroll_range_to">Last day</string>
+    <string name="plans_reroll_day">One day</string>
+    <string name="plans_reroll_day_which">Which day</string>
+    <string name="plans_reroll_day_skipped">%1$s (skipped)</string>
+    <string name="plans_reroll_part_hint">The plan keeps its diet and the target of each day.</string>
+    <string name="plans_reroll_also">Replace as well</string>
+    <string name="plans_reroll_include_past">Days that have passed</string>
+    <string name="plans_reroll_replace_eaten">Meals marked as eaten</string>
+    <string name="plans_reroll_replace_custom">My own meals</string>
+    <string name="plans_reroll_hold_limits">Stay inside every limit this time. The plan may now go outside: %1$s.</string>
+    <string name="plans_reroll_kept">Kept as it is:</string>
+    <string name="plans_reroll_kept_nothing">Nothing of the plan is kept as it is.</string>
+    <plurals name="plans_reroll_kept_outside">
+        <item quantity="one">%1$d day outside the days chosen</item>
+        <item quantity="other">%1$d days outside the days chosen</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_past">
+        <item quantity="one">%1$d day that has passed</item>
+        <item quantity="other">%1$d days that have passed</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_skipped">
+        <item quantity="one">%1$d skipped day</item>
+        <item quantity="other">%1$d skipped days</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_eaten">
+        <item quantity="one">%1$d meal marked as eaten</item>
+        <item quantity="other">%1$d meals marked as eaten</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_custom">
+        <item quantity="one">%1$d meal of your own</item>
+        <item quantity="other">%1$d meals of your own</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_locked">
+        <item quantity="one">%1$d meal locked to its recipe</item>
+        <item quantity="other">%1$d meals locked to their recipes</item>
+    </plurals>
+    <string name="plans_reroll_nothing_past">The days chosen have passed, and days that have passed are left as they are. Tick them above to make them again as well.</string>
+    <string name="plans_reroll_nothing_kept">Nothing would change on the days chosen.</string>
+    <string name="plans_reroll_confirm">Make again</string>
+    <string name="plans_reroll_replaced">Replaced: %1$s on %2$s.</string>
+    <string name="plans_reroll_no_meal">no meal</string>
+    <plurals name="plans_reroll_meals">
+        <item quantity="one">%1$d meal</item>
+        <item quantity="other">%1$d meals</item>
+    </plurals>
+    <plurals name="plans_reroll_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
     <string name="ai_mark_label">AI-assisted</string>
     <string name="ai_mark_picked">A model chose this recipe for the meal, from the recipes that fit your plan.</string>
     <string name="ai_mark_picked_why">A model chose this recipe for the meal: “%1$s”</string>

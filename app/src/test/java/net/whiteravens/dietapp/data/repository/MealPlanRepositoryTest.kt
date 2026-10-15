@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
+import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.Substitution
 import net.whiteravens.dietapp.domain.SwapAsk
@@ -321,6 +322,27 @@ class MealPlanRepositoryTest {
         assertEquals("true", sent.getValue("rewriteWithAi").jsonPrimitive.content)
         assertEquals("note", sent.getValue("pick").jsonPrimitive.content)
         assertEquals("quota_exhausted", done.fallbackReason)
+    }
+
+    @Test
+    fun `a day is made again at its own address, a part of the plan by its days, and nothing is sent that is not asked for`() {
+        repeat(3) { server.enqueue(answer("meal-plan")) }
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.reroll("plan-1", Reroll(dayId = "day-1", replaceCustom = true))
+            plans.reroll("plan-1", Reroll(from = "2026-10-13", to = "2026-10-15", includePast = true, allowRelaxations = emptyList()))
+            plans.reroll("plan-1", Reroll())
+        }
+
+        val day = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/days/day-1/regenerate", day.path)
+        assertEquals("""{"replaceCustom":true}""", day.body.readUtf8())
+        val part = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/regenerate", part.path)
+        // An empty list of limits is every limit held: it is sent.
+        assertEquals("""{"from":"2026-10-13","to":"2026-10-15","includePast":true,"allowRelaxations":[]}""", part.body.readUtf8())
+        assertEquals("{}", server.takeRequest().body.readUtf8())
     }
 }
 

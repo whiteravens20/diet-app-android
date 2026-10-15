@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.data.remote.RebalanceChangeDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
+import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
@@ -37,6 +38,7 @@ import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.MarkedRecipe
+import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.SwapAsk
@@ -99,10 +101,10 @@ class PlanDetailViewModelTest {
     private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id)) =
         PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, NoCache, json), favorites, users)
 
-    private fun refused(status: Int, code: String) = HttpException(
+    private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
             status,
-            """{"statusCode":$status,"error":"$code","message":"Refused."}""".toResponseBody("application/json".toMediaType()),
+            """{"statusCode":$status,"error":"$code","message":"Refused."${details?.let { ",\"details\":$it" }.orEmpty()}}""".toResponseBody("application/json".toMediaType()),
         ),
     )
 
@@ -328,6 +330,68 @@ class PlanDetailViewModelTest {
         assertEquals("note", model.state.value.offer?.pick)
         assertEquals("Lighter.", model.state.value.offer?.reason)
         assertEquals("ai", model.state.value.offer?.ask?.strategy)
+    }
+
+    @Test
+    fun `a plan made again shows the plan the API made`() {
+        val api = mockk<DietApiService>()
+        val asked = mutableListOf<RegenerateRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.regenerateDay(plan.id, plan.days[2].id, capture(asked)) } returns swapped.plan
+        val model = model(api)
+
+        model.reroll(Reroll(dayId = plan.days[2].id, replaceEaten = true))
+
+        assertEquals(RegenerateRequest(replaceEaten = true), asked.single())
+        assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
+        assertFalse(model.state.value.changing)
+    }
+
+    @Test
+    fun `a re-roll refused for a lock that no longer holds, or for days that have all passed, is asked again with that allowed`() {
+        val api = mockk<DietApiService>()
+        val asked = mutableListOf<RegenerateRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.regeneratePlan(plan.id, capture(asked)) } throws refused(400, "LOCKED_RECIPE_INELIGIBLE") andThenThrows refused(409, "NOTHING_TO_REGENERATE") andThen plan
+        val model = model(api)
+
+        model.reroll(Reroll(from = "2026-10-13", to = "2026-10-14"))
+
+        assertEquals(PlanDetailViewModel.DROP_LOCKS, model.state.value.refused?.allow)
+        assertEquals("LOCKED_RECIPE_INELIGIBLE", (model.state.value.error as ApiException).code)
+
+        model.allowRefused()
+
+        assertEquals(PlanDetailViewModel.INCLUDE_PAST, model.state.value.refused?.allow)
+
+        model.allowRefused()
+
+        assertEquals(RegenerateRequest(from = "2026-10-13", to = "2026-10-14", includePast = true, dropIneligibleLocks = true), asked.last())
+        assertNull(model.state.value.refused)
+        assertNull(model.state.value.error)
+    }
+
+    @Test
+    fun `a re-roll that could only go outside the plan's limits says what stands in the way, and is asked again with them let give way in their order`() {
+        val api = mockk<DietApiService>()
+        val asked = mutableListOf<RegenerateRequest>()
+        val needs = """{"needs":["weekly_cap","cook_time"],"meals":[{"date":"2026-10-13","slot":"lunch","gaveWay":["weekly_cap"]}]}"""
+        coEvery { api.mealPlan(plan.id) } returns plan.copy(options = plan.options.copy(allowRelaxations = listOf("ingredient_cap")))
+        coEvery { api.regeneratePlan(plan.id, capture(asked)) } throws refused(422, "PLAN_NEEDS_RELAXATION", needs) andThen plan
+        val model = model(api)
+
+        model.reroll(Reroll())
+
+        val inTheWay = model.state.value.inTheWay!!
+        assertEquals(listOf("weekly_cap", "cook_time"), inTheWay.needed.needs)
+        // Left out by the window: the limits the plan may already let give way.
+        assertEquals(listOf("ingredient_cap"), inTheWay.allowed)
+        assertNull(model.state.value.error)
+
+        model.letGiveWay()
+
+        assertEquals(listOf("cook_time", "weekly_cap", "ingredient_cap"), asked.last().allowRelaxations)
+        assertNull(model.state.value.inTheWay)
     }
 }
 

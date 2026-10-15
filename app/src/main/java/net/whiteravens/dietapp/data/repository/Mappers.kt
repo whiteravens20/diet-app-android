@@ -191,6 +191,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     offTarget = offTarget,
     belowSafetyFloor = belowSafetyFloor,
     targetMacros = targetMacros.toDomain(),
+    locks = overrides?.lockedSlots.orEmpty().associate { it.mealType to it.recipeId },
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(

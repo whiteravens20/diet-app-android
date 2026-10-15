@@ -166,6 +166,29 @@ fun PlanDetailScreen(
         )
     }
 
+    // How much of the plan the window to make it again opens on, while it is open.
+    var rerollScope by rememberSaveable { mutableStateOf<RerollScope?>(null) }
+    var rerollDay by rememberSaveable { mutableStateOf<String?>(null) }
+    var rerollHolds by rememberSaveable { mutableStateOf(false) }
+    val openReroll: (RerollStart) -> Unit = { start ->
+        rerollScope = start.scope
+        rerollDay = start.day
+        rerollHolds = start.holdLimits
+    }
+    rerollScope?.let { scope ->
+        if (plan != null) {
+            RerollDialog(
+                plan = plan,
+                start = RerollStart(scope, rerollDay, rerollHolds),
+                onConfirm = { asked ->
+                    rerollScope = null
+                    viewModel.reroll(asked)
+                },
+                onDismiss = { rerollScope = null },
+            )
+        }
+    }
+
     // The meal an ingredient is being substituted in, while its window is open.
     var substitutingIn by rememberSaveable { mutableStateOf<String?>(null) }
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == substitutingIn }?.let { meal ->
@@ -231,6 +254,21 @@ fun PlanDetailScreen(
                 }
             }
             if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly)) }
+            // A re-roll refused for something the user can allow: asked again with it allowed.
+            state.refused?.let { refused ->
+                item {
+                    OutlinedButton(onClick = viewModel::allowRefused, enabled = !busy) {
+                        Text(
+                            stringResource(
+                                if (refused.allow == PlanDetailViewModel.INCLUDE_PAST) R.string.plans_include_past_and_retry else R.string.plans_drop_lock_and_retry,
+                            ),
+                        )
+                    }
+                }
+            }
+            state.inTheWay?.let { inTheWay ->
+                item { InTheWayBox(inTheWay.needed, busy = busy, onLetGiveWay = viewModel::letGiveWay, onCancel = viewModel::dismissInTheWay) }
+            }
 
             if (plan == null) {
                 if (state.loading) {
@@ -240,7 +278,7 @@ fun PlanDetailScreen(
                 return@LazyColumn
             }
 
-            item { PlanFacts(plan) }
+            item { PlanFacts(plan, onReroll = openReroll.takeUnless { readOnly || busy }) }
             if (plan.conflicts > 0) {
                 item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
             }
@@ -261,7 +299,9 @@ fun PlanDetailScreen(
             }
 
             val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
-            item(key = "summary-${day.id}") { DaySummary(day) }
+            item(key = "summary-${day.id}") {
+                DaySummary(day, onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy })
+            }
             itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
                 MealCard(
                     meal = meal,
@@ -340,7 +380,7 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onDelete: (() -> Unit)?)
  * the limits it was let go outside of, and what the pantry had to do with it.
  */
 @Composable
-private fun PlanFacts(plan: MealPlan) {
+private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?) {
     val average = plan.averageDailyNutrition
     val target = plan.targetMacros
     AppCard {
@@ -357,11 +397,19 @@ private fun PlanFacts(plan: MealPlan) {
                 ),
             )
             if (plan.packs.bought > 0) PacksLine(plan.packs)
-            if (plan.mayGiveWay.isNotEmpty()) Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
+            if (plan.mayGiveWay.isNotEmpty()) {
+                Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
+                if (onReroll != null) {
+                    TextButton(onClick = { onReroll(RerollStart(RerollScope.WHOLE, holdLimits = true)) }) { Text(stringResource(R.string.plans_hold_limits)) }
+                }
+            }
             when (plan.pantry) {
                 "counted" -> Fact(stringResource(R.string.plans_pantry_counted))
                 "left_out" -> Fact(stringResource(R.string.plans_pantry_left_out))
                 "unused" -> Fact(stringResource(R.string.plans_pantry_unused))
+            }
+            if (onReroll != null) {
+                OutlinedButton(onClick = { onReroll(RerollStart(RerollScope.WHOLE)) }) { Text(stringResource(R.string.plans_recalculate)) }
             }
         }
     }
@@ -414,7 +462,7 @@ private fun PacksLine(packs: PlanPacks) {
 
 /** A day against its target: what it holds in kcal and by how much it misses, its macros against theirs, and where it stands. */
 @Composable
-private fun DaySummary(day: PlanDay) {
+private fun DaySummary(day: PlanDay, onChange: (() -> Unit)?) {
     AppCard {
         if (day.skipped) {
             // A day the user skips is no shortfall, and there is nothing in it to change.
@@ -468,6 +516,9 @@ private fun DaySummary(day: PlanDay) {
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp),
             )
+        }
+        if (onChange != null) {
+            TextButton(onClick = onChange, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_change_day)) }
         }
     }
 }

@@ -892,6 +892,23 @@ data class AiSuggestIngredientResponseDto(val toIngredient: IngredientDto, val a
 @Serializable
 data class SwapIngredientResponseDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null, val aiMeta: AiGenerationMetaDto? = null)
 
+/**
+ * POST `/meal-plans/:id/regenerate` and `/meal-plans/:id/days/:dayId/regenerate`: the days from
+ * [from] to [to] get other meals (the whole plan where both are left out); what is otherwise left
+ * alone may go as well; a lock whose recipe may no longer go in is dropped instead of refusing;
+ * [allowRelaxations] are the limits that may give way this time (those of the plan where left out).
+ */
+@Serializable
+data class RegenerateRequest(
+    val from: String? = null,
+    val to: String? = null,
+    val includePast: Boolean = false,
+    val replaceEaten: Boolean = false,
+    val replaceCustom: Boolean = false,
+    val dropIneligibleLocks: Boolean = false,
+    val allowRelaxations: List<String>? = null,
+)
+
 /** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
 @Serializable
 data class SetMealEatenRequest(val eaten: Boolean)

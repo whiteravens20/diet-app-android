@@ -287,6 +287,85 @@
     <string name="substitute_rewrite_with_ai">Przeredaguj treść przepisu z pomocą AI</string>
     <string name="substitute_rewrite_with_ai_hint">Zużywa jedno zapytanie AI. Bez tego nazwa nowego składnika po prostu zastąpi w treści starą.</string>
     <string name="substitute_step_replace">2. %1$s: wybierz zamiennik</string>
+    <string name="plans_recalculate">Ułóż ponownie…</string>
+    <string name="plans_change_day">Zmień dzień…</string>
+    <string name="plans_hold_limits">Ułóż ponownie, trzymając wszystkie limity…</string>
+    <string name="plans_include_past_and_retry">Ułóż ponownie także dni, które już minęły</string>
+    <string name="plans_drop_lock_and_retry">Usuń to przypięcie i spróbuj ponownie</string>
+    <string name="plans_reroll_title">Ułóż plan ponownie</string>
+    <string name="plans_reroll_scope">Co ułożyć ponownie</string>
+    <string name="plans_reroll_whole">Cały plan</string>
+    <string name="plans_reroll_whole_hint">Układany od nowa z tymi samymi ustawieniami i z profilem w obecnym kształcie: dieta i cel kaloryczny, których plan nie nadpisał, są brane z profilu.</string>
+    <string name="plans_reroll_from_today">Od dziś do końca planu</string>
+    <string name="plans_reroll_from_today_not_begun">Plan jeszcze się nie zaczął, więc to cały plan.</string>
+    <string name="plans_reroll_from_today_over">Wszystkie dni tego planu już minęły.</string>
+    <string name="plans_reroll_range">Od dnia do dnia</string>
+    <string name="plans_reroll_range_from">Pierwszy dzień</string>
+    <string name="plans_reroll_range_to">Ostatni dzień</string>
+    <string name="plans_reroll_day">Jeden dzień</string>
+    <string name="plans_reroll_day_which">Który dzień</string>
+    <string name="plans_reroll_day_skipped">%1$s (pominięty)</string>
+    <string name="plans_reroll_part_hint">Plan zachowuje swoją dietę i cel każdego dnia.</string>
+    <string name="plans_reroll_also">Zastąp także</string>
+    <string name="plans_reroll_include_past">Dni, które już minęły</string>
+    <string name="plans_reroll_replace_eaten">Posiłki oznaczone jako zjedzone</string>
+    <string name="plans_reroll_replace_custom">Moje własne posiłki</string>
+    <string name="plans_reroll_hold_limits">Tym razem trzymaj wszystkie limity. Plan może teraz wychodzić poza limit: %1$s.</string>
+    <string name="plans_reroll_kept">Bez zmian:</string>
+    <string name="plans_reroll_kept_nothing">Nic z planu nie zostaje bez zmian.</string>
+    <plurals name="plans_reroll_kept_outside">
+        <item quantity="one">%1$d dzień poza wybranymi</item>
+        <item quantity="few">%1$d dni poza wybranymi</item>
+        <item quantity="many">%1$d dni poza wybranymi</item>
+        <item quantity="other">%1$d dnia poza wybranymi</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_past">
+        <item quantity="one">%1$d dzień, który już minął</item>
+        <item quantity="few">%1$d dni, które już minęły</item>
+        <item quantity="many">%1$d dni, które już minęły</item>
+        <item quantity="other">%1$d dnia, które już minęły</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_skipped">
+        <item quantity="one">%1$d pominięty dzień</item>
+        <item quantity="few">%1$d pominięte dni</item>
+        <item quantity="many">%1$d pominiętych dni</item>
+        <item quantity="other">%1$d pominiętego dnia</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_eaten">
+        <item quantity="one">%1$d posiłek oznaczony jako zjedzony</item>
+        <item quantity="few">%1$d posiłki oznaczone jako zjedzone</item>
+        <item quantity="many">%1$d posiłków oznaczonych jako zjedzone</item>
+        <item quantity="other">%1$d posiłku oznaczonego jako zjedzony</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_custom">
+        <item quantity="one">%1$d własny posiłek</item>
+        <item quantity="few">%1$d własne posiłki</item>
+        <item quantity="many">%1$d własnych posiłków</item>
+        <item quantity="other">%1$d własnego posiłku</item>
+    </plurals>
+    <plurals name="plans_reroll_kept_locked">
+        <item quantity="one">%1$d posiłek przypięty do swojego przepisu</item>
+        <item quantity="few">%1$d posiłki przypięte do swoich przepisów</item>
+        <item quantity="many">%1$d posiłków przypiętych do swoich przepisów</item>
+        <item quantity="other">%1$d posiłku przypiętego do swojego przepisu</item>
+    </plurals>
+    <string name="plans_reroll_nothing_past">Wybrane dni już minęły, a dni, które minęły, zostają bez zmian. Zaznacz powyżej „Dni, które już minęły”, żeby ułożyć ponownie również je.</string>
+    <string name="plans_reroll_nothing_kept">W wybranych dniach nic by się nie zmieniło.</string>
+    <string name="plans_reroll_confirm">Ułóż ponownie</string>
+    <string name="plans_reroll_replaced">Zastąpione: %1$s w %2$s.</string>
+    <string name="plans_reroll_no_meal">żaden posiłek</string>
+    <plurals name="plans_reroll_meals">
+        <item quantity="one">%1$d posiłek</item>
+        <item quantity="few">%1$d posiłki</item>
+        <item quantity="many">%1$d posiłków</item>
+        <item quantity="other">%1$d posiłku</item>
+    </plurals>
+    <plurals name="plans_reroll_days">
+        <item quantity="one">%1$d dniu</item>
+        <item quantity="few">%1$d dniach</item>
+        <item quantity="many">%1$d dniach</item>
+        <item quantity="other">%1$d dnia</item>
+    </plurals>
     <string name="ai_mark_label">Z pomocą AI</string>
     <string name="ai_mark_picked">Ten przepis wybrał dla tego posiłku model AI, spośród przepisów pasujących do Twojego planu.</string>
     <string name="ai_mark_picked_why">Ten przepis wybrał dla tego posiłku model AI: „%1$s”</string>

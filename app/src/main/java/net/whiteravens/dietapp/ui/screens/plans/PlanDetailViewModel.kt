@@ -18,8 +18,11 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
+import net.whiteravens.dietapp.domain.RelaxationNeeded
+import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.ui.common.attempt
@@ -31,9 +34,10 @@ import javax.inject.Inject
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
  * swaps one: a recipe is offered (any of the plan's diet, a favourite picked by hand, one with the
  * profile's favourite ingredients, or a model's pick), another can be asked for, and nothing is
- * written until the offer is taken. A meal is marked eaten or not, a meal of one's own is added to a day, and a
- * change that balanced the day again says how, with the way back and the rest of the week to
- * balance as well. The plan can be deleted.
+ * written until the offer is taken. A meal is marked eaten or not, a meal of one's own is added to
+ * a day, and a change that balanced the day again says how, with the way back and the rest of the
+ * week to balance as well. The plan, a part of it or a day is made again; a refusal for something
+ * the user can allow offers to allow it. The plan can be deleted.
  */
 @HiltViewModel
 class PlanDetailViewModel @Inject constructor(
@@ -49,6 +53,12 @@ class PlanDetailViewModel @Inject constructor(
 
     /** The day the plan opens at, where the route names one (yyyy-MM-dd): the calendar's day that was chosen. */
     private val openAt: String? = savedStateHandle.get<String>(PlanDetailRoute::day.name)
+
+    /** A re-roll refused for something the user can allow: a lock that may no longer hold to drop ([DROP_LOCKS]), or days that have passed to make again too ([INCLUDE_PAST]). */
+    data class Refused(val reroll: Reroll, val allow: String)
+
+    /** A re-roll that could only be made outside the plan's limits: what stands in the way, what was let give way, and what was asked. */
+    data class InTheWay(val needed: RelaxationNeeded, val allowed: List<String>, val reroll: Reroll)
 
     data class UiState(
         val loading: Boolean = true,
@@ -74,6 +84,8 @@ class PlanDetailViewModel @Inject constructor(
         val notice: String? = null,
         /** The plan is gone: the screen is done. */
         val deleted: Boolean = false,
+        val refused: Refused? = null,
+        val inTheWay: InTheWay? = null,
         val error: Throwable? = null,
     )
 
@@ -181,6 +193,49 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(plan = result.plan, rebalance = result.rebalance.shown(), notice = result.fallbackReason) }
     }
 
+    /** Makes the plan, a part of it or a day again, as the window asked. */
+    fun reroll(asked: Reroll) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null, refused = null, inTheWay = null) }
+            attempt { plans.reroll(planId, asked) }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
+                .onFailure { e ->
+                    val allow = when ((e as? ApiException)?.code) {
+                        "LOCKED_RECIPE_INELIGIBLE" -> DROP_LOCKS.takeUnless { asked.dropIneligibleLocks }
+                        "NOTHING_TO_REGENERATE" -> INCLUDE_PAST.takeUnless { asked.includePast }
+                        else -> null
+                    }
+                    val needed = plans.relaxationNeeded(e)
+                    _state.update {
+                        it.copy(
+                            changing = false,
+                            refused = allow?.let { what -> Refused(asked, what) },
+                            // Where the window left them out, the limits the plan may already let give way.
+                            inTheWay = needed?.let { n -> InTheWay(n, asked.allowRelaxations ?: it.plan?.mayGiveWay.orEmpty(), asked) },
+                            error = e.takeIf { needed == null },
+                        )
+                    }
+                }
+        }
+    }
+
+    /** Asks for the refused re-roll again, with what it was refused for allowed. */
+    fun allowRefused() {
+        val refused = _state.value.refused ?: return
+        reroll(if (refused.allow == INCLUDE_PAST) refused.reroll.copy(includePast = true) else refused.reroll.copy(dropIneligibleLocks = true))
+    }
+
+    /** Asks for the same re-roll again, letting the limits that stood in the way give way too, in the order they do. */
+    fun letGiveWay() {
+        val inTheWay = _state.value.inTheWay ?: return
+        reroll(inTheWay.reroll.copy(allowRelaxations = PLAN_RELAXATIONS.filter { it in inTheWay.allowed || it in inTheWay.needed.needs }))
+    }
+
+    fun dismissInTheWay() {
+        _state.update { it.copy(inTheWay = null) }
+    }
+
     fun delete() {
         val plan = _state.value.plan ?: return
         if (_state.value.changing) return
@@ -236,4 +291,12 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     private fun Throwable.isPlanChanged() = this is ApiException && code == "PLAN_CHANGED"
+
+    companion object {
+        /** What a re-roll refused for a lock that may no longer hold is asked again with. */
+        const val DROP_LOCKS = "dropIneligibleLocks"
+
+        /** What a re-roll refused because every day asked for has passed is asked again with. */
+        const val INCLUDE_PAST = "includePast"
+    }
 }

@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
+import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
@@ -40,6 +41,7 @@ import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
+import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.Substitution
@@ -223,6 +225,29 @@ class MealPlanRepository @Inject constructor(
             )
         },
     )
+
+    /**
+     * Makes a plan, a part of it or one of its days again, as [reroll] asks; the plan is kept for
+     * offline use. Refused with `PLAN_NEEDS_RELAXATION` where a limit stands in the way,
+     * `LOCKED_RECIPE_INELIGIBLE` where a lock may no longer hold, and `NOTHING_TO_REGENERATE` where
+     * every day asked for has passed.
+     */
+    suspend fun reroll(planId: String, reroll: Reroll): MealPlan {
+        val body = RegenerateRequest(
+            from = reroll.from,
+            to = reroll.to,
+            includePast = reroll.includePast,
+            replaceEaten = reroll.replaceEaten,
+            replaceCustom = reroll.replaceCustom,
+            dropIneligibleLocks = reroll.dropIneligibleLocks,
+            allowRelaxations = reroll.allowRelaxations,
+        )
+        val plan = apiCall(json) {
+            if (reroll.dayId != null) api.regenerateDay(planId, reroll.dayId, body) else api.regeneratePlan(planId, body)
+        }
+        mirror(plan)
+        return plan.toDomain()
+    }
 
     /** Marks a meal eaten or not; its day is balanced again around it. */
     suspend fun setEaten(planId: String, mealId: String, eaten: Boolean): Rebalanced =

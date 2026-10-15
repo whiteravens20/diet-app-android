@@ -141,6 +141,14 @@ interface DietApiService {
     @POST("meal-plans/ai-swap-meal/preview")
     suspend fun aiOfferSwap(@Body body: AiSwapOfferRequest): AiMealSwapPreviewDto
 
+    /** Makes a plan again, or the days of it the request names. */
+    @POST("meal-plans/{id}/regenerate")
+    suspend fun regeneratePlan(@Path("id") id: String, @Body body: RegenerateRequest): MealPlanDto
+
+    /** Makes one day of a plan again. */
+    @POST("meal-plans/{id}/days/{dayId}/regenerate")
+    suspend fun regenerateDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: RegenerateRequest): MealPlanDto
+
     /** Marks a meal eaten or not; the day is balanced again around it. */
     @PATCH("meal-plans/{id}/meals/{mealId}/eaten")
     suspend fun setMealEaten(@Path("id") id: String, @Path("mealId") mealId: String, @Body body: SetMealEatenRequest): RebalanceResultDto

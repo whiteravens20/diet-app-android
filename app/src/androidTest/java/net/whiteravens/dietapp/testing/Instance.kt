@@ -90,6 +90,9 @@ object Instance {
         return (0 until items.length()).map { items.getJSONObject(it).getString("id") }
     }
 
+    /** How many times a plan has been changed. */
+    fun planRevision(account: Account, planId: String): Int = call("GET", "meal-plans/$planId", token = account.accessToken).getInt("revision")
+
     /** What a plan was made with: its options as the API keeps them. */
     fun planOptions(account: Account, planId: String): JSONObject =
         call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("options")
