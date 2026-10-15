@@ -82,12 +82,15 @@ jobs:
         with:
           cache-read-only: true
 
-      # The tasks CI runs, so that everything they download is recorded. Keys the keyring
-      # does not have yet are fetched from the key servers.
+      # The tasks CI runs, so that everything they download is recorded, the screens' tests of
+      # both build types they run on included. Keys the keyring does not have yet are fetched
+      # from the key servers.
       - name: Write the metadata and the lockfiles
-        run: >-
-          ./gradlew --write-verification-metadata sha256,pgp --export-keys --write-locks
-          assembleDebug testDebugUnitTest lintDebug
+        run: |
+          ./gradlew --write-verification-metadata sha256,pgp --export-keys --write-locks \
+            assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug
+          ./gradlew -PtestBuildType=minified --write-verification-metadata sha256,pgp --export-keys --write-locks \
+            assembleMinifiedAndroidTest :app:dependencies --configuration minifiedAndroidTestLintChecksClasspath
 
       - name: Collect what changed
         id: collect

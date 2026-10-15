@@ -74,7 +74,9 @@ Changing a dependency, or adding one, means writing the metadata and the lockfil
 
 ```bash
 ./gradlew --write-verification-metadata sha256,pgp --export-keys --write-locks \
-  assembleDebug testDebugUnitTest lintDebug
+  assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug
+./gradlew -PtestBuildType=minified --write-verification-metadata sha256,pgp --export-keys --write-locks \
+  assembleMinifiedAndroidTest :app:dependencies --configuration minifiedAndroidTestLintChecksClasspath
 ```
 
 Read the diff before you commit it. A new entry under `trusted-keys`, or a new key in the
