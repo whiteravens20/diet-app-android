@@ -41,6 +41,13 @@
     <string name="server_unknown_host">There is no server of that name.</string>
     <string name="server_no_answer">Nothing answers at this address.</string>
     <string name="server_untrusted">This phone does not trust the server\'s certificate. If it comes from your own certificate authority, install that authority on the phone.</string>
+    <string name="server_open_settings">Open settings</string>
+    <string name="server_local_network_refused">The app may not reach your local network, where this server is. Allow nearby devices for it in the phone\'s settings, then save again.</string>
+    <string name="local_network_title">Your server is on your local network</string>
+    <string name="local_network_body">Android lets the app reach it only with the permission for nearby devices. Without it the app cannot sign in to your server or read anything from it.</string>
+    <string name="local_network_refused">The permission was refused. Allow nearby devices for the app in the phone\'s settings.</string>
+    <string name="local_network_allow">Allow</string>
+    <string name="common_not_now">Not now</string>
     <string name="server_change_signs_out">Changing the server signs you out on this device and clears the offline cache.</string>
     <string name="server_other_version">This server runs diet-app %1$s, and this app was checked against %2$s: some screens may not work as they should.</string>
     <string name="server_unsupported">This server\'s version is not supported.</string>

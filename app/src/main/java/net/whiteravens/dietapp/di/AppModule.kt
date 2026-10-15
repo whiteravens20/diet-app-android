@@ -19,6 +19,8 @@ import net.whiteravens.dietapp.data.auth.AuthInterceptor
 import net.whiteravens.dietapp.data.auth.KeystoreSealer
 import net.whiteravens.dietapp.data.auth.Sealer
 import net.whiteravens.dietapp.data.auth.TokenAuthenticator
+import net.whiteravens.dietapp.data.config.LocalNetworkAccess
+import net.whiteravens.dietapp.data.config.PhoneLocalNetworkAccess
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
@@ -124,6 +126,10 @@ object AppModule {
     @Singleton
     @ApplicationScope
     fun applicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /** Whether the app may reach the phone's local network, as Android tells it. */
+    @Provides
+    fun localNetwork(phone: PhoneLocalNetworkAccess): LocalNetworkAccess = phone
 
     /** The tokens are kept sealed under a key of the device's keystore. */
     @Provides

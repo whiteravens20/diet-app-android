@@ -12,20 +12,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.data.config.AddressProblem
+import net.whiteravens.dietapp.data.config.LocalNetworkAccess
 import net.whiteravens.dietapp.data.config.TypedAddress
 import net.whiteravens.dietapp.data.config.readAddress
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.ServerProbe
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 
 /**
  * The server dialog's check of an address: read by the rules the build talks by (plain `http` in
  * a debug build alone), then asked what answers there. A wrong address is named at once; one
  * where no Diet App API answers is named too, and is kept only when asked again, for a server
- * that is down for now.
+ * that is down for now. A server on the local network is asked about only once the app may reach
+ * it (Android 17): until then the permission is asked for, and nothing is sent.
  */
 @HiltViewModel
-class ServerAddressViewModel @Inject constructor(private val servers: ServerRepository) : ViewModel() {
+class ServerAddressViewModel @Inject constructor(
+    private val servers: ServerRepository,
+    private val localNetwork: LocalNetworkAccess,
+) : ViewModel() {
 
     sealed interface State {
         data object Typing : State
@@ -39,6 +45,12 @@ class ServerAddressViewModel @Inject constructor(private val servers: ServerRepo
 
         /** A Diet App API answers at [url]: it is kept. */
         data class Answers(val url: String) : State
+
+        /** [url] is on the local network, which the app may not reach yet: the permission is asked for. */
+        data class NeedsLocalNetwork(val url: String) : State
+
+        /** The permission to reach the local network was refused, so nothing can be sent to [url]. */
+        data class LocalNetworkRefused(val url: String) : State
     }
 
     private val _state = MutableStateFlow<State>(State.Typing)
@@ -53,15 +65,30 @@ class ServerAddressViewModel @Inject constructor(private val servers: ServerRepo
             is TypedAddress.Base -> {
                 _state.value = State.Checking
                 checking = viewModelScope.launch {
-                    val probe = servers.probe(address.url)
-                    _state.value = if (probe == ServerProbe.Answers) {
-                        State.Answers(address.url)
+                    if (!localNetwork.allowed() && localNetwork.isLocal(address.url.toHttpUrl().host)) {
+                        _state.value = State.NeedsLocalNetwork(address.url)
                     } else {
-                        State.Doubtful(address.url, probe)
+                        probe(address.url)
                     }
                 }
             }
         }
+    }
+
+    /** The answer to the request for the permission to reach the local network. */
+    fun localNetworkAnswered(granted: Boolean) {
+        val asked = _state.value as? State.NeedsLocalNetwork ?: return
+        if (!granted) {
+            _state.value = State.LocalNetworkRefused(asked.url)
+            return
+        }
+        _state.value = State.Checking
+        checking = viewModelScope.launch { probe(asked.url) }
+    }
+
+    private suspend fun probe(url: String) {
+        val probe = servers.probe(url)
+        _state.value = if (probe == ServerProbe.Answers) State.Answers(url) else State.Doubtful(url, probe)
     }
 
     /** The address is typed again, or the dialog is gone: what was said of the last one no longer holds. */

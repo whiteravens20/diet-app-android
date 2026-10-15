@@ -40,6 +40,13 @@
     <string name="server_unknown_host">Nie ma serwera o tej nazwie.</string>
     <string name="server_no_answer">Pod tym adresem nic nie odpowiada.</string>
     <string name="server_untrusted">Ten telefon nie ufa certyfikatowi serwera. Jeśli pochodzi on od Twojego własnego urzędu certyfikacji, zainstaluj ten urząd na telefonie.</string>
+    <string name="server_open_settings">Otwórz ustawienia</string>
+    <string name="server_local_network_refused">Aplikacja nie może łączyć się z Twoją siecią lokalną, w której jest ten serwer. Zezwól jej na dostęp do urządzeń w pobliżu w ustawieniach telefonu i zapisz ponownie.</string>
+    <string name="local_network_title">Twój serwer jest w Twojej sieci lokalnej</string>
+    <string name="local_network_body">Android pozwala aplikacji łączyć się z nim tylko z uprawnieniem do urządzeń w pobliżu. Bez niego aplikacja nie zaloguje się na Twoim serwerze ani nic z niego nie odczyta.</string>
+    <string name="local_network_refused">Uprawnienie zostało odrzucone. Zezwól aplikacji na dostęp do urządzeń w pobliżu w ustawieniach telefonu.</string>
+    <string name="local_network_allow">Zezwól</string>
+    <string name="common_not_now">Nie teraz</string>
     <string name="server_change_signs_out">Zmiana serwera wyloguje Cię na tym urządzeniu i wyczyści pamięć offline.</string>
     <string name="server_other_version">Ten serwer działa na diet-app %1$s, a aplikację sprawdzano z wersją %2$s: niektóre ekrany mogą nie działać tak, jak powinny.</string>
     <string name="server_unsupported">Wersja tego serwera nie jest obsługiwana.</string>

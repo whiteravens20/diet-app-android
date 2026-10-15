@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -38,8 +39,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -47,11 +50,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.config.LocalNetworkAccess
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
@@ -61,6 +66,7 @@ import net.whiteravens.dietapp.ui.screens.profile.ProfileScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeDetailScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipesScreen
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreen
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -82,8 +88,9 @@ import kotlin.reflect.KClass
 @HiltViewModel
 class RootViewModel @Inject constructor(
     auth: AuthRepository,
-    serverConfig: ServerConfigStore,
+    private val serverConfig: ServerConfigStore,
     private val server: ServerRepository,
+    private val localNetwork: LocalNetworkAccess,
 ) : ViewModel() {
     val isSignedIn: StateFlow<Boolean?> = auth.isSignedIn
         .map { it as Boolean? }
@@ -91,11 +98,27 @@ class RootViewModel @Inject constructor(
 
     val serverVersion: StateFlow<ServerVersion> = server.version
 
+    private val _localNetworkMissing = MutableStateFlow(false)
+
+    /** The server is on the local network, which the app may not reach yet (Android 17). */
+    val localNetworkMissing: StateFlow<Boolean> = _localNetworkMissing.asStateFlow()
+
     init {
         viewModelScope.launch {
-            serverConfig.baseUrl.distinctUntilChanged().collectLatest { server.refresh() }
+            serverConfig.baseUrl.distinctUntilChanged().collectLatest {
+                checkLocalNetwork()
+                server.refresh()
+            }
         }
         viewModelScope.launch { auth.retryRevocation() }
+    }
+
+    /** Asked again when the app comes to the front: the permission may have been given in the settings since. */
+    fun checkLocalNetwork() {
+        viewModelScope.launch {
+            val host = serverConfig.current().toHttpUrlOrNull()?.host
+            _localNetworkMissing.value = host != null && !localNetwork.allowed() && localNetwork.isLocal(host)
+        }
     }
 }
 
@@ -108,6 +131,12 @@ class RootViewModel @Inject constructor(
 fun DietAppRoot(viewModel: RootViewModel = hiltViewModel()) {
     val signedIn by viewModel.isSignedIn.collectAsStateWithLifecycle()
     val serverVersion by viewModel.serverVersion.collectAsStateWithLifecycle()
+    val localNetworkMissing by viewModel.localNetworkMissing.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(viewModel) {
+        viewModel.checkLocalNetwork()
+        onPauseOrDispose {}
+    }
+    if (localNetworkMissing) LocalNetworkDialog(onAnswered = viewModel::checkLocalNetwork)
     when (signedIn) {
         null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
         false -> AuthScreen(serverVersion = serverVersion)

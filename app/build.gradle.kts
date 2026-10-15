@@ -19,7 +19,7 @@ android {
     defaultConfig {
         applicationId = "net.whiteravens.dietapp"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "0.0.0"
         // The version of diet-app's API this build was checked against (contract/API_VERSION):
@@ -32,7 +32,7 @@ android {
         // The screens' tests run against a diet-app instance at the debug build's address
         // (.github/workflows/test.yml starts one for them), each test on an app with
         // no data of its own.
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "net.whiteravens.dietapp.testing.DietAppTestRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 

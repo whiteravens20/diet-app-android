@@ -17,7 +17,9 @@ The companion app holds an authenticated session and cached personal data.
 - **Transport** — a release build talks HTTPS only, and trusts the system's certificate
   authorities and those the user installed on the phone, since a self-hosted server often
   has a certificate from its owner's own authority. A debug build also talks plain `http`,
-  for a backend on the developer's own network.
+  for a backend on the developer's own network. On Android 17 and later the app asks for
+  the permission for nearby devices before it sends anything to a server on the local
+  network, which the system otherwise does not let it reach.
 - **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
   It is cleared on sign-out.
 - **Anti-abuse check** — where a server asks for Cloudflare Turnstile, its script runs in

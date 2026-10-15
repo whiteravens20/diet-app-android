@@ -2,6 +2,12 @@
 
 package net.whiteravens.dietapp.ui.components
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,12 +27,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.config.AddressProblem
+import net.whiteravens.dietapp.data.config.LOCAL_NETWORK_PERMISSION
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.ui.components.ServerAddressViewModel.State
 
@@ -49,6 +57,11 @@ fun ServerUrlDialog(
 
     // A dialog opened again starts from what is typed in it.
     DisposableEffect(model) { onDispose { model.typing() } }
+    val askLocalNetwork = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission(), model::localNetworkAnswered)
+    LaunchedEffect(state) {
+        if (state is State.NeedsLocalNetwork) askLocalNetwork.launch(LOCAL_NETWORK_PERMISSION)
+    }
+    val context = LocalContext.current
     val answers = state as? State.Answers
     LaunchedEffect(answers) {
         if (answers != null) {
@@ -79,7 +92,7 @@ fun ServerUrlDialog(
                     placeholder = { Text(stringResource(R.string.server_placeholder)) },
                     singleLine = true,
                     enabled = state !is State.Checking,
-                    isError = state is State.Wrong || state is State.Doubtful,
+                    isError = state is State.Wrong || state is State.Doubtful || state is State.LocalNetworkRefused,
                     supportingText = note?.let { { Text(it) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     shape = MaterialTheme.shapes.medium,
@@ -89,7 +102,11 @@ fun ServerUrlDialog(
         },
         confirmButton = {
             val doubtful = state as? State.Doubtful
-            if (doubtful != null) {
+            if (state is State.LocalNetworkRefused) {
+                Button(onClick = { context.startActivity(appSettings(context)) }) {
+                    Text(stringResource(R.string.server_open_settings))
+                }
+            } else if (doubtful != null) {
                 Button(
                     onClick = {
                         onSave(doubtful.url)
@@ -97,7 +114,7 @@ fun ServerUrlDialog(
                     },
                 ) { Text(stringResource(R.string.server_save_anyway)) }
             } else {
-                Button(onClick = { model.check(value) }, enabled = state !is State.Checking) {
+                Button(onClick = { model.check(value) }, enabled = state !is State.Checking && state !is State.NeedsLocalNetwork) {
                     Text(stringResource(R.string.common_save))
                 }
             }
@@ -112,7 +129,8 @@ fun ServerUrlDialog(
 @Composable
 private fun addressNote(state: State): String? = when (state) {
     State.Typing, is State.Answers -> null
-    State.Checking -> stringResource(R.string.server_checking)
+    State.Checking, is State.NeedsLocalNetwork -> stringResource(R.string.server_checking)
+    is State.LocalNetworkRefused -> stringResource(R.string.server_local_network_refused)
     is State.Wrong -> stringResource(
         when (state.problem) {
             AddressProblem.NOT_AN_ADDRESS -> R.string.server_not_an_address
@@ -132,3 +150,7 @@ private fun addressNote(state: State): String? = when (state) {
         },
     )
 }
+
+/** The page of the phone's settings where the app's permissions are given. */
+fun appSettings(context: Context): Intent =
+    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
