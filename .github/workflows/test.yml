@@ -73,6 +73,7 @@ jobs:
             artifact: screens
             cores: 2
             ram-size: ''
+            disk-size: ''
             boot-timeout: 600
             build-type: debug
             variant: Debug
@@ -82,9 +83,11 @@ jobs:
           - name: Screens on Android 17
             api-level: '37.0'
             artifact: screens-android-17
-            # Its image takes longer to start: more of the runner's cores and memory, and time.
+            # Its image takes longer to start and leaves less room for apps: more of the runner's
+            # cores, memory, disk and time.
             cores: 4
             ram-size: 4096M
+            disk-size: 6G
             boot-timeout: 1200
             build-type: debug
             variant: Debug
@@ -98,6 +101,7 @@ jobs:
             artifact: screens-release-build
             cores: 2
             ram-size: ''
+            disk-size: ''
             boot-timeout: 600
             build-type: minified
             variant: Minified
@@ -142,6 +146,7 @@ jobs:
           api-level: ${{ matrix.api-level }}
           cores: ${{ matrix.cores }}
           ram-size: ${{ matrix.ram-size }}
+          disk-size: ${{ matrix.disk-size }}
           emulator-boot-timeout: ${{ matrix.boot-timeout }}
           arch: x86_64
           target: google_apis
