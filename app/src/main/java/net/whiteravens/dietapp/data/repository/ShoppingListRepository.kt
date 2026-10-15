@@ -41,18 +41,32 @@ class ShoppingListRepository @Inject constructor(
             cache.deleteShoppingList(row.id)
         }
 
-    /** Fetch a plan's lists from the API and mirror them. Throws when offline. */
+    /** Fetch a plan's lists from the API and mirror them; a list kept of the plan that the API no longer has goes. Throws when offline. */
     suspend fun refreshForPlan(planId: String): List<ShoppingList> {
         val lists = apiCall(json) { api.shoppingLists(planId) }
+        val ids = lists.map { it.id }.toSet()
+        cache.shoppingListsForPlan(planId).filter { it.id !in ids }.forEach { cache.deleteShoppingList(it.id) }
         lists.forEach { mirror(it) }
         return lists.map { it.toDomain() }
     }
 
-    /** Generate a list from a plan (backend operation; may consume pantry stock). */
-    suspend fun generate(planId: String): ShoppingList {
-        val list = apiCall(json) { api.generateShoppingList(GenerateShoppingListRequest(planId)) }
-        mirror(list)
-        return list.toDomain()
+    /**
+     * Makes the list of a plan, or of the days from [fromDate] to [toDate] of it (yyyy-MM-dd; the
+     * plan's first or last day where null). The lists of the plan that share a day with it are
+     * replaced: the copies kept of them go too.
+     */
+    suspend fun generate(planId: String, fromDate: String? = null, toDate: String? = null): ShoppingList {
+        val answer = apiCall(json) { api.generateShoppingList(GenerateShoppingListRequest(planId, fromDate, toDate)) }
+        val made = answer.toDomain()
+        cachedForPlan(planId).filter { it.id != made.id && it.meets(made.fromDate, made.toDate) }.forEach { cache.deleteShoppingList(it.id) }
+        mirror(answer)
+        return made
+    }
+
+    /** Deletes a list, and the copy kept of it. */
+    suspend fun delete(listId: String) {
+        apiCall(json) { api.deleteShoppingList(listId) }
+        cache.deleteShoppingList(listId)
     }
 
     /** Fetch from the API and mirror into the cache. Throws when offline. */

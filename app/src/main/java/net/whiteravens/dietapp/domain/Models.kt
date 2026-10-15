@@ -478,22 +478,53 @@ data class RecipePage(
     val totalPages: Int,
 )
 
+/**
+ * A row of a shopping list: one ingredient summed across the meals of the list's days, every
+ * quantity in [unit]. What is at home ([atHome]) starts at what the pantry had when the list was
+ * made and is the user's to correct; [purchasedQuantity] is everything the user has for the row,
+ * the part at home included, and null until the row is first changed.
+ */
 data class ShoppingItem(
     val id: String,
     val name: String,
+    /** How much the plan needs, rounded up to what one buys. */
+    val totalQuantity: Double,
     val toBuyQuantity: Double,
     /** `g` | `ml` | `piece`. */
     val unit: String,
-    /** Pantry-covered portion — the "from pantry" chip. */
-    val fromPantryQuantity: Double,
+    /** What to call [unit] when showing the row: `slice` for bread, `clove` for garlic. */
+    val displayUnit: String,
+    val atHome: Double,
     val purchasedQuantity: Double?,
+    /** The earliest best-before of the pantry's rows the part at home came from. */
+    val pantryBestBefore: String?,
+    val estimatedCalories: Double,
+    /** What is left to buy in the packs the ingredient is sold in; null where it is not sold in packs, or nothing is left to buy. */
+    val packs: RowPacks?,
     val checked: Boolean,
-)
+) {
+    /** Everything the user has for the row. */
+    val have: Double get() = purchasedQuantity ?: atHome
+
+    /** What is still to be obtained for the row: its need less everything the user has for it. */
+    val stillToBuy: Double get() = (totalQuantity - have).coerceAtLeast(0.0)
+
+    /**
+     * Whether [packs] are what is still to be bought of the row: they are counted from the need less
+     * what is at home, so they say nothing once a part of the rest was bought.
+     */
+    val packsStand: Boolean get() = packs != null && !checked && have == atHome
+}
+
+/** [count] packs of [size] [sizeUnit] each, which give the row [quantity] in its own unit. */
+data class RowPacks(val count: Int, val size: Double, val sizeUnit: String, val quantity: Double)
 
 data class ShoppingGroup(
     /** Product category key, doubles as the section header i18n key. */
     val category: String,
     val items: List<ShoppingItem>,
+    /** What the entries of the aisle come to in kilocalories, an estimate as each of theirs is. */
+    val estimatedCalories: Double,
 )
 
 data class ShoppingList(
@@ -502,11 +533,19 @@ data class ShoppingList(
     val fromDate: String,
     val toDate: String,
     val groups: List<ShoppingGroup>,
+    val totalEstimatedCalories: Double,
     /** The plan's menu changed after the list was made, so it no longer matches what the plan needs. */
     val stale: Boolean,
+    val createdAt: String,
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
-)
+) {
+    val rows: Int get() = groups.sumOf { it.items.size }
+    val ticked: Int get() = groups.sumOf { group -> group.items.count { it.checked } }
+
+    /** Whether the list is for a day of the days from [from] to [to] (yyyy-MM-dd). */
+    fun meets(from: String, to: String): Boolean = fromDate <= to && from <= toDate
+}
 
 /** What the app knows of the version of the server it talks to. */
 sealed interface ServerVersion {

@@ -201,6 +201,10 @@ interface DietApiService {
     @GET("shopping-lists/{id}")
     suspend fun shoppingList(@Path("id") id: String): ShoppingListDto
 
+    /** Deletes a shopping list; what was obtained for days still ahead goes into the pantry. */
+    @DELETE("shopping-lists/{id}")
+    suspend fun deleteShoppingList(@Path("id") id: String)
+
     /** Returns the full updated list, which we mirror straight into the cache. */
     @PATCH("shopping-lists/{id}/items/{itemId}")
     suspend fun updateShoppingItem(

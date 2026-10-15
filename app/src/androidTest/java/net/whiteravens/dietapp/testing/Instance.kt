@@ -170,6 +170,12 @@ object Instance {
         return recipe.getString("title") to recipe.getJSONArray("ingredients").getJSONObject(0).getString("name")
     }
 
+    /** The ids of the shopping lists of [planId], the newest first. */
+    fun shoppingListIds(account: Account, planId: String): List<String> {
+        val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, null))
+        return (0 until lists.length()).map { lists.getJSONObject(it).getString("id") }
+    }
+
     /** The rows of the shopping list of [planId] in [language], by name, and whether each is ticked. */
     fun shoppingRows(account: Account, planId: String, language: String): Map<String, Boolean> {
         val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))

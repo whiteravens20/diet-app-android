@@ -451,9 +451,18 @@
     <string name="shopping_no_profile_body">Najpierw utwórz profil i wygeneruj plan posiłków — lista zakupów powstaje z planu.</string>
     <string name="shopping_no_plans">Brak planów dla tego profilu</string>
     <string name="shopping_no_plans_body">Najpierw wygeneruj plan posiłków — lista zakupów powstaje z niego.</string>
-    <string name="shopping_no_list">Brak listy zakupów</string>
-    <string name="shopping_no_list_body">Wygeneruj listę z tego planu. Pozycje w pełni pokryte spiżarnią odhaczają się same.</string>
-    <string name="shopping_generate">Wygeneruj listę</string>
+    <string name="shopping_no_lists_title">Ten plan nie ma jeszcze listy zakupów</string>
+    <string name="shopping_no_lists">Lista sumuje to, czego potrzebują posiłki planu, i pomija to, co jest już w spiżarni.</string>
+    <string name="shopping_make_list">Utwórz listę</string>
+    <string name="shopping_generate_title">Wygeneruj listę</string>
+    <string name="shopping_generate_button">Wygeneruj</string>
+    <string name="shopping_generating">Generowanie…</string>
+    <string name="shopping_from_date">Od</string>
+    <string name="shopping_to_date">Do</string>
+    <string name="shopping_list_options">Opcje listy</string>
+    <string name="shopping_summary">Odhaczone %1$s/%2$s · łącznie %3$s kcal</string>
+    <string name="shopping_delete_confirm">Usunąć tę listę zakupów?</string>
+    <string name="shopping_aisle_energy">około %1$s kcal</string>
     <string name="shopping_from_pantry">ze spiżarni: %1$s %2$s</string>
 
     <!-- Profile -->
@@ -556,6 +565,7 @@
     <string name="plans_disliked_hint">Zawiera: %1$s. Ten profil woli tego nie jeść: przy układaniu nic innego nie pasowało do posiłku albo profil dodał to później. Zamień posiłek, żeby to zmienić.</string>
     <string name="shopping_stale">Jadłospis planu zmienił się po utworzeniu tej listy, więc nie odpowiada już temu, czego plan potrzebuje.</string>
     <string name="shopping_stale_update">Zaktualizuj listę</string>
+    <string name="shopping_stale_hint">To, co już masz, zostanie policzone na poczet nowej listy.</string>
     <string name="amount_g">%1$s g</string>
     <string name="amount_ml">%1$s ml</string>
     <string name="unit_name_piece">szt.</string>

@@ -418,9 +418,18 @@
     <string name="shopping_no_profile_body">Create a profile and generate a meal plan first — the shopping list is built from a plan.</string>
     <string name="shopping_no_plans">No plans for this profile</string>
     <string name="shopping_no_plans_body">Generate a meal plan first — the shopping list is built from it.</string>
-    <string name="shopping_no_list">No shopping list yet</string>
-    <string name="shopping_no_list_body">Generate one from this plan. Items fully covered by your pantry check themselves off.</string>
-    <string name="shopping_generate">Generate list</string>
+    <string name="shopping_no_lists_title">No shopping list for this plan yet</string>
+    <string name="shopping_no_lists">A list adds up what the plan\'s meals take and leaves out what the pantry already covers.</string>
+    <string name="shopping_make_list">Make the list</string>
+    <string name="shopping_generate_title">Generate a list</string>
+    <string name="shopping_generate_button">Generate</string>
+    <string name="shopping_generating">Generating…</string>
+    <string name="shopping_from_date">From date</string>
+    <string name="shopping_to_date">To date</string>
+    <string name="shopping_list_options">List options</string>
+    <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
+    <string name="shopping_delete_confirm">Delete this shopping list?</string>
+    <string name="shopping_aisle_energy">about %1$s kcal</string>
     <string name="shopping_from_pantry">from pantry: %1$s %2$s</string>
 
     <!-- Profile -->
@@ -517,6 +526,7 @@
     <string name="plans_disliked_hint">Holds %1$s, which this profile would rather not eat: nothing else fit the meal when it was planned, or the profile came to dislike it since. Swap the meal to change it.</string>
     <string name="shopping_stale">The plan\'s menu changed after this list was made, so it no longer matches what the plan needs.</string>
     <string name="shopping_stale_update">Update the list</string>
+    <string name="shopping_stale_hint">What you already have for it is counted for the new one.</string>
     <string name="amount_g">%1$s g</string>
     <string name="amount_ml">%1$s ml</string>
     <string name="unit_name_piece">pieces</string>

@@ -41,6 +41,7 @@ import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipePage
+import net.whiteravens.dietapp.domain.RowPacks
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.SubstitutionPreview
@@ -284,16 +285,22 @@ fun AiMealSwapPreviewDto.toDomain(planId: String, mealId: String, ask: SwapAsk, 
 fun ShoppingListItemDto.toDomain() = ShoppingItem(
     id = id,
     name = name,
+    totalQuantity = totalQuantity,
     toBuyQuantity = toBuyQuantity,
     unit = unit,
-    fromPantryQuantity = alreadyHaveQuantity,
+    displayUnit = displayUnit,
+    atHome = alreadyHaveQuantity,
     purchasedQuantity = purchasedQuantity,
+    pantryBestBefore = pantryBestBefore,
+    estimatedCalories = estimatedCalories,
+    packs = packs?.let { RowPacks(it.count, it.size, it.sizeUnit, it.quantity) },
     checked = checked,
 )
 
 fun ShoppingListGroupDto.toDomain() = ShoppingGroup(
     category = category,
     items = items.map(ShoppingListItemDto::toDomain),
+    estimatedCalories = estimatedCalories,
 )
 
 fun ShoppingListDto.toDomain(syncedAt: Long? = null) = ShoppingList(
@@ -302,6 +309,8 @@ fun ShoppingListDto.toDomain(syncedAt: Long? = null) = ShoppingList(
     fromDate = fromDate,
     toDate = toDate,
     groups = groups.map(ShoppingListGroupDto::toDomain),
+    totalEstimatedCalories = totalEstimatedCalories,
     stale = stale,
+    createdAt = createdAt,
     syncedAt = syncedAt,
 )
