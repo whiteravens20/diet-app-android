@@ -32,8 +32,10 @@ import okhttp3.Dispatcher
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Converter
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -60,8 +62,8 @@ annotation class ApplicationScope
 object AppModule {
 
     // `ignoreUnknownKeys` tolerates fields the platform adds before we mirror
-    // them; `explicitNulls = false` keeps unset optional fields out of PATCH
-    // bodies instead of sending `null` (which the Zod schemas reject).
+    // them; `explicitNulls = false` reads a field an answer leaves out as null.
+    // What the app sends is written by [requestJson].
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
@@ -115,12 +117,37 @@ object AppModule {
     fun api(client: OkHttpClient, json: Json): DietApiService =
         retrofit(client, json).create(DietApiService::class.java)
 
+    /**
+     * What the app sends: a field with a default is left out while it holds it, so an optional field
+     * the app leaves unset is not sent, and a field without one is always sent, null as null, as the
+     * API asks of a field it requires that may be empty (a profile's `PUT`).
+     */
+    fun requestJson(json: Json): Json = Json(json) { explicitNulls = true }
+
     private fun retrofit(client: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
             .baseUrl(PLACEHOLDER_BASE)
             .client(client)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .addConverterFactory(ReadAndWrite(read = json, write = requestJson(json)))
             .build()
+
+    /** Reads answers with one [Json] and writes requests with another. */
+    private class ReadAndWrite(read: Json, write: Json) : Converter.Factory() {
+        private val read = read.asConverterFactory(JSON)
+        private val write = write.asConverterFactory(JSON)
+
+        override fun responseBodyConverter(type: Type, annotations: Array<out Annotation>, retrofit: Retrofit) =
+            read.responseBodyConverter(type, annotations, retrofit)
+
+        override fun requestBodyConverter(
+            type: Type,
+            parameterAnnotations: Array<out Annotation>,
+            methodAnnotations: Array<out Annotation>,
+            retrofit: Retrofit,
+        ) = write.requestBodyConverter(type, parameterAnnotations, methodAnnotations, retrofit)
+    }
+
+    private val JSON = "application/json".toMediaType()
 
     @Provides
     @Singleton

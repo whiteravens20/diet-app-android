@@ -27,6 +27,59 @@ data class Profile(
     val mealCount: Int,
 )
 
+/**
+ * A profile's figures and choices as its form edits them, in the API's units (cm, kg): what its
+ * calorie target is worked out from, and what its plans are made for. An empty one is null.
+ */
+data class ProfileFigures(
+    val name: String,
+    val age: Int,
+    /** `male` | `female`, or null when not said. */
+    val sex: String?,
+    val heightCm: Double,
+    val weightKg: Double,
+    val targetWeightKg: Double?,
+    val activityLevel: String,
+    val dietType: String,
+    /** `0.25` | `0.5` | `0.75` | `1.0` kg a week, or null for none. */
+    val weeklyLossTarget: String?,
+    val manualCalorieTarget: Int?,
+    val mealCount: Int,
+    val weightReminderCadence: String,
+    /** The split of energy on the `custom` diet, in per cent; null on another. */
+    val customMacroSplit: MacroSplit?,
+    val allergens: List<String>,
+)
+
+data class MacroSplit(val protein: Int, val fat: Int, val carbs: Int)
+
+/** What a profile would rather not have, beyond its allergens, and how often a meal may come back. */
+data class ProfilePreferences(
+    val favoriteIngredientIds: List<String>,
+    val excludedIngredientIds: List<String>,
+    val dislikedIngredientIds: List<String>,
+    val preferredCuisines: List<String>,
+    val maxConsecutiveDaysSameMeal: Int,
+    val maxTimesPerWeekSameMeal: Int,
+    /** The most of one ingredient, in g or ml, any seven days of a plan hold together. */
+    val maxWeeklyAmountPerIngredient: Int,
+    val inventoryBiasResetEvery: Int,
+)
+
+/** A profile as it is kept: its figures, its preferences, and whether it said it understands the risk of its goal. */
+data class ProfileDetails(
+    val id: String,
+    val figures: ProfileFigures,
+    val preferences: ProfilePreferences,
+    val riskAcknowledged: Boolean,
+)
+
+/** What figures come to: their calculation, and the same body at each pace of loss, slowest first. */
+data class CaloriePreview(val calculation: CalorieTarget, val paces: List<CalorieTarget>)
+
+/** An ingredient of the catalogue, as a picker offers it. */
+data class IngredientChoice(val id: String, val name: String, val category: String)
+
 data class Nutrition(
     val calories: Double,
     val protein: Double,

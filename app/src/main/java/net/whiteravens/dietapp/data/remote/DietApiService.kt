@@ -3,10 +3,12 @@
 package net.whiteravens.dietapp.data.remote
 
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -42,6 +44,28 @@ interface DietApiService {
     /** Deterministic calorie target — engine-owned, rendered as-is. */
     @GET("profiles/{id}/calories")
     suspend fun calories(@Path("id") profileId: String): CalorieCalculationDto
+
+    @POST("profiles")
+    suspend fun createProfile(@Body body: NewProfileDto): ProfileDto
+
+    @PUT("profiles/{id}")
+    suspend fun updateProfile(@Path("id") id: String, @Body body: ProfileUpdateDto): ProfileDto
+
+    @DELETE("profiles/{id}")
+    suspend fun deleteProfile(@Path("id") id: String)
+
+    @PATCH("profiles/{id}/preferences")
+    suspend fun updatePreferences(@Path("id") id: String, @Body body: ProfilePreferencesPatchDto): ProfileDto
+
+    /** What typed figures come to, and each pace of loss for the same body. Nothing is kept. */
+    @POST("profiles/calories")
+    suspend fun previewCalories(@Body body: CaloriePreviewRequestDto): CaloriePreviewDto
+
+    // ── Ingredients ─────────────────────────────────────────────────────────
+
+    /** The catalogue's ingredients whose name holds [search], in the language of the request. */
+    @GET("ingredients")
+    suspend fun ingredients(@Query("search") search: String): List<IngredientDto>
 
     // ── Meal plans ──────────────────────────────────────────────────────────
 

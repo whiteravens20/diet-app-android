@@ -37,7 +37,20 @@ data class ApiErrorDto(
 
 /** What the instance tells anybody, signed in or not: its version, and whether it asks for the anti-abuse check. */
 @Serializable
-data class PublicConfigDto(val instance: InstanceDto, val turnstile: TurnstileDto)
+data class PublicConfigDto(
+    val instance: InstanceDto,
+    val turnstile: TurnstileDto,
+    val accounts: AccountsConfigDto = AccountsConfigDto(),
+    val email: EmailConfigDto = EmailConfigDto(),
+)
+
+/** How many profiles an account may have on the instance. */
+@Serializable
+data class AccountsConfigDto(val maxProfiles: Int = 1)
+
+/** Whether the instance sends mail at all: a confirmation mail or a password reset needs it. */
+@Serializable
+data class EmailConfigDto(val enabled: Boolean = false)
 
 /** Cloudflare Turnstile: on or off, and the site key a page shows the check with. */
 @Serializable
@@ -256,6 +269,106 @@ data class ProfileDto(
     val createdAt: String,
     val updatedAt: String,
 )
+
+/**
+ * A new profile (`POST /profiles`). Every field the form shows is sent, an empty one as null, so
+ * that a choice of none (no pace of loss, no sex given, no own target) is the profile's own and not
+ * the API's default; [acknowledgeRisk] only by a form that showed the risk of losing weight.
+ */
+@Serializable
+data class NewProfileDto(
+    val name: String,
+    val age: Int,
+    val sex: String?,
+    val heightCm: Double,
+    val weightKg: Double,
+    val targetWeightKg: Double?,
+    val activityLevel: String,
+    val dietType: String,
+    val weeklyLossTarget: String?,
+    val manualCalorieTarget: Int?,
+    val mealCount: Int,
+    val weightReminderCadence: String,
+    val customMacroSplit: MacroSplitDto?,
+    val acknowledgeRisk: Boolean? = null,
+    val preferences: NewProfilePreferencesDto,
+)
+
+/** What a new profile is given of its preferences: the allergens; the API sets the rest. */
+@Serializable
+data class NewProfilePreferencesDto(val allergens: List<String>)
+
+/** A profile as it is from now on (`PUT /profiles/:id`): every part of it, its preferences too. */
+@Serializable
+data class ProfileUpdateDto(
+    val name: String,
+    val age: Int,
+    val sex: String?,
+    val heightCm: Double,
+    val weightKg: Double,
+    val targetWeightKg: Double?,
+    val activityLevel: String,
+    val dietType: String,
+    val weeklyLossTarget: String?,
+    val manualCalorieTarget: Int?,
+    val mealCount: Int,
+    val weightReminderCadence: String,
+    val customMacroSplit: MacroSplitDto?,
+    val acknowledgeRisk: Boolean? = null,
+    val preferences: ProfilePreferencesUpdateDto,
+)
+
+/** Every preference of a profile, as a `PUT` sends them: none is left to a default. */
+@Serializable
+data class ProfilePreferencesUpdateDto(
+    val favoriteIngredientIds: List<String>,
+    val excludedIngredientIds: List<String>,
+    val allergens: List<String>,
+    val dislikedIngredientIds: List<String>,
+    val preferredCuisines: List<String>,
+    val maxConsecutiveDaysSameMeal: Int,
+    val maxTimesPerWeekSameMeal: Int,
+    val maxWeeklyAmountPerIngredient: Int,
+    val inventoryBiasResetEvery: Int,
+)
+
+/** Some of a profile's preferences (`PATCH /profiles/:id/preferences`): the ones set, and no other. */
+@Serializable
+data class ProfilePreferencesPatchDto(
+    val excludedIngredientIds: List<String>? = null,
+    val allergens: List<String>? = null,
+    val dislikedIngredientIds: List<String>? = null,
+    val preferredCuisines: List<String>? = null,
+    val maxWeeklyAmountPerIngredient: Int? = null,
+)
+
+/**
+ * What typed figures come to (`POST /profiles/calories`), before there is a profile or without
+ * changing one: the same fields as a profile's, nothing kept.
+ */
+@Serializable
+data class CaloriePreviewRequestDto(
+    val age: Int,
+    val sex: String?,
+    val heightCm: Double,
+    val weightKg: Double,
+    val activityLevel: String,
+    val dietType: String,
+    val customMacroSplit: MacroSplitDto?,
+    val weeklyLossTarget: String?,
+    val manualCalorieTarget: Int?,
+    val acknowledgeRisk: Boolean,
+)
+
+/** The calculation for the typed figures, and the same body at each pace of loss, slowest first. */
+@Serializable
+data class CaloriePreviewDto(val calculation: CalorieCalculationDto, val paces: List<CalorieCalculationDto>)
+
+// ── Ingredients (packages/shared/src/ingredient.ts) ─────────────────────────
+
+/** An ingredient of the catalogue, as a picker shows it: its name in the language asked for. */
+@Serializable
+data class IngredientDto(val id: String, val name: String, val category: String, val allergens: List<String> = emptyList())
 
 // ── Recipes (packages/shared/src/recipe.ts) ─────────────────────────────────
 
