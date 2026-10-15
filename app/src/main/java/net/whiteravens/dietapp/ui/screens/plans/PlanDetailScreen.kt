@@ -24,7 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -130,6 +129,9 @@ fun PlanDetailScreen(
     var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
+    // The plan taken out of the app as a table for a spreadsheet.
+    val words = planWords()
+    val saveTable = rememberPlanTableSaver(plan, words)
     val readOnly = state.offline
     val busy = state.changing || state.taking
 
@@ -257,7 +259,14 @@ fun PlanDetailScreen(
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Header(plan, onBack, onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy }) }
+            item {
+                Header(
+                    plan,
+                    onBack,
+                    onSaveTable = { plan?.let(saveTable) },
+                    onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
+                )
+            }
 
             state.error?.let {
                 item {
@@ -384,9 +393,9 @@ fun PlanDetailScreen(
     }
 }
 
-/** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it. */
+/** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it; and what can be done with it. */
 @Composable
-private fun Header(plan: MealPlan?, onBack: () -> Unit, onDelete: (() -> Unit)?) {
+private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
@@ -406,10 +415,25 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onDelete: (() -> Unit)?)
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
             }
         }
-        if (plan != null) {
-            IconButton(onClick = { onDelete?.invoke() }, enabled = onDelete != null) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_delete))
+        if (plan != null) PlanActions(onSaveTable, onDelete)
+    }
+}
+
+/** What can be done with the plan as a whole, behind one button: saved as a table, or deleted. */
+@Composable
+private fun PlanActions(onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.plans_options))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            fun pick(action: () -> Unit) {
+                open = false
+                action()
             }
+            DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_csv)) }, onClick = { pick(onSaveTable) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }
 }

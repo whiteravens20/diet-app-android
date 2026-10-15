@@ -18,6 +18,8 @@
     <string name="common_save">Zapisz</string>
     <string name="common_edit">Edytuj</string>
     <string name="common_close">Zamknij</string>
+    <string name="common_yes">Tak</string>
+    <string name="common_no">Nie</string>
     <string name="plans_open_recipe">Przepis</string>
 
     <!-- Server setting -->
@@ -202,6 +204,19 @@
     <string name="plans_use_up_energy">Posiłek: %1$s → %2$s kcal · białko %3$s → %4$s g</string>
     <string name="plans_use_up_none">Nic, co może zastąpić któryś posiłek, nie zostawiłoby mniej z tych opakowań.</string>
     <string name="plans_use_up_swap">%1$s (zamiast: %2$s)</string>
+    <string name="plans_options">Opcje planu</string>
+    <string name="plans_export_csv">Zapisz jako CSV</string>
+    <string name="plans_export_failed">Nie udało się zapisać pliku.</string>
+    <string name="plans_export_date">Data</string>
+    <string name="plans_export_meal">Posiłek</string>
+    <string name="plans_export_dish">Danie</string>
+    <string name="plans_export_servings">Porcje</string>
+    <string name="plans_export_energy">kcal</string>
+    <string name="plans_export_protein">Białko (g)</string>
+    <string name="plans_export_fat">Tłuszcz (g)</string>
+    <string name="plans_export_carbs">Węglowodany (g)</string>
+    <string name="plans_export_eaten">Zjedzone</string>
+    <string name="plans_skipped">Pominięty</string>
     <string name="plans_mark_eaten">Oznacz jako zjedzone</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Dodaj własny posiłek</string>

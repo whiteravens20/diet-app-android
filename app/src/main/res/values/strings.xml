@@ -19,6 +19,8 @@
     <string name="common_save">Save</string>
     <string name="common_edit">Edit</string>
     <string name="common_close">Close</string>
+    <string name="common_yes">Yes</string>
+    <string name="common_no">No</string>
     <string name="plans_open_recipe">Recipe</string>
 
     <!-- Server setting -->
@@ -191,6 +193,19 @@
     <string name="plans_use_up_energy">The meal: %1$s → %2$s kcal · protein %3$s → %4$s g</string>
     <string name="plans_use_up_none">Nothing that may take the place of a meal would leave less of these packs.</string>
     <string name="plans_use_up_swap">%1$s in place of %2$s</string>
+    <string name="plans_options">Plan options</string>
+    <string name="plans_export_csv">Save as CSV</string>
+    <string name="plans_export_failed">The file could not be saved.</string>
+    <string name="plans_export_date">Date</string>
+    <string name="plans_export_meal">Meal</string>
+    <string name="plans_export_dish">Dish</string>
+    <string name="plans_export_servings">Servings</string>
+    <string name="plans_export_energy">kcal</string>
+    <string name="plans_export_protein">Protein (g)</string>
+    <string name="plans_export_fat">Fat (g)</string>
+    <string name="plans_export_carbs">Carbohydrate (g)</string>
+    <string name="plans_export_eaten">Eaten</string>
+    <string name="plans_skipped">Skipped</string>
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Add custom meal</string>

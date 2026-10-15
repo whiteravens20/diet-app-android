@@ -247,11 +247,14 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }
 
-        // The plan is deleted once that is confirmed, and the list is back.
-        screen.scrollTo(hasContentDescription(text(R.string.common_delete)))
-        screen.onNodeWithContentDescription(text(R.string.common_delete)).performClick()
-        screen.waitForText(text(R.string.plans_delete_confirm))
+        // The plan's menu saves it as a table for a spreadsheet, and deletes it once that is confirmed: the list is back.
+        val options = hasContentDescription(text(R.string.plans_options))
+        screen.scrollTo(options)
+        screen.onNode(options).performClick()
+        screen.onNodeWithText(text(R.string.plans_export_csv)).assertExists()
         screen.onNodeWithText(text(R.string.common_delete)).performClick()
+        screen.waitForText(text(R.string.plans_delete_confirm))
+        screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { Instance.planIds(account, profileId).isEmpty() }
         screen.waitForText(text(R.string.plans_calendar_title))
     }
