@@ -17,14 +17,14 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.common.formatDate
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.net.URI
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.URI
 
 /** What the phone keeps of a plan is there to read when the network is not. */
 @RunWith(AndroidJUnit4::class)

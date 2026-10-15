@@ -20,12 +20,12 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
-import java.text.NumberFormat
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.text.NumberFormat
+import java.util.Locale
 
 /**
  * Profiles as an account holder makes and keeps them: the first one in three steps from the empty
