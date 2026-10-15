@@ -22,7 +22,7 @@ import javax.inject.Inject
 
 /**
  * The server dialog's check of an address: read by the rules the build talks by (plain `http` in
- * a debug build alone), then asked what answers there. A wrong address is named at once; one
+ * a debug build, never in a release build), then asked what answers there. A wrong address is named at once; one
  * where no Diet App API answers is named too, and is kept only when asked again, for a server
  * that is down for now. A server on the local network is asked about only once the app may reach
  * it (Android 17): until then the permission is asked for, and nothing is sent.
@@ -60,7 +60,7 @@ class ServerAddressViewModel @Inject constructor(
 
     fun check(typed: String) {
         checking?.cancel()
-        when (val address = readAddress(typed, plainHttp = BuildConfig.DEBUG)) {
+        when (val address = readAddress(typed, plainHttp = BuildConfig.PLAIN_HTTP)) {
             is TypedAddress.Wrong -> _state.value = State.Wrong(address.problem)
             is TypedAddress.Base -> {
                 _state.value = State.Checking

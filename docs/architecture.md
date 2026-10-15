@@ -64,6 +64,7 @@ Check a change before sending it:
 ./gradlew testDebugUnitTest  # the unit tests, on the JVM
 ./gradlew lintDebug
 ./gradlew connectedDebugAndroidTest  # the screens, on an emulator or a phone
+./gradlew -PtestBuildType=minified connectedMinifiedAndroidTest  # the same, on the release build as R8 shrinks it
 ```
 
 CI builds the debug APK and the release variant, shrunk by R8 with the rules in

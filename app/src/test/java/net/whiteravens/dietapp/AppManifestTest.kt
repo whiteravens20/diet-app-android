@@ -49,11 +49,13 @@ class AppManifestTest {
     }
 
     @Test
-    fun `a debug build also talks plain http and trusts what a release build trusts`() {
-        val debug = xml("src/debug/res/xml/network_security_config.xml")
+    fun `a debug build and the shrunk build of the screens' tests also talk plain http and trust what a release build trusts`() {
+        for (buildType in listOf("debug", "minified")) {
+            val config = xml("src/$buildType/res/xml/network_security_config.xml")
 
-        assertEquals("true", debug.elements("base-config").single().getAttribute("cleartextTrafficPermitted"))
-        assertEquals(listOf("system", "user"), debug.elements("certificates").map { it.getAttribute("src") })
+            assertEquals(buildType, "true", config.elements("base-config").single().getAttribute("cleartextTrafficPermitted"))
+            assertEquals(buildType, listOf("system", "user"), config.elements("certificates").map { it.getAttribute("src") })
+        }
     }
 
     private companion object {

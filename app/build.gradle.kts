@@ -39,17 +39,36 @@ android {
     // The server a build starts with: the emulator's host in a debug build, and none in a release
     // build, whose first screen asks for one. `-PapiBaseUrl=<address>` gives another, such as a
     // backend on a phone's own network: http://<host-lan-ip>:4000/api/.
+    // `PLAIN_HTTP`: whether the build talks plain http as well, which a backend on a developer's
+    // own network or the test instance has; a release build talks HTTPS only.
     val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
+    val testInstance = apiBaseUrl.getOrElse("http://10.0.2.2:4000/api/")
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.getOrElse("http://10.0.2.2:4000/api/")}\"")
+            buildConfigField("String", "API_BASE_URL", "\"$testInstance\"")
+            buildConfigField("boolean", "PLAIN_HTTP", "true")
         }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.getOrElse("")}\"")
+            buildConfigField("boolean", "PLAIN_HTTP", "false")
+        }
+        // The release build as R8 shrinks it, signed with the debug key and pointed at the test
+        // instance over plain http, for the screens' tests to run on: what R8 takes out of a
+        // release shows there rather than on a tester's phone. It keeps what the tests call.
+        create("minified") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            proguardFile("proguard-minified.pro")
+            testProguardFile("proguard-minified-test.pro")
+            buildConfigField("String", "API_BASE_URL", "\"$testInstance\"")
+            buildConfigField("boolean", "PLAIN_HTTP", "true")
         }
     }
+    // The build type the screens' tests run on: `-PtestBuildType=minified` for the shrunk one.
+    testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
 
     buildFeatures {
         compose = true
@@ -226,6 +245,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.services.storage)
     androidTestImplementation(libs.okhttp.mockwebserver)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    "minifiedImplementation"(libs.androidx.compose.ui.test.manifest)
     androidTestUtil(libs.androidx.test.orchestrator)
     androidTestUtil(libs.androidx.test.services)
 }
