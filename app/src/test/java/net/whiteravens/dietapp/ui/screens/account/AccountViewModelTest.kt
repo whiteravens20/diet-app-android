@@ -1,6 +1,6 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
-package net.whiteravens.dietapp.ui.screens.profile
+package net.whiteravens.dietapp.ui.screens.account
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -26,7 +26,7 @@ import org.junit.Test
 import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ProfileViewModelTest {
+class AccountViewModelTest {
     @After
     fun reset() = Dispatchers.resetMain()
 
@@ -52,9 +52,9 @@ class ProfileViewModelTest {
         val factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ProfileViewModel(users, auth, servers, application) as T
+                AccountViewModel(users, auth, servers, application) as T
         }
-        val model = ViewModelProvider(screen, factory)[ProfileViewModel::class.java]
+        val model = ViewModelProvider(screen, factory)[AccountViewModel::class.java]
 
         model.changeServer("https://new.example.test/api/")
         testScheduler.advanceUntilIdle()

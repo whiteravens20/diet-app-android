@@ -9,7 +9,7 @@
     <string name="nav_meal_plans">Plany posiłków</string>
     <string name="nav_recipes">Przepisy</string>
     <string name="nav_shopping">Zakupy</string>
-    <string name="nav_profile">Profil</string>
+    <string name="nav_more">Więcej</string>
 
     <!-- Common -->
     <string name="common_retry">Spróbuj ponownie</string>
@@ -148,16 +148,17 @@
     <string name="shopping_from_pantry">ze spiżarni: %1$s %2$s</string>
 
     <!-- Profile -->
-    <string name="profile_verified">Zweryfikowany</string>
-    <string name="profile_unverified">E-mail niezweryfikowany</string>
-    <string name="profile_language">Język</string>
-    <string name="profile_theme">Motyw</string>
-    <string name="profile_theme_light">Jasny</string>
-    <string name="profile_theme_dark">Ciemny</string>
-    <string name="profile_theme_system">Systemowy</string>
-    <string name="profile_app_version">Wersja aplikacji</string>
-    <string name="profile_settings_hint">Ustawienia konta, preferencje i profile dietetyczne zarządzane są w aplikacji webowej.</string>
-    <string name="profile_sign_out">Wyloguj się</string>
+    <string name="account_title">Ustawienia konta</string>
+    <string name="account_verified">Zweryfikowany</string>
+    <string name="account_unverified">E-mail niezweryfikowany</string>
+    <string name="account_language">Język</string>
+    <string name="account_theme">Motyw</string>
+    <string name="account_theme_light">Jasny</string>
+    <string name="account_theme_dark">Ciemny</string>
+    <string name="account_theme_system">Systemowy</string>
+    <string name="account_app_version">Wersja aplikacji</string>
+    <string name="account_settings_hint">Ustawienia konta, preferencje i profile dietetyczne zarządzane są w aplikacji webowej.</string>
+    <string name="account_sign_out">Wyloguj się</string>
 
     <!-- Enum labels (platform wire values) -->
     <string name="diet_balanced">Zbilansowana</string>

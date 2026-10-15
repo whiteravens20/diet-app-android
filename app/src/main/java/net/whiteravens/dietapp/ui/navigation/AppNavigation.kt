@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,11 +58,12 @@ import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
+import net.whiteravens.dietapp.ui.screens.account.AccountScreen
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
+import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
-import net.whiteravens.dietapp.ui.screens.profile.ProfileScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeDetailScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipesScreen
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreen
@@ -78,7 +79,8 @@ import kotlin.reflect.KClass
 @Serializable object RecipesRoute
 @Serializable data class RecipeDetailRoute(val recipeId: String)
 @Serializable object ShoppingRoute
-@Serializable object ProfileRoute
+@Serializable object MoreRoute
+@Serializable object AccountRoute
 
 /**
  * Signed-in state for the root switch (null while the token store loads), and the version
@@ -158,7 +160,7 @@ private val topLevelDestinations = listOf(
     TopLevelDestination(PlansRoute, PlansRoute::class, Icons.Default.DateRange, R.string.nav_meal_plans),
     TopLevelDestination(RecipesRoute, RecipesRoute::class, AppIcons.Restaurant, R.string.nav_recipes),
     TopLevelDestination(ShoppingRoute, ShoppingRoute::class, Icons.Default.ShoppingCart, R.string.nav_shopping),
-    TopLevelDestination(ProfileRoute, ProfileRoute::class, Icons.Default.Person, R.string.nav_profile),
+    TopLevelDestination(MoreRoute, MoreRoute::class, Icons.Default.Menu, R.string.nav_more),
 )
 
 @Composable
@@ -225,7 +227,8 @@ private fun MainScaffold(serverVersion: ServerVersion) {
                 RecipeDetailScreen(onBack = { navController.popBackStack() })
             }
             composable<ShoppingRoute> { ShoppingScreen() }
-            composable<ProfileRoute> { ProfileScreen() }
+            composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
+            composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
         }
     }
 }

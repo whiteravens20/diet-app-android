@@ -18,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ProfileTest {
+class AccountTest {
     @get:Rule
     val screen = createAndroidComposeRule<MainActivity>()
 
@@ -27,13 +27,16 @@ class ProfileTest {
         val account = Instance.newAccount()
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_profile)).performClick()
+        // The account's settings are under "More", as the web application's menu has them.
+        screen.onNodeWithText(text(R.string.nav_more)).performClick()
+        screen.keepScreenshot("more")
+        screen.onNodeWithText(text(R.string.account_title)).performClick()
         screen.waitForText(account.email)
         screen.onNodeWithText(account.displayName).assertIsDisplayed()
         screen.onNodeWithText(BuildConfig.API_BASE_URL).performScrollTo().assertIsDisplayed()
-        screen.keepScreenshot("profile-the-account")
+        screen.keepScreenshot("account-settings")
 
-        screen.onNodeWithText(text(R.string.profile_sign_out)).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.account_sign_out)).performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_welcome_back))
     }
 }

@@ -45,7 +45,8 @@ The debug build allows cleartext HTTP so a plain `http://…:4000` backend works
 development; release builds do not.
 
 The baked-in value is only the default: the server address is editable **in the app**
-— the **Server** button on the login screen, or Profile → Server once signed in. The
+— the **Server** button on the login screen, or More → Account settings → Server once
+signed in. The
 app asks `GET /api/health` at the address before it keeps it, and names what answers
 there when it is not a Diet App API. The value persists on the device; changing it while
 signed in signs you out, since tokens and the offline cache belong to the old instance.

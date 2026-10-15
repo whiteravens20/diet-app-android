@@ -10,7 +10,7 @@
     <string name="nav_meal_plans">Meal plans</string>
     <string name="nav_recipes">Recipes</string>
     <string name="nav_shopping">Shopping</string>
-    <string name="nav_profile">Profile</string>
+    <string name="nav_more">More</string>
 
     <!-- Common -->
     <string name="common_retry">Try again</string>
@@ -147,16 +147,17 @@
     <string name="shopping_from_pantry">from pantry: %1$s %2$s</string>
 
     <!-- Profile -->
-    <string name="profile_verified">Verified</string>
-    <string name="profile_unverified">Email not verified</string>
-    <string name="profile_language">Language</string>
-    <string name="profile_theme">Theme</string>
-    <string name="profile_theme_light">Light</string>
-    <string name="profile_theme_dark">Dark</string>
-    <string name="profile_theme_system">System</string>
-    <string name="profile_app_version">App version</string>
-    <string name="profile_settings_hint">Account settings, preferences and diet profiles are managed in the web app.</string>
-    <string name="profile_sign_out">Sign out</string>
+    <string name="account_title">Account settings</string>
+    <string name="account_verified">Verified</string>
+    <string name="account_unverified">Email not verified</string>
+    <string name="account_language">Language</string>
+    <string name="account_theme">Theme</string>
+    <string name="account_theme_light">Light</string>
+    <string name="account_theme_dark">Dark</string>
+    <string name="account_theme_system">System</string>
+    <string name="account_app_version">App version</string>
+    <string name="account_settings_hint">Account settings, preferences and diet profiles are managed in the web app.</string>
+    <string name="account_sign_out">Sign out</string>
 
     <!-- Enum labels (platform wire values) -->
     <string name="diet_balanced">Balanced</string>

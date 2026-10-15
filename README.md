@@ -37,9 +37,10 @@ generate a plan, swap a meal, tick off the shopping list.
   ingredients and steps.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, and items ticked off as you shop.
-- **Profile.** The account's e-mail status, language and theme, the app's version, the
-  server address and sign-out. Account settings and diet profiles are edited in the web
-  app.
+- **More.** What the bottom bar has no room for, as the web application's menu has it:
+  the account's settings, with its e-mail status, language and theme, the app's version,
+  the server address and sign-out. Account settings and diet profiles are edited in the
+  web app.
 - **Offline.** Meal plans and shopping lists you have opened stay readable without a
   connection, marked with the time they were last synced. Offline they are read-only.
 - **English and Polish**, refusals of the server included: a request the server refuses is
@@ -75,7 +76,7 @@ on its first screen. For a phone on your network, set another one at build time:
 ```
 
 or change it in the app, with the **Server** button on the sign-in screen or under
-Profile. The app adds `/api/` and `https://` where you leave them out, refuses an address
+More → Account settings. The app adds `/api/` and `https://` where you leave them out, refuses an address
 with a user name or a password in it, and asks the server at once whether a Diet App API
 answers there; one where none does is named, and kept only if you save it anyway.
 Changing the server signs you out and clears the offline cache.

@@ -1,6 +1,6 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
-package net.whiteravens.dietapp.ui.screens.profile
+package net.whiteravens.dietapp.ui.screens.account
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +48,7 @@ import java.util.Locale
 
 /** Account overview + sign-out. Settings editing stays on the web for now. */
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
+fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
@@ -69,7 +69,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ScreenHeader(title = stringResource(R.string.nav_profile))
+        ScreenHeader(title = stringResource(R.string.account_title), onBack = onBack)
 
         state.error?.let {
             ErrorBanner(errorMessage(it))
@@ -113,9 +113,9 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                             )
                             Row(Modifier.padding(top = 6.dp)) {
                                 if (user.emailVerified) {
-                                    AccentChip(stringResource(R.string.profile_verified))
+                                    AccentChip(stringResource(R.string.account_verified))
                                 } else {
-                                    LabelChip(stringResource(R.string.profile_unverified))
+                                    LabelChip(stringResource(R.string.account_unverified))
                                 }
                             }
                         }
@@ -124,7 +124,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
 
                 AppCard {
                     SettingRow(
-                        stringResource(R.string.profile_language),
+                        stringResource(R.string.account_language),
                         Locale.forLanguageTag(user.locale).let { locale ->
                             locale.getDisplayLanguage(locale)
                                 .replaceFirstChar { it.titlecase(locale) }
@@ -136,11 +136,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         modifier = Modifier.padding(vertical = 10.dp),
                     )
                     SettingRow(
-                        stringResource(R.string.profile_theme),
+                        stringResource(R.string.account_theme),
                         when (user.theme) {
-                            "light" -> stringResource(R.string.profile_theme_light)
-                            "dark" -> stringResource(R.string.profile_theme_dark)
-                            else -> stringResource(R.string.profile_theme_system)
+                            "light" -> stringResource(R.string.account_theme_light)
+                            "dark" -> stringResource(R.string.account_theme_dark)
+                            else -> stringResource(R.string.account_theme_system)
                         },
                     )
                     HorizontalDivider(
@@ -152,9 +152,9 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.padding(vertical = 10.dp),
                     )
-                    SettingRow(stringResource(R.string.profile_app_version), BuildConfig.VERSION_NAME)
+                    SettingRow(stringResource(R.string.account_app_version), BuildConfig.VERSION_NAME)
                     Text(
-                        stringResource(R.string.profile_settings_hint),
+                        stringResource(R.string.account_settings_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 12.dp),
@@ -180,7 +180,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
             } else {
-                Text(stringResource(R.string.profile_sign_out))
+                Text(stringResource(R.string.account_sign_out))
             }
         }
     }

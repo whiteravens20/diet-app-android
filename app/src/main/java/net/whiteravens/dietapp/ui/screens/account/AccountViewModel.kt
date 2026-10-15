@@ -1,6 +1,6 @@
 // Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
 
-package net.whiteravens.dietapp.ui.screens.profile
+package net.whiteravens.dietapp.ui.screens.account
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 /** Session account details, the server setting and sign-out. */
 @HiltViewModel
-class ProfileViewModel @Inject constructor(
+class AccountViewModel @Inject constructor(
     private val users: UserRepository,
     private val auth: AuthRepository,
     private val server: ServerConfigStore,
