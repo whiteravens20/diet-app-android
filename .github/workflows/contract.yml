@@ -1,14 +1,14 @@
 # ── Contract ──────────────────────────────────────────────────────────────────
-# Once a week, compares the copy of diet-app's contract in contract/ with the one
+# Every day, compares the copy of diet-app's contract in contract/ with the one
 # on diet-app's dev branch. When they differ, the client's calls are checked
 # against dev's, and its texts for refusals against dev's list of codes, to show
 # what the change breaks, and the run fails: a change of the backend is seen
-# within a week, and the copy is moved on purpose (contract/README.md).
+# within a day, and the copy is moved on purpose (contract/README.md).
 name: Contract
 
 on:
   schedule:
-    - cron: '0 6 * * 1'
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 permissions:

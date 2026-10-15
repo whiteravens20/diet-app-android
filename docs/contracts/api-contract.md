@@ -17,7 +17,7 @@ that fixes it takes it off the list.
 
 [`contract/errors.json`](../../contract/errors.json) is a copy of the list of codes, from the
 same version. The build writes the app's texts for refusals from it, in English and in Polish, and
-a unit test (`ErrorTextsTest`) checks that every code of the list has its text. Once a week CI
+a unit test (`ErrorTextsTest`) checks that every code of the list has its text. Every day CI
 compares both copies with diet-app's `dev` ([contract.yml](../../.github/workflows/contract.yml))
 and fails when they differ.
 

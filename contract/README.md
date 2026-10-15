@@ -14,6 +14,6 @@ for refusals from it, and a unit test checks that every code of the list has one
 against an instance of it.
 
 It is moved on purpose, never by itself: copy both files from the version of diet-app the
-client is to work with, change `API_VERSION` and `diet-app.env`, and make the tests pass. Once a week CI
+client is to work with, change `API_VERSION` and `diet-app.env`, and make the tests pass. Every day CI
 compares this copy with diet-app's `dev` and fails when they differ, so that a change of
-the backend is seen within a week.
+the backend is seen within a day.

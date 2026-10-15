@@ -167,8 +167,8 @@ testers will try the release candidate at the maintainer's request.
   access and commits the result to the pull request, except a change to the signing keys,
   which it commits only when started by hand
   ([dependency-metadata.yml](.github/workflows/dependency-metadata.yml)).
-- Once a week the copy of the contract is compared with diet-app's `dev`, and the run
-  fails when they differ ([contract.yml](.github/workflows/contract.yml)).
+- Every day the copy of the contract is compared with diet-app's `dev`, and the run fails
+  when they differ ([contract.yml](.github/workflows/contract.yml)).
 - `dev` and `main` are protected: a change has to pass the build, the screens' tests and
   the check of the pinned actions (on `main` also CodeQL and the Trivy scan), commits have
   to be signed, and nothing is force-pushed or deleted. Until the first release the
