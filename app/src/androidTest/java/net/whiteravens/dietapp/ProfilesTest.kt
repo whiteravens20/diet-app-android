@@ -15,16 +15,17 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
+import java.text.NumberFormat
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.text.NumberFormat
-import java.util.Locale
 
 /**
  * Profiles as an account holder makes and keeps them: the first one in three steps from the empty
@@ -92,7 +93,7 @@ class ProfilesTest {
         val profileId = Instance.newProfile(account, name = "Ala")
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_more)).performClick()
+        screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.profiles_title)).performClick()
         screen.waitForText("Ala")
         screen.keepScreenshot("profiles-list")
@@ -131,7 +132,7 @@ class ProfilesTest {
         val target = Instance.dailyTarget(account, profileId)
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_more)).performClick()
+        screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.calculator_title)).performClick()
 
         screen.waitForText(kcal(target))

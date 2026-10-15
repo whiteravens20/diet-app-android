@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -28,7 +29,7 @@ class AccountTest {
         screen.signIn(account)
 
         // The account's settings are under "More", as the web application's menu has them.
-        screen.onNodeWithText(text(R.string.nav_more)).performClick()
+        screen.openTab(text(R.string.nav_more))
         screen.keepScreenshot("more")
         screen.onNodeWithText(text(R.string.account_title)).performClick()
         screen.waitForText(account.email)

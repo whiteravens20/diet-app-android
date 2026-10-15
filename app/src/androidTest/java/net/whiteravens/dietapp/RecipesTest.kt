@@ -15,6 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.clickFirst
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -33,7 +34,7 @@ class RecipesTest {
         val (title, ingredient) = Instance.aRecipe(account, text(R.string.api_language))
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_recipes)).performClick()
+        screen.openTab(text(R.string.nav_recipes))
         screen.onNodeWithText(text(R.string.recipes_search_placeholder)).performTextInput(title)
 
         // The recipe's card, not the search field that holds its title too.

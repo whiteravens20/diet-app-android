@@ -25,16 +25,17 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.putAwayPrintService
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.LocalDate
 
 @RunWith(AndroidJUnit4::class)
 class ShoppingTest {
@@ -49,7 +50,7 @@ class ShoppingTest {
         val language = text(R.string.api_language)
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_shopping)).performClick()
+        screen.openTab(text(R.string.nav_shopping))
         screen.waitForEnabled(text(R.string.shopping_make_list))
         screen.onNode(hasText(text(R.string.shopping_make_list)) and hasClickAction()).performClick()
 

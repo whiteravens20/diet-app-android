@@ -24,9 +24,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
-import net.whiteravens.dietapp.ui.common.formatDate
-import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putAwayPrintService
 import net.whiteravens.dietapp.testing.scrollTo
@@ -35,6 +34,12 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.ui.common.formatDate
+import net.whiteravens.dietapp.ui.common.formatDayDate
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -42,10 +47,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.LocalDate
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class PlansTest {
@@ -58,7 +59,7 @@ class PlansTest {
         val profileId = Instance.newProfile(account)
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.openTab(text(R.string.nav_meal_plans))
         screen.waitForEnabled(text(R.string.plans_generate))
         screen.onNode(hasText(text(R.string.plans_generate)) and hasClickAction()).performClick()
 
@@ -143,7 +144,7 @@ class PlansTest {
         Instance.newPlan(account, profileId, days = 3, start = month.atDay(10))
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.openTab(text(R.string.nav_meal_plans))
         screen.waitForText(text(R.string.plans_calendar_title))
 
         // The plan's second day says what it holds once the month is read, and opens the plan there.
@@ -174,7 +175,7 @@ class PlansTest {
         Instance.newPlan(account, profileId, days = 2, start = next)
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.openTab(text(R.string.nav_meal_plans))
         // The plan's card names the day it begins on.
         val card = formatDate(next.toString())
         // The list is below the calendar.
@@ -203,7 +204,7 @@ class PlansTest {
         val (title, _) = Instance.firstMeal(account, planId)
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.openTab(text(R.string.nav_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
@@ -281,7 +282,7 @@ class PlansTest {
         val swaps = Instance.useUpSwaps(account, planId)
         screen.signIn(account)
 
-        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.openTab(text(R.string.nav_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()

@@ -9,6 +9,8 @@ import android.os.Parcel
 import androidx.activity.ComponentActivity
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
@@ -140,4 +142,12 @@ fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.p
         }
         back
     }
+}
+
+/**
+ * Opens the screen of the bottom bar's item called [label]: the bar's own item, which a text of the
+ * same name on the screen above it, a figure or a heading, is not.
+ */
+fun ComposeTestRule.openTab(label: String) {
+    onNode(hasText(label) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)).performClick()
 }

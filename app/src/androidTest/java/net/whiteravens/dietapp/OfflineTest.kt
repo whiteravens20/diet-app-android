@@ -11,19 +11,20 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.common.formatDate
-import org.junit.After
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.URI
+import org.junit.After
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
 
 /** What the phone keeps of a plan is there to read when the network is not. */
 @RunWith(AndroidJUnit4::class)
@@ -63,7 +64,7 @@ class OfflineTest {
         screen.signIn(account)
 
         // Opened once with the network: the phone keeps a copy.
-        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.openTab(text(R.string.nav_meal_plans))
         // The plan's card names the day it begins on; the list is below the calendar.
         val card = formatDate(startDate)
         screen.scrollToText(card, substring = true)
