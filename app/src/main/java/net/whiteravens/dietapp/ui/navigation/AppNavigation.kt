@@ -64,6 +64,7 @@ import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
+import net.whiteravens.dietapp.ui.screens.profiles.CalculatorScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileFormScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeDetailScreen
@@ -85,6 +86,7 @@ import kotlin.reflect.KClass
 @Serializable object AccountRoute
 @Serializable object ProfilesRoute
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
+@Serializable object CalculatorRoute
 
 /**
  * Signed-in state for the root switch (null while the token store loads), and the version
@@ -248,6 +250,9 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             }
             composable<ProfileFormRoute> {
                 ProfileFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
+            }
+            composable<CalculatorRoute> {
+                CalculatorScreen(onBack = { navController.popBackStack() }, onProfiles = { navController.navigate(ProfilesRoute) })
             }
         }
     }

@@ -399,6 +399,12 @@
     <string name="calorie_preview_over">%1$s kcal dziennie powyżej Twojego zapotrzebowania.</string>
     <string name="calorie_preview_macros">Białko %1$s g · tłuszcz %2$s g · węglowodany %3$s g dziennie.</string>
     <string name="calorie_preview_said">Cel dzienny: %1$s kcal.</string>
+    <string name="calculator_title">Kalkulator</string>
+    <string name="calculator_subhead">Dzienny cel kaloryczny liczony na bieżąco z Twoich danych, aktywności, tempa i diety.</string>
+    <string name="calculator_start_from">Zacznij od</string>
+    <string name="calculator_empty">Pusty formularz</string>
+    <string name="calculator_not_kept">Nic z tego, co tu wpiszesz, nie jest zapisywane i żaden plan się nie zmienia. Aby zmienić cel swoich planów, edytuj %1$s.</string>
+    <string name="calculator_not_kept_link">profil</string>
     <string name="pickers_ingredient_search">Szukaj składników…</string>
     <string name="pickers_none_yet">Jeszcze nic.</string>
     <string name="pickers_no_matches">Brak wyników.</string>

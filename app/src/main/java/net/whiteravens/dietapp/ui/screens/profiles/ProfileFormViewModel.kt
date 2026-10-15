@@ -92,6 +92,7 @@ class ProfileFormViewModel @Inject constructor(
 
     private val profileId: String? = savedStateHandle[PROFILE_ID]
     private var kept: ProfileDetails? = null
+    private var startingFrom: ProfileDetails? = null
 
     /** The answers given for this form's figures: going back to figures asked about before asks nothing. */
     private val answers = object : LinkedHashMap<CalorieQuestion, CaloriePreview>(16, 0.75f, true) {
@@ -119,7 +120,7 @@ class ProfileFormViewModel @Inject constructor(
                 ?: _state.value.unit
             val id = profileId
             if (id == null) {
-                _state.update { it.copy(loading = false, unit = unit) }
+                _state.update { it.copy(loading = false, unit = unit, form = startingFrom?.let { from -> ProfileForm.of(from, unit) } ?: it.form) }
             } else {
                 attempt { profiles.profile(id) }
                     .onSuccess { details ->
@@ -138,6 +139,17 @@ class ProfileFormViewModel @Inject constructor(
 
     fun edit(change: (ProfileForm) -> ProfileForm) {
         _state.update { it.copy(form = change(it.form), error = null) }
+    }
+
+    /**
+     * The form begins anew with the figures of [profile], or with nobody's: the calculator's start.
+     * Until the unit its weights are shown in is known, it waits for it.
+     */
+    fun startFrom(profile: ProfileDetails?) {
+        startingFrom = profile
+        _state.update {
+            if (it.loading) it else it.copy(form = profile?.let { from -> ProfileForm.of(from, it.unit) } ?: ProfileForm(), showProblems = false)
+        }
     }
 
     @OptIn(FlowPreview::class)

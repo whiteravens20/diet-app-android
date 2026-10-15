@@ -23,8 +23,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
+import net.whiteravens.dietapp.ui.navigation.CalculatorRoute
 import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
 
 /** A place of the app the bottom bar has no room for, as the "More" tab lists it. */
@@ -34,6 +36,7 @@ data class MoreEntry(val route: Any, val icon: ImageVector, @StringRes val label
 val moreEntries: List<MoreEntry>
     get() = listOf(
         MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
+        MoreEntry(CalculatorRoute, AppIcons.Target, R.string.calculator_title),
         MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
     )
 

@@ -23,12 +23,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.text.NumberFormat
 import java.util.Locale
 
 /**
  * Profiles as an account holder makes and keeps them: the first one in three steps from the empty
- * dashboard, with the target the typed figures come to; and one edited, its preferences changed in
- * place and deleted. What the screens say is checked against what the API keeps.
+ * dashboard, with the target the typed figures come to; one edited, its preferences changed in
+ * place and deleted; and the calculator, which begins with a profile's figures. What the screens
+ * say is checked against what the API keeps.
  */
 @RunWith(AndroidJUnit4::class)
 class ProfilesTest {
@@ -37,6 +39,8 @@ class ProfilesTest {
 
     /** The unit the app shows weights in for an account that has chosen none: that of where the phone is. */
     private val unit = WeightUnit.of(null, Locale.getDefault())
+
+    private fun kcal(value: Int) = text(R.string.calorie_preview_kcal, NumberFormat.getNumberInstance(Locale.getDefault()).format(value))
 
     private fun type(label: String, value: String) = screen.onNodeWithText(label).performScrollTo().performTextInput(value)
 
@@ -118,5 +122,19 @@ class ProfilesTest {
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForText(text(R.string.profile_wizard_title))
         assertEquals(0, Instance.profiles(account).size)
+    }
+
+    @Test
+    fun theCalculatorBeginsWithAProfileAndShowsTheTargetTheApiWorksOut() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        val target = Instance.dailyTarget(account, profileId)
+        screen.signIn(account)
+
+        screen.onNodeWithText(text(R.string.nav_more)).performClick()
+        screen.onNodeWithText(text(R.string.calculator_title)).performClick()
+
+        screen.waitForText(kcal(target))
+        screen.keepScreenshot("calculator")
     }
 }
