@@ -20,8 +20,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.services.storage.TestStorage
 import net.whiteravens.dietapp.R
-import java.io.File
 import java.io.IOException
 
 /** A text of the app's, in the language the device runs in, with [args] put in. */
@@ -35,10 +35,8 @@ fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000) {
 
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
- * `screenshots/` of the directory the Android Gradle plugin copies off the device after the tests
- * (the instrumentation's `additionalTestOutputDir`). A picture the device does not give, or one
- * that cannot be written, is left out with a line in the log: it is a record of the run, not
- * something the test checks.
+ * `screenshots/`. A picture the device does not give, or one that cannot be written, is left out
+ * with a line in the log: it is a record of the run, not something the test checks.
  */
 fun ComposeTestRule.keepScreenshot(name: String) {
     waitForIdle()
@@ -47,14 +45,8 @@ fun ComposeTestRule.keepScreenshot(name: String) {
         println("No screenshot for $name: the device gave none")
         return
     }
-    val kept = InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")
-    if (kept == null) {
-        println("No screenshot for $name: the run keeps no output of the tests")
-        return
-    }
     try {
-        val directory = File(kept, "screenshots").apply { mkdirs() }
-        File(directory, "$name.png").outputStream().use { out -> picture.compress(Bitmap.CompressFormat.PNG, 100, out) }
+        TestStorage().openOutputFile("screenshots/$name.png").use { out -> picture.compress(Bitmap.CompressFormat.PNG, 100, out) }
     } catch (e: IOException) {
         println("No screenshot for $name: ${e.message}")
     }
