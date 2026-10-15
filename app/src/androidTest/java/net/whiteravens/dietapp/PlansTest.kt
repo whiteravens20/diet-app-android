@@ -2,11 +2,16 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -14,6 +19,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.ui.common.formatDate
+import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
@@ -25,7 +31,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class PlansTest {
@@ -89,6 +98,37 @@ class PlansTest {
     }
 
     @Test
+    fun theCalendarOpensAPlanAtTheDayChosenAndADayWithoutOneBeginsANewPlan() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val month = YearMonth.now()
+        Instance.newPlan(account, profileId, days = 3, start = month.atDay(10))
+        screen.signIn(account)
+
+        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        screen.waitForText(text(R.string.plans_calendar_title))
+
+        // The plan's second day says what it holds once the month is read, and opens the plan there.
+        val planned = month.atDay(11)
+        val free = text(R.string.plans_calendar_day_free, spoken(planned))
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(dayCell(planned)).fetchSemanticsNodes().any { it.config[SemanticsProperties.ContentDescription].single() != free }
+        }
+        screen.keepScreenshot("plans-the-calendar")
+        screen.onNode(dayCell(planned)).performScrollTo().performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(planned.toString())) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
+        screen.keepScreenshot("plans-a-plan-at-its-day")
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+
+        // A day that no plan holds begins a new plan on it.
+        val open = month.atDay(20)
+        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.onNode(dayCell(open)).performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_start_date))
+        screen.waitForText(formatDate(open.toString()))
+    }
+
+    @Test
     fun theListIsNarrowedToWhereAPlanStandsAndTheFilterCleared() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
@@ -112,5 +152,10 @@ class PlansTest {
         screen.waitForText(card)
         assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
     }
+
+    /** The cell of [date] in the calendar: what it says begins with the day's name. */
+    private fun dayCell(date: LocalDate): SemanticsMatcher = hasContentDescription("${spoken(date)}:", substring = true)
+
+    private fun spoken(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.getDefault()))
 }
 

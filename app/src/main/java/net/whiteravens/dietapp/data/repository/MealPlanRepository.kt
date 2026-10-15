@@ -25,6 +25,7 @@ import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
@@ -82,6 +83,22 @@ class MealPlanRepository @Inject constructor(
         }
         return answer.toDomain()
     }
+
+    /** The days a profile's plans hold from [from] to [to]: what a calendar of them shows. */
+    suspend fun calendar(profileId: String, from: LocalDate, to: LocalDate): List<PlanCalendarDay> =
+        apiCall(json) { api.planCalendar(profileId, from.toString(), to.toString()) }.days.map {
+            PlanCalendarDay(
+                date = LocalDate.parse(it.date),
+                planId = it.planId,
+                plans = it.plans,
+                calories = it.calories,
+                target = it.target,
+                offTarget = it.offTarget,
+                mealsEaten = it.eaten.meals,
+                meals = it.eaten.of,
+                skipped = it.skipped,
+            )
+        }
 
     /**
      * Makes a plan as [ask] asks for it (the engine fills it on the server). A plan that cannot be

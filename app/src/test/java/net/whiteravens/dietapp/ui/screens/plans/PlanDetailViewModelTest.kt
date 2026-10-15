@@ -118,4 +118,18 @@ class PlanDetailViewModelTest {
         assertEquals("PLAN_CHANGED", (model.state.value.error as ApiException).code)
         coVerify(exactly = 2) { api.mealPlan(plan.id) }
     }
+
+    @Test
+    fun `a plan opened at a day of the calendar shows that day, and one opened from the list its first`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val day = plan.days[3]
+
+        val atDay = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id, "day" to day.date)), MealPlanRepository(api, NoCache, json))
+        val fromList = model(api)
+
+        assertEquals(3, atDay.state.value.selectedDay)
+        assertEquals(0, fromList.state.value.selectedDay)
+    }
 }
+

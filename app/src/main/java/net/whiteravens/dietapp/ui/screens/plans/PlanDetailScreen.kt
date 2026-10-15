@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -150,7 +152,10 @@ fun PlanDetailScreen(
         }
 
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val chips = rememberLazyListState()
+            // The day the plan opened at is in sight, however far into the plan it lies.
+            LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
+            LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
                     FilterChip(
                         selected = index == state.selectedDay,

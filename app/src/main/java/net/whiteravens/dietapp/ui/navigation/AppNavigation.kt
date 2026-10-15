@@ -79,7 +79,7 @@ import kotlin.reflect.KClass
 
 @Serializable object DashboardRoute
 @Serializable object PlansRoute
-@Serializable data class PlanDetailRoute(val planId: String)
+@Serializable data class PlanDetailRoute(val planId: String, val day: String? = null)
 @Serializable object RecipesRoute
 @Serializable data class RecipeDetailRoute(val recipeId: String)
 @Serializable object ShoppingRoute
@@ -88,7 +88,7 @@ import kotlin.reflect.KClass
 @Serializable object ProfilesRoute
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object CalculatorRoute
-@Serializable data class NewPlanRoute(val profileId: String)
+@Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
 
 /**
  * Signed-in state for the root switch (null while the token store loads), and the version
@@ -221,8 +221,8 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             composable<DashboardRoute> { DashboardScreen(onCreateProfile = { navController.navigate(ProfilesRoute) }) }
             composable<PlansRoute> {
                 MealPlansScreen(
-                    onOpenPlan = { navController.navigate(PlanDetailRoute(it)) },
-                    onNewPlan = { navController.navigate(NewPlanRoute(it)) },
+                    onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
+                    onNewPlan = { profileId, startDate -> navController.navigate(NewPlanRoute(profileId, startDate)) },
                     onCreateProfile = { navController.navigate(ProfilesRoute) },
                 )
             }

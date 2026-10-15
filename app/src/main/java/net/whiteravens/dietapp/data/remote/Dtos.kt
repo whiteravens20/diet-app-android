@@ -673,6 +673,30 @@ data class GeneratePlanRequest(
     val dayOverrides: List<DayOverrideDto>? = null,
 )
 
+/** The days of a profile's plans in a span of days: those no plan holds are left out. */
+@Serializable
+data class PlanCalendarDto(val days: List<PlanCalendarDayDto>)
+
+/**
+ * A day a plan holds: the plan made last that holds it, how many plans hold it, what it holds and
+ * aims at in kcal, whether it is more than a tenth off (`over` | `under`), its meals eaten out of
+ * its meals, and whether the plan skips it.
+ */
+@Serializable
+data class PlanCalendarDayDto(
+    val date: String,
+    val planId: String,
+    val plans: Int,
+    val calories: Double,
+    val target: Double,
+    val offTarget: String? = null,
+    val eaten: EatenMealsDto,
+    val skipped: Boolean,
+)
+
+@Serializable
+data class EatenMealsDto(val meals: Int, val of: Int)
+
 /** What one day of a new plan is made with where it differs from the plan; a day that differs in nothing is not sent. */
 @Serializable
 data class DayOverrideDto(

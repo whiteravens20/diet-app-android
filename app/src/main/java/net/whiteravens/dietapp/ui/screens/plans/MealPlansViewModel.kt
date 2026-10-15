@@ -14,23 +14,39 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.MealPlanSummary
+import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.temporal.TemporalAdjusters
 import javax.inject.Inject
 
 /**
  * Plans per profile, offline-first: the Room cache renders the whole list immediately, a network
  * refresh replaces it, and a failed refresh keeps the cache on screen and flags
  * [UiState.offline] instead of erroring the whole screen. The list can be narrowed by whether a
- * plan is under way, to come or over, and to the plans that hold days of a span.
+ * plan is under way, to come or over, and to the plans that hold days of a span. Beside it, a
+ * month of the profile's plans as a calendar.
  */
 @HiltViewModel
 class MealPlansViewModel @Inject constructor(
     private val users: UserRepository,
     private val plans: MealPlanRepository,
 ) : ViewModel() {
+
+    /** A month of a profile's plans: its days in weeks from Monday, and what the plans hold of them. */
+    data class Calendar(
+        val month: YearMonth,
+        val days: Map<LocalDate, PlanCalendarDay> = emptyMap(),
+        val loading: Boolean = true,
+        val error: Throwable? = null,
+    ) {
+        val weeks: List<List<LocalDate>> get() = weeksOf(month)
+    }
 
     data class UiState(
         val loading: Boolean = true,
@@ -47,6 +63,7 @@ class MealPlansViewModel @Inject constructor(
         val loadingMore: Boolean = false,
         val offline: Boolean = false,
         val error: Throwable? = null,
+        val calendar: Calendar = Calendar(YearMonth.now()),
     ) {
         val hasMore: Boolean get() = page < totalPages
     }
@@ -55,6 +72,7 @@ class MealPlansViewModel @Inject constructor(
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     private var listing: Job? = null
+    private var reading: Job? = null
 
     init {
         load()
@@ -74,9 +92,19 @@ class MealPlansViewModel @Inject constructor(
 
     fun selectProfile(profileId: String) {
         _state.update {
-            it.copy(selectedProfileId = profileId, plans = emptyList(), page = 1, totalPages = 1, syncedAt = null, error = null)
+            it.copy(
+                selectedProfileId = profileId,
+                plans = emptyList(),
+                page = 1,
+                totalPages = 1,
+                syncedAt = null,
+                error = null,
+                // The month stays; its days were another profile's.
+                calendar = it.calendar.copy(days = emptyMap(), loading = true, error = null),
+            )
         }
         list(profileId)
+        readCalendar()
     }
 
     /** The list narrowed anew, from its first page. */
@@ -147,8 +175,55 @@ class MealPlansViewModel @Inject constructor(
         }
     }
 
+    /** Another month in the calendar: [months] on from the one shown, back where it is below nought. */
+    fun leaf(months: Long) = showMonth(_state.value.calendar.month.plusMonths(months))
+
+    fun showMonth(month: YearMonth) {
+        if (month == _state.value.calendar.month && !_state.value.calendar.loading) return
+        // The month before stays while the next is on its way: its days are other days.
+        _state.update { it.copy(calendar = it.calendar.copy(month = month, loading = true, error = null)) }
+        readCalendar()
+    }
+
+    /** The month asked for again, after it failed. */
+    fun retryCalendar() {
+        _state.update { it.copy(calendar = it.calendar.copy(loading = true, error = null)) }
+        readCalendar()
+    }
+
+    private fun readCalendar() {
+        val profileId = _state.value.selectedProfileId ?: return
+        val calendar = _state.value.calendar
+        val weeks = calendar.weeks
+        reading?.cancel()
+        reading = viewModelScope.launch {
+            attempt { plans.calendar(profileId, weeks.first().first(), weeks.last().last()) }
+                .onSuccess { days ->
+                    _state.update {
+                        if (it.selectedProfileId != profileId || it.calendar.month != calendar.month) it
+                        else it.copy(calendar = it.calendar.copy(days = days.associateBy(PlanCalendarDay::date), loading = false))
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        if (it.selectedProfileId != profileId || it.calendar.month != calendar.month) it
+                        else it.copy(calendar = it.calendar.copy(loading = false, error = e))
+                    }
+                }
+        }
+    }
+
     /** Guards against a profile or a filter switch racing an in-flight load. */
     private fun ifStillShown(profileId: String, filter: PlanFilter, transform: (UiState) -> UiState) {
         _state.update { if (it.selectedProfileId == profileId && it.filter == filter) transform(it) else it }
+    }
+
+    companion object {
+        /** The weeks a month's days fall in, Monday first, with the days of the months beside it that share them. */
+        fun weeksOf(month: YearMonth): List<List<LocalDate>> {
+            val first = month.atDay(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            val last = month.atEndOfMonth().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+            return generateSequence(first) { it.plusDays(1) }.takeWhile { !it.isAfter(last) }.toList().chunked(7)
+        }
     }
 }

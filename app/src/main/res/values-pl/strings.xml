@@ -122,7 +122,34 @@
     <string name="plans_status_past">Zakończone</string>
     <string name="plans_from">Od</string>
     <string name="plans_to">Do</string>
+    <string name="plans_calendar_title">Kalendarz</string>
+    <string name="plans_calendar_lead">Dni objęte Twoimi planami, miesiąc po miesiącu.</string>
+    <string name="plans_calendar_previous">Poprzedni miesiąc</string>
+    <string name="plans_calendar_next">Następny miesiąc</string>
+    <string name="plans_calendar_this_month">Bieżący miesiąc</string>
+    <string name="plans_calendar_day_free">%1$s: brak planu. Wybierz, aby zacząć plan od tego dnia.</string>
+    <string name="plans_calendar_legend_day">Dzień wyróżniony kolorem należy do planu, a liczba to jego kcal. Wybierz go, aby otworzyć plan na tym dniu; wybierz dzień bez planu, aby zacząć od niego nowy plan.</string>
+    <string name="plans_calendar_legend_off">Dzień odbiega od celu o więcej niż jedną dziesiątą.</string>
+    <string name="plans_calendar_legend_eaten">Posiłki oznaczone jako zjedzone, spośród posiłków danego dnia.</string>
+    <string name="plans_calendar_legend_skipped">— to dzień pominięty w planie: nic na nim nie zaplanowano.</string>
+    <string name="plans_calendar_legend_more">+1 i podobne: tyle innych planów obejmuje ten sam dzień. Kalendarz pokazuje plan utworzony najpóźniej.</string>
     <string name="plans_none_filtered">Żaden plan nie pasuje do bieżących filtrów.</string>
+    <string name="plans_calendar_day_planned">%1$s: %2$s z %3$s kcal%4$s, %5$s%6$s. Wybierz, aby otworzyć plan.</string>
+    <string name="plans_calendar_day_skipped">%1$s: dzień pominięty w planie%2$s. Wybierz, aby otworzyć plan.</string>
+    <string name="plans_calendar_over">, powyżej celu</string>
+    <string name="plans_calendar_under">, poniżej celu</string>
+    <plurals name="plans_calendar_eaten">
+        <item quantity="one">zjedzono %1$s z %2$d posiłku</item>
+        <item quantity="few">zjedzono %1$s z %2$d posiłków</item>
+        <item quantity="many">zjedzono %1$s z %2$d posiłków</item>
+        <item quantity="other">zjedzono %1$s z %2$d posiłku</item>
+    </plurals>
+    <plurals name="plans_calendar_more">
+        <item quantity="one">, a ten dzień obejmuje jeszcze jeden plan</item>
+        <item quantity="few">, a ten dzień obejmują jeszcze %1$d plany</item>
+        <item quantity="many">, a ten dzień obejmuje jeszcze %1$d planów</item>
+        <item quantity="other">, a ten dzień obejmuje jeszcze %1$d planu</item>
+    </plurals>
     <string name="plans_card_title">%1$s · %2$d dni</string>
     <string name="plans_avg_kcal">śr. %1$d kcal/dzień</string>
     <string name="plans_days">%1$d dni</string>

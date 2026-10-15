@@ -121,7 +121,30 @@
     <string name="plans_status_past">Past</string>
     <string name="plans_from">From</string>
     <string name="plans_to">To</string>
+    <string name="plans_calendar_title">Calendar</string>
+    <string name="plans_calendar_lead">The days your plans hold, a month at a time.</string>
+    <string name="plans_calendar_previous">The month before</string>
+    <string name="plans_calendar_next">The month after</string>
+    <string name="plans_calendar_this_month">This month</string>
+    <string name="plans_calendar_day_free">%1$s: no plan. Choose it to begin a plan on this day.</string>
+    <string name="plans_calendar_legend_day">A coloured day is in a plan, and its number is what the day holds in kcal. Choose it to open the plan at that day; choose a day without a plan to begin a plan on it.</string>
+    <string name="plans_calendar_legend_off">The day is more than a tenth off its target.</string>
+    <string name="plans_calendar_legend_eaten">Meals marked as eaten, out of the meals of the day.</string>
+    <string name="plans_calendar_legend_skipped">— is a day the plan skips: nothing is planned on it.</string>
+    <string name="plans_calendar_legend_more">+1 and the like: so many more plans hold the same day. The calendar shows the plan made last.</string>
     <string name="plans_none_filtered">No plans match the current filters.</string>
+    <string name="plans_calendar_day_planned">%1$s: %2$s of %3$s kcal%4$s, %5$s%6$s. Choose it to open the plan.</string>
+    <string name="plans_calendar_day_skipped">%1$s: a day the plan skips%2$s. Choose it to open the plan.</string>
+    <string name="plans_calendar_over">, over the target</string>
+    <string name="plans_calendar_under">, under the target</string>
+    <plurals name="plans_calendar_eaten">
+        <item quantity="one">%1$s of %2$d meal eaten</item>
+        <item quantity="other">%1$s of %2$d meals eaten</item>
+    </plurals>
+    <plurals name="plans_calendar_more">
+        <item quantity="one">, and one more plan holds this day</item>
+        <item quantity="other">, and %1$d more plans hold this day</item>
+    </plurals>
     <string name="plans_card_title">%1$s · %2$d days</string>
     <string name="plans_avg_kcal">%1$d kcal/day avg</string>
     <string name="plans_days">%1$d days</string>

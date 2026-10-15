@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +21,7 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.testing.fixture
@@ -31,7 +33,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MealPlansViewModelTest {
@@ -71,6 +75,7 @@ class MealPlansViewModelTest {
         val api = mockk<DietApiService>()
         coEvery { api.profiles() } returns listOf(profile)
         coEvery { api.mealPlans(any(), any(), any(), any(), any(), any()) } throws IOException("no network")
+        coEvery { api.planCalendar(any(), any(), any()) } throws IOException("no network")
         val cache = Cache(CachedPlanList(profile.id, """[{"id":"plan"}]""", 1L))
 
         var escaped: Throwable? = null
@@ -89,13 +94,84 @@ class MealPlansViewModelTest {
     }
 
     private val ada = Profile("ada", "Ada", "balanced", 3)
+    private val bo = Profile("bo", "Bo", "vegan", 4)
     private fun summary(id: String) = MealPlanSummary(id, "2026-10-12", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0))
     private fun page(vararg ids: String, totalPages: Int = 1, syncedAt: Long? = null) = MealPlanPage(ids.map(::summary), 1, totalPages, syncedAt)
+    private fun calendarDay(date: LocalDate, planId: String = "p1") = PlanCalendarDay(date, planId, 1, 1980.0, 2000.0, null, 0, 3, false)
 
-    private val users = mockk<UserRepository>().also { coEvery { it.profiles() } returns listOf(ada) }
+    private val users = mockk<UserRepository>().also { coEvery { it.profiles() } returns listOf(ada, bo) }
+    private val asked = mutableListOf<Pair<LocalDate, LocalDate>>()
     private val plans = mockk<MealPlanRepository>().also {
         coEvery { it.cachedPlans(any()) } returns null
         coEvery { it.plans(any(), any(), any()) } returns page("p1")
+        coEvery { it.calendar(any(), any(), any()) } answers {
+            asked += secondArg<LocalDate>() to thirdArg<LocalDate>()
+            listOf(calendarDay(secondArg<LocalDate>().plusDays(7)))
+        }
+    }
+
+    @Test
+    fun `a month is drawn in whole weeks from Monday, with the days of the months beside it that share them`() {
+        val october = MealPlansViewModel.weeksOf(YearMonth.of(2026, 10))
+        assertEquals(LocalDate.of(2026, 9, 28), october.first().first())
+        assertEquals(LocalDate.of(2026, 11, 1), october.last().last())
+        assertEquals(5, october.size)
+
+        // A month that begins on a Monday and ends on a Sunday is its own four weeks.
+        val february = MealPlansViewModel.weeksOf(YearMonth.of(2027, 2))
+        assertEquals(LocalDate.of(2027, 2, 1), february.first().first())
+        assertEquals(LocalDate.of(2027, 2, 28), february.last().last())
+        assertEquals(4, february.size)
+
+        // Six weeks at the most: the 42 days the API answers for at once.
+        val august = MealPlansViewModel.weeksOf(YearMonth.of(2026, 8))
+        assertEquals(6, august.size)
+        assertEquals(LocalDate.of(2026, 7, 27), august.first().first())
+        assertEquals(LocalDate.of(2026, 9, 6), august.last().last())
+
+        for (weeks in listOf(october, february, august)) {
+            assertTrue(weeks.all { week -> week.size == 7 && week.first().dayOfWeek == DayOfWeek.MONDAY })
+            assertEquals(weeks.flatten(), weeks.flatten().sorted().distinct())
+        }
+    }
+
+    @Test
+    fun `the calendar asks for the weeks of the month shown, and another month when it is leafed to`() {
+        val model = MealPlansViewModel(users, plans)
+
+        val month = YearMonth.now()
+        val weeks = MealPlansViewModel.weeksOf(month)
+        assertEquals(weeks.first().first() to weeks.last().last(), asked.single())
+        val calendar = model.state.value.calendar
+        assertEquals(month, calendar.month)
+        assertFalse(calendar.loading)
+        assertEquals(setOf(weeks.first().first().plusDays(7)), calendar.days.keys)
+
+        model.leaf(1)
+
+        val next = MealPlansViewModel.weeksOf(month.plusMonths(1))
+        assertEquals(next.first().first() to next.last().last(), asked.last())
+        assertEquals(month.plusMonths(1), model.state.value.calendar.month)
+        assertEquals(setOf(next.first().first().plusDays(7)), model.state.value.calendar.days.keys)
+    }
+
+    @Test
+    fun `a month that failed says so and is asked for again, and another profile's month holds none of the first one's days`() {
+        coEvery { plans.calendar("ada", any(), any()) } throws IOException("no network") andThen listOf(calendarDay(LocalDate.now()))
+        coEvery { plans.calendar("bo", any(), any()) } returns emptyList()
+        val model = MealPlansViewModel(users, plans)
+
+        assertTrue(model.state.value.calendar.error is IOException)
+
+        model.retryCalendar()
+
+        assertNull(model.state.value.calendar.error)
+        assertEquals(setOf(LocalDate.now()), model.state.value.calendar.days.keys)
+
+        model.selectProfile("bo")
+
+        assertEquals(emptyMap<LocalDate, PlanCalendarDay>(), model.state.value.calendar.days)
+        coVerify { plans.calendar("bo", any(), any()) }
     }
 
     @Test

@@ -31,9 +31,12 @@ class PlanDetailViewModel @Inject constructor(
     private val plans: MealPlanRepository,
 ) : ViewModel() {
 
-    // The route's argument, read by its name: `toRoute` needs Android's own classes, which the
+    // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
     // tests on the JVM do not have.
     private val planId: String = checkNotNull(savedStateHandle.get<String>(PlanDetailRoute::planId.name))
+
+    /** The day the plan opens at, where the route names one (yyyy-MM-dd): the calendar's day that was chosen. */
+    private val openAt: String? = savedStateHandle.get<String>(PlanDetailRoute::day.name)
 
     data class UiState(
         val loading: Boolean = true,
@@ -59,9 +62,11 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             val cached = plans.cachedPlan(planId)
-            if (cached != null) _state.value = UiState(loading = false, plan = cached)
+            if (cached != null) _state.value = UiState(loading = false, plan = cached, selectedDay = dayOf(cached))
             attempt { plans.refreshPlan(planId) }
-                .onSuccess { fresh -> _state.update { it.copy(loading = false, plan = fresh) } }
+                .onSuccess { fresh ->
+                    _state.update { it.copy(loading = false, plan = fresh, selectedDay = if (it.plan == null) dayOf(fresh) else it.selectedDay) }
+                }
                 .onFailure { e ->
                     _state.update {
                         it.copy(
@@ -73,6 +78,9 @@ class PlanDetailViewModel @Inject constructor(
                 }
         }
     }
+
+    /** The index of the day the route names in [plan], or of its first day. */
+    private fun dayOf(plan: MealPlan): Int = plan.days.indexOfFirst { it.date == openAt }.coerceAtLeast(0)
 
     fun selectDay(index: Int) {
         _state.update { it.copy(selectedDay = index) }

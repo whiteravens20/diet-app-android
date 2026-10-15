@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -52,20 +53,23 @@ import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import java.time.LocalDate
+import java.time.YearMonth
 import kotlin.math.roundToInt
 
 /**
- * Plans per profile: profile chips, a new plan, and the offline-first list of the profile's plans,
- * narrowed by where a plan stands and by the days it holds.
+ * Plans per profile: profile chips, a new plan, the profile's plans as a calendar, and the
+ * offline-first list of them, narrowed by where a plan stands and by the days it holds.
  */
 @Composable
 fun MealPlansScreen(
-    onOpenPlan: (String) -> Unit,
-    onNewPlan: (profileId: String) -> Unit,
+    onOpenPlan: (planId: String, day: String?) -> Unit,
+    onNewPlan: (profileId: String, startDate: String?) -> Unit,
     onCreateProfile: () -> Unit,
     viewModel: MealPlansViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val today = remember { LocalDate.now() }
 
     when {
         state.loading -> ListSkeleton()
@@ -117,7 +121,7 @@ fun MealPlansScreen(
             val profileId = state.selectedProfileId
             item {
                 Button(
-                    onClick = { profileId?.let(onNewPlan) },
+                    onClick = { profileId?.let { onNewPlan(it, null) } },
                     enabled = profileId != null,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth(),
@@ -127,6 +131,18 @@ fun MealPlansScreen(
                 }
             }
             if (profileId != null) {
+                item {
+                    PlanCalendar(
+                        calendar = state.calendar,
+                        today = today,
+                        onLeaf = viewModel::leaf,
+                        onThisMonth = { viewModel.showMonth(YearMonth.from(today)) },
+                        onRetry = viewModel::retryCalendar,
+                        onOpen = { planId, date -> onOpenPlan(planId, date.toString()) },
+                        // A day without a plan is where the next one can begin: the form starts on it.
+                        onStart = { date -> onNewPlan(profileId, date.toString()) },
+                    )
+                }
                 item {
                     Text(
                         state.profiles.find { it.id == profileId }?.let { stringResource(R.string.plans_for, it.name) } ?: stringResource(R.string.nav_meal_plans),
@@ -154,7 +170,7 @@ fun MealPlansScreen(
                 }
             }
             items(state.plans, key = { it.id }) { plan ->
-                PlanCard(plan, onClick = { onOpenPlan(plan.id) })
+                PlanCard(plan, onClick = { onOpenPlan(plan.id, null) })
             }
             if (state.hasMore) {
                 item {

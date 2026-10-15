@@ -81,3 +81,19 @@ data class PlanFilter(val status: String? = null, val from: LocalDate? = null, v
     val isEmpty: Boolean get() = status == null && from == null && to == null
 }
 
+/**
+ * A day of a profile's plans, for a calendar: the plan made last that holds it ([planId]), how many
+ * plans hold it, what it holds and aims at in kcal, whether it is more than a tenth off
+ * (`over` | `under`), the meals eaten out of the day's meals, and whether the plan skips it.
+ */
+data class PlanCalendarDay(
+    val date: LocalDate,
+    val planId: String,
+    val plans: Int,
+    val calories: Double,
+    val target: Double,
+    val offTarget: String?,
+    val mealsEaten: Int,
+    val meals: Int,
+    val skipped: Boolean,
+)
