@@ -3,7 +3,6 @@
 package net.whiteravens.dietapp.ui.components
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -45,7 +44,11 @@ fun AntiAbuseCheckDialog(
         text = {
             AndroidView(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                factory = { context -> checkView(context, siteKey, origin(serverUrl), { token(it) }, { failed() }) },
+                factory = { context ->
+                    val view = WebView(context)
+                    showCheck(view, siteKey, origin(serverUrl), { token(it) }, { failed() })
+                    view
+                },
             )
         },
         confirmButton = {},
@@ -59,16 +62,15 @@ private fun origin(serverUrl: String): String {
     return url.newBuilder().encodedPath("/").query(null).build().toString()
 }
 
-/** The WebView the check runs in, its page loading. */
+/** Sets [view] up for the check and loads the check's page into it. */
 @SuppressLint("SetJavaScriptEnabled")
-private fun checkView(
-    context: Context,
+private fun showCheck(
+    view: WebView,
     siteKey: String,
     origin: String,
     onToken: (String) -> Unit,
     onFailed: () -> Unit,
-): WebView {
-    val view = WebView(context)
+) {
     // The check runs Cloudflare's script, which reaches no file and no content of the phone.
     val settings = view.settings
     settings.javaScriptEnabled = true
@@ -105,7 +107,6 @@ private fun checkView(
         </head><body style="margin:0"><div id="check"></div></body></html>
     """.trimIndent()
     view.loadDataWithBaseURL(origin, page, "text/html", "utf-8", null)
-    return view
 }
 
 /** The scheme of the address the check's answer comes back to: it names no place. */
