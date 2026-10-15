@@ -654,7 +654,7 @@ data class MealPlanPageDto(
     val totalPages: Int,
 )
 
-/** POST `/meal-plans/generate`. What one day asks for differently (`dayOverrides`) is left out. */
+/** POST `/meal-plans/generate`: a plan asked for, and the days that differ from it (`dayOverrides`). */
 @Serializable
 data class GeneratePlanRequest(
     val profileId: String,
