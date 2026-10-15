@@ -90,6 +90,29 @@ class MealPlansViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Reads the profiles, the list and the month again when the screen comes back, from a plan made,
+     * changed or deleted elsewhere, keeping what is shown until the answer is there; nothing while the
+     * first reading runs.
+     */
+    fun refresh() {
+        if (_state.value.loading) return
+        viewModelScope.launch {
+            attempt { users.profiles() }.onSuccess { profiles ->
+                val shown = _state.value.selectedProfileId
+                _state.update { it.copy(profiles = profiles) }
+                when {
+                    profiles.isEmpty() -> _state.update { it.copy(selectedProfileId = null, plans = emptyList(), error = null) }
+                    profiles.none { it.id == shown } -> selectProfile(profiles.first().id)
+                    else -> shown?.let {
+                        list(it, fromCache = false)
+                        readCalendar()
+                    }
+                }
+            }
+        }
+    }
+
     fun selectProfile(profileId: String) {
         _state.update {
             it.copy(
@@ -114,22 +137,19 @@ class MealPlansViewModel @Inject constructor(
         _state.value.selectedProfileId?.let(::list)
     }
 
-    /** The list's first page from the network, shown from the copy on the phone first where there is one. */
-    private fun list(profileId: String) {
+    /** The list's first page from the network, shown from the copy on the phone first where [fromCache] and there is one. */
+    private fun list(profileId: String, fromCache: Boolean = true) {
         val filter = _state.value.filter
         listing?.cancel()
         listing = viewModelScope.launch {
-            // The copy on the phone is of the whole list: a narrowed one is asked for alone.
-            val cached = if (filter.isEmpty) plans.cachedPlans(profileId) else null
-            _state.update {
-                it.copy(
-                    plans = cached?.plans.orEmpty(),
-                    totalPages = cached?.totalPages ?: 1,
-                    syncedAt = cached?.syncedAt,
-                    refreshing = true,
-                    offline = false,
-                )
+            if (fromCache) {
+                // The copy on the phone is of the whole list: a narrowed one is asked for alone.
+                val cached = if (filter.isEmpty) plans.cachedPlans(profileId) else null
+                _state.update {
+                    it.copy(plans = cached?.plans.orEmpty(), totalPages = cached?.totalPages ?: 1, syncedAt = cached?.syncedAt)
+                }
             }
+            _state.update { it.copy(refreshing = true, offline = false) }
             attempt { plans.plans(profileId, filter = filter) }
                 .onSuccess { fresh ->
                     ifStillShown(profileId, filter) {

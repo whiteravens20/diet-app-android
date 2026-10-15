@@ -209,5 +209,32 @@ class MealPlansViewModelTest {
         assertFalse(model.state.value.hasMore)
     }
 
+    @Test
+    fun `coming back reads the list and the month again, keeping what is shown when the network is gone`() {
+        val model = MealPlansViewModel(users, plans)
+        coEvery { plans.plans("ada", 1, PlanFilter()) } returns page("p1", "new")
 
+        model.refresh()
+
+        assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
+        assertEquals(2, asked.size)
+
+        coEvery { plans.plans("ada", 1, PlanFilter()) } throws IOException("no network")
+        model.refresh()
+
+        assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
+        assertTrue(model.state.value.offline)
+    }
+
+    @Test
+    fun `coming back after the profile shown was deleted shows the first profile left`() {
+        val model = MealPlansViewModel(users, plans)
+        model.selectProfile("bo")
+        coEvery { users.profiles() } returns listOf(ada)
+
+        model.refresh()
+
+        assertEquals("ada", model.state.value.selectedProfileId)
+        assertEquals(listOf(ada), model.state.value.profiles)
+    }
 }
