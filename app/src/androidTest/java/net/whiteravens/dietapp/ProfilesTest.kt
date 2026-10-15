@@ -82,7 +82,7 @@ class ProfilesTest {
 
         // The dashboard shows the target the profile now has.
         val target = Instance.dailyTarget(account, made.getString("id"))
-        screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
         screen.waitForText("$target ${text(R.string.unit_kcal)}")
     }
 
