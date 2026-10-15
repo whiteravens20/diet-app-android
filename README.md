@@ -37,10 +37,17 @@ generate a plan, swap a meal, tick off the shopping list.
   ingredients and steps.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, and items ticked off as you shop.
+- **Profiles.** The first profile set up in three steps from the empty dashboard, with
+  what its figures come to as they are typed; profiles made, edited and deleted up to what
+  the instance allows, each pace of loss with what it comes to in a day, and the risk of a
+  loss for somebody under 18 or underweight to acknowledge; a profile's allergens,
+  cuisines and lists of ingredients changed in place.
+- **Calculator.** What a body, an activity, a pace and a diet come to in a day, from a
+  profile's figures or an empty form, worked out as they are typed and never kept.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
-  the account's settings, with its e-mail status, language and theme, the app's version,
-  the server address and sign-out. Account settings and diet profiles are edited in the
-  web app.
+  the profiles, the calculator and the account's settings, with its e-mail status,
+  language and theme, the app's version, the server address and sign-out. Account
+  settings are edited in the web app.
 - **Offline.** Meal plans and shopping lists you have opened stay readable without a
   connection, marked with the time they were last synced. Offline they are read-only.
 - **English and Polish**, refusals of the server included: a request the server refuses is
