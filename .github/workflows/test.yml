@@ -154,6 +154,7 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
+            .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
@@ -167,7 +168,8 @@ jobs:
           docker compose --env-file .env -f docker-compose.yml -f api-port.yml logs --no-color \
             > "$GITHUB_WORKSPACE/app/build/diet-app.log" 2>&1 || true
 
-      # The tests' report, the app's log of every test, the screenshots, and the instance's log.
+      # The tests' report, the app's log of every test, the screenshots, the emulator's log and the
+      # instance's log.
       - name: Upload what the screens' tests left
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -177,6 +179,7 @@ jobs:
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
             app/build/outputs/connected_android_test_additional_output/
+            app/build/emulator-logcat.txt
             app/build/diet-app.log
           if-no-files-found: ignore
           retention-days: 14
