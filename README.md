@@ -25,10 +25,11 @@ generate a plan, swap a meal, tick off the shopping list.
 
 ## Features
 
-- **Your own server.** Sign in or create an account on the Diet App instance you run. The
-  server address can be changed in the app, so one build works with any instance; it is
-  checked before it is kept, and a server whose version the app was not checked against
-  is named on the screen.
+- **Your own server.** Sign in or create an account on the Diet App instance you run, or
+  ask for a forgotten password by mail where the instance sends mail. The server address
+  can be changed in the app, so one build works with any instance; it is checked before it
+  is kept, and a server whose version the app was not checked against is named on the
+  screen.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
   meals per day and the target macro split.
 - **Meal plans.** The plans of a profile, a new plan generated from the phone, each plan
@@ -45,9 +46,9 @@ generate a plan, swap a meal, tick off the shopping list.
 - **Calculator.** What a body, an activity, a pace and a diet come to in a day, from a
   profile's figures or an empty form, worked out as they are typed and never kept.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
-  the profiles, the calculator and the account's settings, with its e-mail status,
-  language and theme, the app's version, the server address and sign-out. Account
-  settings are edited in the web app.
+  the profiles, the calculator and the account's settings, with its e-mail status and the
+  confirmation mail sent again, its language and theme, the app's version, the server
+  address and sign-out. Account settings are edited in the web app.
 - **Offline.** Meal plans and shopping lists you have opened stay readable without a
   connection, marked with the time they were last synced. Offline they are read-only.
 - **English and Polish**, refusals of the server included: a request the server refuses is
