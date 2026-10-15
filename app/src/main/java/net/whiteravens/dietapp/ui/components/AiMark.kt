@@ -14,6 +14,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.ModelPart
 
 /**
  * The mark that a model had a part in something: a meal of a plan, a recipe, a plan. The chip says
@@ -32,4 +33,12 @@ fun AiMark(said: String, modifier: Modifier = Modifier, spelledOut: Boolean = fa
         LabelChip(label, container = container, content = MaterialTheme.colorScheme.onSurface)
         Text(said, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
     }
+}
+
+/** The sentence that says what a model did with a meal or its recipe. */
+@Composable
+fun modelPartText(part: ModelPart): String = when (part) {
+    is ModelPart.Picked -> part.reason?.let { stringResource(R.string.ai_mark_picked_why, it) } ?: stringResource(R.string.ai_mark_picked)
+    ModelPart.Written -> stringResource(R.string.ai_mark_written)
+    ModelPart.Changed -> stringResource(R.string.ai_mark_changed)
 }

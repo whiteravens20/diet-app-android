@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.repository
 
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
@@ -26,6 +27,7 @@ import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
+import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.PlanDay
@@ -114,34 +116,58 @@ fun RecipeSearchPageDto.toDomain() = RecipePage(
     totalPages = totalPages,
 )
 
-fun PlannedMealDto.toDomain() = Meal(
-    id = id,
-    slot = mealType,
-    name = recipe?.title ?: customName.orEmpty(),
-    recipeId = recipe?.id,
-    servings = servings * quantityScale,
-    eaten = eatenAt != null,
-    offDiet = dietOverride,
-    nutrition = nutrition.toDomain(),
-    lines = ingredients.map { MealLine(name = it.name, quantity = it.display.quantity, unit = it.display.unit) },
-    allergens = recipe?.allergens.orEmpty(),
-    conflicts = restrictionConflicts,
-    disliked = ingredients.filter { it.ingredientId in dislikedIngredientIds }.map { it.name }.distinct(),
-)
+/**
+ * A model's part in a planned meal: that it chose the meal's recipe comes first, since that is
+ * about this meal; what it had to do with the recipe itself after.
+ */
+private fun PlannedMealDto.modelPart(): ModelPart? = when {
+    modelPick != null -> ModelPart.Picked(modelPick.reason)
+    recipe?.byModel == "written" -> ModelPart.Written
+    recipe?.byModel == "changed" -> ModelPart.Changed
+    else -> null
+}
 
-fun MealPlanDayDto.toDomain() = PlanDay(
+/** A meal of the day of [date], with what the generation [report] said of it. */
+fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
+    val custom = source == "USER_CUSTOM" || recipe == null
+    // The report speaks of the recipes the generation placed: a meal of one's own was none of them.
+    fun said(day: String, slot: String) = !custom && day == date && slot == mealType
+    return Meal(
+        id = id,
+        slot = mealType,
+        name = recipe?.title ?: customName.orEmpty(),
+        recipeId = recipe?.id,
+        servings = servings * quantityScale,
+        eaten = eatenAt != null,
+        offDiet = dietOverride,
+        nutrition = nutrition.toDomain(),
+        lines = ingredients.map { MealLine(name = it.name, quantity = it.display.quantity, unit = it.display.unit) },
+        allergens = recipe?.allergens.orEmpty(),
+        conflicts = restrictionConflicts,
+        disliked = ingredients.filter { it.ingredientId in dislikedIngredientIds }.map { it.name }.distinct(),
+        custom = custom,
+        quantityScale = quantityScale,
+        cookAhead = cookAhead,
+        byModel = modelPart(),
+        outsideLimits = report?.relaxations?.firstOrNull { said(it.date, it.slot) }?.gaveWay.orEmpty(),
+        onlyRecipe = report?.singleCandidate?.any { said(it.date, it.slot) } == true,
+    )
+}
+
+fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
+
+fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     id = id,
     date = date,
-    meals = meals.map(PlannedMealDto::toDomain),
+    meals = meals.map { it.toDomain(date, report) },
     nutrition = dayNutrition.toDomain(),
     calorieTarget = calorieTarget,
     calorieDelta = calorieDelta,
     skipped = skipped,
     offTarget = offTarget,
     belowSafetyFloor = belowSafetyFloor,
+    targetMacros = targetMacros.toDomain(),
 )
-
-fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     id = id,
@@ -149,7 +175,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     startDate = startDate,
     durationDays = durationDays,
     dietType = dietType,
-    days = days.map(MealPlanDayDto::toDomain),
+    days = days.map { it.toDomain(report) },
     averageDailyNutrition = averageDailyNutrition.toDomain(),
     syncedAt = syncedAt,
     targetMacros = targetMacros.toDomain(),

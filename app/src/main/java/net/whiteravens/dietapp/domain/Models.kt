@@ -140,6 +140,13 @@ data class Nutrition(
 /** Grams of protein, fat and carbohydrate: what a plan or a day aims at under its diet's split. */
 data class Macros(val protein: Double, val fat: Double, val carbs: Double)
 
+/** What a model had to do with a meal: it chose the meal's recipe (and may have said why), or it wrote or changed the recipe. */
+sealed interface ModelPart {
+    data class Picked(val reason: String?) : ModelPart
+    data object Written : ModelPart
+    data object Changed : ModelPart
+}
+
 data class CalorieTarget(
     val bmr: Double,
     val maintenance: Double,
@@ -181,6 +188,18 @@ data class Meal(
     val conflicts: List<String>,
     /** The names of the meal's ingredients the profile would rather not eat. */
     val disliked: List<String>,
+    /** A meal of the user's own, with the macros they typed; [name] is empty where they gave it none. */
+    val custom: Boolean,
+    /** The multiplier a rebalance gave the meal; 1 where none did. */
+    val quantityScale: Double,
+    /** In a plan made for cooking ahead: `cook` on the meal cooked for the next one too, `cooked` on the one eaten from it. */
+    val cookAhead: String?,
+    /** What a model had to do with the meal, if anything. */
+    val byModel: ModelPart?,
+    /** The limits the meal went outside of when it was planned, because no recipe was left inside them. */
+    val outsideLimits: List<String>,
+    /** For this meal on the plan's diet the profile left one recipe to choose from. */
+    val onlyRecipe: Boolean,
 )
 
 /** A line of a meal: an ingredient and its amount as the server rounds it and names its unit. */
@@ -205,6 +224,8 @@ data class PlanDay(
     val offTarget: String?,
     /** A target somebody typed puts the day under the lowest a calculated plan goes. */
     val belowSafetyFloor: Boolean,
+    /** What the day aims at in grams under the diet's split. */
+    val targetMacros: Macros,
 )
 
 data class MealPlan(
