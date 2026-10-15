@@ -463,13 +463,22 @@ private fun ShareField(value: String, label: Int, bounds: IntRange, shown: Boole
     )
 }
 
-/** The allergens of a profile, each a chip to tick: a recipe with one of them is never planned. */
+/**
+ * Allergens, each a chip to tick, under [title] and [hint]: by default those of a profile, which a
+ * recipe planned for it never holds.
+ */
 @Composable
-internal fun AllergenChoice(selected: Collection<String>, onChange: (List<String>) -> Unit, enabled: Boolean = true) {
+internal fun AllergenChoice(
+    selected: Collection<String>,
+    onChange: (List<String>) -> Unit,
+    enabled: Boolean = true,
+    title: String = stringResource(R.string.profile_allergens),
+    hint: String = stringResource(R.string.profile_allergens_hint),
+) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.profile_allergens), style = MaterialTheme.typography.titleSmall)
+        Text(title, style = MaterialTheme.typography.titleSmall)
         Text(
-            stringResource(R.string.profile_allergens_hint),
+            hint,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

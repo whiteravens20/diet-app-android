@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,6 +17,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.clickFirst
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
+import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -37,9 +39,11 @@ class RecipesTest {
         screen.openTab(text(R.string.nav_recipes))
         screen.onNodeWithText(text(R.string.recipes_search_placeholder)).performTextInput(title)
 
-        // The recipe's card, not the search field that holds its title too.
+        // The recipe's card, not the search field that holds its title too. The cards are below the
+        // tabs, the search and the filters: with the keyboard up they may begin below its edge.
         val card = hasText(title) and hasClickAction() and !hasSetTextAction()
-        screen.waitUntil(20_000) { screen.onAllNodes(card).fetchSemanticsNodes().isNotEmpty() }
+        val list = screen.onNode(hasScrollToNodeAction())
+        screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
         screen.keepScreenshot("recipes-found-by-search")
         screen.clickFirst(card)
 
@@ -47,5 +51,22 @@ class RecipesTest {
         screen.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(ingredient))
         screen.waitForText(ingredient)
         screen.keepScreenshot("recipes-a-recipe")
+    }
+
+    @Test
+    fun theLibraryIsNarrowedInItsWindowOfFilters() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account)
+        screen.signIn(account)
+        screen.openTab(text(R.string.nav_recipes))
+
+        // The filters open in a window of their own and say, once applied, how many are at work.
+        screen.onNodeWithText(text(R.string.recipes_filters)).performClick()
+        screen.onNodeWithText(text(R.string.difficulty_easy)).performScrollTo().performClick()
+        screen.keepScreenshot("recipes-the-filters")
+        screen.onNodeWithText(text(R.string.recipes_filters_apply)).performScrollTo().performClick()
+        screen.waitForText(plural(R.plurals.recipes_filters_on, 1, 1))
+        screen.onNodeWithText(text(R.string.recipes_clear_filters)).performClick()
+        screen.waitForText(text(R.string.recipes_filters))
     }
 }

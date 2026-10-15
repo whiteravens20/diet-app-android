@@ -510,6 +510,49 @@ data class Recipe(
     val byModel: ModelPart?,
 )
 
+/**
+ * How the recipe library is narrowed; every part left empty leaves it open. What a profile marked
+ * and its favourite ingredients are asked about with [profileId].
+ */
+data class RecipeFilter(
+    val search: String = "",
+    val dietType: String? = null,
+    val mealType: String? = null,
+    val difficulty: String? = null,
+    val maxCalories: Int? = null,
+    val maxPrepMinutes: Int? = null,
+    val cuisine: String? = null,
+    /** What a serving holds, in grams: at least this much protein, at most this much fat and carbohydrate. */
+    val minProtein: Double? = null,
+    val maxFat: Double? = null,
+    val maxCarbs: Double? = null,
+    /** Ingredients every recipe of the result holds, with their names to show. */
+    val ingredients: List<IngredientChoice> = emptyList(),
+    /** Allergens no recipe of the result holds. */
+    val withoutAllergens: List<String> = emptyList(),
+    val profileId: String? = null,
+    /** `marked` | `often` | `avoid`. */
+    val marked: String? = null,
+    val favoriteIngredients: Boolean = false,
+) {
+    /** How many ways of narrowing are at work, the words aside. */
+    val atWork: Int get() = listOfNotNull(dietType, mealType, difficulty, maxCalories, maxPrepMinutes, marked).size + more + (if (favoriteIngredients) 1 else 0)
+
+    /** How many of the narrower ways are at work. */
+    val more: Int get() = listOfNotNull(cuisine, minProtein, maxFat, maxCarbs).size + (if (ingredients.isNotEmpty()) 1 else 0) + (if (withoutAllergens.isNotEmpty()) 1 else 0)
+
+    /** Whether anything but the words narrows the library. */
+    val narrowed: Boolean get() = dietType != null || mealType != null || difficulty != null || maxCalories != null || maxPrepMinutes != null || more > 0 || marked != null || favoriteIngredients
+
+    /** The filter with only the words left. */
+    fun cleared(): RecipeFilter = RecipeFilter(search = search, profileId = profileId)
+
+    companion object {
+        /** The most ingredients a search may ask every recipe to hold. */
+        const val MAX_INGREDIENTS = 10
+    }
+}
+
 /** One page of recipe search results. */
 data class RecipePage(
     val items: List<Recipe>,

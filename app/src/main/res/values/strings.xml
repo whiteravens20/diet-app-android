@@ -443,9 +443,44 @@
     <!-- Recipes -->
     <string name="recipes_subtitle">A curated recipe library — every calorie computed by the backend.</string>
     <string name="recipes_search_placeholder">Recipe title…</string>
+    <string name="recipes_diet_type">Diet type</string>
+    <string name="recipes_meal_type">Meal type</string>
+    <string name="recipes_difficulty">Difficulty</string>
+    <string name="recipes_any">Any</string>
+    <string name="recipes_max_calories">Max kcal/serving</string>
+    <string name="recipes_max_prep">Max prep minutes</string>
+    <string name="recipes_clear_filters">Clear filters</string>
+    <string name="recipes_more_filters">More filters</string>
+    <plurals name="recipes_more_filters_on">
+        <item quantity="one">More filters: %1$d at work</item>
+        <item quantity="other">More filters: %1$d at work</item>
+    </plurals>
+    <string name="recipes_cuisine">Cuisine</string>
+    <string name="recipes_min_protein">Protein min. (g)</string>
+    <string name="recipes_max_fat">Fat max. (g)</string>
+    <string name="recipes_max_carbs">Carbs max. (g)</string>
+    <string name="recipes_per_serving">Protein, fat and carbohydrate are what one serving holds.</string>
+    <string name="recipes_with_ingredients">With these ingredients</string>
+    <string name="recipes_with_ingredients_hint">Recipes that hold every one of them, up to %1$s.</string>
+    <string name="recipes_without_allergens">Without these allergens</string>
+    <string name="recipes_without_allergens_hint">Recipes that hold none of them.</string>
+    <string name="recipes_marked">Recipes by how the profile marked them</string>
+    <string name="recipes_marked_any">Marked or not</string>
+    <string name="recipes_marked_marked">Favourites only</string>
+    <string name="recipes_marked_often">Eaten often only</string>
+    <string name="recipes_marked_avoid">To avoid only</string>
+    <string name="recipes_uses_favorites">Uses my favourite ingredients</string>
+    <string name="recipes_favorites_profile">Profile</string>
+    <string name="recipes_none_favorites">No recipes match the filters and your favourite ingredients.</string>
+    <string name="recipes_none_filtered">No recipes match the current filters.</string>
+    <string name="recipes_none_at_all">No recipes.</string>
     <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
-    <string name="recipes_empty">No recipes found</string>
-    <string name="recipes_empty_body">Try a different search.</string>
+    <string name="recipes_filters">Filters</string>
+    <plurals name="recipes_filters_on">
+        <item quantity="one">Filters: %d at work</item>
+        <item quantity="other">Filters: %d at work</item>
+    </plurals>
+    <string name="recipes_filters_apply">Show recipes</string>
     <string name="recipes_minutes">%1$d min</string>
     <string name="recipes_servings">%1$d servings</string>
     <string name="recipes_nutrition_per_serving">Nutrition per serving</string>

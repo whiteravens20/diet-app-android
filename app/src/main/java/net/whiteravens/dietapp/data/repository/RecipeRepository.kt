@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.domain.RecipePage
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,8 +21,30 @@ class RecipeRepository @Inject constructor(
     private val api: DietApiService,
     private val json: Json,
 ) {
-    suspend fun search(query: String? = null, page: Int = 1): RecipePage =
-        apiCall(json) { api.recipes(search = query?.takeIf { it.isNotBlank() }, page = page) }.toDomain()
+    /** A page of the library as [filter] narrows it; what a profile marked and favours is asked about with the profile alone. */
+    suspend fun search(filter: RecipeFilter = RecipeFilter(), page: Int = 1): RecipePage {
+        val aboutProfile = filter.profileId.takeIf { filter.marked != null || filter.favoriteIngredients }
+        return apiCall(json) {
+            api.recipes(
+                search = filter.search.trim().ifEmpty { null },
+                dietType = filter.dietType,
+                mealType = filter.mealType,
+                difficulty = filter.difficulty,
+                maxCalories = filter.maxCalories,
+                maxPrepMinutes = filter.maxPrepMinutes,
+                cuisine = filter.cuisine,
+                minProtein = filter.minProtein,
+                maxFat = filter.maxFat,
+                maxCarbs = filter.maxCarbs,
+                ingredientIds = filter.ingredients.joinToString(",") { it.id }.ifEmpty { null },
+                withoutAllergens = filter.withoutAllergens.joinToString(",").ifEmpty { null },
+                profileId = aboutProfile,
+                marked = filter.marked.takeIf { aboutProfile != null },
+                favoriteIngredients = true.takeIf { aboutProfile != null && filter.favoriteIngredients },
+                page = page,
+            )
+        }.toDomain()
+    }
 
     suspend fun byId(id: String): Recipe = apiCall(json) { api.recipe(id) }.toDomain()
 }

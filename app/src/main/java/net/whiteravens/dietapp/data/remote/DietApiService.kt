@@ -182,11 +182,28 @@ interface DietApiService {
 
     // ── Recipes ─────────────────────────────────────────────────────────────
 
+    /**
+     * The recipe library, the shared recipes and the account's own, narrowed as asked, a page at a
+     * time. [ingredientIds] and [withoutAllergens] are lists parted by commas; [marked] and
+     * [favoriteIngredients] are about the profile [profileId].
+     */
     @GET("recipes")
     suspend fun recipes(
         @Query("search") search: String? = null,
         @Query("dietType") dietType: String? = null,
         @Query("mealType") mealType: String? = null,
+        @Query("difficulty") difficulty: String? = null,
+        @Query("maxCalories") maxCalories: Int? = null,
+        @Query("maxPrepMinutes") maxPrepMinutes: Int? = null,
+        @Query("cuisine") cuisine: String? = null,
+        @Query("minProtein") minProtein: Double? = null,
+        @Query("maxFat") maxFat: Double? = null,
+        @Query("maxCarbs") maxCarbs: Double? = null,
+        @Query("ingredientIds") ingredientIds: String? = null,
+        @Query("withoutAllergens") withoutAllergens: String? = null,
+        @Query("profileId") profileId: String? = null,
+        @Query("marked") marked: String? = null,
+        @Query("favoriteIngredients") favoriteIngredients: Boolean? = null,
         @Query("page") page: Int? = null,
         @Query("pageSize") pageSize: Int? = null,
     ): RecipeSearchPageDto
