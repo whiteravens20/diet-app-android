@@ -2,7 +2,11 @@
 
 package net.whiteravens.dietapp.ui.common
 
+import android.icu.text.DateFormat
+import android.icu.text.DateIntervalFormat
 import android.icu.text.ListFormatter
+import android.icu.util.DateInterval
+import android.icu.util.TimeZone
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
@@ -15,10 +19,12 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.TargetNote
 import java.io.IOException
 import java.text.DecimalFormat
+import java.text.FieldPosition
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -193,6 +199,15 @@ private const val KG_PER_LB = 0.45359237
 /** `2026-07-12` → `12 Jul 2026` in the device locale. */
 fun formatDate(iso: String): String =
     LocalDate.parse(iso).format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
+
+/** The days from [from] to [to] (yyyy-MM-dd) as one span, the way the language writes one: `15–21 Oct 2026`. */
+@Composable
+fun formatDates(from: String, to: String): String {
+    val format = DateIntervalFormat.getInstance(DateFormat.YEAR_ABBR_MONTH_DAY, LocalConfiguration.current.locales[0])
+    format.timeZone = TimeZone.GMT_ZONE
+    fun midnight(day: String) = LocalDate.parse(day).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    return format.format(DateInterval(midnight(from), midnight(to)), StringBuffer(), FieldPosition(0)).toString()
+}
 
 /** `2026-07-12` → `Sun, 12 Jul` in the device locale. */
 fun formatDayDate(iso: String): String =

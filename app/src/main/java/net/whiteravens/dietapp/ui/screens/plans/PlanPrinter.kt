@@ -5,10 +5,6 @@ package net.whiteravens.dietapp.ui.screens.plans
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.icu.text.DateFormat
-import android.icu.text.DateIntervalFormat
-import android.icu.util.DateInterval
-import android.icu.util.TimeZone
 import android.print.PrintAttributes
 import android.print.PrintManager
 import android.webkit.WebView
@@ -25,12 +21,10 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
+import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
-import java.text.FieldPosition
-import java.time.LocalDate
-import java.time.ZoneOffset
 import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 
@@ -88,15 +82,6 @@ private fun planSheet(plan: MealPlan, words: PlanWords): PlanSheet {
             )
         },
     )
-}
-
-/** The days from [from] to [to] (yyyy-MM-dd) as one span, the way the language writes one: `15–21 Oct 2026`. */
-@Composable
-private fun formatDates(from: String, to: String): String {
-    val format = DateIntervalFormat.getInstance(DateFormat.YEAR_ABBR_MONTH_DAY, LocalConfiguration.current.locales[0])
-    format.timeZone = TimeZone.GMT_ZONE
-    fun midnight(day: String) = LocalDate.parse(day).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-    return format.format(DateInterval(midnight(from), midnight(to)), StringBuffer(), FieldPosition(0)).toString()
 }
 
 /** Lays [html] out as a page and gives it to the print service under [name], which the PDF it may keep is called by. */
