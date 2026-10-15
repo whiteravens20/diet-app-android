@@ -141,11 +141,11 @@ testers will try the release candidate at the maintainer's request.
   ([test.yml](.github/workflows/test.yml)). A defect the tests found that the code does
   not fix yet stays in the suite as a test that passes while the defect is there and fails
   once it is gone.
-- The screens' tests run on an Android emulator on every push and pull request, against
-  a diet-app instance started in the same job from the image of the version `contract/`
-  was copied from, pinned by its digest, with its catalogue loaded. Their report, the
-  app's log of every test, the screenshots they take and the instance's log are kept with
-  the run ([test.yml](.github/workflows/test.yml)).
+- The screens' tests run on Android 14 and Android 17 emulators on every push and pull
+  request, against a diet-app instance started in the same job from the image of the
+  version `contract/` was copied from, pinned by its digest, with its catalogue loaded.
+  Their report, the app's log of every test, the screenshots they take and the instance's
+  log are kept with the run ([test.yml](.github/workflows/test.yml)).
 - CodeQL and a Trivy scan of the repository run on every push and pull request, and again
   every week; Trivy fails the run on a high or critical vulnerability in a version the
   release build ships. Every action a workflow uses is pinned to a commit: a run fails

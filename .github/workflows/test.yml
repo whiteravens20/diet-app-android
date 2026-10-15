@@ -60,9 +60,22 @@ jobs:
   # The screens on an emulator, against a diet-app instance started in the same job from
   # the version contract/ was copied from (contract/diet-app.env), with its catalogue.
   screens:
-    name: Screens on an emulator
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Android 14, as most of the phones the app is tried on run.
+          - name: Screens on an emulator
+            api-level: 34
+            artifact: screens
+          # Android 17, whose rules the app targets: a server on the local network, such as
+          # the emulator's host, needs the permission for nearby devices.
+          - name: Screens on Android 17
+            api-level: '37.0'
+            artifact: screens-android-17
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -91,7 +104,7 @@ jobs:
       - name: Run the screens' tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 34
+          api-level: ${{ matrix.api-level }}
           arch: x86_64
           target: google_apis
           disable-animations: true
@@ -111,7 +124,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: screens
+          name: ${{ matrix.artifact }}
           path: |
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
