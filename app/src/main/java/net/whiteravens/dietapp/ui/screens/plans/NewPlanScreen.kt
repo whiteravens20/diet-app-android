@@ -23,10 +23,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +33,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -61,11 +58,7 @@ import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
 import net.whiteravens.dietapp.ui.screens.profiles.SupplyNote
-import net.whiteravens.dietapp.ui.screens.profiles.WarningBox
 import java.time.LocalDate
-
-/** How many of the meals that stand in the way of a plan are named one by one. */
-private const val MEALS_NAMED = 6
 
 /**
  * A new plan for a profile: from a day, for some days, with what it is made for where that differs
@@ -201,7 +194,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                     }
                 }
                 state.inTheWay?.let { inTheWay ->
-                    InTheWayBox(inTheWay, busy = state.generating, onLetGiveWay = viewModel::letGiveWay, onCancel = viewModel::dismissInTheWay)
+                    InTheWayBox(inTheWay.needed, busy = state.generating, onLetGiveWay = viewModel::letGiveWay, onCancel = viewModel::dismissInTheWay)
                 }
             }
         }
@@ -211,36 +204,6 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
 @Composable
 private fun between(range: IntRange): String =
     stringResource(R.string.profile_field_between, formatNumber(range.first), formatNumber(range.last))
-
-/**
- * What stands in the way of a plan that could only be filled outside its limits: how many meals
- * would go outside and which limits, the first few meals by day, and the plan made once those
- * limits may give way.
- */
-@Composable
-private fun InTheWayBox(inTheWay: NewPlanViewModel.InTheWay, busy: Boolean, onLetGiveWay: () -> Unit, onCancel: () -> Unit) {
-    val needed = inTheWay.needed
-    WarningBox {
-        Text(
-            pluralStringResource(R.plurals.plans_limits_in_the_way, needed.meals.size, needed.meals.size, limitNames(needed.needs)),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        needed.meals.take(MEALS_NAMED).forEach { meal ->
-            Text(
-                "• ${formatDayDate(meal.date.toString())} · ${mealTypeLabel(meal.slot)}: ${limitNames(meal.gaveWay)}",
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-        val more = needed.meals.size - MEALS_NAMED
-        if (more > 0) Text(pluralStringResource(R.plurals.plans_limits_in_the_way_more, more, more), style = MaterialTheme.typography.bodySmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onLetGiveWay, enabled = !busy, shape = MaterialTheme.shapes.medium) {
-                Text(pluralStringResource(R.plurals.plans_let_give_way, needed.needs.size))
-            }
-            TextButton(onClick = onCancel) { Text(stringResource(R.string.common_cancel)) }
-        }
-    }
-}
 
 /**
  * The options of a plan beyond the usual ones, folded away until asked for: the most a recipe
