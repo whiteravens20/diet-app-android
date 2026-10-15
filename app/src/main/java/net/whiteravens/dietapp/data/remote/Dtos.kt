@@ -909,6 +909,56 @@ data class RegenerateRequest(
     val allowRelaxations: List<String>? = null,
 )
 
+/** Whether a model is asked to put the engine's proposals in order and say a sentence of each. */
+@Serializable
+data class WeighRequest(val weigh: Boolean = false)
+
+/** What a menu buys in packs that do not keep against what it uses of them, and how many it leaves more than a fifth of. */
+@Serializable
+data class PackTallyDto(val bought: Double, val used: Double, val wasted: Int)
+
+/** A meal of a day as another way to fill the day has it. */
+@Serializable
+data class DayVariationMealDto(
+    val mealType: String,
+    /** The name of its recipe, or of a meal of the user's own. */
+    val title: String,
+    val recipeId: String? = null,
+    val servings: Double,
+    val nutrition: NutritionDto,
+    /** On the day already, and stays: eaten, or the user's own. */
+    val stays: Boolean,
+)
+
+/** Another way to fill a day of a plan, with the note that takes it. */
+@Serializable
+data class DayVariationDto(
+    val meals: List<DayVariationMealDto>,
+    val dayNutrition: NutritionDto,
+    val packs: PackTallyDto,
+    /** A model's sentence on this way, where one was asked and said one. */
+    val reason: String? = null,
+    val offer: String,
+)
+
+@Serializable
+data class DayAsItIsDto(val dayNutrition: NutritionDto, val packs: PackTallyDto)
+
+/** POST `/meal-plans/:id/days/:dayId/variations`: up to three other ways to fill a day; nothing is written. */
+@Serializable
+data class DayVariationsDto(
+    val date: String,
+    val calorieTarget: Double,
+    val current: DayAsItIsDto,
+    val variations: List<DayVariationDto>,
+    /** Who put them in order, or why the engine's order stands; null when no model was asked. */
+    val aiMeta: AiGenerationMetaDto? = null,
+)
+
+/** POST `/meal-plans/:id/days/:dayId/variations/take`. */
+@Serializable
+data class TakeDayVariationRequest(val offer: String)
+
 /** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
 @Serializable
 data class SetMealEatenRequest(val eaten: Boolean)

@@ -87,6 +87,16 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.plans_reroll_confirm)).performClick()
         screen.waitUntil(60_000) { Instance.planRevision(account, planId) > made }
 
+        // The first day is filled another way, from the ways its window offers.
+        val remade = Instance.planRevision(account, planId)
+        screen.scrollToText(text(R.string.plans_other_ways))
+        screen.onNodeWithText(text(R.string.plans_other_ways)).performClick()
+        screen.waitForText(text(R.string.plans_ways_take), timeoutMillis = 60_000)
+        screen.keepScreenshot("plans-other-ways")
+        screen.onAllNodesWithText(text(R.string.plans_ways_take))[0].performClick()
+        screen.waitUntil(60_000) { Instance.planRevision(account, planId) > remade }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
+
         // The first meal of the first day is swapped from the ways to change it, named by the meal:
         // one offer is put away for another, which is taken.
         val before = Instance.firstDayRecipes(account, planId)

@@ -189,6 +189,21 @@ fun PlanDetailScreen(
         }
     }
 
+    // The day other ways to fill are offered for, while their window is open.
+    var waysFor by rememberSaveable { mutableStateOf<String?>(null) }
+    plan?.days?.firstOrNull { it.id == waysFor }?.let { day ->
+        DayWaysDialog(
+            planId = plan.id,
+            day = day,
+            onTaken = { taken ->
+                waysFor = null
+                viewModel.dayTaken(taken)
+            },
+            onStale = viewModel::readAgain,
+            onDismiss = { waysFor = null },
+        )
+    }
+
     // The meal an ingredient is being substituted in, while its window is open.
     var substitutingIn by rememberSaveable { mutableStateOf<String?>(null) }
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == substitutingIn }?.let { meal ->
@@ -300,7 +315,11 @@ fun PlanDetailScreen(
 
             val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
             item(key = "summary-${day.id}") {
-                DaySummary(day, onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy })
+                DaySummary(
+                    day,
+                    onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy },
+                    onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy },
+                )
             }
             itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
                 MealCard(
@@ -462,7 +481,7 @@ private fun PacksLine(packs: PlanPacks) {
 
 /** A day against its target: what it holds in kcal and by how much it misses, its macros against theirs, and where it stands. */
 @Composable
-private fun DaySummary(day: PlanDay, onChange: (() -> Unit)?) {
+private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -> Unit)?) {
     AppCard {
         if (day.skipped) {
             // A day the user skips is no shortfall, and there is nothing in it to change.
@@ -517,8 +536,11 @@ private fun DaySummary(day: PlanDay, onChange: (() -> Unit)?) {
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        if (onChange != null) {
-            TextButton(onClick = onChange, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_change_day)) }
+        if (onOtherWays != null || onChange != null) {
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                onOtherWays?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_other_ways)) } }
+                onChange?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_change_day)) } }
+            }
         }
     }
 }

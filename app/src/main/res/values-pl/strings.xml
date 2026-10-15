@@ -352,6 +352,36 @@
     <string name="plans_reroll_nothing_past">Wybrane dni już minęły, a dni, które minęły, zostają bez zmian. Zaznacz powyżej „Dni, które już minęły”, żeby ułożyć ponownie również je.</string>
     <string name="plans_reroll_nothing_kept">W wybranych dniach nic by się nie zmieniło.</string>
     <string name="plans_reroll_confirm">Ułóż ponownie</string>
+    <string name="plans_other_ways">Inne warianty…</string>
+    <string name="plans_ways_title">Inne warianty dnia %1$s</string>
+    <string name="plans_ways_intro">Każdy z nich to dzień, który planer ułożyłby dla tego planu: w jego limitach, wokół tego, co w dniu zostaje. Nic się nie zmienia, dopóki żadnego nie wybierzesz.</string>
+    <string name="plans_ways_loading">Układam inne warianty…</string>
+    <string name="plans_ways_way">Wariant %1$s</string>
+    <string name="plans_ways_take">Wybierz ten dzień</string>
+    <string name="plans_ways_stays">zostaje</string>
+    <string name="plans_ways_meal_energy">%1$s kcal</string>
+    <string name="plans_ways_day_line">%1$s z %2$s kcal · białko %3$s g · tłuszcz %4$s g · węglowodany %5$s g</string>
+    <string name="plans_ways_none">W limitach planu katalog nie daje innego wariantu tego dnia.</string>
+    <string name="weigh_ask">Poproś model o ocenę</string>
+    <string name="weigh_asking">Pytam…</string>
+    <string name="weigh_tooltip">Model ustawia te propozycje w kolejności i mówi o każdej jedno zdanie. Niczego nie dodaje i niczego nie zmienia. Jedno zapytanie z Twojego limitu AI.</string>
+    <string name="weigh_weighed">Kolejność ustalił model. To, co jest proponowane, pochodzi z planera, tak jak każda liczba.</string>
+    <string name="ai_mark_weighed">Model o tym: „%1$s”</string>
+    <string name="plans_ways_now">Obecnie: %1$s z %2$s kcal. %3$s</string>
+    <string name="plans_ways_now_none">Plan nie zostawia żadnego otwartego opakowania, z którego zostaje ponad jedna piąta.</string>
+    <plurals name="plans_ways_now_packs">
+        <item quantity="one">Plan zostawia %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
+        <item quantity="few">Plan zostawia %1$d otwarte opakowania, z których zostaje ponad jedna piąta.</item>
+        <item quantity="many">Plan zostawia %1$d otwartych opakowań, z których zostaje ponad jedna piąta.</item>
+        <item quantity="other">Plan zostawia %1$d otwartego opakowania, z którego zostaje ponad jedna piąta.</item>
+    </plurals>
+    <string name="plans_ways_packs_none">Z nim plan nie zostawiłby żadnego otwartego opakowania, z którego zostaje ponad jedna piąta.</string>
+    <plurals name="plans_ways_packs">
+        <item quantity="one">Z nim plan zostawiłby %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
+        <item quantity="few">Z nim plan zostawiłby %1$d otwarte opakowania, z których zostaje ponad jedna piąta.</item>
+        <item quantity="many">Z nim plan zostawiłby %1$d otwartych opakowań, z których zostaje ponad jedna piąta.</item>
+        <item quantity="other">Z nim plan zostawiłby %1$d otwartego opakowania, z którego zostaje ponad jedna piąta.</item>
+    </plurals>
     <string name="plans_reroll_replaced">Zastąpione: %1$s w %2$s.</string>
     <string name="plans_reroll_no_meal">żaden posiłek</string>
     <plurals name="plans_reroll_meals">

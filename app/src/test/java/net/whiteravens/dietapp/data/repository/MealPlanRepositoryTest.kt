@@ -30,6 +30,7 @@ import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.Substitution
+import net.whiteravens.dietapp.domain.WayMeal
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -343,6 +344,37 @@ class MealPlanRepositoryTest {
         // An empty list of limits is every limit held: it is sent.
         assertEquals("""{"from":"2026-10-13","to":"2026-10-15","includePast":true,"allowRelaxations":[]}""", part.body.readUtf8())
         assertEquals("{}", server.takeRequest().body.readUtf8())
+    }
+
+    @Test
+    fun `other ways to fill a day are asked for unweighed unless a model is to weigh them, and one is taken with its note`() {
+        val nutrition = """{"calories":2000,"protein":120,"fat":70,"carbs":210}"""
+        val packs = """{"bought":500,"used":450,"wasted":1}"""
+        // The shape the API answers with, a model's order in it.
+        val ways = """{"date":"2026-10-13","calorieTarget":2050.5,"current":{"dayNutrition":$nutrition,"packs":$packs},""" +
+            """"variations":[{"meals":[{"mealType":"lunch","title":"Soup","recipeId":null,"servings":1,"nutrition":$nutrition,"stays":true}],""" +
+            """"dayNutrition":$nutrition,"packs":$packs,"reason":"Lighter.","offer":"note-1"}],""" +
+            """"aiMeta":{"provider":"openrouter","model":"m","failoverChain":[],"usedDeterministicFallback":false,"fallbackReason":null,"reason":null}}"""
+        repeat(2) { server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(ways)) }
+        server.enqueue(answer("meal-plan"))
+        val plans = repository(Cache())
+
+        val offered = runBlocking { plans.dayWays("plan-1", "day-1") }
+        runBlocking {
+            plans.dayWays("plan-1", "day-1", weigh = true)
+            plans.takeDayWay("plan-1", "day-1", "note-1")
+        }
+
+        assertTrue(offered.weighed)
+        assertEquals(listOf(WayMeal("lunch", "Soup", 2000.0, stays = true)), offered.ways.single().meals)
+        assertEquals("Lighter.", offered.ways.single().reason)
+        val first = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/days/day-1/variations", first.path)
+        assertEquals("{}", first.body.readUtf8())
+        assertEquals("""{"weigh":true}""", server.takeRequest().body.readUtf8())
+        val taken = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/days/day-1/variations/take", taken.path)
+        assertEquals("""{"offer":"note-1"}""", taken.body.readUtf8())
     }
 }
 

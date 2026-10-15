@@ -193,6 +193,14 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(plan = result.plan, rebalance = result.rebalance.shown(), notice = result.fallbackReason) }
     }
 
+    /** A day filled another way, taken in its window. */
+    fun dayTaken(plan: MealPlan) {
+        _state.update { it.copy(plan = plan) }
+    }
+
+    /** The plan read anew: another request may have changed it first. */
+    fun readAgain() = reload()
+
     /** Makes the plan, a part of it or a day again, as the window asked. */
     fun reroll(asked: Reroll) {
         if (_state.value.changing) return

@@ -327,6 +327,32 @@
     <string name="plans_reroll_nothing_past">The days chosen have passed, and days that have passed are left as they are. Tick them above to make them again as well.</string>
     <string name="plans_reroll_nothing_kept">Nothing would change on the days chosen.</string>
     <string name="plans_reroll_confirm">Make again</string>
+    <string name="plans_other_ways">Other ways…</string>
+    <string name="plans_ways_title">Other ways to fill %1$s</string>
+    <string name="plans_ways_intro">Each of these is a day the planner would make for this plan: inside its limits, around what stays on the day. Nothing changes until you take one.</string>
+    <string name="plans_ways_loading">Working out other ways…</string>
+    <string name="plans_ways_way">Way %1$s</string>
+    <string name="plans_ways_take">Take this day</string>
+    <string name="plans_ways_stays">stays</string>
+    <string name="plans_ways_meal_energy">%1$s kcal</string>
+    <string name="plans_ways_day_line">%1$s of %2$s kcal · protein %3$s g · fat %4$s g · carbs %5$s g</string>
+    <string name="plans_ways_none">The catalogue leaves no other way to fill this day inside the limits of the plan.</string>
+    <string name="weigh_ask">Ask a model to weigh them</string>
+    <string name="weigh_asking">Asking…</string>
+    <string name="weigh_tooltip">A model puts these in order and says a sentence of each. It adds none and changes none. One request of your AI allowance.</string>
+    <string name="weigh_weighed">A model put these in order. What is proposed is the planner’s own, and so is every figure.</string>
+    <string name="ai_mark_weighed">A model says of this: “%1$s”</string>
+    <string name="plans_ways_now">As it is: %1$s of %2$s kcal. %3$s</string>
+    <string name="plans_ways_now_none">The plan leaves no opened pack more than a fifth full.</string>
+    <plurals name="plans_ways_now_packs">
+        <item quantity="one">The plan leaves %1$d opened pack more than a fifth full.</item>
+        <item quantity="other">The plan leaves %1$d opened packs more than a fifth full.</item>
+    </plurals>
+    <string name="plans_ways_packs_none">With it the plan would leave no opened pack more than a fifth full.</string>
+    <plurals name="plans_ways_packs">
+        <item quantity="one">With it the plan would leave %1$d opened pack more than a fifth full.</item>
+        <item quantity="other">With it the plan would leave %1$d opened packs more than a fifth full.</item>
+    </plurals>
     <string name="plans_reroll_replaced">Replaced: %1$s on %2$s.</string>
     <string name="plans_reroll_no_meal">no meal</string>
     <plurals name="plans_reroll_meals">

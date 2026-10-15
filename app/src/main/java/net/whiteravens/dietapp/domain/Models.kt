@@ -328,6 +328,26 @@ data class SuggestedSubstitute(val ingredient: IngredientChoice, val pick: Strin
 /** A meal of the user's own: its name, its time of day, what one serving holds, and how many servings it is. */
 data class CustomMeal(val name: String, val slot: String, val perServing: Nutrition, val servings: Double)
 
+/**
+ * Other ways to fill a day: the day as it is (what it holds and how many packs the plan leaves more
+ * than a fifth of with it), and up to three ways that differ from it, in a model's order where one
+ * was asked and answered, or the engine's with why ([fallbackReason]); [weighed] where a model put them in order.
+ */
+data class DayWays(
+    val calorieTarget: Double,
+    val now: Nutrition,
+    val nowWasted: Int,
+    val ways: List<DayWay>,
+    val weighed: Boolean,
+    val fallbackReason: String?,
+)
+
+/** One other way to fill a day: its meals, what it holds, the packs the plan would then leave, a model's sentence on it, and the note that takes it. */
+data class DayWay(val meals: List<WayMeal>, val nutrition: Nutrition, val wasted: Int, val reason: String?, val offer: String)
+
+/** A meal of another way to fill a day; [stays] where it is on the day already: eaten, or the user's own. */
+data class WayMeal(val slot: String, val title: String, val calories: Double, val stays: Boolean)
+
 /** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
 data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
 

@@ -30,9 +30,13 @@ import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapIngredientRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
+import net.whiteravens.dietapp.data.remote.TakeDayVariationRequest
+import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.DayWay
+import net.whiteravens.dietapp.domain.DayWays
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
@@ -49,6 +53,7 @@ import net.whiteravens.dietapp.domain.SubstitutionPreview
 import net.whiteravens.dietapp.domain.SuggestedSubstitute
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.WayMeal
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -245,6 +250,34 @@ class MealPlanRepository @Inject constructor(
         val plan = apiCall(json) {
             if (reroll.dayId != null) api.regenerateDay(planId, reroll.dayId, body) else api.regeneratePlan(planId, body)
         }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
+    /** Other ways to fill a day of a plan, put in order by a model where [weigh]. Nothing is written. */
+    suspend fun dayWays(planId: String, dayId: String, weigh: Boolean = false): DayWays {
+        val answer = apiCall(json) { api.dayVariations(planId, dayId, WeighRequest(weigh)) }
+        return DayWays(
+            calorieTarget = answer.calorieTarget,
+            now = answer.current.dayNutrition.toDomain(),
+            nowWasted = answer.current.packs.wasted,
+            ways = answer.variations.map { way ->
+                DayWay(
+                    meals = way.meals.map { WayMeal(it.mealType, it.title, it.nutrition.calories, it.stays) },
+                    nutrition = way.dayNutrition.toDomain(),
+                    wasted = way.packs.wasted,
+                    reason = way.reason,
+                    offer = way.offer,
+                )
+            },
+            weighed = answer.aiMeta != null && answer.aiMeta.fallbackReason == null,
+            fallbackReason = answer.aiMeta?.fallbackReason,
+        )
+    }
+
+    /** Takes one of the ways a day was offered; the plan is kept for offline use. A plan changed since the offer is refused with `PLAN_CHANGED`. */
+    suspend fun takeDayWay(planId: String, dayId: String, offer: String): MealPlan {
+        val plan = apiCall(json) { api.takeDayVariation(planId, dayId, TakeDayVariationRequest(offer)) }
         mirror(plan)
         return plan.toDomain()
     }
