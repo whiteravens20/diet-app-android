@@ -68,6 +68,7 @@ import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,6 +88,8 @@ import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.UseUpFound
+import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
@@ -293,7 +296,24 @@ fun PlanDetailScreen(
                 return@LazyColumn
             }
 
-            item { PlanFacts(plan, onReroll = openReroll.takeUnless { readOnly || busy }) }
+            item {
+                PlanFacts(
+                    plan,
+                    onReroll = openReroll.takeUnless { readOnly || busy },
+                    useUp = if (readOnly) null else {
+                        {
+                            UseUpPanel(
+                                found = state.useUp,
+                                finding = state.findingUseUp,
+                                aiOn = state.aiOn,
+                                busy = busy,
+                                onFind = viewModel::findUseUp,
+                                onTake = viewModel::takeUseUp,
+                            )
+                        }
+                    },
+                )
+            }
             if (plan.conflicts > 0) {
                 item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
             }
@@ -399,7 +419,7 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onDelete: (() -> Unit)?)
  * the limits it was let go outside of, and what the pantry had to do with it.
  */
 @Composable
-private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?) {
+private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp: (@Composable () -> Unit)?) {
     val average = plan.averageDailyNutrition
     val target = plan.targetMacros
     AppCard {
@@ -415,7 +435,7 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?) {
                     formatNumber(target.carbs.roundToInt()),
                 ),
             )
-            if (plan.packs.bought > 0) PacksLine(plan.packs)
+            if (plan.packs.bought > 0) PacksLine(plan.packs, useUp.takeIf { plan.packs.open.any { it.wasted } })
             if (plan.mayGiveWay.isNotEmpty()) {
                 Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
                 if (onReroll != null) {
@@ -441,7 +461,7 @@ private fun Fact(text: String, modifier: Modifier = Modifier, color: Color = Mat
 
 /** What the menu uses of the packs that do not keep once opened, unfolding into the packs it does not finish. */
 @Composable
-private fun PacksLine(packs: PlanPacks) {
+private fun PacksLine(packs: PlanPacks, useUp: (@Composable () -> Unit)?) {
     var open by rememberSaveable { mutableStateOf(false) }
     val percent = formatNumber((packs.used / packs.bought * 100).roundToInt())
     val wasted = packs.open.count { it.wasted }
@@ -474,6 +494,80 @@ private fun PacksLine(packs: PlanPacks) {
                     else Fact(stringResource(R.string.plans_packs_left, pack.name, left, size))
                 }
                 Fact(stringResource(R.string.plans_packs_explain))
+                useUp?.invoke()
+            }
+        }
+    }
+}
+
+/**
+ * The swaps that would use up what a plan opens, asked for under its line of packs: each with the
+ * meal it is for, what it takes of the packs and what it does to the meal, a model's order and its
+ * sentence on each where the user asks for it, and the one taken made as any swap is.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun UseUpPanel(
+    found: UseUpFound?,
+    finding: Boolean,
+    aiOn: Boolean?,
+    busy: Boolean,
+    onFind: (weigh: Boolean) -> Unit,
+    onTake: (UseUpSwap) -> Unit,
+) {
+    val working = busy || finding
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Side by side where the screen is wide enough for both.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onFind(false) }, enabled = !working) {
+                Text(stringResource(if (finding && found == null) R.string.plans_use_up_asking else R.string.plans_use_up_ask))
+            }
+            if (found?.swaps?.isNotEmpty() == true) {
+                TextButton(onClick = { onFind(true) }, enabled = aiOn == true && !working) {
+                    Text(stringResource(if (finding) R.string.weigh_asking else R.string.weigh_ask))
+                }
+            }
+        }
+        if (found?.swaps?.isNotEmpty() == true) Fact(stringResource(if (aiOn == false) R.string.ai_off_note else R.string.weigh_tooltip))
+        Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+            when {
+                found == null -> Unit
+                found.weighed -> Fact(stringResource(R.string.weigh_weighed))
+                found.fallbackReason != null -> fallbackText(found.fallbackReason)?.let { Fact(it, color = MaterialTheme.colorScheme.tertiary) }
+            }
+        }
+        if (found != null && found.swaps.isEmpty()) Fact(stringResource(R.string.plans_use_up_none))
+        found?.swaps?.forEach { swap ->
+            val takes = swap.takes.map { taken ->
+                stringResource(R.string.plans_use_up_takes, amountLabel(taken.amount.toDouble(), taken.unit), taken.name, amountLabel(taken.left.toDouble(), taken.unit))
+            }
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                color = Color.Transparent,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        buildAnnotatedString {
+                            append("${formatDayDate(swap.date)} · ${mealTypeLabel(swap.slot)}: ")
+                            append(emphasized(stringResource(R.string.plans_use_up_swap, MARK, swap.fromTitle), swap.toTitle))
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    swap.reason?.let { AiMark(stringResource(R.string.ai_mark_weighed, it), spelledOut = true) }
+                    Fact(takes.joinToString(" · "))
+                    Fact(
+                        stringResource(
+                            R.string.plans_use_up_energy,
+                            formatNumber(swap.before.calories.roundToInt()),
+                            formatNumber(swap.after.calories.roundToInt()),
+                            formatNumber(swap.before.protein.roundToInt()),
+                            formatNumber(swap.after.protein.roundToInt()),
+                        ),
+                    )
+                    Button(onClick = { onTake(swap) }, enabled = !working) { Text(stringResource(R.string.plans_offer_take)) }
+                }
             }
         }
     }

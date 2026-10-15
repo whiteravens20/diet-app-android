@@ -955,6 +955,40 @@ data class DayVariationsDto(
     val aiMeta: AiGenerationMetaDto? = null,
 )
 
+/** A recipe named by its id and title. */
+@Serializable
+data class RecipeRefDto(val id: String, val title: String)
+
+/** What a swap that uses up a pack takes more of it, and what would be left of the pack, to the gram or millilitre. */
+@Serializable
+data class UseUpTakeDto(val ingredientId: String, val name: String, val unit: String, val amount: Int, val left: Int)
+
+@Serializable
+data class PacksBeforeAfterDto(val before: PackTallyDto, val after: PackTallyDto)
+
+/** A recipe in the place of a meal that would use up what the plan opens. */
+@Serializable
+data class UseUpSuggestionDto(
+    val plannedMealId: String,
+    val date: String,
+    val mealType: String,
+    val from: RecipeRefDto,
+    val to: RecipeRefDto,
+    val servings: Double,
+    val before: NutritionDto,
+    val after: NutritionDto,
+    val takes: List<UseUpTakeDto>,
+    val packs: PacksBeforeAfterDto,
+    /** A model's sentence on the swap, where one was asked and said one. */
+    val reason: String? = null,
+    /** The note of a model's pick, for the swap a model put first. */
+    val pick: String? = null,
+)
+
+/** POST `/meal-plans/:id/use-up`: swaps that would use up what a plan opens; nothing is written. */
+@Serializable
+data class UseUpSuggestionsDto(val revision: Int, val suggestions: List<UseUpSuggestionDto>, val aiMeta: AiGenerationMetaDto? = null)
+
 /** POST `/meal-plans/:id/days/:dayId/variations/take`. */
 @Serializable
 data class TakeDayVariationRequest(val offer: String)

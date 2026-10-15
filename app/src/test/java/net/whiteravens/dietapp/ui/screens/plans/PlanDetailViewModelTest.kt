@@ -25,14 +25,21 @@ import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
+import net.whiteravens.dietapp.data.remote.PackTallyDto
+import net.whiteravens.dietapp.data.remote.PacksBeforeAfterDto
 import net.whiteravens.dietapp.data.remote.RebalanceChangeDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
+import net.whiteravens.dietapp.data.remote.RecipeRefDto
 import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
+import net.whiteravens.dietapp.data.remote.UseUpSuggestionDto
+import net.whiteravens.dietapp.data.remote.UseUpSuggestionsDto
+import net.whiteravens.dietapp.data.remote.UseUpTakeDto
+import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -393,5 +400,86 @@ class PlanDetailViewModelTest {
         assertEquals(listOf("cook_time", "weekly_cap", "ingredient_cap"), asked.last().allowRelaxations)
         assertNull(model.state.value.inTheWay)
     }
-}
 
+    /** A swap the API found that would use up a pack the plan opens, for the plan at [revision]; put first by a model where [weighed]. */
+    private fun usingUp(revision: Int, weighed: Boolean = false) = UseUpSuggestionsDto(
+        revision = revision,
+        suggestions = listOf(
+            UseUpSuggestionDto(
+                plannedMealId = meal.id,
+                date = plan.days.first().date,
+                mealType = meal.mealType,
+                from = RecipeRefDto(meal.recipe!!.id, meal.recipe!!.title),
+                to = RecipeRefDto("recipe-feta", "Feta salad"),
+                servings = 1.0,
+                before = NutritionDto(500.0, 30.0, 20.0, 50.0),
+                after = NutritionDto(480.0, 28.0, 22.0, 45.0),
+                takes = listOf(UseUpTakeDto("feta", "Feta", "g", 60, 40)),
+                packs = PacksBeforeAfterDto(PackTallyDto(400.0, 260.0, 1), PackTallyDto(400.0, 320.0, 0)),
+                reason = "Uses the feta.".takeIf { weighed },
+                pick = "note".takeIf { weighed },
+            ),
+        ),
+        aiMeta = AiGenerationMetaDto(provider = "openrouter", usedDeterministicFallback = false).takeIf { weighed },
+    )
+
+    @Test
+    fun `swaps that would use up the opened packs are weighed by a model on request, and the one taken is written with the revision they were found for and the model's note`() {
+        val api = mockk<DietApiService>()
+        val asked = mutableListOf<WeighRequest>()
+        val taken = slot<ApplyMealSwapRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.useUp(plan.id, capture(asked)) } returns usingUp(plan.revision) andThen usingUp(plan.revision, weighed = true)
+        coEvery { api.swapMeal(capture(taken)) } returns swapped.copy(rebalance = scaled)
+        val model = model(api)
+
+        model.findUseUp()
+        model.findUseUp(weigh = true)
+        val found = model.state.value.useUp!!
+        model.takeUseUp(found.swaps.single())
+
+        assertEquals(listOf(WeighRequest(false), WeighRequest(true)), asked)
+        assertTrue(found.weighed)
+        assertEquals("Uses the feta.", found.swaps.single().reason)
+        assertEquals(ApplyMealSwapRequest(plan.id, meal.id, "recipe-feta", plan.revision, "random", pick = "note"), taken.captured)
+        assertNull(model.state.value.useUp)
+        assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
+        assertEquals(listOf(ScaleChange(meal.id, 1.0, 0.8)), model.state.value.rebalance?.changes)
+    }
+
+    @Test
+    fun `an account without a model is not asked to weigh, and swaps found for the plan before it changed are not offered`() {
+        val api = mockk<DietApiService>()
+        val asked = mutableListOf<WeighRequest>()
+        coEvery { users.me() } returns account("none")
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.useUp(plan.id, capture(asked)) } returns usingUp(plan.revision)
+        coEvery { api.setMealEaten(any(), any(), any()) } returns swapped
+        val model = model(api)
+
+        model.findUseUp(weigh = true)
+
+        assertEquals(listOf(WeighRequest(false)), asked)
+        assertEquals(1, model.state.value.useUp?.swaps?.size)
+
+        model.setEaten(meal.id, true)
+
+        assertNull(model.state.value.useUp)
+    }
+
+    @Test
+    fun `a use-up swap refused because the plan changed meanwhile puts the swaps away, loads the plan again and says why`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.useUp(plan.id, any()) } returns usingUp(plan.revision)
+        coEvery { api.swapMeal(any()) } throws refused(409, "PLAN_CHANGED")
+        val model = model(api)
+
+        model.findUseUp()
+        model.takeUseUp(model.state.value.useUp!!.swaps.single())
+
+        assertNull(model.state.value.useUp)
+        assertEquals("PLAN_CHANGED", (model.state.value.error as ApiException).code)
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
+    }
+}

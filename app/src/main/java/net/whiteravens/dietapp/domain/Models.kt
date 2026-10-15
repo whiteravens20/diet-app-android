@@ -348,6 +348,35 @@ data class DayWay(val meals: List<WayMeal>, val nutrition: Nutrition, val wasted
 /** A meal of another way to fill a day; [stays] where it is on the day already: eaten, or the user's own. */
 data class WayMeal(val slot: String, val title: String, val calories: Double, val stays: Boolean)
 
+/**
+ * Swaps that would use up what a plan opens, for the plan at [revision]: one for a meal, the one
+ * that leaves the least first, in a model's order where one was asked and answered ([weighed]), or
+ * the engine's with why ([fallbackReason]).
+ */
+data class UseUpFound(val revision: Int, val swaps: List<UseUpSwap>, val weighed: Boolean, val fallbackReason: String?)
+
+/**
+ * A recipe in the place of a meal that would use up what the plan opens: the meal, the recipe it
+ * holds and the one that would come, what it takes more of each pack and what would be left of it,
+ * what the meal holds before and after, a model's sentence on it, and the note of a model's pick.
+ */
+data class UseUpSwap(
+    val mealId: String,
+    val date: String,
+    val slot: String,
+    val fromTitle: String,
+    val toId: String,
+    val toTitle: String,
+    val takes: List<UseUpTake>,
+    val before: Nutrition,
+    val after: Nutrition,
+    val reason: String?,
+    val pick: String?,
+)
+
+/** What a swap takes more of a pack, and what would be left of the pack. */
+data class UseUpTake(val name: String, val unit: String, val amount: Int, val left: Int)
+
 /** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
 data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
 

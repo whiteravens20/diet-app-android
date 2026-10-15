@@ -30,6 +30,8 @@ import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.Substitution
+import net.whiteravens.dietapp.domain.UseUpSwap
+import net.whiteravens.dietapp.domain.UseUpTake
 import net.whiteravens.dietapp.domain.WayMeal
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.testing.clientHeaders
@@ -376,5 +378,69 @@ class MealPlanRepositoryTest {
         assertEquals("/api/meal-plans/plan-1/days/day-1/variations/take", taken.path)
         assertEquals("""{"offer":"note-1"}""", taken.body.readUtf8())
     }
-}
 
+    @Test
+    fun `swaps that would use up what a plan opens are asked for unweighed unless a model is to weigh them, and one is taken as a swap with the revision they were found for and the model's note`() {
+        val nutrition = """{"calories":%d,"protein":30,"fat":20,"carbs":50}"""
+        val packs = """{"before":{"bought":400,"used":260,"wasted":1},"after":{"bought":400,"used":320,"wasted":0}}"""
+        // The shape the API answers with: as the engine found them, as a model weighed them, and as the engine's own where the model stood aside.
+        fun found(reason: String?, pick: String?, aiMeta: String) =
+            """{"revision":7,"suggestions":[{"plannedMealId":"meal-1","date":"2026-10-13","mealType":"lunch",""" +
+                """"from":{"id":"recipe-1","title":"Soup"},"to":{"id":"recipe-2","title":"Feta salad"},"servings":1.5,""" +
+                """"before":${nutrition.format(500)},"after":${nutrition.format(480)},""" +
+                """"takes":[{"ingredientId":"feta","name":"Feta","unit":"g","amount":60,"left":40}],"packs":$packs,""" +
+                """"reason":${reason?.let { "\"$it\"" }},"pick":${pick?.let { "\"$it\"" }}}],"aiMeta":$aiMeta}"""
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(found(null, null, "null")))
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "application/json").setBody(
+                found(null, null, """{"provider":null,"model":null,"failoverChain":[],"usedDeterministicFallback":true,"fallbackReason":"quota_exhausted","reason":null}"""),
+            ),
+        )
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "application/json").setBody(
+                found("Uses the feta.", "note-1", """{"provider":"openrouter","model":"m","failoverChain":[],"usedDeterministicFallback":false,"fallbackReason":null,"reason":null}"""),
+            ),
+        )
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val plans = repository(Cache())
+
+        val unweighed = runBlocking { plans.useUp("plan-1") }
+        val byEngine = runBlocking { plans.useUp("plan-1", weigh = true) }
+        val weighed = runBlocking { plans.useUp("plan-1", weigh = true) }
+        runBlocking { plans.takeUseUp("plan-1", weighed.revision, weighed.swaps.single()) }
+
+        assertEquals(
+            UseUpSwap(
+                mealId = "meal-1",
+                date = "2026-10-13",
+                slot = "lunch",
+                fromTitle = "Soup",
+                toId = "recipe-2",
+                toTitle = "Feta salad",
+                takes = listOf(UseUpTake("Feta", "g", 60, 40)),
+                before = Nutrition(500.0, 30.0, 20.0, 50.0),
+                after = Nutrition(480.0, 30.0, 20.0, 50.0),
+                reason = null,
+                pick = null,
+            ),
+            unweighed.swaps.single(),
+        )
+        assertFalse(unweighed.weighed)
+        assertNull(unweighed.fallbackReason)
+        assertFalse(byEngine.weighed)
+        assertEquals("quota_exhausted", byEngine.fallbackReason)
+        assertTrue(weighed.weighed)
+        assertEquals("Uses the feta.", weighed.swaps.single().reason)
+        val first = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/use-up", first.path)
+        assertEquals("{}", first.body.readUtf8())
+        assertEquals("""{"weigh":true}""", server.takeRequest().body.readUtf8())
+        server.takeRequest()
+        val taken = server.takeRequest()
+        assertEquals("/api/meal-plans/swap-meal", taken.path)
+        assertEquals(
+            """{"planId":"plan-1","plannedMealId":"meal-1","recipeId":"recipe-2","revision":7,"strategy":"random","pick":"note-1"}""",
+            taken.body.readUtf8(),
+        )
+    }
+}

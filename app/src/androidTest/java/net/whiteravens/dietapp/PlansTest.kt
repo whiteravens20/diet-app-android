@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
@@ -35,6 +36,7 @@ import net.whiteravens.dietapp.testing.waitForText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -252,6 +254,43 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.common_delete)).performClick()
         screen.waitUntil(20_000) { Instance.planIds(account, profileId).isEmpty() }
         screen.waitForText(text(R.string.plans_calendar_title))
+    }
+
+    @Test
+    fun theSwapsThatWouldUseUpWhatAPlanOpensAreFoundUnderItsPacksAndOneIsTaken() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        // A day's menu opens more than it finishes.
+        val planId = Instance.newPlan(account, profileId, days = 1)
+        assumeTrue("The plan made leaves no more than a fifth of any pack.", Instance.wastesAPack(account, planId))
+        val swaps = Instance.useUpSwaps(account, planId)
+        screen.signIn(account)
+
+        screen.onNodeWithText(text(R.string.nav_meal_plans)).performClick()
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The line of packs unfolds into what the plan leaves of each, and the way to use them up.
+        val packs = SemanticsMatcher.keyIsDefined(SemanticsActions.Expand)
+        screen.waitUntil(20_000) { screen.onAllNodes(packs).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(packs).performScrollTo().performClick()
+        screen.scrollToText(text(R.string.plans_use_up_ask))
+        screen.onNodeWithText(text(R.string.plans_use_up_ask)).performClick()
+
+        // The screen offers what the API finds for the plan.
+        if (swaps == 0) {
+            screen.scrollToText(text(R.string.plans_use_up_none))
+            return
+        }
+        val take = text(R.string.plans_offer_take)
+        screen.waitUntil(30_000) { screen.onAllNodesWithText(take).fetchSemanticsNodes().size == swaps }
+        screen.keepScreenshot("plans-use-up")
+        val found = Instance.planRevision(account, planId)
+        screen.onAllNodesWithText(take)[0].performScrollTo().performClick()
+        screen.waitUntil(20_000) { Instance.planRevision(account, planId) > found }
+        // The swaps were for the plan as it was: they go with it.
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(take).fetchSemanticsNodes().isEmpty() }
     }
 
     /** Puts away the card that says how a change balanced its day, where the change left one. */

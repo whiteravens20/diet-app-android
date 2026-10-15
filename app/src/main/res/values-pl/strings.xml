@@ -196,6 +196,12 @@
     <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
     <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>
     <string name="plans_packs_explain">Policzone z samego jadłospisu; to, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>
+    <string name="plans_use_up_ask">Co by je zużyło?</string>
+    <string name="plans_use_up_asking">Szukam…</string>
+    <string name="plans_use_up_takes">bierze o %1$s więcej: %2$s, a z opakowania zostałoby %3$s</string>
+    <string name="plans_use_up_energy">Posiłek: %1$s → %2$s kcal · białko %3$s → %4$s g</string>
+    <string name="plans_use_up_none">Nic, co może zastąpić któryś posiłek, nie zostawiłoby mniej z tych opakowań.</string>
+    <string name="plans_use_up_swap">%1$s (zamiast: %2$s)</string>
     <string name="plans_mark_eaten">Oznacz jako zjedzone</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Dodaj własny posiłek</string>

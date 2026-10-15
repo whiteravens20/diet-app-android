@@ -25,6 +25,8 @@ import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.UseUpFound
+import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
@@ -37,7 +39,8 @@ import javax.inject.Inject
  * written until the offer is taken. A meal is marked eaten or not, a meal of one's own is added to
  * a day, and a change that balanced the day again says how, with the way back and the rest of the
  * week to balance as well. The plan, a part of it or a day is made again; a refusal for something
- * the user can allow offers to allow it. The plan can be deleted.
+ * the user can allow offers to allow it. Swaps that would use up the packs the plan opens are looked
+ * for, and one is taken as any swap is. The plan can be deleted.
  */
 @HiltViewModel
 class PlanDetailViewModel @Inject constructor(
@@ -86,8 +89,14 @@ class PlanDetailViewModel @Inject constructor(
         val deleted: Boolean = false,
         val refused: Refused? = null,
         val inTheWay: InTheWay? = null,
+        /** Swaps found that would use up what the plan opens, with the revision of the plan they were found for. */
+        val useUpFound: UseUpFound? = null,
+        val findingUseUp: Boolean = false,
         val error: Throwable? = null,
-    )
+    ) {
+        /** The swaps found that would use up what the plan opens, while the plan is the one they were found for. */
+        val useUp: UseUpFound? get() = useUpFound?.takeIf { it.revision == plan?.revision }
+    }
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -191,6 +200,25 @@ class PlanDetailViewModel @Inject constructor(
     /** An ingredient substituted in its window: the plan it left, what it rebalanced, and why a model did not reword the text where it was asked to. */
     fun substituted(result: Rebalanced) {
         _state.update { it.copy(plan = result.plan, rebalance = result.rebalance.shown(), notice = result.fallbackReason) }
+    }
+
+    /** Looks for swaps that would use up what the plan opens, put in order by a model where [weigh] and the account has one. */
+    fun findUseUp(weigh: Boolean = false) {
+        val current = _state.value
+        if (current.findingUseUp || current.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(findingUseUp = true, error = null) }
+            attempt { plans.useUp(planId, weigh = weigh && current.aiOn == true) }
+                .onSuccess { found -> _state.update { it.copy(findingUseUp = false, useUpFound = found) } }
+                .onFailure { e -> _state.update { it.copy(findingUseUp = false, error = e) } }
+        }
+    }
+
+    /** Takes a swap that uses up what the plan opens: the swaps found were for the plan as it was, and go with it. */
+    fun takeUseUp(swap: UseUpSwap) {
+        val found = _state.value.useUp ?: return
+        _state.update { it.copy(useUpFound = null) }
+        change { plans.takeUseUp(planId, found.revision, swap) }
     }
 
     /** A day filled another way, taken in its window. */

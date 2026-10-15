@@ -157,6 +157,10 @@ interface DietApiService {
     @POST("meal-plans/{id}/days/{dayId}/variations/take")
     suspend fun takeDayVariation(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: TakeDayVariationRequest): MealPlanDto
 
+    /** Swaps that would use up what the plan opens, weighed by a model where [WeighRequest.weigh]; nothing is written. */
+    @POST("meal-plans/{id}/use-up")
+    suspend fun useUp(@Path("id") id: String, @Body body: WeighRequest): UseUpSuggestionsDto
+
     /** Marks a meal eaten or not; the day is balanced again around it. */
     @PATCH("meal-plans/{id}/meals/{mealId}/eaten")
     suspend fun setMealEaten(@Path("id") id: String, @Path("mealId") mealId: String, @Body body: SetMealEatenRequest): RebalanceResultDto

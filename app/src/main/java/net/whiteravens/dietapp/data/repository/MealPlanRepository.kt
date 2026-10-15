@@ -53,6 +53,9 @@ import net.whiteravens.dietapp.domain.SubstitutionPreview
 import net.whiteravens.dietapp.domain.SuggestedSubstitute
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.UseUpFound
+import net.whiteravens.dietapp.domain.UseUpSwap
+import net.whiteravens.dietapp.domain.UseUpTake
 import net.whiteravens.dietapp.domain.WayMeal
 import java.time.LocalDate
 import javax.inject.Inject
@@ -281,6 +284,47 @@ class MealPlanRepository @Inject constructor(
         mirror(plan)
         return plan.toDomain()
     }
+
+    /** Swaps that would use up what the plan opens, put in order by a model where [weigh]. Nothing is written. */
+    suspend fun useUp(planId: String, weigh: Boolean = false): UseUpFound {
+        val answer = apiCall(json) { api.useUp(planId, WeighRequest(weigh)) }
+        return UseUpFound(
+            revision = answer.revision,
+            swaps = answer.suggestions.map { suggestion ->
+                UseUpSwap(
+                    mealId = suggestion.plannedMealId,
+                    date = suggestion.date,
+                    slot = suggestion.mealType,
+                    fromTitle = suggestion.from.title,
+                    toId = suggestion.to.id,
+                    toTitle = suggestion.to.title,
+                    takes = suggestion.takes.map { UseUpTake(it.name, it.unit, it.amount, it.left) },
+                    before = suggestion.before.toDomain(),
+                    after = suggestion.after.toDomain(),
+                    reason = suggestion.reason,
+                    pick = suggestion.pick,
+                )
+            },
+            weighed = answer.aiMeta != null && answer.aiMeta.fallbackReason == null,
+            fallbackReason = answer.aiMeta?.fallbackReason,
+        )
+    }
+
+    /** Takes a swap that uses up what the plan opens, as any swap is taken, on the plan as it was when it was found. */
+    suspend fun takeUseUp(planId: String, revision: Int, swap: UseUpSwap): Rebalanced = kept(
+        apiCall(json) {
+            api.swapMeal(
+                ApplyMealSwapRequest(
+                    planId = planId,
+                    plannedMealId = swap.mealId,
+                    recipeId = swap.toId,
+                    revision = revision,
+                    strategy = RANDOM_STRATEGY,
+                    pick = swap.pick,
+                ),
+            )
+        },
+    )
 
     /** Marks a meal eaten or not; its day is balanced again around it. */
     suspend fun setEaten(planId: String, mealId: String, eaten: Boolean): Rebalanced =

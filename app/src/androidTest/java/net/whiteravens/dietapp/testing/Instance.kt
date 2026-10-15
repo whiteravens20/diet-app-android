@@ -138,6 +138,16 @@ object Instance {
         return (0 until meals.length()).map { meals.getJSONObject(it) }.filter { it.getString("source") == "USER_CUSTOM" }.map { it.getString("customName") }
     }
 
+    /** Whether a plan's menu leaves more than a fifth of a pack that does not keep once opened. */
+    fun wastesAPack(account: Account, planId: String): Boolean {
+        val open = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("packs").getJSONArray("open")
+        return (0 until open.length()).any { open.getJSONObject(it).getBoolean("wasted") }
+    }
+
+    /** How many swaps the API finds that would use up what a plan opens; nothing is written by asking. */
+    fun useUpSwaps(account: Account, planId: String): Int =
+        call("POST", "meal-plans/$planId/use-up", JSONObject(), token = account.accessToken).getJSONArray("suggestions").length()
+
     /** A plan of [days] days for [profileId] from [start], made as the app makes one. */
     fun newPlan(account: Account, profileId: String, days: Int = 2, start: LocalDate = LocalDate.now()): String =
         call(

@@ -185,6 +185,12 @@
     <string name="plans_packs_left_much">%1$s: %2$s left of a pack of %3$s, more than a fifth of it</string>
     <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>
     <string name="plans_packs_explain">Counted from the menu alone; what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
+    <string name="plans_use_up_ask">What would use them up?</string>
+    <string name="plans_use_up_asking">Looking…</string>
+    <string name="plans_use_up_takes">takes %1$s more of %2$s, and %3$s of its pack would be left</string>
+    <string name="plans_use_up_energy">The meal: %1$s → %2$s kcal · protein %3$s → %4$s g</string>
+    <string name="plans_use_up_none">Nothing that may take the place of a meal would leave less of these packs.</string>
+    <string name="plans_use_up_swap">%1$s in place of %2$s</string>
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Add custom meal</string>
