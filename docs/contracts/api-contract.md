@@ -3,8 +3,8 @@
 The application talks to the REST API of [diet-app](https://github.com/whiteravens20/diet-app),
 the same API its web application uses. The API describes itself in `docs/api/` of that
 repository: `openapi.json` (every route, what it takes and what it answers), `routes.md`,
-`errors.md` (every code a refusal can carry) and `README.md`, whose section "Asking" has the
-rules a client that keeps its own tokens follows.
+`errors.md` and `errors.json` (every code a refusal can carry, to read and to copy) and
+`README.md`, whose section "Asking" has the rules a client that keeps its own tokens follows.
 
 ## The copy this client is checked against
 
@@ -15,15 +15,15 @@ and the body are ones the API takes, and the class an answer is read into can re
 API answers. A call that does not fit yet is listed in that test with the reason; the change
 that fixes it takes it off the list.
 
-[`contract/errors.md`](../../contract/errors.md) is a copy of the list of codes, from the same
-version. The build writes the app's texts for refusals from it, in English and in Polish, and
+[`contract/errors.json`](../../contract/errors.json) is a copy of the list of codes, from the
+same version. The build writes the app's texts for refusals from it, in English and in Polish, and
 a unit test (`ErrorTextsTest`) checks that every code of the list has its text. Once a week CI
 compares both copies with diet-app's `dev` ([contract.yml](../../.github/workflows/contract.yml))
 and fails when they differ.
 
 ## Moving to another version of the API
 
-1. Copy `docs/api/openapi.json` and `docs/api/errors.md` of the diet-app version the client
+1. Copy `docs/api/openapi.json` and `docs/api/errors.json` of the diet-app version the client
    is to work with into `contract/`, and write that version into `contract/API_VERSION`. Write its commit and
    the digest of its image into `contract/diet-app.env`, read from the registry
    (`docker buildx imagetools inspect ghcr.io/whiteravens20/diet-app:<tag>`), never typed.
@@ -52,7 +52,7 @@ app words it as the web application does, from the code and never from the Engli
 - `VALIDATION_FAILED` names the fields its `issues` name, and the sign-in form marks them;
 - `NO_ELIGIBLE_RECIPE` names the meal and the diet its `details` name, and tells a catalogue
   without a recipe for them from a profile that rules out every one there is;
-- any other code reads as its sentence in `contract/errors.md`, in the language of the app;
+- any other code reads as its sentence in `contract/errors.json`, in the language of the app;
 - a code the copy does not have yet, from a newer server, is shown in the words the API sent,
   which are English;
 - an answer that is not the API's, such as a proxy's error page, is named by its status, and no

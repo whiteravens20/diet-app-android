@@ -24,7 +24,7 @@ jobs:
       - name: Fetch the contract of diet-app's dev
         run: |
           mkdir -p build/dev-contract
-          for file in openapi.json errors.md; do
+          for file in openapi.json errors.json; do
             curl -fsSL "https://raw.githubusercontent.com/whiteravens20/diet-app/dev/docs/api/$file" \
               -o "build/dev-contract/$file"
           done
@@ -33,7 +33,7 @@ jobs:
         id: compare
         run: |
           if cmp -s contract/openapi.json build/dev-contract/openapi.json &&
-            cmp -s contract/errors.md build/dev-contract/errors.md; then
+            cmp -s contract/errors.json build/dev-contract/errors.json; then
             echo "moved=false" >> "$GITHUB_OUTPUT"
           else
             echo "moved=true" >> "$GITHUB_OUTPUT"

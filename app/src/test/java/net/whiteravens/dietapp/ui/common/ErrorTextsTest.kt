@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.ui.common
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File
@@ -10,11 +12,9 @@ import java.io.File
 class ErrorTextsTest {
     @Test
     fun `every code of the API's list has a text, and only those`() {
-        val list = File(checkNotNull(System.getProperty("contract.dir")) { "The build sets contract.dir" }, "errors.md").readText()
-        val codes = Regex("""^\| `([A-Z0-9_]+)` \|""", RegexOption.MULTILINE).findAll(list).map { it.groupValues[1] }.toSet()
-        val announced = Regex("""one of the (\d+) codes below""").find(list)?.groupValues?.get(1)?.toInt()
+        val list = File(checkNotNull(System.getProperty("contract.dir")) { "The build sets contract.dir" }, "errors.json").readText()
+        val codes = Json.parseToJsonElement(list).jsonObject.keys
 
-        assertEquals(announced, codes.size)
         assertEquals(codes, ERROR_TEXTS.keys)
     }
 }

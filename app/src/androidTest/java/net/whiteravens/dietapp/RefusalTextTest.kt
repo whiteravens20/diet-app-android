@@ -23,7 +23,7 @@ import java.util.Locale
 
 /**
  * What a person reads when a request fails, in English and in Polish: the API's own words for its
- * code (contract/errors.md), the wait a held-up request names, the fields a refused form names,
+ * code (contract/errors.json), the wait a held-up request names, the fields a refused form names,
  * the meal no recipe was left for; a code this version has no words for in the words the API sent;
  * an answer that is not the API's, and no answer at all.
  */

@@ -83,7 +83,7 @@ fun difficultyLabel(code: String): String = when (code) {
  * What a person is shown for a failure, worded as the web application words it. A request held up
  * says for how long, where the server said; a refused form names the fields it refused; a refusal
  * is said in the API's own words for its code, in the language of the app's texts
- * (contract/errors.md, written into resources by the build); a code this version has no words for
+ * (contract/errors.json, written into resources by the build); a code this version has no words for
  * is shown as the API put it, which is English but says something; an answer that is not the API's
  * own, such as a proxy's page, is named as that; no answer at all is a connection that failed.
  */

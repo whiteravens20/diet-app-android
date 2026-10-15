@@ -41,7 +41,7 @@ running beside it:
 - **API DTOs** are checked against a copy of the contract the
   [`diet-app`](https://github.com/whiteravens20/diet-app) API publishes; moving to another
   version of it is described in [docs/contracts/api-contract.md](docs/contracts/api-contract.md).
-- **Texts of refusals** are written by the build from `contract/errors.md`, the API's own list
+- **Texts of refusals** are written by the build from `contract/errors.json`, the API's own list
   of codes with their sentences in English and Polish. A code's text is changed in diet-app
   and copied here with the contract, not written in `strings.xml`.
 - **AI-assisted code** — most of this project is written with AI coding tools, as the

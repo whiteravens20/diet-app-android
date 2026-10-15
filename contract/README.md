@@ -6,8 +6,8 @@ copied from diet-app at the version in `API_VERSION` (from commit `2dc7f90`, the
 client with it: the route exists, the body is one the API takes, and the class an answer is
 read into can read what the API answers.
 
-`errors.md` is diet-app's list of every code a refusal can carry (`docs/api/errors.md`), with
-its sentence in English and in Polish, from the same commit. The build writes the app's texts
+`errors.json` is diet-app's list of every code a refusal can carry (`docs/api/errors.json`),
+with its sentence in English and in Polish, from the same commit. The build writes the app's texts
 for refusals from it, and a unit test checks that every code of the list has one.
 
 `diet-app.env` names that version's commit and its image, by digest: the screens' tests run

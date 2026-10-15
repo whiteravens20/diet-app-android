@@ -87,7 +87,7 @@ kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
 /**
  * Writes the API's own words for every code it refuses a request with, in English and Polish, from
- * the copy of its list of codes (contract/errors.md, beside the contract): string resources named
+ * the copy of its list of codes (contract/errors.json, beside the contract): string resources named
  * `error_code_<code>` and a map from each code to its text, which `errorMessage` reads.
  */
 abstract class WriteErrorTexts : DefaultTask() {
@@ -103,12 +103,14 @@ abstract class WriteErrorTexts : DefaultTask() {
 
     @TaskAction
     fun write() {
-        val rows = codes.get().asFile.readLines().filter { it.startsWith("| `") }.map { line ->
-            val cells = line.split("|").map(String::trim)
-            check(cells.size == 6) { "contract/errors.md: a row of other than four cells: $line" }
-            Triple(cells[1].trim('`'), cells[3], cells[4])
+        @Suppress("UNCHECKED_CAST")
+        val list = groovy.json.JsonSlurper().parse(codes.get().asFile) as Map<String, Map<String, Any?>>
+        val rows = list.map { (code, entry) ->
+            val messages = entry["messages"] as Map<String, String?>
+            fun text(language: String) = checkNotNull(messages[language]) { "contract/errors.json: $code has no text in $language" }
+            Triple(code, text("en"), text("pl"))
         }
-        check(rows.isNotEmpty()) { "contract/errors.md lists no code" }
+        check(rows.isNotEmpty()) { "contract/errors.json lists no code" }
         fun xml(text: String) = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             .replace("\\", "\\\\").replace("'", "\\'").replace("\"", "\\\"")
             .let { if (it.startsWith("@") || it.startsWith("?")) "\\$it" else it }
@@ -119,7 +121,7 @@ abstract class WriteErrorTexts : DefaultTask() {
             file.writeText(
                 buildString {
                     appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-                    appendLine("<!-- Written by the build from contract/errors.md. -->")
+                    appendLine("<!-- Written by the build from contract/errors.json. -->")
                     appendLine("<resources>")
                     rows.forEach { row ->
                         val text = if (column == 1) row.second else row.third
@@ -133,7 +135,7 @@ abstract class WriteErrorTexts : DefaultTask() {
         source.parentFile.mkdirs()
         source.writeText(
             buildString {
-                appendLine("// Written by the build from contract/errors.md.")
+                appendLine("// Written by the build from contract/errors.json.")
                 appendLine("package net.whiteravens.dietapp.ui.common")
                 appendLine()
                 appendLine("import net.whiteravens.dietapp.R")
@@ -148,7 +150,7 @@ abstract class WriteErrorTexts : DefaultTask() {
 }
 
 val writeErrorTexts = tasks.register<WriteErrorTexts>("writeErrorTexts") {
-    codes.set(rootProject.layout.projectDirectory.file("contract/errors.md"))
+    codes.set(rootProject.layout.projectDirectory.file("contract/errors.json"))
 }
 
 androidComponents {
