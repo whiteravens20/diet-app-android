@@ -68,13 +68,9 @@ import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -795,19 +791,6 @@ private fun FavoritePicker(meal: Meal, planDiet: String, liked: List<MarkedRecip
     )
 }
 
-/** Why the engine picked where a model was asked; null for a reason this version does not know. */
-@Composable
-private fun fallbackText(reason: String): String? = when (reason) {
-    "quota_exhausted" -> stringResource(R.string.ai_fallback_quota_exhausted)
-    "instance_quota_exhausted" -> stringResource(R.string.ai_fallback_instance_quota_exhausted)
-    "no_provider" -> stringResource(R.string.ai_fallback_no_provider)
-    "all_providers_failed" -> stringResource(R.string.ai_fallback_all_providers_failed)
-    "provider_timeout" -> stringResource(R.string.ai_fallback_provider_timeout)
-    "key_unreadable" -> stringResource(R.string.ai_fallback_key_unreadable)
-    "invalid_output" -> stringResource(R.string.ai_fallback_invalid_output)
-    else -> null
-}
-
 /** What an offer is, as the web says it: the recipe in bold, its servings, and its kcal in place of the meal's. */
 @Composable
 private fun offerLine(offer: SwapOffer): AnnotatedString {
@@ -819,21 +802,13 @@ private fun offerLine(offer: SwapOffer): AnnotatedString {
     }
     val line = stringResource(
         R.string.plans_offer_line,
-        TITLE_MARK,
+        MARK,
         servings,
         formatNumber(offer.after.calories.roundToInt()),
         formatNumber(offer.before.calories.roundToInt()),
     )
-    val (head, tail) = line.split(TITLE_MARK, limit = 2).let { it[0] to it.getOrElse(1) { "" } }
-    return buildAnnotatedString {
-        append(head)
-        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(offer.recipeTitle) }
-        append(tail)
-    }
+    return emphasized(line, offer.recipeTitle)
 }
-
-/** Where the title goes in a line, to be set apart: no text holds it. */
-private const val TITLE_MARK = "\u0000"
 
 /** The recipe offered in the place of a meal, and what taking it does to the meal and to its day. */
 @Composable
