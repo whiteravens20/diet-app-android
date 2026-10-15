@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Parcel
 import androidx.activity.ComponentActivity
 import androidx.annotation.StringRes
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
@@ -45,6 +46,17 @@ fun ComposeTestRule.keepScreenshot(name: String) {
     }
     TestStorage().openOutputFile("screenshots/$name.png").use { out ->
         picture.compress(Bitmap.CompressFormat.PNG, 100, out)
+    }
+}
+
+/**
+ * Clicks the first node [matcher] finds, once there is one. A list read anew while the test waits,
+ * as a search is once typing pauses, can take the node away between finding it and the click: a
+ * click that found no node is tried again.
+ */
+fun ComposeTestRule.clickFirst(matcher: SemanticsMatcher, timeoutMillis: Long = 20_000) {
+    waitUntil(timeoutMillis) {
+        onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() && runCatching { onAllNodes(matcher)[0].performClick() }.isSuccess
     }
 }
 

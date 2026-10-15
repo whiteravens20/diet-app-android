@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.clickFirst
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
@@ -39,7 +40,7 @@ class RecipesTest {
         val card = hasText(title) and hasClickAction() and !hasSetTextAction()
         screen.waitUntil(20_000) { screen.onAllNodes(card).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("recipes-found-by-search")
-        screen.onAllNodes(card)[0].performClick()
+        screen.clickFirst(card)
 
         screen.waitForText(text(R.string.recipes_ingredients))
         screen.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(ingredient))
