@@ -218,7 +218,10 @@ private fun MainScaffold(serverVersion: ServerVersion) {
         ) {
             composable<DashboardRoute> { DashboardScreen(onCreateProfile = { navController.navigate(ProfilesRoute) }) }
             composable<PlansRoute> {
-                MealPlansScreen(onOpenPlan = { navController.navigate(PlanDetailRoute(it)) })
+                MealPlansScreen(
+                    onOpenPlan = { navController.navigate(PlanDetailRoute(it)) },
+                    onCreateProfile = { navController.navigate(ProfilesRoute) },
+                )
             }
             composable<PlanDetailRoute> {
                 PlanDetailScreen(

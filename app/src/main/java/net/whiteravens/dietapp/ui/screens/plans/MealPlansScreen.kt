@@ -59,6 +59,7 @@ import kotlin.math.roundToInt
 @Composable
 fun MealPlansScreen(
     onOpenPlan: (String) -> Unit,
+    onCreateProfile: () -> Unit,
     viewModel: MealPlansViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -80,6 +81,11 @@ fun MealPlansScreen(
             icon = Icons.Default.DateRange,
             title = stringResource(R.string.plans_no_profile),
             description = stringResource(R.string.plans_no_profile_body),
+            cta = {
+                Button(onClick = onCreateProfile, shape = MaterialTheme.shapes.medium) {
+                    Text(stringResource(R.string.plans_no_profile_cta))
+                }
+            },
         )
 
         else -> LazyColumn(

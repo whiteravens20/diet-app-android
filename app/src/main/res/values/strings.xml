@@ -108,7 +108,8 @@
     <!-- Meal plans -->
     <string name="plans_subtitle">Plans built against each profile’s calorie target.</string>
     <string name="plans_no_profile">No profile</string>
-    <string name="plans_no_profile_body">Create a profile in the web app first — meal plans are generated against its calorie target.</string>
+    <string name="plans_no_profile_body">Create a profile first — a meal plan is generated against its calorie target.</string>
+    <string name="plans_no_profile_cta">Create profile</string>
     <string name="plans_generate">Generate plan</string>
     <string name="plans_empty">No plans yet</string>
     <string name="plans_empty_body">Generate the first meal plan for this profile.</string>

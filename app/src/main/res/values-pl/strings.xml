@@ -109,7 +109,8 @@
     <!-- Meal plans -->
     <string name="plans_subtitle">Plany dopasowane do celu kalorycznego każdego profilu.</string>
     <string name="plans_no_profile">Brak profilu</string>
-    <string name="plans_no_profile_body">Najpierw utwórz profil w aplikacji webowej — plan posiłków jest generowany względem jego celu kalorycznego.</string>
+    <string name="plans_no_profile_body">Najpierw utwórz profil — plan posiłków układa się pod jego cel kaloryczny.</string>
+    <string name="plans_no_profile_cta">Utwórz profil</string>
     <string name="plans_generate">Wygeneruj plan</string>
     <string name="plans_empty">Brak planów</string>
     <string name="plans_empty_body">Wygeneruj pierwszy plan posiłków dla tego profilu.</string>
