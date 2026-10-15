@@ -12,6 +12,8 @@
 -keep class net.whiteravens.dietapp.data.remote.ApiErrorIssueDto { *; }
 -keep class net.whiteravens.dietapp.data.auth.AesGcmSealer { *; }
 -keep class net.whiteravens.dietapp.data.auth.KeystoreSealer { *; }
+-keep class net.whiteravens.dietapp.ui.screens.profiles.WeightUnit { *; }
+-keep class net.whiteravens.dietapp.ui.screens.profiles.WeightUnit$Companion { *; }
 
 # The libraries the tests share with the app, whose copy in the app they use: AndroidX (Compose,
 # the test runner's own), Kotlin's, Guava's and the injection annotations Espresso builds on.
