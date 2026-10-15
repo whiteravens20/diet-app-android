@@ -248,4 +248,10 @@ dependencies {
     "minifiedImplementation"(libs.androidx.compose.ui.test.manifest)
     androidTestUtil(libs.androidx.test.orchestrator)
     androidTestUtil(libs.androidx.test.services)
+
+    constraints {
+        // Compose's test library brings Espresso 3.5.0, which finds InputManager.getInstance by
+        // reflection; Android 17 no longer has it. 3.7.0 asks the system for the service instead.
+        androidTestImplementation(libs.androidx.test.espresso.core)
+    }
 }
