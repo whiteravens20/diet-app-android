@@ -60,13 +60,16 @@ import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.ui.common.CsvDialect
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
+import net.whiteravens.dietapp.ui.common.csvOf
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSyncedAt
+import net.whiteravens.dietapp.ui.common.rememberTextSaver
 import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.DateField
@@ -96,8 +99,10 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     // What somebody in a shop is looking for on the list: the entries whose name holds the words.
     var find by rememberSaveable { mutableStateOf("") }
-    // The list taken out of the app as a text to send.
+    // The list taken out of the app: as a text to send, or as a table for a spreadsheet.
     val context = LocalContext.current
+    val locale = LocalConfiguration.current.locales[0]
+    val saveText = rememberTextSaver("text/csv")
     val chooser = stringResource(R.string.shopping_share_text)
 
     if (state.loading) {
@@ -259,6 +264,7 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
                     ListHeader(
                         list,
                         onShare = { shareText(context, words.title, listText(list, words), chooser) },
+                        onSaveTable = { saveText("${exportName(list)}.csv", csvOf(listTable(list, words), CsvDialect.of(locale.language))) },
                         onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
                     )
                 }
@@ -351,7 +357,7 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
 
 /** A list's days and how far it is ticked off, with what can be done with the list behind one button. */
 @Composable
-private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onDelete: (() -> Unit)?) {
+private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(formatDates(list.fromDate, list.toDate), style = MaterialTheme.typography.titleMedium)
@@ -361,13 +367,13 @@ private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onDelete: (() ->
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        ListActions(onShare, onDelete)
+        ListActions(onShare, onSaveTable, onDelete)
     }
 }
 
-/** What can be done with a list as a whole: sent as a text, or deleted. */
+/** What can be done with a list as a whole: sent as a text, saved as a table, or deleted. */
 @Composable
-private fun ListActions(onShare: () -> Unit, onDelete: (() -> Unit)?) {
+private fun ListActions(onShare: () -> Unit, onSaveTable: () -> Unit, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -379,6 +385,7 @@ private fun ListActions(onShare: () -> Unit, onDelete: (() -> Unit)?) {
                 action()
             }
             DropdownMenuItem(text = { Text(stringResource(R.string.shopping_share_text)) }, onClick = { pick(onShare) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.shopping_export_csv)) }, onClick = { pick(onSaveTable) })
             DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }

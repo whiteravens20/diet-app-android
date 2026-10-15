@@ -16,6 +16,12 @@ data class ListWords(
     val toBuy: Map<String, String>,
     /** The packs of each row whose packs are what is still to be bought, by the row's id: `2 × 250 g`. */
     val packs: Map<String, String>,
+    /** The heads of a table's columns: aisle, entry, needed, unit, at home, have in all, still to buy, packs, ticked, kcal. */
+    val head: List<String>,
+    /** What each unit is called beside a number, by its code. */
+    val units: Map<String, String>,
+    val yes: String,
+    val no: String,
 ) {
     fun aisle(code: String): String = aisles[code] ?: code
 }
@@ -33,3 +39,25 @@ fun listText(list: ShoppingList, words: ListWords): String {
     }
     return lines.joinToString("\n")
 }
+
+/** The whole list as a table for a spreadsheet: every row, ticked or not, with its numbers as numbers. */
+fun listTable(list: ShoppingList, words: ListWords): List<List<Any?>> =
+    listOf(words.head) + list.groups.flatMap { group ->
+        group.items.map { item ->
+            listOf(
+                words.aisle(group.category),
+                item.name,
+                item.totalQuantity,
+                words.units[item.displayUnit] ?: item.displayUnit,
+                item.atHome,
+                item.have,
+                item.stillToBuy,
+                words.packs[item.id].orEmpty(),
+                if (item.checked) words.yes else words.no,
+                item.estimatedCalories,
+            )
+        }
+    }
+
+/** The name a list taken out of the app is kept under: its first and its last day. */
+fun exportName(list: ShoppingList): String = "shopping-list-${list.fromDate}_${list.toDate}"

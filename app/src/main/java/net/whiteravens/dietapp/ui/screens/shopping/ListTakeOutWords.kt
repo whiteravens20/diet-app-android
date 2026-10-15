@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
 import net.whiteravens.dietapp.ui.common.formatDates
+import net.whiteravens.dietapp.ui.common.unitName
 
 /** What a row comes to in packs, as a shelf label says it: `2 × 250 g`. */
 @Composable
@@ -27,6 +28,21 @@ fun listWords(list: ShoppingList): ListWords {
         aisles = list.groups.associate { it.category to categoryLabel(it.category) },
         toBuy = items.associate { it.id to amountLabel(it.stillToBuy, it.displayUnit) },
         packs = items.filter { it.packsStand }.associate { item -> item.id to packsText(item.packs!!) },
+        head = listOf(
+            stringResource(R.string.shopping_csv_aisle),
+            stringResource(R.string.shopping_csv_entry),
+            stringResource(R.string.shopping_csv_needed),
+            stringResource(R.string.shopping_csv_unit),
+            stringResource(R.string.shopping_csv_at_home),
+            stringResource(R.string.shopping_csv_have),
+            stringResource(R.string.shopping_csv_to_buy),
+            stringResource(R.string.shopping_csv_packs),
+            stringResource(R.string.shopping_csv_ticked),
+            stringResource(R.string.shopping_csv_energy),
+        ),
+        units = items.map { it.displayUnit }.distinct().associateWith { unitName(it) },
+        yes = stringResource(R.string.common_yes),
+        no = stringResource(R.string.common_no),
     )
 }
 
