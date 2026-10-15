@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.testing.clientHeaders
@@ -76,6 +77,30 @@ class ServerRepositoryTest {
 
         assertEquals(ServerVersion.Checked, asked())
         assertEquals("/api/config", server.takeRequest().path)
+    }
+
+    @Test
+    fun `what the instance allows an account and what its catalogue holds are kept from the same answer`() {
+        server.enqueue(answer(fixture("config")))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+
+        val rules = checkNotNull(repository.rules.value)
+        assertEquals(2, rules.maxProfiles)
+        assertEquals(mapOf(2 to 32, 3 to 32, 4 to 30, 5 to 30), rules.catalogueDepth["balanced"])
+    }
+
+    @Test
+    fun `an instance that does not say how many profiles an account may have allows the API's default`() {
+        val captured = json.parseToJsonElement(fixture("config")).jsonObject
+        server.enqueue(answer(JsonObject(captured - "accounts" - "catalogue").toString()))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+
+        assertEquals(InstanceRules.DEFAULT_MAX_PROFILES, repository.rules.value?.maxProfiles)
+        assertEquals(emptyMap<String, Map<Int, Int>>(), repository.rules.value?.catalogueDepth)
     }
 
     @Test

@@ -12,6 +12,7 @@ import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.HealthDto
 import net.whiteravens.dietapp.data.remote.ServerAddress
+import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import retrofit2.HttpException
@@ -38,7 +39,13 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
     /** The site key of the anti-abuse check the server asks for, or null when it asks for none. */
     val checkSiteKey: StateFlow<String?> = _checkSiteKey.asStateFlow()
 
+    private val _rules = MutableStateFlow<InstanceRules?>(null)
+
+    /** What the server allows an account and what its catalogue holds; null until it has said. */
+    val rules: StateFlow<InstanceRules?> = _rules.asStateFlow()
+
     suspend fun refresh() {
+        _rules.value = null
         _version.value = ask()
     }
 
@@ -79,6 +86,12 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
         try {
             val config = api.config()
             _checkSiteKey.value = config.turnstile.siteKey.takeIf { config.turnstile.enabled }
+            _rules.value = InstanceRules(
+                maxProfiles = config.accounts.maxProfiles,
+                catalogueDepth = config.catalogue.depth.mapValues { (_, byCount) ->
+                    byCount.mapNotNull { (count, recipes) -> count.toIntOrNull()?.let { it to recipes } }.toMap()
+                },
+            )
             val version = config.instance.version
             if (version == BuildConfig.API_VERSION) {
                 ServerVersion.Checked

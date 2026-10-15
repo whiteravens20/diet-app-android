@@ -42,11 +42,19 @@ data class PublicConfigDto(
     val turnstile: TurnstileDto,
     val accounts: AccountsConfigDto = AccountsConfigDto(),
     val email: EmailConfigDto = EmailConfigDto(),
+    val catalogue: CatalogueConfigDto = CatalogueConfigDto(),
 )
 
-/** How many profiles an account may have on the instance. */
+/** How many profiles an account may have on the instance; two where it does not say, as the API's default. */
 @Serializable
-data class AccountsConfigDto(val maxProfiles: Int = 1)
+data class AccountsConfigDto(val maxProfiles: Int = 2)
+
+/**
+ * How many recipes the catalogue has for the meal a diet has the fewest for, at each number of
+ * meals a day (`"2"` to `"5"`): what tells a diet with no recipe, or few, for a plan.
+ */
+@Serializable
+data class CatalogueConfigDto(val depth: Map<String, Map<String, Int>> = emptyMap())
 
 /** Whether the instance sends mail at all: a confirmation mail or a password reset needs it. */
 @Serializable
