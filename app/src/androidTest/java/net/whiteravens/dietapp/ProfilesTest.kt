@@ -52,7 +52,7 @@ class ProfilesTest {
         screen.signIn(account)
 
         screen.waitForText(text(R.string.dashboard_welcome))
-        press(text(R.string.dashboard_create_first_profile_cta))
+        screen.onNodeWithText(text(R.string.dashboard_create_first_profile_cta)).performClick()
         screen.waitForText(text(R.string.profile_wizard_title))
 
         type(text(R.string.profile_name), "Ala")
