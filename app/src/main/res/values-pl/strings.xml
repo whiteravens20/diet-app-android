@@ -146,7 +146,6 @@
     <string name="macro_fat">Tłuszcz</string>
     <string name="macro_carbs">Węglowodany</string>
     <string name="unit_kcal">kcal</string>
-    <string name="unit_piece">szt.</string>
 
     <!-- Offline -->
     <string name="offline_cached">Offline — dane z synchronizacji %1$s</string>

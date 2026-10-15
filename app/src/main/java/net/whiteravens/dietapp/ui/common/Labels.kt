@@ -229,11 +229,6 @@ fun formatSyncedAt(epochMillis: Long): String =
         .atZone(ZoneId.systemDefault())
         .format(DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.getDefault()))
 
-/** Quantity without noise: 250.0 → `250`, 1.5 stays `1.5`. */
-fun formatQuantity(value: Double): String =
-    if (value % 1.0 == 0.0) value.roundToInt().toString()
-    else String.format(Locale.getDefault(), "%.1f", value)
-
 /** An amount as the server rounds it and names its unit: `120 g`, `2 slices`, `0.5 pieces`. */
 @Composable
 fun amountLabel(quantity: Double, unit: String): String {

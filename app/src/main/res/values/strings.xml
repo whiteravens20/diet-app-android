@@ -141,7 +141,6 @@
     <string name="macro_fat">Fat</string>
     <string name="macro_carbs">Carbs</string>
     <string name="unit_kcal">kcal</string>
-    <string name="unit_piece">pcs</string>
 
     <!-- Offline -->
     <string name="offline_cached">Offline — showing data synced %1$s</string>

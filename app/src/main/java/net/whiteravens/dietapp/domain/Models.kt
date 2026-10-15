@@ -484,10 +484,11 @@ data class MealPlanPage(
     val syncedAt: Long?,
 )
 
+/** A line of a recipe in the amount the API shows it: rounded, in the unit its kind of food is counted in. */
 data class RecipeIngredient(
     val name: String,
     val quantity: Double,
-    /** `g` | `ml` | `piece`. */
+    /** `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
     val unit: String,
     val note: String?,
 )

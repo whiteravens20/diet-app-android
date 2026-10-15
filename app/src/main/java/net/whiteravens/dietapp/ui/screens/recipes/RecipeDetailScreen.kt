@@ -29,9 +29,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.difficultyLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.formatQuantity
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -170,7 +170,7 @@ private fun RecipeBody(recipe: Recipe) {
                         }
                     }
                     Text(
-                        "${formatQuantity(ingredient.quantity)} ${unitLabel(ingredient.unit)}",
+                        amountLabel(ingredient.quantity, ingredient.unit),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -197,10 +197,4 @@ private fun RecipeBody(recipe: Recipe) {
             }
         }
     }
-}
-
-@Composable
-private fun unitLabel(unit: String): String = when (unit) {
-    "piece" -> stringResource(R.string.unit_piece)
-    else -> unit // g / ml are universal
 }
