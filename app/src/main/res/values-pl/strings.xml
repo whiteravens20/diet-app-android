@@ -66,6 +66,16 @@
     <string name="auth_create_account_button">Załóż konto</string>
     <string name="auth_no_account">Nie masz konta? Załóż je</string>
     <string name="auth_has_account">Masz już konto? Zaloguj się</string>
+    <string name="auth_forgot_password">Nie pamiętasz hasła?</string>
+    <string name="auth_reset_title">Zresetuj hasło</string>
+    <string name="auth_forgot_intro">Podaj swój adres e-mail, a wyślemy link do zresetowania hasła.</string>
+    <string name="auth_reset_submit">Wyślij link resetujący</string>
+    <string name="auth_submitting">Wysyłanie…</string>
+    <string name="auth_reset_sent">Sprawdź pocztę</string>
+    <string name="auth_reset_sent_body">Jeśli z tym adresem jest powiązane konto, wysłaliśmy na niego link do zresetowania hasła.</string>
+    <string name="auth_reset_unavailable">Reset hasła nie jest dostępny na tej instancji — operator nie skonfigurował poczty.</string>
+    <string name="auth_back_to_sign_in">Powrót do logowania</string>
+    <string name="auth_remembered">Pamiętasz hasło?</string>
 
     <!-- Dashboard -->
     <string name="dashboard_welcome">Witaj w Diet App</string>

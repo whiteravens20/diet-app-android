@@ -88,6 +88,7 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
             _checkSiteKey.value = config.turnstile.siteKey.takeIf { config.turnstile.enabled }
             _rules.value = InstanceRules(
                 maxProfiles = config.accounts.maxProfiles,
+                mailsSent = config.email.enabled,
                 catalogueDepth = config.catalogue.depth.mapValues { (_, byCount) ->
                     byCount.mapNotNull { (count, recipes) -> count.toIntOrNull()?.let { it to recipes } }.toMap()
                 },

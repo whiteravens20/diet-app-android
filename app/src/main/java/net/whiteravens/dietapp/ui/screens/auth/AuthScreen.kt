@@ -55,6 +55,7 @@ import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 @Composable
 fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltViewModel()) {
     var registerMode by rememberSaveable { mutableStateOf(false) }
+    var resetMode by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
@@ -64,6 +65,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
     val checkSiteKey by viewModel.checkSiteKey.collectAsState()
     val password by viewModel.password.collectAsState()
     val secondStepCode by viewModel.secondStepCode.collectAsState()
+    val mailsSent by viewModel.mailsSent.collectAsState()
     // The fields a refused form named are marked where they are typed.
     val refused = (state.error as? ApiException)?.refusedFields.orEmpty()
 
@@ -134,6 +136,24 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
             return@Column
         }
 
+        if (resetMode) {
+            PasswordResetCard(
+                email = email,
+                onEmailChange = { email = it },
+                mailsSent = mailsSent,
+                sent = state.resetSent,
+                busy = state.busy,
+                error = state.error,
+                checkFailed = state.checkFailed,
+                onSubmit = { viewModel.requestPasswordReset(email) },
+                onBack = {
+                    resetMode = false
+                    viewModel.leavePasswordReset()
+                },
+            )
+            return@Column
+        }
+
         AppCard(Modifier.fillMaxWidth()) {
             Text(
                 stringResource(if (registerMode) R.string.auth_create_account else R.string.auth_welcome_back),
@@ -179,6 +199,16 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),
                 )
+            } else {
+                TextButton(
+                    onClick = {
+                        resetMode = true
+                        viewModel.leavePasswordReset()
+                    },
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(stringResource(R.string.auth_forgot_password), style = MaterialTheme.typography.bodySmall)
+                }
             }
             state.error?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 12.dp)) }
             if (state.checkFailed) {
@@ -225,6 +255,84 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * A forgotten password: the address a link to set a new one is mailed to. The answer is the same
+ * whether the address has an account or not. An instance that sends no mail has no such link.
+ */
+@Composable
+private fun PasswordResetCard(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    mailsSent: Boolean?,
+    sent: Boolean,
+    busy: Boolean,
+    error: Throwable?,
+    checkFailed: Boolean,
+    onSubmit: () -> Unit,
+    onBack: () -> Unit,
+) {
+    AppCard(Modifier.fillMaxWidth()) {
+        when {
+            // The link arrives by mail: without mail the request would be taken and nothing would reach anybody.
+            mailsSent == false -> {
+                Text(stringResource(R.string.auth_reset_title), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    stringResource(R.string.auth_reset_unavailable),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+
+            sent -> {
+                Text(stringResource(R.string.auth_reset_sent), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    stringResource(R.string.auth_reset_sent_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+
+            else -> {
+                Text(stringResource(R.string.auth_reset_title), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    stringResource(R.string.auth_forgot_intro),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = { Text(stringResource(R.string.auth_email)) },
+                    isError = "email" in (error as? ApiException)?.refusedFields.orEmpty(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                error?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 12.dp)) }
+                if (checkFailed) ErrorBanner(stringResource(R.string.error_code_turnstile_failed), Modifier.padding(top = 12.dp))
+                Button(
+                    onClick = onSubmit,
+                    enabled = !busy && email.isNotBlank(),
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                ) {
+                    Text(stringResource(if (busy) R.string.auth_submitting else R.string.auth_reset_submit))
+                }
+            }
+        }
+    }
+    TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
+        Text(
+            if (sent || mailsSent == false) stringResource(R.string.auth_back_to_sign_in)
+            else stringResource(R.string.auth_remembered) + " " + stringResource(R.string.auth_sign_in_button),
+        )
     }
 }
 

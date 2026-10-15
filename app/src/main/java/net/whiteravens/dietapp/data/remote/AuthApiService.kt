@@ -34,6 +34,10 @@ interface AuthApiService {
     @POST("auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
 
+    /** Answered 202 whether the address has an account or not. */
+    @POST("auth/password-reset/request")
+    suspend fun requestPasswordReset(@Body body: PasswordResetRequestDto)
+
     /**
      * Revokes the refresh token on [server], the one that issued it, which may no longer be the
      * one in use. 204; the access token simply expires.

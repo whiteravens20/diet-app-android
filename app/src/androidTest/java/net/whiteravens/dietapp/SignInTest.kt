@@ -34,4 +34,23 @@ class SignInTest {
         screen.onNodeWithText(text(R.string.dashboard_no_profiles)).assertIsDisplayed()
         screen.keepScreenshot("signed-in-dashboard-without-profiles")
     }
+
+    @Test
+    fun aForgottenPasswordIsAskedForByMailWhereTheInstanceSendsMail() {
+        val account = Instance.newAccount()
+
+        screen.onNodeWithText(text(R.string.auth_forgot_password)).performScrollTo().performClick()
+        if (Instance.mailsSent()) {
+            screen.onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
+            screen.onNodeWithText(text(R.string.auth_reset_submit)).performScrollTo().performClick()
+            screen.waitForText(text(R.string.auth_reset_sent))
+        } else {
+            // The link would be mailed: an instance that sends no mail says that it has none.
+            screen.waitForText(text(R.string.auth_reset_unavailable))
+        }
+        screen.keepScreenshot("sign-in-forgotten-password")
+
+        screen.onNodeWithText(text(R.string.auth_back_to_sign_in)).performScrollTo().performClick()
+        screen.waitForText(text(R.string.auth_welcome_back))
+    }
 }

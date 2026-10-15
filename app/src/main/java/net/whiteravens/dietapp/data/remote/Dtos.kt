@@ -75,6 +75,10 @@ data class HealthDto(val status: String, val db: String)
 
 // ── Auth (packages/shared/src/auth.ts) ──────────────────────────────────────
 
+/** A mail with a link to set a new password, asked for an address; [turnstileToken] as for a sign-in. */
+@Serializable
+data class PasswordResetRequestDto(val email: String, val turnstileToken: String? = null)
+
 /** [turnstileToken]: the anti-abuse check's answer, where the instance has the check on. */
 @Serializable
 data class LoginRequest(val email: String, val password: String, val turnstileToken: String? = null)

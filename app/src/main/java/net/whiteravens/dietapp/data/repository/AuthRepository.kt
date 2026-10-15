@@ -11,6 +11,7 @@ import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
+import net.whiteravens.dietapp.data.remote.PasswordResetRequestDto
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
 import net.whiteravens.dietapp.data.remote.SecondFactorSignInRequest
@@ -63,6 +64,15 @@ class AuthRepository @Inject constructor(
     suspend fun register(email: String, password: String, displayName: String, checkToken: String? = null) {
         val response = apiCall(json) { authApi.register(RegisterRequest(email, password, displayName, checkToken)) }
         tokens.save(response.tokens)
+    }
+
+    /**
+     * Asks for a mail with a link to set a new password for [email], with the anti-abuse check's
+     * answer where the server asks for the check. The answer is the same whether the address has an
+     * account or not.
+     */
+    suspend fun requestPasswordReset(email: String, checkToken: String? = null) {
+        apiCall(json) { authApi.requestPasswordReset(PasswordResetRequestDto(email, checkToken)) }
     }
 
     suspend fun signOut() {

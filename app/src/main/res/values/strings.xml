@@ -67,6 +67,16 @@
     <string name="auth_create_account_button">Create account</string>
     <string name="auth_no_account">No account yet? Create one</string>
     <string name="auth_has_account">Already have an account? Sign in</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_reset_title">Reset your password</string>
+    <string name="auth_forgot_intro">Enter your email and we\'ll send a link to reset your password.</string>
+    <string name="auth_reset_submit">Send reset link</string>
+    <string name="auth_submitting">Submitting…</string>
+    <string name="auth_reset_sent">Check your email</string>
+    <string name="auth_reset_sent_body">If an account exists for that email, a reset link is on its way.</string>
+    <string name="auth_reset_unavailable">Password reset isn\'t available on this instance — the operator hasn\'t configured email.</string>
+    <string name="auth_back_to_sign_in">Back to sign in</string>
+    <string name="auth_remembered">Remembered it?</string>
 
     <!-- Dashboard -->
     <string name="dashboard_welcome">Welcome to Diet App</string>

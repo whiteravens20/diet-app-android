@@ -72,6 +72,9 @@ object Instance {
             expect = 201,
         ).getString("id")
 
+    /** Whether the instance sends mail, as its configuration says. */
+    fun mailsSent(): Boolean = call("GET", "config").getJSONObject("email").getBoolean("enabled")
+
     /** The profiles of [account], as the API keeps them. */
     fun profiles(account: Account): List<JSONObject> {
         val list = JSONArray(send("GET", "profiles", null, account.accessToken, 200, null))

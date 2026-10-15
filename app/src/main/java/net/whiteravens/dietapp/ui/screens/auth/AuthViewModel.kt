@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -20,9 +21,10 @@ import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
 /**
- * Login / registration. On success [AuthRepository] persists the token pair,
- * which flips the root `isSignedIn` flow — no navigation call needed here.
- * Where the server asks for the anti-abuse check, a sign-in or a sign-up waits
+ * Login / registration, and a forgotten password asked for by mail. On success
+ * [AuthRepository] persists the token pair, which flips the root `isSignedIn`
+ * flow — no navigation call needed here. Where the server asks for the
+ * anti-abuse check, a sign-in, a sign-up or a request for a new password waits
  * for its answer ([UiState.awaitingCheck]); an account with two-step sign-in
  * is asked for a code ([UiState.secondStep]). Also exposes the server base URL:
  * it must be editable before sign-in, and this screen is all there is then.
@@ -34,10 +36,11 @@ class AuthViewModel @Inject constructor(
     private val instance: ServerRepository,
 ) : ViewModel() {
 
-    /** A sign-in or a sign-up, as it was asked for, waiting for the check's answer. */
+    /** A sign-in, a sign-up or a request for a new password, as it was asked for, waiting for the check's answer. */
     sealed interface Submission {
         data class SignIn(val email: String, val password: String) : Submission
         data class Register(val email: String, val password: String, val displayName: String) : Submission
+        data class PasswordReset(val email: String) : Submission
     }
 
     data class UiState(
@@ -49,6 +52,8 @@ class AuthViewModel @Inject constructor(
         val awaitingCheck: Submission? = null,
         /** The check could not be solved. */
         val checkFailed: Boolean = false,
+        /** A link to set a new password was asked for; whether the address has an account is not said. */
+        val resetSent: Boolean = false,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -77,6 +82,11 @@ class AuthViewModel @Inject constructor(
     /** The site key of the anti-abuse check the server asks for, or null. */
     val checkSiteKey: StateFlow<String?> = instance.checkSiteKey
 
+    /** Whether the server sends mail; null until it has said. A new password is asked for by mail. */
+    val mailsSent: StateFlow<Boolean?> = instance.rules
+        .map { it?.mailsSent }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), instance.rules.value?.mailsSent)
+
     fun saveServerUrl(url: String) {
         viewModelScope.launch { server.save(url) }
     }
@@ -85,6 +95,14 @@ class AuthViewModel @Inject constructor(
 
     fun register(email: String, password: String, displayName: String) =
         submit(Submission.Register(email.trim(), password, displayName.trim()))
+
+    /** Asks for a mail with a link to set a new password for [email]. */
+    fun requestPasswordReset(email: String) = submit(Submission.PasswordReset(email.trim()))
+
+    /** Back to signing in, from a request for a new password. */
+    fun leavePasswordReset() {
+        _state.update { it.copy(resetSent = false, error = null, checkFailed = false) }
+    }
 
     /** The check's answer: the submission that waited for it goes on with it. */
     fun checkSolved(token: String) {
@@ -132,6 +150,10 @@ class AuthViewModel @Inject constructor(
                 is SignInResult.SecondStep -> _state.update { it.copy(secondStep = result.challenge) }
             }
             is Submission.Register -> auth.register(submission.email, submission.password, submission.displayName, checkToken)
+            is Submission.PasswordReset -> {
+                auth.requestPasswordReset(submission.email, checkToken)
+                _state.update { it.copy(resetSent = true) }
+            }
         }
         // The password was taken: a second step, if any, asks for a code instead.
         _password.value = ""
