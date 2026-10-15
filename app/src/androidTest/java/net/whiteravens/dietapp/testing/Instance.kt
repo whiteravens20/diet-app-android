@@ -19,7 +19,8 @@ data class Account(val email: String, val password: String, val displayName: Str
 /**
  * The diet-app instance at the app's own address, which CI starts before the screens'
  * tests. What a test needs there before it opens a screen is made through the API, as the
- * web application would make it, and what a screen did is read back the same way.
+ * web application would make it, and what a screen did is read back the same way. Every
+ * request says the day it is on the phone, as the app's own do.
  */
 object Instance {
     private val client = OkHttpClient()
@@ -184,6 +185,7 @@ object Instance {
             .method(method, body?.toString()?.toRequestBody(json))
             .apply { if (token != null) header("Authorization", "Bearer $token") }
             .apply { if (language != null) header("Accept-Language", language) }
+            .header("X-Client-Date", LocalDate.now().toString())
             .build()
         client.newCall(request).execute().use { response ->
             val text = response.body.string()
