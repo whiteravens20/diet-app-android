@@ -88,6 +88,28 @@ object Instance {
     /** The account's way of using a model: `none` where it has none to ask. */
     fun aiMode(account: Account): String = call("GET", "users/me", token = account.accessToken).getString("aiMode")
 
+    /** Chooses the unit [account]'s weights are shown in, as the web application's settings do. */
+    fun chooseWeightUnit(account: Account, unit: String) {
+        call("PATCH", "users/me", JSONObject().put("weightUnit", unit), token = account.accessToken)
+    }
+
+    /** Logs [kg] for a profile of [account], taken at noon of [day] (UTC). */
+    fun logWeight(account: Account, profileId: String, kg: Double, day: LocalDate) {
+        call(
+            "POST",
+            "weights",
+            JSONObject().put("profileId", profileId).put("kg", kg).put("recordedAt", "${day}T12:00:00.000Z"),
+            token = account.accessToken,
+            expect = 201,
+        )
+    }
+
+    /** The weights a profile of [account] logged, in kilograms, the newest first. */
+    fun weights(account: Account, profileId: String): List<Double> {
+        val list = JSONArray(send("GET", "weights?profileId=$profileId", null, account.accessToken, 200, null))
+        return (0 until list.length()).map { list.getJSONObject(it).getDouble("kg") }
+    }
+
     /** The ids of a profile's plans, as the API lists them. */
     fun planIds(account: Account, profileId: String): List<String> {
         val items = call("GET", "meal-plans?profileId=$profileId", token = account.accessToken).getJSONArray("items")

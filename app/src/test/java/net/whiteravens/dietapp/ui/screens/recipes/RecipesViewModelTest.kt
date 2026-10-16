@@ -43,7 +43,7 @@ class RecipesViewModelTest {
         Recipe(id, id, "", 2, listOf("lunch"), emptyList(), emptyList(), emptyList(), 10, 10, "easy", Nutrition(500.0, 30.0, 20.0, 50.0), byModel = null, cuisine = null, allergens = emptyList(), source = null)
 
     private val users = mockk<UserRepository>().also {
-        coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3))
+        coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null))
         coEvery { it.me() } throws IOException("not asked here")
     }
     private val profiles = mockk<ProfileRepository>()

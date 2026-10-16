@@ -674,6 +674,27 @@
     <string name="favorite_sets_apply_confirm">Zastosuj</string>
     <string name="favorite_sets_err_apply">Nie udało się zastosować zestawu.</string>
 
+    <!-- Weight log -->
+    <string name="weight_title">Dziennik wagi</string>
+    <string name="weight_today">Dzisiejsza waga (%1$s)</string>
+    <string name="weight_log">Zapisz</string>
+    <string name="weight_logging">Zapisywanie…</string>
+    <string name="weight_log_failed">Nie udało się zapisać wagi.</string>
+    <string name="weight_range">Podaj wagę między %1$s a %2$s.</string>
+    <string name="weight_reference_hint">Waga z profilu: %1$s</string>
+    <string name="weight_target_hint">Waga z profilu: %1$s · cel: %2$s</string>
+    <string name="weight_reference_label">z profilu</string>
+    <string name="weight_target_label">cel</string>
+    <string name="weight_series_entry">Wpis</string>
+    <string name="weight_series_mean">Średnia 7 dni</string>
+    <string name="weight_empty">Zapisz wagę, aby zobaczyć trend z 90 dni.</string>
+    <string name="weight_remove_latest">Usuń ostatni wpis</string>
+    <string name="weight_remove_latest_label">%1$s · %2$s</string>
+    <string name="weight_remove_latest_confirm">Usunąć ostatnią zapisaną wagę (%1$s · %2$s)?</string>
+    <string name="weight_remove_failed">Nie udało się usunąć wpisu wagi.</string>
+    <string name="weight_read_failed">Nie udało się odczytać wag.</string>
+    <string name="weight_chart_point">%1$s: wpis %2$s, średnia 7 dni %3$s</string>
+
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
     <string name="shopping_no_profile">Brak profilu</string>

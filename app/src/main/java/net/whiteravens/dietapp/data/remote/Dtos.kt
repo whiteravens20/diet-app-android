@@ -434,6 +434,23 @@ data class CaloriePreviewRequestDto(
 @Serializable
 data class CaloriePreviewDto(val calculation: CalorieCalculationDto, val paces: List<CalorieCalculationDto>)
 
+// ── Weights (packages/shared/src/weight.ts) ─────────────────────────────────
+
+/** A weight logged for a profile, in kilograms whatever unit the account reads it in. */
+@Serializable
+data class WeightEntryDto(
+    val id: String,
+    val profileId: String,
+    val kg: Double,
+    /** When the weight was taken (ISO-8601). */
+    val recordedAt: String,
+    val createdAt: String,
+)
+
+/** POST `/weights`: a weight of a profile, taken the moment it is logged. */
+@Serializable
+data class LogWeightRequest(val profileId: String, val kg: Double)
+
 // ── Ingredients (packages/shared/src/ingredient.ts) ─────────────────────────
 
 /** An ingredient of the catalogue, as a picker shows it: its name in the language asked for. */

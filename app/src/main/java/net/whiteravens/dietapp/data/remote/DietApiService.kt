@@ -111,6 +111,20 @@ interface DietApiService {
     @POST("profiles/calories")
     suspend fun previewCalories(@Body body: CaloriePreviewRequestDto): CaloriePreviewDto
 
+    // ── Weights ─────────────────────────────────────────────────────────────
+
+    /** The weights logged for a profile, the newest first: those taken [since] a moment, where it is given. */
+    @GET("weights")
+    suspend fun weights(@Query("profileId") profileId: String, @Query("since") since: String? = null): List<WeightEntryDto>
+
+    /** Logs a weight of a profile, taken now; answers it as the API keeps it. */
+    @POST("weights")
+    suspend fun logWeight(@Body body: LogWeightRequest): WeightEntryDto
+
+    /** Removes a logged weight; answered 204. */
+    @DELETE("weights/{id}")
+    suspend fun deleteWeight(@Path("id") id: String)
+
     // ── Ingredients ─────────────────────────────────────────────────────────
 
     /**

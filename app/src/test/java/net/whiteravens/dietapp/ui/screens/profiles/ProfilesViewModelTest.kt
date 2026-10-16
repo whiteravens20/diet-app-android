@@ -165,7 +165,7 @@ class ProfilesViewModelTest {
         assertEquals(emptyList<ProfileDetails>(), model.state.value.list)
 
         coEvery { profiles.profiles() } returns listOf(kept)
-        val made = Profile(kept.id, kept.figures.name, "balanced", 5)
+        val made = Profile(kept.id, kept.figures.name, "balanced", 5, kept.figures.weightKg, kept.figures.targetWeightKg)
         model.made(made)
         runCurrent()
         assertEquals(made, model.state.value.made)

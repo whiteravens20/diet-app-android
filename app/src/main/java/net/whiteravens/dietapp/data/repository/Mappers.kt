@@ -70,6 +70,8 @@ fun ProfileDto.toDomain() = Profile(
     name = name,
     dietType = dietType,
     mealCount = mealCount,
+    weightKg = weightKg,
+    targetWeightKg = targetWeightKg,
 )
 
 fun NutritionDto.toDomain() = Nutrition(

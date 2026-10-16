@@ -31,6 +31,10 @@ enum class WeightUnit(val code: String) {
     val bounds: ClosedFloatingPointRange<Double>
         get() = ceil(shown(ProfileBounds.WEIGHT_KG.start) * 10) / 10..floor(shown(ProfileBounds.WEIGHT_KG.endInclusive) * 10) / 10
 
+    /** A weight typed in this unit, with a decimal comma as well as a point, in kilograms; null for one that is no number within [bounds]. */
+    fun typedKg(typed: String): Double? =
+        typed.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it in bounds }?.let(::toKilograms)
+
     companion object {
         /** One pound in kilograms, as the pound is defined. */
         private const val KG_PER_LB = 0.45359237

@@ -2,7 +2,10 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -13,18 +16,24 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.ui.common.formatDate
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.text.NumberFormat
+import java.time.LocalDate
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class DashboardTest {
@@ -95,5 +104,37 @@ class DashboardTest {
         screen.onNodeWithText(text(R.string.common_delete)).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.favoriteSets(account, profileId).isEmpty() }
         screen.waitForText(text(R.string.favorite_sets_empty))
+    }
+
+    @Test
+    fun aWeightIsLoggedOnItsProfilesCardDrawnAndTheLastOneTakenBack() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        val threeDaysAgo = LocalDate.now().minusDays(3)
+        Instance.logWeight(account, profileId, 80.6, threeDaysAgo)
+        Instance.chooseWeightUnit(account, "kg")
+        screen.signIn(account)
+
+        // The weight logged three days ago is a point of the chart, which says its day in words.
+        screen.scrollToText(text(R.string.weight_title))
+        screen.scrollTo(hasContentDescription(formatDate(threeDaysAgo.toString()), substring = true))
+
+        // Today's weight, typed with a decimal comma, is logged and the field emptied.
+        val field = hasText(text(R.string.weight_today, "kg"))
+        screen.scrollTo(field)
+        screen.onNode(field).performScrollTo().performTextInput("81,5")
+        screen.onNode(hasText(text(R.string.weight_log)) and hasClickAction()).performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(81.5, 80.6) }
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(field and SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))).fetchSemanticsNodes().isNotEmpty()
+        }
+        screen.keepScreenshot("dashboard-a-weight-logged")
+
+        // The last entry taken back once it is confirmed; the one before it stays, and is the one offered next.
+        screen.onNodeWithText(text(R.string.weight_remove_latest)).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(80.6) }
+        val before = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(80.6)
+        screen.waitForText("(${text(R.string.weight_remove_latest_label, "$before kg", formatDate(threeDaysAgo.toString()))})")
     }
 }

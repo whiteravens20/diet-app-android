@@ -29,6 +29,10 @@ data class Profile(
     val name: String,
     val dietType: String,
     val mealCount: Int,
+    /** The weight the profile registered, in kilograms: what its calorie target is worked out from. */
+    val weightKg: Double,
+    /** The weight the profile works towards, in kilograms, or null where it names none. */
+    val targetWeightKg: Double?,
 )
 
 /**

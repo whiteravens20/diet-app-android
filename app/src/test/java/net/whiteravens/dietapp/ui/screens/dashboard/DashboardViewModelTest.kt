@@ -7,15 +7,18 @@ import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.repository.WeightRepository
 import net.whiteravens.dietapp.data.repository.toDomain
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.FavoriteSet
@@ -25,14 +28,21 @@ import net.whiteravens.dietapp.domain.OverviewDay
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Share
+import net.whiteravens.dietapp.domain.WeightEntry
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightLog
+import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightProblem
+import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.Duration
+import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
@@ -50,6 +60,9 @@ class DashboardViewModelTest {
         coEvery { it.marked(any(), any()) } returns emptyList()
     }
 
+    /** No profile has logged a weight, unless a test says otherwise. */
+    private val weights = mockk<WeightRepository>().also { coEvery { it.entries(any(), any()) } returns emptyList() }
+
     @After
     fun reset() = Dispatchers.resetMain()
 
@@ -58,12 +71,12 @@ class DashboardViewModelTest {
         val users = mockk<UserRepository>()
         val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
         val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
-        val (held, whole) = listOf(Profile("a", "Ala", "balanced", 4), Profile("b", "Olek", "vegan", 3))
+        val (held, whole) = listOf(Profile("a", "Ala", "balanced", 4, 70.0, null), Profile("b", "Olek", "vegan", 3, 70.0, null))
         coEvery { users.profiles() } returns listOf(held, whole)
         coEvery { users.calorieTarget(held.id) } throws refusal
         coEvery { users.calorieTarget(whole.id) } returns target
 
-        val state = DashboardViewModel(users, plans, favorites).state.value
+        val state = DashboardViewModel(users, plans, favorites, weights).state.value
 
         assertNull(state.error)
         assertEquals(listOf(held, whole), state.profiles.map { it.profile })
@@ -77,9 +90,9 @@ class DashboardViewModelTest {
     fun `the dashboard read again on coming back shows a profile made in the meantime, and a failed reading leaves what was shown`() {
         val users = mockk<UserRepository>()
         val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
-        val made = Profile("a", "Ala", "balanced", 4)
+        val made = Profile("a", "Ala", "balanced", 4, 70.0, null)
         coEvery { users.profiles() } returns emptyList()
-        val model = DashboardViewModel(users, plans, favorites)
+        val model = DashboardViewModel(users, plans, favorites, weights)
         assertEquals(emptyList<DashboardViewModel.ProfileStats>(), model.state.value.profiles)
 
         coEvery { users.profiles() } returns listOf(made)
@@ -97,7 +110,7 @@ class DashboardViewModelTest {
     fun `the plan of the moment of each profile is read beside its target, and one that cannot be read is said on its own card`() {
         val users = mockk<UserRepository>()
         val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
-        val (planned, unread) = listOf(Profile("a", "Ala", "balanced", 4), Profile("b", "Olek", "vegan", 3))
+        val (planned, unread) = listOf(Profile("a", "Ala", "balanced", 4, 70.0, null), Profile("b", "Olek", "vegan", 3, 70.0, null))
         val overview = PlanOverview(
             planId = "plan", startDate = "2026-10-13", durationDays = 7, dietType = "balanced", status = "active",
             energy = 1980.0, energyTarget = 2000.0, macros = Macros(100.0, 70.0, 220.0), macrosTarget = Macros(110.0, 65.0, 230.0),
@@ -111,7 +124,7 @@ class DashboardViewModelTest {
         coEvery { plans.overview(planned.id) } returns overview
         coEvery { plans.overview(unread.id) } throws refusal
 
-        val state = DashboardViewModel(users, plans, favorites).state.value
+        val state = DashboardViewModel(users, plans, favorites, weights).state.value
 
         assertEquals(overview, state.profiles[0].overview)
         assertNull(state.profiles[0].overviewError)
@@ -120,7 +133,7 @@ class DashboardViewModelTest {
         assertEquals(target, state.profiles[1].target)
     }
 
-    private val ala = Profile("a", "Ala", "balanced", 4)
+    private val ala = Profile("a", "Ala", "balanced", 4, 70.0, null)
     private val oats = MarkedRecipe("oats", "Oats", listOf("breakfast"), "favorite", emptyList())
     private val weekday = FavoriteSet("weekday", "Weekday", mapOf("breakfast" to "oats"))
 
@@ -134,7 +147,7 @@ class DashboardViewModelTest {
         coEvery { favorites.sets(ala.id) } returns listOf(weekday)
         coEvery { favorites.marked(ala.id, any()) } returns listOf(oats)
 
-        val read = DashboardViewModel(users(), plans, favorites).state.value.profiles.single()
+        val read = DashboardViewModel(users(), plans, favorites, weights).state.value.profiles.single()
 
         assertEquals(listOf(weekday), read.sets)
         assertEquals(listOf(oats), read.marks)
@@ -142,7 +155,7 @@ class DashboardViewModelTest {
 
         val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
         coEvery { favorites.marked(ala.id, any()) } throws refusal
-        val unread = DashboardViewModel(users(), plans, favorites).state.value.profiles.single()
+        val unread = DashboardViewModel(users(), plans, favorites, weights).state.value.profiles.single()
 
         assertEquals(listOf(weekday), unread.sets)
         assertNull(unread.marks)
@@ -157,7 +170,7 @@ class DashboardViewModelTest {
         coEvery { favorites.createSet(ala.id, "Training day", mapOf("breakfast" to "oats")) } returns made
         val changed = weekday.copy(label = "Workday")
         coEvery { favorites.updateSet("weekday", "Workday", weekday.slots) } returns changed
-        val model = DashboardViewModel(users(), plans, favorites)
+        val model = DashboardViewModel(users(), plans, favorites, weights)
 
         model.newSet(ala.id)
         model.saveSet("Training day", mapOf("breakfast" to "oats"))
@@ -181,7 +194,7 @@ class DashboardViewModelTest {
     fun `a set deleted leaves its card, and one refused is said on its profile's card`() {
         coEvery { favorites.sets(ala.id) } returns listOf(weekday)
         coEvery { favorites.deleteSet("weekday") } just runs
-        val model = DashboardViewModel(users(), plans, favorites)
+        val model = DashboardViewModel(users(), plans, favorites, weights)
 
         model.deleteSet(ala.id, "weekday")
 
@@ -194,5 +207,88 @@ class DashboardViewModelTest {
 
         assertEquals(DashboardViewModel.SetDeleteFailed(ala.id, gone), model.state.value.setDeleteFailed)
         assertNull(model.state.value.deletingSet)
+    }
+
+    /** The account as the API answers it, with the unit it chose for weights. */
+    private fun account(unit: String) = json.decodeFromString<SessionUserDto>(fixture("users-me")).toDomain().copy(weightUnit = unit)
+
+    private val logged = WeightEntry("logged", 79.85, Instant.parse("2026-10-16T21:51:18.696Z"))
+    private val earlier = WeightEntry("earlier", 80.6, Instant.parse("2026-10-13T07:30:00Z"))
+
+    @Test
+    fun `each profile's weights of the last ninety days are read with it in the account's unit, and ones that cannot be read are said on its card`() {
+        val users = users().also { coEvery { it.me() } returns account("lb") }
+        val since = slot<Instant>()
+        coEvery { weights.entries(ala.id, capture(since)) } returns listOf(logged, earlier)
+
+        val state = DashboardViewModel(users, plans, favorites, weights).state.value
+
+        assertEquals(WeightUnit.LB, state.unit)
+        assertEquals(listOf(logged, earlier), state.profiles.single().weights)
+        assertEquals(90L, Duration.between(since.captured, Instant.now()).toDays())
+
+        val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
+        coEvery { weights.entries(ala.id, any()) } throws refusal
+        val unread = DashboardViewModel(users, plans, favorites, weights).state.value.profiles.single()
+
+        assertNull(unread.weights)
+        assertSame(refusal, unread.weightsError)
+        assertNotNull(unread.target)
+    }
+
+    @Test
+    fun `a weight typed in the account's unit is logged in kilograms, empties the field and is the newest, and one out of bounds is said and not sent`() {
+        val users = users().also { coEvery { it.me() } returns account("lb") }
+        coEvery { weights.entries(ala.id, any()) } returns listOf(earlier)
+        val today = logged.copy(kg = 81.65)
+        coEvery { weights.log(ala.id, 81.65) } returns today
+        val model = DashboardViewModel(users, plans, favorites, weights)
+
+        model.typeWeight(ala.id, "1000")
+        model.logWeight(ala.id)
+
+        assertEquals(WeightLog(typed = "1000", problem = WeightProblem.OutOfBounds), model.state.value.weightLogs[ala.id])
+        coVerify(exactly = 0) { weights.log(any(), any()) }
+
+        model.typeWeight(ala.id, "180,0")
+        model.logWeight(ala.id)
+
+        coVerify { weights.log(ala.id, 81.65) }
+        assertEquals(WeightLog(), model.state.value.weightLogs[ala.id])
+        assertEquals(listOf(today, earlier), model.state.value.profiles.single().weights)
+    }
+
+    @Test
+    fun `a weight the API refuses keeps what was typed, with the reason`() {
+        val users = users().also { coEvery { it.me() } returns account("kg") }
+        val refusal = ApiException(404, "PROFILE_NOT_FOUND", "Profile not found.")
+        coEvery { weights.log(ala.id, 80.2) } throws refusal
+        val model = DashboardViewModel(users, plans, favorites, weights)
+
+        model.typeWeight(ala.id, "80.2")
+        model.logWeight(ala.id)
+
+        assertEquals(WeightLog(typed = "80.2", problem = WeightProblem.LogFailed(refusal)), model.state.value.weightLogs[ala.id])
+        assertEquals(emptyList<WeightEntry>(), model.state.value.profiles.single().weights)
+    }
+
+    @Test
+    fun `the newest weight is taken back, then the one before it, and a refusal is said on the card`() {
+        coEvery { weights.entries(ala.id, any()) } returns listOf(logged, earlier)
+        coEvery { weights.delete(logged.id) } just runs
+        val gone = ApiException(404, "WEIGHT_ENTRY_NOT_FOUND", "Weight entry not found.")
+        coEvery { weights.delete(earlier.id) } throws gone
+        val model = DashboardViewModel(users(), plans, favorites, weights)
+
+        model.removeLatestWeight(ala.id)
+
+        coVerify { weights.delete(logged.id) }
+        assertEquals(listOf(earlier), model.state.value.profiles.single().weights)
+
+        model.removeLatestWeight(ala.id)
+
+        coVerify { weights.delete(earlier.id) }
+        assertEquals(WeightLog(problem = WeightProblem.RemoveFailed(gone)), model.state.value.weightLogs[ala.id])
+        assertEquals(listOf(earlier), model.state.value.profiles.single().weights)
     }
 }

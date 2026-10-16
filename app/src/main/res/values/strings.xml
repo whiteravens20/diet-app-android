@@ -621,6 +621,27 @@
     <string name="favorite_sets_apply_confirm">Apply</string>
     <string name="favorite_sets_err_apply">Could not apply the set.</string>
 
+    <!-- Weight log -->
+    <string name="weight_title">Weight log</string>
+    <string name="weight_today">Today\'s weight (%1$s)</string>
+    <string name="weight_log">Log</string>
+    <string name="weight_logging">Logging…</string>
+    <string name="weight_log_failed">Could not log weight.</string>
+    <string name="weight_range">Enter a weight between %1$s and %2$s.</string>
+    <string name="weight_reference_hint">Registered weight: %1$s</string>
+    <string name="weight_target_hint">Registered weight: %1$s · working towards %2$s</string>
+    <string name="weight_reference_label">registered</string>
+    <string name="weight_target_label">target</string>
+    <string name="weight_series_entry">Logged</string>
+    <string name="weight_series_mean">7-day average</string>
+    <string name="weight_empty">Log a weight to see your 90-day trend.</string>
+    <string name="weight_remove_latest">Remove last entry</string>
+    <string name="weight_remove_latest_label">%1$s · %2$s</string>
+    <string name="weight_remove_latest_confirm">Remove the last logged weight (%1$s · %2$s)?</string>
+    <string name="weight_remove_failed">Could not remove the weight entry.</string>
+    <string name="weight_read_failed">Could not read the weights.</string>
+    <string name="weight_chart_point">%1$s: logged %2$s, 7-day average %3$s</string>
+
     <!-- Shopping -->
     <string name="shopping_subtitle">Grouped by store section — pantry stock is already deducted.</string>
     <string name="shopping_no_profile">No profile</string>

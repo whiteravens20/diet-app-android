@@ -159,7 +159,7 @@ class ProfileFormViewModelTest {
     @Test
     fun `a new profile says whether the risk is acknowledged only when the form showed the risk`() = runTest(main) {
         coEvery { profiles.preview(any()) } returns answer
-        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3)
+        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
         val model = model()
         runCurrent()
 
@@ -189,7 +189,7 @@ class ProfileFormViewModelTest {
         val kept = json.decodeFromString<ProfileDto>(fixture("profile")).toDetails()
         coEvery { profiles.profile(kept.id) } returns kept
         coEvery { profiles.preview(any()) } returns answer
-        coEvery { profiles.update(any(), any(), any(), any()) } returns Profile(kept.id, kept.figures.name, "balanced", 5)
+        coEvery { profiles.update(any(), any(), any(), any()) } returns Profile(kept.id, kept.figures.name, "balanced", 5, kept.figures.weightKg, kept.figures.targetWeightKg)
         val model = model(kept.id)
         runCurrent()
 
@@ -211,7 +211,7 @@ class ProfileFormViewModelTest {
     @Test
     fun `the first profile goes on a step only when the step's fields hold what the API would take`() = runTest(main) {
         coEvery { profiles.preview(any()) } returns answer
-        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3)
+        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
         val model = model()
         runCurrent()
 

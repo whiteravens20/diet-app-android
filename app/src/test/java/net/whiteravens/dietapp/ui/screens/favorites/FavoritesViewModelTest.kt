@@ -37,7 +37,7 @@ class FavoritesViewModelTest {
     private val soup = MarkedRecipe("soup", "Soup", listOf("lunch"), "often", emptyList(), tags = listOf("warm"), calories = 410.0)
 
     private val users = mockk<UserRepository>().also {
-        coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3), Profile("bo", "Bo", "vegan", 4))
+        coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null), Profile("bo", "Bo", "vegan", 4, 70.0, null))
     }
 
     private fun favorites(vararg kept: MarkedRecipe) = mockk<FavoriteRepository>().also {

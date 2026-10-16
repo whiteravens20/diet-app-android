@@ -49,8 +49,8 @@ import kotlin.math.roundToInt
 
 /**
  * Calorie target, deficit and macro split for every profile, what its plan of the moment comes to,
- * and its favourite sets — the web dashboard. A plan opens on [onOpenPlan]; a plan is made for a
- * profile on [onNewPlan]; the recipe library, where favourites are marked, is [onRecipes].
+ * its weights and its favourite sets — the web dashboard. A plan opens on [onOpenPlan]; a plan is
+ * made for a profile on [onNewPlan]; the recipe library, where favourites are marked, is [onRecipes].
  */
 @Composable
 fun DashboardScreen(
@@ -114,7 +114,21 @@ fun DashboardScreen(
             }
             state.profiles.forEach { stats ->
                 item(key = stats.profile.id) {
-                    ProfileSummary(stats, onOpenPlan, onNewPlan = { onNewPlan(stats.profile.id) }) {
+                    ProfileSummary(
+                        stats,
+                        onOpenPlan,
+                        onNewPlan = { onNewPlan(stats.profile.id) },
+                        weight = {
+                            WeightCard(
+                                stats,
+                                unit = state.unit,
+                                log = state.weightLogs[stats.profile.id] ?: DashboardViewModel.WeightLog(),
+                                onType = { viewModel.typeWeight(stats.profile.id, it) },
+                                onLog = { viewModel.logWeight(stats.profile.id) },
+                                onRemoveLatest = { viewModel.removeLatestWeight(stats.profile.id) },
+                            )
+                        },
+                    ) {
                         FavoriteSetsCard(
                             stats,
                             deleting = state.deletingSet,
@@ -133,7 +147,13 @@ fun DashboardScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (planId: String) -> Unit, onNewPlan: () -> Unit, sets: @Composable () -> Unit) {
+private fun ProfileSummary(
+    stats: DashboardViewModel.ProfileStats,
+    onOpenPlan: (planId: String) -> Unit,
+    onNewPlan: () -> Unit,
+    weight: @Composable () -> Unit,
+    sets: @Composable () -> Unit,
+) {
     val profile = stats.profile
     val target = stats.target
     val kcal = stringResource(R.string.unit_kcal)
@@ -238,6 +258,7 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (
             }
         }
 
+        weight()
         sets()
     }
 }

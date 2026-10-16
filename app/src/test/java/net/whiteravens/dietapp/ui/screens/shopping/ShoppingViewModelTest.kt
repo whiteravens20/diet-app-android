@@ -44,7 +44,7 @@ class ShoppingViewModelTest {
     private val early = list("early", "2026-10-13", "2026-10-15", made = "12")
     private val later = list("later", "2026-10-18", "2026-10-19", made = "11")
 
-    private val users = mockk<UserRepository>().also { coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3)) }
+    private val users = mockk<UserRepository>().also { coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null)) }
     private val plans = mockk<MealPlanRepository>().also {
         coEvery { it.cachedPlans(any()) } returns null
         coEvery { it.plans(any(), any(), any()) } returns
