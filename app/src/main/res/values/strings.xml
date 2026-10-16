@@ -715,8 +715,14 @@
     <string name="account_theme_light">Light</string>
     <string name="account_theme_dark">Dark</string>
     <string name="account_theme_system">System</string>
+    <string name="account_weight_unit">Weight unit</string>
+    <string name="account_weight_unit_by_region">By where I am</string>
+    <string name="account_weight_unit_kg">Kilograms</string>
+    <string name="account_weight_unit_lb">Pounds</string>
+    <string name="account_weight_unit_hint">The unit body weights are shown and typed in, on the dashboard and in a profile. “By where I am” goes by your phone\'s settings: pounds in the countries that weigh in them, kilograms everywhere else.</string>
+    <string name="account_weight_unit_failed">Could not save the unit.</string>
     <string name="account_app_version">App version</string>
-    <string name="account_settings_hint">Account settings, preferences and diet profiles are managed in the web app.</string>
+    <string name="account_settings_hint">The account\'s other settings are changed in the web app.</string>
     <string name="account_sign_out">Sign out</string>
 
     <!-- Enum labels (platform wire values) -->

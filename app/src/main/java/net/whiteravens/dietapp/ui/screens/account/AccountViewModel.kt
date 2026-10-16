@@ -23,7 +23,7 @@ import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
-/** Session account details, the confirmation mail sent again, the server setting and sign-out. */
+/** Session account details, the confirmation mail sent again, the unit weights are shown in, the server setting and sign-out. */
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val users: UserRepository,
@@ -42,7 +42,17 @@ class AccountViewModel @Inject constructor(
         /** The mail that confirms the address was sent again. */
         val resent: Boolean = false,
         val resendError: Throwable? = null,
-    )
+        /** The unit chosen and on its way to the API, shown at once; null while none is. */
+        val choosing: UnitChoice? = null,
+        val unitError: Throwable? = null,
+    ) {
+        /** The unit weights are shown in as the account has it, or as it was just chosen: `kg`, `lb`, or null for where the phone is. */
+        val weightUnit: String?
+            get() = if (choosing != null) choosing.unit else user?.weightUnit
+    }
+
+    /** A unit chosen: `kg`, `lb`, or null to go by where the phone is. */
+    data class UnitChoice(val unit: String?)
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -93,6 +103,18 @@ class AccountViewModel @Inject constructor(
             attempt { users.resendVerification() }
                 .onSuccess { _state.update { it.copy(resending = false, resent = true) } }
                 .onFailure { e -> _state.update { it.copy(resending = false, resendError = e) } }
+        }
+    }
+
+    /** Chooses the unit the account's weights are shown and typed in; null gives the choice back to where the phone is. */
+    fun chooseWeightUnit(unit: String?) {
+        val state = _state.value
+        if (state.user == null || state.choosing != null || unit == state.weightUnit) return
+        _state.update { it.copy(choosing = UnitChoice(unit), unitError = null) }
+        viewModelScope.launch {
+            attempt { users.chooseWeightUnit(unit) }
+                .onSuccess { saved -> _state.update { it.copy(user = saved, choosing = null) } }
+                .onFailure { e -> _state.update { it.copy(choosing = null, unitError = e) } }
         }
     }
 

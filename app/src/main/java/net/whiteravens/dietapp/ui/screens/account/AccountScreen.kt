@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -47,7 +50,7 @@ import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
 import java.util.Locale
 
-/** Account overview + sign-out. Settings editing stays on the web for now. */
+/** Account overview, the unit weights are shown in, and sign-out. The other settings are changed on the web for now. */
 @Composable
 fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -170,6 +173,16 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
                         color = MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.padding(vertical = 10.dp),
                     )
+                    WeightUnitChoice(
+                        chosen = state.weightUnit,
+                        saving = state.choosing != null,
+                        failed = state.unitError,
+                        onChoose = viewModel::chooseWeightUnit,
+                    )
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(vertical = 10.dp),
+                    )
                     ServerRow(serverUrl, onEdit = { showServerDialog = true })
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant,
@@ -205,6 +218,49 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
             } else {
                 Text(stringResource(R.string.account_sign_out))
             }
+        }
+    }
+}
+
+/**
+ * The unit body weights are shown and typed in, as the web's settings choose it: by where the phone
+ * is, which is what an account that never chose goes by, kilograms or pounds. [chosen] is `kg`, `lb`,
+ * or null for where the phone is.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WeightUnitChoice(chosen: String?, saving: Boolean, failed: Throwable?, onChoose: (String?) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            stringResource(R.string.account_weight_unit),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                null to R.string.account_weight_unit_by_region,
+                "kg" to R.string.account_weight_unit_kg,
+                "lb" to R.string.account_weight_unit_lb,
+            ).forEach { (unit, label) ->
+                FilterChip(
+                    selected = chosen == unit,
+                    onClick = { onChoose(unit) },
+                    label = { Text(stringResource(label)) },
+                    enabled = !saving,
+                )
+            }
+        }
+        Text(
+            stringResource(R.string.account_weight_unit_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        failed?.let {
+            Text(
+                "${stringResource(R.string.account_weight_unit_failed)} ${errorMessage(it)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }

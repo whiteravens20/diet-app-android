@@ -6,8 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,13 +22,20 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.yield
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.repository.toDomain
+import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.SessionUser
+import net.whiteravens.dietapp.testing.fixture
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -93,5 +102,33 @@ class AccountViewModelTest {
         testScheduler.advanceUntilIdle()
 
         assertEquals("https://new.example.test/api/", saved)
+    }
+
+    @Test
+    fun `the unit chosen for weights is shown at once and kept as the API answers it, and one refused goes back with the reason`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val json = AppModule.json()
+        val users = mockk<UserRepository>()
+        coEvery { users.me() } returns json.decodeFromString<SessionUserDto>(fixture("users-me")).toDomain()
+        val answer = CompletableDeferred<SessionUser>()
+        coEvery { users.chooseWeightUnit("lb") } coAnswers { answer.await() }
+        val model = AccountViewModel(users, mockk(), servers(), instance(), this)
+        assertNull(model.state.value.weightUnit)
+
+        model.chooseWeightUnit("lb")
+        assertEquals("lb", model.state.value.weightUnit)
+        answer.complete(json.decodeFromString<SessionUserDto>(fixture("users-me-in-pounds")).toDomain())
+
+        assertEquals("lb", model.state.value.user?.weightUnit)
+        assertNull(model.state.value.choosing)
+        model.chooseWeightUnit("lb")
+        coVerify(exactly = 1) { users.chooseWeightUnit("lb") }
+
+        val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
+        coEvery { users.chooseWeightUnit(null) } throws refusal
+        model.chooseWeightUnit(null)
+
+        assertEquals("lb", model.state.value.weightUnit)
+        assertSame(refusal, model.state.value.unitError)
     }
 }

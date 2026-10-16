@@ -175,6 +175,10 @@ data class UpdateUserSettingsRequest(
     val aiMode: String? = null,
 )
 
+/** PATCH `/users/me` with the unit the account's weights are shown in: `kg`, `lb`, or null, sent as null, to go by where the phone is. */
+@Serializable
+data class WeightUnitRequest(val weightUnit: String?)
+
 @Serializable
 data class ChangePasswordRequest(val currentPassword: String, val newPassword: String)
 

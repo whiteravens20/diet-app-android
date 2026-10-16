@@ -772,8 +772,14 @@
     <string name="account_theme_light">Jasny</string>
     <string name="account_theme_dark">Ciemny</string>
     <string name="account_theme_system">Systemowy</string>
+    <string name="account_weight_unit">Jednostka wagi</string>
+    <string name="account_weight_unit_by_region">Według mojego regionu</string>
+    <string name="account_weight_unit_kg">Kilogramy</string>
+    <string name="account_weight_unit_lb">Funty</string>
+    <string name="account_weight_unit_hint">Jednostka, w której waga ciała jest pokazywana i wpisywana, na pulpicie i w profilu. „Według mojego regionu” kieruje się ustawieniami telefonu: funty w krajach, w których się ich używa, kilogramy wszędzie indziej.</string>
+    <string name="account_weight_unit_failed">Nie udało się zapisać jednostki.</string>
     <string name="account_app_version">Wersja aplikacji</string>
-    <string name="account_settings_hint">Ustawienia konta, preferencje i profile dietetyczne zarządzane są w aplikacji webowej.</string>
+    <string name="account_settings_hint">Pozostałe ustawienia konta zmienia się w aplikacji webowej.</string>
     <string name="account_sign_out">Wyloguj się</string>
 
     <!-- Enum labels (platform wire values) -->

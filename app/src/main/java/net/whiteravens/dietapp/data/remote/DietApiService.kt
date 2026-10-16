@@ -27,6 +27,10 @@ interface DietApiService {
     @PATCH("users/me")
     suspend fun updateSettings(@Body body: UpdateUserSettingsRequest): SessionUserDto
 
+    /** Chooses the unit the account's weights are shown and typed in; null gives the choice back to where the phone is. */
+    @PATCH("users/me")
+    suspend fun chooseWeightUnit(@Body body: WeightUnitRequest): SessionUserDto
+
     /** Sends the mail that confirms the account's address again; answered 202. */
     @POST("users/me/email/resend-verification")
     suspend fun resendVerification()
