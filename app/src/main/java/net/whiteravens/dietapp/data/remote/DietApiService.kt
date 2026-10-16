@@ -39,9 +39,28 @@ interface DietApiService {
 
     // ── Favourites ──────────────────────────────────────────────────────────
 
-    /** The recipes a profile marked, each with its recipe. */
+    /**
+     * The recipes a profile marked, each with its recipe: narrowed to those whose title holds
+     * [search], those for [mealType], those marked as [sentiment] and those under [tag], in the
+     * order [sort] names (`newest`, `title`, `calories`; the mark made last first where it is left out).
+     */
     @GET("favorites")
-    suspend fun favorites(@Query("profileId") profileId: String): List<MarkedRecipeDto>
+    suspend fun favorites(
+        @Query("profileId") profileId: String,
+        @Query("search") search: String? = null,
+        @Query("mealType") mealType: String? = null,
+        @Query("sentiment") sentiment: String? = null,
+        @Query("tag") tag: String? = null,
+        @Query("sort") sort: String? = null,
+    ): List<MarkedRecipeDto>
+
+    /** Marks a recipe for a profile; marking it again replaces what was said of it before. */
+    @POST("favorites")
+    suspend fun markRecipe(@Body body: AddFavoriteRequest): FavoriteMarkDto
+
+    /** Takes a profile's mark off a recipe; 404 `FAVORITE_NOT_FOUND` where there was none. */
+    @DELETE("favorites/{profileId}/{recipeId}")
+    suspend fun unmarkRecipe(@Path("profileId") profileId: String, @Path("recipeId") recipeId: String)
 
     @GET("favorite-sets")
     suspend fun favoriteSets(@Query("profileId") profileId: String): List<FavoriteSetDto>

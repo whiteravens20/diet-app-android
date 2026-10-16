@@ -97,7 +97,7 @@ class PlanDetailViewModelTest {
     }
 
     private val liked = listOf(
-        MarkedRecipe("oats", "Oats", listOf("breakfast"), "marked", emptyList()),
+        MarkedRecipe("oats", "Oats", listOf("breakfast"), "favorite", emptyList()),
         MarkedRecipe("liver", "Liver", listOf("lunch"), "avoid", emptyList()),
     )
     private val favorites = mockk<FavoriteRepository>().also { coEvery { it.marked(plan.profileId) } returns liked }

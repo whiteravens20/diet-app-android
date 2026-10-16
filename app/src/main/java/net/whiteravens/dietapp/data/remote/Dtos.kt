@@ -791,7 +791,7 @@ data class DayOverrideDto(
 @Serializable
 data class RelaxationNeededDto(val needs: List<String>, val meals: List<RelaxedMealDto>)
 
-/** A recipe a profile marked (`marked`, `often` or `avoid`), with the recipe itself. */
+/** A recipe a profile marked (`favorite`, `often` or `avoid`) under tags of its own, with the recipe itself. */
 @Serializable
 data class MarkedRecipeDto(
     val id: String,
@@ -800,6 +800,14 @@ data class MarkedRecipeDto(
     val markedAt: String,
     val recipe: RecipeDto,
 )
+
+/** POST `/favorites`: how a profile marks a recipe, and under which of its tags. */
+@Serializable
+data class AddFavoriteRequest(val profileId: String, val recipeId: String, val tags: List<String>, val sentiment: String)
+
+/** A mark as the API keeps it: what marking a recipe answers. */
+@Serializable
+data class FavoriteMarkDto(val id: String, val profileId: String, val recipeId: String, val tags: List<String>, val sentiment: String)
 
 /** A profile's favourite set: a recipe for each meal it names. */
 @Serializable

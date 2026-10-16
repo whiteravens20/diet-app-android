@@ -103,7 +103,10 @@ internal fun FormField(
     )
 }
 
-/** A choice among a few, as the web's select is: a field that opens its options. */
+/**
+ * A choice among a few, as the web's select is: a field that opens its options, where [enabled];
+ * [description] says what it chooses where the label alone does not, as the web's `aria-label` does.
+ */
 @Composable
 internal fun <T> ChoiceField(
     label: String,
@@ -113,21 +116,25 @@ internal fun <T> ChoiceField(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     hint: String? = null,
+    enabled: Boolean = true,
+    description: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = modifier.fillMaxWidth()) {
+    ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { expanded = it && enabled }, modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = optionLabel(selected),
             onValueChange = {},
             readOnly = true,
+            enabled = enabled,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             supportingText = hint?.let { { Text(it) } },
             singleLine = true,
             shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled).fillMaxWidth()
+                .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(optionLabel(option)) },

@@ -549,6 +549,50 @@
     </plurals>
     <string name="recipe_allergens">Allergens:</string>
 
+    <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
+    <string name="favorites_title">Favourites</string>
+    <string name="favorites_subhead">The recipes a profile marked: liked, eaten often, or to avoid. Tags are your own words, to find a recipe by.</string>
+    <string name="favorites_no_profile">No profile yet</string>
+    <string name="favorites_no_profile_body">Recipes are marked for a profile. Make one first.</string>
+    <string name="favorites_no_profile_cta">To the profiles</string>
+    <string name="favorites_search">Search</string>
+    <string name="favorites_search_placeholder">Recipe title…</string>
+    <string name="favorites_meal_type">Meal</string>
+    <string name="favorites_marked">Marked as</string>
+    <string name="favorites_tag">Tag</string>
+    <string name="favorites_sort">Order</string>
+    <string name="favorites_any">Any</string>
+    <string name="favorites_sentiment_favorite">Favourite</string>
+    <string name="favorites_sentiment_often">Eaten often</string>
+    <string name="favorites_sentiment_avoid">Avoid</string>
+    <string name="favorites_sort_newest">Marked last first</string>
+    <string name="favorites_sort_title">By title</string>
+    <string name="favorites_sort_calories">Lightest first</string>
+    <string name="favorites_legend">A favourite is a recipe the planner leans towards; one that is eaten often, it leans towards more; one to avoid is never planned, swapped in or suggested.</string>
+    <plurals name="favorites_count">
+        <item quantity="one">%d recipe</item>
+        <item quantity="other">%d recipes</item>
+    </plurals>
+    <string name="favorites_facts">%1$s kcal a serving · %2$s</string>
+    <string name="favorites_marked_as">How %1$s is marked</string>
+    <string name="favorites_remove">Remove</string>
+    <string name="favorites_remove_of">Remove the mark of %1$s</string>
+    <string name="favorites_tags_of">Tags of %1$s</string>
+    <string name="favorites_remove_tag">Remove the tag %1$s</string>
+    <string name="favorites_new_tag">New tag</string>
+    <string name="favorites_new_tag_of">A new tag for %1$s</string>
+    <string name="favorites_add_tag">Add tag</string>
+    <plurals name="favorites_tags_full">
+        <item quantity="one">A recipe holds at most %1$d tag.</item>
+        <item quantity="other">A recipe holds at most %1$d tags.</item>
+    </plurals>
+    <string name="favorites_none_filtered">No marked recipe matches.</string>
+    <string name="favorites_empty_title">Nothing marked yet</string>
+    <string name="favorites_empty_body">Open a recipe and mark it as a favourite, and it is listed here.</string>
+    <string name="favorites_empty_cta">To the recipes</string>
+    <string name="favorites_err_save">Could not save the mark.</string>
+    <string name="favorites_err_remove">Could not remove the mark.</string>
+
     <!-- Shopping -->
     <string name="shopping_subtitle">Grouped by store section — pantry stock is already deducted.</string>
     <string name="shopping_no_profile">No profile</string>

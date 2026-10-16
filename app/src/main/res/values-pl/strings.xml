@@ -598,6 +598,54 @@
     </plurals>
     <string name="recipe_allergens">Alergeny:</string>
 
+    <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
+    <string name="favorites_title">Ulubione</string>
+    <string name="favorites_subhead">Przepisy oznaczone przez profil: lubiane, jedzone często albo do unikania. Tagi to Twoje własne słowa, po których znajdziesz przepis.</string>
+    <string name="favorites_no_profile">Nie ma jeszcze profilu</string>
+    <string name="favorites_no_profile_body">Przepisy oznacza się dla profilu. Najpierw utwórz profil.</string>
+    <string name="favorites_no_profile_cta">Do profili</string>
+    <string name="favorites_search">Szukaj</string>
+    <string name="favorites_search_placeholder">Tytuł przepisu…</string>
+    <string name="favorites_meal_type">Posiłek</string>
+    <string name="favorites_marked">Oznaczone jako</string>
+    <string name="favorites_tag">Tag</string>
+    <string name="favorites_sort">Kolejność</string>
+    <string name="favorites_any">Dowolne</string>
+    <string name="favorites_sentiment_favorite">Ulubiony</string>
+    <string name="favorites_sentiment_often">Jedzony często</string>
+    <string name="favorites_sentiment_avoid">Do unikania</string>
+    <string name="favorites_sort_newest">Najpierw ostatnio oznaczone</string>
+    <string name="favorites_sort_title">Według tytułu</string>
+    <string name="favorites_sort_calories">Najpierw najlżejsze</string>
+    <string name="favorites_legend">Po ulubiony przepis planer sięga chętniej, a po jedzony często — jeszcze chętniej; przepis do unikania nigdy nie jest planowany, proponowany przy zamianach ani sugerowany.</string>
+    <plurals name="favorites_count">
+        <item quantity="one">%d przepis</item>
+        <item quantity="few">%d przepisy</item>
+        <item quantity="many">%d przepisów</item>
+        <item quantity="other">%d przepisu</item>
+    </plurals>
+    <string name="favorites_facts">%1$s kcal na porcję · %2$s</string>
+    <string name="favorites_marked_as">Jak oznaczony jest przepis %1$s</string>
+    <string name="favorites_remove">Usuń</string>
+    <string name="favorites_remove_of">Usuń oznaczenie przepisu %1$s</string>
+    <string name="favorites_tags_of">Tagi przepisu %1$s</string>
+    <string name="favorites_remove_tag">Usuń tag %1$s</string>
+    <string name="favorites_new_tag">Nowy tag</string>
+    <string name="favorites_new_tag_of">Nowy tag dla przepisu %1$s</string>
+    <string name="favorites_add_tag">Dodaj tag</string>
+    <plurals name="favorites_tags_full">
+        <item quantity="one">Przepis ma najwyżej %1$d tag.</item>
+        <item quantity="few">Przepis ma najwyżej %1$d tagi.</item>
+        <item quantity="many">Przepis ma najwyżej %1$d tagów.</item>
+        <item quantity="other">Przepis ma najwyżej %1$d tagu.</item>
+    </plurals>
+    <string name="favorites_none_filtered">Żaden oznaczony przepis nie pasuje.</string>
+    <string name="favorites_empty_title">Nic jeszcze nie oznaczono</string>
+    <string name="favorites_empty_body">Otwórz przepis i oznacz go jako ulubiony, a pojawi się tutaj.</string>
+    <string name="favorites_empty_cta">Do przepisów</string>
+    <string name="favorites_err_save">Nie udało się zapisać oznaczenia.</string>
+    <string name="favorites_err_remove">Nie udało się usunąć oznaczenia.</string>
+
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
     <string name="shopping_no_profile">Brak profilu</string>

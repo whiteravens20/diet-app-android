@@ -61,7 +61,7 @@ class NewPlanViewModelTest {
     private val users = mockk<UserRepository>().also { coEvery { it.calorieTarget(profile.id) } returns target }
     private val favorites = mockk<FavoriteRepository>().also {
         coEvery { it.marked(profile.id) } returns listOf(
-            MarkedRecipe("oats", "Oats", listOf("breakfast"), "marked", emptyList()),
+            MarkedRecipe("oats", "Oats", listOf("breakfast"), "favorite", emptyList()),
             MarkedRecipe("liver", "Liver", listOf("lunch"), "avoid", emptyList()),
         )
         coEvery { it.sets(profile.id) } returns listOf(FavoriteSet("s", "Weekday", mapOf("breakfast" to "oats")))

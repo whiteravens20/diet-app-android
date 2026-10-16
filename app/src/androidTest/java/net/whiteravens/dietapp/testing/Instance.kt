@@ -173,6 +173,32 @@ object Instance {
         return recipe.getString("title") to recipe.getJSONArray("ingredients").getJSONObject(0).getString("name")
     }
 
+    /** The first [count] recipes of the catalogue in [language]: their ids and titles. */
+    fun recipes(account: Account, count: Int, language: String): List<Pair<String, String>> {
+        val items = call("GET", "recipes?page=1", token = account.accessToken, language = language).getJSONArray("items")
+        return (0 until minOf(count, items.length())).map { items.getJSONObject(it).let { recipe -> recipe.getString("id") to recipe.getString("title") } }
+    }
+
+    /** Marks [recipeId] for [profileId] as [sentiment], under [tags], as the web application marks one. */
+    fun mark(account: Account, profileId: String, recipeId: String, sentiment: String, tags: List<String> = emptyList()) {
+        call(
+            "POST",
+            "favorites",
+            JSONObject().put("profileId", profileId).put("recipeId", recipeId).put("sentiment", sentiment).put("tags", JSONArray(tags)),
+            token = account.accessToken,
+            expect = 201,
+        )
+    }
+
+    /** The recipes [profileId] marked, by the recipe's id: how each is marked, and its tags. */
+    fun marks(account: Account, profileId: String): Map<String, Pair<String, List<String>>> {
+        val list = JSONArray(send("GET", "favorites?profileId=$profileId", null, account.accessToken, 200, null))
+        return (0 until list.length()).map { list.getJSONObject(it) }.associate { mark ->
+            val tags = mark.getJSONArray("tags")
+            mark.getJSONObject("recipe").getString("id") to (mark.getString("sentiment") to (0 until tags.length()).map(tags::getString))
+        }
+    }
+
     /** The ids of the shopping lists of [planId], the newest first. */
     fun shoppingListIds(account: Account, planId: String): List<String> {
         val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, null))

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
 import net.whiteravens.dietapp.ui.navigation.CalculatorRoute
+import net.whiteravens.dietapp.ui.navigation.FavoritesRoute
 import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
 
 /** A place of the app the bottom bar has no room for, as the "More" tab lists it. */
@@ -37,6 +39,7 @@ val moreEntries: List<MoreEntry>
     get() = listOf(
         MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
         MoreEntry(CalculatorRoute, AppIcons.Target, R.string.calculator_title),
+        MoreEntry(FavoritesRoute, Icons.Default.Star, R.string.favorites_title),
         MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
     )
 

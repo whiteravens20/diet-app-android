@@ -61,6 +61,7 @@ import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
+import net.whiteravens.dietapp.ui.screens.favorites.FavoritesScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
@@ -88,6 +89,7 @@ import kotlin.reflect.KClass
 @Serializable object ProfilesRoute
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object CalculatorRoute
+@Serializable object FavoritesRoute
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
 
 /**
@@ -276,6 +278,19 @@ private fun MainScaffold(serverVersion: ServerVersion) {
             }
             composable<CalculatorRoute> {
                 CalculatorScreen(onBack = { navController.popBackStack() }, onProfiles = { navController.navigate(ProfilesRoute) })
+            }
+            composable<FavoritesRoute> {
+                FavoritesScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                    onRecipes = {
+                        navController.navigate(RecipesRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onProfiles = { navController.navigate(ProfilesRoute) },
+                )
             }
         }
     }

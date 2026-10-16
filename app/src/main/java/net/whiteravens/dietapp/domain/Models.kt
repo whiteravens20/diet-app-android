@@ -566,6 +566,40 @@ data class RecipeFilter(
 }
 
 /**
+ * How a profile's marked recipes are narrowed and put in order: by words of the title, a meal, how
+ * they are marked (`favorite` | `often` | `avoid`) and a tag of the profile's; the mark made last
+ * first (`newest`), by title (`title`), or the lightest serving first (`calories`).
+ */
+data class FavoriteFilter(
+    val search: String = "",
+    val mealType: String? = null,
+    val sentiment: String? = null,
+    val tag: String? = null,
+    val sort: String = NEWEST,
+) {
+    /** Whether anything narrows the list; the order does not. */
+    val narrowed: Boolean get() = search.isNotBlank() || mealType != null || sentiment != null || tag != null
+
+    companion object {
+        /** The order the API lists marks in where none is asked for. */
+        const val NEWEST = "newest"
+
+        /** The orders the API takes, as the web lists them. */
+        val SORTS = listOf(NEWEST, "title", "calories")
+
+        /** The ways a profile marks a recipe, as the web lists them. */
+        val SENTIMENTS = listOf("favorite", "often", "avoid")
+
+        /** The longest the words searched for may be. */
+        const val SEARCH_LENGTH = 200
+
+        /** The most tags a marked recipe holds, and the longest a tag is: the API's own bounds. */
+        const val MOST_TAGS = 20
+        const val TAG_LENGTH = 40
+    }
+}
+
+/**
  * The choices a model writes a recipe of one's own from, for [profileId]: each part left null is the
  * model's to choose. The profile's allergens are always left out; its excluded ingredients where
  * [respectExclusions], and its favourite ingredients are put first where [useFavoriteIngredients].
