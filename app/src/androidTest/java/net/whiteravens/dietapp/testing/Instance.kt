@@ -305,6 +305,11 @@ object Instance {
         language: String? = null,
     ): JSONObject = JSONObject(send(method, path, body, token, expect, language))
 
+    /**
+     * Asks the instance, and waits as a person would where it says to: every test signs up from the
+     * same address, which the instance lets open ten accounts a minute, and a quick run of tests
+     * opens more. A refusal for that is asked again after the wait it names, a few times.
+     */
     private fun send(method: String, path: String, body: JSONObject?, token: String?, expect: Int, language: String?): String {
         val request = Request.Builder()
             .url(BuildConfig.API_BASE_URL + path)
@@ -313,10 +318,20 @@ object Instance {
             .apply { if (language != null) header("Accept-Language", language) }
             .header("X-Client-Date", LocalDate.now().toString())
             .build()
-        client.newCall(request).execute().use { response ->
-            val text = response.body.string()
-            check(response.code == expect) { "$method $path answered ${response.code}: $text" }
-            return text
+        repeat(HELD_UP_TRIES) {
+            client.newCall(request).execute().use { response ->
+                val text = response.body.string()
+                if (response.code == 429 && expect != 429) {
+                    Thread.sleep(1_000L * (response.header("Retry-After")?.toLongOrNull() ?: 10L).coerceIn(1L, 90L))
+                    return@repeat
+                }
+                check(response.code == expect) { "$method $path answered ${response.code}: $text" }
+                return text
+            }
         }
+        error("$method $path was held up $HELD_UP_TRIES times")
     }
+
+    /** How many times a request the instance holds up is asked. */
+    private const val HELD_UP_TRIES = 4
 }
