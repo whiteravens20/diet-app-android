@@ -489,11 +489,17 @@
         <item quantity="other">Filters: %d at work</item>
     </plurals>
     <string name="recipes_filters_apply">Show recipes</string>
-    <string name="recipes_minutes">%1$d min</string>
-    <string name="recipes_servings">%1$d servings</string>
     <string name="recipes_nutrition_per_serving">Nutrition per serving</string>
     <string name="recipes_ingredients">Ingredients</string>
     <string name="recipes_steps">Steps</string>
+    <string name="recipe_cuisine">%1$s cuisine</string>
+    <string name="recipe_source">From %1$s</string>
+    <string name="recipe_source_licence">Licence: %1$s</string>
+    <plurals name="recipe_serving_meta">
+        <item quantity="one">Makes %1$d serving · %2$s min prep · %3$s min cook</item>
+        <item quantity="other">Makes %1$d servings · %2$s min prep · %3$s min cook</item>
+    </plurals>
+    <string name="recipe_allergens">Allergens:</string>
 
     <!-- Shopping -->
     <string name="shopping_subtitle">Grouped by store section — pantry stock is already deducted.</string>

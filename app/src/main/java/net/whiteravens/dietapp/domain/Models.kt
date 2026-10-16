@@ -503,13 +503,24 @@ data class Recipe(
     val dietTags: List<String>,
     val ingredients: List<RecipeIngredient>,
     val steps: List<String>,
-    val totalMinutes: Int,
+    val prepMinutes: Int,
+    val cookMinutes: Int,
     /** `easy` | `medium` | `hard`. */
     val difficulty: String,
     val nutritionPerServing: Nutrition,
     /** What a model had to do with the recipe: wrote it, or changed it; null where nothing. */
     val byModel: ModelPart?,
-)
+    /** The kitchen the recipe belongs to, where it belongs to one. */
+    val cuisine: String?,
+    val allergens: List<String>,
+    /** Where a recipe taken in from somewhere else is from; null for one written here. */
+    val source: RecipeSource?,
+) {
+    val totalMinutes: Int get() = prepMinutes + cookMinutes
+}
+
+/** Where a recipe taken in from somewhere else is from ([url], where there is one) and the licence it may be passed on under. */
+data class RecipeSource(val url: String?, val license: String)
 
 /**
  * How the recipe library is narrowed; every part left empty leaves it open. What a profile marked

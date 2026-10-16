@@ -530,11 +530,19 @@
         <item quantity="other">Filtry: %d aktywnego</item>
     </plurals>
     <string name="recipes_filters_apply">Pokaż przepisy</string>
-    <string name="recipes_minutes">%1$d min</string>
-    <string name="recipes_servings">Porcje: %1$d</string>
     <string name="recipes_nutrition_per_serving">Wartości odżywcze na porcję</string>
     <string name="recipes_ingredients">Składniki</string>
     <string name="recipes_steps">Kroki</string>
+    <string name="recipe_cuisine">Kuchnia: %1$s</string>
+    <string name="recipe_source">Źródło: %1$s</string>
+    <string name="recipe_source_licence">Licencja: %1$s</string>
+    <plurals name="recipe_serving_meta">
+        <item quantity="one">Wychodzi %1$d porcja · %2$s min przygotowania · %3$s min gotowania</item>
+        <item quantity="few">Wychodzą %1$d porcje · %2$s min przygotowania · %3$s min gotowania</item>
+        <item quantity="many">Wychodzi %1$d porcji · %2$s min przygotowania · %3$s min gotowania</item>
+        <item quantity="other">Wychodzi %1$d porcji · %2$s min przygotowania · %3$s min gotowania</item>
+    </plurals>
+    <string name="recipe_allergens">Alergeny:</string>
 
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>

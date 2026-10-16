@@ -39,7 +39,8 @@ class RecipesViewModelTest {
     @After
     fun reset() = Dispatchers.resetMain()
 
-    private fun recipe(id: String) = Recipe(id, id, "", 2, listOf("lunch"), emptyList(), emptyList(), emptyList(), 20, "easy", Nutrition(500.0, 30.0, 20.0, 50.0), byModel = null)
+    private fun recipe(id: String) =
+        Recipe(id, id, "", 2, listOf("lunch"), emptyList(), emptyList(), emptyList(), 10, 10, "easy", Nutrition(500.0, 30.0, 20.0, 50.0), byModel = null, cuisine = null, allergens = emptyList(), source = null)
 
     private val users = mockk<UserRepository>().also {
         coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3))

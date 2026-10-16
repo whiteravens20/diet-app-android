@@ -4,6 +4,8 @@ package net.whiteravens.dietapp.ui.screens.recipes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,22 +25,40 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.domain.RecipeSource
+import net.whiteravens.dietapp.ui.common.MARK
+import net.whiteravens.dietapp.ui.common.allergenLabel
 import net.whiteravens.dietapp.ui.common.amountLabel
+import net.whiteravens.dietapp.ui.common.cuisineLabel
+import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.difficultyLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.modelPartText
 import kotlin.math.roundToInt
 
 /** Full recipe: meta chips, per-serving nutrition, ingredients, steps. */
@@ -97,9 +117,16 @@ private fun androidx.compose.foundation.lazy.LazyListScope.skeletonItems() {
     item { Skeleton(Modifier.fillMaxWidth().height(240.dp)) }
 }
 
+/**
+ * The recipe as the web's view has it: a model's part in it, what it is, its difficulty, meals,
+ * diets and cuisine, where it is from and under what licence, what a serving holds, how many
+ * servings it makes and how long it takes, its lines, its method and its allergens.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RecipeBody(recipe: Recipe) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        recipe.byModel?.let { AiMark(modelPartText(it), spelledOut = true) }
         if (recipe.description.isNotBlank()) {
             Text(
                 recipe.description,
@@ -108,12 +135,14 @@ private fun RecipeBody(recipe: Recipe) {
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            LabelChip(stringResource(R.string.recipes_minutes, recipe.totalMinutes))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             LabelChip(difficultyLabel(recipe.difficulty))
-            LabelChip(stringResource(R.string.recipes_servings, recipe.servings))
-            recipe.mealTypes.firstOrNull()?.let { LabelChip(mealTypeLabel(it)) }
+            recipe.mealTypes.forEach { LabelChip(mealTypeLabel(it)) }
+            recipe.dietTags.forEach { LabelChip(dietTypeLabel(it)) }
+            // The kitchen the recipe belongs to, for the recipes that belong to one.
+            recipe.cuisine?.let { LabelChip(stringResource(R.string.recipe_cuisine, cuisineLabel(it))) }
         }
+        recipe.source?.let { SourceLine(it) }
 
         AppCard {
             Text(
@@ -145,6 +174,12 @@ private fun RecipeBody(recipe: Recipe) {
                     ),
                 )
             }
+            Text(
+                pluralStringResource(R.plurals.recipe_serving_meta, recipe.servings, recipe.servings, formatNumber(recipe.prepMinutes), formatNumber(recipe.cookMinutes)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 12.dp),
+            )
         }
 
         AppCard {
@@ -196,5 +231,49 @@ private fun RecipeBody(recipe: Recipe) {
                 }
             }
         }
+
+        if (recipe.allergens.isNotEmpty()) {
+            Text(
+                buildAnnotatedString {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Medium)) { append(stringResource(R.string.recipe_allergens)) }
+                    append(" ")
+                    append(recipe.allergens.map { allergenLabel(it) }.joinToString(", "))
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
+}
+
+/**
+ * Where a recipe taken in from elsewhere is from, and the licence it is passed on under: each a
+ * link where it is an address of the web, which the browser opens; anything else is said as it is.
+ */
+@Composable
+private fun SourceLine(source: RecipeSource) {
+    val links = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
+    val from = webAddress(source.url)
+    val licence = webAddress(source.license)
+    val fromLine = stringResource(R.string.recipe_source, MARK)
+    val licenceLine = stringResource(R.string.recipe_source_licence, MARK)
+    Text(
+        buildAnnotatedString {
+            if (from != null) {
+                linked(fromLine, siteOf(from), from, links)
+                append(" · ")
+            }
+            linked(licenceLine, licence?.let(::siteOf) ?: source.license, licence, links)
+        },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** [line] with [label] in the place of [MARK], a link to [url] where there is one. */
+private fun AnnotatedString.Builder.linked(line: String, label: String, url: String?, style: TextLinkStyles) {
+    val (head, tail) = line.split(MARK, limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+    append(head)
+    if (url != null) withLink(LinkAnnotation.Url(url, style)) { append(label) } else append(label)
+    append(tail)
 }

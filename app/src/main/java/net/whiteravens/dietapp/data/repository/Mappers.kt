@@ -41,6 +41,7 @@ import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipePage
+import net.whiteravens.dietapp.domain.RecipeSource
 import net.whiteravens.dietapp.domain.RowPacks
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
@@ -115,7 +116,8 @@ fun RecipeDto.toDomain() = Recipe(
     dietTags = dietTags,
     ingredients = ingredients.map(RecipeIngredientDto::toDomain),
     steps = steps,
-    totalMinutes = prepMinutes + cookMinutes,
+    prepMinutes = prepMinutes,
+    cookMinutes = cookMinutes,
     difficulty = difficulty,
     nutritionPerServing = nutritionPerServing.toDomain(),
     byModel = when (byModel) {
@@ -123,6 +125,9 @@ fun RecipeDto.toDomain() = Recipe(
         "changed" -> ModelPart.Changed
         else -> null
     },
+    cuisine = cuisine,
+    allergens = allergens,
+    source = source?.let { RecipeSource(it.url, it.license) },
 )
 
 fun RecipeSearchPageDto.toDomain() = RecipePage(
