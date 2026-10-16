@@ -489,6 +489,53 @@
         <item quantity="other">Filters: %d at work</item>
     </plurals>
     <string name="recipes_filters_apply">Show recipes</string>
+    <string name="recipes_ai_draft">Draft with AI</string>
+    <string name="draft_title">Draft a recipe with AI</string>
+    <string name="draft_subhead">Pick the filters you care about — leave the rest blank and the AI picks freely. Allergens from your profile are always respected.</string>
+    <string name="draft_disclaimer">AI-drafted recipes can contain mistakes. Double-check the ingredients, quantities and steps before relying on the result.</string>
+    <string name="draft_diet_type">Diet type</string>
+    <string name="draft_meal_type">Meal type</string>
+    <string name="draft_cuisine">Cuisine</string>
+    <string name="draft_cooking_method">Cooking method</string>
+    <string name="draft_complexity">Complexity</string>
+    <string name="draft_any">Any</string>
+    <string name="draft_targets">Targets</string>
+    <string name="draft_kcal_target">kcal target (per serving)</string>
+    <string name="draft_prep_time_max">Max prep + cook time</string>
+    <string name="draft_profile_prefs">From this profile</string>
+    <string name="draft_use_favorites">Prefer my favourite ingredients</string>
+    <string name="draft_use_favorites_empty">Add favourites on the profile to use this.</string>
+    <plurals name="draft_use_favorites_count">
+        <item quantity="one">%1$d favourite ingredient on this profile.</item>
+        <item quantity="other">%1$d favourite ingredients on this profile.</item>
+    </plurals>
+    <string name="draft_respect_exclusions">Skip my excluded ingredients</string>
+    <string name="draft_respect_exclusions_empty">Add exclusions on the profile to use this.</string>
+    <plurals name="draft_respect_exclusions_count">
+        <item quantity="one">%1$d excluded ingredient on this profile.</item>
+        <item quantity="other">%1$d excluded ingredients on this profile.</item>
+    </plurals>
+    <plurals name="draft_allergens_respected">
+        <item quantity="one">%1$d allergen on this profile is always excluded.</item>
+        <item quantity="other">%1$d allergens on this profile are always excluded.</item>
+    </plurals>
+    <string name="draft_add_to_favorites">Add to favourites for this profile</string>
+    <string name="draft_determinism_hint">Nutrition is recomputed from the ingredient database after the draft — AI never writes calorie or macro values.</string>
+    <string name="draft_submit">Draft recipe</string>
+    <string name="draft_drafting">Drafting…</string>
+    <string name="cooking_baked">Baked</string>
+    <string name="cooking_grilled">Grilled</string>
+    <string name="cooking_pan_fried">Pan-fried</string>
+    <string name="cooking_boiled">Boiled</string>
+    <string name="cooking_steamed">Steamed</string>
+    <string name="cooking_stewed">Stewed</string>
+    <string name="cooking_raw">Raw</string>
+    <string name="cooking_no_cook">No-cook</string>
+    <string name="complexity_simple">Simple</string>
+    <string name="complexity_medium">Medium</string>
+    <string name="complexity_complex">Complex</string>
+    <string name="draft_kcal_value">%1$s kcal</string>
+    <string name="draft_minutes_value">%1$s min</string>
     <string name="recipes_nutrition_per_serving">Nutrition per serving</string>
     <string name="recipes_ingredients">Ingredients</string>
     <string name="recipes_steps">Steps</string>

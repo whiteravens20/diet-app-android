@@ -2,10 +2,12 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -60,17 +62,31 @@ class RecipesTest {
         screen.signIn(account)
         screen.openTab(text(R.string.nav_recipes))
 
+        // A recipe drafted by a model waits for a model on the account: without one the button is
+        // off and says why; with one it opens the window of choices.
+        val draft = hasText(text(R.string.recipes_ai_draft)) and hasClickAction()
+        screen.waitUntil(20_000) { screen.onAllNodes(draft).fetchSemanticsNodes().isNotEmpty() }
+        if (Instance.aiMode(account) == "none") {
+            screen.waitForText(text(R.string.ai_off_note))
+            screen.onNode(draft).assertIsNotEnabled()
+        } else {
+            screen.waitUntil(20_000) { screen.onAllNodes(draft and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            screen.onNode(draft).performScrollTo().performClick()
+            screen.waitForText(text(R.string.draft_title))
+            screen.onNodeWithText(text(R.string.common_close)).performClick()
+        }
+
         // The filters open in a window of their own and say, once applied, how many are at work.
-        screen.onNodeWithText(text(R.string.recipes_filters)).performClick()
+        screen.onNodeWithText(text(R.string.recipes_filters)).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.difficulty_easy)).performScrollTo().performClick()
         screen.keepScreenshot("recipes-the-filters")
         screen.onNodeWithText(text(R.string.recipes_filters_apply)).performScrollTo().performClick()
         screen.waitForText(plural(R.plurals.recipes_filters_on, 1, 1))
-        screen.onNodeWithText(text(R.string.recipes_clear_filters)).performClick()
+        screen.onNodeWithText(text(R.string.recipes_clear_filters)).performScrollTo().performClick()
         screen.waitForText(text(R.string.recipes_filters))
 
         // A new account has no recipes of its own.
-        screen.onNodeWithText(text(R.string.recipes_tab_mine)).performClick()
+        screen.onNodeWithText(text(R.string.recipes_tab_mine)).performScrollTo().performClick()
         screen.waitForText(text(R.string.recipes_mine_empty_title))
     }
 }

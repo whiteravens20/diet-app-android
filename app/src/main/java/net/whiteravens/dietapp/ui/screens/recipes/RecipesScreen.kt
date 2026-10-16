@@ -68,8 +68,9 @@ import kotlin.math.roundToInt
 
 /**
  * The recipe library: the shared recipes and the account's own, searched by words and narrowed by
- * every filter the API takes in a window of their own, scrolled without end; and the account's own
- * recipes in a tab of their own, each to be suggested for the shared library or deleted.
+ * every filter the API takes in a window of their own, scrolled without end; the account's own
+ * recipes in a tab of their own, each to be suggested for the shared library or deleted; and a
+ * recipe of one's own drafted by a model, which opens once it is written.
  */
 @Composable
 fun RecipesScreen(
@@ -80,6 +81,7 @@ fun RecipesScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     var filtering by rememberSaveable { mutableStateOf(false) }
+    var drafting by rememberSaveable { mutableStateOf(false) }
     // A recipe of one's own waiting for a yes: to be suggested for the shared library, or deleted.
     var submitting by rememberSaveable { mutableStateOf<String?>(null) }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
@@ -108,6 +110,16 @@ fun RecipesScreen(
             onDismiss = { filtering = false },
         )
     }
+    if (drafting) {
+        RecipeDraftDialog(
+            onDrafted = { id ->
+                drafting = false
+                viewModel.retry()
+                onOpenRecipe(id)
+            },
+            onDismiss = { drafting = false },
+        )
+    }
     submitting?.let { id ->
         Confirm(stringResource(R.string.recipes_submit_confirm), stringResource(R.string.recipes_submit), onYes = { viewModel.submit(id) }, onDone = { submitting = null })
     }
@@ -128,6 +140,8 @@ fun RecipesScreen(
                 subtitle = stringResource(R.string.recipes_subtitle),
             )
         }
+        // A recipe drafted by a model is of a profile: there is none to draft for without one.
+        if (state.profiles.isNotEmpty()) item { DraftButton(aiOn = state.aiOn, onOpen = { drafting = true }) }
         item {
             TabRow(selectedTabIndex = state.tab.ordinal) {
                 Tab(selected = !mine, onClick = { viewModel.selectTab(RecipesViewModel.Tab.LIBRARY) }, text = { Text(stringResource(R.string.recipes_tab_library)) })
@@ -266,6 +280,18 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, mine: Boolean, busy:
                 TextButton(onClick = onDelete, enabled = !busy) { Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error) }
             }
         }
+    }
+}
+
+/**
+ * The button that opens the draft of a recipe by a model. Where the account has no model to ask, it
+ * stays in its place, off, over a line that says what it waits for.
+ */
+@Composable
+private fun DraftButton(aiOn: Boolean?, onOpen: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedButton(onClick = onOpen, enabled = aiOn == true) { Text(stringResource(R.string.recipes_ai_draft)) }
+        if (aiOn == false) Text(stringResource(R.string.ai_off_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

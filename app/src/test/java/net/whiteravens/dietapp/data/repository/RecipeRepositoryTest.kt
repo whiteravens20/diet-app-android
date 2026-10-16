@@ -5,10 +5,13 @@ package net.whiteravens.dietapp.data.repository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.IngredientChoice
+import net.whiteravens.dietapp.domain.RecipeDraftAsk
 import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -109,5 +112,25 @@ class RecipeRepositoryTest {
         val deleted = server.takeRequest()
         assertEquals("DELETE", deleted.method)
         assertEquals("/api/recipes/mine", deleted.path)
+    }
+
+    @Test
+    fun `a draft is asked for with what was chosen, the switches only where they differ from the API's own, and the recipe written is read`() {
+        // The shape the API answers with: the recipe as the engine worked it out, and the model that wrote it.
+        val written = """{"recipe":${fixture("recipe")},"aiMeta":{"provider":"openrouter","model":"m","failoverChain":[],"usedDeterministicFallback":false,"fallbackReason":null,"reason":null}}"""
+        repeat(2) { server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(written)) }
+        val recipes = repository()
+
+        val recipe = runBlocking { recipes.draft(RecipeDraftAsk(profileId = "ada", dietType = "vegan", mealType = "lunch", kcalTarget = 500)) }
+        runBlocking { recipes.draft(RecipeDraftAsk(profileId = "ada", dietType = "vegan", useFavoriteIngredients = true, respectExclusions = false, addToFavorites = false)) }
+
+        val first = server.takeRequest()
+        assertEquals("/api/recipes/drafts/from-prompt", first.path)
+        assertEquals("""{"profileId":"ada","mealType":"lunch","dietType":"vegan","kcalTarget":500}""", first.body.readUtf8())
+        assertEquals(
+            """{"profileId":"ada","dietType":"vegan","useFavoriteIngredients":true,"respectExclusions":false,"addToFavorites":false}""",
+            server.takeRequest().body.readUtf8(),
+        )
+        assertEquals(json.parseToJsonElement(fixture("recipe")).jsonObject.getValue("id").jsonPrimitive.content, recipe.id)
     }
 }

@@ -3,9 +3,11 @@
 package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
+import net.whiteravens.dietapp.data.remote.AiDraftRecipeRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.domain.RecipeDraftAsk
 import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.domain.RecipePage
 import javax.inject.Inject
@@ -45,6 +47,25 @@ class RecipeRepository @Inject constructor(
             )
         }.toDomain()
     }
+
+    /** A recipe of one's own a model writes from [ask]; the engine works out its nutrition. */
+    suspend fun draft(ask: RecipeDraftAsk): Recipe = apiCall(json) {
+        api.draftRecipe(
+            AiDraftRecipeRequest(
+                profileId = ask.profileId,
+                mealType = ask.mealType,
+                dietType = ask.dietType,
+                cuisine = ask.cuisine,
+                cookingMethod = ask.cookingMethod,
+                complexity = ask.complexity,
+                kcalTarget = ask.kcalTarget,
+                prepTimeMaxMinutes = ask.prepMinutes,
+                useFavoriteIngredients = ask.useFavoriteIngredients,
+                respectExclusions = ask.respectExclusions,
+                addToFavorites = ask.addToFavorites,
+            ),
+        )
+    }.recipe.toDomain()
 
     /** A page of the account's own recipes. */
     suspend fun mine(page: Int = 1): RecipePage = apiCall(json) { api.myRecipes(page = page) }.toDomain()

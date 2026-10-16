@@ -208,6 +208,10 @@ interface DietApiService {
         @Query("pageSize") pageSize: Int? = null,
     ): RecipeSearchPageDto
 
+    /** Asks a model for a recipe of the account's own, from the choices of [body]. */
+    @POST("recipes/drafts/from-prompt")
+    suspend fun draftRecipe(@Body body: AiDraftRecipeRequest): AiDraftRecipeResponseDto
+
     /** The account's own recipes, a page at a time: those a model wrote for it and those a substitution left. */
     @GET("recipes/mine")
     suspend fun myRecipes(@Query("page") page: Int? = null, @Query("pageSize") pageSize: Int? = null): RecipeSearchPageDto

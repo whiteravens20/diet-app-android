@@ -494,6 +494,32 @@ data class RecipeDto(
     val source: RecipeSourceDto? = null,
 )
 
+/**
+ * POST `/recipes/drafts/from-prompt`: a recipe of the account's own a model writes from these
+ * choices, none of them a text of the user's. What is left null is the model's to choose; the
+ * profile's allergens hold whatever is chosen.
+ */
+@Serializable
+data class AiDraftRecipeRequest(
+    val profileId: String,
+    val mealType: String? = null,
+    val dietType: String? = null,
+    val cuisine: String? = null,
+    val cookingMethod: String? = null,
+    val complexity: String? = null,
+    /** What a serving is to hold, 200 to 1200 kcal. */
+    val kcalTarget: Int? = null,
+    /** The most minutes of preparing and cooking, 5 to 120. */
+    val prepTimeMaxMinutes: Int? = null,
+    val useFavoriteIngredients: Boolean = false,
+    val respectExclusions: Boolean = true,
+    val addToFavorites: Boolean = true,
+)
+
+/** The recipe a model wrote, with the nutrition the engine worked out, and what the model was. */
+@Serializable
+data class AiDraftRecipeResponseDto(val recipe: RecipeDto, val aiMeta: AiGenerationMetaDto)
+
 /** Paginated recipe list — returned by `GET /recipes`. */
 @Serializable
 data class RecipeSearchPageDto(

@@ -565,6 +565,25 @@ data class RecipeFilter(
     }
 }
 
+/**
+ * The choices a model writes a recipe of one's own from, for [profileId]: each part left null is the
+ * model's to choose. The profile's allergens are always left out; its excluded ingredients where
+ * [respectExclusions], and its favourite ingredients are put first where [useFavoriteIngredients].
+ */
+data class RecipeDraftAsk(
+    val profileId: String,
+    val dietType: String,
+    val mealType: String? = null,
+    val cuisine: String? = null,
+    val cookingMethod: String? = null,
+    val complexity: String? = null,
+    val kcalTarget: Int? = null,
+    val prepMinutes: Int? = null,
+    val useFavoriteIngredients: Boolean = false,
+    val respectExclusions: Boolean = true,
+    val addToFavorites: Boolean = true,
+)
+
 /** One page of recipe search results. */
 data class RecipePage(
     val items: List<Recipe>,

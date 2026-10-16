@@ -85,6 +85,9 @@ object Instance {
     /** A profile of [account], as the API keeps it. */
     fun profile(account: Account, profileId: String): JSONObject = call("GET", "profiles/$profileId", token = account.accessToken)
 
+    /** The account's way of using a model: `none` where it has none to ask. */
+    fun aiMode(account: Account): String = call("GET", "users/me", token = account.accessToken).getString("aiMode")
+
     /** The ids of a profile's plans, as the API lists them. */
     fun planIds(account: Account, profileId: String): List<String> {
         val items = call("GET", "meal-plans?profileId=$profileId", token = account.accessToken).getJSONArray("items")
