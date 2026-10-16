@@ -805,10 +805,6 @@ data class MarkedRecipeDto(
 @Serializable
 data class AddFavoriteRequest(val profileId: String, val recipeId: String, val tags: List<String>, val sentiment: String)
 
-/** A mark as the API keeps it: what marking a recipe answers. */
-@Serializable
-data class FavoriteMarkDto(val id: String, val profileId: String, val recipeId: String, val tags: List<String>, val sentiment: String)
-
 /** A profile's favourite set: a recipe for each meal it names. */
 @Serializable
 data class FavoriteSetDto(val id: String, val profileId: String, val label: String, val slots: Map<String, String>)

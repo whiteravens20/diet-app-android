@@ -36,9 +36,8 @@ class FavoriteRepository @Inject constructor(
         }.map { it.toDomain() }
 
     /** Marks [recipeId] for [profileId] as [sentiment], under [tags]: what was said of it before is replaced. */
-    suspend fun mark(profileId: String, recipeId: String, sentiment: String, tags: List<String>) {
+    suspend fun mark(profileId: String, recipeId: String, sentiment: String, tags: List<String>) =
         apiCall(json) { api.markRecipe(AddFavoriteRequest(profileId, recipeId, tags, sentiment)) }
-    }
 
     /** Takes the mark of [profileId] off [recipeId]. */
     suspend fun unmark(profileId: String, recipeId: String) = apiCall(json) { api.unmarkRecipe(profileId, recipeId) }

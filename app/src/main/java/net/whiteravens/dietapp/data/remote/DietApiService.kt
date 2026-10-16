@@ -54,9 +54,12 @@ interface DietApiService {
         @Query("sort") sort: String? = null,
     ): List<MarkedRecipeDto>
 
-    /** Marks a recipe for a profile; marking it again replaces what was said of it before. */
+    /**
+     * Marks a recipe for a profile; marking it again replaces what was said of it before. The mark
+     * the API answers with is not read: a class nothing reads is one R8 takes out of a release build.
+     */
     @POST("favorites")
-    suspend fun markRecipe(@Body body: AddFavoriteRequest): FavoriteMarkDto
+    suspend fun markRecipe(@Body body: AddFavoriteRequest)
 
     /** Takes a profile's mark off a recipe; 404 `FAVORITE_NOT_FOUND` where there was none. */
     @DELETE("favorites/{profileId}/{recipeId}")
