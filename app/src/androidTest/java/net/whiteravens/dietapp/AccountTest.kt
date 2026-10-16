@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -65,7 +66,9 @@ class AccountTest {
         }
         screen.keepScreenshot("account-weight-unit")
 
-        // On the dashboard a weight is typed in pounds, and the API keeps it in kilograms.
+        // On the dashboard, reached from the bar the account's screen does not show, a weight is typed
+        // in pounds, and the API keeps it in kilograms.
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
         screen.openTab(text(R.string.nav_dashboard))
         val field = hasText(text(R.string.weight_today, "lb"))
         screen.scrollTo(field)
