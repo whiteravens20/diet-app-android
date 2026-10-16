@@ -29,7 +29,7 @@ import javax.net.ssl.SSLHandshakeException
 /**
  * The server's version as the app asks for it, with `GET /config` through the client the app
  * uses for it, against a local server. The answers are the one a running backend gave
- * (`config.json`, API 0.19.0, the version in contract/API_VERSION), and that answer with another
+ * (`config.json`, API 0.77.0, the version in contract/API_VERSION), and that answer with another
  * version in it.
  */
 class ServerRepositoryTest {
@@ -88,7 +88,7 @@ class ServerRepositoryTest {
 
         val rules = checkNotNull(repository.rules.value)
         assertEquals(2, rules.maxProfiles)
-        assertEquals(mapOf(2 to 32, 3 to 32, 4 to 30, 5 to 30), rules.catalogueDepth["balanced"])
+        assertEquals(mapOf(2 to 39, 3 to 39, 4 to 35, 5 to 35), rules.catalogueDepth["balanced"])
     }
 
     @Test
