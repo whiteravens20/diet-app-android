@@ -548,6 +548,7 @@
         <item quantity="other">Makes %1$d servings · %2$s min prep · %3$s min cook</item>
     </plurals>
     <string name="recipe_allergens">Allergens:</string>
+    <string name="recipe_save_to_favorites">Save to favorites for:</string>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
     <string name="favorites_title">Favourites</string>

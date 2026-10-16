@@ -12,10 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,9 +63,10 @@ import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
+import net.whiteravens.dietapp.ui.screens.favorites.sentimentLabel
 import kotlin.math.roundToInt
 
-/** Full recipe: meta chips, per-serving nutrition, ingredients, steps. */
+/** Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps. */
 @Composable
 fun RecipeDetailScreen(
     onBack: () -> Unit,
@@ -107,7 +112,55 @@ fun RecipeDetailScreen(
             return@LazyColumn
         }
 
-        item { RecipeBody(recipe) }
+        item {
+            RecipeBody(recipe) {
+                Marks(state.marks, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark)
+            }
+        }
+    }
+}
+
+/**
+ * Each profile of the account, as a chip that puts the recipe among its favourites or takes its mark
+ * off, as the web's view has them; a mark other than a favourite is said by its name.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Marks(
+    marks: List<RecipeDetailViewModel.ProfileMark>,
+    marking: String?,
+    failed: RecipeDetailViewModel.MarkFailed?,
+    onToggle: (profileId: String) -> Unit,
+) {
+    if (marks.isEmpty()) return
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.recipe_save_to_favorites),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        marks.forEach { mark ->
+            val sentiment = mark.sentiment
+            FilterChip(
+                selected = sentiment != null,
+                onClick = { onToggle(mark.profile.id) },
+                enabled = marking == null,
+                label = { Text(if (sentiment == null || sentiment == "favorite") mark.profile.name else "${mark.profile.name} · ${sentimentLabel(sentiment)}") },
+                leadingIcon = if (sentiment != null) {
+                    { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                } else {
+                    null
+                },
+            )
+        }
+    }
+    failed?.let {
+        val lead = stringResource(if (it.removing) R.string.favorites_err_remove else R.string.favorites_err_save)
+        ErrorBanner("$lead ${errorMessage(it.error)}")
     }
 }
 
@@ -119,12 +172,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.skeletonItems() {
 
 /**
  * The recipe as the web's view has it: a model's part in it, what it is, its difficulty, meals,
- * diets and cuisine, where it is from and under what licence, what a serving holds, how many
- * servings it makes and how long it takes, its lines, its method and its allergens.
+ * diets and cuisine, where it is from and under what licence, how the profiles marked it ([marks]),
+ * what a serving holds, how many servings it makes and how long it takes, its lines, its method and
+ * its allergens.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RecipeBody(recipe: Recipe) {
+private fun RecipeBody(recipe: Recipe, marks: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         recipe.byModel?.let { AiMark(modelPartText(it), spelledOut = true) }
         if (recipe.description.isNotBlank()) {
@@ -143,6 +197,7 @@ private fun RecipeBody(recipe: Recipe) {
             recipe.cuisine?.let { LabelChip(stringResource(R.string.recipe_cuisine, cuisineLabel(it))) }
         }
         recipe.source?.let { SourceLine(it) }
+        marks()
 
         AppCard {
             Text(

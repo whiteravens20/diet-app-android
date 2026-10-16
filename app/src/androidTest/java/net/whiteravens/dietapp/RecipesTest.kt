@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
+import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import org.junit.Rule
 import org.junit.Test
@@ -53,6 +54,31 @@ class RecipesTest {
         screen.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(ingredient))
         screen.waitForText(ingredient)
         screen.keepScreenshot("recipes-a-recipe")
+    }
+
+    @Test
+    fun aRecipeIsPutAmongAProfilesFavouritesFromItsViewAndItsMarkTakenOff() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        val (recipeId, title) = Instance.recipes(account, 1, text(R.string.api_language)).single()
+        screen.signIn(account)
+
+        screen.openTab(text(R.string.nav_recipes))
+        screen.onNodeWithText(text(R.string.recipes_search_placeholder)).performTextInput(title)
+        val card = hasText(title) and hasClickAction() and !hasSetTextAction()
+        val list = screen.onNode(hasScrollToNodeAction())
+        screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
+        screen.clickFirst(card)
+
+        // The profile's chip marks the recipe as a favourite, and takes the mark off again.
+        screen.waitForText(text(R.string.recipe_save_to_favorites))
+        val chip = hasText("Ala") and hasClickAction()
+        screen.onNode(chip).performScrollTo().performClick()
+        screen.waitUntil(20_000) { Instance.marks(account, profileId)[recipeId]?.first == "favorite" }
+        screen.keepScreenshot("recipes-marked-for-a-profile")
+        screen.waitForEnabled("Ala")
+        screen.onNode(chip).performScrollTo().performClick()
+        screen.waitUntil(20_000) { recipeId !in Instance.marks(account, profileId) }
     }
 
     @Test

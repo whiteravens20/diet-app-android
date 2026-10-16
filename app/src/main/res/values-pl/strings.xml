@@ -597,6 +597,7 @@
         <item quantity="other">Wychodzi %1$d porcji · %2$s min przygotowania · %3$s min gotowania</item>
     </plurals>
     <string name="recipe_allergens">Alergeny:</string>
+    <string name="recipe_save_to_favorites">Zapisz w ulubionych dla:</string>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
     <string name="favorites_title">Ulubione</string>
