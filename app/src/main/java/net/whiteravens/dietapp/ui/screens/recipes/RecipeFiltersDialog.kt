@@ -56,6 +56,7 @@ import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.ui.common.cuisineLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.difficultyLabel
+import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.screens.profiles.AllergenChoice
@@ -65,7 +66,8 @@ import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
  * Every way the library can be narrowed, as the web's page has them: the diet, the meal, the
  * difficulty, the energy and the time of a serving; behind "More filters" the cuisine, what a
  * serving holds, the ingredients every recipe holds and the allergens none holds; and what a
- * profile marked and favours. Nothing is asked of the API until the filters are applied.
+ * profile marked and favours. Nothing is asked of the API until the filters are applied, and a
+ * figure outside the bounds the API takes says so in its field instead of being sent.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -86,8 +88,8 @@ internal fun RecipeFiltersDialog(
     var carbs by rememberSaveable { mutableStateOf(filter.maxCarbs?.let(::plain).orEmpty()) }
     var more by rememberSaveable { mutableStateOf(filter.more > 0) }
     fun applied() = draft.copy(
-        maxCalories = calories.trim().toIntOrNull()?.takeIf { it > 0 },
-        maxPrepMinutes = minutes.trim().toIntOrNull()?.takeIf { it > 0 },
+        maxCalories = calories.trim().toIntOrNull(),
+        maxPrepMinutes = minutes.trim().toIntOrNull(),
         minProtein = decimal(protein),
         maxFat = decimal(fat),
         maxCarbs = decimal(carbs),
@@ -107,8 +109,8 @@ internal fun RecipeFiltersDialog(
                 Choice(stringResource(R.string.recipes_meal_type), MealSlots.BY_COUNT.getValue(5), draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
                 Choice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Figure(stringResource(R.string.recipes_max_calories), calories, whole = true, Modifier.weight(1f)) { calories = it }
-                    Figure(stringResource(R.string.recipes_max_prep), minutes, whole = true, Modifier.weight(1f)) { minutes = it }
+                    Figure(stringResource(R.string.recipes_max_calories), calories, CALORIES, Modifier.weight(1f)) { calories = it }
+                    Figure(stringResource(R.string.recipes_max_prep), minutes, MINUTES, Modifier.weight(1f)) { minutes = it }
                 }
 
                 // The narrower ways to look stay folded until they are wanted; the count says when one of them is at work.
@@ -131,9 +133,9 @@ internal fun RecipeFiltersDialog(
                 if (more) {
                     Choice(stringResource(R.string.recipes_cuisine), ProfileBounds.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Figure(stringResource(R.string.recipes_min_protein), protein, whole = false, Modifier.weight(1f)) { protein = it }
-                        Figure(stringResource(R.string.recipes_max_fat), fat, whole = false, Modifier.weight(1f)) { fat = it }
-                        Figure(stringResource(R.string.recipes_max_carbs), carbs, whole = false, Modifier.weight(1f)) { carbs = it }
+                        Figure(stringResource(R.string.recipes_min_protein), protein, PROTEIN_OR_FAT, Modifier.weight(1f)) { protein = it }
+                        Figure(stringResource(R.string.recipes_max_fat), fat, PROTEIN_OR_FAT, Modifier.weight(1f)) { fat = it }
+                        Figure(stringResource(R.string.recipes_max_carbs), carbs, CARBS, Modifier.weight(1f)) { carbs = it }
                     }
                     Text(stringResource(R.string.recipes_per_serving), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     IngredientChooser(
@@ -173,7 +175,8 @@ internal fun RecipeFiltersDialog(
                             carbs = ""
                         },
                     ) { Text(stringResource(R.string.recipes_clear_filters)) }
-                    Button(onClick = { onApply(applied()) }) { Text(stringResource(R.string.recipes_filters_apply)) }
+                    val within = listOf(calories to CALORIES, minutes to MINUTES, protein to PROTEIN_OR_FAT, fat to PROTEIN_OR_FAT, carbs to CARBS).none { (typed, bounds) -> outside(typed, bounds) }
+                    Button(onClick = { onApply(applied()) }, enabled = within) { Text(stringResource(R.string.recipes_filters_apply)) }
                 }
             }
         }
@@ -213,15 +216,20 @@ private fun Choice(
     }
 }
 
-/** A figure typed in: a whole number, or one with decimals; a sign under nothing is not taken. */
+/** A figure typed in, whole or with decimals as [bounds] says; outside them it says what they are. */
 @Composable
-private fun Figure(label: String, value: String, whole: Boolean, modifier: Modifier, onValue: (String) -> Unit) {
+private fun Figure(label: String, value: String, bounds: Bounds, modifier: Modifier, onValue: (String) -> Unit) {
+    val wrong = outside(value, bounds)
     OutlinedTextField(
         value = value,
-        onValueChange = { typed -> if (typed.isEmpty() || typed.all { it.isDigit() || (!whole && (it == '.' || it == ',')) }) onValue(typed) },
+        onValueChange = { typed -> if (typed.isEmpty() || typed.all { it.isDigit() || (!bounds.whole && (it == '.' || it == ',')) }) onValue(typed) },
         label = { Text(label) },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = if (whole) KeyboardType.Number else KeyboardType.Decimal),
+        isError = wrong,
+        supportingText = if (wrong) {
+            { Text(stringResource(R.string.recipes_filter_between, formatNumber(bounds.least), formatNumber(bounds.most))) }
+        } else null,
+        keyboardOptions = KeyboardOptions(keyboardType = if (bounds.whole) KeyboardType.Number else KeyboardType.Decimal),
         modifier = modifier,
     )
 }
@@ -297,8 +305,6 @@ private fun IngredientChooser(
     }
 }
 
-/** A number typed with a comma or a point; nothing where it is not one, or not above nothing. */
-private fun decimal(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it >= 0 }
 
 /** A figure as it is typed back into its field: `30`, `12.5`. */
 private fun plain(value: Double): String = if (value % 1.0 == 0.0) value.toLong().toString() else value.toString()

@@ -530,6 +530,7 @@
         <item quantity="other">Filtry: %d aktywnego</item>
     </plurals>
     <string name="recipes_filters_apply">Pokaż przepisy</string>
+    <string name="recipes_filter_between">Od %1$s do %2$s.</string>
     <string name="recipes_ai_draft">Zaproponuj z AI</string>
     <string name="draft_title">Zaproponuj przepis z AI</string>
     <string name="draft_subhead">Wybierz tylko te filtry, na których Ci zależy — resztę zostaw pustą, a AI dobierze ją samo. Alergeny z profilu są zawsze respektowane.</string>
