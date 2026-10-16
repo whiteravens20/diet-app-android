@@ -179,6 +179,18 @@ object Instance {
         return (0 until minOf(count, items.length())).map { items.getJSONObject(it).let { recipe -> recipe.getString("id") to recipe.getString("title") } }
     }
 
+    /** The ingredients of a recipe's lines, in the order the recipe lists them. */
+    fun recipeIngredients(account: Account, recipeId: String): List<String> {
+        val lines = call("GET", "recipes/$recipeId", token = account.accessToken).getJSONArray("ingredients")
+        return (0 until lines.length()).map { lines.getJSONObject(it).getString("ingredientId") }
+    }
+
+    /** The ingredients a profile's preferences hold in the list called [list] (`favoriteIngredientIds`, `excludedIngredientIds`, …). */
+    fun preferredIngredients(account: Account, profileId: String, list: String): List<String> {
+        val ids = profile(account, profileId).getJSONObject("preferences").getJSONArray(list)
+        return (0 until ids.length()).map(ids::getString)
+    }
+
     /** Marks [recipeId] for [profileId] as [sentiment], under [tags], as the web application marks one. */
     fun mark(account: Account, profileId: String, recipeId: String, sentiment: String, tags: List<String> = emptyList()) {
         call(

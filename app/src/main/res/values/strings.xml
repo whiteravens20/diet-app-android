@@ -549,6 +549,10 @@
     </plurals>
     <string name="recipe_allergens">Allergens:</string>
     <string name="recipe_save_to_favorites">Save to favorites for:</string>
+    <string name="recipe_prefs_for">Preferences for:</string>
+    <string name="recipe_mark_favorite">Mark as favorite</string>
+    <string name="recipe_mark_avoid">Mark to avoid</string>
+    <string name="recipe_prefs_save_failed">Could not save ingredient preference.</string>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
     <string name="favorites_title">Favourites</string>

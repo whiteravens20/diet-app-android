@@ -23,6 +23,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipeSource
 import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.allergenLabel
@@ -57,6 +60,7 @@ import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.MacroLegend
@@ -113,9 +117,73 @@ fun RecipeDetailScreen(
         }
 
         item {
-            RecipeBody(recipe) {
-                Marks(state.marks, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark)
+            val prefs = state.prefsProfile
+            RecipeBody(
+                recipe,
+                marks = { Marks(state.marks, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark) },
+                prefsFor = {
+                    if (prefs != null) PrefsFor(state.profiles, prefs.id, state.savingPrefs, state.prefsFailed, onPick = viewModel::pickPrefsProfile)
+                },
+                lineMarks = if (prefs == null) {
+                    null
+                } else {
+                    { line ->
+                        LineMarks(
+                            favourite = line.ingredientId in prefs.preferences.favoriteIngredientIds,
+                            avoided = line.ingredientId in prefs.preferences.excludedIngredientIds,
+                            saving = state.savingPrefs,
+                            onToggle = { avoid -> viewModel.toggleIngredient(line.ingredientId, avoid) },
+                        )
+                    }
+                },
+            )
+        }
+    }
+}
+
+/**
+ * The profile whose favourite and avoided ingredients the lines show, to choose among where there
+ * are two or more, and why a change of them was refused.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PrefsFor(profiles: List<ProfileDetails>, chosen: String, saving: Boolean, failed: Throwable?, onPick: (String) -> Unit) {
+    if (profiles.size > 1) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 4.dp),
+        ) {
+            Text(
+                stringResource(R.string.recipe_prefs_for),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            profiles.forEach { profile ->
+                FilterChip(selected = profile.id == chosen, onClick = { onPick(profile.id) }, enabled = !saving, label = { Text(profile.figures.name) })
             }
+        }
+    }
+    failed?.let { ErrorBanner("${stringResource(R.string.recipe_prefs_save_failed)} ${errorMessage(it)}", Modifier.padding(bottom = 4.dp)) }
+}
+
+/** A line's ingredient marked as a favourite of the profile, or as one it avoids: each a toggle, as the web's two buttons are. */
+@Composable
+private fun LineMarks(favourite: Boolean, avoided: Boolean, saving: Boolean, onToggle: (avoid: Boolean) -> Unit) {
+    Row {
+        IconToggleButton(checked = favourite, onCheckedChange = { onToggle(false) }, enabled = !saving) {
+            Icon(
+                if (favourite) Icons.Default.Star else AppIcons.StarOutline,
+                contentDescription = stringResource(R.string.recipe_mark_favorite),
+                tint = if (favourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconToggleButton(checked = avoided, onCheckedChange = { onToggle(true) }, enabled = !saving) {
+            Icon(
+                AppIcons.Block,
+                contentDescription = stringResource(R.string.recipe_mark_avoid),
+                tint = if (avoided) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -147,9 +215,9 @@ private fun Marks(
             val sentiment = mark.sentiment
             FilterChip(
                 selected = sentiment != null,
-                onClick = { onToggle(mark.profile.id) },
+                onClick = { onToggle(mark.profileId) },
                 enabled = marking == null,
-                label = { Text(if (sentiment == null || sentiment == "favorite") mark.profile.name else "${mark.profile.name} · ${sentimentLabel(sentiment)}") },
+                label = { Text(if (sentiment == null || sentiment == "favorite") mark.name else "${mark.name} · ${sentimentLabel(sentiment)}") },
                 leadingIcon = if (sentiment != null) {
                     { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
                 } else {
@@ -173,12 +241,17 @@ private fun androidx.compose.foundation.lazy.LazyListScope.skeletonItems() {
 /**
  * The recipe as the web's view has it: a model's part in it, what it is, its difficulty, meals,
  * diets and cuisine, where it is from and under what licence, how the profiles marked it ([marks]),
- * what a serving holds, how many servings it makes and how long it takes, its lines, its method and
- * its allergens.
+ * what a serving holds, how many servings it makes and how long it takes, its lines with their
+ * ingredients marked for a profile ([prefsFor], [lineMarks]), its method and its allergens.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RecipeBody(recipe: Recipe, marks: @Composable () -> Unit) {
+private fun RecipeBody(
+    recipe: Recipe,
+    marks: @Composable () -> Unit,
+    prefsFor: @Composable () -> Unit,
+    lineMarks: (@Composable (RecipeIngredient) -> Unit)?,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         recipe.byModel?.let { AiMark(modelPartText(it), spelledOut = true) }
         if (recipe.description.isNotBlank()) {
@@ -243,11 +316,13 @@ private fun RecipeBody(recipe: Recipe, marks: @Composable () -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 4.dp),
             )
+            prefsFor()
             recipe.ingredients.forEachIndexed { index, ingredient ->
                 if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    Modifier.fillMaxWidth().padding(vertical = if (lineMarks != null) 2.dp else 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(ingredient.name, style = MaterialTheme.typography.bodyMedium)
@@ -264,6 +339,7 @@ private fun RecipeBody(recipe: Recipe, marks: @Composable () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    lineMarks?.invoke(ingredient)
                 }
             }
         }

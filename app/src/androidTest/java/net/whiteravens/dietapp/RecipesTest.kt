@@ -4,11 +4,13 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -57,7 +59,7 @@ class RecipesTest {
     }
 
     @Test
-    fun aRecipeIsPutAmongAProfilesFavouritesFromItsViewAndItsMarkTakenOff() {
+    fun aRecipeIsMarkedForAProfileFromItsViewAndSoAreTheIngredientsOfItsLines() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account, name = "Ala")
         val (recipeId, title) = Instance.recipes(account, 1, text(R.string.api_language)).single()
@@ -79,6 +81,20 @@ class RecipesTest {
         screen.waitForEnabled("Ala")
         screen.onNode(chip).performScrollTo().performClick()
         screen.waitUntil(20_000) { recipeId !in Instance.marks(account, profileId) }
+
+        // The first line's ingredient marked as a favourite of the profile, then as one it avoids.
+        val ingredient = Instance.recipeIngredients(account, recipeId).first()
+        val favourite = text(R.string.recipe_mark_favorite)
+        val avoid = text(R.string.recipe_mark_avoid)
+        screen.onAllNodesWithContentDescription(favourite)[0].performScrollTo().performClick()
+        screen.waitUntil(20_000) { ingredient in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds") }
+        screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(avoid) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        screen.onAllNodesWithContentDescription(avoid)[0].performScrollTo().performClick()
+        screen.waitUntil(20_000) {
+            ingredient in Instance.preferredIngredients(account, profileId, "excludedIngredientIds") &&
+                ingredient !in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds")
+        }
+        screen.keepScreenshot("recipes-an-ingredient-avoided")
     }
 
     @Test

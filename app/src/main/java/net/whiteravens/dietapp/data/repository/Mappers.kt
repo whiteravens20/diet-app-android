@@ -101,6 +101,7 @@ fun CalorieCalculationDto.toDomain() = CalorieTarget(
 )
 
 fun RecipeIngredientDto.toDomain() = RecipeIngredient(
+    ingredientId = ingredientId,
     name = name,
     quantity = display.quantity,
     unit = display.unit,

@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Material Symbols the app needs that are missing from material-icons-core
- * (the extended artifact is ~10 MB of dex — not worth four glyphs). Path data
+ * (the extended artifact is ~10 MB of dex — not worth six glyphs). Path data
  * is the standard 24dp Material icon set; fill colour is irrelevant, Icon()
  * tints vectors via LocalContentColor.
  */
@@ -54,6 +54,25 @@ object AppIcons {
             "M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 " +
                 "11.99 2zm.01 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" +
                 "m.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z",
+        )
+    }
+
+    /** `star_border` — a star's outline; an ingredient not marked as a favourite. */
+    val StarOutline: ImageVector by lazy {
+        icon(
+            "StarOutline",
+            "M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 " +
+                "2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z",
+        )
+    }
+
+    /** `block` — a circle struck through; an ingredient to avoid. */
+    val Block: ImageVector by lazy {
+        icon(
+            "Block",
+            "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 " +
+                "3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 " +
+                "0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z",
         )
     }
 

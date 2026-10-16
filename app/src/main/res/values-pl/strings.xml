@@ -598,6 +598,10 @@
     </plurals>
     <string name="recipe_allergens">Alergeny:</string>
     <string name="recipe_save_to_favorites">Zapisz w ulubionych dla:</string>
+    <string name="recipe_prefs_for">Preferencje dla:</string>
+    <string name="recipe_mark_favorite">Oznacz jako ulubiony</string>
+    <string name="recipe_mark_avoid">Oznacz do unikania</string>
+    <string name="recipe_prefs_save_failed">Nie udało się zapisać preferencji składnika.</string>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
     <string name="favorites_title">Ulubione</string>
