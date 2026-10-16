@@ -31,8 +31,10 @@ generate a plan, swap a meal, tick off the shopping list.
   is kept, and a server whose version the app was not checked against is named on the
   screen.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
-  meals per day and the target macro split; its favourite sets, a day's meals chosen from
-  its favourite recipes, made, changed and deleted there.
+  meals per day and the target macro split; its weight log, today's weight logged in the
+  account's unit and the last one taken back, with ninety days of weights drawn beside the
+  mean of each seven days and the weight it works towards; its favourite sets, a day's
+  meals chosen from its favourite recipes, made, changed and deleted there.
 - **Meal plans.** The plans of a profile, a new plan generated from the phone, each plan
   day by day with its totals, a meal swapped for another recipe, and a favourite set put
   on days of the plan.
@@ -50,8 +52,9 @@ generate a plan, swap a meal, tick off the shopping list.
   profile's figures or an empty form, worked out as they are typed and never kept.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
   the profiles, the calculator, the favourites and the account's settings, with its e-mail
-  status and the confirmation mail sent again, its language and theme, the app's version,
-  the server address and sign-out. Account settings are edited in the web app.
+  status and the confirmation mail sent again, its language and theme, the unit body
+  weights are shown in, chosen there, the app's version, the server address and sign-out.
+  The account's other settings are edited in the web app.
 - **Favourites.** The recipes a profile marked as a favourite, as eaten often or to avoid,
   narrowed by words, meal, mark and tag and put in order; each recipe's mark and tags
   changed, or its mark taken off.
@@ -60,7 +63,7 @@ generate a plan, swap a meal, tick off the shopping list.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 
-The app never computes nutrition, calorie targets or meal plans. Every number on the
+The app never computes nutrition, calorie targets or meal plans: every such figure on the
 screen comes from the backend.
 
 ## Install
