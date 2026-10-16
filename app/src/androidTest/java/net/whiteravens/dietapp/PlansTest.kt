@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isOn
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -194,6 +195,36 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.common_clear)).performClick()
         screen.scrollToText(card, substring = true)
         assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun aFavouriteSetIsPutOnEveryDayOfAPlanFromItsMenu() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val (recipeId, _) = Instance.aRecipeFor(account, "breakfast", text(R.string.api_language))
+        Instance.mark(account, profileId, recipeId, "favorite")
+        Instance.newFavoriteSet(account, profileId, "Weekday", mapOf("breakfast" to recipeId))
+        val planId = Instance.newPlan(account, profileId, days = 2)
+        screen.signIn(account)
+
+        screen.openTab(text(R.string.nav_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The set picked in the window the plan's menu opens, on every day of the plan, as it begins.
+        val options = hasContentDescription(text(R.string.plans_options))
+        screen.scrollTo(options)
+        screen.onNode(options).performClick()
+        screen.onNodeWithText(text(R.string.favorite_sets_apply)).performClick()
+        // The profile's sets are read once the window is open.
+        screen.waitForText(text(R.string.favorite_sets_apply_pick_set))
+        screen.onNode(hasText(text(R.string.favorite_sets_apply_pick_set)) and hasAnyAncestor(isDialog())).performClick()
+        screen.onNode(hasText("Weekday") and hasAnyAncestor(isPopup())).performClick()
+        screen.keepScreenshot("plans-a-favourite-set-to-put-on")
+        screen.onNode(hasText(text(R.string.favorite_sets_apply_confirm)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { Instance.recipesFor(account, planId, "breakfast") == listOf(recipeId, recipeId) }
+        screen.waitUntil(20_000) { screen.onAllNodes(isDialog()).fetchSemanticsNodes().isEmpty() }
     }
 
     @Test

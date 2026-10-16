@@ -821,6 +821,10 @@ data class CreateFavoriteSetRequest(val profileId: String, val label: String, va
 @Serializable
 data class UpdateFavoriteSetRequest(val label: String, val slots: Map<String, String>)
 
+/** POST `/favorite-sets/{id}/apply`: the plan, and the days of it (yyyy-MM-dd) the set's recipes go on. */
+@Serializable
+data class ApplyFavoriteSetRequest(val planId: String, val dayDates: List<String>)
+
 /** POST `/meal-plans/swap-meal/preview`: ask for a recipe to put in the place of a meal. Nothing is written. */
 @Serializable
 data class SwapOfferRequest(

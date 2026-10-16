@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
@@ -40,7 +41,8 @@ import javax.inject.Inject
  * a day, and a change that balanced the day again says how, with the way back and the rest of the
  * week to balance as well. The plan, a part of it or a day is made again; a refusal for something
  * the user can allow offers to allow it. Swaps that would use up the packs the plan opens are looked
- * for, and one is taken as any swap is. The plan can be deleted.
+ * for, and one is taken as any swap is. A favourite set of the profile is put on days of the plan.
+ * The plan can be deleted.
  */
 @HiltViewModel
 class PlanDetailViewModel @Inject constructor(
@@ -62,6 +64,12 @@ class PlanDetailViewModel @Inject constructor(
 
     /** A re-roll that could only be made outside the plan's limits: what stands in the way, what was let give way, and what was asked. */
     data class InTheWay(val needed: RelaxationNeeded, val allowed: List<String>, val reroll: Reroll)
+
+    /**
+     * The window that puts a favourite set on days of the plan: the profile's sets, null while they
+     * are read, or why they could not be; and what came of putting one.
+     */
+    data class SetWindow(val sets: List<FavoriteSet>? = null, val readError: Throwable? = null, val applying: Boolean = false, val error: Throwable? = null)
 
     data class UiState(
         val loading: Boolean = true,
@@ -92,6 +100,8 @@ class PlanDetailViewModel @Inject constructor(
         /** Swaps found that would use up what the plan opens, with the revision of the plan they were found for. */
         val useUpFound: UseUpFound? = null,
         val findingUseUp: Boolean = false,
+        /** The window that puts a favourite set on days of the plan, while it is open. */
+        val setWindow: SetWindow? = null,
         val error: Throwable? = null,
     ) {
         /** The swaps found that would use up what the plan opens, while the plan is the one they were found for. */
@@ -219,6 +229,37 @@ class PlanDetailViewModel @Inject constructor(
         val found = _state.value.useUp ?: return
         _state.update { it.copy(useUpFound = null) }
         change { plans.takeUseUp(planId, found.revision, swap) }
+    }
+
+    /** Opens the window that puts a favourite set on days of the plan, and reads the profile's sets for it. */
+    fun openSetWindow() {
+        val plan = _state.value.plan ?: return
+        _state.update { it.copy(setWindow = SetWindow()) }
+        viewModelScope.launch {
+            attempt { favorites.sets(plan.profileId) }
+                .onSuccess { sets -> _state.update { it.copy(setWindow = it.setWindow?.copy(sets = sets)) } }
+                .onFailure { e -> _state.update { it.copy(setWindow = it.setWindow?.copy(sets = emptyList(), readError = e)) } }
+        }
+    }
+
+    /** Closes the window of the sets, unless one is being put on the plan. */
+    fun closeSetWindow() {
+        _state.update { if (it.setWindow?.applying == true) it else it.copy(setWindow = null) }
+    }
+
+    /** Puts the set [setId] on the days [dates] (yyyy-MM-dd) of the plan: the plan it leaves is shown, and the window closes. */
+    fun applySet(setId: String, dates: List<String>) {
+        val window = _state.value.setWindow ?: return
+        if (window.applying || _state.value.changing) return
+        _state.update { it.copy(setWindow = window.copy(applying = true, error = null)) }
+        viewModelScope.launch {
+            attempt { plans.applySet(setId, planId, dates) }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null) } }
+                .onFailure { e ->
+                    _state.update { it.copy(setWindow = it.setWindow?.copy(applying = false, error = e)) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
     }
 
     /** A day filled another way, taken in its window. */

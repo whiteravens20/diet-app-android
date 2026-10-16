@@ -248,6 +248,10 @@ fun PlanDetailScreen(
         )
     }
 
+    state.setWindow?.let { window ->
+        if (plan != null) ApplySetDialog(plan, window, onApply = viewModel::applySet, onDismiss = viewModel::closeSetWindow)
+    }
+
     state.offer?.let { offer ->
         SwapOfferDialog(
             offer = offer,
@@ -275,6 +279,7 @@ fun PlanDetailScreen(
                     onBack,
                     onSaveTable = { plan?.let { saveText("${exportName(it)}.csv", csvOf(planTable(it, words), dialect)) } },
                     onPrint = { printing = true },
+                    onApplySet = { viewModel.openSetWindow() }.takeUnless { readOnly || busy },
                     onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
                 )
             }
@@ -406,7 +411,7 @@ fun PlanDetailScreen(
 
 /** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it; and what can be done with it. */
 @Composable
-private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: (() -> Unit)?) {
+private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit, onPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
@@ -426,13 +431,16 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit,
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
             }
         }
-        if (plan != null) PlanActions(onSaveTable, onPrint, onDelete)
+        if (plan != null) PlanActions(onSaveTable, onPrint, onApplySet, onDelete)
     }
 }
 
-/** What can be done with the plan as a whole, behind one button: saved as a table, printed or kept as a PDF, or deleted. */
+/**
+ * What can be done with the plan as a whole, behind one button: a favourite set put on its days,
+ * saved as a table, printed or kept as a PDF, or deleted.
+ */
 @Composable
-private fun PlanActions(onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: (() -> Unit)?) {
+private fun PlanActions(onSaveTable: () -> Unit, onPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -443,6 +451,7 @@ private fun PlanActions(onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: 
                 open = false
                 action()
             }
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorite_sets_apply)) }, onClick = { onApplySet?.let(::pick) }, enabled = onApplySet != null)
             DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_csv)) }, onClick = { pick(onSaveTable) })
             DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_print)) }, onClick = { pick(onPrint) })
             DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)

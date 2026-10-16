@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.data.remote.AddCustomMealRequest
 import net.whiteravens.dietapp.data.remote.AiSuggestIngredientRequest
 import net.whiteravens.dietapp.data.remote.AiSwapOfferRequest
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.remote.ApplyFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DayOverrideDto
 import net.whiteravens.dietapp.data.remote.DietApiService
@@ -307,6 +308,19 @@ class MealPlanRepository @Inject constructor(
     /** Takes one of the ways a day was offered; the plan is kept for offline use. A plan changed since the offer is refused with `PLAN_CHANGED`. */
     suspend fun takeDayWay(planId: String, dayId: String, offer: String): MealPlan {
         val plan = apiCall(json) { api.takeDayVariation(planId, dayId, TakeDayVariationRequest(offer)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
+    /**
+     * Puts the recipes of the favourite set [setId] on the days [dates] (yyyy-MM-dd) of a plan, each in
+     * the place of the day's meal of its kind, the rest of the day as it was; the plan is kept for
+     * offline use. Refused with `MEAL_EATEN` where a meal it would take the place of was eaten, and
+     * with `FAVORITE_SET_NOT_ELIGIBLE` or `FAVORITE_SET_ALLERGEN_CONFLICT` where the profile now rules
+     * out one of its recipes.
+     */
+    suspend fun applySet(setId: String, planId: String, dates: List<String>): MealPlan {
+        val plan = apiCall(json) { api.applyFavoriteSet(setId, ApplyFavoriteSetRequest(planId, dates)) }
         mirror(plan)
         return plan.toDomain()
     }

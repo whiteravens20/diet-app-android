@@ -76,6 +76,10 @@ interface DietApiService {
     @DELETE("favorite-sets/{id}")
     suspend fun deleteFavoriteSet(@Path("id") id: String)
 
+    /** Puts the recipes of a set on days of a plan, each in the place of the day's meal of its kind; answers the plan. */
+    @POST("favorite-sets/{id}/apply")
+    suspend fun applyFavoriteSet(@Path("id") id: String, @Body body: ApplyFavoriteSetRequest): MealPlanDto
+
     // ── Profiles ────────────────────────────────────────────────────────────
 
     @GET("profiles")

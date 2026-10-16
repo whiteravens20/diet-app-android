@@ -66,6 +66,7 @@ class MealPlanRepositoryTest {
     /** Keeps what is written to it, and what is taken out of it. */
     private class Cache(private val listsOfPlan: List<CachedShoppingList> = emptyList()) : CacheDao {
         val planLists = mutableListOf<CachedPlanList>()
+        val plans = mutableListOf<CachedMealPlan>()
         val dropped = mutableListOf<String>()
         override suspend fun upsertPlanList(list: CachedPlanList) {
             planLists += list
@@ -74,7 +75,9 @@ class MealPlanRepositoryTest {
         override suspend fun deletePlanList(profileId: String) {
             dropped += "list of $profileId"
         }
-        override suspend fun upsertMealPlan(plan: CachedMealPlan) = Unit
+        override suspend fun upsertMealPlan(plan: CachedMealPlan) {
+            plans += plan
+        }
         override suspend fun mealPlan(id: String): CachedMealPlan? = null
         override suspend fun deleteMealPlan(id: String) {
             dropped += "plan $id"
@@ -442,5 +445,22 @@ class MealPlanRepositoryTest {
             """{"planId":"plan-1","plannedMealId":"meal-1","recipeId":"recipe-2","revision":7,"strategy":"random","pick":"note-1"}""",
             taken.body.readUtf8(),
         )
+    }
+
+    @Test
+    fun `a favourite set is put on the days asked of a plan, and the plan it leaves is kept for offline use`() {
+        server.enqueue(answer("meal-plan"))
+        val cache = Cache()
+
+        val plan = runBlocking { repository(cache).applySet("set-1", "plan-1", listOf("2026-10-13", "2026-10-14")) }
+
+        val applied = server.takeRequest()
+        assertEquals("POST", applied.method)
+        assertEquals("/api/favorite-sets/set-1/apply", applied.path)
+        assertEquals(
+            json.parseToJsonElement("""{"planId":"plan-1","dayDates":["2026-10-13","2026-10-14"]}"""),
+            json.parseToJsonElement(applied.body.readUtf8()),
+        )
+        assertEquals(listOf(plan.id), cache.plans.map { it.id })
     }
 }

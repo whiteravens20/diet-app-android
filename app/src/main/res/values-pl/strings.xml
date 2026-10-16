@@ -667,6 +667,12 @@
     <string name="favorite_sets_at_least_one">Wybierz co najmniej jeden posiłek.</string>
     <string name="favorite_sets_err_save">Nie udało się zapisać zestawu.</string>
     <string name="favorite_sets_err_delete">Nie udało się usunąć zestawu.</string>
+    <string name="favorite_sets_apply">Zastosuj zestaw</string>
+    <string name="favorite_sets_apply_pick_set">Wybierz zestaw</string>
+    <string name="favorite_sets_apply_pick_days">Wybierz dni</string>
+    <string name="favorite_sets_apply_all_days">Wszystkie dni</string>
+    <string name="favorite_sets_apply_confirm">Zastosuj</string>
+    <string name="favorite_sets_err_apply">Nie udało się zastosować zestawu.</string>
 
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>

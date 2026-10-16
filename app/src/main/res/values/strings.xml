@@ -614,6 +614,12 @@
     <string name="favorite_sets_at_least_one">Pick at least one meal.</string>
     <string name="favorite_sets_err_save">Could not save the set.</string>
     <string name="favorite_sets_err_delete">Could not delete the set.</string>
+    <string name="favorite_sets_apply">Apply set</string>
+    <string name="favorite_sets_apply_pick_set">Pick a set</string>
+    <string name="favorite_sets_apply_pick_days">Pick days</string>
+    <string name="favorite_sets_apply_all_days">All days</string>
+    <string name="favorite_sets_apply_confirm">Apply</string>
+    <string name="favorite_sets_err_apply">Could not apply the set.</string>
 
     <!-- Shopping -->
     <string name="shopping_subtitle">Grouped by store section — pantry stock is already deducted.</string>

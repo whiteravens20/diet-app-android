@@ -185,6 +185,25 @@ object Instance {
         return first.getString("id") to first.getString("title")
     }
 
+    /** A favourite set of [profileId] called [label], with the recipe [slots] names for each meal, as the web application keeps one. */
+    fun newFavoriteSet(account: Account, profileId: String, label: String, slots: Map<String, String>): String =
+        call(
+            "POST",
+            "favorite-sets",
+            JSONObject().put("profileId", profileId).put("label", label).put("slots", JSONObject(slots)),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+
+    /** The recipe each day of a plan has for [mealType], in the order of the days; null for a day without one. */
+    fun recipesFor(account: Account, planId: String, mealType: String): List<String?> {
+        val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")
+        return (0 until days.length()).map { d ->
+            val meals = days.getJSONObject(d).getJSONArray("meals")
+            (0 until meals.length()).map(meals::getJSONObject).firstOrNull { it.getString("mealType") == mealType }?.optJSONObject("recipe")?.getString("id")
+        }
+    }
+
     /** The favourite sets of [profileId], the one made last first. */
     fun favoriteSets(account: Account, profileId: String): List<JSONObject> {
         val list = JSONArray(send("GET", "favorite-sets?profileId=$profileId", null, account.accessToken, 200, null))

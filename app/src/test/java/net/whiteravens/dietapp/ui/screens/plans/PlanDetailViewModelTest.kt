@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.AiGenerationMetaDto
 import net.whiteravens.dietapp.data.remote.AiMealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.remote.ApplyFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.MealPlanDto
@@ -44,6 +45,7 @@ import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.ScaleChange
@@ -62,6 +64,7 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
+import java.io.IOException
 
 /**
  * A meal swapped on the plan's screen, the way the web application swaps one: a recipe is offered,
@@ -481,5 +484,50 @@ class PlanDetailViewModelTest {
         assertNull(model.state.value.useUp)
         assertEquals("PLAN_CHANGED", (model.state.value.error as ApiException).code)
         coVerify(exactly = 2) { api.mealPlan(plan.id) }
+    }
+
+    private val weekday = FavoriteSet("weekday", "Weekday", mapOf("breakfast" to "oats"))
+
+    @Test
+    fun `a favourite set is put on the days picked in its window, which reads the profile's sets and closes on the plan it leaves`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { favorites.sets(plan.profileId) } returns listOf(weekday)
+        val asked = slot<ApplyFavoriteSetRequest>()
+        val applied = plan.copy(revision = plan.revision + 1)
+        coEvery { api.applyFavoriteSet("weekday", capture(asked)) } returns applied
+        val model = model(api)
+        val first = plan.days.first().date
+
+        model.openSetWindow()
+        assertEquals(listOf(weekday), model.state.value.setWindow?.sets)
+        model.applySet("weekday", listOf(first))
+
+        assertEquals(ApplyFavoriteSetRequest(plan.id, listOf(first)), asked.captured)
+        assertNull(model.state.value.setWindow)
+        assertEquals(applied.revision, model.state.value.plan?.revision)
+    }
+
+    @Test
+    fun `a set the API refuses keeps its window open with the reason, and the sets that cannot be read are said there`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { favorites.sets(plan.profileId) } returns listOf(weekday)
+        coEvery { api.applyFavoriteSet(any(), any()) } throws refused(409, "MEAL_EATEN")
+        val model = model(api)
+
+        model.openSetWindow()
+        model.applySet("weekday", listOf(plan.days.first().date))
+
+        val window = model.state.value.setWindow
+        assertEquals("MEAL_EATEN", (window?.error as? ApiException)?.code)
+        assertFalse(window!!.applying)
+        model.closeSetWindow()
+        assertNull(model.state.value.setWindow)
+
+        coEvery { favorites.sets(plan.profileId) } throws IOException("no answer")
+        model.openSetWindow()
+        assertEquals(emptyList<FavoriteSet>(), model.state.value.setWindow?.sets)
+        assertTrue(model.state.value.setWindow?.readError is IOException)
     }
 }
