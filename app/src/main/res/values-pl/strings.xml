@@ -651,6 +651,23 @@
     <string name="favorites_err_save">Nie udało się zapisać oznaczenia.</string>
     <string name="favorites_err_remove">Nie udało się usunąć oznaczenia.</string>
 
+    <!-- Favourite sets: a day's meals kept as a template, worded as the web application words them. -->
+    <string name="favorite_sets_title">Zestawy ulubionych</string>
+    <string name="favorite_sets_subtitle">Zapisz posiłki jednego dnia jako szablon i wstaw go do planu jednym kliknięciem.</string>
+    <string name="favorite_sets_empty">Nie ma jeszcze zestawów. Złóż posiłki na dzień ze swoich ulubionych.</string>
+    <string name="favorite_sets_no_favorites">Najpierw zapisz kilka ulubionych przepisów; zestawy korzystają z ulubionych.</string>
+    <string name="favorite_sets_no_favorites_cta">Przeglądaj przepisy</string>
+    <string name="favorite_sets_new">Nowy zestaw</string>
+    <string name="favorite_sets_label">Nazwa zestawu</string>
+    <string name="favorite_sets_label_placeholder">np. Dzień treningowy</string>
+    <string name="favorite_sets_save">Zapisz zestaw</string>
+    <string name="favorite_sets_pick_recipe">Wybierz przepis</string>
+    <string name="favorite_sets_slots_heading">Posiłki w zestawie</string>
+    <string name="favorite_sets_slots_hint">Puste miejsce zostawia posiłek, który już jest w dniu, do którego stosujesz zestaw.</string>
+    <string name="favorite_sets_at_least_one">Wybierz co najmniej jeden posiłek.</string>
+    <string name="favorite_sets_err_save">Nie udało się zapisać zestawu.</string>
+    <string name="favorite_sets_err_delete">Nie udało się usunąć zestawu.</string>
+
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
     <string name="shopping_no_profile">Brak profilu</string>

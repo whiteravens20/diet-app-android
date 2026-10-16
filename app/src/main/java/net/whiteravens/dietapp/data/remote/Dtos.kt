@@ -813,6 +813,14 @@ data class FavoriteMarkDto(val id: String, val profileId: String, val recipeId: 
 @Serializable
 data class FavoriteSetDto(val id: String, val profileId: String, val label: String, val slots: Map<String, String>)
 
+/** POST `/favorite-sets`: a set of a profile, named, with a recipe for each meal it names. */
+@Serializable
+data class CreateFavoriteSetRequest(val profileId: String, val label: String, val slots: Map<String, String>)
+
+/** PATCH `/favorite-sets/{id}`: a set's name and its recipes, both said anew. */
+@Serializable
+data class UpdateFavoriteSetRequest(val label: String, val slots: Map<String, String>)
+
 /** POST `/meal-plans/swap-meal/preview`: ask for a recipe to put in the place of a meal. Nothing is written. */
 @Serializable
 data class SwapOfferRequest(

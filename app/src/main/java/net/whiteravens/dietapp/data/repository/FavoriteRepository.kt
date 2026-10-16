@@ -4,8 +4,11 @@ package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AddFavoriteRequest
+import net.whiteravens.dietapp.data.remote.CreateFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.FavoriteSetDto
 import net.whiteravens.dietapp.data.remote.MarkedRecipeDto
+import net.whiteravens.dietapp.data.remote.UpdateFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.FavoriteSet
@@ -13,7 +16,7 @@ import net.whiteravens.dietapp.domain.MarkedRecipe
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** The recipes a profile marked, and its favourite sets. */
+/** The recipes a profile marked, and its favourite sets: a recipe for each meal a set names. */
 @Singleton
 class FavoriteRepository @Inject constructor(
     private val api: DietApiService,
@@ -40,8 +43,20 @@ class FavoriteRepository @Inject constructor(
     /** Takes the mark of [profileId] off [recipeId]. */
     suspend fun unmark(profileId: String, recipeId: String) = apiCall(json) { api.unmarkRecipe(profileId, recipeId) }
 
-    suspend fun sets(profileId: String): List<FavoriteSet> =
-        apiCall(json) { api.favoriteSets(profileId) }.map { FavoriteSet(it.id, it.label, it.slots) }
+    /** The favourite sets of [profileId], the one made last first. */
+    suspend fun sets(profileId: String): List<FavoriteSet> = apiCall(json) { api.favoriteSets(profileId) }.map { it.toDomain() }
+
+    /** Keeps a set of [profileId] called [label], with the recipe [slots] names for each meal. */
+    suspend fun createSet(profileId: String, label: String, slots: Map<String, String>): FavoriteSet =
+        apiCall(json) { api.createFavoriteSet(CreateFavoriteSetRequest(profileId, label, slots)) }.toDomain()
+
+    /** Says the set [id]'s name and its recipes anew. */
+    suspend fun updateSet(id: String, label: String, slots: Map<String, String>): FavoriteSet =
+        apiCall(json) { api.updateFavoriteSet(id, UpdateFavoriteSetRequest(label, slots)) }.toDomain()
+
+    suspend fun deleteSet(id: String) = apiCall(json) { api.deleteFavoriteSet(id) }
+
+    private fun FavoriteSetDto.toDomain() = FavoriteSet(id, label, slots)
 
     private fun MarkedRecipeDto.toDomain() =
         MarkedRecipe(recipe.id, recipe.title, recipe.mealTypes, sentiment, recipe.dietTags, tags, recipe.nutritionPerServing.calories)

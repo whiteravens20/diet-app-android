@@ -598,6 +598,23 @@
     <string name="favorites_err_save">Could not save the mark.</string>
     <string name="favorites_err_remove">Could not remove the mark.</string>
 
+    <!-- Favourite sets: a day's meals kept as a template, worded as the web application words them. -->
+    <string name="favorite_sets_title">Favourite sets</string>
+    <string name="favorite_sets_subtitle">Save a day\'s meals as a reusable template and drop it onto plan days in one click.</string>
+    <string name="favorite_sets_empty">No sets yet. Put a day\'s meals together from your favourites.</string>
+    <string name="favorite_sets_no_favorites">Save a few favourite recipes first; sets pull from your favourites.</string>
+    <string name="favorite_sets_no_favorites_cta">Browse recipes</string>
+    <string name="favorite_sets_new">New set</string>
+    <string name="favorite_sets_label">Set name</string>
+    <string name="favorite_sets_label_placeholder">e.g. Training day</string>
+    <string name="favorite_sets_save">Save set</string>
+    <string name="favorite_sets_pick_recipe">Pick a recipe</string>
+    <string name="favorite_sets_slots_heading">Meal slots</string>
+    <string name="favorite_sets_slots_hint">Leave a slot empty to keep the existing meal on the day the set is applied.</string>
+    <string name="favorite_sets_at_least_one">Pick at least one meal.</string>
+    <string name="favorite_sets_err_save">Could not save the set.</string>
+    <string name="favorite_sets_err_delete">Could not delete the set.</string>
+
     <!-- Shopping -->
     <string name="shopping_subtitle">Grouped by store section — pantry stock is already deducted.</string>
     <string name="shopping_no_profile">No profile</string>

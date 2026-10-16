@@ -225,6 +225,12 @@ private fun MainScaffold(serverVersion: ServerVersion) {
                     onCreateProfile = { navController.navigate(ProfilesRoute) },
                     onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
                     onNewPlan = { profileId -> navController.navigate(NewPlanRoute(profileId)) },
+                    onRecipes = {
+                        navController.navigate(RecipesRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable<PlansRoute> {

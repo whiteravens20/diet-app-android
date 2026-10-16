@@ -48,14 +48,16 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Calorie target, deficit and macro split for every profile, and what its plan of the moment comes
- * to — the web dashboard. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan].
+ * Calorie target, deficit and macro split for every profile, what its plan of the moment comes to,
+ * and its favourite sets — the web dashboard. A plan opens on [onOpenPlan]; a plan is made for a
+ * profile on [onNewPlan]; the recipe library, where favourites are marked, is [onRecipes].
  */
 @Composable
 fun DashboardScreen(
     onCreateProfile: () -> Unit,
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: (profileId: String) -> Unit,
+    onRecipes: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -63,6 +65,14 @@ fun DashboardScreen(
     LifecycleResumeEffect(viewModel) {
         viewModel.refresh()
         onPauseOrDispose {}
+    }
+    state.editing?.let { edit ->
+        FavoriteSetDialog(
+            edit = edit,
+            marks = state.profiles.firstOrNull { it.profile.id == edit.profileId }?.marks.orEmpty(),
+            onSave = viewModel::saveSet,
+            onDismiss = viewModel::closeSet,
+        )
     }
 
     when {
@@ -103,7 +113,19 @@ fun DashboardScreen(
                 )
             }
             state.profiles.forEach { stats ->
-                item(key = stats.profile.id) { ProfileSummary(stats, onOpenPlan, onNewPlan = { onNewPlan(stats.profile.id) }) }
+                item(key = stats.profile.id) {
+                    ProfileSummary(stats, onOpenPlan, onNewPlan = { onNewPlan(stats.profile.id) }) {
+                        FavoriteSetsCard(
+                            stats,
+                            deleting = state.deletingSet,
+                            deleteFailed = state.setDeleteFailed?.takeIf { it.profileId == stats.profile.id }?.error,
+                            onNew = { viewModel.newSet(stats.profile.id) },
+                            onEdit = { viewModel.editSet(stats.profile.id, it) },
+                            onDelete = { viewModel.deleteSet(stats.profile.id, it.id) },
+                            onRecipes = onRecipes,
+                        )
+                    }
+                }
             }
         }
     }
@@ -111,7 +133,7 @@ fun DashboardScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (planId: String) -> Unit, onNewPlan: () -> Unit) {
+private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (planId: String) -> Unit, onNewPlan: () -> Unit, sets: @Composable () -> Unit) {
     val profile = stats.profile
     val target = stats.target
     val kcal = stringResource(R.string.unit_kcal)
@@ -215,6 +237,8 @@ private fun ProfileSummary(stats: DashboardViewModel.ProfileStats, onOpenPlan: (
                 }
             }
         }
+
+        sets()
     }
 }
 

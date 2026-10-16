@@ -179,6 +179,18 @@ object Instance {
         return (0 until minOf(count, items.length())).map { items.getJSONObject(it).let { recipe -> recipe.getString("id") to recipe.getString("title") } }
     }
 
+    /** The first recipe of the catalogue for [mealType], in [language]: its id and title. */
+    fun aRecipeFor(account: Account, mealType: String, language: String): Pair<String, String> {
+        val first = call("GET", "recipes?page=1&mealType=$mealType", token = account.accessToken, language = language).getJSONArray("items").getJSONObject(0)
+        return first.getString("id") to first.getString("title")
+    }
+
+    /** The favourite sets of [profileId], the one made last first. */
+    fun favoriteSets(account: Account, profileId: String): List<JSONObject> {
+        val list = JSONArray(send("GET", "favorite-sets?profileId=$profileId", null, account.accessToken, 200, null))
+        return (0 until list.length()).map { list.getJSONObject(it) }
+    }
+
     /** The ingredients of a recipe's lines, in the order the recipe lists them. */
     fun recipeIngredients(account: Account, recipeId: String): List<String> {
         val lines = call("GET", "recipes/$recipeId", token = account.accessToken).getJSONArray("ingredients")
