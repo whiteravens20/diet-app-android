@@ -19,6 +19,7 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -110,11 +111,11 @@ class ProfilesTest {
         assertEquals(80.0, edited.getDouble("weightKg"), 0.0)
 
         press(text(R.string.allergen_soy))
-        screen.waitUntil(20_000) {
+        screen.waitForTheApi(20_000) {
             Instance.profile(account, profileId).getJSONObject("preferences").getJSONArray("allergens").let { it.length() == 1 && it.getString(0) == "soy" }
         }
         press(text(R.string.cuisine_italian))
-        screen.waitUntil(20_000) {
+        screen.waitForTheApi(20_000) {
             Instance.profile(account, profileId).getJSONObject("preferences").getJSONArray("preferredCuisines").let { it.length() == 1 && it.getString(0) == "italian" }
         }
         screen.keepScreenshot("profiles-preferences")

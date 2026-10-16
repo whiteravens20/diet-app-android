@@ -87,6 +87,27 @@ fun ComposeTestRule.clickFirst(matcher: SemanticsMatcher, timeoutMillis: Long = 
     }
 }
 
+/**
+ * Waits until [condition], which asks the API, holds. It is asked at most once a second, so that a
+ * wait stays well within what the instance lets one account ask of a route in a minute (120 by
+ * default), beside the app's own asking; the screen runs on between the askings.
+ */
+fun ComposeTestRule.waitForTheApi(timeoutMillis: Long = 20_000, condition: () -> Boolean) {
+    var askedAt = 0L
+    var holds = false
+    waitUntil(timeoutMillis) {
+        val now = System.currentTimeMillis()
+        if (now - askedAt >= API_PAUSE_MILLIS) {
+            askedAt = now
+            holds = condition()
+        }
+        holds
+    }
+}
+
+/** The least time between two askings of the API while a test waits on it. */
+private const val API_PAUSE_MILLIS = 1_000L
+
 /** Waits until a button reading [label] can be pressed. */
 fun ComposeTestRule.waitForEnabled(label: String, timeoutMillis: Long = 20_000) {
     waitUntil(timeoutMillis) { onAllNodes(hasText(label) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }

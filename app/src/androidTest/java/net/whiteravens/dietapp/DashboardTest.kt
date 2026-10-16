@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -78,7 +79,7 @@ class DashboardTest {
         screen.onNode(hasText(title) and hasAnyAncestor(isPopup())).performClick()
         screen.keepScreenshot("dashboard-a-new-favourite-set")
         screen.onNode(hasText(text(R.string.favorite_sets_save)) and hasAnyAncestor(isDialog())).performClick()
-        screen.waitUntil(20_000) { Instance.favoriteSets(account, profileId).size == 1 }
+        screen.waitForTheApi(20_000) { Instance.favoriteSets(account, profileId).size == 1 }
         val made = Instance.favoriteSets(account, profileId).single()
         assertEquals("Weekday", made.getString("label"))
         assertEquals(recipeId, made.getJSONObject("slots").getString("breakfast"))
@@ -88,11 +89,11 @@ class DashboardTest {
         screen.onNodeWithText(text(R.string.common_edit)).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.favorite_sets_label)) and hasAnyAncestor(isDialog())).performTextReplacement("Workday")
         screen.onNode(hasText(text(R.string.favorite_sets_save)) and hasAnyAncestor(isDialog())).performClick()
-        screen.waitUntil(20_000) { Instance.favoriteSets(account, profileId).singleOrNull()?.getString("label") == "Workday" }
+        screen.waitForTheApi(20_000) { Instance.favoriteSets(account, profileId).singleOrNull()?.getString("label") == "Workday" }
         screen.scrollToText("Workday")
         screen.keepScreenshot("dashboard-a-favourite-set")
         screen.onNodeWithText(text(R.string.common_delete)).performScrollTo().performClick()
-        screen.waitUntil(20_000) { Instance.favoriteSets(account, profileId).isEmpty() }
+        screen.waitForTheApi(20_000) { Instance.favoriteSets(account, profileId).isEmpty() }
         screen.waitForText(text(R.string.favorite_sets_empty))
     }
 }

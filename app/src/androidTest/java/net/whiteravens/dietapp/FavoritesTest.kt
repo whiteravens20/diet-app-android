@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -79,7 +80,7 @@ class FavoritesTest {
         screen.scrollTo(firstMark)
         screen.onNode(firstMark).performScrollTo().performClick()
         pick(text(R.string.favorites_sentiment_avoid))
-        screen.waitUntil(20_000) { Instance.marks(account, profileId)[first.first]?.first == "avoid" }
+        screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[first.first]?.first == "avoid" }
 
         // A tag put on the other recipe, in the field that names it, once the change before is in:
         // a mark on its way to the API holds every field of the list.
@@ -88,7 +89,7 @@ class FavoritesTest {
         screen.waitUntil(20_000) { screen.onAllNodes(secondTag and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onNode(secondTag).performScrollTo().performTextInput("for later")
         screen.onAllNodes(hasText(text(R.string.favorites_add_tag)) and isEnabled())[0].performScrollTo().performClick()
-        screen.waitUntil(20_000) { Instance.marks(account, profileId)[second.first]?.second == listOf("for later") }
+        screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[second.first]?.second == listOf("for later") }
         screen.scrollToText("for later")
         screen.keepScreenshot("favorites-changed")
 
@@ -97,7 +98,7 @@ class FavoritesTest {
         screen.scrollTo(remove)
         screen.waitUntil(20_000) { screen.onAllNodes(remove and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onNode(remove).performScrollTo().performClick()
-        screen.waitUntil(20_000) { first.first !in Instance.marks(account, profileId) }
+        screen.waitForTheApi(20_000) { first.first !in Instance.marks(account, profileId) }
         screen.waitForText(plural(R.plurals.favorites_count, 1, 1))
     }
 }

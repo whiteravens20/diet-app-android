@@ -35,6 +35,7 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import org.junit.Assert.assertEquals
@@ -74,7 +75,7 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.plans_generate_button)) and hasClickAction()).performScrollTo().performClick()
 
         // The plan is made on the server with what the form chose, and opens in its place.
-        screen.waitUntil(60_000) { Instance.planIds(account, profileId).isNotEmpty() }
+        screen.waitForTheApi(60_000) { Instance.planIds(account, profileId).isNotEmpty() }
         val planId = Instance.planIds(account, profileId).first()
         val options = Instance.planOptions(account, planId)
         assertEquals(4, options.getInt("mealCount"))
@@ -91,7 +92,7 @@ class PlansTest {
         screen.waitForText(text(R.string.plans_reroll_title))
         screen.keepScreenshot("plans-make-again")
         screen.onNodeWithText(text(R.string.plans_reroll_confirm)).performClick()
-        screen.waitUntil(60_000) { Instance.planRevision(account, planId) > made }
+        screen.waitForTheApi(60_000) { Instance.planRevision(account, planId) > made }
 
         // The first day is filled another way, from the ways its window offers.
         val remade = Instance.planRevision(account, planId)
@@ -100,7 +101,7 @@ class PlansTest {
         screen.waitForText(text(R.string.plans_ways_take), timeoutMillis = 60_000)
         screen.keepScreenshot("plans-other-ways")
         screen.onAllNodesWithText(text(R.string.plans_ways_take))[0].performClick()
-        screen.waitUntil(60_000) { Instance.planRevision(account, planId) > remade }
+        screen.waitForTheApi(60_000) { Instance.planRevision(account, planId) > remade }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
 
         // The first meal of the first day is swapped from the ways to change it, named by the meal:
@@ -223,7 +224,7 @@ class PlansTest {
         screen.onNode(hasText("Weekday") and hasAnyAncestor(isPopup())).performClick()
         screen.keepScreenshot("plans-a-favourite-set-to-put-on")
         screen.onNode(hasText(text(R.string.favorite_sets_apply_confirm)) and hasAnyAncestor(isDialog())).performClick()
-        screen.waitUntil(20_000) { Instance.recipesFor(account, planId, "breakfast") == listOf(recipeId, recipeId) }
+        screen.waitForTheApi(20_000) { Instance.recipesFor(account, planId, "breakfast") == listOf(recipeId, recipeId) }
         screen.waitUntil(20_000) { screen.onAllNodes(isDialog()).fetchSemanticsNodes().isEmpty() }
     }
 
@@ -245,7 +246,7 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(eaten).fetchSemanticsNodes().isNotEmpty() }
         // The meals are below the plan's facts and its day: on a small screen the box may be at its edge.
         screen.onAllNodesWithContentDescription(eaten)[0].performScrollTo().performClick()
-        screen.waitUntil(20_000) { Instance.firstMealEaten(account, planId) }
+        screen.waitForTheApi(20_000) { Instance.firstMealEaten(account, planId) }
         screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(eaten) and isOn()).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("plans-a-meal-eaten")
         putAwayRebalance()
@@ -263,7 +264,7 @@ class PlansTest {
         screen.waitForText(text(R.string.plans_custom_total, "600", "24", "16", "80"))
         screen.keepScreenshot("plans-a-meal-of-ones-own")
         screen.onNodeWithText(text(R.string.plans_custom_submit)).performClick()
-        screen.waitUntil(20_000) { Instance.ownMeals(account, planId) == listOf("Grandma's soup") }
+        screen.waitForTheApi(20_000) { Instance.ownMeals(account, planId) == listOf("Grandma's soup") }
         screen.scrollToText("Grandma's soup")
         putAwayRebalance()
 
@@ -299,7 +300,7 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.common_delete)).performClick()
         screen.waitForText(text(R.string.plans_delete_confirm))
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
-        screen.waitUntil(20_000) { Instance.planIds(account, profileId).isEmpty() }
+        screen.waitForTheApi(20_000) { Instance.planIds(account, profileId).isEmpty() }
         screen.waitForText(text(R.string.plans_calendar_title))
     }
 
@@ -335,7 +336,7 @@ class PlansTest {
         screen.keepScreenshot("plans-use-up")
         val found = Instance.planRevision(account, planId)
         screen.onAllNodesWithText(take)[0].performScrollTo().performClick()
-        screen.waitUntil(20_000) { Instance.planRevision(account, planId) > found }
+        screen.waitForTheApi(20_000) { Instance.planRevision(account, planId) > found }
         // The swaps were for the plan as it was: they go with it.
         screen.waitUntil(20_000) { screen.onAllNodesWithText(take).fetchSemanticsNodes().isEmpty() }
     }

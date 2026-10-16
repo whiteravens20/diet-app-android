@@ -26,6 +26,7 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -76,21 +77,21 @@ class RecipesTest {
         screen.waitForText(text(R.string.recipe_save_to_favorites))
         val chip = hasText("Ala") and hasClickAction()
         screen.onNode(chip).performScrollTo().performClick()
-        screen.waitUntil(20_000) { Instance.marks(account, profileId)[recipeId]?.first == "favorite" }
+        screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[recipeId]?.first == "favorite" }
         screen.keepScreenshot("recipes-marked-for-a-profile")
         screen.waitForEnabled("Ala")
         screen.onNode(chip).performScrollTo().performClick()
-        screen.waitUntil(20_000) { recipeId !in Instance.marks(account, profileId) }
+        screen.waitForTheApi(20_000) { recipeId !in Instance.marks(account, profileId) }
 
         // The first line's ingredient marked as a favourite of the profile, then as one it avoids.
         val ingredient = Instance.recipeIngredients(account, recipeId).first()
         val favourite = text(R.string.recipe_mark_favorite)
         val avoid = text(R.string.recipe_mark_avoid)
         screen.onAllNodesWithContentDescription(favourite)[0].performScrollTo().performClick()
-        screen.waitUntil(20_000) { ingredient in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds") }
+        screen.waitForTheApi(20_000) { ingredient in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds") }
         screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(avoid) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onAllNodesWithContentDescription(avoid)[0].performScrollTo().performClick()
-        screen.waitUntil(20_000) {
+        screen.waitForTheApi(20_000) {
             ingredient in Instance.preferredIngredients(account, profileId, "excludedIngredientIds") &&
                 ingredient !in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds")
         }

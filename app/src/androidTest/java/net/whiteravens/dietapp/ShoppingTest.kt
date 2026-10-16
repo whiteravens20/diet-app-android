@@ -31,6 +31,7 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
+import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -82,7 +83,7 @@ class ShoppingTest {
         screen.keepScreenshot("shopping-the-amounts-of-a-row")
         // The amounts open under the row, which may reach below the screen's edge.
         screen.onNodeWithText(text(R.string.common_save)).performScrollTo().performClick()
-        screen.waitUntil(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
+        screen.waitForTheApi(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
 
         // The entries are found by a part of the name: the rows shown are those whose name holds it.
         list.performScrollToNode(hasText(text(R.string.shopping_find_entry)))
@@ -132,7 +133,7 @@ class ShoppingTest {
         screen.waitForText(text(R.string.shopping_generate_button))
         screen.keepScreenshot("shopping-the-days-of-a-list")
         screen.onNodeWithText(text(R.string.shopping_generate_button)).performClick()
-        screen.waitUntil(30_000) { Instance.shoppingListIds(account, planId).let { it.size == 1 && it != first } }
+        screen.waitForTheApi(30_000) { Instance.shoppingListIds(account, planId).let { it.size == 1 && it != first } }
 
         // The list is deleted from its menu once that is confirmed: the plan has none left.
         list.performScrollToNode(hasContentDescription(text(R.string.shopping_list_options)))
@@ -140,7 +141,7 @@ class ShoppingTest {
         screen.onNodeWithText(text(R.string.common_delete)).performClick()
         screen.waitForText(text(R.string.shopping_delete_confirm))
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
-        screen.waitUntil(20_000) { Instance.shoppingListIds(account, planId).isEmpty() }
+        screen.waitForTheApi(20_000) { Instance.shoppingListIds(account, planId).isEmpty() }
         screen.waitForText(text(R.string.shopping_no_lists_title))
     }
 }
