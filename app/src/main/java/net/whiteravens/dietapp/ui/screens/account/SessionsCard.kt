@@ -3,7 +3,6 @@
 package net.whiteravens.dietapp.ui.screens.account
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,30 +96,27 @@ internal fun SessionsCard(
     }
 }
 
-/** One open session: its name, this phone's marked, when it began and was last used, and its own sign-out, which says whose it is. */
+/**
+ * One open session: its name, this phone's marked under it, when it began and was last used, and its
+ * own sign-out, which says whose it is. The name has the row's width beside the sign-out to itself.
+ */
 @Composable
 private fun SessionRow(session: AccountSession, enabled: Boolean, onEnd: () -> Unit) {
     val name = session.label ?: stringResource(R.string.account_session_unknown)
     val described = stringResource(R.string.account_session_end_named, name)
     Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                if (session.current) AccentChip(stringResource(R.string.account_session_current))
-            }
+            Text(
+                name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+            )
             TextButton(onClick = onEnd, enabled = enabled, modifier = Modifier.semantics { contentDescription = described }) {
                 Text(stringResource(R.string.account_session_end))
             }
         }
+        if (session.current) AccentChip(stringResource(R.string.account_session_current), Modifier.padding(bottom = 4.dp))
         Text(
             stringResource(R.string.account_session_times, formatMoment(session.startedAt), formatMoment(session.lastUsedAt)),
             style = MaterialTheme.typography.bodySmall,
