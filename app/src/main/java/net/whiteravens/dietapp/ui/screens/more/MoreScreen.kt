@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
 import net.whiteravens.dietapp.ui.navigation.CalculatorRoute
 import net.whiteravens.dietapp.ui.navigation.FavoritesRoute
+import net.whiteravens.dietapp.ui.navigation.PantryRoute
 import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
 
 /** A place of the app the bottom bar has no room for, as the "More" tab lists it. */
@@ -40,6 +41,7 @@ val moreEntries: List<MoreEntry>
         MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
         MoreEntry(CalculatorRoute, AppIcons.Target, R.string.calculator_title),
         MoreEntry(FavoritesRoute, Icons.Default.Star, R.string.favorites_title),
+        MoreEntry(PantryRoute, AppIcons.Inventory, R.string.pantry_title),
         MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
     )
 

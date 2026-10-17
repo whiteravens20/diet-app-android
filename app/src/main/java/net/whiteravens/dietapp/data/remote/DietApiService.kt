@@ -165,6 +165,24 @@ interface DietApiService {
     @DELETE("weights/{id}")
     suspend fun deleteWeight(@Path("id") id: String)
 
+    // ── Pantry ──────────────────────────────────────────────────────────────
+
+    /** What a profile's pantry holds, in the order of the ingredients' English names, then of their units. */
+    @GET("inventory")
+    suspend fun pantry(@Query("profileId") profileId: String): List<InventoryItemDto>
+
+    /** Puts some of an ingredient into a profile's pantry; answers the row it is kept in. */
+    @POST("inventory")
+    suspend fun addToPantry(@Body body: UpsertInventoryItemRequest): InventoryItemDto
+
+    /** Changes a row of the pantry; answers it as it is kept now. */
+    @PATCH("inventory/{id}")
+    suspend fun changePantryRow(@Path("id") id: String, @Body body: PatchInventoryItemRequest): InventoryItemDto
+
+    /** Takes a row out of the pantry; answered 204. */
+    @DELETE("inventory/{id}")
+    suspend fun removePantryRow(@Path("id") id: String)
+
     // ── Ingredients ─────────────────────────────────────────────────────────
 
     /**

@@ -504,9 +504,59 @@ data class LogWeightRequest(val profileId: String, val kg: Double)
 
 // ── Ingredients (packages/shared/src/ingredient.ts) ─────────────────────────
 
-/** An ingredient of the catalogue, as a picker shows it: its name in the language asked for. */
+/**
+ * An ingredient of the catalogue: its name in the language asked for, the unit it is weighed or
+ * measured in, and what turns another unit into that one.
+ */
 @Serializable
-data class IngredientDto(val id: String, val name: String, val category: String, val allergens: List<String> = emptyList())
+data class IngredientDto(
+    val id: String,
+    val name: String,
+    val category: String,
+    /** `g` | `ml` | `piece`. */
+    val canonicalUnit: String,
+    /** The grams a piece of it weighs, where a piece has a weight. */
+    val gramsPerPiece: Double? = null,
+    /** The grams a millilitre of it weighs, where it is weighed and measured both. */
+    val density: Double? = null,
+    /** What a piece of it is called where it is counted: `piece` | `slice` | `clove` | `handful`. */
+    val displayUnit: String? = null,
+    val allergens: List<String> = emptyList(),
+)
+
+// ── Pantry (packages/shared/src/inventory.ts) ───────────────────────────────
+
+/** A row of a profile's pantry: how much of an ingredient it holds, in the row's own unit. */
+@Serializable
+data class InventoryItemDto(
+    val id: String,
+    val ingredient: IngredientDto,
+    /** The quantity as it is shown: rounded, a piece called what the ingredient calls it. */
+    val display: DisplayAmountDto,
+    /** The day it is best eaten before (yyyy-MM-dd); null where none is kept. */
+    val bestBefore: String? = null,
+)
+
+/**
+ * POST `/inventory`: some of an ingredient put into a profile's pantry, in [unit], and added to the
+ * row of that ingredient and unit where there is one. A [bestBefore] left out leaves that row's day.
+ */
+@Serializable
+data class UpsertInventoryItemRequest(
+    val profileId: String,
+    val ingredientId: String,
+    val quantity: Double,
+    /** `g` | `ml` | `piece`. */
+    val unit: String,
+    val bestBefore: String? = null,
+)
+
+/**
+ * PATCH `/inventory/:id`: what changed of a row, nothing else: its quantity in the row's unit, and
+ * its best-before day (yyyy-MM-dd), [JsonNull] where it has none any more.
+ */
+@Serializable
+data class PatchInventoryItemRequest(val quantity: Double? = null, val bestBefore: JsonElement? = null)
 
 // ── Recipes (packages/shared/src/recipe.ts) ─────────────────────────────────
 

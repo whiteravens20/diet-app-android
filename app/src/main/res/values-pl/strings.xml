@@ -674,6 +674,32 @@
     <string name="favorite_sets_apply_confirm">Zastosuj</string>
     <string name="favorite_sets_err_apply">Nie udało się zastosować zestawu.</string>
 
+    <!-- Pantry: what a profile has at home, worded as the web application's inventory page words it. -->
+    <string name="pantry_title">Spiżarnia</string>
+    <string name="pantry_subhead">Co masz pod ręką. Plany, ponowne układanie dni i zamiany posiłków domyślnie sięgają po przepisy, na które wystarcza to, co jest w spiżarni.</string>
+    <string name="pantry_no_profile">Nie ma jeszcze profilu</string>
+    <string name="pantry_no_profile_body">Utwórz profil, aby śledzić jego spiżarnię.</string>
+    <string name="pantry_no_profile_cta">Do profili</string>
+    <string name="pantry_empty_title">Spiżarnia jest pusta</string>
+    <string name="pantry_empty_body">Dodaj to, co masz, żeby planer mógł to wykorzystać.</string>
+    <string name="pantry_add_title">Dodaj do spiżarni</string>
+    <string name="pantry_ingredient">Składnik</string>
+    <string name="pantry_search_placeholder">Szukaj w katalogu…</string>
+    <string name="pantry_change_pick">Zmień</string>
+    <string name="pantry_quantity">Ilość</string>
+    <string name="pantry_quantity_of">Ilość: %1$s</string>
+    <string name="pantry_unit">Jednostka</string>
+    <string name="pantry_best_before">Najlepiej spożyć przed</string>
+    <string name="pantry_best_before_on">Najlepiej spożyć przed %1$s</string>
+    <string name="pantry_expiring_soon">wkrótce minie termin</string>
+    <string name="pantry_past_date">po terminie</string>
+    <string name="pantry_add">Dodaj</string>
+    <string name="pantry_change_of">Zmień: %1$s</string>
+    <string name="pantry_remove_of">Usuń %1$s</string>
+    <string name="pantry_err_add">Nie udało się dodać pozycji.</string>
+    <string name="pantry_err_change">Nie udało się zaktualizować pozycji.</string>
+    <string name="pantry_err_remove">Nie udało się usunąć pozycji.</string>
+
     <!-- Weight log -->
     <string name="weight_title">Dziennik wagi</string>
     <string name="weight_today">Dzisiejsza waga (%1$s)</string>

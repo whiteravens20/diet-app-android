@@ -9,6 +9,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.math.roundToInt
@@ -298,6 +299,34 @@ object Instance {
         return (0 until list.length()).map { list.getJSONObject(it) }.associate { mark ->
             val tags = mark.getJSONArray("tags")
             mark.getJSONObject("recipe").getString("id") to (mark.getString("sentiment") to (0 until tags.length()).map(tags::getString))
+        }
+    }
+
+    /** The ingredient of the catalogue called [english] in English: its id, and its name in [language]. */
+    fun ingredient(account: Account, english: String, language: String): Pair<String, String> {
+        val found = JSONArray(send("GET", "ingredients?search=${URLEncoder.encode(english, "UTF-8")}", null, account.accessToken, 200, "en"))
+        val id = (0 until found.length()).map(found::getJSONObject).first { it.getString("name") == english }.getString("id")
+        return id to JSONArray(send("GET", "ingredients?ids=$id", null, account.accessToken, 200, language)).getJSONObject(0).getString("name")
+    }
+
+    /** Puts [quantity] of an ingredient, in [unit], into a profile's pantry, best before [bestBefore], as the web application's form puts it in. */
+    fun stock(account: Account, profileId: String, ingredientId: String, quantity: Double, unit: String, bestBefore: LocalDate) {
+        call(
+            "POST",
+            "inventory",
+            JSONObject().put("profileId", profileId).put("ingredientId", ingredientId).put("quantity", quantity).put("unit", unit)
+                .put("bestBefore", bestBefore.toString()),
+            token = account.accessToken,
+            expect = 201,
+        )
+    }
+
+    /** A profile's pantry, by the ingredient of each row: its quantity in the row's unit, the unit, and its day or null. */
+    fun pantry(account: Account, profileId: String): Map<String, Triple<Double, String, String?>> {
+        val rows = JSONArray(send("GET", "inventory?profileId=$profileId", null, account.accessToken, 200, null))
+        return (0 until rows.length()).map(rows::getJSONObject).associate { row ->
+            row.getJSONObject("ingredient").getString("id") to
+                Triple(row.getDouble("quantity"), row.getString("unit"), if (row.isNull("bestBefore")) null else row.getString("bestBefore"))
         }
     }
 

@@ -65,6 +65,7 @@ import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.favorites.FavoritesScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
+import net.whiteravens.dietapp.ui.screens.pantry.PantryScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
@@ -92,6 +93,7 @@ import kotlin.reflect.KClass
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object CalculatorRoute
 @Serializable object FavoritesRoute
+@Serializable object PantryRoute
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
 
 /**
@@ -300,6 +302,9 @@ private fun MainScaffold(serverVersion: ServerVersion) {
                     },
                     onProfiles = { navController.navigate(ProfilesRoute) },
                 )
+            }
+            composable<PantryRoute> {
+                PantryScreen(onBack = { navController.popBackStack() }, onProfiles = { navController.navigate(ProfilesRoute) })
             }
         }
     }

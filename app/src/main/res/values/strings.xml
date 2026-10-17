@@ -621,6 +621,32 @@
     <string name="favorite_sets_apply_confirm">Apply</string>
     <string name="favorite_sets_err_apply">Could not apply the set.</string>
 
+    <!-- Pantry: what a profile has at home, worded as the web application's inventory page words it. -->
+    <string name="pantry_title">Inventory</string>
+    <string name="pantry_subhead">What you have on hand. Plans, day re-rolls and meal swaps default to recipes the pantry can cover.</string>
+    <string name="pantry_no_profile">No profile yet</string>
+    <string name="pantry_no_profile_body">Create a profile first to track its pantry.</string>
+    <string name="pantry_no_profile_cta">To the profiles</string>
+    <string name="pantry_empty_title">Pantry is empty</string>
+    <string name="pantry_empty_body">Add what you already have so the optimiser can use it.</string>
+    <string name="pantry_add_title">Add to pantry</string>
+    <string name="pantry_ingredient">Ingredient</string>
+    <string name="pantry_search_placeholder">Search the catalogue…</string>
+    <string name="pantry_change_pick">Change</string>
+    <string name="pantry_quantity">Quantity</string>
+    <string name="pantry_quantity_of">Quantity of %1$s</string>
+    <string name="pantry_unit">Unit</string>
+    <string name="pantry_best_before">Best before</string>
+    <string name="pantry_best_before_on">Best before %1$s</string>
+    <string name="pantry_expiring_soon">expiring soon</string>
+    <string name="pantry_past_date">past its date</string>
+    <string name="pantry_add">Add</string>
+    <string name="pantry_change_of">Change %1$s</string>
+    <string name="pantry_remove_of">Remove %1$s</string>
+    <string name="pantry_err_add">Could not add the item.</string>
+    <string name="pantry_err_change">Could not update the item.</string>
+    <string name="pantry_err_remove">Could not remove the item.</string>
+
     <!-- Weight log -->
     <string name="weight_title">Weight log</string>
     <string name="weight_today">Today\'s weight (%1$s)</string>

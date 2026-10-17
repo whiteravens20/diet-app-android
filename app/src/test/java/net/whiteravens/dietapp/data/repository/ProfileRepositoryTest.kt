@@ -119,14 +119,16 @@ class ProfileRepositoryTest {
 
     @Test
     fun `ingredients are named by their ids in one call, and none are asked for when there are none`() {
-        server.enqueue(answer("""[{"id":"a","name":"Apple","category":"fruits"},{"id":"b","name":"Bean","category":"legumes"}]"""))
+        server.enqueue(answer(fixture("ingredients-by-ids")))
+        val egg = "e8ca52e7-16a4-41fa-b861-966769b3944e"
+        val garlic = "2dad81f3-0d9d-44e1-9ef3-d275bc7782ee"
 
         val none = runBlocking { repository().ingredientsOf(emptyList()) }
-        val named = runBlocking { repository().ingredientsOf(listOf("a", "b")) }
+        val named = runBlocking { repository().ingredientsOf(listOf(egg, garlic)) }
 
         assertEquals(emptyList<IngredientChoice>(), none)
-        assertEquals(listOf("Apple", "Bean"), named.map { it.name })
-        assertEquals("/api/ingredients?ids=a%2Cb", server.takeRequest().path)
+        assertEquals(listOf("Garlic", "Large egg"), named.map { it.name })
+        assertEquals("/api/ingredients?ids=$egg%2C$garlic", server.takeRequest().path)
         assertEquals(1, server.requestCount)
     }
 
