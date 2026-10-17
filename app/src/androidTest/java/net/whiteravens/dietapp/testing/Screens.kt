@@ -23,7 +23,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
+import androidx.test.espresso.Espresso
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
@@ -55,6 +59,26 @@ fun ComposeTestRule.scrollTo(sought: SemanticsMatcher, timeoutMillis: Long = 20_
     waitUntil(timeoutMillis) {
         runCatching { onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(sought) }.isSuccess
     }
+}
+
+/**
+ * Puts the keyboard away, as a person does before reaching for what lies under it, and waits until
+ * the window in front, the app's or a dialog's, no longer has it. An open keyboard shortens the
+ * screen, and its height can change a moment after a field is chosen, which would move what was
+ * scrolled to between finding it and tapping it.
+ */
+fun ComposeTestRule.putKeyboardAway() {
+    Espresso.closeSoftKeyboard()
+    waitUntil(5_000) { !keyboardOpen() }
+}
+
+/** Whether the keyboard is over the window in front. */
+private fun keyboardOpen(): Boolean {
+    var open = false
+    Espresso.onView(isRoot()).check { root, _ ->
+        open = ViewCompat.getRootWindowInsets(root)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+    }
+    return open
 }
 
 /** [scrollTo] what shows [shown], or a text holding it where [substring]. */
@@ -170,7 +194,7 @@ fun ComposeTestRule.openAccountSettings(account: Account) {
 fun ComposeTestRule.signIn(account: Account) {
     onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
     onNodeWithText(text(R.string.auth_password)).performTextInput(account.password)
-    // Above the keyboard the field leaves open.
+    putKeyboardAway()
     onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
     waitForText(text(R.string.nav_dashboard))
 }

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import org.junit.Rule
@@ -28,6 +29,7 @@ class SignInTest {
 
         screen.onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
         screen.onNodeWithText(text(R.string.auth_password)).performTextInput(account.password)
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
 
         screen.waitForText(text(R.string.dashboard_welcome))
@@ -42,6 +44,7 @@ class SignInTest {
         screen.onNodeWithText(text(R.string.auth_forgot_password)).performScrollTo().performClick()
         if (Instance.mailsSent()) {
             screen.onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
+            screen.putKeyboardAway()
             screen.onNodeWithText(text(R.string.auth_reset_submit)).performScrollTo().performClick()
             screen.waitForText(text(R.string.auth_reset_sent))
         } else {

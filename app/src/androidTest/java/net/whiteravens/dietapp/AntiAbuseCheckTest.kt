@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import okhttp3.mockwebserver.Dispatcher
@@ -81,6 +82,7 @@ class AntiAbuseCheckTest {
         screen.onNodeWithText(text(R.string.auth_name)).performTextInput("Check")
         screen.onNodeWithText(text(R.string.auth_email)).performTextInput("check@example.test")
         screen.onNodeWithText(text(R.string.auth_password)).performTextInput("Check-Test-Passw0rd")
+        screen.putKeyboardAway()
         // The card's title reads the same as its button.
         screen.onNode(hasText(text(R.string.auth_create_account_button)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_check_title))

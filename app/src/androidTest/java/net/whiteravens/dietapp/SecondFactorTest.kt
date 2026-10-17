@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.totp
@@ -52,6 +53,7 @@ class SecondFactorTest {
 
         screen.onNodeWithText(text(R.string.account_second_factor_set_up)).performScrollTo().performClick()
         typeIntoTheSecond(text(R.string.account_password_current), account.password)
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_continue)).performScrollTo().performClick()
 
         // The key, as the screen shows it to be typed into an authenticator app, gives the first code.
@@ -61,6 +63,7 @@ class SecondFactorTest {
         screen.onNodeWithContentDescription(text(R.string.account_second_factor_qr)).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("second-factor-set-up")
         screen.onNodeWithText(text(R.string.account_second_factor_code)).performScrollTo().performTextInput(totp(key))
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_switch_on)).performScrollTo().performClick()
 
         screen.waitForText(text(R.string.account_second_factor_on_now))
@@ -75,6 +78,7 @@ class SecondFactorTest {
         screen.onNodeWithText(text(R.string.account_second_factor_new_codes)).performScrollTo().performClick()
         typeIntoTheSecond(text(R.string.account_password_current), account.password)
         screen.onNodeWithText(text(R.string.account_second_factor_code_or_recovery)).performScrollTo().performTextInput(recovery.first())
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_new_codes)).performScrollTo().performClick()
         screen.waitForText(text(R.string.account_second_factor_recovery_title))
         val renewed = shown(RECOVERY_CODE)
@@ -87,6 +91,7 @@ class SecondFactorTest {
         screen.onNodeWithText(text(R.string.account_second_factor_switch_off)).performScrollTo().performClick()
         typeIntoTheSecond(text(R.string.account_password_current), account.password)
         screen.onNodeWithText(text(R.string.account_second_factor_code_or_recovery)).performScrollTo().performTextInput(renewed.first())
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_switch_off)).performScrollTo().performClick()
         screen.waitForText(text(R.string.account_second_factor_off))
         screen.waitForTheApi(20_000) { !Instance.secondFactorOn(account) }

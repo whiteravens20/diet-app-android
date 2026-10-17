@@ -20,6 +20,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
@@ -123,6 +124,7 @@ class DashboardTest {
         val field = hasText(text(R.string.weight_today, "kg"))
         screen.scrollTo(field)
         screen.onNode(field).performScrollTo().performTextInput("81,5")
+        screen.putKeyboardAway()
         screen.onNode(hasText(text(R.string.weight_log)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(81.5, 80.6) }
         screen.waitUntil(20_000) {

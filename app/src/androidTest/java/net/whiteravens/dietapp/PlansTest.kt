@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putAwayPrintService
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
@@ -68,6 +69,7 @@ class PlansTest {
         // The new plan's form: three days, cooked ahead, four meals a day instead of the profile's own.
         screen.waitForText(text(R.string.plans_start_date))
         screen.onNodeWithText(text(R.string.plans_duration_days)).performTextReplacement("3")
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.plans_meal_prep)).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.plans_meals_a_day)).performScrollTo().performClick()
         screen.onNode(hasText("4") and hasClickAction()).performClick()
@@ -263,6 +265,7 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.plans_custom_servings)).performScrollTo().performTextReplacement("2")
         screen.waitForText(text(R.string.plans_custom_total, "600", "24", "16", "80"))
         screen.keepScreenshot("plans-a-meal-of-ones-own")
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.plans_custom_submit)).performClick()
         screen.waitForTheApi(20_000) { Instance.ownMeals(account, planId) == listOf("Grandma's soup") }
         screen.scrollToText("Grandma's soup")

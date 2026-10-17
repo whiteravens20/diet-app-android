@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
@@ -88,6 +89,7 @@ class FavoritesTest {
         screen.scrollTo(secondTag)
         screen.waitUntil(20_000) { screen.onAllNodes(secondTag and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onNode(secondTag).performScrollTo().performTextInput("for later")
+        screen.putKeyboardAway()
         screen.onAllNodes(hasText(text(R.string.favorites_add_tag)) and isEnabled())[0].performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[second.first]?.second == listOf("for later") }
         screen.scrollToText("for later")

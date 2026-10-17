@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -46,7 +47,10 @@ class ProfilesTest {
 
     private fun type(label: String, value: String) = screen.onNodeWithText(label).performScrollTo().performTextInput(value)
 
-    private fun press(label: String) = screen.onNodeWithText(label).performScrollTo().performClick()
+    private fun press(label: String) {
+        screen.putKeyboardAway()
+        screen.onNodeWithText(label).performScrollTo().performClick()
+    }
 
     @Test
     fun aFirstProfileIsSetUpInThreeStepsFromTheEmptyDashboard() {

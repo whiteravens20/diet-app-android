@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.putAwayPrintService
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -81,6 +82,7 @@ class ShoppingTest {
         screen.onNode(amounts).performClick()
         screen.onNodeWithText(text(R.string.shopping_at_home)).performTextReplacement("1")
         screen.keepScreenshot("shopping-the-amounts-of-a-row")
+        screen.putKeyboardAway()
         // The amounts open under the row, which may reach below the screen's edge.
         screen.onNodeWithText(text(R.string.common_save)).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
@@ -88,6 +90,7 @@ class ShoppingTest {
         // The entries are found by a part of the name: the rows shown are those whose name holds it.
         list.performScrollToNode(hasText(text(R.string.shopping_find_entry)))
         screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextInput(other)
+        screen.putKeyboardAway()
         screen.waitUntil(20_000) {
             val shown = screen.onAllNodes(isToggleable()).fetchSemanticsNodes()
             shown.isNotEmpty() && shown.all { node -> node.config[SemanticsProperties.Text].any { other.lowercase() in it.text.lowercase() } }

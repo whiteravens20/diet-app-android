@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.testing.clickFirst
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -51,6 +52,7 @@ class RecipesTest {
         val list = screen.onNode(hasScrollToNodeAction())
         screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
         screen.keepScreenshot("recipes-found-by-search")
+        screen.putKeyboardAway()
         screen.clickFirst(card)
 
         screen.waitForText(text(R.string.recipes_ingredients))
@@ -71,6 +73,7 @@ class RecipesTest {
         val card = hasText(title) and hasClickAction() and !hasSetTextAction()
         val list = screen.onNode(hasScrollToNodeAction())
         screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
+        screen.putKeyboardAway()
         screen.clickFirst(card)
 
         // The profile's chip marks the recipe as a favourite, and takes the mark off again.

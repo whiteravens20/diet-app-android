@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.openTab
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.startSignedIn
@@ -83,6 +84,7 @@ class AccountTest {
 
         val name = hasText(account.displayName) and hasSetTextAction()
         screen.onNode(name).performScrollTo().performTextReplacement("  Renamed on the phone ")
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.common_save)).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.me(account).getString("displayName") == "Renamed on the phone" }
         screen.waitForText(text(R.string.account_display_name_saved))
@@ -120,6 +122,7 @@ class AccountTest {
         screen.onNodeWithText(text(R.string.account_email_new)).performScrollTo().performTextInput("moved-${account.email}")
         // The form's own password, below the password card's.
         screen.onAllNodesWithText(text(R.string.account_password_current))[1].performScrollTo().performTextInput(account.password)
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_email_submit)).performScrollTo().performClick()
         screen.waitForText(text(R.string.account_email_sent))
         screen.keepScreenshot("account-address-asked-for")
@@ -164,6 +167,7 @@ class AccountTest {
         screen.onNode(hasText(text(R.string.account_delete_email)) and hasSetTextAction()).performScrollTo().performTextInput(account.email.uppercase())
         screen.onNode(hasText(text(R.string.account_delete_password)) and hasSetTextAction()).performScrollTo().performTextInput(account.password)
         screen.keepScreenshot("account-deletion")
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_delete_forever)).performScrollTo().performClick()
 
         screen.waitForText(text(R.string.auth_welcome_back))
@@ -195,6 +199,7 @@ class AccountTest {
         val field = hasText(text(R.string.weight_today, "lb"))
         screen.scrollTo(field)
         screen.onNode(field).performScrollTo().performTextInput("180")
+        screen.putKeyboardAway()
         screen.onNode(hasText(text(R.string.weight_log)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(81.65) }
     }

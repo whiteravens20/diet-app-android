@@ -13,6 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
@@ -66,6 +67,7 @@ class SessionsTest {
 
         screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
         screen.onNodeWithText(text(R.string.account_password_new)).performScrollTo().performTextInput(renewed)
+        screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_password_change)).performScrollTo().performClick()
         screen.waitForText(text(R.string.account_password_changed))
         screen.keepScreenshot("account-password-changed")
