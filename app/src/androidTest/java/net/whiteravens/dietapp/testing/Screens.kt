@@ -28,7 +28,11 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.auth.KeystoreSealer
+import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.remote.AuthTokens
 import java.io.IOException
+import kotlinx.coroutines.runBlocking
 
 /** A text of the app's, in the language the device runs in, with [args] put in. */
 fun text(@StringRes id: Int, vararg args: Any): String =
@@ -137,6 +141,23 @@ fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.s
 
 private fun ByteArray.contains(part: ByteArray): Boolean =
     (0..size - part.size).any { start -> part.indices.all { this[start + it] == part[it] } }
+
+/**
+ * Starts the app signed in to the session [account]'s sign-up opened, as a sign-in leaves it, and
+ * waits for the dashboard, asking the API for nothing: the instance lets one address sign in thirty
+ * times a quarter of an hour, and every screens' test runs from the emulator's one. A test of signing
+ * in, or of the session a sign-in on the phone opens, signs in on the screen instead ([signIn]).
+ */
+fun ComposeTestRule.startSignedIn(account: Account) {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    runBlocking {
+        TokenStore(context, KeystoreSealer()).save(AuthTokens(account.accessToken, account.refreshToken, ACCESS_TOKEN_SECONDS), account.sessionId)
+    }
+    waitForText(text(R.string.nav_dashboard))
+}
+
+/** How long an access token of the instance holds, as its sign-up answers it. */
+private const val ACCESS_TOKEN_SECONDS = 900.0
 
 /** Opens the account's settings from the bar's "More", and waits for the account to be read. */
 fun ComposeTestRule.openAccountSettings(account: Account) {

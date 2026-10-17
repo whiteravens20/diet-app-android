@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.signIn
+import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
@@ -60,7 +61,7 @@ class SessionsTest {
     fun aChangedPasswordEndsEverySessionAndTheNewOneSignsIn() {
         val account = Instance.newAccount()
         val renewed = "${account.password}-Renewed"
-        screen.signIn(account)
+        screen.startSignedIn(account)
         screen.openAccountSettings(account)
 
         screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
@@ -69,7 +70,7 @@ class SessionsTest {
         screen.waitForText(text(R.string.account_password_changed))
         screen.keepScreenshot("account-password-changed")
 
-        // Every session ended with the old password, the phone's and the sign-up's; the new one signs in.
+        // Every session ended with the old password, the one the phone was in too; the new one signs in.
         screen.waitForText(text(R.string.auth_welcome_back))
         assertFalse(Instance.stillSignedIn(account.accessToken))
         screen.signIn(account.copy(password = renewed))

@@ -13,8 +13,15 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlin.math.roundToInt
 
-/** What an account signs in with, and the session its sign-up opened (its access token and id), for asking the API about it. */
-data class Account(val email: String, val password: String, val displayName: String, val accessToken: String, val sessionId: String)
+/** What an account signs in with, and the session its sign-up opened (its tokens and id), for asking the API about it. */
+data class Account(
+    val email: String,
+    val password: String,
+    val displayName: String,
+    val accessToken: String,
+    val refreshToken: String,
+    val sessionId: String,
+)
 
 /**
  * The diet-app instance at the app's own address, which CI starts before the screens'
@@ -38,8 +45,8 @@ object Instance {
             JSONObject().put("email", email).put("password", password).put("displayName", displayName),
             expect = 201,
         )
-        val accessToken = answer.getJSONObject("tokens").getString("accessToken")
-        return Account(email, password, displayName, accessToken, answer.getString("sessionId"))
+        val tokens = answer.getJSONObject("tokens")
+        return Account(email, password, displayName, tokens.getString("accessToken"), tokens.getString("refreshToken"), answer.getString("sessionId"))
     }
 
     /** Signs [account] in with [password] as another app would, and answers the access token of the session that opens. */

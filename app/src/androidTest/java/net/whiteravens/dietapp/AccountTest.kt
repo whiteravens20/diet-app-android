@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.signIn
+import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
@@ -61,7 +62,7 @@ class AccountTest {
     @Test
     fun theAccountIsGivenANewNameWithoutTheSpacesTypedAroundIt() {
         val account = Instance.newAccount()
-        screen.signIn(account)
+        screen.startSignedIn(account)
         screen.openAccountSettings(account)
 
         val name = hasText(account.displayName) and hasSetTextAction()
@@ -75,7 +76,7 @@ class AccountTest {
     @Test
     fun theLanguageOfTheMailsAndTheWebIsChosenWhileTheAppKeepsThePhonesLanguage() {
         val account = Instance.newAccount()
-        screen.signIn(account)
+        screen.startSignedIn(account)
         screen.openAccountSettings(account)
 
         // Polish, named in itself; the app's texts stay as the phone has them.
@@ -89,7 +90,7 @@ class AccountTest {
     @Test
     fun anotherAddressIsAskedForThroughAMailWhereTheInstanceSendsMailAndNotOfferedWhereItDoesNot() {
         val account = Instance.newAccount()
-        screen.signIn(account)
+        screen.startSignedIn(account)
         screen.openAccountSettings(account)
 
         if (!Instance.mailsSent()) {
