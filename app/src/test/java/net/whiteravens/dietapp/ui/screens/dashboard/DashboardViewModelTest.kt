@@ -10,6 +10,7 @@ import io.mockk.runs
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
@@ -49,7 +50,7 @@ class DashboardViewModelTest {
     private val json = AppModule.json()
 
     @Before
-    fun mainThread() = Dispatchers.setMain(Dispatchers.Unconfined)
+    fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     /** A profile with no plan, unless a test says otherwise. */
     private val plans = mockk<MealPlanRepository>().also { coEvery { it.overview(any()) } returns null }

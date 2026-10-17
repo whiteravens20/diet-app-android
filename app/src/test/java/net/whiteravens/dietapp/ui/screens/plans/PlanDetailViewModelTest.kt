@@ -11,6 +11,7 @@ import io.mockk.runs
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.local.CacheDao
@@ -80,7 +81,7 @@ class PlanDetailViewModelTest {
     private val meal = plan.days.first().meals.first { it.recipe != null }
 
     @Before
-    fun mainThread() = Dispatchers.setMain(Dispatchers.Unconfined)
+    fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     @After
     fun reset() = Dispatchers.resetMain()

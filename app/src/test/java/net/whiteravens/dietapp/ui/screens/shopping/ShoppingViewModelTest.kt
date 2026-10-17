@@ -9,6 +9,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
@@ -32,7 +33,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShoppingViewModelTest {
     @Before
-    fun mainThread() = Dispatchers.setMain(Dispatchers.Unconfined)
+    fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     @After
     fun reset() = Dispatchers.resetMain()

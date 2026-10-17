@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.local.CacheDao
@@ -42,7 +43,7 @@ class MealPlansViewModelTest {
     private val json = AppModule.json()
 
     @Before
-    fun mainThread() = Dispatchers.setMain(Dispatchers.Unconfined)
+    fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     @After
     fun reset() = Dispatchers.resetMain()

@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.config.ServerConfigStore
@@ -34,7 +35,7 @@ class AuthViewModelTest {
     private val auth = mockk<AuthRepository>()
 
     @Before
-    fun mainThread() = Dispatchers.setMain(Dispatchers.Unconfined)
+    fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     @After
     fun reset() = Dispatchers.resetMain()
