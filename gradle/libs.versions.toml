@@ -17,6 +17,7 @@ kotlinxSerialization = "1.11.0"
 room = "2.8.5"
 datastore = "1.2.1"
 coroutines = "1.11.0"
+zxing = "3.5.4"
 # Final release — the material-icons artifacts left the Compose BOM after 1.7.x.
 materialIcons = "1.7.8"
 junit = "4.13.2"
@@ -53,6 +54,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 # Tests on the JVM only.
 junit = { module = "junit:junit", version.ref = "junit" }

@@ -236,6 +236,9 @@ dependencies {
 
     implementation(libs.datastore.preferences)
 
+    // QR codes drawn on the phone, for an authenticator app on another device.
+    implementation(libs.zxing.core)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
