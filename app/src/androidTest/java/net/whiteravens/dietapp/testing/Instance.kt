@@ -65,6 +65,10 @@ object Instance {
     fun secondFactorOn(account: Account): Boolean =
         call("GET", "users/me/second-factor", token = account.accessToken).getBoolean("enabled")
 
+    /** Whether [account] signs in with its password: false once the account is gone. */
+    fun signsIn(account: Account): Boolean =
+        exchange("POST", "auth/login", JSONObject().put("email", account.email).put("password", account.password), null, null).first == 200
+
     /** Whether [token] is still the access token of an open session. */
     fun stillSignedIn(token: String): Boolean = exchange("GET", "users/me", null, token, null).first == 200
 

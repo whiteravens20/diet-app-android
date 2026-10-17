@@ -120,6 +120,23 @@ class UserRepositoryTest {
     }
 
     @Test
+    fun `the account is deleted for its password, and a wrong one is refused with its code`() {
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(answer("account-deletion-wrong-password").setResponseCode(401))
+        val users = repository()
+
+        runBlocking { users.deleteAccount("Str0ng-Passw0rd-1!") }
+        val refused = runCatching { runBlocking { users.deleteAccount("Wr0ng-Passw0rd-9?") } }.exceptionOrNull() as ApiException
+
+        val sent = server.takeRequest()
+        assertEquals("DELETE", sent.method)
+        assertEquals("/api/users/me", sent.requestUrl!!.encodedPath)
+        assertEquals(json.parseToJsonElement("""{"currentPassword":"Str0ng-Passw0rd-1!"}"""), json.parseToJsonElement(sent.body.readUtf8()))
+        assertEquals(401, refused.statusCode)
+        assertEquals("INVALID_PASSWORD", refused.code)
+    }
+
+    @Test
     fun `a new name is sent alone, and the account read back as the API keeps it`() {
         server.enqueue(answer("users-me-renamed-in-polish"))
 

@@ -781,6 +781,14 @@
     <string name="account_app_version">Wersja aplikacji</string>
     <string name="account_settings_hint">Pozostałe ustawienia konta zmienia się w aplikacji webowej.</string>
     <string name="account_sign_out">Wyloguj się</string>
+    <string name="account_danger">Usuwanie konta</string>
+    <string name="account_danger_body">Trwale usuń swoje konto wraz z każdym profilem, planem posiłków, ulubionym przepisem, listą zakupów i kluczem AI. Tej operacji nie można cofnąć.</string>
+    <string name="account_delete">Usuń konto</string>
+    <string name="account_delete_confirm">Wpisz swój e-mail, aby potwierdzić.</string>
+    <string name="account_delete_email">E-mail</string>
+    <string name="account_delete_password">Hasło</string>
+    <string name="account_delete_forever">Usuń na zawsze</string>
+    <string name="account_deleting">Usuwanie…</string>
     <string name="account_data">Twoje dane</string>
     <string name="account_data_body">Wszystko, co przechowuje to konto, w jednym pliku JSON: profile i ich preferencje, zapisane pomiary wagi, spiżarnia, oznaczone przepisy i przepisy własne, plany z posiłkami i listami zakupów. W pliku nie ma hasła, tokenów ani kluczy dostawców AI.</string>
     <string name="account_data_button">Zapisz moje dane w pliku</string>

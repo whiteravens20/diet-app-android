@@ -724,6 +724,14 @@
     <string name="account_app_version">App version</string>
     <string name="account_settings_hint">The account\'s other settings are changed in the web app.</string>
     <string name="account_sign_out">Sign out</string>
+    <string name="account_danger">Danger zone</string>
+    <string name="account_danger_body">Permanently delete your account and every profile, meal plan, favourite, shopping list and AI key that belongs to it. This cannot be undone.</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_confirm">Type your email to confirm.</string>
+    <string name="account_delete_email">Email</string>
+    <string name="account_delete_password">Password</string>
+    <string name="account_delete_forever">Delete forever</string>
+    <string name="account_deleting">Deleting…</string>
     <string name="account_data">Your data</string>
     <string name="account_data_body">Everything this account holds, as one JSON file: its profiles and their preferences, the weights you logged, your pantry, the recipes you marked and the ones that are your own, your plans with their meals and shopping lists. No password, token or provider key is in it.</string>
     <string name="account_data_button">Save my data to a file</string>

@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.ChangeEmailRequest
 import net.whiteravens.dietapp.data.remote.ChangePasswordRequest
+import net.whiteravens.dietapp.data.remote.DeleteAccountRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.UpdateUserSettingsRequest
 import net.whiteravens.dietapp.data.remote.WeightUnitRequest
@@ -76,6 +77,10 @@ class UserRepository @Inject constructor(
             }
         }
     }
+
+    /** Deletes the account and everything it holds, for [currentPassword]; its sessions end with it, the phone's too. */
+    suspend fun deleteAccount(currentPassword: String) =
+        apiCall(json) { api.deleteAccount(DeleteAccountRequest(currentPassword)) }
 
     /** Sends the mail that confirms the account's address again. */
     suspend fun resendVerification() = apiCall(json) { api.resendVerification() }

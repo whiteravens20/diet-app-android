@@ -57,8 +57,8 @@ import java.util.Locale
 
 /**
  * Account overview, its name, the language of its mails and of the web, the unit weights are shown
- * in, its password, two-step sign-in, where it is signed in, its address, its data in a file, and
- * sign-out. The other settings are changed on the web for now.
+ * in, its password, two-step sign-in, where it is signed in, its address, its data in a file, its
+ * deletion, and sign-out. The other settings are changed on the web for now.
  */
 @Composable
 fun AccountScreen(
@@ -69,6 +69,7 @@ fun AccountScreen(
     sessions: SessionsViewModel = hiltViewModel(),
     email: EmailChangeViewModel = hiltViewModel(),
     exporter: DataExportViewModel = hiltViewModel(),
+    deletion: AccountDeletionViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val passwordForm by password.state.collectAsStateWithLifecycle()
@@ -76,6 +77,7 @@ fun AccountScreen(
     val signedIn by sessions.state.collectAsStateWithLifecycle()
     val emailForm by email.state.collectAsStateWithLifecycle()
     val export by exporter.state.collectAsStateWithLifecycle()
+    val deleting by deletion.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
@@ -245,6 +247,16 @@ fun AccountScreen(
                 )
 
                 DataExportCard(export, onExport = exporter::export)
+
+                DangerZoneCard(
+                    address = user.email,
+                    state = deleting,
+                    onOpen = deletion::open,
+                    onCancel = deletion::cancel,
+                    onEmail = deletion::typeEmail,
+                    onPassword = deletion::typePassword,
+                    onDelete = { deletion.delete(user.email) },
+                )
             }
         }
 

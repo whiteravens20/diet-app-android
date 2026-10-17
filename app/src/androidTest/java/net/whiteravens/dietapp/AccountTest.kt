@@ -43,6 +43,7 @@ import net.whiteravens.dietapp.testing.waitForTheApi
 import org.hamcrest.CoreMatchers.allOf
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -150,6 +151,23 @@ class AccountTest {
         assertEquals("diet-app/account/1", saved.getString("format"))
         assertEquals(account.email, saved.getJSONObject("account").getString("email"))
         assertTrue(saved.getBoolean("complete"))
+    }
+
+    @Test
+    fun theAccountIsDeletedOnceItsAddressIsTypedAgainAndItsPasswordGiven() {
+        val account = Instance.newAccount()
+        screen.startSignedIn(account)
+        screen.openAccountSettings(account)
+
+        screen.onNodeWithText(text(R.string.account_delete)).performScrollTo().performClick()
+        // The address as typed in capitals is the account's all the same.
+        screen.onNode(hasText(text(R.string.account_delete_email)) and hasSetTextAction()).performScrollTo().performTextInput(account.email.uppercase())
+        screen.onNode(hasText(text(R.string.account_delete_password)) and hasSetTextAction()).performScrollTo().performTextInput(account.password)
+        screen.keepScreenshot("account-deletion")
+        screen.onNodeWithText(text(R.string.account_delete_forever)).performScrollTo().performClick()
+
+        screen.waitForText(text(R.string.auth_welcome_back))
+        assertFalse(Instance.signsIn(account))
     }
 
     @Test
