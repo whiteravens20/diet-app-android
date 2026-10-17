@@ -6,6 +6,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -13,9 +14,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.signIn
@@ -42,7 +45,8 @@ class AccountTest {
         screen.keepScreenshot("more")
         screen.onNodeWithText(text(R.string.account_title)).performClick()
         screen.waitForText(account.email)
-        screen.onNodeWithText(account.displayName).assertIsDisplayed()
+        // The name in the account's card, beside the field it is changed in.
+        screen.onNode(hasText(account.displayName) and !hasSetTextAction()).assertIsDisplayed()
         screen.onNodeWithText(BuildConfig.API_BASE_URL).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("account-settings")
 
@@ -50,6 +54,20 @@ class AccountTest {
         screen.onNode(hasText(text(R.string.account_sign_out)) and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
             .performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_welcome_back))
+    }
+
+    @Test
+    fun theAccountIsGivenANewNameWithoutTheSpacesTypedAroundIt() {
+        val account = Instance.newAccount()
+        screen.signIn(account)
+        screen.openAccountSettings(account)
+
+        val name = hasText(account.displayName) and hasSetTextAction()
+        screen.onNode(name).performScrollTo().performTextReplacement("  Renamed on the phone ")
+        screen.onNodeWithText(text(R.string.common_save)).performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { Instance.me(account).getString("displayName") == "Renamed on the phone" }
+        screen.waitForText(text(R.string.account_display_name_saved))
+        screen.keepScreenshot("account-renamed")
     }
 
     @Test

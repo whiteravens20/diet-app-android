@@ -22,13 +22,9 @@ class UserRepository @Inject constructor(
 ) {
     suspend fun me(): SessionUser = apiCall(json) { api.me() }.toDomain()
 
-    suspend fun updateSettings(
-        displayName: String? = null,
-        locale: String? = null,
-        theme: String? = null,
-    ): SessionUser = apiCall(json) {
-        api.updateSettings(UpdateUserSettingsRequest(displayName = displayName, locale = locale, theme = theme))
-    }.toDomain()
+    /** Gives the account the name it shows. */
+    suspend fun rename(displayName: String): SessionUser =
+        apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(displayName = displayName)) }.toDomain()
 
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =

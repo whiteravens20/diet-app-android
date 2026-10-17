@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +26,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,8 +56,8 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import java.util.Locale
 
 /**
- * Account overview, the unit weights are shown in, where the account is signed in, and sign-out.
- * The other settings are changed on the web for now.
+ * Account overview, its name, the unit weights are shown in, where the account is signed in, and
+ * sign-out. The other settings are changed on the web for now.
  */
 @Composable
 fun AccountScreen(
@@ -156,6 +161,14 @@ fun AccountScreen(
                     }
                 }
 
+                NameCard(
+                    name = user.displayName,
+                    renaming = state.renaming,
+                    renamed = state.renamed,
+                    failed = state.renameError,
+                    onRename = viewModel::rename,
+                )
+
                 AppCard {
                     SettingRow(
                         stringResource(R.string.account_language),
@@ -231,6 +244,49 @@ fun AccountScreen(
         }
     }
 }
+
+/** The name the account shows, typed anew and kept with Save; the API takes at most [NAME_MAX] characters. */
+@Composable
+private fun NameCard(name: String, renaming: Boolean, renamed: Boolean, failed: Throwable?, onRename: (String) -> Unit) {
+    var typed by rememberSaveable(name) { mutableStateOf(name) }
+    val changed = typed.trim().let { it.isNotEmpty() && it != name }
+    AppCard(Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = typed,
+            onValueChange = { if (it.length <= NAME_MAX) typed = it },
+            label = { Text(stringResource(R.string.account_display_name)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onRename(typed) }),
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+            Button(onClick = { onRename(typed) }, enabled = changed && !renaming, shape = MaterialTheme.shapes.medium) {
+                Text(stringResource(R.string.common_save))
+            }
+            if (renamed && !changed) {
+                Text(
+                    stringResource(R.string.account_display_name_saved),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
+            }
+        }
+        failed?.let {
+            Text(
+                errorMessage(it),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+/** The most characters of a name the API keeps. */
+private const val NAME_MAX = 80
 
 /**
  * The unit body weights are shown and typed in, as the web's settings choose it: by where the phone

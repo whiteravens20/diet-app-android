@@ -767,6 +767,8 @@
     <string name="account_resend_verification">Wyślij ponownie e-mail weryfikacyjny</string>
     <string name="account_resend_sending">Wysyłanie…</string>
     <string name="account_resend_sent">Wysłano e-mail weryfikacyjny.</string>
+    <string name="account_display_name">Nazwa wyświetlana</string>
+    <string name="account_display_name_saved">Nazwa zaktualizowana.</string>
     <string name="account_language">Język</string>
     <string name="account_theme">Motyw</string>
     <string name="account_theme_light">Jasny</string>

@@ -103,6 +103,9 @@ object Instance {
     /** The account's way of using a model: `none` where it has none to ask. */
     fun aiMode(account: Account): String = call("GET", "users/me", token = account.accessToken).getString("aiMode")
 
+    /** The account as the API keeps it: its name, the language of its mails, what it chose. */
+    fun me(account: Account): JSONObject = call("GET", "users/me", token = account.accessToken)
+
     /** The unit [account] chose for weights, `kg` or `lb`, or null while it goes by where the phone is. */
     fun weightUnit(account: Account): String? =
         call("GET", "users/me", token = account.accessToken).let { if (it.isNull("weightUnit")) null else it.getString("weightUnit") }

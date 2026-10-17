@@ -18,7 +18,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-/** The unit an account's weights are shown in, chosen and given back, against a local server answering as the backend did. */
+/** The account's settings changed one at a time, against a local server answering as the backend did. */
 class UserRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
@@ -58,5 +58,18 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"weightUnit":null}"""), json.parseToJsonElement(server.takeRequest().body.readUtf8()))
         assertEquals("lb", inPounds.weightUnit)
         assertNull(givenBack.weightUnit)
+    }
+
+    @Test
+    fun `a new name is sent alone, and the account read back as the API keeps it`() {
+        server.enqueue(answer("users-me-renamed-in-polish"))
+
+        val renamed = runBlocking { repository().rename("Konto z telefonu") }
+
+        val named = server.takeRequest()
+        assertEquals("PATCH", named.method)
+        assertEquals("/api/users/me", named.requestUrl!!.encodedPath)
+        assertEquals(json.parseToJsonElement("""{"displayName":"Konto z telefonu"}"""), json.parseToJsonElement(named.body.readUtf8()))
+        assertEquals("Konto z telefonu", renamed.displayName)
     }
 }
