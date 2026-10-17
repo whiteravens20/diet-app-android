@@ -724,6 +724,14 @@
     <string name="account_app_version">App version</string>
     <string name="account_settings_hint">The account\'s other settings are changed in the web app.</string>
     <string name="account_sign_out">Sign out</string>
+    <string name="account_email">Email</string>
+    <string name="account_email_hint">Used for sign-in and account recovery.</string>
+    <string name="account_email_change">Change email</string>
+    <string name="account_email_new">New email</string>
+    <string name="account_email_submit">Send confirmation link</string>
+    <string name="account_email_sending">Sending…</string>
+    <string name="account_email_sent">Check your new inbox — we sent a confirmation link to that address.</string>
+    <string name="account_email_unavailable">Changing your email isn\'t available on this instance — the operator hasn\'t configured email.</string>
     <string name="account_password">Password</string>
     <string name="account_password_current">Current password</string>
     <string name="account_password_new">New password</string>

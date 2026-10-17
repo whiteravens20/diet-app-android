@@ -82,6 +82,26 @@ class UserRepositoryTest {
     }
 
     @Test
+    fun `another address is asked for with the password, and one taken already is refused with its code`() {
+        server.enqueue(MockResponse().setResponseCode(202))
+        server.enqueue(answer("email-change-taken").setResponseCode(400))
+        val users = repository()
+
+        runBlocking { users.changeEmail("ola@example.test", "Str0ng-Passw0rd-1!") }
+        val refused = runCatching { runBlocking { users.changeEmail("ala@example.test", "Str0ng-Passw0rd-1!") } }.exceptionOrNull() as ApiException
+
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/users/me/email", sent.requestUrl!!.encodedPath)
+        assertEquals(
+            json.parseToJsonElement("""{"newEmail":"ola@example.test","currentPassword":"Str0ng-Passw0rd-1!"}"""),
+            json.parseToJsonElement(sent.body.readUtf8()),
+        )
+        assertEquals(400, refused.statusCode)
+        assertEquals("EMAIL_TAKEN", refused.code)
+    }
+
+    @Test
     fun `a new name is sent alone, and the account read back as the API keeps it`() {
         server.enqueue(answer("users-me-renamed-in-polish"))
 

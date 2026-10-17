@@ -38,6 +38,10 @@ interface DietApiService {
     @POST("users/me/password")
     suspend fun changePassword(@Body body: ChangePasswordRequest)
 
+    /** Asks for another address: a mail with a link goes to it, and the link makes the change; answered 202. */
+    @POST("users/me/email")
+    suspend fun changeEmail(@Body body: ChangeEmailRequest)
+
     @HTTP(method = "DELETE", path = "users/me", hasBody = true)
     suspend fun deleteAccount(@Body body: DeleteAccountRequest)
 

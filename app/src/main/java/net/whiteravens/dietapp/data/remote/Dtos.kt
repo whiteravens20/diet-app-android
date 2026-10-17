@@ -184,6 +184,10 @@ data class WeightUnitRequest(val weightUnit: String?)
 @Serializable
 data class ChangePasswordRequest(val currentPassword: String, val newPassword: String)
 
+/** POST `/users/me/email`: the address asked for, and the password the account has. */
+@Serializable
+data class ChangeEmailRequest(val newEmail: String, val currentPassword: String)
+
 @Serializable
 data class DeleteAccountRequest(val currentPassword: String)
 

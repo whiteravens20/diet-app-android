@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -26,6 +27,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -82,6 +84,30 @@ class AccountTest {
         screen.keepScreenshot("account-language")
         screen.onNodeWithText(text(R.string.account_language)).assertExists()
         screen.onNodeWithText(text(R.string.account_title)).assertExists()
+    }
+
+    @Test
+    fun anotherAddressIsAskedForThroughAMailWhereTheInstanceSendsMailAndNotOfferedWhereItDoesNot() {
+        val account = Instance.newAccount()
+        screen.signIn(account)
+        screen.openAccountSettings(account)
+
+        if (!Instance.mailsSent()) {
+            screen.waitForText(text(R.string.account_email_unavailable))
+            screen.onNodeWithText(text(R.string.account_email_unavailable)).performScrollTo().assertIsDisplayed()
+            screen.onNodeWithText(text(R.string.account_email_change)).assertDoesNotExist()
+            return
+        }
+        screen.waitForText(text(R.string.account_email_change))
+        screen.onNodeWithText(text(R.string.account_email_change)).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.account_email_new)).performScrollTo().performTextInput("moved-${account.email}")
+        // The form's own password, below the password card's.
+        screen.onAllNodesWithText(text(R.string.account_password_current))[1].performScrollTo().performTextInput(account.password)
+        screen.onNodeWithText(text(R.string.account_email_submit)).performScrollTo().performClick()
+        screen.waitForText(text(R.string.account_email_sent))
+        screen.keepScreenshot("account-address-asked-for")
+        // The address changes once the link in the mail is followed, not before.
+        assertEquals(account.email, Instance.me(account).getString("email"))
     }
 
     @Test
