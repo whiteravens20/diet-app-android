@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -16,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,8 +27,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
@@ -48,6 +44,7 @@ import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.profiles.WarningBox
 import kotlin.math.roundToInt
@@ -71,91 +68,89 @@ fun SubstituteDialog(
     LaunchedEffect(meal.id) { viewModel.open(planId, meal.id) }
     LaunchedEffect(state.done) { state.done?.let(onApplied) }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+    ScreenDialog(onDismiss) {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.substitute_title), style = MaterialTheme.typography.titleLarge)
+                    Text(meal.name, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            }
+            state.error?.let { ErrorBanner(errorMessage(it)) }
+
+            Text(stringResource(R.string.substitute_step_pick), style = MaterialTheme.typography.titleSmall)
+            meal.lines.forEach { line ->
+                Choice(
+                    label = line.name,
+                    aside = amountLabel(line.quantity, line.unit),
+                    selected = line.ingredientId == state.fromId,
+                    onClick = { viewModel.pickLine(line.ingredientId) },
+                )
+            }
+
+            val from = meal.lines.find { it.ingredientId == state.fromId }
+            if (from != null) {
+                Text(emphasized(stringResource(R.string.substitute_step_replace, MARK), from.name), style = MaterialTheme.typography.titleSmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.substitute_title), style = MaterialTheme.typography.titleLarge)
-                        Text(meal.name, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
-                }
-                state.error?.let { ErrorBanner(errorMessage(it)) }
-
-                Text(stringResource(R.string.substitute_step_pick), style = MaterialTheme.typography.titleSmall)
-                meal.lines.forEach { line ->
-                    Choice(
-                        label = line.name,
-                        aside = amountLabel(line.quantity, line.unit),
-                        selected = line.ingredientId == state.fromId,
-                        onClick = { viewModel.pickLine(line.ingredientId) },
+                    OutlinedTextField(
+                        value = state.search,
+                        onValueChange = viewModel::search,
+                        placeholder = { Text(stringResource(R.string.pickers_ingredient_search)) },
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.weight(1f),
                     )
+                    TextButton(onClick = viewModel::suggest, enabled = state.aiOn == true && !state.suggesting) {
+                        Text(stringResource(if (state.suggesting) R.string.substitute_ai_suggest_pending else R.string.substitute_ai_suggest))
+                    }
                 }
-
-                val from = meal.lines.find { it.ingredientId == state.fromId }
-                if (from != null) {
-                    Text(emphasized(stringResource(R.string.substitute_step_replace, MARK), from.name), style = MaterialTheme.typography.titleSmall)
+                if (state.aiOn == false) Note(stringResource(R.string.ai_off_note))
+                else Note(stringResource(R.string.substitute_tooltip_ai_suggest))
+                state.suggested?.let { suggested ->
+                    suggested.fallbackReason?.let { reason -> fallbackText(reason)?.let { Note(it, MaterialTheme.colorScheme.tertiary) } }
+                    suggested.reason?.let { Note(stringResource(R.string.substitute_ai_reason, it), MaterialTheme.colorScheme.onSurface) }
+                }
+                state.suggestions[from.ingredientId]?.let { suggestion ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(
-                            value = state.search,
-                            onValueChange = viewModel::search,
-                            placeholder = { Text(stringResource(R.string.pickers_ingredient_search)) },
-                            singleLine = true,
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.weight(1f),
-                        )
-                        TextButton(onClick = viewModel::suggest, enabled = state.aiOn == true && !state.suggesting) {
-                            Text(stringResource(if (state.suggesting) R.string.substitute_ai_suggest_pending else R.string.substitute_ai_suggest))
-                        }
-                    }
-                    if (state.aiOn == false) Note(stringResource(R.string.ai_off_note))
-                    else Note(stringResource(R.string.substitute_tooltip_ai_suggest))
-                    state.suggested?.let { suggested ->
-                        suggested.fallbackReason?.let { reason -> fallbackText(reason)?.let { Note(it, MaterialTheme.colorScheme.tertiary) } }
-                        suggested.reason?.let { Note(stringResource(R.string.substitute_ai_reason, it), MaterialTheme.colorScheme.onSurface) }
-                    }
-                    state.suggestions[from.ingredientId]?.let { suggestion ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Note(stringResource(R.string.substitute_catalogue_suggests))
-                            TextButton(onClick = { viewModel.pickSubstitute(suggestion) }) { Text(suggestion.name) }
-                        }
-                    }
-                    if (state.search.trim().length >= 2 || state.candidates.isNotEmpty()) {
-                        if (state.candidates.isEmpty()) Note(stringResource(R.string.pickers_no_matches))
-                        state.candidates.forEach { candidate ->
-                            // A model's own pick says so where it stands among the others.
-                            val picked = state.suggested?.takeIf { it.pick != null && it.ingredient.id == candidate.id }
-                            Choice(
-                                label = candidate.name,
-                                aside = null,
-                                selected = candidate.id == state.to?.id,
-                                onClick = { viewModel.pickSubstitute(candidate) },
-                                mark = picked?.let { { AiMark(modelPartText(ModelPart.Picked(it.reason))) } },
-                            )
-                        }
+                        Note(stringResource(R.string.substitute_catalogue_suggests))
+                        TextButton(onClick = { viewModel.pickSubstitute(suggestion) }) { Text(suggestion.name) }
                     }
                 }
+                if (state.search.trim().length >= 2 || state.candidates.isNotEmpty()) {
+                    if (state.candidates.isEmpty()) Note(stringResource(R.string.pickers_no_matches))
+                    state.candidates.forEach { candidate ->
+                        // A model's own pick says so where it stands among the others.
+                        val picked = state.suggested?.takeIf { it.pick != null && it.ingredient.id == candidate.id }
+                        Choice(
+                            label = candidate.name,
+                            aside = null,
+                            selected = candidate.id == state.to?.id,
+                            onClick = { viewModel.pickSubstitute(candidate) },
+                            mark = picked?.let { { AiMark(modelPartText(ModelPart.Picked(it.reason))) } },
+                        )
+                    }
+                }
+            }
 
-                if (from != null && state.to != null) {
-                    AppCard {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.substitute_step_delta), style = MaterialTheme.typography.titleSmall)
-                            if (state.previewing) Note(stringResource(R.string.substitute_computing))
-                            state.preview?.let { preview -> PreviewOf(preview, state.acceptChange, viewModel::setAcceptChange) }
-                            CheckRow(
-                                label = stringResource(R.string.substitute_rewrite_with_ai),
-                                hint = stringResource(if (state.aiOn == false) R.string.ai_off_note else R.string.substitute_rewrite_with_ai_hint),
-                                checked = state.aiOn == true && state.rewriteWithAi,
-                                onChange = viewModel::setRewriteWithAi,
-                                enabled = state.aiOn == true,
-                            )
-                            Button(onClick = viewModel::apply, enabled = state.canApply, modifier = Modifier.fillMaxWidth()) {
-                                Text(stringResource(if (state.applying) R.string.substitute_applying else R.string.substitute_apply))
-                            }
+            if (from != null && state.to != null) {
+                AppCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.substitute_step_delta), style = MaterialTheme.typography.titleSmall)
+                        if (state.previewing) Note(stringResource(R.string.substitute_computing))
+                        state.preview?.let { preview -> PreviewOf(preview, state.acceptChange, viewModel::setAcceptChange) }
+                        CheckRow(
+                            label = stringResource(R.string.substitute_rewrite_with_ai),
+                            hint = stringResource(if (state.aiOn == false) R.string.ai_off_note else R.string.substitute_rewrite_with_ai_hint),
+                            checked = state.aiOn == true && state.rewriteWithAi,
+                            onChange = viewModel::setRewriteWithAi,
+                            enabled = state.aiOn == true,
+                        )
+                        Button(onClick = viewModel::apply, enabled = state.canApply, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(if (state.applying) R.string.substitute_applying else R.string.substitute_apply))
                         }
                     }
                 }

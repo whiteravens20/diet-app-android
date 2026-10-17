@@ -45,8 +45,6 @@ import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MealSlots
@@ -59,6 +57,7 @@ import net.whiteravens.dietapp.ui.common.difficultyLabel
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.screens.profiles.AllergenChoice
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
 
@@ -95,89 +94,87 @@ internal fun RecipeFiltersDialog(
         maxCarbs = decimal(carbs),
     )
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+    ScreenDialog(onDismiss) {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.recipes_filters), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            }
+            Choice(stringResource(R.string.recipes_diet_type), RECIPE_DIET_TAGS.toList(), draft.dietType, { dietTypeLabel(it) }) { draft = draft.copy(dietType = it) }
+            Choice(stringResource(R.string.recipes_meal_type), MealSlots.BY_COUNT.getValue(5), draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
+            Choice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Figure(stringResource(R.string.recipes_max_calories), calories, CALORIES, Modifier.weight(1f)) { calories = it }
+                Figure(stringResource(R.string.recipes_max_prep), minutes, MINUTES, Modifier.weight(1f)) { minutes = it }
+            }
+
+            // The narrower ways to look stay folded until they are wanted; the count says when one of them is at work.
+            val narrower = applied().more
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(role = Role.Button) { more = !more }
+                    .semantics { if (more) collapse { more = false; true } else expand { more = true; true } }
+                    .padding(vertical = 8.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.recipes_filters), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
-                }
-                Choice(stringResource(R.string.recipes_diet_type), RECIPE_DIET_TAGS.toList(), draft.dietType, { dietTypeLabel(it) }) { draft = draft.copy(dietType = it) }
-                Choice(stringResource(R.string.recipes_meal_type), MealSlots.BY_COUNT.getValue(5), draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
-                Choice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
+                Text(
+                    if (narrower > 0) pluralStringResource(R.plurals.recipes_more_filters_on, narrower, narrower) else stringResource(R.string.recipes_more_filters),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(if (more) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
+            }
+            if (more) {
+                Choice(stringResource(R.string.recipes_cuisine), ProfileBounds.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Figure(stringResource(R.string.recipes_max_calories), calories, CALORIES, Modifier.weight(1f)) { calories = it }
-                    Figure(stringResource(R.string.recipes_max_prep), minutes, MINUTES, Modifier.weight(1f)) { minutes = it }
+                    Figure(stringResource(R.string.recipes_min_protein), protein, PROTEIN_OR_FAT, Modifier.weight(1f)) { protein = it }
+                    Figure(stringResource(R.string.recipes_max_fat), fat, PROTEIN_OR_FAT, Modifier.weight(1f)) { fat = it }
+                    Figure(stringResource(R.string.recipes_max_carbs), carbs, CARBS, Modifier.weight(1f)) { carbs = it }
                 }
+                Text(stringResource(R.string.recipes_per_serving), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                IngredientChooser(
+                    chosen = draft.ingredients,
+                    search = ingredientSearch,
+                    onSearch = onSearchIngredients,
+                    onAdd = { draft = draft.copy(ingredients = (draft.ingredients + it).take(RecipeFilter.MAX_INGREDIENTS)) },
+                    onRemove = { id -> draft = draft.copy(ingredients = draft.ingredients.filterNot { it.id == id }) },
+                )
+                AllergenChoice(
+                    selected = draft.withoutAllergens,
+                    onChange = { draft = draft.copy(withoutAllergens = it) },
+                    title = stringResource(R.string.recipes_without_allergens),
+                    hint = stringResource(R.string.recipes_without_allergens_hint),
+                )
+            }
 
-                // The narrower ways to look stay folded until they are wanted; the count says when one of them is at work.
-                val narrower = applied().more
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(role = Role.Button) { more = !more }
-                        .semantics { if (more) collapse { more = false; true } else expand { more = true; true } }
-                        .padding(vertical = 8.dp),
-                ) {
-                    Text(
-                        if (narrower > 0) pluralStringResource(R.plurals.recipes_more_filters_on, narrower, narrower) else stringResource(R.string.recipes_more_filters),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(if (more) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
-                }
-                if (more) {
-                    Choice(stringResource(R.string.recipes_cuisine), ProfileBounds.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Figure(stringResource(R.string.recipes_min_protein), protein, PROTEIN_OR_FAT, Modifier.weight(1f)) { protein = it }
-                        Figure(stringResource(R.string.recipes_max_fat), fat, PROTEIN_OR_FAT, Modifier.weight(1f)) { fat = it }
-                        Figure(stringResource(R.string.recipes_max_carbs), carbs, CARBS, Modifier.weight(1f)) { carbs = it }
+            // What a profile marked and favours, for the profile chosen where there is more than one.
+            if (profiles.isNotEmpty()) {
+                if (profiles.size > 1) {
+                    Choice(stringResource(R.string.recipes_favorites_profile), profiles.map { it.id }, draft.profileId, { id -> profiles.first { it.id == id }.name }, any = false) {
+                        draft = draft.copy(profileId = it)
                     }
-                    Text(stringResource(R.string.recipes_per_serving), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    IngredientChooser(
-                        chosen = draft.ingredients,
-                        search = ingredientSearch,
-                        onSearch = onSearchIngredients,
-                        onAdd = { draft = draft.copy(ingredients = (draft.ingredients + it).take(RecipeFilter.MAX_INGREDIENTS)) },
-                        onRemove = { id -> draft = draft.copy(ingredients = draft.ingredients.filterNot { it.id == id }) },
-                    )
-                    AllergenChoice(
-                        selected = draft.withoutAllergens,
-                        onChange = { draft = draft.copy(withoutAllergens = it) },
-                        title = stringResource(R.string.recipes_without_allergens),
-                        hint = stringResource(R.string.recipes_without_allergens_hint),
-                    )
                 }
+                CheckRow(stringResource(R.string.recipes_uses_favorites), checked = draft.favoriteIngredients) { draft = draft.copy(favoriteIngredients = it) }
+                Choice(stringResource(R.string.recipes_marked), MARKS, draft.marked, { markLabel(it) }, anyLabel = stringResource(R.string.recipes_marked_any)) { draft = draft.copy(marked = it) }
+            }
 
-                // What a profile marked and favours, for the profile chosen where there is more than one.
-                if (profiles.isNotEmpty()) {
-                    if (profiles.size > 1) {
-                        Choice(stringResource(R.string.recipes_favorites_profile), profiles.map { it.id }, draft.profileId, { id -> profiles.first { it.id == id }.name }, any = false) {
-                            draft = draft.copy(profileId = it)
-                        }
-                    }
-                    CheckRow(stringResource(R.string.recipes_uses_favorites), checked = draft.favoriteIngredients) { draft = draft.copy(favoriteIngredients = it) }
-                    Choice(stringResource(R.string.recipes_marked), MARKS, draft.marked, { markLabel(it) }, anyLabel = stringResource(R.string.recipes_marked_any)) { draft = draft.copy(marked = it) }
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(
-                        onClick = {
-                            draft = draft.cleared()
-                            calories = ""
-                            minutes = ""
-                            protein = ""
-                            fat = ""
-                            carbs = ""
-                        },
-                    ) { Text(stringResource(R.string.recipes_clear_filters)) }
-                    val within = listOf(calories to CALORIES, minutes to MINUTES, protein to PROTEIN_OR_FAT, fat to PROTEIN_OR_FAT, carbs to CARBS).none { (typed, bounds) -> outside(typed, bounds) }
-                    Button(onClick = { onApply(applied()) }, enabled = within) { Text(stringResource(R.string.recipes_filters_apply)) }
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(
+                    onClick = {
+                        draft = draft.cleared()
+                        calories = ""
+                        minutes = ""
+                        protein = ""
+                        fat = ""
+                        carbs = ""
+                    },
+                ) { Text(stringResource(R.string.recipes_clear_filters)) }
+                val within = listOf(calories to CALORIES, minutes to MINUTES, protein to PROTEIN_OR_FAT, fat to PROTEIN_OR_FAT, carbs to CARBS).none { (typed, bounds) -> outside(typed, bounds) }
+                Button(onClick = { onApply(applied()) }, enabled = within) { Text(stringResource(R.string.recipes_filters_apply)) }
             }
         }
     }

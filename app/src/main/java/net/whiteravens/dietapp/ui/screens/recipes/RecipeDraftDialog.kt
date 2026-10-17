@@ -32,8 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
@@ -46,6 +44,7 @@ import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
 import kotlin.math.roundToInt
 
@@ -76,83 +75,81 @@ fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Un
     var respectExclusions by rememberSaveable { mutableStateOf(true) }
     var addToFavorites by rememberSaveable { mutableStateOf(true) }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.draft_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+    ScreenDialog(onDismiss) {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.draft_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            }
+            Note(stringResource(R.string.draft_subhead))
+            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.draft_disclaimer), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
+            }
+            if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (profile != null) {
+                // Whose recipe it is, where there is more than one profile.
+                if (state.profiles.size > 1) {
+                    Choice(stringResource(R.string.recipes_favorites_profile), state.profiles.map { it.id }, profile.id, { id -> state.profiles.first { it.id == id }.figures.name }, any = false) { profileId = it }
                 }
-                Note(stringResource(R.string.draft_subhead))
-                Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.draft_disclaimer), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
-                }
-                if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (profile != null) {
-                    // Whose recipe it is, where there is more than one profile.
-                    if (state.profiles.size > 1) {
-                        Choice(stringResource(R.string.recipes_favorites_profile), state.profiles.map { it.id }, profile.id, { id -> state.profiles.first { it.id == id }.figures.name }, any = false) { profileId = it }
-                    }
-                    val diet = dietType ?: profile.figures.dietType
-                    Choice(stringResource(R.string.draft_diet_type), NAMED_DIETS, diet, { dietTypeLabel(it) }, any = false) { dietType = it }
-                    Choice(stringResource(R.string.draft_meal_type), MealSlots.BY_COUNT.getValue(5), mealType, { mealTypeLabel(it) }) { mealType = it }
-                    Choice(stringResource(R.string.draft_cuisine), ProfileBounds.CUISINES, cuisine, { cuisineLabel(it) }) { cuisine = it }
-                    Choice(stringResource(R.string.draft_cooking_method), COOKING_METHODS, cookingMethod, { cookingLabel(it) }) { cookingMethod = it }
-                    Choice(stringResource(R.string.draft_complexity), COMPLEXITIES, complexity, { complexityLabel(it) }) { complexity = it }
+                val diet = dietType ?: profile.figures.dietType
+                Choice(stringResource(R.string.draft_diet_type), NAMED_DIETS, diet, { dietTypeLabel(it) }, any = false) { dietType = it }
+                Choice(stringResource(R.string.draft_meal_type), MealSlots.BY_COUNT.getValue(5), mealType, { mealTypeLabel(it) }) { mealType = it }
+                Choice(stringResource(R.string.draft_cuisine), ProfileBounds.CUISINES, cuisine, { cuisineLabel(it) }) { cuisine = it }
+                Choice(stringResource(R.string.draft_cooking_method), COOKING_METHODS, cookingMethod, { cookingLabel(it) }) { cookingMethod = it }
+                Choice(stringResource(R.string.draft_complexity), COMPLEXITIES, complexity, { complexityLabel(it) }) { complexity = it }
 
-                    Text(stringResource(R.string.draft_targets), style = MaterialTheme.typography.titleSmall)
-                    Target(stringResource(R.string.draft_kcal_target), kcalOn, { kcalOn = it }, kcal, { kcal = it }, 200f..1200f, steps = 19, stringResource(R.string.draft_kcal_value, formatNumber(kcal.roundToInt())))
-                    Target(stringResource(R.string.draft_prep_time_max), timeOn, { timeOn = it }, minutes, { minutes = it }, 5f..120f, steps = 22, stringResource(R.string.draft_minutes_value, formatNumber(minutes.roundToInt())))
+                Text(stringResource(R.string.draft_targets), style = MaterialTheme.typography.titleSmall)
+                Target(stringResource(R.string.draft_kcal_target), kcalOn, { kcalOn = it }, kcal, { kcal = it }, 200f..1200f, steps = 19, stringResource(R.string.draft_kcal_value, formatNumber(kcal.roundToInt())))
+                Target(stringResource(R.string.draft_prep_time_max), timeOn, { timeOn = it }, minutes, { minutes = it }, 5f..120f, steps = 22, stringResource(R.string.draft_minutes_value, formatNumber(minutes.roundToInt())))
 
-                    val favourites = profile.preferences.favoriteIngredientIds.size
-                    val excluded = profile.preferences.excludedIngredientIds.size
-                    val allergens = profile.figures.allergens.size
-                    Text(stringResource(R.string.draft_profile_prefs), style = MaterialTheme.typography.titleSmall)
-                    CheckRow(
-                        stringResource(R.string.draft_use_favorites),
-                        hint = if (favourites == 0) stringResource(R.string.draft_use_favorites_empty) else pluralStringResource(R.plurals.draft_use_favorites_count, favourites, favourites),
-                        checked = useFavorites && favourites > 0,
-                        enabled = favourites > 0,
-                    ) { useFavorites = it }
-                    CheckRow(
-                        stringResource(R.string.draft_respect_exclusions),
-                        hint = if (excluded == 0) stringResource(R.string.draft_respect_exclusions_empty) else pluralStringResource(R.plurals.draft_respect_exclusions_count, excluded, excluded),
-                        checked = respectExclusions && excluded > 0,
-                        enabled = excluded > 0,
-                    ) { respectExclusions = it }
-                    if (allergens > 0) Note(pluralStringResource(R.plurals.draft_allergens_respected, allergens, allergens))
-                    CheckRow(stringResource(R.string.draft_add_to_favorites), checked = addToFavorites) { addToFavorites = it }
-                    Note(stringResource(R.string.draft_determinism_hint))
-                    state.error?.let { ErrorBanner(errorMessage(it)) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-                        Button(
-                            onClick = {
-                                viewModel.draft(
-                                    RecipeDraftAsk(
-                                        profileId = profile.id,
-                                        dietType = diet,
-                                        mealType = mealType,
-                                        cuisine = cuisine,
-                                        cookingMethod = cookingMethod,
-                                        complexity = complexity,
-                                        kcalTarget = kcal.roundToInt().takeIf { kcalOn },
-                                        prepMinutes = minutes.roundToInt().takeIf { timeOn },
-                                        useFavoriteIngredients = useFavorites && favourites > 0,
-                                        respectExclusions = respectExclusions,
-                                        addToFavorites = addToFavorites,
-                                    ),
-                                )
-                            },
-                            enabled = !state.drafting,
-                        ) { Text(stringResource(if (state.drafting) R.string.draft_drafting else R.string.draft_submit)) }
-                    }
-                } else if (!state.loading) {
-                    state.error?.let { ErrorBanner(errorMessage(it)) }
+                val favourites = profile.preferences.favoriteIngredientIds.size
+                val excluded = profile.preferences.excludedIngredientIds.size
+                val allergens = profile.figures.allergens.size
+                Text(stringResource(R.string.draft_profile_prefs), style = MaterialTheme.typography.titleSmall)
+                CheckRow(
+                    stringResource(R.string.draft_use_favorites),
+                    hint = if (favourites == 0) stringResource(R.string.draft_use_favorites_empty) else pluralStringResource(R.plurals.draft_use_favorites_count, favourites, favourites),
+                    checked = useFavorites && favourites > 0,
+                    enabled = favourites > 0,
+                ) { useFavorites = it }
+                CheckRow(
+                    stringResource(R.string.draft_respect_exclusions),
+                    hint = if (excluded == 0) stringResource(R.string.draft_respect_exclusions_empty) else pluralStringResource(R.plurals.draft_respect_exclusions_count, excluded, excluded),
+                    checked = respectExclusions && excluded > 0,
+                    enabled = excluded > 0,
+                ) { respectExclusions = it }
+                if (allergens > 0) Note(pluralStringResource(R.plurals.draft_allergens_respected, allergens, allergens))
+                CheckRow(stringResource(R.string.draft_add_to_favorites), checked = addToFavorites) { addToFavorites = it }
+                Note(stringResource(R.string.draft_determinism_hint))
+                state.error?.let { ErrorBanner(errorMessage(it)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+                    Button(
+                        onClick = {
+                            viewModel.draft(
+                                RecipeDraftAsk(
+                                    profileId = profile.id,
+                                    dietType = diet,
+                                    mealType = mealType,
+                                    cuisine = cuisine,
+                                    cookingMethod = cookingMethod,
+                                    complexity = complexity,
+                                    kcalTarget = kcal.roundToInt().takeIf { kcalOn },
+                                    prepMinutes = minutes.roundToInt().takeIf { timeOn },
+                                    useFavoriteIngredients = useFavorites && favourites > 0,
+                                    respectExclusions = respectExclusions,
+                                    addToFavorites = addToFavorites,
+                                ),
+                            )
+                        },
+                        enabled = !state.drafting,
+                    ) { Text(stringResource(if (state.drafting) R.string.draft_drafting else R.string.draft_submit)) }
                 }
+            } else if (!state.loading) {
+                state.error?.let { ErrorBanner(errorMessage(it)) }
             }
         }
     }

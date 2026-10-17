@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,8 +29,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
@@ -47,6 +44,7 @@ import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 import kotlin.math.roundToInt
 
 /**
@@ -69,53 +67,51 @@ fun DayWaysDialog(
     LaunchedEffect(state.taken) { state.taken?.let(onTaken) }
     LaunchedEffect(state.stale) { if (state.stale) onStale() }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.plans_ways_title, formatDayDate(day.date)),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
-                }
-                Note(stringResource(R.string.plans_ways_intro))
-                if (state.loading) {
-                    Note(stringResource(R.string.plans_ways_loading))
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                }
-                state.error?.let { ErrorBanner(errorMessage(it)) }
-                state.ways?.let { ways ->
-                    val target = formatNumber(ways.calorieTarget.roundToInt())
-                    Note(
-                        stringResource(
-                            R.string.plans_ways_now,
-                            formatNumber(ways.now.calories.roundToInt()),
-                            target,
-                            if (ways.nowWasted == 0) stringResource(R.string.plans_ways_now_none)
-                            else pluralStringResource(R.plurals.plans_ways_now_packs, ways.nowWasted, ways.nowWasted),
-                        ),
-                    )
-                    if (ways.ways.isEmpty()) Text(stringResource(R.string.plans_ways_none), style = MaterialTheme.typography.bodyMedium)
-                    ways.ways.forEachIndexed { index, way -> Way(index, way, target, busy = state.busy) { viewModel.take(way.offer) } }
+    ScreenDialog(onDismiss) {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.plans_ways_title, formatDayDate(day.date)),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            }
+            Note(stringResource(R.string.plans_ways_intro))
+            if (state.loading) {
+                Note(stringResource(R.string.plans_ways_loading))
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+            }
+            state.error?.let { ErrorBanner(errorMessage(it)) }
+            state.ways?.let { ways ->
+                val target = formatNumber(ways.calorieTarget.roundToInt())
+                Note(
+                    stringResource(
+                        R.string.plans_ways_now,
+                        formatNumber(ways.now.calories.roundToInt()),
+                        target,
+                        if (ways.nowWasted == 0) stringResource(R.string.plans_ways_now_none)
+                        else pluralStringResource(R.plurals.plans_ways_now_packs, ways.nowWasted, ways.nowWasted),
+                    ),
+                )
+                if (ways.ways.isEmpty()) Text(stringResource(R.string.plans_ways_none), style = MaterialTheme.typography.bodyMedium)
+                ways.ways.forEachIndexed { index, way -> Way(index, way, target, busy = state.busy) { viewModel.take(way.offer) } }
 
-                    // How asking a model went, said where the ways are and read out.
-                    Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
-                        when {
-                            ways.weighed -> Note(stringResource(R.string.weigh_weighed))
-                            ways.fallbackReason != null -> fallbackText(ways.fallbackReason)?.let { Note(it, MaterialTheme.colorScheme.tertiary) }
-                        }
+                // How asking a model went, said where the ways are and read out.
+                Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+                    when {
+                        ways.weighed -> Note(stringResource(R.string.weigh_weighed))
+                        ways.fallbackReason != null -> fallbackText(ways.fallbackReason)?.let { Note(it, MaterialTheme.colorScheme.tertiary) }
                     }
-                    if (ways.ways.isNotEmpty()) {
-                        TextButton(onClick = viewModel::weigh, enabled = state.aiOn == true && !state.busy) {
-                            Text(stringResource(if (state.weighing) R.string.weigh_asking else R.string.weigh_ask))
-                        }
-                        Note(stringResource(if (state.aiOn == false) R.string.ai_off_note else R.string.weigh_tooltip))
+                }
+                if (ways.ways.isNotEmpty()) {
+                    TextButton(onClick = viewModel::weigh, enabled = state.aiOn == true && !state.busy) {
+                        Text(stringResource(if (state.weighing) R.string.weigh_asking else R.string.weigh_ask))
                     }
+                    Note(stringResource(if (state.aiOn == false) R.string.ai_off_note else R.string.weigh_tooltip))
                 }
             }
         }
