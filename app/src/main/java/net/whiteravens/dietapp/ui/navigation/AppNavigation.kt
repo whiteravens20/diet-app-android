@@ -5,7 +5,9 @@ package net.whiteravens.dietapp.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -218,7 +220,8 @@ private fun MainScaffold(serverVersion: ServerVersion) {
         NavHost(
             navController = navController,
             startDestination = DashboardRoute,
-            modifier = Modifier.padding(padding),
+            // An open keyboard shortens every screen, so that what is being typed stays above it.
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding(),
         ) {
             composable<DashboardRoute> {
                 DashboardScreen(

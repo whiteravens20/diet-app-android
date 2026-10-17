@@ -17,10 +17,12 @@
         android:theme="@style/Theme.DietApp"
         tools:targetApi="31">
 
+        <!-- An open keyboard shortens the screens, which make room for it themselves, rather than pushing the window up. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.DietApp">
+            android:theme="@style/Theme.DietApp"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
