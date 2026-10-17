@@ -324,6 +324,16 @@ class NetworkStackTest {
     }
 
     @Test
+    fun `an answer that stops coming for ten seconds is given up`() {
+        val config = mockk<ServerConfigStore>()
+        val context = mockk<Context>()
+
+        val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context))
+
+        assertEquals(10_000, client.readTimeoutMillis)
+    }
+
+    @Test
     fun `signing in and registering send no access token, and other calls send the one held`() {
         val asked = Collections.synchronizedList(mutableListOf<RecordedRequest>())
         server.dispatcher = object : Dispatcher() {

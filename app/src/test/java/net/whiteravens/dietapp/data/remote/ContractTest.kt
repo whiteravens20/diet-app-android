@@ -225,7 +225,7 @@ class ContractTest(private val call: Call) {
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
         fun calls(): List<Array<Any>> =
-            listOf(AuthApiService::class.java, RefreshApiService::class.java, DietApiService::class.java)
+            listOf(AuthApiService::class.java, RefreshApiService::class.java, DietApiService::class.java, FileApiService::class.java)
                 .flatMap(::callsOf)
                 .map { arrayOf(it) }
 

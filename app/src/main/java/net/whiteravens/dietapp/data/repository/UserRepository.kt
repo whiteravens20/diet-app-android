@@ -10,6 +10,7 @@ import net.whiteravens.dietapp.data.remote.ChangeEmailRequest
 import net.whiteravens.dietapp.data.remote.ChangePasswordRequest
 import net.whiteravens.dietapp.data.remote.DeleteAccountRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.FileApiService
 import net.whiteravens.dietapp.data.remote.UpdateUserSettingsRequest
 import net.whiteravens.dietapp.data.remote.WeightUnitRequest
 import net.whiteravens.dietapp.data.remote.apiCall
@@ -31,6 +32,7 @@ class IncompleteExportException : IOException("The account's file did not arrive
 @Singleton
 class UserRepository @Inject constructor(
     private val api: DietApiService,
+    private val files: FileApiService,
     private val json: Json,
 ) {
     suspend fun me(): SessionUser = apiCall(json) { api.me() }.toDomain()
@@ -61,7 +63,7 @@ class UserRepository @Inject constructor(
      * ([IncompleteExportException]), so that one cut short is not taken for the account's data.
      */
     suspend fun export(into: OutputStream) {
-        val file = apiCall(json) { api.exportAccount() }
+        val file = apiCall(json) { files.exportAccount() }
         withContext(Dispatchers.IO) {
             file.use { answer ->
                 val input = answer.byteStream()

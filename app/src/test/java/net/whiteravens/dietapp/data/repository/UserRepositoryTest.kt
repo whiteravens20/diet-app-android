@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.data.repository
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.io.ByteArrayOutputStream
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
@@ -12,6 +14,7 @@ import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -37,13 +40,18 @@ class UserRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    private fun repository(): UserRepository {
+    private fun repository(client: OkHttpClient = client()): UserRepository =
+        UserRepository(AppModule.api(client, json), AppModule.fileApi(client, json), json)
+
+    private fun client(): OkHttpClient {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return UserRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json)
+        return AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))
+
+    private fun file(body: String) = MockResponse().setHeader("Content-Type", "application/json; charset=utf-8").setBody(body)
 
     @Test
     fun `the unit chosen is sent alone and read back, and the choice given back sends a null the API reads as such`() {
@@ -106,8 +114,8 @@ class UserRepositoryTest {
     @Test
     fun `the account's file is written as it arrives, and one that stops before its end is refused`() {
         val whole = fixture("account-export")
-        server.enqueue(MockResponse().setHeader("Content-Type", "application/json; charset=utf-8").setBody(whole))
-        server.enqueue(MockResponse().setHeader("Content-Type", "application/json; charset=utf-8").setBody(whole.dropLast(20)))
+        server.enqueue(file(whole))
+        server.enqueue(file(whole.dropLast(20)))
         val users = repository()
 
         val written = ByteArrayOutputStream()
@@ -117,6 +125,25 @@ class UserRepositoryTest {
         assertEquals("/api/users/me/export", server.takeRequest().requestUrl!!.encodedPath)
         assertEquals(whole, written.toString(Charsets.UTF_8))
         assertTrue(cut is IncompleteExportException)
+    }
+
+    @Test
+    fun `the account's file is read for as long as it keeps coming, and given up once it stops`() {
+        val whole = fixture("account-export")
+        val size = whole.toByteArray().size.toLong()
+        // An eighth of the file every quarter of a second: two seconds in all, never a second without a byte.
+        server.enqueue(file(whole).throttleBody(size / 8, 250, TimeUnit.MILLISECONDS))
+        // Half of the file, then nothing for longer than a read waits.
+        server.enqueue(file(whole).throttleBody(size / 2, 3, TimeUnit.SECONDS))
+        // The client's limits cut to a second each, so that the file outlasts the limit on a whole call.
+        val users = repository(client().newBuilder().callTimeout(1, TimeUnit.SECONDS).readTimeout(1, TimeUnit.SECONDS).build())
+
+        val written = ByteArrayOutputStream()
+        runBlocking { users.export(written) }
+        val stopped = runCatching { runBlocking { users.export(ByteArrayOutputStream()) } }.exceptionOrNull()
+
+        assertEquals(whole, written.toString(Charsets.UTF_8))
+        assertTrue(stopped.toString(), stopped is SocketTimeoutException)
     }
 
     @Test

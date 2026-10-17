@@ -26,6 +26,7 @@ import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.data.remote.ClientHeaders
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.FileApiService
 import net.whiteravens.dietapp.data.remote.PLACEHOLDER_BASE
 import net.whiteravens.dietapp.data.remote.RefreshApiService
 import okhttp3.Dispatcher
@@ -81,6 +82,8 @@ object AppModule {
             .addInterceptor(clientHeaders)
             // A call that takes longer is given up, so that nothing waits on a server for ever.
             .callTimeout(30, TimeUnit.SECONDS)
+            // An answer that stops coming for this long is given up, a file's too, which has no limit on the whole call.
+            .readTimeout(10, TimeUnit.SECONDS)
             .apply {
                 if (BuildConfig.DEBUG) {
                     // BASIC, not BODY — response bodies and auth headers carry tokens.
@@ -116,6 +119,15 @@ object AppModule {
     @Singleton
     fun api(client: OkHttpClient, json: Json): DietApiService =
         retrofit(client, json).create(DietApiService::class.java)
+
+    /**
+     * The files, on the authenticated client without its limit on the whole call: a large account's
+     * file on a slow line takes longer than any other answer may.
+     */
+    @Provides
+    @Singleton
+    fun fileApi(client: OkHttpClient, json: Json): FileApiService =
+        retrofit(client.newBuilder().callTimeout(0, TimeUnit.SECONDS).build(), json).create(FileApiService::class.java)
 
     /**
      * What the app sends: a field with a default is left out while it holds it, so an optional field
