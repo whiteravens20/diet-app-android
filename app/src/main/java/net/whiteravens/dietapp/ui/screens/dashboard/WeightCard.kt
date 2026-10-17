@@ -208,7 +208,11 @@ private fun WeightChart(points: List<WeightPoint>, lineKg: Double, lineLabel: St
             val inset = 4.dp.toPx()
             val width = size.width - 2 * inset
             fun x(index: Int) = inset + if (points.size == 1) width / 2 else width * index / (points.size - 1)
-            fun y(kg: Double) = ((top - unit.shown(kg)) / (top - bottom) * size.height).toFloat()
+            val span = top - bottom
+            fun y(kg: Double): Float {
+                val fromTop = top - unit.shown(kg)
+                return (fromTop / span * size.height).toFloat()
+            }
             drawLine(edge, Offset(0f, 0f), Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
             drawLine(edge, Offset(0f, size.height), Offset(size.width, size.height), strokeWidth = 1.dp.toPx())
             drawLine(line, Offset(0f, y(lineKg)), Offset(size.width, y(lineKg)), strokeWidth = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
