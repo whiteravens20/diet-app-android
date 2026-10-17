@@ -225,6 +225,7 @@ private fun ScanStep(setup: SecondFactorSetup, state: SecondFactorViewModel.UiSt
 }
 
 /** The recovery codes, this once, to copy or write down; the card leaves them once they are saved. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CodesStep(step: Step.Codes, actions: SecondFactorActions) {
     val context = LocalContext.current
@@ -261,7 +262,8 @@ private fun CodesStep(step: Step.Codes, actions: SecondFactorActions) {
             }
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+    // A line of its own for a button the other leaves too little room, as the web's buttons wrap.
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
             onClick = {
                 copySensitive(context, title, step.recoveryCodes.joinToString("\n"))
