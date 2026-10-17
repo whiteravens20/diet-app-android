@@ -296,33 +296,13 @@ private fun AddCard(state: PantryViewModel.UiState, viewModel: PantryViewModel) 
  * A row of the pantry: what it is, how much of it there is and until when, how near that day is,
  * and its amount and day to change, in fields that open under it, or the row to take out.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RowItem(row: PantryRow, enabled: Boolean, onChange: (PantryChange) -> Unit, onRemove: () -> Unit) {
     var editing by rememberSaveable(row.id) { mutableStateOf(false) }
     Column(Modifier.padding(vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(row.name, style = MaterialTheme.typography.bodyMedium)
-                row.bestBefore?.let { day ->
-                    Text(
-                        stringResource(R.string.pantry_best_before_on, formatDate(day.toString())),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                val near = when (freshness(row.bestBefore, LocalDate.now())) {
-                    Freshness.SOON -> R.string.pantry_expiring_soon
-                    Freshness.PAST -> R.string.pantry_past_date
-                    Freshness.FINE -> null
-                }
-                if (near != null) {
-                    LabelChip(
-                        stringResource(near),
-                        container = MaterialTheme.colorScheme.errorContainer,
-                        content = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                }
-            }
+            Text(row.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Text(
                 amountLabel(row.shown, row.shownUnit),
                 style = MaterialTheme.typography.bodyMedium,
@@ -334,6 +314,30 @@ private fun RowItem(row: PantryRow, enabled: Boolean, onChange: (PantryChange) -
             }
             IconButton(onClick = onRemove, enabled = enabled, colors = muted) {
                 Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.pantry_remove_of, row.name))
+            }
+        }
+        // The day on a line of its own, the width of the row, so that a narrow screen does not break it.
+        row.bestBefore?.let { day ->
+            val near = when (freshness(day, LocalDate.now())) {
+                Freshness.SOON -> R.string.pantry_expiring_soon
+                Freshness.PAST -> R.string.pantry_past_date
+                Freshness.FINE -> null
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    stringResource(R.string.pantry_best_before_on, formatDate(day.toString())),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                )
+                if (near != null) {
+                    LabelChip(
+                        stringResource(near),
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        container = MaterialTheme.colorScheme.errorContainer,
+                        content = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
             }
         }
         if (editing) {
