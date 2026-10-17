@@ -60,7 +60,6 @@ fun SessionUserDto.toDomain() = SessionUser(
     displayName = displayName,
     emailVerified = emailVerified,
     locale = locale,
-    theme = theme,
     weightUnit = weightUnit,
     aiMode = aiMode,
 )

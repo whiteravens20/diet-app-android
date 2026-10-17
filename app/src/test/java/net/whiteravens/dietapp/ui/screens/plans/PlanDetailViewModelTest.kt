@@ -106,7 +106,7 @@ class PlanDetailViewModelTest {
     private val favorites = mockk<FavoriteRepository>().also { coEvery { it.marked(plan.profileId) } returns liked }
     private val users = mockk<UserRepository>().also { coEvery { it.me() } returns account("admin") }
 
-    private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", "system", aiMode = aiMode)
+    private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = aiMode)
 
     private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id)) =
         PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, NoCache, json), favorites, users)

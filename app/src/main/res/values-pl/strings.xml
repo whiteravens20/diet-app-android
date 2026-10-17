@@ -769,11 +769,9 @@
     <string name="account_resend_sent">Wysłano e-mail weryfikacyjny.</string>
     <string name="account_display_name">Nazwa wyświetlana</string>
     <string name="account_display_name_saved">Nazwa zaktualizowana.</string>
-    <string name="account_language">Język</string>
-    <string name="account_theme">Motyw</string>
-    <string name="account_theme_light">Jasny</string>
-    <string name="account_theme_dark">Ciemny</string>
-    <string name="account_theme_system">Systemowy</string>
+    <string name="account_language">Język maili i aplikacji webowej</string>
+    <string name="account_language_hint">Ta aplikacja używa języka telefonu.</string>
+    <string name="account_language_failed">Nie udało się zapisać języka.</string>
     <string name="account_weight_unit">Jednostka wagi</string>
     <string name="account_weight_unit_by_region">Według mojego regionu</string>
     <string name="account_weight_unit_kg">Kilogramy</string>

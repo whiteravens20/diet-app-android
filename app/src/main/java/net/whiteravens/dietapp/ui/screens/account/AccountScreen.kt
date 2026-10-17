@@ -56,8 +56,8 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import java.util.Locale
 
 /**
- * Account overview, its name, the unit weights are shown in, where the account is signed in, and
- * sign-out. The other settings are changed on the web for now.
+ * Account overview, its name, the language of its mails and of the web, the unit weights are shown
+ * in, where the account is signed in, and sign-out. The other settings are changed on the web for now.
  */
 @Composable
 fun AccountScreen(
@@ -170,25 +170,11 @@ fun AccountScreen(
                 )
 
                 AppCard {
-                    SettingRow(
-                        stringResource(R.string.account_language),
-                        Locale.forLanguageTag(user.locale).let { locale ->
-                            locale.getDisplayLanguage(locale)
-                                .replaceFirstChar { it.titlecase(locale) }
-                                .ifBlank { user.locale }
-                        },
-                    )
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(vertical = 10.dp),
-                    )
-                    SettingRow(
-                        stringResource(R.string.account_theme),
-                        when (user.theme) {
-                            "light" -> stringResource(R.string.account_theme_light)
-                            "dark" -> stringResource(R.string.account_theme_dark)
-                            else -> stringResource(R.string.account_theme_system)
-                        },
+                    LanguageChoice(
+                        chosen = state.locale,
+                        saving = state.choosingLanguage != null,
+                        failed = state.languageError,
+                        onChoose = viewModel::chooseLanguage,
                     )
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant,
@@ -287,6 +273,47 @@ private fun NameCard(name: String, renaming: Boolean, renamed: Boolean, failed: 
 
 /** The most characters of a name the API keeps. */
 private const val NAME_MAX = 80
+
+/**
+ * The language of the account's mails and of the web application, as the web's settings choose it,
+ * each named in itself. The app's own texts follow the phone's language, whatever is chosen here.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LanguageChoice(chosen: String?, saving: Boolean, failed: Throwable?, onChoose: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            stringResource(R.string.account_language),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ACCOUNT_LANGUAGES.forEach { code ->
+                FilterChip(
+                    selected = chosen == code,
+                    onClick = { onChoose(code) },
+                    label = { Text(Locale.forLanguageTag(code).let { it.getDisplayLanguage(it).replaceFirstChar { c -> c.titlecase(it) } }) },
+                    enabled = !saving,
+                )
+            }
+        }
+        Text(
+            stringResource(R.string.account_language_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        failed?.let {
+            Text(
+                "${stringResource(R.string.account_language_failed)} ${errorMessage(it)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+    }
+}
+
+/** The languages the backend writes its mails and the web application in. */
+private val ACCOUNT_LANGUAGES = listOf("en", "pl")
 
 /**
  * The unit body weights are shown and typed in, as the web's settings choose it: by where the phone

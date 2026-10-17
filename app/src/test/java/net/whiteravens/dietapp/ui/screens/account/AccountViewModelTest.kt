@@ -159,4 +159,32 @@ class AccountViewModelTest {
         assertSame(refusal, model.state.value.renameError)
         assertEquals("Konto z telefonu", model.state.value.user?.displayName)
     }
+
+    @Test
+    fun `the language of the mails and the web is shown at once and kept as the API answers it, and one refused goes back with the reason`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val json = AppModule.json()
+        val users = mockk<UserRepository>()
+        coEvery { users.me() } returns json.decodeFromString<SessionUserDto>(fixture("users-me-in-english")).toDomain()
+        val answer = CompletableDeferred<SessionUser>()
+        coEvery { users.chooseLanguage("pl") } coAnswers { answer.await() }
+        val model = AccountViewModel(users, mockk(), servers(), instance(), this)
+        assertEquals("en", model.state.value.locale)
+
+        model.chooseLanguage("pl")
+        assertEquals("pl", model.state.value.locale)
+        model.chooseLanguage("en")
+        coVerify(exactly = 0) { users.chooseLanguage("en") }
+        answer.complete(json.decodeFromString<SessionUserDto>(fixture("users-me-renamed-in-polish")).toDomain())
+
+        assertEquals("pl", model.state.value.user?.locale)
+        assertNull(model.state.value.choosingLanguage)
+
+        val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
+        coEvery { users.chooseLanguage("en") } throws refusal
+        model.chooseLanguage("en")
+
+        assertEquals("pl", model.state.value.locale)
+        assertSame(refusal, model.state.value.languageError)
+    }
 }

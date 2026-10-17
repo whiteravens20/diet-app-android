@@ -70,7 +70,7 @@ class SubstituteViewModelTest {
     private val catalogue = mockk<ProfileRepository>().also { coEvery { it.ingredients("mar") } returns listOf(butter, margarine, oil) }
     private val users = mockk<UserRepository>().also { coEvery { it.me() } returns account("admin") }
 
-    private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", "system", aiMode = aiMode)
+    private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = aiMode)
 
     private fun opened(): SubstituteViewModel = SubstituteViewModel(plans, catalogue, users).also {
         it.open("plan", "meal")

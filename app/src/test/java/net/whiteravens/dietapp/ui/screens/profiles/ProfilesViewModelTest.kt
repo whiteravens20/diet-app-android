@@ -59,7 +59,7 @@ class ProfilesViewModelTest {
         coEvery { it.ingredientsOf(listOf("apple")) } returns listOf(IngredientChoice("apple", "Apple", "fruits"))
     }
     private val users = mockk<UserRepository>().also {
-        coEvery { it.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", weightUnit = "lb", aiMode = "none")
+        coEvery { it.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", weightUnit = "lb", aiMode = "none")
     }
     private val server = mockk<ServerRepository>().also {
         every { it.rules } returns MutableStateFlow<InstanceRules?>(InstanceRules(2, emptyMap()))

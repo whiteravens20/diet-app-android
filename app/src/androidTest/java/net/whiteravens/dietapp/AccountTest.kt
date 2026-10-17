@@ -71,6 +71,20 @@ class AccountTest {
     }
 
     @Test
+    fun theLanguageOfTheMailsAndTheWebIsChosenWhileTheAppKeepsThePhonesLanguage() {
+        val account = Instance.newAccount()
+        screen.signIn(account)
+        screen.openAccountSettings(account)
+
+        // Polish, named in itself; the app's texts stay as the phone has them.
+        screen.onNodeWithText("Polski").performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { Instance.me(account).getString("locale") == "pl" }
+        screen.keepScreenshot("account-language")
+        screen.onNodeWithText(text(R.string.account_language)).assertExists()
+        screen.onNodeWithText(text(R.string.account_title)).assertExists()
+    }
+
+    @Test
     fun theUnitOfWeightsIsChosenForTheAccountAndAWeightIsThenTypedInIt() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)

@@ -98,7 +98,7 @@ class ShoppingViewModelTest {
     @Test
     fun `what a list could do without is kept with the list it was asked of, and weighed only on an account with a model`() {
         val found = ListProposals(listOf(ListProposal.Leftover("Feta", "g", 80, 200.0, null)), weighed = false, fallbackReason = null)
-        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", "system", aiMode = "none")
+        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = "none")
         coEvery { lists.proposals(any(), any()) } returns found
         val model = ShoppingViewModel(users, plans, lists)
 

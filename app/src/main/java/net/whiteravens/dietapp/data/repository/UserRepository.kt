@@ -26,6 +26,10 @@ class UserRepository @Inject constructor(
     suspend fun rename(displayName: String): SessionUser =
         apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(displayName = displayName)) }.toDomain()
 
+    /** Chooses the language of the account's mails and of the web application, `en` or `pl`; this app follows the phone's. */
+    suspend fun chooseLanguage(locale: String): SessionUser =
+        apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(locale = locale)) }.toDomain()
+
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
         apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain()

@@ -712,11 +712,9 @@
     <string name="account_resend_sent">Verification email sent.</string>
     <string name="account_display_name">Display name</string>
     <string name="account_display_name_saved">Name updated.</string>
-    <string name="account_language">Language</string>
-    <string name="account_theme">Theme</string>
-    <string name="account_theme_light">Light</string>
-    <string name="account_theme_dark">Dark</string>
-    <string name="account_theme_system">System</string>
+    <string name="account_language">Language of mails and the web</string>
+    <string name="account_language_hint">This app follows your phone\'s language.</string>
+    <string name="account_language_failed">Could not save the language.</string>
     <string name="account_weight_unit">Weight unit</string>
     <string name="account_weight_unit_by_region">By where I am</string>
     <string name="account_weight_unit_kg">Kilograms</string>

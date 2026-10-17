@@ -16,10 +16,8 @@ data class SessionUser(
     val email: String,
     val displayName: String,
     val emailVerified: Boolean,
-    /** Platform locale code (`en`, `pl`, …). */
+    /** The language of the account's mails and of the web application (`en`, `pl`, …); the app follows the phone's. */
     val locale: String,
-    /** `light` | `dark` | `system`. */
-    val theme: String,
     /** `kg` | `lb`, or null for the unit of where the phone is. */
     val weightUnit: String? = null,
     /** `none` | `admin` | `byok`: whether the account has a model to ask, and whose. */

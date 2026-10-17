@@ -174,8 +174,6 @@ data class SessionUserDto(
 data class UpdateUserSettingsRequest(
     val displayName: String? = null,
     val locale: String? = null,
-    val theme: String? = null,
-    val palette: String? = null,
     val aiMode: String? = null,
 )
 

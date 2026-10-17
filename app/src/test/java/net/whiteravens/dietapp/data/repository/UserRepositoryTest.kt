@@ -72,4 +72,16 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"displayName":"Konto z telefonu"}"""), json.parseToJsonElement(named.body.readUtf8()))
         assertEquals("Konto z telefonu", renamed.displayName)
     }
+
+    @Test
+    fun `the language of the mails and the web is sent alone, and the account read back as the API keeps it`() {
+        server.enqueue(answer("users-me-renamed-in-polish"))
+
+        val inPolish = runBlocking { repository().chooseLanguage("pl") }
+
+        val chosen = server.takeRequest()
+        assertEquals("PATCH", chosen.method)
+        assertEquals(json.parseToJsonElement("""{"locale":"pl"}"""), json.parseToJsonElement(chosen.body.readUtf8()))
+        assertEquals("pl", inPolish.locale)
+    }
 }
