@@ -34,6 +34,9 @@ android {
         // no data of its own.
         testInstrumentationRunner = "net.whiteravens.dietapp.testing.DietAppTestRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        // The screenshots the tests keep are written through the test storage service, which the
+        // plugin lets write to the device's storage, and copies off it after the run, only when asked.
+        testInstrumentationRunnerArguments["useTestStorageService"] = "true"
     }
 
     // The server a build starts with: the emulator's host in a debug build, and none in a release
