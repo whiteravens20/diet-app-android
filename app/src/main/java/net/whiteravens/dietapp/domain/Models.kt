@@ -24,6 +24,12 @@ data class SessionUser(
     val aiMode: String,
 )
 
+/** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */
+data class SecondFactorState(val enabled: Boolean, val since: Instant?, val recoveryCodesLeft: Int)
+
+/** A secret for an authenticator app: as text, as an `otpauth://` link, and the enrolment its first code is sent with. */
+data class SecondFactorSetup(val secret: String, val uri: String, val enrolment: String)
+
 /**
  * A session of the account: what it was opened from ([label], null where that was not said), when
  * it began and was last used, and when it ends at the latest; [current] is this phone's own.

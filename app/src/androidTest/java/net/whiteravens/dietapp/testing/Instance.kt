@@ -61,6 +61,10 @@ object Instance {
             .associate { session -> session.getString("id") to (if (session.isNull("label")) null else session.getString("label")) }
     }
 
+    /** Whether [account] signs in with a second step, as its sign-up's session reads it. */
+    fun secondFactorOn(account: Account): Boolean =
+        call("GET", "users/me/second-factor", token = account.accessToken).getBoolean("enabled")
+
     /** Whether [token] is still the access token of an open session. */
     fun stillSignedIn(token: String): Boolean = exchange("GET", "users/me", null, token, null).first == 200
 

@@ -188,6 +188,33 @@ data class ChangePasswordRequest(val currentPassword: String, val newPassword: S
 @Serializable
 data class ChangeEmailRequest(val newEmail: String, val currentPassword: String)
 
+/** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */
+@Serializable
+data class SecondFactorStateDto(val enabled: Boolean, val since: String?, val recoveryCodesLeft: Int)
+
+/** POST `/users/me/second-factor/setup`: the password, for which a secret is handed out. */
+@Serializable
+data class SecondFactorSetupRequest(val currentPassword: String)
+
+/**
+ * A secret to set an authenticator app up with: as text, as an `otpauth://` link, and the enrolment
+ * its first code is sent with, which runs out after [expiresIn] seconds.
+ */
+@Serializable
+data class SecondFactorSetupDto(val secret: String, val uri: String, val enrolment: String, val expiresIn: Double)
+
+/** POST `/users/me/second-factor`: the enrolment, and the authenticator app's first code. */
+@Serializable
+data class SecondFactorConfirmRequest(val enrolment: String, val code: String)
+
+/** The password and a code from the authenticator app, or a recovery code: to switch the second step off, or for new recovery codes. */
+@Serializable
+data class SecondFactorProofRequest(val currentPassword: String, val code: String)
+
+/** The recovery codes of a second step, given once. */
+@Serializable
+data class RecoveryCodesDto(val recoveryCodes: List<String>)
+
 @Serializable
 data class DeleteAccountRequest(val currentPassword: String)
 

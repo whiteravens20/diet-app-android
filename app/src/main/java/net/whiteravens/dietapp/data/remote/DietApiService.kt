@@ -45,6 +45,26 @@ interface DietApiService {
     @HTTP(method = "DELETE", path = "users/me", hasBody = true)
     suspend fun deleteAccount(@Body body: DeleteAccountRequest)
 
+    /** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */
+    @GET("users/me/second-factor")
+    suspend fun secondFactor(): SecondFactorStateDto
+
+    /** A secret to set an authenticator app up with, for the password; it counts from its first code on. */
+    @POST("users/me/second-factor/setup")
+    suspend fun proposeSecondFactor(@Body body: SecondFactorSetupRequest): SecondFactorSetupDto
+
+    /** The first code: signing in takes one from now on; answered with the recovery codes, this once. */
+    @POST("users/me/second-factor")
+    suspend fun beginSecondFactor(@Body body: SecondFactorConfirmRequest): RecoveryCodesDto
+
+    /** New recovery codes in the place of the ones the account had, for the password and a code. */
+    @POST("users/me/second-factor/recovery-codes")
+    suspend fun newRecoveryCodes(@Body body: SecondFactorProofRequest): RecoveryCodesDto
+
+    /** Switches the second step off, for the password and a code; answered 204. */
+    @HTTP(method = "DELETE", path = "users/me/second-factor", hasBody = true)
+    suspend fun endSecondFactor(@Body body: SecondFactorProofRequest)
+
     /** The open sessions of the account, the one used last first. */
     @GET("users/me/sessions")
     suspend fun sessions(): List<AccountSessionDto>

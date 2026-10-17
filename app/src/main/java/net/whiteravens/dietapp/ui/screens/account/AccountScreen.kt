@@ -57,19 +57,21 @@ import java.util.Locale
 
 /**
  * Account overview, its name, the language of its mails and of the web, the unit weights are shown
- * in, its password, where it is signed in, its address, and sign-out. The other settings are changed
- * on the web for now.
+ * in, its password, two-step sign-in, where it is signed in, its address, and sign-out. The other
+ * settings are changed on the web for now.
  */
 @Composable
 fun AccountScreen(
     onBack: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
     password: PasswordViewModel = hiltViewModel(),
+    secondFactor: SecondFactorViewModel = hiltViewModel(),
     sessions: SessionsViewModel = hiltViewModel(),
     email: EmailChangeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val passwordForm by password.state.collectAsStateWithLifecycle()
+    val twoStep by secondFactor.state.collectAsStateWithLifecycle()
     val signedIn by sessions.state.collectAsStateWithLifecycle()
     val emailForm by email.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
@@ -210,6 +212,23 @@ fun AccountScreen(
                 }
 
                 PasswordCard(passwordForm, onCurrent = password::typeCurrent, onNew = password::typeNew, onChange = password::change)
+
+                SecondFactorCard(
+                    twoStep,
+                    SecondFactorActions(
+                        load = secondFactor::load,
+                        setUp = secondFactor::setUp,
+                        prove = secondFactor::prove,
+                        cancel = secondFactor::cancel,
+                        saved = secondFactor::saved,
+                        typePassword = secondFactor::typePassword,
+                        typeCode = secondFactor::typeCode,
+                        continueWithPassword = secondFactor::continueWithPassword,
+                        switchOn = secondFactor::switchOn,
+                        submitProof = secondFactor::submitProof,
+                    ),
+                    onOthersSignedOut = sessions::load,
+                )
 
                 SessionsCard(signedIn, onEnd = sessions::end, onEndAll = sessions::endAll, onRetry = sessions::load)
 
