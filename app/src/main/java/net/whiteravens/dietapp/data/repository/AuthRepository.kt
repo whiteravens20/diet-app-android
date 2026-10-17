@@ -82,6 +82,12 @@ class AuthRepository @Inject constructor(
         retryRevocation()
     }
 
+    /**
+     * Leaves a session the server has ended already, as a change of the password ends it: what the
+     * phone keeps of it goes, and there is nothing left to revoke.
+     */
+    suspend fun leave() = sessionEnd.end()
+
     /** Revokes on the server a session signed out of on this device, if one is still waiting for it. */
     suspend fun retryRevocation() {
         val pending = tokens.pendingRevocation() ?: return

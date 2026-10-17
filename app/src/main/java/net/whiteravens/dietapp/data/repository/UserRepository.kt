@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.ChangePasswordRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.UpdateUserSettingsRequest
 import net.whiteravens.dietapp.data.remote.WeightUnitRequest
@@ -33,6 +34,10 @@ class UserRepository @Inject constructor(
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
         apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain()
+
+    /** Changes the password from [current] to [new]; the API then ends every session of the account, the phone's too. */
+    suspend fun changePassword(current: String, new: String) =
+        apiCall(json) { api.changePassword(ChangePasswordRequest(current, new)) }
 
     /** Sends the mail that confirms the account's address again. */
     suspend fun resendVerification() = apiCall(json) { api.resendVerification() }

@@ -781,6 +781,12 @@
     <string name="account_app_version">Wersja aplikacji</string>
     <string name="account_settings_hint">Pozostałe ustawienia konta zmienia się w aplikacji webowej.</string>
     <string name="account_sign_out">Wyloguj się</string>
+    <string name="account_password">Hasło</string>
+    <string name="account_password_current">Aktualne hasło</string>
+    <string name="account_password_new">Nowe hasło</string>
+    <string name="account_password_change">Zmień hasło</string>
+    <string name="account_password_changing">Zmienianie…</string>
+    <string name="account_password_changed">Hasło zmienione. Zaloguj się ponownie nowym hasłem.</string>
     <string name="account_sessions">Aktywne sesje</string>
     <string name="account_sessions_body">Każda przeglądarka i aplikacja zalogowana na Twoje konto. Wyloguj te, których nie używasz albo nie znasz.</string>
     <string name="account_sessions_failed">Nie udało się wczytać sesji.</string>

@@ -57,15 +57,18 @@ import java.util.Locale
 
 /**
  * Account overview, its name, the language of its mails and of the web, the unit weights are shown
- * in, where the account is signed in, and sign-out. The other settings are changed on the web for now.
+ * in, its password, where it is signed in, and sign-out. The other settings are changed on the web
+ * for now.
  */
 @Composable
 fun AccountScreen(
     onBack: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
+    password: PasswordViewModel = hiltViewModel(),
     sessions: SessionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val passwordForm by password.state.collectAsStateWithLifecycle()
     val signedIn by sessions.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
@@ -203,6 +206,8 @@ fun AccountScreen(
                         modifier = Modifier.padding(top = 12.dp),
                     )
                 }
+
+                PasswordCard(passwordForm, onCurrent = password::typeCurrent, onNew = password::typeNew, onChange = password::change)
 
                 SessionsCard(signedIn, onEnd = sessions::end, onEndAll = sessions::endAll, onRetry = sessions::load)
             }

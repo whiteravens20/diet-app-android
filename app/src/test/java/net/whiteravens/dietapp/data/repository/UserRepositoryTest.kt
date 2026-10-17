@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.config.ServerConfigStore
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.clientHeaders
@@ -58,6 +59,26 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"weightUnit":null}"""), json.parseToJsonElement(server.takeRequest().body.readUtf8()))
         assertEquals("lb", inPounds.weightUnit)
         assertNull(givenBack.weightUnit)
+    }
+
+    @Test
+    fun `a password is changed with the one the account has, and a wrong one is refused with its code`() {
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(answer("password-change-wrong-password").setResponseCode(401))
+        val users = repository()
+
+        runBlocking { users.changePassword("Str0ng-Passw0rd-1!", "An0ther-Passw0rd-2?") }
+        val refused = runCatching { runBlocking { users.changePassword("Wr0ng-Passw0rd-9?", "An0ther-Passw0rd-2?") } }.exceptionOrNull() as ApiException
+
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/users/me/password", sent.requestUrl!!.encodedPath)
+        assertEquals(
+            json.parseToJsonElement("""{"currentPassword":"Str0ng-Passw0rd-1!","newPassword":"An0ther-Passw0rd-2?"}"""),
+            json.parseToJsonElement(sent.body.readUtf8()),
+        )
+        assertEquals(401, refused.statusCode)
+        assertEquals("INVALID_PASSWORD", refused.code)
     }
 
     @Test
