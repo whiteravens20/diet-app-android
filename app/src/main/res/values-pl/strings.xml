@@ -878,12 +878,12 @@
     <string name="category_dairy">Nabiał</string>
     <string name="category_meat">Mięso</string>
     <string name="category_fish">Ryby</string>
-    <string name="category_grains">Zboża</string>
+    <string name="category_grains">Produkty zbożowe</string>
     <string name="category_legumes">Rośliny strączkowe</string>
     <string name="category_nuts_seeds">Orzechy i nasiona</string>
     <string name="category_fats_oils">Tłuszcze i oleje</string>
     <string name="category_spices">Przyprawy</string>
-    <string name="category_pantry">Spiżarnia</string>
+    <string name="category_pantry">Produkty trwałe</string>
     <string name="category_beverages">Napoje</string>
     <string name="category_other">Inne</string>
 
