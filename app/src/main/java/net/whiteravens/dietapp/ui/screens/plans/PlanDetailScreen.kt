@@ -112,6 +112,7 @@ import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
@@ -874,16 +875,14 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
         )
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
+    // A window over the whole screen: the form is long, and an open keyboard leaves room for little of it.
+    ScreenDialog(onDismiss) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column {
-                Text(stringResource(R.string.plans_custom_modal_title))
+                Text(stringResource(R.string.plans_custom_modal_title), style = MaterialTheme.typography.titleLarge)
                 Text(formatDayDate(date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-        },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FormField(
                     value = form.name,
                     onValueChange = { typed -> form = form.copy(name = typed) },
@@ -929,17 +928,17 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val meal = form.meal()
-                    if (meal != null) onAdd(meal) else showProblems = true
-                },
-            ) { Text(stringResource(R.string.plans_custom_submit)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } },
-    )
+            Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+                Button(
+                    onClick = {
+                        val meal = form.meal()
+                        if (meal != null) onAdd(meal) else showProblems = true
+                    },
+                ) { Text(stringResource(R.string.plans_custom_submit)) }
+            }
+        }
+    }
 }
 
 /**
