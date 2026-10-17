@@ -4,8 +4,10 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -55,6 +57,8 @@ class SecondFactorTest {
         // The key, as the screen shows it to be typed into an authenticator app, gives the first code.
         screen.waitForText(text(R.string.account_second_factor_type_instead))
         val key = shown(Regex("([A-Z2-7]{4} )+[A-Z2-7]{1,4}")).single().replace(" ", "")
+        // The same secret drawn as a QR code, for an app on another device.
+        screen.onNodeWithContentDescription(text(R.string.account_second_factor_qr)).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("second-factor-set-up")
         screen.onNodeWithText(text(R.string.account_second_factor_code)).performScrollTo().performTextInput(totp(key))
         screen.onNodeWithText(text(R.string.account_second_factor_switch_on)).performScrollTo().performClick()
