@@ -61,9 +61,9 @@ class TokenAuthenticator @Inject constructor(
             return null
         }
         return when {
-            answer.isSuccessful -> answer.body()?.tokens?.let { pair ->
-                runBlocking { tokens.save(pair) }
-                pair.accessToken
+            answer.isSuccessful -> answer.body()?.let { renewed ->
+                runBlocking { tokens.save(renewed.tokens, renewed.sessionId) }
+                renewed.tokens.accessToken
             }
             answer.code() == 401 -> {
                 runBlocking { sessionEnd.end() }

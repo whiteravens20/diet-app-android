@@ -50,7 +50,7 @@ class TokenStoreTest {
     fun `a session is kept sealed, and the pair opens again`() = runBlocking {
         val store = TokenStore(data, sealer)
 
-        store.save(tokens(ACCESS, REFRESH))
+        store.save(tokens(ACCESS, REFRESH), SESSION)
 
         assertFalse(file.holds(ACCESS))
         assertFalse(file.holds(REFRESH))
@@ -61,17 +61,17 @@ class TokenStoreTest {
     @Test
     fun `a new pair is the session as soon as it is saved`() = runBlocking {
         val store = TokenStore(data, sealer)
-        store.save(tokens(ACCESS, REFRESH))
+        store.save(tokens(ACCESS, REFRESH), SESSION)
         assertEquals(Session(ACCESS, REFRESH), store.current())
 
-        store.save(tokens("access-2", "refresh-2"))
+        store.save(tokens("access-2", "refresh-2"), SESSION)
 
         assertEquals(Session("access-2", "refresh-2"), store.current())
     }
 
     @Test
     fun `a pair that the key cannot open, or that was never sealed, is no session`() = runBlocking {
-        TokenStore(data, sealer).save(tokens(ACCESS, REFRESH))
+        TokenStore(data, sealer).save(tokens(ACCESS, REFRESH), SESSION)
         val other = newKey()
 
         assertNull(TokenStore(data, AesGcmSealer({ null }, { other })).current())
@@ -82,6 +82,24 @@ class TokenStoreTest {
             prefs[stringPreferencesKey("refresh_token")] = REFRESH
         }
         assertNull(TokenStore(data, sealer).current())
+    }
+
+    @Test
+    fun `the id of the session is kept beside its pair, through a refresh, and goes with it`() = runBlocking {
+        val store = TokenStore(data, sealer)
+
+        store.save(tokens(ACCESS, REFRESH), SESSION)
+        assertEquals(SESSION, store.sessionId())
+        store.save(tokens("access-2", "refresh-2"), SESSION)
+        assertEquals(SESSION, store.sessionId())
+
+        store.clear()
+        assertNull(store.sessionId())
+
+        // A server that does not name the session leaves none named, not the one before.
+        store.save(tokens(ACCESS, REFRESH), SESSION)
+        store.save(tokens("access-3", "refresh-3"), null)
+        assertNull(store.sessionId())
     }
 
     @Test
@@ -102,5 +120,6 @@ class TokenStoreTest {
     private companion object {
         const val ACCESS = "eyJhbGciOiJIUzI1NiJ9.access-token-of-a-session"
         const val REFRESH = "7d0c5e2a-refresh-token-of-a-session"
+        const val SESSION = "83bc3b9b-0c12-47f6-a4f2-d4ad0b806338"
     }
 }

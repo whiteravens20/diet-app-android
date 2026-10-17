@@ -49,7 +49,7 @@ class AuthRepository @Inject constructor(
     suspend fun signIn(email: String, password: String, checkToken: String? = null): SignInResult {
         val answer = apiCall(json) { authApi.login(LoginRequest(email, password, checkToken)) }
         answer.secondFactor?.let { return SignInResult.SecondStep(it.challenge) }
-        tokens.save(checkNotNull(answer.tokens) { "A sign-in answered neither a session nor a second step" })
+        tokens.save(checkNotNull(answer.tokens) { "A sign-in answered neither a session nor a second step" }, answer.sessionId)
         return SignInResult.SignedIn
     }
 
@@ -58,12 +58,12 @@ class AuthRepository @Inject constructor(
         val response = apiCall(json) {
             authApi.loginSecondFactor(SecondFactorSignInRequest(challenge, code.filterNot(Char::isWhitespace)))
         }
-        tokens.save(response.tokens)
+        tokens.save(response.tokens, response.sessionId)
     }
 
     suspend fun register(email: String, password: String, displayName: String, checkToken: String? = null) {
         val response = apiCall(json) { authApi.register(RegisterRequest(email, password, displayName, checkToken)) }
-        tokens.save(response.tokens)
+        tokens.save(response.tokens, response.sessionId)
     }
 
     /**

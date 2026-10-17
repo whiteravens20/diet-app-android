@@ -82,8 +82,8 @@ class NetworkStackTest {
         runCatching { server.shutdown() }
     }
 
-    /** The session as the token store holds it; null is signed out. */
-    private class Held(var session: Session?)
+    /** The session as the token store holds it, null when signed out, and the id it was saved with. */
+    private class Held(var session: Session?, var sessionId: String? = null)
 
     /** The clients as the application wires them; [ended] counts the sessions the stack ended. */
     private class Stack(val api: DietApiService, val auth: AuthApiService, val ended: AtomicInteger)
@@ -91,9 +91,10 @@ class NetworkStackTest {
     private fun stack(held: Held): Stack {
         val tokens = mockk<TokenStore>()
         coEvery { tokens.current() } answers { held.session }
-        coEvery { tokens.save(any()) } answers {
+        coEvery { tokens.save(any(), any()) } answers {
             val pair = firstArg<AuthTokens>()
             held.session = Session(pair.accessToken, pair.refreshToken)
+            held.sessionId = secondArg()
         }
         coEvery { tokens.clear() } answers { held.session = null }
         val ended = AtomicInteger()
@@ -158,7 +159,7 @@ class NetworkStackTest {
     }
 
     @Test
-    fun `a request whose access token ran out is answered after one refresh, with the new pair kept`() {
+    fun `a request whose access token ran out is answered after one refresh, with the new pair kept and the session it belongs to`() {
         val held = aRunOutSession()
         val refreshes = AtomicInteger()
         server.dispatcher = backend({ answer("auth-refresh") }, refreshes)
@@ -167,6 +168,7 @@ class NetworkStackTest {
 
         assertEquals(1, refreshes.get())
         assertEquals("<removed>", held.session?.accessToken)
+        assertEquals("222dea42-e0d7-4792-af43-38277cb5d75f", held.sessionId)
     }
 
     @Test

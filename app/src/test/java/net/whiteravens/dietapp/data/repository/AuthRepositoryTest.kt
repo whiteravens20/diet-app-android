@@ -153,7 +153,8 @@ class AuthRepositoryTest {
         val held = Tokens(session = null)
         val tokens = tokens(held)
         val saved = mutableListOf<AuthTokens>()
-        coEvery { tokens.save(capture(saved)) } returns Unit
+        val sessions = mutableListOf<String?>()
+        coEvery { tokens.save(capture(saved), captureNullable(sessions)) } returns Unit
         val api = mockk<AuthApiService>()
         coEvery { api.login(any()) } returns json.decodeFromString(fixture("auth-login-two-step-account"))
         coEvery { api.loginSecondFactor(any()) } returns json.decodeFromString(fixture("auth-login-after"))
@@ -167,6 +168,25 @@ class AuthRepositoryTest {
         coVerify { api.login(LoginRequest("ala@example.test", "A-long-password-1", "check-1")) }
         coVerify { api.loginSecondFactor(SecondFactorSignInRequest(challenge, "123456")) }
         assertEquals(1, saved.size)
+        assertEquals(listOf("80eb1686-7071-4650-a2e1-49a7edefce01"), sessions)
+    }
+
+    @Test
+    fun `a sign-in and a sign-up keep the id of the session they opened, which the list of sessions names this phone's by`() {
+        val tokens = tokens(Tokens(session = null))
+        val sessions = mutableListOf<String?>()
+        coEvery { tokens.save(any(), captureNullable(sessions)) } returns Unit
+        val api = mockk<AuthApiService>()
+        coEvery { api.login(any()) } returns json.decodeFromString(fixture("auth-login"))
+        coEvery { api.register(any()) } returns json.decodeFromString(fixture("auth-register"))
+        val auth = AuthRepository(api, tokens, mockk(), servers(), json)
+
+        runBlocking {
+            auth.signIn("ala@example.test", "A-long-password-1")
+            auth.register("ala@example.test", "A-long-password-1", "Ala")
+        }
+
+        assertEquals(listOf("222dea42-e0d7-4792-af43-38277cb5d75f", "2d733c1c-2e91-4bf2-9131-6bc29175074e"), sessions)
     }
 
     @Test

@@ -29,7 +29,8 @@ data class PendingRevocation(val refreshToken: String, val server: String)
  * The pair is written atomically on login/refresh and cleared on sign-out;
  * observers of [session] see sign-in state reactively. Every token is kept
  * sealed ([Sealer]): the file holds none of them, and a pair that cannot be
- * opened again is no session.
+ * opened again is no session. Beside the pair is the id of the session it
+ * belongs to, which is no token: it names the session, and opens nothing.
  */
 @Singleton
 class TokenStore internal constructor(
@@ -47,17 +48,23 @@ class TokenStore internal constructor(
 
     suspend fun current(): Session? = session.first()
 
-    suspend fun save(tokens: AuthTokens) {
+    /** Keeps [tokens] as the session, with the id of the session they belong to where the server named it. */
+    suspend fun save(tokens: AuthTokens, sessionId: String?) {
         store.edit { prefs ->
             prefs[ACCESS_TOKEN] = sealer.seal(ACCESS_TOKEN.name, tokens.accessToken)
             prefs[REFRESH_TOKEN] = sealer.seal(REFRESH_TOKEN.name, tokens.refreshToken)
+            if (sessionId != null) prefs[SESSION_ID] = sessionId else prefs.remove(SESSION_ID)
         }
     }
+
+    /** The id of the session the phone is signed in to, as the account's list of sessions names it; null where the server did not say. */
+    suspend fun sessionId(): String? = store.data.first()[SESSION_ID]
 
     suspend fun clear() {
         store.edit { prefs ->
             prefs.remove(ACCESS_TOKEN)
             prefs.remove(REFRESH_TOKEN)
+            prefs.remove(SESSION_ID)
         }
     }
 
@@ -94,6 +101,7 @@ class TokenStore internal constructor(
     private companion object {
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        val SESSION_ID = stringPreferencesKey("session_id")
         val PENDING_REVOCATION = stringPreferencesKey("pending_revocation")
         val PENDING_REVOCATION_SERVER = stringPreferencesKey("pending_revocation_server")
     }

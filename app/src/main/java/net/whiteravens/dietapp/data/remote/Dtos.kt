@@ -127,9 +127,12 @@ data class AuthUser(
     val emailVerified: Boolean,
 )
 
-/** Returned by register, refresh and the second step of a sign-in. */
+/**
+ * Returned by register, refresh and the second step of a sign-in. [sessionId] names the session the
+ * tokens belong to, the same from sign-in to sign-out, through every refresh.
+ */
 @Serializable
-data class AuthResponse(val user: AuthUser, val tokens: AuthTokens)
+data class AuthResponse(val user: AuthUser, val tokens: AuthTokens, val sessionId: String? = null)
 
 /**
  * `POST /auth/login` answers one of two shapes: a session ([user] and [tokens]), or, for an
@@ -139,6 +142,7 @@ data class AuthResponse(val user: AuthUser, val tokens: AuthTokens)
 data class LoginResponseDto(
     val user: AuthUser? = null,
     val tokens: AuthTokens? = null,
+    val sessionId: String? = null,
     val secondFactor: SecondFactorChallengeDto? = null,
 )
 
