@@ -12,6 +12,9 @@
 -keep class net.whiteravens.dietapp.data.remote.ApiErrorIssueDto { *; }
 -keep class net.whiteravens.dietapp.data.auth.AesGcmSealer { *; }
 -keep class net.whiteravens.dietapp.data.auth.KeystoreSealer { *; }
+-keep class net.whiteravens.dietapp.data.auth.Sealer { *; }
+-keep class net.whiteravens.dietapp.data.auth.TokenStore { *; }
+-keep class net.whiteravens.dietapp.data.remote.AuthTokens { *; }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.WeightUnit { *; }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.WeightUnit$Companion { *; }
 
