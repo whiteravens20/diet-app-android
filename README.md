@@ -51,10 +51,15 @@ generate a plan, swap a meal, tick off the shopping list.
 - **Calculator.** What a body, an activity, a pace and a diet come to in a day, from a
   profile's figures or an empty form, worked out as they are typed and never kept.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
-  the profiles, the calculator, the favourites and the account's settings, with its e-mail
-  status and the confirmation mail sent again, its language and theme, the unit body
-  weights are shown in, chosen there, the app's version, the server address and sign-out.
-  The account's other settings are edited in the web app.
+  the profiles, the calculator, the favourites and the account's settings: its name, its
+  e-mail status and the confirmation mail sent again, the language of its mails and of the
+  web app (the app itself follows the phone's language and theme), the unit body weights
+  are shown in, its password, two-step sign-in set up with an authenticator app on the
+  phone or on another device and its recovery codes, where it is signed in with this phone
+  named and one session or all signed out, another address asked for by mail, everything it
+  holds saved to a file chosen on the phone, and the account deleted; the app's version, the
+  server address and sign-out. The account's other settings, its theme, palette and AI, are
+  edited in the web app.
 - **Favourites.** The recipes a profile marked as a favourite, as eaten often or to avoid,
   narrowed by words, meal, mark and tag and put in order; each recipe's mark and tags
   changed, or its mark taken off.
