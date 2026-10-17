@@ -18,6 +18,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 import net.whiteravens.dietapp.testing.knownDefect
+import okhttp3.ResponseBody
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -102,7 +103,10 @@ class ContractTest(private val call: Call) {
         val responses = operation["responses"]?.jsonObject.orEmpty()
         val answerSchema = responses.keys.firstOrNull { it.startsWith("2") }
             ?.let { responses[it]?.jsonObject?.jsonSchemaOf() }
-        if (call.answer != null) {
+        if (call.answer == ResponseBody::class.java) {
+            // A file is read as the bytes it is: any body the route answers will do.
+            if (answerSchema == null) found += Problem("FAILS", "ResponseBody", "the client reads a file, the route answers none")
+        } else if (call.answer != null) {
             val descriptor = descriptorOf(call.answer)
             if (answerSchema == null) {
                 found += Problem("FAILS", descriptor.shortName, "the client reads a body, the route answers none")

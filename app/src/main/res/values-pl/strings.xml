@@ -781,6 +781,12 @@
     <string name="account_app_version">Wersja aplikacji</string>
     <string name="account_settings_hint">Pozostałe ustawienia konta zmienia się w aplikacji webowej.</string>
     <string name="account_sign_out">Wyloguj się</string>
+    <string name="account_data">Twoje dane</string>
+    <string name="account_data_body">Wszystko, co przechowuje to konto, w jednym pliku JSON: profile i ich preferencje, zapisane pomiary wagi, spiżarnia, oznaczone przepisy i przepisy własne, plany z posiłkami i listami zakupów. W pliku nie ma hasła, tokenów ani kluczy dostawców AI.</string>
+    <string name="account_data_button">Zapisz moje dane w pliku</string>
+    <string name="account_data_preparing">Przygotowywanie pliku…</string>
+    <string name="account_data_saved">Plik został zapisany.</string>
+    <string name="account_data_not_whole">Nie udało się przygotować pliku. Spróbuj ponownie.</string>
     <string name="account_email">E-mail</string>
     <string name="account_email_hint">Używany do logowania i odzyskiwania konta.</string>
     <string name="account_email_change">Zmień adres e-mail</string>

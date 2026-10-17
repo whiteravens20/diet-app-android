@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.data.remote
 
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -11,6 +12,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 /**
  * Retrofit binding for the authenticated Diet App API surface. Every call is
@@ -64,6 +66,14 @@ interface DietApiService {
     /** Switches the second step off, for the password and a code; answered 204. */
     @HTTP(method = "DELETE", path = "users/me/second-factor", hasBody = true)
     suspend fun endSecondFactor(@Body body: SecondFactorProofRequest)
+
+    /**
+     * Everything the account holds, as one JSON file the API writes piece by piece, read as it
+     * arrives; asked for a few times an hour at most.
+     */
+    @Streaming
+    @GET("users/me/export")
+    suspend fun exportAccount(): ResponseBody
 
     /** The open sessions of the account, the one used last first. */
     @GET("users/me/sessions")

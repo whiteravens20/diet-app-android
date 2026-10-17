@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.data.repository
 
+import java.io.IOException
+import java.io.OutputStream
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.ChangeEmailRequest
@@ -15,6 +17,14 @@ import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.SessionUser
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/** How the API ends the account's file once all of it is written. */
+private val WHOLE = "\"complete\":true}".toByteArray()
+
+/** The account's file stopped before its end: what arrived is not the account's data. */
+class IncompleteExportException : IOException("The account's file did not arrive whole.")
 
 /** Session user, settings and profiles — thin, network-only (no offline cache). */
 @Singleton
@@ -43,6 +53,29 @@ class UserRepository @Inject constructor(
     /** Asks for [newEmail] as the account's address, with [currentPassword]: the change is made once the link mailed there is followed. */
     suspend fun changeEmail(newEmail: String, currentPassword: String) =
         apiCall(json) { api.changeEmail(ChangeEmailRequest(newEmail, currentPassword)) }
+
+    /**
+     * Writes everything the account holds into [into], one JSON file as the API writes it, piece by
+     * piece. A file that does not end the way the API ends a whole one is refused
+     * ([IncompleteExportException]), so that one cut short is not taken for the account's data.
+     */
+    suspend fun export(into: OutputStream) {
+        val file = apiCall(json) { api.exportAccount() }
+        withContext(Dispatchers.IO) {
+            file.use { answer ->
+                val input = answer.byteStream()
+                val buffer = ByteArray(8 * 1024)
+                var end = ByteArray(0)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    into.write(buffer, 0, read)
+                    end = (end + buffer.copyOf(read)).takeLast(WHOLE.size).toByteArray()
+                }
+                if (!end.contentEquals(WHOLE)) throw IncompleteExportException()
+            }
+        }
+    }
 
     /** Sends the mail that confirms the account's address again. */
     suspend fun resendVerification() = apiCall(json) { api.resendVerification() }

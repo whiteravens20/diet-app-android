@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
@@ -16,6 +17,7 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -99,6 +101,22 @@ class UserRepositoryTest {
         )
         assertEquals(400, refused.statusCode)
         assertEquals("EMAIL_TAKEN", refused.code)
+    }
+
+    @Test
+    fun `the account's file is written as it arrives, and one that stops before its end is refused`() {
+        val whole = fixture("account-export")
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json; charset=utf-8").setBody(whole))
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json; charset=utf-8").setBody(whole.dropLast(20)))
+        val users = repository()
+
+        val written = ByteArrayOutputStream()
+        runBlocking { users.export(written) }
+        val cut = runCatching { runBlocking { users.export(ByteArrayOutputStream()) } }.exceptionOrNull()
+
+        assertEquals("/api/users/me/export", server.takeRequest().requestUrl!!.encodedPath)
+        assertEquals(whole, written.toString(Charsets.UTF_8))
+        assertTrue(cut is IncompleteExportException)
     }
 
     @Test

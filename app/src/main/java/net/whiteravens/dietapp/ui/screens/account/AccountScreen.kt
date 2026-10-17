@@ -57,8 +57,8 @@ import java.util.Locale
 
 /**
  * Account overview, its name, the language of its mails and of the web, the unit weights are shown
- * in, its password, two-step sign-in, where it is signed in, its address, and sign-out. The other
- * settings are changed on the web for now.
+ * in, its password, two-step sign-in, where it is signed in, its address, its data in a file, and
+ * sign-out. The other settings are changed on the web for now.
  */
 @Composable
 fun AccountScreen(
@@ -68,12 +68,14 @@ fun AccountScreen(
     secondFactor: SecondFactorViewModel = hiltViewModel(),
     sessions: SessionsViewModel = hiltViewModel(),
     email: EmailChangeViewModel = hiltViewModel(),
+    exporter: DataExportViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val passwordForm by password.state.collectAsStateWithLifecycle()
     val twoStep by secondFactor.state.collectAsStateWithLifecycle()
     val signedIn by sessions.state.collectAsStateWithLifecycle()
     val emailForm by email.state.collectAsStateWithLifecycle()
+    val export by exporter.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
@@ -241,6 +243,8 @@ fun AccountScreen(
                     onPassword = email::typePassword,
                     onSend = email::send,
                 )
+
+                DataExportCard(export, onExport = exporter::export)
             }
         }
 

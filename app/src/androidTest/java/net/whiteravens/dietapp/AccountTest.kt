@@ -2,6 +2,10 @@
 
 package net.whiteravens.dietapp
 
+import android.app.Activity
+import android.app.Instrumentation
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,7 +20,15 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.espresso.intent.Intents.intending
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasExtra
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
+import java.time.LocalDate
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
@@ -28,7 +40,10 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import org.hamcrest.CoreMatchers.allOf
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -109,6 +124,32 @@ class AccountTest {
         screen.keepScreenshot("account-address-asked-for")
         // The address changes once the link in the mail is followed, not before.
         assertEquals(account.email, Instance.me(account).getString("email"))
+    }
+
+    @Test
+    fun theAccountsDataIsSavedWholeToTheFileChosen() {
+        val account = Instance.newAccount()
+        screen.startSignedIn(account)
+        screen.openAccountSettings(account)
+        val file = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "account.json").apply { delete() }
+
+        // The platform's window that asks where to keep the file answers with a file of the test's.
+        Intents.init()
+        try {
+            intending(hasAction(Intent.ACTION_CREATE_DOCUMENT))
+                .respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, Intent().setData(Uri.fromFile(file))))
+            screen.onNodeWithText(text(R.string.account_data_button)).performScrollTo().performClick()
+            screen.waitForText(text(R.string.account_data_saved))
+            intended(allOf(hasAction(Intent.ACTION_CREATE_DOCUMENT), hasExtra(Intent.EXTRA_TITLE, "diet-app-account-${LocalDate.now()}.json")))
+        } finally {
+            Intents.release()
+        }
+        screen.keepScreenshot("account-data-saved")
+
+        val saved = JSONObject(file.readText())
+        assertEquals("diet-app/account/1", saved.getString("format"))
+        assertEquals(account.email, saved.getJSONObject("account").getString("email"))
+        assertTrue(saved.getBoolean("complete"))
     }
 
     @Test

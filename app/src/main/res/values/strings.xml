@@ -724,6 +724,12 @@
     <string name="account_app_version">App version</string>
     <string name="account_settings_hint">The account\'s other settings are changed in the web app.</string>
     <string name="account_sign_out">Sign out</string>
+    <string name="account_data">Your data</string>
+    <string name="account_data_body">Everything this account holds, as one JSON file: its profiles and their preferences, the weights you logged, your pantry, the recipes you marked and the ones that are your own, your plans with their meals and shopping lists. No password, token or provider key is in it.</string>
+    <string name="account_data_button">Save my data to a file</string>
+    <string name="account_data_preparing">Preparing the file…</string>
+    <string name="account_data_saved">The file was saved.</string>
+    <string name="account_data_not_whole">The file could not be prepared. Try again.</string>
     <string name="account_email">Email</string>
     <string name="account_email_hint">Used for sign-in and account recovery.</string>
     <string name="account_email_change">Change email</string>
