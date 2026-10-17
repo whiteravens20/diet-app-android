@@ -781,6 +781,17 @@
     <string name="account_app_version">Wersja aplikacji</string>
     <string name="account_settings_hint">Pozostałe ustawienia konta zmienia się w aplikacji webowej.</string>
     <string name="account_sign_out">Wyloguj się</string>
+    <string name="account_sessions">Aktywne sesje</string>
+    <string name="account_sessions_body">Każda przeglądarka i aplikacja zalogowana na Twoje konto. Wyloguj te, których nie używasz albo nie znasz.</string>
+    <string name="account_sessions_failed">Nie udało się wczytać sesji.</string>
+    <string name="account_session_unknown">Aplikacja lub przeglądarka, która się nie przedstawiła</string>
+    <string name="account_session_current">Ten telefon</string>
+    <string name="account_session_times">Zalogowano %1$s · ostatnia aktywność %2$s</string>
+    <string name="account_session_ends">Wygasa najpóźniej %1$s, wcześniej, jeśli nie będzie używana.</string>
+    <string name="account_session_end">Wyloguj</string>
+    <string name="account_session_end_named">Wyloguj: %1$s</string>
+    <string name="account_session_end_all">Wyloguj wszędzie</string>
+    <string name="account_session_end_all_body">Kończy każdą sesję, tę też. Tutaj trzeba będzie zalogować się ponownie.</string>
 
     <!-- Enum labels (platform wire values) -->
     <string name="diet_balanced">Zbilansowana</string>

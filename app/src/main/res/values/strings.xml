@@ -724,6 +724,17 @@
     <string name="account_app_version">App version</string>
     <string name="account_settings_hint">The account\'s other settings are changed in the web app.</string>
     <string name="account_sign_out">Sign out</string>
+    <string name="account_sessions">Where you are signed in</string>
+    <string name="account_sessions_body">Every browser and app that is signed in to your account. Sign out the ones you do not use, or do not know.</string>
+    <string name="account_sessions_failed">The sessions could not be loaded.</string>
+    <string name="account_session_unknown">An app or browser that did not say what it is</string>
+    <string name="account_session_current">This phone</string>
+    <string name="account_session_times">Signed in %1$s · last active %2$s</string>
+    <string name="account_session_ends">Ends by %1$s, sooner if left unused.</string>
+    <string name="account_session_end">Sign out</string>
+    <string name="account_session_end_named">Sign out %1$s</string>
+    <string name="account_session_end_all">Sign out everywhere</string>
+    <string name="account_session_end_all_body">Ends every session, this one too. You sign in again here.</string>
 
     <!-- Enum labels (platform wire values) -->
     <string name="diet_balanced">Balanced</string>

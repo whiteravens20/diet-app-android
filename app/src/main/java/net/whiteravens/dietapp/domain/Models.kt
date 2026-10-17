@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.domain
 
+import java.time.Instant
+
 /**
  * Domain models — the app's own representation, decoupled from wire DTOs.
  * Repositories map `data.remote.*Dto` into these; DTOs never reach `ui`.
@@ -22,6 +24,19 @@ data class SessionUser(
     val weightUnit: String? = null,
     /** `none` | `admin` | `byok`: whether the account has a model to ask, and whose. */
     val aiMode: String,
+)
+
+/**
+ * A session of the account: what it was opened from ([label], null where that was not said), when
+ * it began and was last used, and when it ends at the latest; [current] is this phone's own.
+ */
+data class AccountSession(
+    val id: String,
+    val label: String?,
+    val startedAt: Instant,
+    val lastUsedAt: Instant,
+    val endsAt: Instant,
+    val current: Boolean,
 )
 
 data class Profile(

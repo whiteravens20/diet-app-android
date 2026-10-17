@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
@@ -44,7 +46,9 @@ class AccountTest {
         screen.onNodeWithText(BuildConfig.API_BASE_URL).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("account-settings")
 
-        screen.onNodeWithText(text(R.string.account_sign_out)).performScrollTo().performClick()
+        // The rows of the account's sessions say whose sign-out they are; the account's own button says nothing more.
+        screen.onNode(hasText(text(R.string.account_sign_out)) and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
+            .performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_welcome_back))
     }
 

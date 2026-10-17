@@ -41,6 +41,18 @@ interface DietApiService {
     @HTTP(method = "DELETE", path = "users/me", hasBody = true)
     suspend fun deleteAccount(@Body body: DeleteAccountRequest)
 
+    /** The open sessions of the account, the one used last first. */
+    @GET("users/me/sessions")
+    suspend fun sessions(): List<AccountSessionDto>
+
+    /** Ends one session of the account; answered 204, or 404 `SESSION_NOT_FOUND`. */
+    @DELETE("users/me/sessions/{id}")
+    suspend fun endSession(@Path("id") id: String)
+
+    /** Ends every session of the account, the one asking included; answered 204. */
+    @DELETE("users/me/sessions")
+    suspend fun endAllSessions()
+
     // ── Favourites ──────────────────────────────────────────────────────────
 
     /**

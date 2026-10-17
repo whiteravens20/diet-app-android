@@ -13,8 +13,8 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlin.math.roundToInt
 
-/** What an account signs in with, and the session its sign-up opened, for asking the API about it. */
-data class Account(val email: String, val password: String, val displayName: String, val accessToken: String)
+/** What an account signs in with, and the session its sign-up opened (its access token and id), for asking the API about it. */
+data class Account(val email: String, val password: String, val displayName: String, val accessToken: String, val sessionId: String)
 
 /**
  * The diet-app instance at the app's own address, which CI starts before the screens'
@@ -39,8 +39,23 @@ object Instance {
             expect = 201,
         )
         val accessToken = answer.getJSONObject("tokens").getString("accessToken")
-        return Account(email, password, displayName, accessToken)
+        return Account(email, password, displayName, accessToken, answer.getString("sessionId"))
     }
+
+    /** Signs [account] in with [password] as another app would, and answers the access token of the session that opens. */
+    fun signIn(account: Account, password: String = account.password): String =
+        call("POST", "auth/login", JSONObject().put("email", account.email).put("password", password))
+            .getJSONObject("tokens").getString("accessToken")
+
+    /** The open sessions of the account [token] is of, each id with its label. */
+    fun sessions(token: String): Map<String, String?> {
+        val open = JSONArray(send("GET", "users/me/sessions", null, token, 200, null))
+        return (0 until open.length()).map { open.getJSONObject(it) }
+            .associate { session -> session.getString("id") to (if (session.isNull("label")) null else session.getString("label")) }
+    }
+
+    /** Whether [token] is still the access token of an open session. */
+    fun stillSignedIn(token: String): Boolean = exchange("GET", "users/me", null, token, null).first == 200
 
     /**
      * Switches two-step sign-in on for [account], as the web application's settings do, with the
@@ -311,6 +326,20 @@ object Instance {
      * opens more. A refusal for that is asked again after the wait it names, a few times.
      */
     private fun send(method: String, path: String, body: JSONObject?, token: String?, expect: Int, language: String?): String {
+        val (code, text) = exchange(method, path, body, token, language, waitWhenHeldUp = expect != 429)
+        check(code == expect) { "$method $path answered $code: $text" }
+        return text
+    }
+
+    /** The status and the body of an answer, a hold-up waited out unless [waitWhenHeldUp] is false. */
+    private fun exchange(
+        method: String,
+        path: String,
+        body: JSONObject?,
+        token: String?,
+        language: String?,
+        waitWhenHeldUp: Boolean = true,
+    ): Pair<Int, String> {
         val request = Request.Builder()
             .url(BuildConfig.API_BASE_URL + path)
             .method(method, body?.toString()?.toRequestBody(json))
@@ -321,12 +350,11 @@ object Instance {
         repeat(HELD_UP_TRIES) {
             client.newCall(request).execute().use { response ->
                 val text = response.body.string()
-                if (response.code == 429 && expect != 429) {
+                if (response.code == 429 && waitWhenHeldUp) {
                     Thread.sleep(1_000L * (response.header("Retry-After")?.toLongOrNull() ?: 10L).coerceIn(1L, 90L))
                     return@repeat
                 }
-                check(response.code == expect) { "$method $path answered ${response.code}: $text" }
-                return text
+                return response.code to text
             }
         }
         error("$method $path was held up $HELD_UP_TRIES times")

@@ -138,6 +138,13 @@ fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.s
 private fun ByteArray.contains(part: ByteArray): Boolean =
     (0..size - part.size).any { start -> part.indices.all { this[start + it] == part[it] } }
 
+/** Opens the account's settings from the bar's "More", and waits for the account to be read. */
+fun ComposeTestRule.openAccountSettings(account: Account) {
+    openTab(text(R.string.nav_more))
+    onNodeWithText(text(R.string.account_title)).performClick()
+    waitForText(account.email)
+}
+
 /** Signs [account] in on the sign-in screen, as a person would, and waits for the dashboard. */
 fun ComposeTestRule.signIn(account: Account) {
     onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)

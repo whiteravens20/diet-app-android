@@ -31,6 +31,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -228,6 +229,13 @@ fun formatSyncedAt(epochMillis: Long): String =
     Instant.ofEpochMilli(epochMillis)
         .atZone(ZoneId.systemDefault())
         .format(DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.getDefault()))
+
+/** A moment in the phone's time zone, as the language of the app's texts writes a day and an hour: `17 Oct 2026, 10:42`. */
+@Composable
+fun formatMoment(at: Instant): String =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        .withLocale(LocalConfiguration.current.locales[0])
+        .format(at.atZone(ZoneId.systemDefault()))
 
 /** An amount as the server rounds it and names its unit: `120 g`, `2 slices`, `0.5 pieces`. */
 @Composable

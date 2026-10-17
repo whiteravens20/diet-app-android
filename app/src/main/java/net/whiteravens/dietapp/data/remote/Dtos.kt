@@ -189,6 +189,20 @@ data class ChangePasswordRequest(val currentPassword: String, val newPassword: S
 @Serializable
 data class DeleteAccountRequest(val currentPassword: String)
 
+/**
+ * An open session of the account, as `GET /users/me/sessions` lists it: [label] is what it was
+ * opened from ("Firefox · Linux"), null where the request said nothing usable; it ends at [endsAt]
+ * at the latest, sooner when left unused.
+ */
+@Serializable
+data class AccountSessionDto(
+    val id: String,
+    val label: String?,
+    val startedAt: String,
+    val lastUsedAt: String,
+    val endsAt: String,
+)
+
 // ── Nutrition (packages/shared/src/nutrition.ts) ────────────────────────────
 
 /** Macronutrient triple, grams. */

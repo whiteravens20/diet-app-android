@@ -50,10 +50,18 @@ import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
 import java.util.Locale
 
-/** Account overview, the unit weights are shown in, and sign-out. The other settings are changed on the web for now. */
+/**
+ * Account overview, the unit weights are shown in, where the account is signed in, and sign-out.
+ * The other settings are changed on the web for now.
+ */
 @Composable
-fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewModel()) {
+fun AccountScreen(
+    onBack: () -> Unit,
+    viewModel: AccountViewModel = hiltViewModel(),
+    sessions: SessionsViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val signedIn by sessions.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
@@ -196,6 +204,8 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
                         modifier = Modifier.padding(top = 12.dp),
                     )
                 }
+
+                SessionsCard(signedIn, onEnd = sessions::end, onEndAll = sessions::endAll, onRetry = sessions::load)
             }
         }
 
