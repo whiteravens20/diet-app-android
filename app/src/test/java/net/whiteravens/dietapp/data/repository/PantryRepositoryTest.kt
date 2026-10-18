@@ -154,7 +154,7 @@ class PantryRepositoryTest {
         val asked = server.takeRequest().requestUrl!!
         assertEquals("/api/ingredients", asked.encodedPath)
         assertEquals("egg", asked.queryParameter("search"))
-        // Weighed in grams, a piece of it 55 g, and counted: put in in pieces at first.
-        assertEquals(listOf(StockableIngredient(egg.ingredientId, "Large egg", listOf("g", "piece"), "piece", "piece")), found)
+        // Weighed in grams, a piece of it 55 g, and counted: put in in pieces alone.
+        assertEquals(listOf(StockableIngredient(egg.ingredientId, "Large egg", listOf("piece"), "piece", "piece")), found)
     }
 }

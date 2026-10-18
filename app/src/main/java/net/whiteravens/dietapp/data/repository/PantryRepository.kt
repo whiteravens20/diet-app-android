@@ -63,6 +63,6 @@ private fun InventoryItemDto.toDomain() = PantryRow(
 )
 
 private fun IngredientDto.toStockable(): StockableIngredient {
-    val units = pantryUnits(canonicalUnit, gramsPerPiece, density)
+    val units = pantryUnits(canonicalUnit, gramsPerPiece, density, displayUnit)
     return StockableIngredient(id, name, units, firstPantryUnit(units, canonicalUnit, displayUnit), displayUnit ?: "piece")
 }

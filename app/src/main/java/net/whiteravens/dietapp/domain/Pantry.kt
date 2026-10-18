@@ -45,9 +45,10 @@ enum class Freshness { FINE, SOON, PAST }
  * The units the API keeps an ingredient in: those it converts into the unit the ingredient is
  * weighed or measured in ([canonicalUnit]). A piece takes the weight of one ([gramsPerPiece]),
  * grams and millilitres the weight of a millilitre ([density]), and a piece of something measured
- * in millilitres both. Stock in any other unit would count as nothing, and is refused.
+ * in millilitres both. Stock in any other unit would count as nothing, and is refused. What is
+ * counted ([displayUnit]: eggs, slices, cloves) is kept in its pieces alone, as the API keeps it.
  */
-fun pantryUnits(canonicalUnit: String, gramsPerPiece: Double?, density: Double?): List<String> {
+fun pantryUnits(canonicalUnit: String, gramsPerPiece: Double?, density: Double?, displayUnit: String?): List<String> {
     val piece = gramsPerPiece != null && gramsPerPiece > 0
     val volume = density != null && density > 0
     fun converts(unit: String): Boolean = when {
@@ -55,6 +56,7 @@ fun pantryUnits(canonicalUnit: String, gramsPerPiece: Double?, density: Double?)
         unit == "piece" || canonicalUnit == "piece" -> piece && ("g" in setOf(unit, canonicalUnit) || volume)
         else -> volume
     }
+    if (displayUnit != null && converts("piece")) return listOf("piece")
     return PANTRY_UNITS.filter(::converts)
 }
 

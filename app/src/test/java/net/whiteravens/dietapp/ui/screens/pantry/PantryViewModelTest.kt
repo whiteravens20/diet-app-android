@@ -48,7 +48,7 @@ class PantryViewModelTest {
     private val oats = PantryRow("oats-row", "oats", "Rolled oats", "grains", 212.0, "g", null)
     private val milk = PantryRow("milk-row", "milk", "Whole milk", "dairy", 1000.0, "ml", null)
 
-    private val eggs = StockableIngredient("egg", "Large egg", listOf("g", "piece"), "piece", "piece")
+    private val eggs = StockableIngredient("egg", "Large egg", listOf("piece"), "piece", "piece")
     private val eggplant = StockableIngredient("eggplant", "Eggplant", listOf("g"), "g", "piece")
 
     private val users = mockk<UserRepository>().also {
