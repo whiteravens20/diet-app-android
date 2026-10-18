@@ -78,6 +78,20 @@ interface DietApiService {
     @DELETE("users/me/sessions")
     suspend fun endAllSessions()
 
+    // ── AI ──────────────────────────────────────────────────────────────────
+
+    /** The providers the account set up, without their keys, the one asked first first. */
+    @GET("ai/providers")
+    suspend fun aiProviders(): List<AiProviderConfigDto>
+
+    /** Saves the account's configuration of a provider: made the first time, replaced afterwards. */
+    @PUT("ai/providers")
+    suspend fun saveAiProvider(@Body body: AiProviderConfigRequest): AiProviderConfigDto
+
+    /** Removes a provider of the account, with its key; answered 204, or 404 `AI_CONFIG_NOT_FOUND`. */
+    @DELETE("ai/providers/{id}")
+    suspend fun removeAiProvider(@Path("id") id: String)
+
     // ── Favourites ──────────────────────────────────────────────────────────
 
     /**

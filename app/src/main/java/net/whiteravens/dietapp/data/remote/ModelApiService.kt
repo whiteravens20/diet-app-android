@@ -7,9 +7,9 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 /**
- * The routes a model may take part in. The API may wait a minute for the model before it answers,
- * and says nothing until then, so these calls are given two minutes, where every other call is
- * given half of one. Held to the API's contract as [DietApiService] is.
+ * The routes on which the API waits for an AI provider before it answers: up to a minute for a
+ * model, and it says nothing until then. These calls are given two minutes, where every other call
+ * is given half of one. Held to the API's contract as [DietApiService] is.
  */
 interface ModelApiService {
 
@@ -46,4 +46,14 @@ interface ModelApiService {
     /** What a list could do without, weighed by a model where [WeighRequest.weigh]; nothing is written. */
     @POST("shopping-lists/{id}/proposals")
     suspend fun listProposals(@Path("id") id: String, @Body body: WeighRequest): ListProposalsDto
+
+    // ── AI ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Asks a provider whether it answers to a key or at an address, and which models it has; nothing
+     * is kept. The API gives the provider ten seconds, which a call's ten seconds without a byte
+     * would not outlast.
+     */
+    @POST("ai/test")
+    suspend fun testAiConnection(@Body body: AiTestConnectionRequest): AiTestConnectionResponseDto
 }

@@ -1,0 +1,1 @@
+[{"id":"73a9027d-1cfc-4a2a-8eda-36b5a8720e2d","provider":"ollama","model":"mock-queue","priority":0,"enabled":true,"hasKey":false,"keyUnreadable":false,"baseUrl":"http://mockai:11434"},{"id":"9aeea55b-07b7-4823-a0c8-f9123d718571","provider":"openai","model":"gpt-4.1-mini","priority":2,"enabled":true,"hasKey":true,"keyUnreadable":true,"baseUrl":null}]

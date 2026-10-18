@@ -43,6 +43,31 @@ data class AccountSession(
     val current: Boolean,
 )
 
+/**
+ * A provider the account set up: which, the model it asks, its place in the order providers are
+ * asked in (the lowest first), whether a key is kept for it and whether the instance can still read
+ * it, and the address of an Ollama server ([baseUrl]).
+ */
+data class AiProviderConfig(
+    val id: String,
+    val provider: String,
+    val model: String,
+    val priority: Int,
+    val enabled: Boolean,
+    val hasKey: Boolean,
+    val keyUnreadable: Boolean,
+    val baseUrl: String?,
+)
+
+/**
+ * A provider of the account's own as it is set up: which, the model to ask, its key (every provider
+ * but Ollama) or its server's address (Ollama), and its place in the order providers are asked in.
+ */
+data class ProviderSetup(val provider: String, val model: String, val apiKey: String?, val baseUrl: String?, val priority: Int)
+
+/** How a provider answered a test: whether it did, the models it lists, and what it said where it did not. */
+data class ConnectionTest(val ok: Boolean, val models: List<String>, val error: String?)
+
 data class Profile(
     val id: String,
     val name: String,

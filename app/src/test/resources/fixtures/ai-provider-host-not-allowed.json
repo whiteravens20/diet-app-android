@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"OLLAMA_HOST_NOT_ALLOWED","message":"Ollama host \"192.0.2.10:11434\" is not allowed. It must match OLLAMA_BASE_URL or an entry in OLLAMA_ALLOWED_HOSTS."}

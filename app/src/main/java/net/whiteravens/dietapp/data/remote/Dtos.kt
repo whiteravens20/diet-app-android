@@ -232,6 +232,53 @@ data class AccountSessionDto(
     val endsAt: String,
 )
 
+// ── AI (packages/shared/src/ai.ts) ──────────────────────────────────────────
+
+/**
+ * A provider the account set up, as `GET /ai/providers` lists it, never with its key: whether one
+ * is kept, and whether the instance can still read it; [baseUrl] is an Ollama server's address.
+ */
+@Serializable
+data class AiProviderConfigDto(
+    val id: String,
+    /** `openai` | `anthropic` | `openrouter` | `ollama`. */
+    val provider: String,
+    val model: String,
+    val priority: Int,
+    val enabled: Boolean,
+    val hasKey: Boolean,
+    val keyUnreadable: Boolean,
+    val baseUrl: String?,
+)
+
+/**
+ * PUT `/ai/providers`: the account's configuration of a provider, made the first time and replaced
+ * afterwards. [apiKey] is the provider's key, which every provider but Ollama needs, kept sealed and
+ * never shown again; [baseUrl] is an Ollama server's address; the lowest [priority] is asked first.
+ */
+@Serializable
+data class AiProviderConfigRequest(
+    val provider: String,
+    val model: String,
+    val apiKey: String? = null,
+    val baseUrl: String? = null,
+    val priority: Int,
+    val enabled: Boolean,
+)
+
+/** POST `/ai/test`: a provider's key, or an Ollama server's address, tried and not kept; [model] for a provider that lists none. */
+@Serializable
+data class AiTestConnectionRequest(
+    val provider: String,
+    val apiKey: String? = null,
+    val baseUrl: String? = null,
+    val model: String? = null,
+)
+
+/** Whether the provider answered, the models it lists (none for Anthropic), and what it said where it did not. */
+@Serializable
+data class AiTestConnectionResponseDto(val ok: Boolean, val models: List<String>, val error: String?)
+
 // ── Nutrition (packages/shared/src/nutrition.ts) ────────────────────────────
 
 /** Macronutrient triple, grams. */

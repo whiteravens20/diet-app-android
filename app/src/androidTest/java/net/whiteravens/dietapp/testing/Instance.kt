@@ -122,6 +122,15 @@ object Instance {
     /** The account as the API keeps it: its name, the language of its mails, what it chose. */
     fun me(account: Account): JSONObject = call("GET", "users/me", token = account.accessToken)
 
+    /** The AI providers [account] set up, as the API lists them, without their keys. */
+    fun aiProviders(account: Account): List<JSONObject> {
+        val list = JSONArray(send("GET", "ai/providers", null, account.accessToken, 200, null))
+        return (0 until list.length()).map { list.getJSONObject(it) }
+    }
+
+    /** What the API answers a test of a provider's connection asked with [body], as the app asks it. */
+    fun testProvider(account: Account, body: JSONObject): JSONObject = call("POST", "ai/test", body, token = account.accessToken, expect = 201)
+
     /** The unit [account] chose for weights, `kg` or `lb`, or null while it goes by where the phone is. */
     fun weightUnit(account: Account): String? =
         call("GET", "users/me", token = account.accessToken).let { if (it.isNull("weightUnit")) null else it.getString("weightUnit") }
