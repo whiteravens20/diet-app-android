@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
@@ -75,6 +76,7 @@ import javax.inject.Singleton
 @Singleton
 class MealPlanRepository @Inject constructor(
     private val api: DietApiService,
+    private val model: ModelApiService,
     private val cache: CacheDao,
     private val json: Json,
 ) {
@@ -220,7 +222,7 @@ class MealPlanRepository @Inject constructor(
     ): SwapOffer {
         if (ask.strategy == AI_STRATEGY) {
             val preview = apiCall(json) {
-                api.aiOfferSwap(AiSwapOfferRequest(planId = planId, plannedMealId = mealId, respectInventory = respectInventory, skip = seen))
+                model.aiOfferSwap(AiSwapOfferRequest(planId = planId, plannedMealId = mealId, respectInventory = respectInventory, skip = seen))
             }
             return preview.toDomain(planId, mealId, ask, seen + preview.recipe.id)
         }
@@ -286,7 +288,7 @@ class MealPlanRepository @Inject constructor(
 
     /** Other ways to fill a day of a plan, put in order by a model where [weigh]. Nothing is written. */
     suspend fun dayWays(planId: String, dayId: String, weigh: Boolean = false): DayWays {
-        val answer = apiCall(json) { api.dayVariations(planId, dayId, WeighRequest(weigh)) }
+        val answer = apiCall(json) { model.dayVariations(planId, dayId, WeighRequest(weigh)) }
         return DayWays(
             calorieTarget = answer.calorieTarget,
             now = answer.current.dayNutrition.toDomain(),
@@ -327,7 +329,7 @@ class MealPlanRepository @Inject constructor(
 
     /** Swaps that would use up what the plan opens, put in order by a model where [weigh]. Nothing is written. */
     suspend fun useUp(planId: String, weigh: Boolean = false): UseUpFound {
-        val answer = apiCall(json) { api.useUp(planId, WeighRequest(weigh)) }
+        val answer = apiCall(json) { model.useUp(planId, WeighRequest(weigh)) }
         return UseUpFound(
             revision = answer.revision,
             swaps = answer.suggestions.map { suggestion ->
@@ -419,14 +421,14 @@ class MealPlanRepository @Inject constructor(
      * engine's plain replacement stands instead, the answer says why.
      */
     suspend fun substitute(substitution: Substitution): Rebalanced {
-        val result = apiCall(json) { api.substitute(substitution.toRequest()) }
+        val result = apiCall(json) { model.substitute(substitution.toRequest()) }
         mirror(result.plan)
         return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), result.aiMeta?.fallbackReason)
     }
 
     /** An ingredient a model picked for the line of [fromIngredientId], with the note of its pick, or why the engine picked. */
     suspend fun suggestSubstitute(planId: String, mealId: String, fromIngredientId: String): SuggestedSubstitute {
-        val answer = apiCall(json) { api.suggestSubstitute(AiSuggestIngredientRequest(planId, mealId, fromIngredientId)) }
+        val answer = apiCall(json) { model.suggestSubstitute(AiSuggestIngredientRequest(planId, mealId, fromIngredientId)) }
         return SuggestedSubstitute(
             ingredient = IngredientChoice(answer.toIngredient.id, answer.toIngredient.name, answer.toIngredient.category),
             pick = answer.pick,

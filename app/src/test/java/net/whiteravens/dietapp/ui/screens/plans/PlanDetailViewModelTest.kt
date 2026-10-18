@@ -24,6 +24,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.ApplyFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
@@ -109,8 +110,8 @@ class PlanDetailViewModelTest {
 
     private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = aiMode)
 
-    private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id)) =
-        PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, NoCache, json), favorites, users)
+    private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id), asking: ModelApiService = mockk()) =
+        PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, NoCache, json), favorites, users)
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
@@ -313,6 +314,7 @@ class PlanDetailViewModelTest {
     @Test
     fun `an offer a model was asked for says why the engine picked, or that the model did and why`() {
         val api = mockk<DietApiService>()
+        val asking = mockk<ModelApiService>()
         val byEngine = AiMealSwapPreviewDto(
             recipe = preview.recipe,
             servings = preview.servings,
@@ -327,8 +329,8 @@ class PlanDetailViewModelTest {
         )
         val byModel = byEngine.copy(aiMeta = AiGenerationMetaDto(provider = "openrouter", usedDeterministicFallback = false, reason = "Lighter."), pick = "note")
         coEvery { api.mealPlan(plan.id) } returns plan
-        coEvery { api.aiOfferSwap(any()) } returns byEngine andThen byModel
-        val model = model(api)
+        coEvery { asking.aiOfferSwap(any()) } returns byEngine andThen byModel
+        val model = model(api, asking = asking)
 
         model.offerSwap(meal.id, SwapAsk("ai"))
 
@@ -430,12 +432,13 @@ class PlanDetailViewModelTest {
     @Test
     fun `swaps that would use up the opened packs are weighed by a model on request, and the one taken is written with the revision they were found for and the model's note`() {
         val api = mockk<DietApiService>()
+        val asking = mockk<ModelApiService>()
         val asked = mutableListOf<WeighRequest>()
         val taken = slot<ApplyMealSwapRequest>()
         coEvery { api.mealPlan(plan.id) } returns plan
-        coEvery { api.useUp(plan.id, capture(asked)) } returns usingUp(plan.revision) andThen usingUp(plan.revision, weighed = true)
+        coEvery { asking.useUp(plan.id, capture(asked)) } returns usingUp(plan.revision) andThen usingUp(plan.revision, weighed = true)
         coEvery { api.swapMeal(capture(taken)) } returns swapped.copy(rebalance = scaled)
-        val model = model(api)
+        val model = model(api, asking = asking)
 
         model.findUseUp()
         model.findUseUp(weigh = true)
@@ -454,12 +457,13 @@ class PlanDetailViewModelTest {
     @Test
     fun `an account without a model is not asked to weigh, and swaps found for the plan before it changed are not offered`() {
         val api = mockk<DietApiService>()
+        val asking = mockk<ModelApiService>()
         val asked = mutableListOf<WeighRequest>()
         coEvery { users.me() } returns account("none")
         coEvery { api.mealPlan(plan.id) } returns plan
-        coEvery { api.useUp(plan.id, capture(asked)) } returns usingUp(plan.revision)
+        coEvery { asking.useUp(plan.id, capture(asked)) } returns usingUp(plan.revision)
         coEvery { api.setMealEaten(any(), any(), any()) } returns swapped
-        val model = model(api)
+        val model = model(api, asking = asking)
 
         model.findUseUp(weigh = true)
 
@@ -474,10 +478,11 @@ class PlanDetailViewModelTest {
     @Test
     fun `a use-up swap refused because the plan changed meanwhile puts the swaps away, loads the plan again and says why`() {
         val api = mockk<DietApiService>()
+        val asking = mockk<ModelApiService>()
         coEvery { api.mealPlan(plan.id) } returns plan
-        coEvery { api.useUp(plan.id, any()) } returns usingUp(plan.revision)
+        coEvery { asking.useUp(plan.id, any()) } returns usingUp(plan.revision)
         coEvery { api.swapMeal(any()) } throws refused(409, "PLAN_CHANGED")
-        val model = model(api)
+        val model = model(api, asking = asking)
 
         model.findUseUp()
         model.takeUseUp(model.state.value.useUp!!.swaps.single())

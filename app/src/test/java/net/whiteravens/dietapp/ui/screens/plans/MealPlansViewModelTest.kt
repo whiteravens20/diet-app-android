@@ -83,7 +83,7 @@ class MealPlansViewModelTest {
         val before = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { _, e -> escaped = e }
         val model = try {
-            MealPlansViewModel(UserRepository(api, mockk(), json), MealPlanRepository(api, cache, json))
+            MealPlansViewModel(UserRepository(api, mockk(), json), MealPlanRepository(api, mockk(), cache, json))
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(before)
         }

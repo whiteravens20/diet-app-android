@@ -66,7 +66,8 @@ class ShoppingListRepositoryTest {
     private fun repository(cache: CacheDao): ShoppingListRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return ShoppingListRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), cache, json)
+        val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
+        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json)
     }
 
     /** The captured list of a plan, its days and id those given: another list of the same plan. */

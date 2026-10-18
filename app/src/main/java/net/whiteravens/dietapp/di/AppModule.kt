@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.data.remote.ClientHeaders
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.FileApiService
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.PLACEHOLDER_BASE
 import net.whiteravens.dietapp.data.remote.RefreshApiService
 import okhttp3.Dispatcher
@@ -128,6 +129,19 @@ object AppModule {
     @Singleton
     fun fileApi(client: OkHttpClient, json: Json): FileApiService =
         retrofit(client.newBuilder().callTimeout(0, TimeUnit.SECONDS).build(), json).create(FileApiService::class.java)
+
+    /** The routes a model may take part in, on the authenticated client given the time a model may take ([modelClient]). */
+    @Provides
+    @Singleton
+    fun modelApi(client: OkHttpClient, json: Json): ModelApiService =
+        retrofit(modelClient(client), json).create(ModelApiService::class.java)
+
+    /**
+     * [client] given the time a model may take: the API may wait a minute for one before it answers,
+     * and says nothing until then, so the call is given two minutes, and its answer as long to begin.
+     */
+    fun modelClient(client: OkHttpClient): OkHttpClient =
+        client.newBuilder().callTimeout(2, TimeUnit.MINUTES).readTimeout(2, TimeUnit.MINUTES).build()
 
     /**
      * What the app sends: a field with a default is left out while it holds it, so an optional field

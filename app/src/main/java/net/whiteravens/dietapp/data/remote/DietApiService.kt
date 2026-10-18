@@ -15,7 +15,8 @@ import retrofit2.http.Query
 /**
  * Retrofit binding for the authenticated Diet App API surface. Every call is
  * held to the copy of the API's contract in contract/ (docs/contracts/api-contract.md).
- * Auth endpoints live on [AuthApiService], and the account's file on [FileApiService].
+ * Auth endpoints live on [AuthApiService], the account's file on [FileApiService], and the routes
+ * a model may take part in on [ModelApiService].
  */
 interface DietApiService {
 
@@ -242,18 +243,6 @@ interface DietApiService {
     @POST("meal-plans/swap-ingredient/preview")
     suspend fun previewSubstitution(@Body body: SwapIngredientRequest): SwapPreviewDto
 
-    /** Makes a substitution: the meal gets a recipe of its own with the substitute in it. */
-    @POST("meal-plans/swap-ingredient/apply")
-    suspend fun substitute(@Body body: SwapIngredientRequest): SwapIngredientResponseDto
-
-    /** An ingredient a model picked from the engine's pool for the line; nothing is written. */
-    @POST("meal-plans/swap-ingredient/ai-suggest")
-    suspend fun suggestSubstitute(@Body body: AiSuggestIngredientRequest): AiSuggestIngredientResponseDto
-
-    /** A recipe for the meal that a model picked from those the engine puts first; nothing is written. */
-    @POST("meal-plans/ai-swap-meal/preview")
-    suspend fun aiOfferSwap(@Body body: AiSwapOfferRequest): AiMealSwapPreviewDto
-
     /** Makes a plan again, or the days of it the request names. */
     @POST("meal-plans/{id}/regenerate")
     suspend fun regeneratePlan(@Path("id") id: String, @Body body: RegenerateRequest): MealPlanDto
@@ -262,17 +251,9 @@ interface DietApiService {
     @POST("meal-plans/{id}/days/{dayId}/regenerate")
     suspend fun regenerateDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: RegenerateRequest): MealPlanDto
 
-    /** Other ways to fill a day, weighed by a model where [WeighRequest.weigh]; nothing is written. */
-    @POST("meal-plans/{id}/days/{dayId}/variations")
-    suspend fun dayVariations(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: WeighRequest): DayVariationsDto
-
     /** Takes one of the ways a day was offered. */
     @POST("meal-plans/{id}/days/{dayId}/variations/take")
     suspend fun takeDayVariation(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: TakeDayVariationRequest): MealPlanDto
-
-    /** Swaps that would use up what the plan opens, weighed by a model where [WeighRequest.weigh]; nothing is written. */
-    @POST("meal-plans/{id}/use-up")
-    suspend fun useUp(@Path("id") id: String, @Body body: WeighRequest): UseUpSuggestionsDto
 
     /** Marks a meal eaten or not; the day is balanced again around it. */
     @PATCH("meal-plans/{id}/meals/{mealId}/eaten")
@@ -317,10 +298,6 @@ interface DietApiService {
         @Query("pageSize") pageSize: Int? = null,
     ): RecipeSearchPageDto
 
-    /** Asks a model for a recipe of the account's own, from the choices of [body]. */
-    @POST("recipes/drafts/from-prompt")
-    suspend fun draftRecipe(@Body body: AiDraftRecipeRequest): AiDraftRecipeResponseDto
-
     /** The account's own recipes, a page at a time: those a model wrote for it and those a substitution left. */
     @GET("recipes/mine")
     suspend fun myRecipes(@Query("page") page: Int? = null, @Query("pageSize") pageSize: Int? = null): RecipeSearchPageDto
@@ -346,10 +323,6 @@ interface DietApiService {
 
     @GET("shopping-lists/{id}")
     suspend fun shoppingList(@Path("id") id: String): ShoppingListDto
-
-    /** What a list could do without, weighed by a model where [WeighRequest.weigh]; nothing is written. */
-    @POST("shopping-lists/{id}/proposals")
-    suspend fun listProposals(@Path("id") id: String, @Body body: WeighRequest): ListProposalsDto
 
     /** Deletes a shopping list; what was obtained for days still ahead goes into the pantry. */
     @DELETE("shopping-lists/{id}")

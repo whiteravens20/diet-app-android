@@ -93,7 +93,8 @@ class MealPlanRepositoryTest {
     private fun repository(cache: CacheDao): MealPlanRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return MealPlanRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), cache, json)
+        val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
+        return MealPlanRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json)
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))

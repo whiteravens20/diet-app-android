@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.local.readOrDrop
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GenerateShoppingListRequest
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.UpdateShoppingItemRequest
 import net.whiteravens.dietapp.data.remote.WeighRequest
@@ -33,6 +34,7 @@ import javax.inject.Singleton
 @Singleton
 class ShoppingListRepository @Inject constructor(
     private val api: DietApiService,
+    private val model: ModelApiService,
     private val cache: CacheDao,
     private val json: Json,
 ) {
@@ -72,7 +74,7 @@ class ShoppingListRepository @Inject constructor(
 
     /** What a list could do without, put in order by a model where [weigh]. Nothing is written; a kind of proposal this version does not know is left out. */
     suspend fun proposals(listId: String, weigh: Boolean = false): ListProposals {
-        val answer = apiCall(json) { api.listProposals(listId, WeighRequest(weigh)) }
+        val answer = apiCall(json) { model.listProposals(listId, WeighRequest(weigh)) }
         return ListProposals(
             proposals = answer.proposals.mapNotNull { proposal ->
                 when (proposal.kind) {

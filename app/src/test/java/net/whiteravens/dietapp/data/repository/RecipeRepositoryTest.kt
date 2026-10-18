@@ -42,7 +42,8 @@ class RecipeRepositoryTest {
     private fun repository(): RecipeRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return RecipeRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json)
+        val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
+        return RecipeRepository(AppModule.api(client, json), AppModule.modelApi(client, json), json)
     }
 
     private fun page() = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture("recipes"))

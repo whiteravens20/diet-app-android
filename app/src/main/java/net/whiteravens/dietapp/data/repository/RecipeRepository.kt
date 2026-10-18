@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.data.repository
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AiDraftRecipeRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeDraftAsk
@@ -21,6 +22,7 @@ import javax.inject.Singleton
 @Singleton
 class RecipeRepository @Inject constructor(
     private val api: DietApiService,
+    private val model: ModelApiService,
     private val json: Json,
 ) {
     /** A page of the library as [filter] narrows it; what a profile marked and favours is asked about with the profile alone. */
@@ -50,7 +52,7 @@ class RecipeRepository @Inject constructor(
 
     /** A recipe of one's own a model writes from [ask]; the engine works out its nutrition. */
     suspend fun draft(ask: RecipeDraftAsk): Recipe = apiCall(json) {
-        api.draftRecipe(
+        model.draftRecipe(
             AiDraftRecipeRequest(
                 profileId = ask.profileId,
                 mealType = ask.mealType,

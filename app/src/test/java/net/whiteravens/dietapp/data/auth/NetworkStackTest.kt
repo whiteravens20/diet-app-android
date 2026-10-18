@@ -24,6 +24,7 @@ import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.RefreshRequest
 import net.whiteravens.dietapp.data.remote.RegisterRequest
 import net.whiteravens.dietapp.data.remote.ServerAddress
+import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.fixture
@@ -41,6 +42,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.time.LocalDate
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
@@ -331,6 +333,37 @@ class NetworkStackTest {
         val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context))
 
         assertEquals(10_000, client.readTimeoutMillis)
+    }
+
+    @Test
+    fun `a call a model takes part in is given two minutes, and its answer as long to begin`() {
+        val config = mockk<ServerConfigStore>()
+        val context = mockk<Context>()
+
+        val client = AppModule.modelClient(AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context)))
+
+        assertEquals(120_000, client.callTimeoutMillis)
+        assertEquals(120_000, client.readTimeoutMillis)
+    }
+
+    @Test
+    fun `a route a model takes part in waits for an answer that begins after any other call would have been given up`() {
+        val config = mockk<ServerConfigStore>()
+        coEvery { config.current() } returns server.url("/api/").toString()
+        val context = mockk<Context>()
+        every { context.getString(R.string.api_language) } returns "pl"
+        // The other calls' limits cut to a second, so that an answer two seconds in the coming outlasts them.
+        val short = AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context)).newBuilder()
+            .callTimeout(1, TimeUnit.SECONDS)
+            .readTimeout(1, TimeUnit.SECONDS)
+            .build()
+        repeat(2) { server.enqueue(answer("meal-plan-of-another-account", 404).setHeadersDelay(2, TimeUnit.SECONDS)) }
+
+        val other = runCatching { runBlocking { apiCall(json) { AppModule.api(short, json).mealPlan("plan") } } }.exceptionOrNull()
+        val asked = runCatching { runBlocking { apiCall(json) { AppModule.modelApi(short, json).useUp("plan", WeighRequest(false)) } } }.exceptionOrNull()
+
+        assertTrue(other.toString(), other is InterruptedIOException)
+        assertEquals("PLAN_NOT_FOUND", (asked as ApiException).code)
     }
 
     @Test

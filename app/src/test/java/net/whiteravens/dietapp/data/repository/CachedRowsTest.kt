@@ -9,6 +9,7 @@ import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.testing.fixture
 import org.junit.Assert.assertEquals
@@ -25,6 +26,7 @@ import org.junit.Test
 class CachedRowsTest {
     private val json = AppModule.json()
     private val api = mockk<DietApiService>()
+    private val asking = mockk<ModelApiService>()
 
     /** The rows on the device, kept in memory; [dropped] names what was deleted. */
     private class Cache(
@@ -61,7 +63,7 @@ class CachedRowsTest {
                 CachedPlanList("unreadable", unreadable, 1L),
             ),
         )
-        val plans = MealPlanRepository(api, cache, json)
+        val plans = MealPlanRepository(api, asking, cache, json)
 
         assertNull(runBlocking { plans.cachedPlans("unreadable") })
         val readable = runBlocking { plans.cachedPlans("readable") }
@@ -79,7 +81,7 @@ class CachedRowsTest {
                 CachedMealPlan("unreadable", "profile", unreadable, 1L),
             ),
         )
-        val plans = MealPlanRepository(api, cache, json)
+        val plans = MealPlanRepository(api, asking, cache, json)
 
         assertNull(runBlocking { plans.cachedPlan("unreadable") })
         assertNotNull(runBlocking { plans.cachedPlan("readable") })
@@ -94,7 +96,7 @@ class CachedRowsTest {
                 CachedShoppingList("unreadable", "plan", unreadable, 1L),
             ),
         )
-        val lists = ShoppingListRepository(api, cache, json)
+        val lists = ShoppingListRepository(api, asking, cache, json)
 
         val cached = runBlocking { lists.cachedForPlan("plan") }
 
