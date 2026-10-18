@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.DayWays
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.ui.common.attempt
@@ -53,7 +54,7 @@ class DayWaysViewModel @Inject constructor(
     fun open(planId: String, dayId: String) {
         _state.value = UiState(planId = planId, dayId = dayId)
         viewModelScope.launch {
-            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { if (it.dayId == dayId) it.copy(aiOn = aiOn) else it }
         }
         viewModelScope.launch {

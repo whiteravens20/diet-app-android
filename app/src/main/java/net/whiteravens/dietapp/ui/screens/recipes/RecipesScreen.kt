@@ -56,6 +56,7 @@ import net.whiteravens.dietapp.ui.common.difficultyLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.EmptyState
@@ -75,6 +76,7 @@ import kotlin.math.roundToInt
 @Composable
 fun RecipesScreen(
     onOpenRecipe: (String) -> Unit,
+    onTurnAiOn: () -> Unit,
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -141,7 +143,7 @@ fun RecipesScreen(
             )
         }
         // A recipe drafted by a model is of a profile: there is none to draft for without one.
-        if (state.profiles.isNotEmpty()) item { DraftButton(aiOn = state.aiOn, onOpen = { drafting = true }) }
+        if (state.profiles.isNotEmpty()) item { DraftButton(aiOn = state.aiOn, onOpen = { drafting = true }, onTurnAiOn = onTurnAiOn) }
         item {
             TabRow(selectedTabIndex = state.tab.ordinal) {
                 Tab(selected = !mine, onClick = { viewModel.selectTab(RecipesViewModel.Tab.LIBRARY) }, text = { Text(stringResource(R.string.recipes_tab_library)) })
@@ -288,10 +290,10 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, mine: Boolean, busy:
  * stays in its place, off, over a line that says what it waits for.
  */
 @Composable
-private fun DraftButton(aiOn: Boolean?, onOpen: () -> Unit) {
+private fun DraftButton(aiOn: Boolean?, onOpen: () -> Unit, onTurnAiOn: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         OutlinedButton(onClick = onOpen, enabled = aiOn == true) { Text(stringResource(R.string.recipes_ai_draft)) }
-        if (aiOn == false) Text(stringResource(R.string.ai_off_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (aiOn == false) AiOffNote(onTurnAiOn)
     }
 }
 

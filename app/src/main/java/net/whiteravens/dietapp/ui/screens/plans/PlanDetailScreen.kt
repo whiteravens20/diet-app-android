@@ -107,6 +107,7 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.common.rememberTextSaver
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -114,6 +115,7 @@ import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.aiOffText
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
@@ -128,6 +130,7 @@ import kotlin.math.roundToInt
 fun PlanDetailScreen(
     onBack: () -> Unit,
     onOpenRecipe: (String) -> Unit,
+    onTurnAiOn: () -> Unit,
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -217,6 +220,7 @@ fun PlanDetailScreen(
             },
             onStale = viewModel::readAgain,
             onDismiss = { waysFor = null },
+            onTurnAiOn = onTurnAiOn,
         )
     }
 
@@ -231,6 +235,7 @@ fun PlanDetailScreen(
                 viewModel.substituted(result)
             },
             onDismiss = { substitutingIn = null },
+            onTurnAiOn = onTurnAiOn,
         )
     }
 
@@ -335,6 +340,7 @@ fun PlanDetailScreen(
                                 busy = busy,
                                 onFind = viewModel::findUseUp,
                                 onTake = viewModel::takeUseUp,
+                                onTurnAiOn = onTurnAiOn,
                             )
                         }
                     },
@@ -560,6 +566,7 @@ private fun UseUpPanel(
     busy: Boolean,
     onFind: (weigh: Boolean) -> Unit,
     onTake: (UseUpSwap) -> Unit,
+    onTurnAiOn: () -> Unit,
 ) {
     val working = busy || finding
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -574,7 +581,9 @@ private fun UseUpPanel(
                 }
             }
         }
-        if (found?.swaps?.isNotEmpty() == true) Fact(stringResource(if (aiOn == false) R.string.ai_off_note else R.string.weigh_tooltip))
+        if (found?.swaps?.isNotEmpty() == true) {
+            if (aiOn == false) AiOffNote(onTurnAiOn) else Fact(stringResource(R.string.weigh_tooltip))
+        }
         Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
             when {
                 found == null -> Unit
@@ -967,7 +976,7 @@ private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (Swa
             Change("${stringResource(R.string.plans_swap_to_fav)} ★", stringResource(R.string.plans_tooltip_swap_to_fav)) { pick(onPickFavorite) }
             Change(
                 stringResource(R.string.plans_ai_swap),
-                stringResource(if (aiOn) R.string.plans_tooltip_ai_swap else R.string.ai_off_note),
+                if (aiOn) stringResource(R.string.plans_tooltip_ai_swap) else aiOffText(),
                 enabled = aiOn,
             ) { pick { onChange(SwapAsk("ai")) } }
             Change(stringResource(R.string.plans_swap_fav_ingr), stringResource(R.string.plans_tooltip_swap_by_fav)) { pick { onChange(SwapAsk("favorite_ingredients")) } }

@@ -4,12 +4,15 @@ package net.whiteravens.dietapp.ui.screens.recipes
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -22,6 +25,7 @@ import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.domain.RecipePage
+import net.whiteravens.dietapp.domain.SessionUser
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,6 +50,7 @@ class RecipesViewModelTest {
     private val users = mockk<UserRepository>().also {
         coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null))
         coEvery { it.me() } throws IOException("not asked here")
+        every { it.aiModeChanges } returns emptyFlow()
     }
     private val profiles = mockk<ProfileRepository>()
 
@@ -115,5 +120,22 @@ class RecipesViewModelTest {
         model.submit("mine")
 
         assertEquals(refusal, model.state.value.submitted!!.exceptionOrNull())
+    }
+
+    @Test
+    fun `AI turned on in the account's settings meanwhile offers the draft at once, and turned off takes it away`() {
+        val recipes = mockk<RecipeRepository>()
+        val changes = MutableSharedFlow<String>(extraBufferCapacity = 2)
+        coEvery { recipes.search(any(), any()) } returns RecipePage(emptyList(), 1, 0)
+        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = "none")
+        every { users.aiModeChanges } returns changes
+        val model = RecipesViewModel(recipes, users, profiles)
+        assertEquals(false, model.state.value.aiOn)
+
+        changes.tryEmit("admin")
+        assertEquals(true, model.state.value.aiOn)
+
+        changes.tryEmit("none")
+        assertEquals(false, model.state.value.aiOn)
     }
 }

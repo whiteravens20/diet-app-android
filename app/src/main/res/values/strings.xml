@@ -307,7 +307,8 @@
         <item quantity="other">%1$s servings</item>
     </plurals>
     <string name="plans_offer_servings_fraction">%1$s servings</string>
-    <string name="ai_off_note">AI is turned off for this account, so the actions that ask a model are switched off. Turn AI on in Settings to use them.</string>
+    <string name="ai_off_note">AI is turned off for this account, so the actions that ask a model are switched off. %1$s to use them.</string>
+    <string name="ai_off_turn_on">Turn AI on in Account settings</string>
     <string name="plans_substitute_ingr">Swap chosen ingr.</string>
     <string name="plans_tooltip_substitute">Substitute one ingredient inside this recipe</string>
     <string name="substitute_title">Substitute an ingredient</string>

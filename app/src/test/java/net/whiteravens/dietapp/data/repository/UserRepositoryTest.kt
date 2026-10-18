@@ -7,7 +7,12 @@ import io.mockk.mockk
 import java.io.ByteArrayOutputStream
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
@@ -203,5 +208,22 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"aiMode":"admin"}"""), json.parseToJsonElement(chosen.body.readUtf8()))
         assertEquals("admin", shared.aiMode)
         assertEquals("BYOK_NO_PROVIDER", refused.code)
+    }
+
+    @Test
+    fun `the AI mode every answer about the account says is told to whoever follows it`() {
+        server.enqueue(answer("users-me"))
+        server.enqueue(answer("users-me-ai-admin"))
+        val users = repository()
+
+        val told = runBlocking {
+            val following = async(start = CoroutineStart.UNDISPATCHED) { users.aiModeChanges.take(2).toList() }
+            users.me()
+            users.chooseAiMode("admin")
+            // An answer that tells nobody leaves the follower waiting: it is given up after a while.
+            withTimeoutOrNull(5_000) { following.await() }.also { following.cancel() }
+        }
+
+        assertEquals(listOf("none", "admin"), told)
     }
 }

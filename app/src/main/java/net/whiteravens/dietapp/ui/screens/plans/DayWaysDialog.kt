@@ -41,6 +41,7 @@ import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
@@ -60,6 +61,7 @@ fun DayWaysDialog(
     onTaken: (MealPlan) -> Unit,
     onStale: () -> Unit,
     onDismiss: () -> Unit,
+    onTurnAiOn: () -> Unit,
     viewModel: DayWaysViewModel = hiltViewModel(key = "ways-${day.id}"),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -111,7 +113,7 @@ fun DayWaysDialog(
                     TextButton(onClick = viewModel::weigh, enabled = state.aiOn == true && !state.busy) {
                         Text(stringResource(if (state.weighing) R.string.weigh_asking else R.string.weigh_ask))
                     }
-                    Note(stringResource(if (state.aiOn == false) R.string.ai_off_note else R.string.weigh_tooltip))
+                    if (state.aiOn == false) AiOffNote(onTurnAiOn) else Note(stringResource(R.string.weigh_tooltip))
                 }
             }
         }

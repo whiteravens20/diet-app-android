@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -113,6 +114,12 @@ class PlanDetailViewModel @Inject constructor(
 
     init {
         load()
+        followAiMode()
+    }
+
+    /** AI turned on or off in the account's settings shows here as soon as it is. */
+    private fun followAiMode() {
+        viewModelScope.launch { users.aiModeChanges.collect { mode -> _state.update { it.copy(aiOn = mode != AiModes.NONE) } } }
     }
 
     fun load() {
@@ -151,7 +158,7 @@ class PlanDetailViewModel @Inject constructor(
     private fun readSwapChoices(profileId: String) {
         viewModelScope.launch {
             val liked = attempt { favorites.marked(profileId) }.getOrDefault(emptyList()).filter { it.sentiment != "avoid" }
-            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { it.copy(liked = liked, aiOn = aiOn) }
         }
     }

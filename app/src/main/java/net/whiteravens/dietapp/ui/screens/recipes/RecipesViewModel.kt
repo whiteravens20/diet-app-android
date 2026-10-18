@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Recipe
@@ -80,9 +81,10 @@ class RecipesViewModel @Inject constructor(
             _state.update { it.copy(profiles = found, filter = it.filter.copy(profileId = it.filter.profileId ?: found.firstOrNull()?.id)) }
         }
         viewModelScope.launch {
-            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { it.copy(aiOn = aiOn) }
         }
+        followAiMode()
         load()
         @OptIn(FlowPreview::class)
         viewModelScope.launch {
@@ -94,6 +96,11 @@ class RecipesViewModel @Inject constructor(
     }
 
     fun retry() = load()
+
+    /** AI turned on or off in the account's settings shows here as soon as it is. */
+    private fun followAiMode() {
+        viewModelScope.launch { users.aiModeChanges.collect { mode -> _state.update { it.copy(aiOn = mode != AiModes.NONE) } } }
+    }
 
     fun selectTab(tab: Tab) {
         if (_state.value.tab == tab) return

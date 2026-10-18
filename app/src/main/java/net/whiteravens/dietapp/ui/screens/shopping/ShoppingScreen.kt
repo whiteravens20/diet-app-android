@@ -93,7 +93,11 @@ import kotlin.math.roundToInt
  * which [onOpenPlan] opens.
  */
 @Composable
-fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel: ShoppingViewModel = hiltViewModel()) {
+fun ShoppingScreen(
+    onOpenPlan: (planId: String, day: String?) -> Unit,
+    onTurnAiOn: () -> Unit,
+    viewModel: ShoppingViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // The window that makes a list for some of the plan's days, while it is open.
     var choosingDays by rememberSaveable { mutableStateOf(false) }
@@ -307,6 +311,7 @@ fun ShoppingScreen(onOpenPlan: (planId: String, day: String?) -> Unit, viewModel
                         listFrom = list.fromDate,
                         onAsk = viewModel::findProposals,
                         onOpenPlanAt = { day -> onOpenPlan(list.planId, day) },
+                        onTurnAiOn = onTurnAiOn,
                     )
                 }
                 item(key = "find") {

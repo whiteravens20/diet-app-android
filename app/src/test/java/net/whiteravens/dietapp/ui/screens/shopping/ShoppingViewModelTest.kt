@@ -4,11 +4,13 @@ package net.whiteravens.dietapp.ui.screens.shopping
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -45,7 +47,10 @@ class ShoppingViewModelTest {
     private val early = list("early", "2026-10-13", "2026-10-15", made = "12")
     private val later = list("later", "2026-10-18", "2026-10-19", made = "11")
 
-    private val users = mockk<UserRepository>().also { coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null)) }
+    private val users = mockk<UserRepository>().also {
+        coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null))
+        every { it.aiModeChanges } returns emptyFlow()
+    }
     private val plans = mockk<MealPlanRepository>().also {
         coEvery { it.cachedPlans(any()) } returns null
         coEvery { it.plans(any(), any(), any()) } returns

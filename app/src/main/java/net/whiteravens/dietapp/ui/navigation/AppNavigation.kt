@@ -258,16 +258,23 @@ private fun MainScaffold(serverVersion: ServerVersion) {
                 PlanDetailScreen(
                     onBack = { navController.popBackStack() },
                     onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                    onTurnAiOn = { navController.navigate(AccountRoute) },
                 )
             }
             composable<RecipesRoute> {
-                RecipesScreen(onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) })
+                RecipesScreen(
+                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                    onTurnAiOn = { navController.navigate(AccountRoute) },
+                )
             }
             composable<RecipeDetailRoute> {
                 RecipeDetailScreen(onBack = { navController.popBackStack() })
             }
             composable<ShoppingRoute> {
-                ShoppingScreen(onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) })
+                ShoppingScreen(
+                    onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
+                    onTurnAiOn = { navController.navigate(AccountRoute) },
+                )
             }
             composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
             composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }

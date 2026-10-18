@@ -4,6 +4,10 @@ package net.whiteravens.dietapp.data.repository
 
 import java.io.IOException
 import java.io.OutputStream
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.ChangeEmailRequest
@@ -35,26 +39,35 @@ class UserRepository @Inject constructor(
     private val files: FileApiService,
     private val json: Json,
 ) {
-    suspend fun me(): SessionUser = apiCall(json) { api.me() }.toDomain()
+    private val aiModes = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /**
+     * The account's AI mode each time an answer about the account says it, from the moment it is
+     * followed: a screen that read the account already shows AI turned on or off in the account's
+     * settings as soon as it is.
+     */
+    val aiModeChanges: Flow<String> = aiModes.asSharedFlow()
+
+    suspend fun me(): SessionUser = heard(apiCall(json) { api.me() }.toDomain())
 
     /** Gives the account the name it shows. */
     suspend fun rename(displayName: String): SessionUser =
-        apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(displayName = displayName)) }.toDomain()
+        heard(apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(displayName = displayName)) }.toDomain())
 
     /** Chooses the language of the account's mails and of the web application, `en` or `pl`; this app follows the phone's. */
     suspend fun chooseLanguage(locale: String): SessionUser =
-        apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(locale = locale)) }.toDomain()
+        heard(apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(locale = locale)) }.toDomain())
 
     /**
      * Chooses what AI the account has: `none`, `admin` (the instance's provider) or `byok` (its own
      * providers), which is refused while it has none.
      */
     suspend fun chooseAiMode(mode: String): SessionUser =
-        apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(aiMode = mode)) }.toDomain()
+        heard(apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(aiMode = mode)) }.toDomain())
 
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
-        apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain()
+        heard(apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain())
 
     /** Changes the password from [current] to [new]; the API then ends every session of the account, the phone's too. */
     suspend fun changePassword(current: String, new: String) =
@@ -99,4 +112,7 @@ class UserRepository @Inject constructor(
 
     suspend fun calorieTarget(profileId: String): CalorieTarget =
         apiCall(json) { api.calories(profileId) }.let(CalorieCalculationDto::toDomain)
+
+    /** Tells whoever follows the account's AI mode what [user] says it is. */
+    private fun heard(user: SessionUser): SessionUser = user.also { aiModes.tryEmit(it.aiMode) }
 }

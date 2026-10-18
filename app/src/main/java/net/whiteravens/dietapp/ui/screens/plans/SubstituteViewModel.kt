@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.Substitution
@@ -88,7 +89,7 @@ class SubstituteViewModel @Inject constructor(
         _state.value = UiState(planId = planId, mealId = mealId)
         viewModelScope.launch {
             val suggestions = attempt { plans.substitutes(planId, mealId) }.getOrDefault(emptyMap())
-            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { if (it.mealId == mealId) it.copy(suggestions = suggestions, aiOn = aiOn) else it }
         }
     }

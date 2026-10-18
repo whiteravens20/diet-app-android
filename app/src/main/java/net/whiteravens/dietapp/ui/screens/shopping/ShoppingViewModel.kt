@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.ListProposals
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
@@ -74,6 +75,7 @@ class ShoppingViewModel @Inject constructor(
 
     init {
         load()
+        followAiMode()
     }
 
     fun load() {
@@ -87,9 +89,14 @@ class ShoppingViewModel @Inject constructor(
                 .onFailure { e -> _state.update { UiState(loading = false, error = e, aiOn = it.aiOn) } }
         }
         viewModelScope.launch {
-            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != "none" }
+            val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { it.copy(aiOn = aiOn) }
         }
+    }
+
+    /** AI turned on or off in the account's settings shows here as soon as it is. */
+    private fun followAiMode() {
+        viewModelScope.launch { users.aiModeChanges.collect { mode -> _state.update { it.copy(aiOn = mode != AiModes.NONE) } } }
     }
 
     fun selectProfile(profileId: String) {

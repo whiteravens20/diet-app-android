@@ -41,6 +41,8 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.AiOffNote
+import net.whiteravens.dietapp.ui.components.aiOffText
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -62,6 +64,7 @@ fun SubstituteDialog(
     meal: Meal,
     onApplied: (Rebalanced) -> Unit,
     onDismiss: () -> Unit,
+    onTurnAiOn: () -> Unit,
     viewModel: SubstituteViewModel = hiltViewModel(key = "substitute-${meal.id}"),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -108,7 +111,7 @@ fun SubstituteDialog(
                         Text(stringResource(if (state.suggesting) R.string.substitute_ai_suggest_pending else R.string.substitute_ai_suggest))
                     }
                 }
-                if (state.aiOn == false) Note(stringResource(R.string.ai_off_note))
+                if (state.aiOn == false) AiOffNote(onTurnAiOn)
                 else Note(stringResource(R.string.substitute_tooltip_ai_suggest))
                 state.suggested?.let { suggested ->
                     suggested.fallbackReason?.let { reason -> fallbackText(reason)?.let { Note(it, MaterialTheme.colorScheme.tertiary) } }
@@ -144,7 +147,7 @@ fun SubstituteDialog(
                         state.preview?.let { preview -> PreviewOf(preview, state.acceptChange, viewModel::setAcceptChange) }
                         CheckRow(
                             label = stringResource(R.string.substitute_rewrite_with_ai),
-                            hint = stringResource(if (state.aiOn == false) R.string.ai_off_note else R.string.substitute_rewrite_with_ai_hint),
+                            hint = if (state.aiOn == false) aiOffText() else stringResource(R.string.substitute_rewrite_with_ai_hint),
                             checked = state.aiOn == true && state.rewriteWithAi,
                             onChange = viewModel::setRewriteWithAi,
                             enabled = state.aiOn == true,

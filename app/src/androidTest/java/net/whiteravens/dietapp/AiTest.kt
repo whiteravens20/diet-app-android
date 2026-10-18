@@ -2,26 +2,32 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performFirstLinkClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.savedStateHolds
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
+import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -136,6 +142,32 @@ class AiTest {
         screen.onNodeWithText(text(R.string.account_ai_mode_none)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "none" }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.account_ai_disclaimer)).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun theNoteThatAiIsOffLeadsToTheAccountsSettingsAndWhatAsksAModelWaitsNoLongerOnceItIsOn() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account)
+        screen.startSignedIn(account)
+        screen.openTab(text(R.string.nav_recipes))
+
+        // A new account has AI off: the draft by a model is off, and the note says where AI is turned on.
+        val note = text(R.string.ai_off_note, text(R.string.ai_off_turn_on))
+        val draft = hasText(text(R.string.recipes_ai_draft)) and hasClickAction()
+        screen.waitForText(note)
+        screen.onNode(draft).assertIsNotEnabled()
+        screen.keepScreenshot("ai-off-note")
+
+        screen.onNodeWithText(note).performFirstLinkClick()
+        screen.waitForText(account.email)
+        screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.aiMode(account) == "admin" }
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
+
+        // Back on the recipes, the draft waits no longer, and nothing says AI is off.
+        screen.waitUntil(20_000) { screen.onAllNodes(draft and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        assertTrue(screen.onAllNodesWithText(note).fetchSemanticsNodes().isEmpty())
+        screen.keepScreenshot("ai-on-the-draft-waits-no-longer")
     }
 
     private companion object {

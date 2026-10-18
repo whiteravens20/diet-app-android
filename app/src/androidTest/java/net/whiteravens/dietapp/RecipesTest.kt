@@ -113,7 +113,7 @@ class RecipesTest {
         val draft = hasText(text(R.string.recipes_ai_draft)) and hasClickAction()
         screen.waitUntil(20_000) { screen.onAllNodes(draft).fetchSemanticsNodes().isNotEmpty() }
         if (Instance.aiMode(account) == "none") {
-            screen.waitForText(text(R.string.ai_off_note))
+            screen.waitForText(text(R.string.ai_off_note, text(R.string.ai_off_turn_on)))
             screen.onNode(draft).assertIsNotEnabled()
         } else {
             screen.waitUntil(20_000) { screen.onAllNodes(draft and isEnabled()).fetchSemanticsNodes().isNotEmpty() }

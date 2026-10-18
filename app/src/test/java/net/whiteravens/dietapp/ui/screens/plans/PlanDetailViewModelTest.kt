@@ -5,12 +5,14 @@ package net.whiteravens.dietapp.ui.screens.plans
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -106,7 +108,10 @@ class PlanDetailViewModelTest {
         MarkedRecipe("liver", "Liver", listOf("lunch"), "avoid", emptyList()),
     )
     private val favorites = mockk<FavoriteRepository>().also { coEvery { it.marked(plan.profileId) } returns liked }
-    private val users = mockk<UserRepository>().also { coEvery { it.me() } returns account("admin") }
+    private val users = mockk<UserRepository>().also {
+        coEvery { it.me() } returns account("admin")
+        every { it.aiModeChanges } returns emptyFlow()
+    }
 
     private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = aiMode)
 

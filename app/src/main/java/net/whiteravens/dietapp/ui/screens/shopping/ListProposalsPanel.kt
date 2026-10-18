@@ -32,6 +32,7 @@ import net.whiteravens.dietapp.ui.common.emphasized
 import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.AiOffNote
 
 /**
  * What a shopping list could do without, asked for on the list: rows that one ingredient could
@@ -49,6 +50,7 @@ internal fun ListProposalsPanel(
     listFrom: String,
     onAsk: (weigh: Boolean) -> Unit,
     onOpenPlanAt: (day: String) -> Unit,
+    onTurnAiOn: () -> Unit,
 ) {
     val any = found?.proposals?.isNotEmpty() == true
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -62,7 +64,9 @@ internal fun ListProposalsPanel(
                 }
             }
         }
-        if (any) Note(stringResource(if (aiOn == false) R.string.ai_off_note else R.string.weigh_tooltip))
+        if (any) {
+            if (aiOn == false) AiOffNote(onTurnAiOn) else Note(stringResource(R.string.weigh_tooltip))
+        }
         // How asking a model went, said where the proposals are and read out.
         Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
             when {
