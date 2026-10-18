@@ -22,6 +22,11 @@ The companion app holds an authenticated session and cached personal data.
   network, which the system otherwise does not let it reach.
 - **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
   It is cleared on sign-out.
+- **AI provider keys** — a key typed for one of the account's own AI providers is shown
+  as dots, held in memory while its form is open and kept out of the screen's saved
+  state, which the system may write to disk. It goes to the server alone, which tries it
+  against the provider when a test is asked for and seals it when it is saved; the server
+  never sends it back, and the app keeps none of it.
 - **Anti-abuse check** — where a server asks for Cloudflare Turnstile, its script runs in
   a WebView that reaches no file and no content of the phone and has no bridge into the
   app: the answer comes back as a navigation to an address of the app's own scheme, which

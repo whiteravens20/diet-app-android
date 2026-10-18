@@ -54,12 +54,15 @@ generate a plan, swap a meal, tick off the shopping list.
   the profiles, the calculator, the favourites, the pantry and the account's settings:
   its name, its e-mail status and the confirmation mail sent again, the language of its
   mails and of the web app (the app itself follows the phone's language and theme), the
-  unit body weights are shown in, its password, two-step sign-in set up with an
-  authenticator app on the phone or on another device and its recovery codes, where it is
-  signed in with this phone named and one session or all signed out, another address
-  asked for by mail, everything it holds saved to a file chosen on the phone, and the
-  account deleted; the app's version, the server address and sign-out. The account's
-  other settings, its theme, palette and AI, are edited in the web app.
+  unit body weights are shown in, what AI it has (none, the instance's provider with what
+  is left of the month's requests, or providers of its own, each tested before it is
+  saved, its key shown as dots and never again), its password, two-step sign-in set up
+  with an authenticator app on the phone or on another device and its recovery codes,
+  where it is signed in with this phone named and one session or all signed out, another
+  address asked for by mail, everything it holds saved to a file chosen on the phone, and
+  the account deleted; the app's version, the server address and sign-out. Where AI is
+  off, an action that asks a model says so and leads to these settings. The account's
+  other settings, its theme and palette, are edited in the web app.
 - **Favourites.** The recipes a profile marked as a favourite, as eaten often or to avoid,
   narrowed by words, meal, mark and tag and put in order; each recipe's mark and tags
   changed, or its mark taken off.

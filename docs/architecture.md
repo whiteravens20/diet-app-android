@@ -12,7 +12,9 @@ ui/        Jetpack Compose screens + Material 3 theme + components.
            Each screen has a Hilt ViewModel exposing UI state as a StateFlow.
 domain/    Plain app models, decoupled from the wire format.
 data/
-  remote/  Retrofit `DietApiService` (authenticated) + `AuthApiService`
+  remote/  Retrofit `DietApiService` (authenticated), `ModelApiService` (the
+           routes the server waits for an AI provider on, given two minutes),
+           `FileApiService` (files, no limit on the whole call) + `AuthApiService`
            (token-free) + DTOs — the Kotlin mirror of the platform's
            `packages/shared` contract. `ApiException` types the error envelope.
   auth/    `TokenStore` (DataStore) + OkHttp interceptor/authenticator pair —
@@ -51,7 +53,7 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 | Change | Start here |
 |---|---|
 | New screen | `ui/screens/`, with a Hilt ViewModel and a repository behind it |
-| New API call | `data/remote/DietApiService.kt` and `Dtos.kt` |
+| New API call | `data/remote/DietApiService.kt`, or `ModelApiService.kt` where the server waits for an AI provider, and `Dtos.kt` |
 | Caching or offline behaviour | `data/local/` and `data/repository/` |
 | Dependency wiring | `di/AppModule.kt` |
 | A library or plugin, or its version | `gradle/libs.versions.toml`, then the verification metadata and the lockfiles ([CONTRIBUTING.md](../CONTRIBUTING.md#dependencies)) |

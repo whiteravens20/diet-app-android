@@ -39,6 +39,10 @@ run against an instance of that commit
 - Registering, signing in, refreshing and signing out go through a client without the access
   token, and so does `GET /config`. Every other call carries `Authorization: Bearer <access
   token>` and `Accept-Language` with the device's language.
+- A call is given half a minute, and an answer that stops coming ten seconds. The routes on
+  which the API waits for an AI provider before it answers, a minute at most for a model, are
+  given two minutes and as long for the answer to begin (`ModelApiService`); the account's
+  file has no limit on the whole call.
 - `GET /config` is asked when the app starts and whenever the server's address changes. A
   server that answers another version than `contract/API_VERSION` is named on the screen,
   and one whose answer the app cannot read, or that has no such route, is shown as running
