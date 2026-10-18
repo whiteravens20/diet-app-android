@@ -25,7 +25,6 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.savedStateHolds
-import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -47,12 +46,21 @@ class AiTest {
     /** Picks [option] in the list a field of choices opened. */
     private fun pick(option: String) = screen.onNode(hasText(option) and hasAnyAncestor(isPopup())).performClick()
 
+    /**
+     * Waits for [shown] on the account's screen and scrolls it into view. That screen is a column the
+     * app composes whole, which the screens' helper for a list composed as it scrolls cannot move.
+     */
+    private fun show(shown: String, timeoutMillis: Long = 20_000) {
+        screen.waitForText(shown, timeoutMillis)
+        screen.onNodeWithText(shown).performScrollTo()
+    }
+
     @Test
     fun anOwnProviderIsTestedThenSavedAndOneWithAKeyRemovedOnceThatIsConfirmed() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
         screen.openAccountSettings(account)
-        screen.scrollToText(text(R.string.account_ai_providers_none))
+        show(text(R.string.account_ai_providers_none))
 
         // The instance's own Ollama server, the one address a user's may name where the operator lists
         // no other; nothing answers there on CI, and the screen says what the API says of it.
@@ -65,7 +73,7 @@ class AiTest {
         screen.onNodeWithText(text(R.string.account_ai_test)).performScrollTo().performClick()
         val said = Instance.testProvider(account, JSONObject().put("provider", "ollama").put("baseUrl", INSTANCE_OLLAMA).put("model", "llama3.1:8b"))
         assertFalse(said.getBoolean("ok"))
-        screen.scrollToText(said.getString("error"), timeoutMillis = 40_000)
+        show(said.getString("error"), timeoutMillis = 40_000)
         screen.keepScreenshot("ai-provider-tested")
 
         screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
@@ -74,8 +82,8 @@ class AiTest {
         assertEquals("ollama", saved.getString("provider"))
         assertEquals("llama3.1:8b", saved.getString("model"))
         assertEquals(INSTANCE_OLLAMA, saved.getString("baseUrl"))
-        screen.scrollToText("Ollama · llama3.1:8b")
-        screen.scrollToText(text(R.string.account_ai_no_key))
+        show("Ollama · llama3.1:8b")
+        show(text(R.string.account_ai_no_key))
 
         // A provider's key is shown as dots while it is typed, kept out of the saved state, and never
         // shown again. Nothing asks the provider with it.
@@ -89,8 +97,8 @@ class AiTest {
         screen.keepScreenshot("ai-provider-key-typed")
         screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiProviders(account).size == 2 }
-        screen.scrollToText("OpenAI · gpt-4o-mini")
-        screen.scrollToText(text(R.string.account_ai_key_set))
+        show("OpenAI · gpt-4o-mini")
+        show(text(R.string.account_ai_key_set))
         assertTrue(screen.onAllNodesWithText(key, substring = true).fetchSemanticsNodes().isEmpty())
         screen.keepScreenshot("ai-providers")
 
@@ -108,14 +116,14 @@ class AiTest {
         screen.openAccountSettings(account)
 
         // A new account has AI off, and its own providers' mode waits for a provider.
-        screen.scrollToText(text(R.string.account_ai_mode_byok_unavailable))
+        show(text(R.string.account_ai_mode_byok_unavailable))
         screen.keepScreenshot("ai-mode-off")
         val limit = Instance.aiQuota(account).getInt("limit")
         screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "admin" }
-        screen.scrollToText(plural(R.plurals.account_ai_allowance_used, limit, 0, limit))
-        screen.scrollToText(text(R.string.account_ai_allowance_unused))
-        screen.scrollToText(text(R.string.account_ai_disclaimer))
+        show(plural(R.plurals.account_ai_allowance_used, limit, 0, limit))
+        show(text(R.string.account_ai_allowance_unused))
+        show(text(R.string.account_ai_disclaimer))
         screen.keepScreenshot("ai-mode-instance")
 
         // With a provider of its own, the account's own mode can be chosen.
@@ -130,14 +138,14 @@ class AiTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.account_ai_mode_byok_unavailable)).fetchSemanticsNodes().isEmpty() }
         screen.onNodeWithText(text(R.string.account_ai_mode_byok)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "byok" }
-        screen.scrollToText(text(R.string.account_ai_mode_saved))
+        show(text(R.string.account_ai_mode_saved))
         assertTrue(screen.onAllNodesWithText(text(R.string.account_ai_allowance)).fetchSemanticsNodes().isEmpty())
 
         // Its last provider removed, the API gives the account the instance's provider, and the screen says so.
         screen.onNodeWithContentDescription(text(R.string.account_ai_remove_named, "Ollama")).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.account_ai_remove)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "admin" }
-        screen.scrollToText(plural(R.plurals.account_ai_allowance_used, limit, 0, limit))
+        show(plural(R.plurals.account_ai_allowance_used, limit, 0, limit))
 
         // And off again.
         screen.onNodeWithText(text(R.string.account_ai_mode_none)).performScrollTo().performClick()
