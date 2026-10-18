@@ -2,9 +2,11 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -92,7 +94,10 @@ class AiTest {
         screen.onNodeWithText(text(R.string.account_ai_api_key)).performScrollTo().performTextInput(key)
         screen.onNodeWithText(text(R.string.account_ai_model)).performScrollTo().performTextInput("gpt-4o-mini")
         screen.putKeyboardAway()
-        assertTrue(screen.onAllNodesWithText(key, substring = true).fetchSemanticsNodes().isEmpty())
+        // What the field shows, and what a screen reader is given with its mark of a password, is dots.
+        val typed = screen.onNode(hasText(text(R.string.account_ai_api_key)) and hasSetTextAction()).fetchSemanticsNode().config
+        assertTrue("the key's field is not a password's", SemanticsProperties.Password in typed)
+        assertFalse("the key is shown", typed[SemanticsProperties.EditableText].text.contains(key))
         assertFalse("the key is in the saved state", screen.savedStateHolds(key))
         screen.keepScreenshot("ai-provider-key-typed")
         screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
