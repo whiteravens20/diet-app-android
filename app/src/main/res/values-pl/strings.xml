@@ -814,7 +814,12 @@
     <string name="account_ai_mode_none">Wyłączone</string>
     <string name="account_ai_mode_none_hint">Każda funkcja AI korzysta z wbudowanego silnika. Żadne zapytanie nie opuszcza instancji.</string>
     <string name="account_ai_mode_admin">Użyj domyślnego dostawcy instancji</string>
-    <string name="account_ai_mode_admin_hint">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</string>
+    <plurals name="account_ai_mode_admin_hint">
+        <item quantity="one">Korzystasz z dostawcy operatora, z limitem %1$d zapytania na miesiąc.</item>
+        <item quantity="few">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
+        <item quantity="many">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
+        <item quantity="other">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
+    </plurals>
     <string name="account_ai_mode_admin_unavailable">Operator nie skonfigurował domyślnego dostawcy.</string>
     <string name="account_ai_mode_admin_disabled">Operator nie udostępnił współdzielonego AI użytkownikom tej instancji.</string>
     <string name="account_ai_mode_byok">Użyj własnego klucza</string>
@@ -825,7 +830,12 @@
     <string name="account_ai_mode_failed">Nie udało się zaktualizować trybu AI.</string>
     <string name="account_ai_disclaimer">AI pomaga tworzyć przepisy i dobierać zamiany, ale może się mylić. Zawsze sprawdzaj wyniki AI pod kątem swoich potrzeb żywieniowych i zdrowia.</string>
     <string name="account_ai_allowance">Miesięczne użycie</string>
-    <string name="account_ai_allowance_used">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</string>
+    <plurals name="account_ai_allowance_used">
+        <item quantity="one">Wykorzystano %1$d/%2$d zapytania w tym miesiącu</item>
+        <item quantity="few">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
+        <item quantity="many">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
+        <item quantity="other">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
+    </plurals>
     <string name="account_ai_instance_used_up">Wspólna pula zapytań AI tej instancji na ten miesiąc została wykorzystana.</string>
     <string name="account_ai_allowance_frees">Następne zapytanie odblokuje się %1$s</string>
     <string name="account_ai_allowance_unused">Nie użyto jeszcze żadnych zapytań — licznik resetuje się 30 dni po pierwszym wywołaniu.</string>

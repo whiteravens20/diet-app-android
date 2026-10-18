@@ -757,7 +757,10 @@
     <string name="account_ai_mode_none">Off</string>
     <string name="account_ai_mode_none_hint">Every AI feature falls back to the deterministic engine. No request leaves the instance.</string>
     <string name="account_ai_mode_admin">Use the instance default</string>
-    <string name="account_ai_mode_admin_hint">Borrow the operator\'s provider, capped at %1$d requests per month.</string>
+    <plurals name="account_ai_mode_admin_hint">
+        <item quantity="one">Borrow the operator\'s provider, capped at %1$d request per month.</item>
+        <item quantity="other">Borrow the operator\'s provider, capped at %1$d requests per month.</item>
+    </plurals>
     <string name="account_ai_mode_admin_unavailable">The operator hasn\'t configured a default provider.</string>
     <string name="account_ai_mode_admin_disabled">The operator has not enabled shared AI for users on this instance.</string>
     <string name="account_ai_mode_byok">Bring your own key</string>
@@ -768,7 +771,10 @@
     <string name="account_ai_mode_failed">Could not update AI mode.</string>
     <string name="account_ai_disclaimer">AI helps draft recipes and pick swaps, but it can make mistakes. Always review AI-generated content against your own dietary needs and health.</string>
     <string name="account_ai_allowance">Monthly usage</string>
-    <string name="account_ai_allowance_used">%1$d/%2$d requests used this month</string>
+    <plurals name="account_ai_allowance_used">
+        <item quantity="one">%1$d/%2$d request used this month</item>
+        <item quantity="other">%1$d/%2$d requests used this month</item>
+    </plurals>
     <string name="account_ai_instance_used_up">This instance\'s shared AI requests for the month are used up.</string>
     <string name="account_ai_allowance_frees">Next request frees up %1$s</string>
     <string name="account_ai_allowance_unused">No requests used yet — the counter resets thirty days after your first call.</string>

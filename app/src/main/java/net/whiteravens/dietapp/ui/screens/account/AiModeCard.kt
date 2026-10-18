@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
@@ -133,7 +134,7 @@ private fun ModeRow(mode: String, status: AiStatus, chosen: Boolean, enabled: Bo
                 Text(
                     when (mode) {
                         AiModes.NONE -> stringResource(R.string.account_ai_mode_none_hint)
-                        AiModes.INSTANCE -> stringResource(R.string.account_ai_mode_admin_hint, status.limit)
+                        AiModes.INSTANCE -> pluralStringResource(R.plurals.account_ai_mode_admin_hint, status.limit, status.limit)
                         else -> stringResource(R.string.account_ai_mode_byok_hint)
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -166,7 +167,7 @@ private fun Allowance(status: AiStatus) {
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.account_ai_allowance), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-            Text(stringResource(R.string.account_ai_allowance_used, status.used, status.limit), style = MaterialTheme.typography.bodyMedium)
+            Text(pluralStringResource(R.plurals.account_ai_allowance_used, status.limit, status.used, status.limit), style = MaterialTheme.typography.bodyMedium)
             if (status.instanceLimitReached) {
                 Text(stringResource(R.string.account_ai_instance_used_up), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }

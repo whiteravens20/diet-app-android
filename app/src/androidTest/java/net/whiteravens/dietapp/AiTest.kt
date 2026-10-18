@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.openTab
+import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.savedStateHolds
 import net.whiteravens.dietapp.testing.scrollToText
@@ -112,7 +113,7 @@ class AiTest {
         val limit = Instance.aiQuota(account).getInt("limit")
         screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "admin" }
-        screen.scrollToText(text(R.string.account_ai_allowance_used, 0, limit))
+        screen.scrollToText(plural(R.plurals.account_ai_allowance_used, limit, 0, limit))
         screen.scrollToText(text(R.string.account_ai_allowance_unused))
         screen.scrollToText(text(R.string.account_ai_disclaimer))
         screen.keepScreenshot("ai-mode-instance")
@@ -136,7 +137,7 @@ class AiTest {
         screen.onNodeWithContentDescription(text(R.string.account_ai_remove_named, "Ollama")).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.account_ai_remove)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "admin" }
-        screen.scrollToText(text(R.string.account_ai_allowance_used, 0, limit))
+        screen.scrollToText(plural(R.plurals.account_ai_allowance_used, limit, 0, limit))
 
         // And off again.
         screen.onNodeWithText(text(R.string.account_ai_mode_none)).performScrollTo().performClick()
