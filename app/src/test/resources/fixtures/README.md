@@ -14,10 +14,13 @@ from API 0.19.0, captured on 2026-10-17; `ai-providers.json`, `ai-providers-none
 `ai-providers-key-unreadable.json` (the stored key damaged in the instance's database first),
 `ai-provider-saved.json`, `ai-provider-ollama-saved.json`, `ai-provider-replaced.json`,
 `ai-provider-host-not-allowed.json`, `ai-provider-unknown.json`, `ai-test-connected.json` (an Ollama
-server standing in for a model), `ai-test-host-not-allowed.json` and
-`ai-test-anthropic-without-a-model.json` from API 0.77.0, captured on 2026-10-18 from an instance of
+server standing in for a model), `ai-test-host-not-allowed.json`,
+`ai-test-anthropic-without-a-model.json`, `ai-quota-off.json`, `ai-quota-admin.json`,
+`ai-quota-byok.json`, `ai-quota-instance-used-up.json` (the instance's monthly limit lowered under
+what it had used, for the one call), `users-me-ai-admin.json` and
+`ai-mode-byok-without-a-provider.json` from API 0.77.0, captured on 2026-10-18 from an instance of
 diet-app's `dev`, whose AI routes are those of `0fb1cef`; the others from API 0.19.0, captured on
-2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens,
-the sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
+2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

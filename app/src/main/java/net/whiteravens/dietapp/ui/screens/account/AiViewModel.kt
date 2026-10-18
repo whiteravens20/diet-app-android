@@ -11,22 +11,35 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.AiRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.AiProviderConfig
+import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
 import net.whiteravens.dietapp.domain.ProviderSetup
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
 /**
- * The AI providers the account brings of its own, as the web's settings show them: listed with
- * whether their keys can still be read, one set up in a form whose connection can be tested before
- * it is saved, and one removed. The key typed is kept here, not in the screen's saved state, which
- * the system may write to disk, and goes once the provider is saved or the form closed.
+ * What AI the account has, as the web's settings show it: the mode it chose, offered as far as the
+ * instance and the account's providers allow, with what is left of the instance's allowance; and the
+ * providers it brings of its own, listed with whether their keys can still be read, one set up in a
+ * form whose connection can be tested before it is saved, and one removed. The key typed is kept
+ * here, not in the screen's saved state, which the system may write to disk, and goes once the
+ * provider is saved or the form closed.
  */
 @HiltViewModel
-class AiViewModel @Inject constructor(private val ai: AiRepository) : ViewModel() {
+class AiViewModel @Inject constructor(private val ai: AiRepository, private val users: UserRepository) : ViewModel() {
 
     data class UiState(
+        /** The mode the account chose and the instance's allowance; null until they were read. */
+        val status: AiStatus? = null,
+        val statusFailed: Throwable? = null,
+        /** The mode chosen and on its way to the API, shown at once; null while none is. */
+        val choosing: String? = null,
+        /** The mode chosen last was kept. */
+        val modeSaved: Boolean = false,
+        val modeError: Throwable? = null,
         /** The providers the account set up; null until they were read. */
         val providers: List<AiProviderConfig>? = null,
         val readFailed: Throwable? = null,
@@ -42,6 +55,32 @@ class AiViewModel @Inject constructor(private val ai: AiRepository) : ViewModel(
         val removing: Boolean = false,
         val removeError: Throwable? = null,
     ) {
+        /** The mode as the account has it, or as it was just chosen; null until it was read. */
+        val mode: String?
+            get() = choosing ?: status?.mode
+
+        /**
+         * The modes offered, as the web offers them: the instance's provider only where the operator
+         * shares one, or while the account has it, so that what it has is never hidden.
+         */
+        val modes: List<String>
+            get() = when {
+                status == null -> emptyList()
+                status.shared || status.mode == AiModes.INSTANCE -> listOf(AiModes.NONE, AiModes.INSTANCE, AiModes.OWN)
+                else -> listOf(AiModes.NONE, AiModes.OWN)
+            }
+
+        /** Whether the account has a provider of its own that is on, which its own mode asks. */
+        val ownProvider: Boolean
+            get() = providers.orEmpty().any { it.enabled }
+
+        /** Whether [mode] can be chosen now: the instance's where it is shared, the account's own once it has a provider. */
+        fun canChoose(mode: String): Boolean = choosing == null && status != null && when (mode) {
+            AiModes.INSTANCE -> status.shared
+            AiModes.OWN -> ownProvider
+            else -> true
+        }
+
         /** The account's provider of the form's kind, which saving the form replaces; null where it has none. */
         val replaced: AiProviderConfig?
             get() = form?.let { form -> providers.orEmpty().firstOrNull { it.provider == form.provider } }
@@ -54,9 +93,30 @@ class AiViewModel @Inject constructor(private val ai: AiRepository) : ViewModel(
         load()
     }
 
-    /** Reads the account's providers again. */
+    /** Reads what AI the account has and its providers again. */
     fun load() {
-        viewModelScope.launch { readProviders() }
+        viewModelScope.launch {
+            readStatus()
+            readProviders()
+        }
+    }
+
+    /**
+     * Gives the account the mode [mode]: shown at once, and kept as the API answers; the allowance is
+     * read again, as what is left of it is the mode's. A refusal is said and the mode stays as it was.
+     */
+    fun chooseMode(mode: String) {
+        val state = _state.value
+        if (mode == state.mode || !state.canChoose(mode)) return
+        _state.update { it.copy(choosing = mode, modeSaved = false, modeError = null) }
+        viewModelScope.launch {
+            attempt { users.chooseAiMode(mode) }
+                .onSuccess { saved ->
+                    _state.update { it.copy(status = it.status?.copy(mode = saved.aiMode), choosing = null, modeSaved = true) }
+                    readStatus()
+                }
+                .onFailure { e -> _state.update { it.copy(choosing = null, modeError = e) } }
+        }
     }
 
     /** Opens the form for a provider to be set up. */
@@ -103,7 +163,11 @@ class AiViewModel @Inject constructor(private val ai: AiRepository) : ViewModel(
         }
     }
 
-    /** Removes the provider [id]; the list is read again either way, so that one gone already goes from it too. */
+    /**
+     * Removes the provider [id]; the list is read again either way, so that one gone already goes
+     * from it too, and so is the mode, which the API turns to the instance's provider once the
+     * account's own mode is left without one.
+     */
     fun remove(id: String) {
         if (_state.value.removing) return
         _state.update { it.copy(removing = true, removeError = null) }
@@ -111,7 +175,14 @@ class AiViewModel @Inject constructor(private val ai: AiRepository) : ViewModel(
             val removed = attempt { ai.remove(id) }
             _state.update { it.copy(removing = false, removeError = removed.exceptionOrNull()) }
             readProviders()
+            readStatus()
         }
+    }
+
+    private suspend fun readStatus() {
+        attempt { ai.status() }
+            .onSuccess { status -> _state.update { it.copy(status = status, statusFailed = null) } }
+            .onFailure { e -> _state.update { it.copy(statusFailed = e) } }
     }
 
     private suspend fun readProviders() {

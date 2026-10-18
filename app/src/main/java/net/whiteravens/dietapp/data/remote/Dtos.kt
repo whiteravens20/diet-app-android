@@ -235,6 +235,24 @@ data class AccountSessionDto(
 // ── AI (packages/shared/src/ai.ts) ──────────────────────────────────────────
 
 /**
+ * What AI the account has now, as `GET /ai/quota` says it: the mode it chose (`none` | `admin` |
+ * `byok`); the requests a month an account may make on the operator's provider ([limit], 0 where
+ * the operator shares none), how many of them it made in the last thirty days and has left (null
+ * where no allowance applies to it); when a place comes free again; whether all accounts together
+ * used what the instance allows; and whether the operator set a provider up at all.
+ */
+@Serializable
+data class AiQuotaStatusDto(
+    val mode: String,
+    val limit: Int,
+    val used: Int,
+    val remaining: Int?,
+    val resetAt: String?,
+    val instanceLimitReached: Boolean,
+    val adminProviderConfigured: Boolean,
+)
+
+/**
  * A provider the account set up, as `GET /ai/providers` lists it, never with its key: whether one
  * is kept, and whether the instance can still read it; [baseUrl] is an Ollama server's address.
  */

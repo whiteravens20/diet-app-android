@@ -94,6 +94,50 @@ class AiTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithText("OpenAI · gpt-4o-mini").fetchSemanticsNodes().isEmpty() }
     }
 
+    @Test
+    fun theInstancesProviderIsChosenWithItsAllowanceAndTheAccountsOwnOnceItHasOne() {
+        val account = Instance.newAccount()
+        screen.startSignedIn(account)
+        screen.openAccountSettings(account)
+
+        // A new account has AI off, and its own providers' mode waits for a provider.
+        screen.scrollToText(text(R.string.account_ai_mode_byok_unavailable))
+        screen.keepScreenshot("ai-mode-off")
+        val limit = Instance.aiQuota(account).getInt("limit")
+        screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.aiMode(account) == "admin" }
+        screen.scrollToText(text(R.string.account_ai_allowance_used, 0, limit))
+        screen.scrollToText(text(R.string.account_ai_allowance_unused))
+        screen.scrollToText(text(R.string.account_ai_disclaimer))
+        screen.keepScreenshot("ai-mode-instance")
+
+        // With a provider of its own, the account's own mode can be chosen.
+        screen.onNodeWithText(text(R.string.account_ai_add)).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.account_ai_provider)) and hasText("OpenAI")).performScrollTo().performClick()
+        pick("Ollama")
+        screen.onNodeWithText(text(R.string.account_ai_ollama_url)).performScrollTo().performTextInput(INSTANCE_OLLAMA)
+        screen.onNodeWithText(text(R.string.account_ai_model)).performScrollTo().performTextInput("llama3.1:8b")
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.aiProviders(account).size == 1 }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.account_ai_mode_byok_unavailable)).fetchSemanticsNodes().isEmpty() }
+        screen.onNodeWithText(text(R.string.account_ai_mode_byok)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.aiMode(account) == "byok" }
+        screen.scrollToText(text(R.string.account_ai_mode_saved))
+        assertTrue(screen.onAllNodesWithText(text(R.string.account_ai_allowance)).fetchSemanticsNodes().isEmpty())
+
+        // Its last provider removed, the API gives the account the instance's provider, and the screen says so.
+        screen.onNodeWithContentDescription(text(R.string.account_ai_remove_named, "Ollama")).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.account_ai_remove)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForTheApi { Instance.aiMode(account) == "admin" }
+        screen.scrollToText(text(R.string.account_ai_allowance_used, 0, limit))
+
+        // And off again.
+        screen.onNodeWithText(text(R.string.account_ai_mode_none)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.aiMode(account) == "none" }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.account_ai_disclaimer)).fetchSemanticsNodes().isEmpty() }
+    }
+
     private companion object {
         /** The instance's own Ollama server, as the settings template CI installs from names it. */
         const val INSTANCE_OLLAMA = "http://ollama:11434"

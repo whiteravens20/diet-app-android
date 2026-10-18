@@ -5,19 +5,22 @@ package net.whiteravens.dietapp.data.repository
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AiProviderConfigDto
 import net.whiteravens.dietapp.data.remote.AiProviderConfigRequest
+import net.whiteravens.dietapp.data.remote.AiQuotaStatusDto
 import net.whiteravens.dietapp.data.remote.AiTestConnectionRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.AiProviderConfig
+import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
 import net.whiteravens.dietapp.domain.ProviderSetup
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * The AI providers the account brings of its own: listed without their keys, set up, tested before
- * they are kept, and removed. Network-only, as the account's other settings are.
+ * What AI the account has, and the providers it brings of its own: listed without their keys, set
+ * up, tested before they are kept, and removed. Network-only, as the account's other settings are.
  */
 @Singleton
 class AiRepository @Inject constructor(
@@ -25,6 +28,9 @@ class AiRepository @Inject constructor(
     private val model: ModelApiService,
     private val json: Json,
 ) {
+    /** What AI the account has now: the mode it chose, and what is left of the instance's allowance. */
+    suspend fun status(): AiStatus = apiCall(json) { api.aiQuota() }.toDomain()
+
     /** The providers the account set up, the one asked first first. */
     suspend fun providers(): List<AiProviderConfig> = apiCall(json) { api.aiProviders() }.map { it.toDomain() }
 
@@ -42,6 +48,16 @@ class AiRepository @Inject constructor(
         apiCall(json) { model.testAiConnection(AiTestConnectionRequest(setup.provider, setup.apiKey, setup.baseUrl, setup.model.ifEmpty { null })) }
             .let { ConnectionTest(it.ok, it.models, it.error) }
 }
+
+private fun AiQuotaStatusDto.toDomain() = AiStatus(
+    mode = mode,
+    limit = limit,
+    used = used,
+    remaining = remaining,
+    resetAt = resetAt?.let(Instant::parse),
+    instanceLimitReached = instanceLimitReached,
+    adminProviderConfigured = adminProviderConfigured,
+)
 
 private fun AiProviderConfigDto.toDomain() = AiProviderConfig(
     id = id,

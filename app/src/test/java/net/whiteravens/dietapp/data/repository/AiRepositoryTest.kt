@@ -10,6 +10,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.AiProviderConfig
+import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
 import net.whiteravens.dietapp.domain.ProviderSetup
 import net.whiteravens.dietapp.testing.clientHeaders
@@ -21,8 +22,9 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 
-/** The account's own AI providers listed, saved, removed and tested, against a local server answering as the backend did. */
+/** What AI the account has, and its own providers listed, saved, removed and tested, against a local server answering as the backend did. */
 class AiRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
@@ -58,6 +60,31 @@ class AiRepositoryTest {
         MockResponse().setResponseCode(status).setHeader("Content-Type", "application/json").setBody(fixture(name))
 
     private fun sent(request: RecordedRequest) = json.parseToJsonElement(request.body.readUtf8())
+
+    @Test
+    fun `what AI the account has is read as the API says it, the instance's allowance with it`() {
+        server.enqueue(answer(200, "ai-quota-off"))
+        server.enqueue(answer(200, "ai-quota-admin"))
+        server.enqueue(answer(200, "ai-quota-byok"))
+        server.enqueue(answer(200, "ai-quota-instance-used-up"))
+        val ai = repository()
+
+        val off = runBlocking { ai.status() }
+        val shared = runBlocking { ai.status() }
+        val own = runBlocking { ai.status() }
+        val usedUp = runBlocking { ai.status() }
+
+        assertEquals("/api/ai/quota", server.takeRequest().requestUrl!!.encodedPath)
+        assertEquals(AiStatus("none", 40, 0, null, null, instanceLimitReached = false, adminProviderConfigured = true), off)
+        assertEquals(AiStatus("admin", 40, 0, 40, null, instanceLimitReached = false, adminProviderConfigured = true), shared)
+        assertEquals(AiStatus("byok", 40, 0, null, null, instanceLimitReached = false, adminProviderConfigured = true), own)
+        // While the instance has used what it allows, nothing is left of the account's own allowance, and a
+        // request comes free when the instance's oldest counted one leaves the thirty days.
+        assertEquals(
+            AiStatus("admin", 40, 0, 0, Instant.parse("2026-11-09T22:08:02.316Z"), instanceLimitReached = true, adminProviderConfigured = true),
+            usedUp,
+        )
+    }
 
     @Test
     fun `the providers are read as the API lists them, the one asked first first, and a key that can no longer be read is said so`() {

@@ -80,6 +80,10 @@ interface DietApiService {
 
     // ── AI ──────────────────────────────────────────────────────────────────
 
+    /** What AI the account has now: the mode it chose, and what is left of the instance's allowance. */
+    @GET("ai/quota")
+    suspend fun aiQuota(): AiQuotaStatusDto
+
     /** The providers the account set up, without their keys, the one asked first first. */
     @GET("ai/providers")
     suspend fun aiProviders(): List<AiProviderConfigDto>

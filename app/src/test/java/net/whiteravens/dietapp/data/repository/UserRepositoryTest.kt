@@ -187,4 +187,21 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"locale":"pl"}"""), json.parseToJsonElement(chosen.body.readUtf8()))
         assertEquals("pl", inPolish.locale)
     }
+
+    @Test
+    fun `the AI mode is sent alone and the account read back, and its own providers' mode is refused while it has none`() {
+        server.enqueue(answer("users-me-ai-admin"))
+        server.enqueue(answer("ai-mode-byok-without-a-provider").setResponseCode(400))
+        val users = repository()
+
+        val shared = runBlocking { users.chooseAiMode("admin") }
+        val refused = runCatching { runBlocking { users.chooseAiMode("byok") } }.exceptionOrNull() as ApiException
+
+        val chosen = server.takeRequest()
+        assertEquals("PATCH", chosen.method)
+        assertEquals("/api/users/me", chosen.requestUrl!!.encodedPath)
+        assertEquals(json.parseToJsonElement("""{"aiMode":"admin"}"""), json.parseToJsonElement(chosen.body.readUtf8()))
+        assertEquals("admin", shared.aiMode)
+        assertEquals("BYOK_NO_PROVIDER", refused.code)
+    }
 }

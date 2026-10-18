@@ -45,6 +45,13 @@ class UserRepository @Inject constructor(
     suspend fun chooseLanguage(locale: String): SessionUser =
         apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(locale = locale)) }.toDomain()
 
+    /**
+     * Chooses what AI the account has: `none`, `admin` (the instance's provider) or `byok` (its own
+     * providers), which is refused while it has none.
+     */
+    suspend fun chooseAiMode(mode: String): SessionUser =
+        apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(aiMode = mode)) }.toDomain()
+
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
         apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain()

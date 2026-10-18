@@ -122,6 +122,9 @@ object Instance {
     /** The account as the API keeps it: its name, the language of its mails, what it chose. */
     fun me(account: Account): JSONObject = call("GET", "users/me", token = account.accessToken)
 
+    /** What AI [account] has, as the API says it: its mode and the instance's allowance. */
+    fun aiQuota(account: Account): JSONObject = call("GET", "ai/quota", token = account.accessToken)
+
     /** The AI providers [account] set up, as the API lists them, without their keys. */
     fun aiProviders(account: Account): List<JSONObject> {
         val list = JSONArray(send("GET", "ai/providers", null, account.accessToken, 200, null))

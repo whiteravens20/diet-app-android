@@ -57,9 +57,9 @@ import java.util.Locale
 
 /**
  * Account overview, its name, the language of its mails and of the web, the unit weights are shown
- * in, the AI providers it brings of its own, its password, two-step sign-in, where it is signed in,
- * its address, its data in a file, its deletion, and sign-out. The other settings are changed on
- * the web for now.
+ * in, what AI it has and the providers it brings of its own, its password, two-step sign-in, where
+ * it is signed in, its address, its data in a file, its deletion, and sign-out. The other settings
+ * are changed on the web for now.
  */
 @Composable
 fun AccountScreen(
@@ -217,6 +217,8 @@ fun AccountScreen(
                         modifier = Modifier.padding(top = 12.dp),
                     )
                 }
+
+                AiModeCard(aiState, onChoose = ai::chooseMode, onRetry = ai::load)
 
                 AiProvidersCard(
                     aiState,

@@ -14,14 +14,18 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.AiRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AiProviderConfig
+import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
 import net.whiteravens.dietapp.domain.ProviderSetup
+import net.whiteravens.dietapp.domain.SessionUser
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -31,10 +35,15 @@ class AiViewModelTest {
     private val ollama = AiProviderConfig("ollama-id", "ollama", "mock-queue", 0, true, hasKey = false, keyUnreadable = false, baseUrl = "http://mockai:11434")
     private val openai = AiProviderConfig("openai-id", "openai", "gpt-4o-mini", 1, true, hasKey = true, keyUnreadable = false, baseUrl = null)
     private val listed = ConnectionTest(true, listOf("gpt-4o", "gpt-4o-mini"), null)
+    private val off = AiStatus("none", 40, 0, null, null, instanceLimitReached = false, adminProviderConfigured = true)
     private val ai = mockk<AiRepository>()
+    private val users = mockk<UserRepository>()
 
     @Before
-    fun main() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    fun main() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        coEvery { ai.status() } returns off
+    }
 
     @After
     fun reset() = Dispatchers.resetMain()
@@ -43,7 +52,7 @@ class AiViewModelTest {
     fun `the providers are read on opening, and a read that failed is said and made again on asking`() = runTest {
         val offline = IOException("offline")
         coEvery { ai.providers() } throws offline andThen listOf(ollama)
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
         assertSame(offline, model.state.value.readFailed)
         assertNull(model.state.value.providers)
 
@@ -57,7 +66,7 @@ class AiViewModelTest {
     fun `a provider is saved as the form holds it, and the form closes with the key typed and the list is read again`() = runTest {
         coEvery { ai.providers() } returnsMany listOf(emptyList(), listOf(openai))
         coEvery { ai.save(any()) } returns openai
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
 
         model.open()
         model.edit { it.copy(model = " gpt-4o-mini ", apiKey = " sk-typed ", priority = "1") }
@@ -72,7 +81,7 @@ class AiViewModelTest {
     fun `an Ollama server is saved with its address and without a key typed for another provider`() = runTest {
         coEvery { ai.providers() } returns emptyList()
         coEvery { ai.save(any()) } returns ollama
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
 
         model.open()
         model.edit { it.copy(apiKey = "sk-typed-first", model = "mock-queue") }
@@ -85,7 +94,7 @@ class AiViewModelTest {
     @Test
     fun `a form without a model, a key or a server's address the API takes, or with a place out of its bounds, is not sent`() = runTest {
         coEvery { ai.providers() } returns emptyList()
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
         model.open()
         val whole = ProviderForm(provider = "openai", model = "gpt-4o-mini", apiKey = "sk-typed", priority = "0")
 
@@ -109,7 +118,7 @@ class AiViewModelTest {
         val refused = ApiException(400, "OLLAMA_HOST_NOT_ALLOWED", "Ollama host is not allowed.")
         coEvery { ai.providers() } returns emptyList()
         coEvery { ai.save(any()) } throws refused
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
         val typed = ProviderForm(provider = "ollama", model = "llama3.1:8b", baseUrl = "http://192.0.2.10:11434")
 
         model.open()
@@ -125,7 +134,7 @@ class AiViewModelTest {
     fun `a test lists the provider's models to choose one of, and a change of the form puts its answer away`() = runTest {
         coEvery { ai.providers() } returns emptyList()
         coEvery { ai.test(any()) } returns listed
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
 
         model.open()
         model.edit { it.copy(apiKey = "sk-typed") }
@@ -146,7 +155,7 @@ class AiViewModelTest {
         val answer = CompletableDeferred<ConnectionTest>()
         coEvery { ai.providers() } returns emptyList()
         coEvery { ai.test(any()) } coAnswers { answer.await() }
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
         model.open()
         model.edit { it.copy(apiKey = "sk-typed") }
 
@@ -161,7 +170,7 @@ class AiViewModelTest {
     @Test
     fun `the provider of the kind the form holds is named as the one saving replaces`() = runTest {
         coEvery { ai.providers() } returns listOf(ollama, openai)
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
 
         model.open()
         assertEquals(openai, model.state.value.replaced)
@@ -176,7 +185,7 @@ class AiViewModelTest {
         coEvery { ai.providers() } returnsMany listOf(listOf(ollama, openai), listOf(ollama), emptyList())
         coEvery { ai.remove("openai-id") } returns Unit
         coEvery { ai.remove("ollama-id") } throws gone
-        val model = AiViewModel(ai)
+        val model = AiViewModel(ai, users)
 
         model.remove("openai-id")
         assertEquals(listOf(ollama), model.state.value.providers)
@@ -184,6 +193,87 @@ class AiViewModelTest {
 
         model.remove("ollama-id")
         assertSame(gone, model.state.value.removeError)
+        assertEquals(emptyList<AiProviderConfig>(), model.state.value.providers)
+    }
+
+    private fun account(aiMode: String) = SessionUser("account", "ada@example.test", "Ada", emailVerified = true, locale = "en", aiMode = aiMode)
+
+    @Test
+    fun `the modes are offered as far as the instance and the account's providers allow`() = runTest {
+        coEvery { ai.providers() } returns emptyList()
+        val shared = AiViewModel(ai, users).state.value
+
+        assertEquals(listOf("none", "admin", "byok"), shared.modes)
+        assertTrue(shared.canChoose("admin"))
+        assertFalse(shared.canChoose("byok"))
+        assertTrue(shared.copy(providers = listOf(openai)).canChoose("byok"))
+        assertFalse(shared.copy(providers = listOf(openai.copy(enabled = false))).canChoose("byok"))
+
+        // Where the operator shares no provider, its mode is offered only to an account that has it.
+        val notShared = shared.copy(status = off.copy(limit = 0))
+        assertEquals(listOf("none", "byok"), notShared.modes)
+        val stillHad = shared.copy(status = off.copy(mode = "admin", adminProviderConfigured = false))
+        assertEquals(listOf("none", "admin", "byok"), stillHad.modes)
+        assertFalse(stillHad.canChoose("admin"))
+    }
+
+    @Test
+    fun `a mode chosen is shown at once and kept as the API answers, and the allowance is read again for it`() = runTest {
+        val kept = CompletableDeferred<SessionUser>()
+        val shared = off.copy(mode = "admin", remaining = 40)
+        coEvery { ai.providers() } returns emptyList()
+        coEvery { ai.status() } returnsMany listOf(off, shared)
+        coEvery { users.chooseAiMode("admin") } coAnswers { kept.await() }
+        val model = AiViewModel(ai, users)
+
+        model.chooseMode("admin")
+        assertEquals("admin", model.state.value.mode)
+        assertEquals("admin", model.state.value.choosing)
+
+        kept.complete(account("admin"))
+
+        assertEquals(shared, model.state.value.status)
+        assertNull(model.state.value.choosing)
+        assertTrue(model.state.value.modeSaved)
+    }
+
+    @Test
+    fun `a mode refused is said, and the mode stays as the account has it`() = runTest {
+        val refused = ApiException(400, "BYOK_NO_PROVIDER", "Add at least one provider key before switching to bring-your-own.")
+        coEvery { ai.providers() } returns listOf(openai)
+        coEvery { users.chooseAiMode("byok") } throws refused
+        val model = AiViewModel(ai, users)
+
+        model.chooseMode("byok")
+
+        assertSame(refused, model.state.value.modeError)
+        assertEquals("none", model.state.value.mode)
+        assertFalse(model.state.value.modeSaved)
+    }
+
+    @Test
+    fun `the account's own mode is not asked for while it has no provider, nor the instance's where the operator shares none`() = runTest {
+        coEvery { ai.providers() } returns emptyList()
+        coEvery { ai.status() } returns off.copy(limit = 0)
+        val model = AiViewModel(ai, users)
+
+        model.chooseMode("byok")
+        model.chooseMode("admin")
+
+        coVerify(exactly = 0) { users.chooseAiMode(any()) }
+    }
+
+    @Test
+    fun `once the last provider is removed, the mode is read again, as the API gives the account the instance's provider`() = runTest {
+        coEvery { ai.providers() } returnsMany listOf(listOf(openai), emptyList())
+        coEvery { ai.status() } returnsMany listOf(off.copy(mode = "byok"), off.copy(mode = "admin", remaining = 40))
+        coEvery { ai.remove("openai-id") } returns Unit
+        val model = AiViewModel(ai, users)
+        assertEquals("byok", model.state.value.mode)
+
+        model.remove("openai-id")
+
+        assertEquals("admin", model.state.value.mode)
         assertEquals(emptyList<AiProviderConfig>(), model.state.value.providers)
     }
 }

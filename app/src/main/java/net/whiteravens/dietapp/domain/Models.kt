@@ -43,6 +43,39 @@ data class AccountSession(
     val current: Boolean,
 )
 
+/** The ways an account can have AI, as the API names them. */
+object AiModes {
+    /** No model is asked: the engine does everything alone. */
+    const val NONE = "none"
+
+    /** The operator's provider, within the instance's allowance. */
+    const val INSTANCE = "admin"
+
+    /** The account's own providers. */
+    const val OWN = "byok"
+}
+
+/**
+ * What AI the account has: the [mode] it chose (`none` | `admin` | `byok`), and the instance's
+ * allowance on the operator's provider: [limit] requests a month for an account, 0 where the
+ * operator shares none; [used] in the last thirty days and [remaining] (null where no allowance
+ * applies); when a place comes free again ([resetAt], the instance's while [instanceLimitReached]);
+ * and whether the operator set a provider up ([adminProviderConfigured]).
+ */
+data class AiStatus(
+    val mode: String,
+    val limit: Int,
+    val used: Int,
+    val remaining: Int?,
+    val resetAt: Instant?,
+    val instanceLimitReached: Boolean,
+    val adminProviderConfigured: Boolean,
+) {
+    /** Whether the account may borrow the operator's provider: there is one, and it is shared. */
+    val shared: Boolean
+        get() = adminProviderConfigured && limit > 0
+}
+
 /**
  * A provider the account set up: which, the model it asks, its place in the order providers are
  * asked in (the lowest first), whether a key is kept for it and whether the instance can still read
