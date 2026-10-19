@@ -13,10 +13,11 @@ ui/        Jetpack Compose screens + Material 3 theme + components.
 domain/    Plain app models, decoupled from the wire format.
 data/
   remote/  Retrofit `DietApiService` (authenticated), `ModelApiService` (the
-           routes the server waits for an AI provider on, given two minutes),
-           `FileApiService` (files, no limit on the whole call) + `AuthApiService`
-           (token-free) + DTOs — the Kotlin mirror of the platform's
+           routes the server waits for an AI provider on, given two minutes) +
+           `AuthApiService` (token-free) + DTOs — the Kotlin mirror of the platform's
            `packages/shared` contract. `ApiException` types the error envelope.
+  config/  The server's address, and the address of its web application, where the
+           app opens in the browser what it leaves to it.
   auth/    `TokenStore` (DataStore) + OkHttp interceptor/authenticator pair —
            attaches the bearer token and transparently refreshes it on 401.
   local/   Room `CacheDatabase` — offline copies of meal plans / shopping lists.
@@ -79,8 +80,11 @@ instance it starts for them. Running the app against a backend is described in
 
 The API binding, the DTO mirror, the auth plumbing and the offline-first repositories are
 in place, and the screens for signing in, the dashboard, meal plans, recipes, the
-favourites, the shopping list, the pantry, the profiles with their preferences, the
-calculator and the account are built on them, with tests on the JVM and journeys on
-emulators. Next are the rest of what an account holder does in the web application, the
-write-sync outbox described in [sync-strategy.md](sync-strategy.md), and notifications
-the app asks the server for.
+favourites, the shopping list, the pantry, the profiles with their preferences and the
+account are built on them, with tests on the JVM and journeys on emulators. What the app
+leaves to the web application (the calculator, a plan or a list as a table or printed,
+favourite sets made and changed, and the account's password, address, name, language of
+its mails, data in a file and deletion) it opens there, in the browser. Next are the
+browser signed in when the app opens it, the rules the app still works out itself taken
+from the API instead, the write-sync outbox described in [sync-strategy.md](sync-strategy.md),
+and notifications the app asks the server for.

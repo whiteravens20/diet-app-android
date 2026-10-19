@@ -10,7 +10,8 @@
 The companion app for [**Diet App**](https://github.com/whiteravens20/diet-app), the
 self-hostable diet and meal-planning platform. It signs in to your own Diet App server,
 shows what the platform computed and lets you do the day-to-day things on a phone:
-generate a plan, swap a meal, tick off the shopping list.
+generate a plan, swap a meal, tick off the shopping list. What it leaves to the
+platform's web application, it opens there, in the phone's browser.
 
 > **Status: the main screens work; nothing is released yet.** Signing in, the dashboard,
 > meal plans, recipes, the shopping list and the profile are built and talk to the
@@ -33,36 +34,36 @@ generate a plan, swap a meal, tick off the shopping list.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
   meals per day and the target macro split; its weight log, today's weight logged in the
   account's unit and the last one taken back, with ninety days of weights drawn beside the
-  mean of each seven days and the weight it works towards; its favourite sets, a day's
-  meals chosen from its favourite recipes, made, changed and deleted there.
-- **Meal plans.** The plans of a profile, a new plan generated from the phone, each plan
-  day by day with its totals, a meal swapped for another recipe, and a favourite set put
-  on days of the plan.
+  mean of each seven days and the weight it works towards. A profile's favourite sets are
+  made and changed in the web application, which its card opens in the browser.
+- **Meal plans.** The plans of a profile and a month of them as a calendar, a new plan
+  generated from the phone, each plan day by day with its totals, a meal swapped for
+  another recipe, and a favourite set put on days of the plan. The plan as a table or
+  printed is the web application's, which the plan's menu opens in the browser.
 - **Recipes.** Search in the recipe library; a recipe with its nutrition per serving,
   ingredients and steps, put among a profile's favourites from its view, and the
   ingredients of its lines marked as a profile's favourites or as ones it avoids.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
-  pantry already covers, and items ticked off as you shop.
+  pantry already covers, items ticked off as you shop, and what is left to buy sent as a
+  text. The list as a table or printed is the web application's, which the list's menu
+  opens in the browser.
 - **Profiles.** The first profile set up in three steps from the empty dashboard, with
   what its figures come to as they are typed; profiles made, edited and deleted up to what
   the instance allows, each pace of loss with what it comes to in a day, and the risk of a
   loss for somebody under 18 or underweight to acknowledge; a profile's allergens,
   cuisines and lists of ingredients changed in place.
-- **Calculator.** What a body, an activity, a pace and a diet come to in a day, from a
-  profile's figures or an empty form, worked out as they are typed and never kept.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
-  the profiles, the calculator, the favourites, the pantry and the account's settings:
-  its name, its e-mail status and the confirmation mail sent again, the language of its
-  mails and of the web app (the app itself follows the phone's language and theme), the
-  unit body weights are shown in, what AI it has (none, the instance's provider with what
-  is left of the month's requests, or providers of its own, each tested before it is
-  saved, its key shown as dots and never again), its password, two-step sign-in set up
-  with an authenticator app on the phone or on another device and its recovery codes,
-  where it is signed in with this phone named and one session or all signed out, another
-  address asked for by mail, everything it holds saved to a file chosen on the phone, and
-  the account deleted; the app's version, the server address and sign-out. Where AI is
-  off, an action that asks a model says so and leads to these settings. The account's
-  other settings, its theme and palette, are edited in the web app.
+  the profiles, the favourites, the pantry and the account's settings: its e-mail status
+  and the confirmation mail sent again, the unit body weights are shown in (the app itself
+  follows the phone's language and theme), what AI it has (none, the instance's provider
+  with what is left of the month's requests, or providers of its own, each tested before
+  it is saved, its key shown as dots and never again), two-step sign-in set up with an
+  authenticator app on the phone or on another device and its recovery codes, where it is
+  signed in with this phone named and one session or all signed out; the app's version,
+  the server address and sign-out. Where AI is off, an action that asks a model says so and
+  leads to these settings. The calculator, and the account's password, address, name, the
+  language of its mails, its theme and palette, its data in a file and its deletion, are
+  the web application's, which More and the account's settings open in the browser.
 - **Favourites.** The recipes a profile marked as a favourite, as eaten often or to avoid,
   narrowed by words, meal, mark and tag and put in order; each recipe's mark and tags
   changed, or its mark taken off.
