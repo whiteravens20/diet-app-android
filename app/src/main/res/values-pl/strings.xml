@@ -241,21 +241,7 @@
     <string name="plans_use_up_none">Nic, co może zastąpić któryś posiłek, nie zostawiłoby mniej z tych opakowań.</string>
     <string name="plans_use_up_swap">%1$s (zamiast: %2$s)</string>
     <string name="plans_options">Opcje planu</string>
-    <string name="plans_export_csv">Zapisz jako CSV</string>
-    <string name="plans_export_print">Drukuj lub zapisz jako PDF</string>
     <string name="export_failed">Nie udało się zapisać pliku.</string>
-    <string name="plans_export_date">Data</string>
-    <string name="plans_export_meal">Posiłek</string>
-    <string name="plans_export_dish">Danie</string>
-    <string name="plans_export_servings">Porcje</string>
-    <string name="plans_export_energy">kcal</string>
-    <string name="plans_export_protein">Białko (g)</string>
-    <string name="plans_export_fat">Tłuszcz (g)</string>
-    <string name="plans_export_carbs">Węglowodany (g)</string>
-    <string name="plans_export_eaten">Zjedzone</string>
-    <string name="plans_export_sheet_title">Plan posiłków, %1$s · %2$s</string>
-    <string name="plans_export_sheet_average">Średnio dziennie: %1$s kcal · białko %2$s g · tłuszcz %3$s g · węglowodany %4$s g.</string>
-    <string name="plans_export_sheet_day">%1$s z %2$s kcal</string>
     <string name="plans_skipped">Pominięty</string>
     <string name="plans_mark_eaten">Oznacz jako zjedzone</string>
     <string name="plans_action_for">%1$s: %2$s</string>
@@ -1302,4 +1288,9 @@
     <string name="plans_advanced_legend_variety_most">Maks. powtórzeń: ile razy jeden przepis może pojawić się w całym planie — dodatkowo do limitów różnorodności z profilu, nie zamiast nich. Puste = %1$s, liczba ustawiona dla tej instancji.</string>
     <string name="plans_advanced_variety_floor_hint_none">W całym planie, dodatkowo do limitów różnorodności z profilu (nie zastępuje ich). Zostaw puste, aby nie dodawać limitu.</string>
     <string name="plans_advanced_variety_floor_hint_most">W całym planie, dodatkowo do limitów różnorodności z profilu (nie zastępuje ich). Gdy pole jest puste, obowiązuje liczba ustawiona dla tej instancji: %1$s.</string>
+
+    <!-- What the app leaves to the instance's web application, which it opens in the browser. -->
+    <string name="web_table_and_print">Tabela i druk w przeglądarce</string>
+    <string name="web_no_browser_title">Brak przeglądarki</string>
+    <string name="web_no_browser_body">Żadna przeglądarka na tym telefonie nie otwiera tej strony. Jej adres, do otwarcia gdzie indziej:</string>
 </resources>

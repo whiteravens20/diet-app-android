@@ -23,6 +23,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,11 +55,13 @@ import kotlinx.serialization.Serializable
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.config.LocalNetworkAccess
 import net.whiteravens.dietapp.data.config.ServerConfigStore
+import net.whiteravens.dietapp.data.config.webAppAddress
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
+import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
@@ -97,9 +100,10 @@ import kotlin.reflect.KClass
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
 
 /**
- * Signed-in state for the root switch (null while the token store loads), and the version
- * of the server, asked when the app starts and again whenever the server's address changes.
- * At the start, a session signed out of offline is revoked on the server if it can be now.
+ * Signed-in state for the root switch (null while the token store loads), the version of the
+ * server, asked when the app starts and again whenever the server's address changes, and the
+ * address of its web application. At the start, a session signed out of offline is revoked on
+ * the server if it can be now.
  */
 @HiltViewModel
 class RootViewModel @Inject constructor(
@@ -113,6 +117,11 @@ class RootViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val serverVersion: StateFlow<ServerVersion> = server.version
+
+    /** Where the server's web application is, which the app opens for what it leaves to it; null before a server is chosen. */
+    val webApp: StateFlow<String?> = serverConfig.baseUrl
+        .map(::webAppAddress)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _localNetworkMissing = MutableStateFlow(false)
 
@@ -148,15 +157,18 @@ fun DietAppRoot(viewModel: RootViewModel = hiltViewModel()) {
     val signedIn by viewModel.isSignedIn.collectAsStateWithLifecycle()
     val serverVersion by viewModel.serverVersion.collectAsStateWithLifecycle()
     val localNetworkMissing by viewModel.localNetworkMissing.collectAsStateWithLifecycle()
+    val webApp by viewModel.webApp.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel) {
         viewModel.checkLocalNetwork()
         onPauseOrDispose {}
     }
     if (localNetworkMissing) LocalNetworkDialog(onAnswered = viewModel::checkLocalNetwork)
-    when (signedIn) {
-        null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
-        false -> AuthScreen(serverVersion = serverVersion)
-        true -> MainScaffold(serverVersion)
+    CompositionLocalProvider(LocalWebApp provides webApp) {
+        when (signedIn) {
+            null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
+            false -> AuthScreen(serverVersion = serverVersion)
+            true -> MainScaffold(serverVersion)
+        }
     }
 }
 

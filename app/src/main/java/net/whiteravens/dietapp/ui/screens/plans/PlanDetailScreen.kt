@@ -56,7 +56,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalAccessibilityManager
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -91,10 +90,8 @@ import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
-import net.whiteravens.dietapp.ui.common.CsvDialect
 import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.amountLabel
-import net.whiteravens.dietapp.ui.common.csvOf
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.emphasized
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -104,7 +101,6 @@ import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSigned
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
-import net.whiteravens.dietapp.ui.common.rememberTextSaver
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AiOffNote
@@ -117,6 +113,7 @@ import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.aiOffText
 import net.whiteravens.dietapp.ui.components.modelPartText
+import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import kotlin.math.abs
@@ -140,12 +137,8 @@ fun PlanDetailScreen(
     var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
-    // The plan taken out of the app: as a table for a spreadsheet, or as a sheet for the printer.
-    val words = planWords()
-    val saveText = rememberTextSaver("text/csv")
-    val dialect = CsvDialect.of(LocalConfiguration.current.locales[0].language)
-    var printing by remember { mutableStateOf(false) }
-    if (printing && plan != null) PlanPrinter(plan, words, onDone = { printing = false })
+    // The plan as a table or on paper is the web application's: its page of the plan opens in the browser.
+    val web = rememberWebPages()
     val readOnly = state.offline
     val busy = state.changing || state.taking
 
@@ -283,8 +276,7 @@ fun PlanDetailScreen(
                 Header(
                     plan,
                     onBack,
-                    onSaveTable = { plan?.let { saveText("${exportName(it)}.csv", csvOf(planTable(it, words), dialect)) } },
-                    onPrint = { printing = true },
+                    onTableAndPrint = { plan?.let { web.open("meal-plans", "profile" to it.profileId, "plan" to it.id) } },
                     onApplySet = { viewModel.openSetWindow() }.takeUnless { readOnly || busy },
                     onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
                 )
@@ -418,7 +410,7 @@ fun PlanDetailScreen(
 
 /** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it; and what can be done with it. */
 @Composable
-private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit, onPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
+private fun Header(plan: MealPlan?, onBack: () -> Unit, onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
@@ -438,16 +430,16 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onSaveTable: () -> Unit,
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
             }
         }
-        if (plan != null) PlanActions(onSaveTable, onPrint, onApplySet, onDelete)
+        if (plan != null) PlanActions(onTableAndPrint, onApplySet, onDelete)
     }
 }
 
 /**
  * What can be done with the plan as a whole, behind one button: a favourite set put on its days,
- * saved as a table, printed or kept as a PDF, or deleted.
+ * the plan as a table or printed in the web application, or the plan deleted.
  */
 @Composable
-private fun PlanActions(onSaveTable: () -> Unit, onPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
+private fun PlanActions(onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -459,8 +451,7 @@ private fun PlanActions(onSaveTable: () -> Unit, onPrint: () -> Unit, onApplySet
                 action()
             }
             DropdownMenuItem(text = { Text(stringResource(R.string.favorite_sets_apply)) }, onClick = { onApplySet?.let(::pick) }, enabled = onApplySet != null)
-            DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_csv)) }, onClick = { pick(onSaveTable) })
-            DropdownMenuItem(text = { Text(stringResource(R.string.plans_export_print)) }, onClick = { pick(onPrint) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.web_table_and_print)) }, onClick = { pick(onTableAndPrint) })
             DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }

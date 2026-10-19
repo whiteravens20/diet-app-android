@@ -226,21 +226,7 @@
     <string name="plans_use_up_none">Nothing that may take the place of a meal would leave less of these packs.</string>
     <string name="plans_use_up_swap">%1$s in place of %2$s</string>
     <string name="plans_options">Plan options</string>
-    <string name="plans_export_csv">Save as CSV</string>
-    <string name="plans_export_print">Print or save as PDF</string>
     <string name="export_failed">The file could not be saved.</string>
-    <string name="plans_export_date">Date</string>
-    <string name="plans_export_meal">Meal</string>
-    <string name="plans_export_dish">Dish</string>
-    <string name="plans_export_servings">Servings</string>
-    <string name="plans_export_energy">kcal</string>
-    <string name="plans_export_protein">Protein (g)</string>
-    <string name="plans_export_fat">Fat (g)</string>
-    <string name="plans_export_carbs">Carbohydrate (g)</string>
-    <string name="plans_export_eaten">Eaten</string>
-    <string name="plans_export_sheet_title">Meal plan, %1$s · %2$s</string>
-    <string name="plans_export_sheet_average">A day on average: %1$s kcal · protein %2$s g · fat %3$s g · carbohydrate %4$s g.</string>
-    <string name="plans_export_sheet_day">%1$s of %2$s kcal</string>
     <string name="plans_skipped">Skipped</string>
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
@@ -1211,4 +1197,9 @@
     <string name="plans_advanced_legend_variety_most">Max repeats: caps how many times one recipe can appear across the whole plan — added on top of your profile\'s variety limits, not instead of them. Blank = %1$s, the number set for this instance.</string>
     <string name="plans_advanced_variety_floor_hint_none">Across the whole plan, on top of your profile\'s variety limits (it doesn\'t replace them). Leave blank for no extra limit.</string>
     <string name="plans_advanced_variety_floor_hint_most">Across the whole plan, on top of your profile\'s variety limits (it doesn\'t replace them). Left blank, the number set for this instance applies: %1$s.</string>
+
+    <!-- What the app leaves to the instance's web application, which it opens in the browser. -->
+    <string name="web_table_and_print">Table and printing in the browser</string>
+    <string name="web_no_browser_title">No browser</string>
+    <string name="web_no_browser_body">No browser on this phone opens the page. Its address, to open elsewhere:</string>
 </resources>

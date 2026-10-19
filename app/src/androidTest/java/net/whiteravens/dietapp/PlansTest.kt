@@ -2,7 +2,6 @@
 
 package net.whiteravens.dietapp
 
-import android.print.PrintManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -27,8 +26,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
+import net.whiteravens.dietapp.testing.opensInTheBrowser
 import net.whiteravens.dietapp.testing.plural
-import net.whiteravens.dietapp.testing.putAwayPrintService
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
@@ -37,6 +36,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import org.junit.Assert.assertEquals
@@ -256,18 +256,13 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }
 
-        // The plan goes from its menu to the platform's print service, which prints it or keeps it as
-        // a PDF named by its days; it is put away there, back to the plan.
-        val (start, days) = Instance.planStart(account, planId)
-        val name = "meal-plan-${start}_${LocalDate.parse(start).plusDays(days - 1L)}"
-        val printing = screen.activity.getSystemService(PrintManager::class.java)
+        // The plan as a table or on paper is the web application's: the menu opens the plan's page there, in the browser.
         val options = hasContentDescription(text(R.string.plans_options))
         screen.scrollTo(options)
         screen.onNode(options).performClick()
-        screen.onNodeWithText(text(R.string.plans_export_csv)).assertExists()
-        screen.onNodeWithText(text(R.string.plans_export_print)).performClick()
-        screen.waitUntil(30_000) { printing.printJobs.any { it.info.label == name } }
-        screen.putAwayPrintService()
+        opensInTheBrowser("${webApp}meal-plans?profile=$profileId&plan=$planId") {
+            screen.onNodeWithText(text(R.string.web_table_and_print)).performClick()
+        }
 
         // The plan is deleted from its menu once that is confirmed, and the list is back.
         screen.onNode(options).performClick()
