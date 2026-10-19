@@ -53,7 +53,8 @@ class DashboardTest {
         screen.keepScreenshot("dashboard-a-profile")
 
         // A profile's favourite sets are made and changed in the web application, whose dashboard opens in the browser.
-        screen.scrollToText(text(R.string.favorite_sets_in_the_browser))
+        // The profile is one item of the list, its sets' card at the item's end: scrolled to itself, not to the item.
+        screen.onNodeWithText(text(R.string.favorite_sets_in_the_browser)).performScrollTo()
         screen.keepScreenshot("dashboard-favourite-sets-in-the-browser")
         opensInTheBrowser("${webApp}dashboard") {
             screen.onNodeWithText(text(R.string.web_open)).performScrollTo().performClick()

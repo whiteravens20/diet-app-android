@@ -51,8 +51,10 @@ class AccountTest {
 
         // The password, the address, the name and the language of the mails are changed in the web
         // application, whose settings the account's screen opens in the browser.
+        screen.onNodeWithText(text(R.string.web_open)).performScrollTo()
+        screen.keepScreenshot("account-the-web-applications-settings")
         opensInTheBrowser("${webApp}settings") {
-            screen.onNodeWithText(text(R.string.web_open)).performScrollTo().performClick()
+            screen.onNodeWithText(text(R.string.web_open)).performClick()
         }
 
         // The rows of the account's sessions say whose sign-out they are; the account's own button says nothing more.
