@@ -1053,11 +1053,6 @@
     <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g a day.</string>
     <string name="calorie_preview_said">Daily target: %1$s kcal.</string>
     <string name="calculator_title">Calculator</string>
-    <string name="calculator_subhead">What a body, an activity, a pace and a diet come to in a day, worked out as you type.</string>
-    <string name="calculator_start_from">Start from</string>
-    <string name="calculator_empty">An empty form</string>
-    <string name="calculator_not_kept">Nothing typed here is kept, and no plan changes. To change what your plans aim at, edit the %1$s.</string>
-    <string name="calculator_not_kept_link">profile</string>
     <string name="pickers_ingredient_search">Search ingredients…</string>
     <string name="pickers_none_yet">None yet.</string>
     <string name="pickers_no_matches">No matches.</string>
@@ -1172,6 +1167,7 @@
 
     <!-- What the app leaves to the instance's web application, which it opens in the browser. -->
     <string name="web_open">Open in the browser</string>
+    <string name="web_opens_in_the_browser">Opens in the browser</string>
     <string name="web_table_and_print">Table and printing in the browser</string>
     <string name="web_no_browser_title">No browser</string>
     <string name="web_no_browser_body">No browser on this phone opens the page. Its address, to open elsewhere:</string>

@@ -16,17 +16,19 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
+import net.whiteravens.dietapp.testing.opensInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
+import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.text.NumberFormat
 import java.util.Locale
 
 /**
@@ -42,8 +44,6 @@ class ProfilesTest {
 
     /** The unit the app shows weights in for an account that has chosen none: that of where the phone is. */
     private val unit = WeightUnit.of(null, Locale.getDefault())
-
-    private fun kcal(value: Int) = text(R.string.calorie_preview_kcal, NumberFormat.getNumberInstance(Locale.getDefault()).format(value))
 
     private fun type(label: String, value: String) = screen.onNodeWithText(label).performScrollTo().performTextInput(value)
 
@@ -131,16 +131,15 @@ class ProfilesTest {
     }
 
     @Test
-    fun theCalculatorBeginsWithAProfileAndShowsTheTargetTheApiWorksOut() {
+    fun theCalculatorIsTheWebApplicationsAndOpensInTheBrowser() {
         val account = Instance.newAccount()
-        val profileId = Instance.newProfile(account, name = "Ala")
-        val target = Instance.dailyTarget(account, profileId)
-        screen.signIn(account)
+        screen.startSignedIn(account)
 
         screen.openTab(text(R.string.nav_more))
-        screen.onNodeWithText(text(R.string.calculator_title)).performClick()
-
-        screen.waitForText(kcal(target))
-        screen.keepScreenshot("calculator")
+        screen.waitForText(text(R.string.web_opens_in_the_browser))
+        screen.keepScreenshot("more-the-calculator-in-the-browser")
+        opensInTheBrowser("${webApp}calculator") {
+            screen.onNodeWithText(text(R.string.calculator_title)).performClick()
+        }
     }
 }

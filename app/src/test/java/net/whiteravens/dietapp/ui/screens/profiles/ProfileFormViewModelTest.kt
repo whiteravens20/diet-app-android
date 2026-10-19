@@ -249,21 +249,4 @@ class ProfileFormViewModelTest {
         assertEquals(0, model.state.value.step)
         assertEquals(ProfileForm(), model.state.value.form)
     }
-
-    @Test
-    fun `the calculator begins with a profile's figures once the unit to show them in is known`() = runTest(main) {
-        val kept = json.decodeFromString<ProfileDto>(fixture("profile")).toDetails()
-        coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", weightUnit = "lb", aiMode = "none")
-        coEvery { profiles.preview(any()) } returns answer
-        val model = model()
-
-        model.startFrom(kept)
-        runCurrent()
-
-        assertEquals(WeightUnit.LB, model.state.value.unit)
-        assertEquals(WeightUnit.LB.shownToOne(kept.figures.weightKg).toString(), model.state.value.form.weight)
-
-        model.startFrom(null)
-        assertEquals(ProfileForm(), model.state.value.form)
-    }
 }

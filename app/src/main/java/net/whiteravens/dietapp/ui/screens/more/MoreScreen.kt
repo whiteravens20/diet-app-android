@@ -26,8 +26,8 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ScreenHeader
+import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
-import net.whiteravens.dietapp.ui.navigation.CalculatorRoute
 import net.whiteravens.dietapp.ui.navigation.FavoritesRoute
 import net.whiteravens.dietapp.ui.navigation.PantryRoute
 import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
@@ -39,15 +39,18 @@ data class MoreEntry(val route: Any, val icon: ImageVector, @StringRes val label
 val moreEntries: List<MoreEntry>
     get() = listOf(
         MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
-        MoreEntry(CalculatorRoute, AppIcons.Target, R.string.calculator_title),
         MoreEntry(FavoritesRoute, Icons.Default.Star, R.string.favorites_title),
         MoreEntry(PantryRoute, AppIcons.Inventory, R.string.pantry_title),
         MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
     )
 
-/** What the bottom bar's "More" opens: the rest of the app, a tap each. */
+/**
+ * What the bottom bar's "More" opens: the rest of the app, a tap each, and the calculator, which is
+ * the web application's and opens in the browser.
+ */
 @Composable
 fun MoreScreen(onOpen: (Any) -> Unit) {
+    val web = rememberWebPages()
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -55,13 +58,23 @@ fun MoreScreen(onOpen: (Any) -> Unit) {
         ScreenHeader(title = stringResource(R.string.nav_more))
         AppCard {
             moreEntries.forEach { entry ->
-                ListItem(
-                    headlineContent = { Text(stringResource(entry.label)) },
-                    leadingContent = { Icon(entry.icon, contentDescription = null) },
-                    trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                    modifier = Modifier.clickable(role = Role.Button) { onOpen(entry.route) },
-                )
+                Entry(entry.icon, stringResource(entry.label)) { onOpen(entry.route) }
+            }
+            Entry(AppIcons.Target, stringResource(R.string.calculator_title), stringResource(R.string.web_opens_in_the_browser)) {
+                web.open("calculator")
             }
         }
     }
+}
+
+/** A place in the list: its icon and name, and where it opens elsewhere than in the app, where that is. */
+@Composable
+private fun Entry(icon: ImageVector, label: String, elsewhere: String? = null, onClick: () -> Unit) {
+    ListItem(
+        headlineContent = { Text(label) },
+        supportingContent = elsewhere?.let { { Text(it) } },
+        leadingContent = { Icon(icon, contentDescription = null) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
+    )
 }
