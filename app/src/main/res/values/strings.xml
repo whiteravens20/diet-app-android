@@ -19,8 +19,6 @@
     <string name="common_save">Save</string>
     <string name="common_edit">Edit</string>
     <string name="common_close">Close</string>
-    <string name="common_yes">Yes</string>
-    <string name="common_no">No</string>
     <string name="plans_open_recipe">Recipe</string>
 
     <!-- Server setting -->
@@ -226,7 +224,6 @@
     <string name="plans_use_up_none">Nothing that may take the place of a meal would leave less of these packs.</string>
     <string name="plans_use_up_swap">%1$s in place of %2$s</string>
     <string name="plans_options">Plan options</string>
-    <string name="export_failed">The file could not be saved.</string>
     <string name="plans_skipped">Skipped</string>
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
@@ -664,21 +661,8 @@
     <string name="shopping_to_date">To date</string>
     <string name="shopping_list_options">List options</string>
     <string name="shopping_share_text">Share as text</string>
-    <string name="shopping_export_csv">Save as CSV</string>
-    <string name="shopping_export_print">Print or save as PDF</string>
     <string name="shopping_copy_title">Shopping list, %1$s</string>
     <string name="shopping_copy_nothing">Everything on this list is ticked off.</string>
-    <string name="shopping_have_short">have</string>
-    <string name="shopping_csv_aisle">Aisle</string>
-    <string name="shopping_csv_entry">Entry</string>
-    <string name="shopping_csv_needed">Needed</string>
-    <string name="shopping_csv_unit">Unit</string>
-    <string name="shopping_csv_at_home">At home</string>
-    <string name="shopping_csv_have">Have in all</string>
-    <string name="shopping_csv_to_buy">Still to buy</string>
-    <string name="shopping_csv_packs">Packs</string>
-    <string name="shopping_csv_ticked">Ticked</string>
-    <string name="shopping_csv_energy">kcal (estimate)</string>
     <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
     <string name="shopping_delete_confirm">Delete this shopping list?</string>
     <string name="shopping_aisle_energy">about %1$s kcal</string>

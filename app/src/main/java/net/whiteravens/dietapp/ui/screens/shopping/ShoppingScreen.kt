@@ -45,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -61,17 +60,13 @@ import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
-import net.whiteravens.dietapp.ui.common.CsvDialect
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
-import net.whiteravens.dietapp.ui.common.csvOf
-import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSyncedAt
-import net.whiteravens.dietapp.ui.common.rememberTextSaver
 import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.DateField
@@ -81,6 +76,7 @@ import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.rememberWebPages
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Locale
@@ -105,18 +101,10 @@ fun ShoppingScreen(
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     // What somebody in a shop is looking for on the list: the entries whose name holds the words.
     var find by rememberSaveable { mutableStateOf("") }
-    // The list taken out of the app: as a text to send, as a table for a spreadsheet, or as a sheet for the printer.
+    // The list taken out of the app as a text to send; as a table or on paper it is the web application's, opened in the browser.
     val context = LocalContext.current
-    val locale = LocalConfiguration.current.locales[0]
-    val saveText = rememberTextSaver("text/csv")
     val chooser = stringResource(R.string.shopping_share_text)
-    var printing by remember { mutableStateOf(false) }
-    if (printing) {
-        state.list?.let { list ->
-            val plan = state.plan?.let { pluralStringResource(R.plurals.plans_plan_summary, it.durationDays, it.durationDays, dietTypeLabel(it.dietType)) }.orEmpty()
-            ListPrinter(list, plan, locale.toLanguageTag(), onDone = { printing = false })
-        }
-    }
+    val web = rememberWebPages()
 
     if (state.loading) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -277,8 +265,7 @@ fun ShoppingScreen(
                     ListHeader(
                         list,
                         onShare = { shareText(context, words.title, listText(list, words), chooser) },
-                        onSaveTable = { saveText("${exportName(list)}.csv", csvOf(listTable(list, words), CsvDialect.of(locale.language))) },
-                        onPrint = { printing = true },
+                        onTableAndPrint = { web.open("shopping-lists") },
                         onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
                     )
                 }
@@ -372,7 +359,7 @@ fun ShoppingScreen(
 
 /** A list's days and how far it is ticked off, with what can be done with the list behind one button. */
 @Composable
-private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: (() -> Unit)?) {
+private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onTableAndPrint: () -> Unit, onDelete: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(formatDates(list.fromDate, list.toDate), style = MaterialTheme.typography.titleMedium)
@@ -382,13 +369,13 @@ private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onSaveTable: () 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        ListActions(onShare, onSaveTable, onPrint, onDelete)
+        ListActions(onShare, onTableAndPrint, onDelete)
     }
 }
 
-/** What can be done with a list as a whole: sent as a text, saved as a table, printed or kept as a PDF, or deleted. */
+/** What can be done with a list as a whole: sent as a text, as a table or printed in the web application, or deleted. */
 @Composable
-private fun ListActions(onShare: () -> Unit, onSaveTable: () -> Unit, onPrint: () -> Unit, onDelete: (() -> Unit)?) {
+private fun ListActions(onShare: () -> Unit, onTableAndPrint: () -> Unit, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -400,8 +387,7 @@ private fun ListActions(onShare: () -> Unit, onSaveTable: () -> Unit, onPrint: (
                 action()
             }
             DropdownMenuItem(text = { Text(stringResource(R.string.shopping_share_text)) }, onClick = { pick(onShare) })
-            DropdownMenuItem(text = { Text(stringResource(R.string.shopping_export_csv)) }, onClick = { pick(onSaveTable) })
-            DropdownMenuItem(text = { Text(stringResource(R.string.shopping_export_print)) }, onClick = { pick(onPrint) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.web_table_and_print)) }, onClick = { pick(onTableAndPrint) })
             DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }
