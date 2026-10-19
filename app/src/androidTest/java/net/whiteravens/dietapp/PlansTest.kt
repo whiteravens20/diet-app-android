@@ -172,35 +172,6 @@ class PlansTest {
     }
 
     @Test
-    fun theListIsNarrowedToWhereAPlanStandsAndTheFilterCleared() {
-        val account = Instance.newAccount()
-        val profileId = Instance.newProfile(account)
-        val next = YearMonth.now().plusMonths(1).atDay(10)
-        Instance.newPlan(account, profileId, days = 2, start = next)
-        screen.signIn(account)
-
-        screen.openTab(text(R.string.nav_meal_plans))
-        // The plan's card names the day it begins on.
-        val card = formatDate(next.toString())
-        // The list is below the calendar.
-        screen.scrollToText(card, substring = true)
-
-        // A plan of next month is still to come: it is among those to come, and none of those that are over.
-        screen.scrollToText(text(R.string.plans_status_past))
-        screen.onNodeWithText(text(R.string.plans_status_past)).performClick()
-        screen.scrollToText(text(R.string.plans_none_filtered))
-        assertTrue(screen.onAllNodesWithText(card, substring = true).fetchSemanticsNodes().isEmpty())
-        screen.keepScreenshot("plans-narrowed")
-        screen.onNodeWithText(text(R.string.plans_status_upcoming)).performClick()
-        screen.scrollToText(card, substring = true)
-
-        screen.scrollToText(text(R.string.common_clear))
-        screen.onNodeWithText(text(R.string.common_clear)).performClick()
-        screen.scrollToText(card, substring = true)
-        assertTrue(screen.onAllNodesWithText(text(R.string.common_clear)).fetchSemanticsNodes().isEmpty())
-    }
-
-    @Test
     fun aFavouriteSetIsPutOnEveryDayOfAPlanFromItsMenu() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)

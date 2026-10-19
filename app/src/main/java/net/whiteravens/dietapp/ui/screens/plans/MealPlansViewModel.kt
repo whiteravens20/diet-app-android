@@ -15,7 +15,6 @@ import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.PlanCalendarDay
-import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
@@ -28,9 +27,8 @@ import javax.inject.Inject
 /**
  * Plans per profile, offline-first: the Room cache renders the whole list immediately, a network
  * refresh replaces it, and a failed refresh keeps the cache on screen and flags
- * [UiState.offline] instead of erroring the whole screen. The list can be narrowed by whether a
- * plan is under way, to come or over, and to the plans that hold days of a span. Beside it, a
- * month of the profile's plans as a calendar.
+ * [UiState.offline] instead of erroring the whole screen. Beside it, a month of the profile's
+ * plans as a calendar.
  */
 @HiltViewModel
 class MealPlansViewModel @Inject constructor(
@@ -53,7 +51,6 @@ class MealPlansViewModel @Inject constructor(
         val profiles: List<Profile> = emptyList(),
         val selectedProfileId: String? = null,
         val plans: List<MealPlanSummary> = emptyList(),
-        val filter: PlanFilter = PlanFilter(),
         /** The last page of the list fetched, and how many there are. */
         val page: Int = 1,
         val totalPages: Int = 1,
@@ -130,34 +127,25 @@ class MealPlansViewModel @Inject constructor(
         readCalendar()
     }
 
-    /** The list narrowed anew, from its first page. */
-    fun narrow(filter: PlanFilter) {
-        if (filter == _state.value.filter) return
-        _state.update { it.copy(filter = filter, plans = emptyList(), page = 1, totalPages = 1, syncedAt = null, error = null) }
-        _state.value.selectedProfileId?.let(::list)
-    }
-
     /** The list's first page from the network, shown from the copy on the phone first where [fromCache] and there is one. */
     private fun list(profileId: String, fromCache: Boolean = true) {
-        val filter = _state.value.filter
         listing?.cancel()
         listing = viewModelScope.launch {
             if (fromCache) {
-                // The copy on the phone is of the whole list: a narrowed one is asked for alone.
-                val cached = if (filter.isEmpty) plans.cachedPlans(profileId) else null
+                val cached = plans.cachedPlans(profileId)
                 _state.update {
                     it.copy(plans = cached?.plans.orEmpty(), totalPages = cached?.totalPages ?: 1, syncedAt = cached?.syncedAt)
                 }
             }
             _state.update { it.copy(refreshing = true, offline = false) }
-            attempt { plans.plans(profileId, filter = filter) }
+            attempt { plans.plans(profileId) }
                 .onSuccess { fresh ->
-                    ifStillShown(profileId, filter) {
+                    ifStillShown(profileId) {
                         it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = null, refreshing = false, error = null)
                     }
                 }
                 .onFailure { e ->
-                    ifStillShown(profileId, filter) {
+                    ifStillShown(profileId) {
                         it.copy(
                             refreshing = false,
                             offline = e is IOException,
@@ -175,9 +163,9 @@ class MealPlansViewModel @Inject constructor(
         if (!current.hasMore || current.loadingMore) return
         viewModelScope.launch {
             _state.update { it.copy(loadingMore = true, error = null) }
-            attempt { plans.plans(profileId, current.page + 1, current.filter) }
+            attempt { plans.plans(profileId, current.page + 1) }
                 .onSuccess { next ->
-                    ifStillShown(profileId, current.filter) {
+                    ifStillShown(profileId) {
                         val shown = it.plans.map { plan -> plan.id }.toSet()
                         it.copy(
                             plans = it.plans + next.plans.filter { plan -> plan.id !in shown },
@@ -188,7 +176,7 @@ class MealPlansViewModel @Inject constructor(
                     }
                 }
                 .onFailure { e ->
-                    ifStillShown(profileId, current.filter) {
+                    ifStillShown(profileId) {
                         it.copy(loadingMore = false, offline = e is IOException, error = e.takeIf { _ -> e !is IOException })
                     }
                 }
@@ -233,9 +221,9 @@ class MealPlansViewModel @Inject constructor(
         }
     }
 
-    /** Guards against a profile or a filter switch racing an in-flight load. */
-    private fun ifStillShown(profileId: String, filter: PlanFilter, transform: (UiState) -> UiState) {
-        _state.update { if (it.selectedProfileId == profileId && it.filter == filter) transform(it) else it }
+    /** Guards against a profile switch racing an in-flight load. */
+    private fun ifStillShown(profileId: String, transform: (UiState) -> UiState) {
+        _state.update { if (it.selectedProfileId == profileId) transform(it) else it }
     }
 
     companion object {

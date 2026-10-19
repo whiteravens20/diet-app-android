@@ -156,12 +156,6 @@
     <string name="plans_show_more">Show more plans</string>
     <string name="common_clear">Clear</string>
     <string name="plans_for">%1$s\'s plans</string>
-    <string name="plans_status_all">All</string>
-    <string name="plans_status_active">Active</string>
-    <string name="plans_status_upcoming">Upcoming</string>
-    <string name="plans_status_past">Past</string>
-    <string name="plans_from">From</string>
-    <string name="plans_to">To</string>
     <string name="plans_calendar_title">Calendar</string>
     <string name="plans_calendar_lead">The days your plans hold, a month at a time.</string>
     <string name="plans_calendar_previous">The month before</string>
@@ -173,7 +167,6 @@
     <string name="plans_calendar_legend_eaten">Meals marked as eaten, out of the meals of the day.</string>
     <string name="plans_calendar_legend_skipped">— is a day the plan skips: nothing is planned on it.</string>
     <string name="plans_calendar_legend_more">+1 and the like: so many more plans hold the same day. The calendar shows the plan made last.</string>
-    <string name="plans_none_filtered">No plans match the current filters.</string>
     <string name="plans_calendar_day_planned">%1$s: %2$s of %3$s kcal%4$s, %5$s%6$s. Choose it to open the plan.</string>
     <string name="plans_calendar_day_skipped">%1$s: a day the plan skips%2$s. Choose it to open the plan.</string>
     <string name="plans_calendar_over">, over the target</string>

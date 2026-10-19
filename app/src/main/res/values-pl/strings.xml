@@ -161,12 +161,6 @@
     <string name="plans_show_more">Pokaż więcej planów</string>
     <string name="common_clear">Wyczyść</string>
     <string name="plans_for">Plany: %1$s</string>
-    <string name="plans_status_all">Wszystkie</string>
-    <string name="plans_status_active">Aktywne</string>
-    <string name="plans_status_upcoming">Nadchodzące</string>
-    <string name="plans_status_past">Zakończone</string>
-    <string name="plans_from">Od</string>
-    <string name="plans_to">Do</string>
     <string name="plans_calendar_title">Kalendarz</string>
     <string name="plans_calendar_lead">Dni objęte Twoimi planami, miesiąc po miesiącu.</string>
     <string name="plans_calendar_previous">Poprzedni miesiąc</string>
@@ -178,7 +172,6 @@
     <string name="plans_calendar_legend_eaten">Posiłki oznaczone jako zjedzone, spośród posiłków danego dnia.</string>
     <string name="plans_calendar_legend_skipped">— to dzień pominięty w planie: nic na nim nie zaplanowano.</string>
     <string name="plans_calendar_legend_more">+1 i podobne: tyle innych planów obejmuje ten sam dzień. Kalendarz pokazuje plan utworzony najpóźniej.</string>
-    <string name="plans_none_filtered">Żaden plan nie pasuje do bieżących filtrów.</string>
     <string name="plans_calendar_day_planned">%1$s: %2$s z %3$s kcal%4$s, %5$s%6$s. Wybierz, aby otworzyć plan.</string>
     <string name="plans_calendar_day_skipped">%1$s: dzień pominięty w planie%2$s. Wybierz, aby otworzyć plan.</string>
     <string name="plans_calendar_over">, powyżej celu</string>

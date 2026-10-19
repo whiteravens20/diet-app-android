@@ -45,7 +45,6 @@ import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.OverviewDay
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.PlanCalendarDay
-import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
@@ -103,15 +102,10 @@ class MealPlanRepository @Inject constructor(
         return plan.toDomain()
     }
 
-    /**
-     * A page of a profile's plans from the API, narrowed by [filter]; the first page of the whole
-     * list is kept for offline use. Throws when offline.
-     */
-    suspend fun plans(profileId: String, page: Int = 1, filter: PlanFilter = PlanFilter()): MealPlanPage {
-        val answer = apiCall(json) {
-            api.mealPlans(profileId, page, PAGE_SIZE, filter.status, filter.from?.toString(), filter.to?.toString())
-        }
-        if (page == 1 && filter.isEmpty) {
+    /** A page of a profile's plans from the API; the first page is kept for offline use. Throws when offline. */
+    suspend fun plans(profileId: String, page: Int = 1): MealPlanPage {
+        val answer = apiCall(json) { api.mealPlans(profileId, page, PAGE_SIZE) }
+        if (page == 1) {
             cache.upsertPlanList(CachedPlanList(profileId, json.encodeToString(answer), System.currentTimeMillis()))
         }
         return answer.toDomain()

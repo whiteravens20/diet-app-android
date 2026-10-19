@@ -213,18 +213,12 @@ interface DietApiService {
 
     // ── Meal plans ──────────────────────────────────────────────────────────
 
-    /**
-     * A page of a profile's plans, as summaries, narrowed to those [status] names and those holding
-     * a day from [from] to [to]; a plan with its days is [mealPlan].
-     */
+    /** A page of a profile's plans, as summaries; a plan with its days is [mealPlan]. */
     @GET("meal-plans")
     suspend fun mealPlans(
         @Query("profileId") profileId: String,
         @Query("page") page: Int,
         @Query("pageSize") pageSize: Int,
-        @Query("status") status: String? = null,
-        @Query("from") from: String? = null,
-        @Query("to") to: String? = null,
     ): MealPlanPageDto
 
     /** What a profile's plan of the moment comes to: the one under way, else the next, else the last. */

@@ -91,14 +91,6 @@ fun fitsDiet(dietTags: List<String>, diet: String): Boolean = diet !in RECIPE_DI
 data class FavoriteSet(val id: String, val label: String, val slots: Map<String, String>)
 
 /**
- * What the list of plans is narrowed to: those [status] names (`active` | `upcoming` | `past`;
- * null for all) and those holding a day from [from] to [to].
- */
-data class PlanFilter(val status: String? = null, val from: LocalDate? = null, val to: LocalDate? = null) {
-    val isEmpty: Boolean get() = status == null && from == null && to == null
-}
-
-/**
  * A day of a profile's plans, for a calendar: the plan made last that holds it ([planId]), how many
  * plans hold it, what it holds and aims at in kcal, whether it is more than a tenth off
  * (`over` | `under`), the meals eaten out of the day's meals, and whether the plan skips it.

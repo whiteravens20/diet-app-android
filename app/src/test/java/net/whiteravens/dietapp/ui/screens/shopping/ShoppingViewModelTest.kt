@@ -53,7 +53,7 @@ class ShoppingViewModelTest {
     }
     private val plans = mockk<MealPlanRepository>().also {
         coEvery { it.cachedPlans(any()) } returns null
-        coEvery { it.plans(any(), any(), any()) } returns
+        coEvery { it.plans(any(), any()) } returns
             MealPlanPage(listOf(MealPlanSummary("plan", "2026-10-13", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0), 0.4, false)), 1, 1, null)
     }
     private val lists = mockk<ShoppingListRepository>().also {

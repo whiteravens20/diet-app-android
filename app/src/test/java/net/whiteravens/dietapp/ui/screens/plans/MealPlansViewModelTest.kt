@@ -23,7 +23,6 @@ import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanCalendarDay
-import net.whiteravens.dietapp.domain.PlanFilter
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.testing.fixture
 import org.junit.After
@@ -75,7 +74,7 @@ class MealPlansViewModelTest {
         val profile = json.decodeFromString<List<ProfileDto>>(fixture("profiles")).first()
         val api = mockk<DietApiService>()
         coEvery { api.profiles() } returns listOf(profile)
-        coEvery { api.mealPlans(any(), any(), any(), any(), any(), any()) } throws IOException("no network")
+        coEvery { api.mealPlans(any(), any(), any()) } throws IOException("no network")
         coEvery { api.planCalendar(any(), any(), any()) } throws IOException("no network")
         val cache = Cache(CachedPlanList(profile.id, """[{"id":"plan"}]""", 1L))
 
@@ -104,7 +103,7 @@ class MealPlansViewModelTest {
     private val asked = mutableListOf<Pair<LocalDate, LocalDate>>()
     private val plans = mockk<MealPlanRepository>().also {
         coEvery { it.cachedPlans(any()) } returns null
-        coEvery { it.plans(any(), any(), any()) } returns page("p1")
+        coEvery { it.plans(any(), any()) } returns page("p1")
         coEvery { it.calendar(any(), any(), any()) } answers {
             asked += secondArg<LocalDate>() to thirdArg<LocalDate>()
             listOf(calendarDay(secondArg<LocalDate>().plusDays(7)))
@@ -176,51 +175,29 @@ class MealPlansViewModelTest {
     }
 
     @Test
-    fun `a narrowed list is asked for alone, from its first page, and the whole list comes back when the filter is cleared`() {
-        coEvery { plans.cachedPlans("ada") } returns page("cached", syncedAt = 1L)
-        coEvery { plans.plans("ada", 1, PlanFilter()) } returns page("p1", "p2", totalPages = 2)
-        val filter = PlanFilter(status = "past", from = LocalDate.of(2026, 9, 1), to = LocalDate.of(2026, 9, 30))
-        coEvery { plans.plans("ada", 1, filter) } returns page("old")
+    fun `the next page is shown below the first without a plan shown already, and no more is offered after the last`() {
+        coEvery { plans.plans("ada", 1) } returns page("p1", "p2", totalPages = 2)
+        coEvery { plans.plans("ada", 2) } returns MealPlanPage(listOf(summary("p2"), summary("p3")), 2, 2, null)
         val model = MealPlansViewModel(users, plans)
-        assertEquals(listOf("p1", "p2"), model.state.value.plans.map { it.id })
-
-        model.narrow(filter)
-
-        assertEquals(filter, model.state.value.filter)
-        assertEquals(listOf("old"), model.state.value.plans.map { it.id })
-        assertFalse(model.state.value.hasMore)
-
-        model.narrow(PlanFilter())
-
-        assertEquals(listOf("p1", "p2"), model.state.value.plans.map { it.id })
         assertTrue(model.state.value.hasMore)
-    }
 
-    @Test
-    fun `the next page of a narrowed list is of the same filter`() {
-        val filter = PlanFilter(status = "active")
-        coEvery { plans.plans("ada", 1, filter) } returns page("a1", totalPages = 2)
-        coEvery { plans.plans("ada", 2, filter) } returns MealPlanPage(listOf(summary("a2")), 2, 2, null)
-        val model = MealPlansViewModel(users, plans)
-
-        model.narrow(filter)
         model.showMore()
 
-        assertEquals(listOf("a1", "a2"), model.state.value.plans.map { it.id })
+        assertEquals(listOf("p1", "p2", "p3"), model.state.value.plans.map { it.id })
         assertFalse(model.state.value.hasMore)
     }
 
     @Test
     fun `coming back reads the list and the month again, keeping what is shown when the network is gone`() {
         val model = MealPlansViewModel(users, plans)
-        coEvery { plans.plans("ada", 1, PlanFilter()) } returns page("p1", "new")
+        coEvery { plans.plans("ada", 1) } returns page("p1", "new")
 
         model.refresh()
 
         assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
         assertEquals(2, asked.size)
 
-        coEvery { plans.plans("ada", 1, PlanFilter()) } throws IOException("no network")
+        coEvery { plans.plans("ada", 1) } throws IOException("no network")
         model.refresh()
 
         assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
