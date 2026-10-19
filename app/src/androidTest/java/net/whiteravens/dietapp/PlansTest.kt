@@ -260,6 +260,8 @@ class PlansTest {
         val options = hasContentDescription(text(R.string.plans_options))
         screen.scrollTo(options)
         screen.onNode(options).performClick()
+        screen.waitForText(text(R.string.web_table_and_print))
+        screen.keepScreenshot("plans-the-plan-menu")
         opensInTheBrowser("${webApp}meal-plans?profile=$profileId&plan=$planId") {
             screen.onNodeWithText(text(R.string.web_table_and_print)).performClick()
         }

@@ -119,6 +119,7 @@ class ShoppingTest {
         list.performScrollToNode(hasContentDescription(text(R.string.shopping_list_options)))
         screen.onNodeWithContentDescription(text(R.string.shopping_list_options)).performClick()
         screen.onNodeWithText(text(R.string.shopping_share_text)).assertExists()
+        screen.keepScreenshot("shopping-the-list-menu")
         opensInTheBrowser("${webApp}shopping-lists") {
             screen.onNodeWithText(text(R.string.web_table_and_print)).performClick()
         }
