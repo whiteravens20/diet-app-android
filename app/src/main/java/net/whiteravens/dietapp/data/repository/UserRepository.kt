@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
-import net.whiteravens.dietapp.data.remote.ChangeEmailRequest
-import net.whiteravens.dietapp.data.remote.ChangePasswordRequest
 import net.whiteravens.dietapp.data.remote.DeleteAccountRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.FileApiService
@@ -50,14 +48,6 @@ class UserRepository @Inject constructor(
 
     suspend fun me(): SessionUser = heard(apiCall(json) { api.me() }.toDomain())
 
-    /** Gives the account the name it shows. */
-    suspend fun rename(displayName: String): SessionUser =
-        heard(apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(displayName = displayName)) }.toDomain())
-
-    /** Chooses the language of the account's mails and of the web application, `en` or `pl`; this app follows the phone's. */
-    suspend fun chooseLanguage(locale: String): SessionUser =
-        heard(apiCall(json) { api.updateSettings(UpdateUserSettingsRequest(locale = locale)) }.toDomain())
-
     /**
      * Chooses what AI the account has: `none`, `admin` (the instance's provider) or `byok` (its own
      * providers), which is refused while it has none.
@@ -68,14 +58,6 @@ class UserRepository @Inject constructor(
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
         heard(apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain())
-
-    /** Changes the password from [current] to [new]; the API then ends every session of the account, the phone's too. */
-    suspend fun changePassword(current: String, new: String) =
-        apiCall(json) { api.changePassword(ChangePasswordRequest(current, new)) }
-
-    /** Asks for [newEmail] as the account's address, with [currentPassword]: the change is made once the link mailed there is followed. */
-    suspend fun changeEmail(newEmail: String, currentPassword: String) =
-        apiCall(json) { api.changeEmail(ChangeEmailRequest(newEmail, currentPassword)) }
 
     /**
      * Writes everything the account holds into [into], one JSON file as the API writes it, piece by

@@ -8,14 +8,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
-import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
-import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
@@ -56,25 +53,5 @@ class SessionsTest {
         screen.onNodeWithText(text(R.string.account_session_end_all)).performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_welcome_back))
         screen.waitForTheApi(20_000) { !Instance.stillSignedIn(fresh) }
-    }
-
-    @Test
-    fun aChangedPasswordEndsEverySessionAndTheNewOneSignsIn() {
-        val account = Instance.newAccount()
-        val renewed = "${account.password}-Renewed"
-        screen.startSignedIn(account)
-        screen.openAccountSettings(account)
-
-        screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
-        screen.onNodeWithText(text(R.string.account_password_new)).performScrollTo().performTextInput(renewed)
-        screen.putKeyboardAway()
-        screen.onNodeWithText(text(R.string.account_password_change)).performScrollTo().performClick()
-        screen.waitForText(text(R.string.account_password_changed))
-        screen.keepScreenshot("account-password-changed")
-
-        // Every session ended with the old password, the one the phone was in too; the new one signs in.
-        screen.waitForText(text(R.string.auth_welcome_back))
-        assertFalse(Instance.stillSignedIn(account.accessToken))
-        screen.signIn(account.copy(password = renewed))
     }
 }

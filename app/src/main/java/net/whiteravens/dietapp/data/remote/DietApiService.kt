@@ -25,6 +25,7 @@ interface DietApiService {
     @GET("users/me")
     suspend fun me(): SessionUserDto
 
+    /** Chooses what AI the account has. */
     @PATCH("users/me")
     suspend fun updateSettings(@Body body: UpdateUserSettingsRequest): SessionUserDto
 
@@ -35,13 +36,6 @@ interface DietApiService {
     /** Sends the mail that confirms the account's address again; answered 202. */
     @POST("users/me/email/resend-verification")
     suspend fun resendVerification()
-
-    @POST("users/me/password")
-    suspend fun changePassword(@Body body: ChangePasswordRequest)
-
-    /** Asks for another address: a mail with a link goes to it, and the link makes the change; answered 202. */
-    @POST("users/me/email")
-    suspend fun changeEmail(@Body body: ChangeEmailRequest)
 
     @HTTP(method = "DELETE", path = "users/me", hasBody = true)
     suspend fun deleteAccount(@Body body: DeleteAccountRequest)

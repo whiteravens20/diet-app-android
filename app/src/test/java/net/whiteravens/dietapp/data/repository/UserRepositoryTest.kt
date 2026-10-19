@@ -77,46 +77,6 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `a password is changed with the one the account has, and a wrong one is refused with its code`() {
-        server.enqueue(MockResponse().setResponseCode(204))
-        server.enqueue(answer("password-change-wrong-password").setResponseCode(401))
-        val users = repository()
-
-        runBlocking { users.changePassword("Str0ng-Passw0rd-1!", "An0ther-Passw0rd-2?") }
-        val refused = runCatching { runBlocking { users.changePassword("Wr0ng-Passw0rd-9?", "An0ther-Passw0rd-2?") } }.exceptionOrNull() as ApiException
-
-        val sent = server.takeRequest()
-        assertEquals("POST", sent.method)
-        assertEquals("/api/users/me/password", sent.requestUrl!!.encodedPath)
-        assertEquals(
-            json.parseToJsonElement("""{"currentPassword":"Str0ng-Passw0rd-1!","newPassword":"An0ther-Passw0rd-2?"}"""),
-            json.parseToJsonElement(sent.body.readUtf8()),
-        )
-        assertEquals(401, refused.statusCode)
-        assertEquals("INVALID_PASSWORD", refused.code)
-    }
-
-    @Test
-    fun `another address is asked for with the password, and one taken already is refused with its code`() {
-        server.enqueue(MockResponse().setResponseCode(202))
-        server.enqueue(answer("email-change-taken").setResponseCode(400))
-        val users = repository()
-
-        runBlocking { users.changeEmail("ola@example.test", "Str0ng-Passw0rd-1!") }
-        val refused = runCatching { runBlocking { users.changeEmail("ala@example.test", "Str0ng-Passw0rd-1!") } }.exceptionOrNull() as ApiException
-
-        val sent = server.takeRequest()
-        assertEquals("POST", sent.method)
-        assertEquals("/api/users/me/email", sent.requestUrl!!.encodedPath)
-        assertEquals(
-            json.parseToJsonElement("""{"newEmail":"ola@example.test","currentPassword":"Str0ng-Passw0rd-1!"}"""),
-            json.parseToJsonElement(sent.body.readUtf8()),
-        )
-        assertEquals(400, refused.statusCode)
-        assertEquals("EMAIL_TAKEN", refused.code)
-    }
-
-    @Test
     fun `the account's file is written as it arrives, and one that stops before its end is refused`() {
         val whole = fixture("account-export")
         server.enqueue(file(whole))
@@ -166,31 +126,6 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"currentPassword":"Str0ng-Passw0rd-1!"}"""), json.parseToJsonElement(sent.body.readUtf8()))
         assertEquals(401, refused.statusCode)
         assertEquals("INVALID_PASSWORD", refused.code)
-    }
-
-    @Test
-    fun `a new name is sent alone, and the account read back as the API keeps it`() {
-        server.enqueue(answer("users-me-renamed-in-polish"))
-
-        val renamed = runBlocking { repository().rename("Konto z telefonu") }
-
-        val named = server.takeRequest()
-        assertEquals("PATCH", named.method)
-        assertEquals("/api/users/me", named.requestUrl!!.encodedPath)
-        assertEquals(json.parseToJsonElement("""{"displayName":"Konto z telefonu"}"""), json.parseToJsonElement(named.body.readUtf8()))
-        assertEquals("Konto z telefonu", renamed.displayName)
-    }
-
-    @Test
-    fun `the language of the mails and the web is sent alone, and the account read back as the API keeps it`() {
-        server.enqueue(answer("users-me-renamed-in-polish"))
-
-        val inPolish = runBlocking { repository().chooseLanguage("pl") }
-
-        val chosen = server.takeRequest()
-        assertEquals("PATCH", chosen.method)
-        assertEquals(json.parseToJsonElement("""{"locale":"pl"}"""), json.parseToJsonElement(chosen.body.readUtf8()))
-        assertEquals("pl", inPolish.locale)
     }
 
     @Test

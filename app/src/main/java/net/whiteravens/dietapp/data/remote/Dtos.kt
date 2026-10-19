@@ -169,24 +169,13 @@ data class SessionUserDto(
     val weightUnit: String? = null,
 )
 
-/** PATCH `/users/me` — every field optional; omitted fields are left untouched. */
+/** PATCH `/users/me` with the AI mode chosen: `none`, `admin` or `byok`; the account's other settings are left as they are. */
 @Serializable
-data class UpdateUserSettingsRequest(
-    val displayName: String? = null,
-    val locale: String? = null,
-    val aiMode: String? = null,
-)
+data class UpdateUserSettingsRequest(val aiMode: String)
 
 /** PATCH `/users/me` with the unit the account's weights are shown in: `kg`, `lb`, or null, sent as null, to go by where the phone is. */
 @Serializable
 data class WeightUnitRequest(val weightUnit: String?)
-
-@Serializable
-data class ChangePasswordRequest(val currentPassword: String, val newPassword: String)
-
-/** POST `/users/me/email`: the address asked for, and the password the account has. */
-@Serializable
-data class ChangeEmailRequest(val newEmail: String, val currentPassword: String)
 
 /** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */
 @Serializable

@@ -119,9 +119,6 @@ object Instance {
     /** The account's way of using a model: `none` where it has none to ask. */
     fun aiMode(account: Account): String = call("GET", "users/me", token = account.accessToken).getString("aiMode")
 
-    /** The account as the API keeps it: its name, the language of its mails, what it chose. */
-    fun me(account: Account): JSONObject = call("GET", "users/me", token = account.accessToken)
-
     /** What AI [account] has, as the API says it: its mode and the instance's allowance. */
     fun aiQuota(account: Account): JSONObject = call("GET", "ai/quota", token = account.accessToken)
 

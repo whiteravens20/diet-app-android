@@ -23,10 +23,7 @@ import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
-/**
- * Session account details, the confirmation mail sent again, the account's name, the language of its
- * mails and of the web, the unit weights are shown in, the server setting and sign-out.
- */
+/** Session account details, the confirmation mail sent again, the unit weights are shown in, the server setting and sign-out. */
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val users: UserRepository,
@@ -48,22 +45,10 @@ class AccountViewModel @Inject constructor(
         /** The unit chosen and on its way to the API, shown at once; null while none is. */
         val choosing: UnitChoice? = null,
         val unitError: Throwable? = null,
-        /** A new name is on its way to the API. */
-        val renaming: Boolean = false,
-        /** The name typed last was kept. */
-        val renamed: Boolean = false,
-        val renameError: Throwable? = null,
-        /** The language chosen and on its way to the API, shown at once; null while none is. */
-        val choosingLanguage: String? = null,
-        val languageError: Throwable? = null,
     ) {
         /** The unit weights are shown in as the account has it, or as it was just chosen: `kg`, `lb`, or null for where the phone is. */
         val weightUnit: String?
             get() = if (choosing != null) choosing.unit else user?.weightUnit
-
-        /** The language of the account's mails and of the web as the account has it, or as it was just chosen. */
-        val locale: String?
-            get() = choosingLanguage ?: user?.locale
     }
 
     /** A unit chosen: `kg`, `lb`, or null to go by where the phone is. */
@@ -130,31 +115,6 @@ class AccountViewModel @Inject constructor(
             attempt { users.chooseWeightUnit(unit) }
                 .onSuccess { saved -> _state.update { it.copy(user = saved, choosing = null) } }
                 .onFailure { e -> _state.update { it.copy(choosing = null, unitError = e) } }
-        }
-    }
-
-    /** Gives the account the name [typed], without the spaces around it; a name left empty, or as it is, is not sent. */
-    fun rename(typed: String) {
-        val state = _state.value
-        val name = typed.trim()
-        if (state.user == null || state.renaming || name.isEmpty() || name == state.user.displayName) return
-        _state.update { it.copy(renaming = true, renamed = false, renameError = null) }
-        viewModelScope.launch {
-            attempt { users.rename(name) }
-                .onSuccess { saved -> _state.update { it.copy(user = saved, renaming = false, renamed = true) } }
-                .onFailure { e -> _state.update { it.copy(renaming = false, renameError = e) } }
-        }
-    }
-
-    /** Chooses the language of the account's mails and of the web application; the app goes on in the phone's. */
-    fun chooseLanguage(locale: String) {
-        val state = _state.value
-        if (state.user == null || state.choosingLanguage != null || locale == state.locale) return
-        _state.update { it.copy(choosingLanguage = locale, languageError = null) }
-        viewModelScope.launch {
-            attempt { users.chooseLanguage(locale) }
-                .onSuccess { saved -> _state.update { it.copy(user = saved, choosingLanguage = null) } }
-                .onFailure { e -> _state.update { it.copy(choosingLanguage = null, languageError = e) } }
         }
     }
 
