@@ -6,7 +6,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -40,10 +39,6 @@ class SecondFactorTest {
             .flatMap { node -> node.config[SemanticsProperties.Text].map { it.text } }
             .filter(pattern::matches)
 
-    /** The second of two fields called [label]: the password card's comes first. */
-    private fun typeIntoTheSecond(label: String, typed: String) {
-        screen.onAllNodesWithText(label)[1].performScrollTo().performTextInput(typed)
-    }
 
     @Test
     fun twoStepSignInIsSetUpWithTheKeyShownGivenNewRecoveryCodesAndSwitchedOff() {
@@ -52,7 +47,7 @@ class SecondFactorTest {
         screen.openAccountSettings(account)
 
         screen.onNodeWithText(text(R.string.account_second_factor_set_up)).performScrollTo().performClick()
-        typeIntoTheSecond(text(R.string.account_password_current), account.password)
+        screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_continue)).performScrollTo().performClick()
 
@@ -76,7 +71,7 @@ class SecondFactorTest {
 
         // New recovery codes, for the password and one of the codes there were.
         screen.onNodeWithText(text(R.string.account_second_factor_new_codes)).performScrollTo().performClick()
-        typeIntoTheSecond(text(R.string.account_password_current), account.password)
+        screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
         screen.onNodeWithText(text(R.string.account_second_factor_code_or_recovery)).performScrollTo().performTextInput(recovery.first())
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_new_codes)).performScrollTo().performClick()
@@ -89,7 +84,7 @@ class SecondFactorTest {
         // Switched off with one of the new codes.
         screen.waitForEnabled(text(R.string.account_second_factor_switch_off))
         screen.onNodeWithText(text(R.string.account_second_factor_switch_off)).performScrollTo().performClick()
-        typeIntoTheSecond(text(R.string.account_password_current), account.password)
+        screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
         screen.onNodeWithText(text(R.string.account_second_factor_code_or_recovery)).performScrollTo().performTextInput(renewed.first())
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_switch_off)).performScrollTo().performClick()
