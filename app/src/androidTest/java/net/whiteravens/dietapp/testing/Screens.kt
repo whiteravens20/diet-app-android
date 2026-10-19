@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.testing
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Parcel
+import android.view.Choreographer
 import androidx.activity.ComponentActivity
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
@@ -35,6 +36,8 @@ import net.whiteravens.dietapp.data.auth.KeystoreSealer
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.remote.AuthTokens
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 
 /** A text of the app's, in the language the device runs in, with [args] put in. */
@@ -91,6 +94,7 @@ fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, time
  */
 fun ComposeTestRule.keepScreenshot(name: String) {
     waitForIdle()
+    awaitDrawnFrames()
     val picture = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
     if (picture == null) {
         println("No screenshot for $name: the device gave none")
@@ -101,6 +105,23 @@ fun ComposeTestRule.keepScreenshot(name: String) {
     } catch (e: IOException) {
         println("No screenshot for $name: ${e.message}")
     }
+}
+
+/**
+ * Waits for the window to draw three frames. What Compose has laid out is on the screen only once a
+ * frame has drawn it, and a picture taken at once after a scroll the test's clock ran through can
+ * show the frame before it.
+ */
+private fun awaitDrawnFrames() {
+    val drawn = CountDownLatch(3)
+    fun next() {
+        Choreographer.getInstance().postFrameCallback {
+            drawn.countDown()
+            if (drawn.count > 0) next()
+        }
+    }
+    InstrumentationRegistry.getInstrumentation().runOnMainSync { next() }
+    drawn.await(2, TimeUnit.SECONDS)
 }
 
 /**
