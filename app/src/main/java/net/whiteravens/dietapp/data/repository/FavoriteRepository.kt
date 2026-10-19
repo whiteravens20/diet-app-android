@@ -4,11 +4,9 @@ package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AddFavoriteRequest
-import net.whiteravens.dietapp.data.remote.CreateFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.FavoriteSetDto
 import net.whiteravens.dietapp.data.remote.MarkedRecipeDto
-import net.whiteravens.dietapp.data.remote.UpdateFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.FavoriteSet
@@ -44,16 +42,6 @@ class FavoriteRepository @Inject constructor(
 
     /** The favourite sets of [profileId], the one made last first. */
     suspend fun sets(profileId: String): List<FavoriteSet> = apiCall(json) { api.favoriteSets(profileId) }.map { it.toDomain() }
-
-    /** Keeps a set of [profileId] called [label], with the recipe [slots] names for each meal. */
-    suspend fun createSet(profileId: String, label: String, slots: Map<String, String>): FavoriteSet =
-        apiCall(json) { api.createFavoriteSet(CreateFavoriteSetRequest(profileId, label, slots)) }.toDomain()
-
-    /** Says the set [id]'s name and its recipes anew. */
-    suspend fun updateSet(id: String, label: String, slots: Map<String, String>): FavoriteSet =
-        apiCall(json) { api.updateFavoriteSet(id, UpdateFavoriteSetRequest(label, slots)) }.toDomain()
-
-    suspend fun deleteSet(id: String) = apiCall(json) { api.deleteFavoriteSet(id) }
 
     private fun FavoriteSetDto.toDomain() = FavoriteSet(id, label, slots)
 

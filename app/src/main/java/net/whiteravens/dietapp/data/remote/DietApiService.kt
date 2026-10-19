@@ -127,17 +127,6 @@ interface DietApiService {
     @GET("favorite-sets")
     suspend fun favoriteSets(@Query("profileId") profileId: String): List<FavoriteSetDto>
 
-    /** Keeps a set of a profile: a recipe for each meal it names. */
-    @POST("favorite-sets")
-    suspend fun createFavoriteSet(@Body body: CreateFavoriteSetRequest): FavoriteSetDto
-
-    /** Says a set's name and its recipes anew. */
-    @PATCH("favorite-sets/{id}")
-    suspend fun updateFavoriteSet(@Path("id") id: String, @Body body: UpdateFavoriteSetRequest): FavoriteSetDto
-
-    @DELETE("favorite-sets/{id}")
-    suspend fun deleteFavoriteSet(@Path("id") id: String)
-
     /** Puts the recipes of a set on days of a plan, each in the place of the day's meal of its kind; answers the plan. */
     @POST("favorite-sets/{id}/apply")
     suspend fun applyFavoriteSet(@Path("id") id: String, @Body body: ApplyFavoriteSetRequest): MealPlanDto

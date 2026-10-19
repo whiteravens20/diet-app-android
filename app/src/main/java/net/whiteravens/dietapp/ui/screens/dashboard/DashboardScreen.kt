@@ -44,20 +44,20 @@ import net.whiteravens.dietapp.ui.components.MacroRing
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
+import net.whiteravens.dietapp.ui.components.rememberWebPages
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
  * Calorie target, deficit and macro split for every profile, what its plan of the moment comes to,
- * its weights and its favourite sets — the web dashboard. A plan opens on [onOpenPlan]; a plan is
- * made for a profile on [onNewPlan]; the recipe library, where favourites are marked, is [onRecipes].
+ * and its weights — the web dashboard, whose favourite sets are made and changed there, in the
+ * browser. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan].
  */
 @Composable
 fun DashboardScreen(
     onCreateProfile: () -> Unit,
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: (profileId: String) -> Unit,
-    onRecipes: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -66,14 +66,7 @@ fun DashboardScreen(
         viewModel.refresh()
         onPauseOrDispose {}
     }
-    state.editing?.let { edit ->
-        FavoriteSetDialog(
-            edit = edit,
-            marks = state.profiles.firstOrNull { it.profile.id == edit.profileId }?.marks.orEmpty(),
-            onSave = viewModel::saveSet,
-            onDismiss = viewModel::closeSet,
-        )
-    }
+    val web = rememberWebPages()
 
     when {
         state.loading -> DashboardSkeleton()
@@ -129,15 +122,7 @@ fun DashboardScreen(
                             )
                         },
                     ) {
-                        FavoriteSetsCard(
-                            stats,
-                            deleting = state.deletingSet,
-                            deleteFailed = state.setDeleteFailed?.takeIf { it.profileId == stats.profile.id }?.error,
-                            onNew = { viewModel.newSet(stats.profile.id) },
-                            onEdit = { viewModel.editSet(stats.profile.id, it) },
-                            onDelete = { viewModel.deleteSet(stats.profile.id, it.id) },
-                            onRecipes = onRecipes,
-                        )
+                        FavoriteSetsInTheBrowser(onOpen = { web.open("dashboard") })
                     }
                 }
             }
@@ -260,6 +245,23 @@ private fun ProfileSummary(
 
         weight()
         sets()
+    }
+}
+
+/** A profile's favourite sets are made and changed in the web application; on the phone they go on a plan's days from its menu. */
+@Composable
+private fun FavoriteSetsInTheBrowser(onOpen: () -> Unit) {
+    AppCard {
+        Text(stringResource(R.string.favorite_sets_title), style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.favorite_sets_in_the_browser),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        OutlinedButton(onClick = onOpen, shape = MaterialTheme.shapes.medium, modifier = Modifier.padding(top = 8.dp)) {
+            Text(stringResource(R.string.web_open))
+        }
     }
 }
 

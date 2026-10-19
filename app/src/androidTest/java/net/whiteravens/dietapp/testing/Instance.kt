@@ -276,12 +276,6 @@ object Instance {
         }
     }
 
-    /** The favourite sets of [profileId], the one made last first. */
-    fun favoriteSets(account: Account, profileId: String): List<JSONObject> {
-        val list = JSONArray(send("GET", "favorite-sets?profileId=$profileId", null, account.accessToken, 200, null))
-        return (0 until list.length()).map { list.getJSONObject(it) }
-    }
-
     /** The ingredients of a recipe's lines, in the order the recipe lists them. */
     fun recipeIngredients(account: Account, recipeId: String): List<String> {
         val lines = call("GET", "recipes/$recipeId", token = account.accessToken).getJSONArray("ingredients")

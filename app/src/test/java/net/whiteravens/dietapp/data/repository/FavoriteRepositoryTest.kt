@@ -130,40 +130,4 @@ class FavoriteRepositoryTest {
         assertEquals("DELETE", unmarked.method)
         assertEquals("/api/favorites/ada/soup", unmarked.path)
     }
-
-    @Test
-    fun `a set is kept with its profile, changed by its id with its name and recipes, and deleted, as the API takes each`() {
-        // The shape the API answers a set with.
-        val set = """{"id":"3f1c2b7a-9d4e-4c51-8a6f-0b2d7e9c4a13","profileId":"ada","label":"%s","slots":{"breakfast":"oats","dinner":"soup"},""" +
-            """"createdAt":"2026-10-16T10:00:00.000Z","updatedAt":"2026-10-16T10:00:00.000Z"}"""
-        server.enqueue(MockResponse().setResponseCode(201).setHeader("Content-Type", "application/json").setBody(set.format("Weekday")))
-        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(set.format("Workday")))
-        server.enqueue(MockResponse().setResponseCode(204))
-        val favorites = repository()
-        val slots = mapOf("breakfast" to "oats", "dinner" to "soup")
-
-        val made = runBlocking { favorites.createSet("ada", "Weekday", slots) }
-        val changed = runBlocking { favorites.updateSet(made.id, "Workday", slots) }
-        runBlocking { favorites.deleteSet(made.id) }
-
-        assertEquals(slots, made.slots)
-        assertEquals("Workday", changed.label)
-        val created = server.takeRequest()
-        assertEquals("POST", created.method)
-        assertEquals("/api/favorite-sets", created.path)
-        assertEquals(
-            json.parseToJsonElement("""{"profileId":"ada","label":"Weekday","slots":{"breakfast":"oats","dinner":"soup"}}"""),
-            json.parseToJsonElement(created.body.readUtf8()),
-        )
-        val updated = server.takeRequest()
-        assertEquals("PATCH", updated.method)
-        assertEquals("/api/favorite-sets/${made.id}", updated.path)
-        assertEquals(
-            json.parseToJsonElement("""{"label":"Workday","slots":{"breakfast":"oats","dinner":"soup"}}"""),
-            json.parseToJsonElement(updated.body.readUtf8()),
-        )
-        val deleted = server.takeRequest()
-        assertEquals("DELETE", deleted.method)
-        assertEquals("/api/favorite-sets/${made.id}", deleted.path)
-    }
 }

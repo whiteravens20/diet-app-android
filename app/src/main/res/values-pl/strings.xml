@@ -630,20 +630,8 @@
 
     <!-- Favourite sets: a day's meals kept as a template, worded as the web application words them. -->
     <string name="favorite_sets_title">Zestawy ulubionych</string>
-    <string name="favorite_sets_subtitle">Zapisz posiłki jednego dnia jako szablon i wstaw go do planu jednym kliknięciem.</string>
+    <string name="favorite_sets_in_the_browser">Zestawy tworzy się i zmienia w aplikacji webowej. Tutaj nakłada się je na dni planu, z menu planu.</string>
     <string name="favorite_sets_empty">Nie ma jeszcze zestawów. Złóż posiłki na dzień ze swoich ulubionych.</string>
-    <string name="favorite_sets_no_favorites">Najpierw zapisz kilka ulubionych przepisów; zestawy korzystają z ulubionych.</string>
-    <string name="favorite_sets_no_favorites_cta">Przeglądaj przepisy</string>
-    <string name="favorite_sets_new">Nowy zestaw</string>
-    <string name="favorite_sets_label">Nazwa zestawu</string>
-    <string name="favorite_sets_label_placeholder">np. Dzień treningowy</string>
-    <string name="favorite_sets_save">Zapisz zestaw</string>
-    <string name="favorite_sets_pick_recipe">Wybierz przepis</string>
-    <string name="favorite_sets_slots_heading">Posiłki w zestawie</string>
-    <string name="favorite_sets_slots_hint">Puste miejsce zostawia posiłek, który już jest w dniu, do którego stosujesz zestaw.</string>
-    <string name="favorite_sets_at_least_one">Wybierz co najmniej jeden posiłek.</string>
-    <string name="favorite_sets_err_save">Nie udało się zapisać zestawu.</string>
-    <string name="favorite_sets_err_delete">Nie udało się usunąć zestawu.</string>
     <string name="favorite_sets_apply">Zastosuj zestaw</string>
     <string name="favorite_sets_apply_pick_set">Wybierz zestaw</string>
     <string name="favorite_sets_apply_pick_days">Wybierz dni</string>
@@ -1274,6 +1262,7 @@
     <string name="plans_advanced_variety_floor_hint_most">W całym planie, dodatkowo do limitów różnorodności z profilu (nie zastępuje ich). Gdy pole jest puste, obowiązuje liczba ustawiona dla tej instancji: %1$s.</string>
 
     <!-- What the app leaves to the instance's web application, which it opens in the browser. -->
+    <string name="web_open">Otwórz w przeglądarce</string>
     <string name="web_table_and_print">Tabela i druk w przeglądarce</string>
     <string name="web_no_browser_title">Brak przeglądarki</string>
     <string name="web_no_browser_body">Żadna przeglądarka na tym telefonie nie otwiera tej strony. Jej adres, do otwarcia gdzie indziej:</string>

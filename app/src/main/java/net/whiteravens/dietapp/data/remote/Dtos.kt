@@ -992,14 +992,6 @@ data class AddFavoriteRequest(val profileId: String, val recipeId: String, val t
 @Serializable
 data class FavoriteSetDto(val id: String, val profileId: String, val label: String, val slots: Map<String, String>)
 
-/** POST `/favorite-sets`: a set of a profile, named, with a recipe for each meal it names. */
-@Serializable
-data class CreateFavoriteSetRequest(val profileId: String, val label: String, val slots: Map<String, String>)
-
-/** PATCH `/favorite-sets/{id}`: a set's name and its recipes, both said anew. */
-@Serializable
-data class UpdateFavoriteSetRequest(val label: String, val slots: Map<String, String>)
-
 /** POST `/favorite-sets/{id}/apply`: the plan, and the days of it (yyyy-MM-dd) the set's recipes go on. */
 @Serializable
 data class ApplyFavoriteSetRequest(val planId: String, val dayDates: List<String>)
