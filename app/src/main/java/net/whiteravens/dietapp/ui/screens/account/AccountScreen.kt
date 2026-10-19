@@ -52,8 +52,8 @@ import net.whiteravens.dietapp.ui.components.rememberWebPages
 
 /**
  * Account overview, the unit weights are shown in, what AI it has and the providers it brings of its
- * own, two-step sign-in, where it is signed in, its data in a file, its deletion, and sign-out. The
- * password, the address, the name and the language of the mails are changed in the web application,
+ * own, two-step sign-in, where it is signed in, and sign-out. The password, the address, the name and
+ * the language of the mails, the account's data in a file and its deletion are the web application's,
  * whose settings open in the browser.
  */
 @Composable
@@ -62,15 +62,11 @@ fun AccountScreen(
     viewModel: AccountViewModel = hiltViewModel(),
     secondFactor: SecondFactorViewModel = hiltViewModel(),
     sessions: SessionsViewModel = hiltViewModel(),
-    exporter: DataExportViewModel = hiltViewModel(),
-    deletion: AccountDeletionViewModel = hiltViewModel(),
     ai: AiViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val twoStep by secondFactor.state.collectAsStateWithLifecycle()
     val signedIn by sessions.state.collectAsStateWithLifecycle()
-    val export by exporter.state.collectAsStateWithLifecycle()
-    val deleting by deletion.state.collectAsStateWithLifecycle()
     val aiState by ai.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
@@ -233,18 +229,6 @@ fun AccountScreen(
                 )
 
                 SessionsCard(signedIn, onEnd = sessions::end, onEndAll = sessions::endAll, onRetry = sessions::load)
-
-                DataExportCard(export, onExport = exporter::export)
-
-                DangerZoneCard(
-                    address = user.email,
-                    state = deleting,
-                    onOpen = deletion::open,
-                    onCancel = deletion::cancel,
-                    onEmail = deletion::typeEmail,
-                    onPassword = deletion::typePassword,
-                    onDelete = { deletion.delete(user.email) },
-                )
             }
         }
 

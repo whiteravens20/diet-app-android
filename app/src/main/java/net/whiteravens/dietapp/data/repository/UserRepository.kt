@@ -2,17 +2,13 @@
 
 package net.whiteravens.dietapp.data.repository
 
-import java.io.IOException
-import java.io.OutputStream
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
-import net.whiteravens.dietapp.data.remote.DeleteAccountRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
-import net.whiteravens.dietapp.data.remote.FileApiService
 import net.whiteravens.dietapp.data.remote.UpdateUserSettingsRequest
 import net.whiteravens.dietapp.data.remote.WeightUnitRequest
 import net.whiteravens.dietapp.data.remote.apiCall
@@ -21,20 +17,11 @@ import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.SessionUser
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-
-/** How the API ends the account's file once all of it is written. */
-private val WHOLE = "\"complete\":true}".toByteArray()
-
-/** The account's file stopped before its end: what arrived is not the account's data. */
-class IncompleteExportException : IOException("The account's file did not arrive whole.")
 
 /** Session user, settings and profiles — thin, network-only (no offline cache). */
 @Singleton
 class UserRepository @Inject constructor(
     private val api: DietApiService,
-    private val files: FileApiService,
     private val json: Json,
 ) {
     private val aiModes = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -58,33 +45,6 @@ class UserRepository @Inject constructor(
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
         heard(apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain())
-
-    /**
-     * Writes everything the account holds into [into], one JSON file as the API writes it, piece by
-     * piece. A file that does not end the way the API ends a whole one is refused
-     * ([IncompleteExportException]), so that one cut short is not taken for the account's data.
-     */
-    suspend fun export(into: OutputStream) {
-        val file = apiCall(json) { files.exportAccount() }
-        withContext(Dispatchers.IO) {
-            file.use { answer ->
-                val input = answer.byteStream()
-                val buffer = ByteArray(8 * 1024)
-                var end = ByteArray(0)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    into.write(buffer, 0, read)
-                    end = (end + buffer.copyOf(read)).takeLast(WHOLE.size).toByteArray()
-                }
-                if (!end.contentEquals(WHOLE)) throw IncompleteExportException()
-            }
-        }
-    }
-
-    /** Deletes the account and everything it holds, for [currentPassword]; its sessions end with it, the phone's too. */
-    suspend fun deleteAccount(currentPassword: String) =
-        apiCall(json) { api.deleteAccount(DeleteAccountRequest(currentPassword)) }
 
     /** Sends the mail that confirms the account's address again. */
     suspend fun resendVerification() = apiCall(json) { api.resendVerification() }

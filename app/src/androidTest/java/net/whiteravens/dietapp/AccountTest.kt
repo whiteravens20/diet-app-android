@@ -2,15 +2,10 @@
 
 package net.whiteravens.dietapp
 
-import android.app.Activity
-import android.app.Instrumentation
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -18,34 +13,19 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.test.espresso.intent.Intents
-import androidx.test.espresso.intent.Intents.intended
-import androidx.test.espresso.intent.Intents.intending
-import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
-import androidx.test.espresso.intent.matcher.IntentMatchers.hasExtra
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import java.io.File
-import java.time.LocalDate
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.signIn
-import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.testing.webApp
-import org.hamcrest.CoreMatchers.allOf
-import org.json.JSONObject
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -79,50 +59,6 @@ class AccountTest {
         screen.onNode(hasText(text(R.string.account_sign_out)) and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
             .performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_welcome_back))
-    }
-
-    @Test
-    fun theAccountsDataIsSavedWholeToTheFileChosen() {
-        val account = Instance.newAccount()
-        screen.startSignedIn(account)
-        screen.openAccountSettings(account)
-        val file = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "account.json").apply { delete() }
-
-        // The platform's window that asks where to keep the file answers with a file of the test's.
-        Intents.init()
-        try {
-            intending(hasAction(Intent.ACTION_CREATE_DOCUMENT))
-                .respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, Intent().setData(Uri.fromFile(file))))
-            screen.onNodeWithText(text(R.string.account_data_button)).performScrollTo().performClick()
-            screen.waitForText(text(R.string.account_data_saved))
-            intended(allOf(hasAction(Intent.ACTION_CREATE_DOCUMENT), hasExtra(Intent.EXTRA_TITLE, "diet-app-account-${LocalDate.now()}.json")))
-        } finally {
-            Intents.release()
-        }
-        screen.keepScreenshot("account-data-saved")
-
-        val saved = JSONObject(file.readText())
-        assertEquals("diet-app/account/1", saved.getString("format"))
-        assertEquals(account.email, saved.getJSONObject("account").getString("email"))
-        assertTrue(saved.getBoolean("complete"))
-    }
-
-    @Test
-    fun theAccountIsDeletedOnceItsAddressIsTypedAgainAndItsPasswordGiven() {
-        val account = Instance.newAccount()
-        screen.startSignedIn(account)
-        screen.openAccountSettings(account)
-
-        screen.onNodeWithText(text(R.string.account_delete)).performScrollTo().performClick()
-        // The address as typed in capitals is the account's all the same.
-        screen.onNode(hasText(text(R.string.account_delete_email)) and hasSetTextAction()).performScrollTo().performTextInput(account.email.uppercase())
-        screen.onNode(hasText(text(R.string.account_delete_password)) and hasSetTextAction()).performScrollTo().performTextInput(account.password)
-        screen.keepScreenshot("account-deletion")
-        screen.putKeyboardAway()
-        screen.onNodeWithText(text(R.string.account_delete_forever)).performScrollTo().performClick()
-
-        screen.waitForText(text(R.string.auth_welcome_back))
-        assertFalse(Instance.signsIn(account))
     }
 
     @Test

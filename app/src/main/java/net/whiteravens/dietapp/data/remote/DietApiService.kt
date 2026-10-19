@@ -15,8 +15,8 @@ import retrofit2.http.Query
 /**
  * Retrofit binding for the authenticated Diet App API surface. Every call is
  * held to the copy of the API's contract in contract/ (docs/contracts/api-contract.md).
- * Auth endpoints live on [AuthApiService], the account's file on [FileApiService], and the routes
- * a model may take part in on [ModelApiService].
+ * Auth endpoints live on [AuthApiService], and the routes a model may take part in on
+ * [ModelApiService].
  */
 interface DietApiService {
 
@@ -36,9 +36,6 @@ interface DietApiService {
     /** Sends the mail that confirms the account's address again; answered 202. */
     @POST("users/me/email/resend-verification")
     suspend fun resendVerification()
-
-    @HTTP(method = "DELETE", path = "users/me", hasBody = true)
-    suspend fun deleteAccount(@Body body: DeleteAccountRequest)
 
     /** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */
     @GET("users/me/second-factor")

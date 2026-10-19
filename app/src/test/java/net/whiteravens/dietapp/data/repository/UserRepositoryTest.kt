@@ -4,9 +4,6 @@ package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import java.io.ByteArrayOutputStream
-import java.net.SocketTimeoutException
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.take
@@ -25,7 +22,6 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -45,8 +41,7 @@ class UserRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    private fun repository(client: OkHttpClient = client()): UserRepository =
-        UserRepository(AppModule.api(client, json), AppModule.fileApi(client, json), json)
+    private fun repository(): UserRepository = UserRepository(AppModule.api(client(), json), json)
 
     private fun client(): OkHttpClient {
         val config = mockk<ServerConfigStore>()
@@ -55,8 +50,6 @@ class UserRepositoryTest {
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))
-
-    private fun file(body: String) = MockResponse().setHeader("Content-Type", "application/json; charset=utf-8").setBody(body)
 
     @Test
     fun `the unit chosen is sent alone and read back, and the choice given back sends a null the API reads as such`() {
@@ -74,58 +67,6 @@ class UserRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"weightUnit":null}"""), json.parseToJsonElement(server.takeRequest().body.readUtf8()))
         assertEquals("lb", inPounds.weightUnit)
         assertNull(givenBack.weightUnit)
-    }
-
-    @Test
-    fun `the account's file is written as it arrives, and one that stops before its end is refused`() {
-        val whole = fixture("account-export")
-        server.enqueue(file(whole))
-        server.enqueue(file(whole.dropLast(20)))
-        val users = repository()
-
-        val written = ByteArrayOutputStream()
-        runBlocking { users.export(written) }
-        val cut = runCatching { runBlocking { users.export(ByteArrayOutputStream()) } }.exceptionOrNull()
-
-        assertEquals("/api/users/me/export", server.takeRequest().requestUrl!!.encodedPath)
-        assertEquals(whole, written.toString(Charsets.UTF_8))
-        assertTrue(cut is IncompleteExportException)
-    }
-
-    @Test
-    fun `the account's file is read for as long as it keeps coming, and given up once it stops`() {
-        val whole = fixture("account-export")
-        val size = whole.toByteArray().size.toLong()
-        // An eighth of the file every quarter of a second: two seconds in all, never a second without a byte.
-        server.enqueue(file(whole).throttleBody(size / 8, 250, TimeUnit.MILLISECONDS))
-        // Half of the file, then nothing for longer than a read waits.
-        server.enqueue(file(whole).throttleBody(size / 2, 3, TimeUnit.SECONDS))
-        // The client's limits cut to a second each, so that the file outlasts the limit on a whole call.
-        val users = repository(client().newBuilder().callTimeout(1, TimeUnit.SECONDS).readTimeout(1, TimeUnit.SECONDS).build())
-
-        val written = ByteArrayOutputStream()
-        runBlocking { users.export(written) }
-        val stopped = runCatching { runBlocking { users.export(ByteArrayOutputStream()) } }.exceptionOrNull()
-
-        assertEquals(whole, written.toString(Charsets.UTF_8))
-        assertTrue(stopped.toString(), stopped is SocketTimeoutException)
-    }
-
-    @Test
-    fun `the account is deleted for its password, and a wrong one is refused with its code`() {
-        server.enqueue(MockResponse().setResponseCode(204))
-        server.enqueue(answer("account-deletion-wrong-password").setResponseCode(401))
-        val users = repository()
-
-        runBlocking { users.deleteAccount("Str0ng-Passw0rd-1!") }
-        val refused = runCatching { runBlocking { users.deleteAccount("Wr0ng-Passw0rd-9?") } }.exceptionOrNull() as ApiException
-
-        val sent = server.takeRequest()
-        assertEquals("DELETE", sent.method)
-        assertEquals("/api/users/me", sent.requestUrl!!.encodedPath)
-        assertEquals(json.parseToJsonElement("""{"currentPassword":"Str0ng-Passw0rd-1!"}"""), json.parseToJsonElement(sent.body.readUtf8()))
-        assertEquals(401, refused.statusCode)
-        assertEquals("INVALID_PASSWORD", refused.code)
     }
 
     @Test

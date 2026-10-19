@@ -204,9 +204,6 @@ data class SecondFactorProofRequest(val currentPassword: String, val code: Strin
 @Serializable
 data class RecoveryCodesDto(val recoveryCodes: List<String>)
 
-@Serializable
-data class DeleteAccountRequest(val currentPassword: String)
-
 /**
  * An open session of the account, as `GET /users/me/sessions` lists it: [label] is what it was
  * opened from ("Firefox · Linux"), null where the request said nothing usable; it ends at [endsAt]
