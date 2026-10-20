@@ -174,7 +174,9 @@ class AiTest {
 
         screen.onNodeWithText(note).performFirstLinkClick()
         screen.waitForText(account.email)
-        screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performScrollTo().performClick()
+        // The account's AI settings are read after the account itself.
+        show(text(R.string.account_ai_mode_admin))
+        screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "admin" }
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
 
