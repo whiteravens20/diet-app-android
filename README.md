@@ -11,7 +11,8 @@ The companion app for [**Diet App**](https://github.com/whiteravens20/diet-app),
 self-hostable diet and meal-planning platform. It signs in to your own Diet App server,
 shows what the platform computed and lets you do the day-to-day things on a phone:
 generate a plan, swap a meal, tick off the shopping list. What it leaves to the
-platform's web application, it opens there, in the phone's browser.
+platform's web application, it opens there, in the phone's browser, signed in to your
+account once you say on the page that the account it names is yours.
 
 > **Status: the main screens work; nothing is released yet.** Signing in, the dashboard,
 > meal plans, recipes, the shopping list and the profile are built and talk to the

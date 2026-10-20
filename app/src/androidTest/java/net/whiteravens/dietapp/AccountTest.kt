@@ -17,7 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
-import net.whiteravens.dietapp.testing.opensInTheBrowser
+import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.signIn
@@ -25,7 +25,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
-import net.whiteravens.dietapp.testing.webApp
+import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,12 +50,18 @@ class AccountTest {
         screen.keepScreenshot("account-settings")
 
         // The password, the address, the name and the language of the mails are changed in the web
-        // application, whose settings the account's screen opens in the browser.
+        // application, whose settings the account's screen opens in the browser, signed in.
         screen.onNodeWithText(text(R.string.web_open)).performScrollTo()
         screen.keepScreenshot("account-the-web-applications-settings")
-        opensInTheBrowser("${webApp}settings") {
+        val first = opensSignedInTheBrowser("/settings") {
             screen.onNodeWithText(text(R.string.web_open)).performClick()
         }
+        // A code uses up the session's refresh token: the next one is asked for with the token that
+        // came with the first, or the instance would not give it.
+        val second = opensSignedInTheBrowser("/settings") {
+            screen.onNodeWithText(text(R.string.web_open)).performClick()
+        }
+        assertNotEquals(first, second)
 
         // The rows of the account's sessions say whose sign-out they are; the account's own button says nothing more.
         screen.onNode(hasText(text(R.string.account_sign_out)) and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))

@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.auth.BrowserCodes
 import net.whiteravens.dietapp.data.config.LocalNetworkAccess
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.config.webAppAddress
@@ -61,6 +62,7 @@ import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
+import net.whiteravens.dietapp.ui.components.LocalBrowserCode
 import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
@@ -109,6 +111,7 @@ class RootViewModel @Inject constructor(
     private val serverConfig: ServerConfigStore,
     private val server: ServerRepository,
     private val localNetwork: LocalNetworkAccess,
+    browserCodes: BrowserCodes,
 ) : ViewModel() {
     val isSignedIn: StateFlow<Boolean?> = auth.isSignedIn
         .map { it as Boolean? }
@@ -120,6 +123,9 @@ class RootViewModel @Inject constructor(
     val webApp: StateFlow<String?> = serverConfig.baseUrl
         .map(::webAppAddress)
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** A code that signs the browser in to the account, for the pages of the web application the app opens. */
+    val browserCode: () -> String? = browserCodes::next
 
     private val _localNetworkMissing = MutableStateFlow(false)
 
@@ -161,7 +167,7 @@ fun DietAppRoot(viewModel: RootViewModel = hiltViewModel()) {
         onPauseOrDispose {}
     }
     if (localNetworkMissing) LocalNetworkDialog(onAnswered = viewModel::checkLocalNetwork)
-    CompositionLocalProvider(LocalWebApp provides webApp) {
+    CompositionLocalProvider(LocalWebApp provides webApp, LocalBrowserCode provides viewModel.browserCode) {
         when (signedIn) {
             null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
             false -> AuthScreen(serverVersion = serverVersion)

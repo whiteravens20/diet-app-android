@@ -16,14 +16,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
-import net.whiteravens.dietapp.testing.opensInTheBrowser
+import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
-import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -138,7 +137,7 @@ class ProfilesTest {
         screen.openTab(text(R.string.nav_more))
         screen.waitForText(text(R.string.web_opens_in_the_browser))
         screen.keepScreenshot("more-the-calculator-in-the-browser")
-        opensInTheBrowser("${webApp}calculator") {
+        opensSignedInTheBrowser("/calculator") {
             screen.onNodeWithText(text(R.string.calculator_title)).performClick()
         }
     }

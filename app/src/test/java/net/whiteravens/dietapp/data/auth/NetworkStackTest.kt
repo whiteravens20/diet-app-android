@@ -50,6 +50,7 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The client's network stack (the interceptors, the authenticator, Retrofit and the JSON
@@ -88,7 +89,7 @@ class NetworkStackTest {
     private class Held(var session: Session?, var sessionId: String? = null)
 
     /** The clients as the application wires them; [ended] counts the sessions the stack ended. */
-    private class Stack(val api: DietApiService, val auth: AuthApiService, val ended: AtomicInteger)
+    private class Stack(val api: DietApiService, val auth: AuthApiService, val codes: BrowserCodes, val ended: AtomicInteger)
 
     private fun stack(held: Held): Stack {
         val tokens = mockk<TokenStore>()
@@ -113,9 +114,11 @@ class NetworkStackTest {
         val plain = AppModule.baseOkHttp(BaseUrlInterceptor(config), ClientHeaders(context)).newBuilder()
             .dispatcher(CallDispatcher(threads))
             .build()
-        val authenticator = TokenAuthenticator(tokens, sessionEnd, AppModule.refreshApi(plain, json), json)
+        val turns = RefreshTurns()
+        val refreshApi = AppModule.refreshApi(plain, json)
+        val authenticator = TokenAuthenticator(tokens, sessionEnd, refreshApi, turns, json)
         val authed = AppModule.authedOkHttp(plain, AuthInterceptor(tokens), authenticator)
-        return Stack(AppModule.api(authed, json), AppModule.authApi(plain, json), ended)
+        return Stack(AppModule.api(authed, json), AppModule.authApi(plain, json), BrowserCodes(tokens, sessionEnd, refreshApi, turns), ended)
     }
 
     private fun answer(name: String, status: Int = 200) = MockResponse()
@@ -143,6 +146,16 @@ class NetworkStackTest {
 
     private fun aRunOutSession() = Held(Session("run-out", "refresh-1"))
 
+    /** What a refresh answers (the captured answer), with [refreshToken] as the next refresh token. */
+    private fun refreshed(refreshToken: String) = answer("auth-refresh").apply {
+        setBody(fixture("auth-refresh").replace("\"refreshToken\":\"<removed>\"", "\"refreshToken\":\"$refreshToken\""))
+    }
+
+    /** The answer to a code for the browser: what a refresh answers, with the code beside it, as the contract has it. */
+    private fun aCode(code: String = "c0de") = answer("auth-refresh").apply {
+        setBody(fixture("auth-refresh").trimEnd().removeSuffix("}") + ",\"code\":\"$code\",\"codeExpiresIn\":60}")
+    }
+
     /**
      * [backend], holding back the answers to the run-out token until [requests] of them have
      * arrived: the requests meet the run-out token together, however the threads are scheduled.
@@ -158,6 +171,109 @@ class NetworkStackTest {
                 return backend.dispatch(request)
             }
         }
+    }
+
+    @Test
+    fun `a code for the browser uses the refresh token up as a refresh does, and the pair that comes with it is kept`() {
+        val held = Held(Session("access-1", "refresh-1"))
+        val asked = Collections.synchronizedList(mutableListOf<String>())
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
+                "/api/auth/browser-code" -> {
+                    asked += request.body.readUtf8()
+                    aCode()
+                }
+                else -> answer("users-me")
+            }
+        }
+
+        val code = stack(held).codes.next()
+
+        assertEquals("c0de", code)
+        assertEquals(listOf("""{"refreshToken":"refresh-1"}"""), asked)
+        assertEquals(Session("<removed>", "<removed>"), held.session)
+        assertEquals("222dea42-e0d7-4792-af43-38277cb5d75f", held.sessionId)
+    }
+
+    @Test
+    fun `a code asked for while a refresh is on its way waits for it, and shows the token the refresh got`() {
+        val held = aRunOutSession()
+        val refreshing = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val codeAskedWith = AtomicReference<String>()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.path == "/api/auth/refresh" -> {
+                    refreshing.countDown()
+                    release.await(10, TimeUnit.SECONDS)
+                    refreshed("refresh-2")
+                }
+                request.path == "/api/auth/browser-code" -> {
+                    codeAskedWith.set(request.body.readUtf8())
+                    aCode()
+                }
+                request.getHeader("Authorization") == "Bearer run-out" -> refused(401, "INVALID_ACCESS_TOKEN")
+                else -> answer("users-me")
+            }
+        }
+        val stack = stack(held)
+        val call = threads.submit { runBlocking { runCatching { apiCall(json) { stack.api.me() } } } }
+        assertTrue(refreshing.await(10, TimeUnit.SECONDS))
+
+        val code = threads.submit<String?> { stack.codes.next() }
+        // The refresh holds the token: the code is not asked for with the one it is using up.
+        Thread.sleep(300)
+        assertNull(codeAskedWith.get())
+        release.countDown()
+
+        assertEquals("c0de", code.get(10, TimeUnit.SECONDS))
+        assertEquals("""{"refreshToken":"refresh-2"}""", codeAskedWith.get())
+        call.get(10, TimeUnit.SECONDS)
+    }
+
+    @Test
+    fun `a code refused with 401 ends the session, as a refresh refused with it does`() {
+        val held = Held(Session("access-1", "refresh-1"))
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = refused(401, "INVALID_REFRESH")
+        }
+        val stack = stack(held)
+
+        assertNull(stack.codes.next())
+        assertNull(held.session)
+        assertEquals(1, stack.ended.get())
+    }
+
+    @Test
+    fun `a code refused otherwise, or never answered, gives none and leaves the session as it was`() {
+        val answers = listOf(
+            "404 from a server without the route" to { refused(404, "NOT_FOUND") },
+            "409 SESSION_JUST_REFRESHED" to { answer("auth-refresh-used-token-at-once", 409) },
+            "429 BROWSER_CODES_USED_UP" to { refused(429, "BROWSER_CODES_USED_UP") },
+            "500" to { refused(500, "INTERNAL") },
+            "a dropped connection" to { MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST) },
+        )
+        for ((name, refusal) in answers) {
+            val held = Held(Session("access-1", "refresh-1"))
+            server.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse = refusal()
+            }
+            val stack = stack(held)
+
+            assertNull("a code after $name", stack.codes.next())
+            assertEquals("the session after $name", Session("access-1", "refresh-1"), held.session)
+            assertEquals("sessions ended after $name", 0, stack.ended.get())
+        }
+    }
+
+    @Test
+    fun `no code is asked for without a session`() {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = aCode()
+        }
+
+        assertNull(stack(Held(null)).codes.next())
+        assertEquals(0, server.requestCount)
     }
 
     @Test

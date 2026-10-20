@@ -135,6 +135,19 @@ data class AuthUser(
 data class AuthResponse(val user: AuthUser, val tokens: AuthTokens, val sessionId: String? = null)
 
 /**
+ * `POST /auth/browser-code`: the session's next pair, as a refresh gives it, and a [code] with
+ * which the web application's page signs the browser in, good for [codeExpiresIn] seconds and once.
+ */
+@Serializable
+data class BrowserCodeResponse(
+    val user: AuthUser,
+    val tokens: AuthTokens,
+    val sessionId: String? = null,
+    val code: String,
+    val codeExpiresIn: Int,
+)
+
+/**
  * `POST /auth/login` answers one of two shapes: a session ([user] and [tokens]), or, for an
  * account with two-step sign-in, a challenge ([secondFactor]) to answer with a code.
  */

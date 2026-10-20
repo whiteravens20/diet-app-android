@@ -84,7 +84,8 @@ favourites, the shopping list, the pantry, the profiles with their preferences a
 account are built on them, with tests on the JVM and journeys on emulators. What the app
 leaves to the web application (the calculator, a plan or a list as a table or printed,
 favourite sets made and changed, and the account's password, address, name, language of
-its mails, data in a file and deletion) it opens there, in the browser. Next are the
-browser signed in when the app opens it, the rules the app still works out itself taken
+its mails, data in a file and deletion) it opens there, in the browser, signed in with a
+one-time code that the page uses once its reader says the account is theirs. Next are the
+rules the app still works out itself taken
 from the API instead, the write-sync outbox described in [sync-strategy.md](sync-strategy.md),
 and notifications the app asks the server for.

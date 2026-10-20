@@ -12,7 +12,6 @@ import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.concurrent.withLock
@@ -24,9 +23,9 @@ import kotlin.concurrent.withLock
  * - only a 401 that says the token is no good (`UNAUTHORIZED`, `INVALID_ACCESS_TOKEN`) is
  *   answered with a refresh; another 401, a wrong password, is the request's own answer;
  * - the refresh is a synchronous call on a client of its own ([RefreshApiService]), one at a
- *   time: the requests that wait here hold the slots of their client, and a refresh that needed
- *   one would wait for ever. A request that waited while another refreshed takes the token that
- *   one got;
+ *   time, and in turn with the codes for the browser ([RefreshTurns]): the requests that wait
+ *   here hold the slots of their client, and a refresh that needed one would wait for ever. A
+ *   request that waited while another refreshed takes the token that one got;
  * - only a 401 to the refresh ends the session ([SessionEnd]). Any other answer, an answer that
  *   cannot be read, or none, fails the request and keeps the session for the next one.
  */
@@ -35,16 +34,15 @@ class TokenAuthenticator @Inject constructor(
     private val tokens: TokenStore,
     private val sessionEnd: SessionEnd,
     private val refreshApi: RefreshApiService,
+    private val turns: RefreshTurns,
     private val json: Json,
 ) : Authenticator {
-
-    private val lock = ReentrantLock()
 
     override fun authenticate(route: Route?, response: Response): Request? {
         if (priorAttempts(response) >= MAX_ATTEMPTS) return null
         if (refusal(response) !in TOKEN_REFUSALS) return null
         val failedToken = response.request.header("Authorization")?.removePrefix("Bearer ")
-        val freshToken = lock.withLock { tokenInstead(failedToken) } ?: return null
+        val freshToken = turns.lock.withLock { tokenInstead(failedToken) } ?: return null
         return response.request.newBuilder()
             .header("Authorization", "Bearer $freshToken")
             .build()

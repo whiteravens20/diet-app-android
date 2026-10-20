@@ -19,7 +19,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.opensInTheBrowser
+import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
@@ -27,7 +27,6 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
-import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.ui.common.formatDate
 import org.junit.Rule
 import org.junit.Test
@@ -57,7 +56,7 @@ class DashboardTest {
         // The profile is one item of the list, its sets' card at the item's end: scrolled to itself, not to the item.
         screen.onNodeWithText(text(R.string.favorite_sets_in_the_browser)).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("dashboard-favourite-sets-in-the-browser")
-        opensInTheBrowser("${webApp}dashboard") {
+        opensSignedInTheBrowser("/dashboard") {
             screen.onNodeWithText(text(R.string.web_open)).performScrollTo().performClick()
         }
 

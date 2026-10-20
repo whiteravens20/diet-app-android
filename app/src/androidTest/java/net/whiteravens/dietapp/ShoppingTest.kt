@@ -25,14 +25,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
-import net.whiteravens.dietapp.testing.opensInTheBrowser
+import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
-import net.whiteravens.dietapp.testing.webApp
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -120,7 +119,7 @@ class ShoppingTest {
         screen.onNodeWithContentDescription(text(R.string.shopping_list_options)).performClick()
         screen.onNodeWithText(text(R.string.shopping_share_text)).assertExists()
         screen.keepScreenshot("shopping-the-list-menu")
-        opensInTheBrowser("${webApp}shopping-lists") {
+        opensSignedInTheBrowser("/shopping-lists") {
             screen.onNodeWithText(text(R.string.web_table_and_print)).performClick()
         }
 

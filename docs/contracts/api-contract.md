@@ -37,7 +37,12 @@ run against an instance of that commit
 
 - Every request goes to the address the user chose, which ends in `/api/`.
 - Registering, signing in, refreshing and signing out go through a client without the access
-  token, and so does `GET /config`. Every other call carries `Authorization: Bearer <access
+  token, and so does `GET /config`. So does `POST /auth/browser-code`, the code that signs the
+  browser in when the app opens a page of the web application: it uses up the refresh token as
+  a refresh does, so the two take turns, and the pair it brings is kept as a refresh keeps it.
+  The code goes to the page `from-the-app` in the address's fragment, to the phone's default
+  browser alone where there is one; without one, on Android 10 and 11, the page opens without
+  a code. Any answer but a code opens the page itself, to be signed in to there. Every other call carries `Authorization: Bearer <access
   token>` and `Accept-Language` with the device's language.
 - A call is given half a minute, and an answer that stops coming ten seconds. The routes on
   which the API waits for an AI provider before it answers, a minute at most for a model, are

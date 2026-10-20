@@ -6,6 +6,15 @@
     <!-- Android 17 asks for it before the app reaches a server on the phone's local network. -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
 
+    <!-- The browsers, to give an address that signs one in to the default browser alone. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:name=".DietApp"
         android:allowBackup="false"

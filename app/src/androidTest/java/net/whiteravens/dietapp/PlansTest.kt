@@ -26,7 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
-import net.whiteravens.dietapp.testing.opensInTheBrowser
+import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
@@ -36,7 +36,6 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
-import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import org.junit.Assert.assertEquals
@@ -262,7 +261,7 @@ class PlansTest {
         screen.onNode(options).performClick()
         screen.waitForText(text(R.string.web_table_and_print))
         screen.keepScreenshot("plans-the-plan-menu")
-        opensInTheBrowser("${webApp}meal-plans?profile=$profileId&plan=$planId") {
+        opensSignedInTheBrowser("/meal-plans?profile=$profileId&plan=$planId") {
             screen.onNodeWithText(text(R.string.web_table_and_print)).performClick()
         }
 
