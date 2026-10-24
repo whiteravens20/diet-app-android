@@ -272,6 +272,8 @@
     <string name="plans_swap_with_pantry_hint">When on, every swap and AI-swap below prefers recipes (or substitute ingredients) the pantry can cover.</string>
     <string name="ai_fallback_quota_exhausted">Your monthly AI requests are used up — falling back to the rule-based engine.</string>
     <string name="ai_fallback_instance_quota_exhausted">This instance\'s shared AI requests for the month are used up — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_new_accounts_quota_exhausted">New accounts have used their part of this instance\'s AI requests for now — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_not_permitted">The instance\'s AI is not open to your account — falling back to the rule-based engine.</string>
     <string name="ai_fallback_no_provider">No AI provider is configured for your account — falling back to the rule-based engine.</string>
     <string name="ai_fallback_all_providers_failed">AI provider didn\'t respond — falling back to the rule-based engine.</string>
     <string name="ai_fallback_provider_timeout">AI provider was too slow — try a smaller model or a cloud provider. Falling back to the rule-based engine.</string>

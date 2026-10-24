@@ -327,6 +327,8 @@ fun emphasized(line: String, value: String): AnnotatedString {
 fun fallbackText(reason: String): String? = when (reason) {
     "quota_exhausted" -> stringResource(R.string.ai_fallback_quota_exhausted)
     "instance_quota_exhausted" -> stringResource(R.string.ai_fallback_instance_quota_exhausted)
+    "new_accounts_quota_exhausted" -> stringResource(R.string.ai_fallback_new_accounts_quota_exhausted)
+    "not_permitted" -> stringResource(R.string.ai_fallback_not_permitted)
     "no_provider" -> stringResource(R.string.ai_fallback_no_provider)
     "all_providers_failed" -> stringResource(R.string.ai_fallback_all_providers_failed)
     "provider_timeout" -> stringResource(R.string.ai_fallback_provider_timeout)
