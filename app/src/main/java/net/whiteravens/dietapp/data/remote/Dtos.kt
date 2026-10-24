@@ -70,8 +70,9 @@ data class EmailConfigDto(val enabled: Boolean = false)
 @Serializable
 data class TurnstileDto(val enabled: Boolean, val siteKey: String? = null)
 
+/** The instance's version, and how to reach whoever runs it where they published it. */
 @Serializable
-data class InstanceDto(val version: String)
+data class InstanceDto(val version: String, val operatorContact: String? = null)
 
 // ── Health (GET /health) ────────────────────────────────────────────────────
 
@@ -238,7 +239,11 @@ data class AccountSessionDto(
  * `byok`); the requests a month an account may make on the operator's provider ([limit], 0 where
  * the operator shares none), how many of them it made in the last thirty days and has left (null
  * where no allowance applies to it); when a place comes free again; whether all accounts together
- * used what the instance allows; and whether the operator set a provider up at all.
+ * used what the instance allows; whether the operator set a provider up at all; whether the account
+ * may use it (`granted` | `email_unconfirmed` | `not_approved`); and, for an account that is new,
+ * until when, and whether the new accounts used their part of the instance's allowance. An instance
+ * from before the operator chose which accounts may use its provider says none of the last three,
+ * and lets every account use it.
  */
 @Serializable
 data class AiQuotaStatusDto(
@@ -249,6 +254,9 @@ data class AiQuotaStatusDto(
     val resetAt: String?,
     val instanceLimitReached: Boolean,
     val adminProviderConfigured: Boolean,
+    val adminAccess: String = "granted",
+    val newUntil: String? = null,
+    val newAccountsLimitReached: Boolean = false,
 )
 
 /**

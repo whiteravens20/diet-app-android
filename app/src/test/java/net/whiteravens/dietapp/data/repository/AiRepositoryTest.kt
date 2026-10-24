@@ -9,6 +9,7 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.AdminAccess
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
@@ -20,6 +21,8 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
@@ -77,6 +80,8 @@ class AiRepositoryTest {
         assertEquals("/api/ai/quota", server.takeRequest().requestUrl!!.encodedPath)
         assertEquals(AiStatus("none", 40, 0, null, null, instanceLimitReached = false, adminProviderConfigured = true), off)
         assertEquals(AiStatus("admin", 40, 0, 40, null, instanceLimitReached = false, adminProviderConfigured = true), shared)
+        // An instance from before the operator chose which accounts may use its provider lets every account use it.
+        assertTrue(shared.granted)
         assertEquals(AiStatus("byok", 40, 0, null, null, instanceLimitReached = false, adminProviderConfigured = true), own)
         // While the instance has used what it allows, nothing is left of the account's own allowance, and a
         // request comes free when the instance's oldest counted one leaves the thirty days.
@@ -84,6 +89,26 @@ class AiRepositoryTest {
             AiStatus("admin", 40, 0, 0, Instant.parse("2026-11-09T22:08:02.316Z"), instanceLimitReached = true, adminProviderConfigured = true),
             usedUp,
         )
+    }
+
+    @Test
+    fun `an account the operator does not let use its provider is read as that, with until when it is new`() {
+        server.enqueue(answer(200, "ai-quota-not-approved"))
+
+        val status = runBlocking { repository().status() }
+
+        assertEquals(
+            AiStatus(
+                "admin", 40, 0, 0, null,
+                instanceLimitReached = false,
+                adminProviderConfigured = true,
+                adminAccess = AdminAccess.NOT_APPROVED,
+                newUntil = Instant.parse("2026-10-31T11:24:03.536Z"),
+                newAccountsLimitReached = false,
+            ),
+            status,
+        )
+        assertFalse(status.granted)
     }
 
     @Test

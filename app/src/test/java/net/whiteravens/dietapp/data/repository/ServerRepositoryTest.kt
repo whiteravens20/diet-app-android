@@ -92,6 +92,21 @@ class ServerRepositoryTest {
     }
 
     @Test
+    fun `whom to ask for the use of the instance's AI is kept where the operator published it`() {
+        val captured = json.parseToJsonElement(fixture("config")).jsonObject
+        val instance = captured.getValue("instance").jsonObject
+        server.enqueue(answer(fixture("config")))
+        server.enqueue(answer(JsonObject(captured + ("instance" to JsonObject(instance + ("operatorContact" to JsonPrimitive("operator@example.test"))))).toString()))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+        assertEquals(null, repository.rules.value?.operatorContact)
+        runBlocking { repository.refresh() }
+
+        assertEquals("operator@example.test", repository.rules.value?.operatorContact)
+    }
+
+    @Test
     fun `an instance that does not say how many profiles an account may have allows the API's default`() {
         val captured = json.parseToJsonElement(fixture("config")).jsonObject
         server.enqueue(answer(JsonObject(captured - "accounts" - "catalogue").toString()))

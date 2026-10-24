@@ -55,12 +55,26 @@ object AiModes {
     const val OWN = "byok"
 }
 
+/** Whether an account may use the operator's provider, as the API says it, or what it lacks for it. */
+object AdminAccess {
+    const val GRANTED = "granted"
+
+    /** The operator lets the accounts with a confirmed address use it, and this one's is not. */
+    const val EMAIL_UNCONFIRMED = "email_unconfirmed"
+
+    /** The operator lets the accounts it approved use it, and this one it has not. */
+    const val NOT_APPROVED = "not_approved"
+}
+
 /**
  * What AI the account has: the [mode] it chose (`none` | `admin` | `byok`), and the instance's
  * allowance on the operator's provider: [limit] requests a month for an account, 0 where the
  * operator shares none; [used] in the last thirty days and [remaining] (null where no allowance
  * applies); when a place comes free again ([resetAt], the instance's while [instanceLimitReached]);
- * and whether the operator set a provider up ([adminProviderConfigured]).
+ * whether the operator set a provider up ([adminProviderConfigured]); whether the operator lets the
+ * account use it ([adminAccess], an [AdminAccess]); and, for an account that is new, until when
+ * ([newUntil]), the new accounts sharing a part of the instance's allowance, which they may have
+ * used up ([newAccountsLimitReached]).
  */
 data class AiStatus(
     val mode: String,
@@ -70,10 +84,17 @@ data class AiStatus(
     val resetAt: Instant?,
     val instanceLimitReached: Boolean,
     val adminProviderConfigured: Boolean,
+    val adminAccess: String = AdminAccess.GRANTED,
+    val newUntil: Instant? = null,
+    val newAccountsLimitReached: Boolean = false,
 ) {
-    /** Whether the account may borrow the operator's provider: there is one, and it is shared. */
+    /** Whether the operator shares its provider with the accounts it lets use it: there is one, and it gives requests. */
     val shared: Boolean
         get() = adminProviderConfigured && limit > 0
+
+    /** Whether this account may use the operator's provider now. */
+    val granted: Boolean
+        get() = adminAccess == AdminAccess.GRANTED
 }
 
 /**

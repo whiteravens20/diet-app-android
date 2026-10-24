@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.AdminAccess
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -35,12 +37,14 @@ import net.whiteravens.dietapp.ui.components.AppCard
 
 /**
  * What AI the account has, as the web's settings show it: the mode it chose among those the
- * instance and its providers allow, why the instance's provider is not offered where it is not,
- * that a model can err once one is on, and, with the instance's provider, how many of the month's
- * requests were used, whether the instance has used all of its own, and when one comes free again.
+ * instance and its providers allow, why the instance's provider is not offered where it is not, or
+ * is off for this account and what it takes, with whom to ask ([contact]) where the operator
+ * approves accounts; that a model can err once one is on; and, with the instance's provider, how
+ * many of the month's requests were used, whether the instance has used all of its own, until when
+ * the account is new, and when a request comes free again.
  */
 @Composable
-internal fun AiModeCard(state: AiViewModel.UiState, onChoose: (String) -> Unit, onRetry: () -> Unit) {
+internal fun AiModeCard(state: AiViewModel.UiState, contact: String?, onChoose: (String) -> Unit, onRetry: () -> Unit) {
     AppCard(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.account_ai), style = MaterialTheme.typography.titleMedium)
         Text(
@@ -81,6 +85,8 @@ internal fun AiModeCard(state: AiViewModel.UiState, onChoose: (String) -> Unit, 
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            } else if (!status.granted) {
+                AccessNote(status.adminAccess, contact)
             }
         }
         if (mode != null && mode != AiModes.NONE) {
@@ -172,11 +178,53 @@ private fun Allowance(status: AiStatus) {
                 Text(stringResource(R.string.account_ai_instance_used_up), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             Text(
-                status.resetAt?.let { stringResource(R.string.account_ai_allowance_frees, formatMoment(it)) }
-                    ?: stringResource(R.string.account_ai_allowance_unused),
+                when {
+                    !status.granted -> stringResource(R.string.account_ai_no_access)
+                    status.resetAt != null -> stringResource(R.string.account_ai_allowance_frees, formatMoment(status.resetAt))
+                    else -> stringResource(R.string.account_ai_allowance_unused)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (status.granted && status.newUntil != null) {
+                Text(
+                    stringResource(
+                        if (status.newAccountsLimitReached) R.string.account_ai_new_accounts_used_up else R.string.account_ai_new_account,
+                        formatMoment(status.newUntil),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Why the instance's provider is off for this account, and what it takes: a confirmed address, for
+ * which the notice over every screen sends a new link, or the operator's approval, asked for at the
+ * address the operator published where there is one.
+ */
+@Composable
+private fun AccessNote(access: String, contact: String?) {
+    val uris = LocalUriHandler.current
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            stringResource(if (access == AdminAccess.EMAIL_UNCONFIRMED) R.string.account_ai_mode_admin_confirm_email else R.string.account_ai_mode_admin_not_approved),
+            style = MaterialTheme.typography.bodySmall,
+            fontStyle = FontStyle.Italic,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (access != AdminAccess.EMAIL_UNCONFIRMED) {
+            if (contact != null) {
+                TextButton(onClick = { uris.openUri("mailto:$contact") }) { Text(contact) }
+            } else {
+                Text(
+                    stringResource(R.string.account_ai_mode_admin_no_contact),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

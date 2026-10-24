@@ -70,6 +70,7 @@ fun AccountScreen(
     val aiState by ai.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
+    val operatorContact by viewModel.operatorContact.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     val web = rememberWebPages()
 
@@ -195,7 +196,7 @@ fun AccountScreen(
                     }
                 }
 
-                AiModeCard(aiState, onChoose = ai::chooseMode, onRetry = ai::load)
+                AiModeCard(aiState, operatorContact, onChoose = ai::chooseMode, onRetry = ai::load)
 
                 AiProvidersCard(
                     aiState,

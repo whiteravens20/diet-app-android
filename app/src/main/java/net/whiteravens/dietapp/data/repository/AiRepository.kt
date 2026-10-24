@@ -57,6 +57,9 @@ private fun AiQuotaStatusDto.toDomain() = AiStatus(
     resetAt = resetAt?.let(Instant::parse),
     instanceLimitReached = instanceLimitReached,
     adminProviderConfigured = adminProviderConfigured,
+    adminAccess = adminAccess,
+    newUntil = newUntil?.let(Instant::parse),
+    newAccountsLimitReached = newAccountsLimitReached,
 )
 
 private fun AiProviderConfigDto.toDomain() = AiProviderConfig(

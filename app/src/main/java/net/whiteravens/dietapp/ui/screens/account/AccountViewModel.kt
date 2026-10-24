@@ -62,6 +62,11 @@ class AccountViewModel @Inject constructor(
         .map { it?.mailsSent }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), instance.rules.value?.mailsSent)
 
+    /** How to reach whoever runs the instance, where they published it: whom to ask for the use of its AI. */
+    val operatorContact: StateFlow<String?> = instance.rules
+        .map { it?.operatorContact }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), instance.rules.value?.operatorContact)
+
     /** Effective API base URL; empty only until the first DataStore emission. */
     val serverUrl: StateFlow<String> = server.baseUrl
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")

@@ -57,8 +57,10 @@ account once you say on the page that the account it names is yours.
   the profiles, the favourites, the pantry and the account's settings: its e-mail status
   and the confirmation mail sent again, the unit body weights are shown in (the app itself
   follows the phone's language and theme), what AI it has (none, the instance's provider
-  with what is left of the month's requests, or providers of its own, each tested before
-  it is saved, its key shown as dots and never again), two-step sign-in set up with an
+  where the operator lets the account use it, with what is left of the month's requests
+  and until when the account counts as new, or what it takes where the operator does not,
+  or providers of its own, each tested before it is saved, its key shown as dots and never
+  again), two-step sign-in set up with an
   authenticator app on the phone or on another device and its recovery codes, where it is
   signed in with this phone named and one session or all signed out; the app's version,
   the server address and sign-out. Where AI is off, an action that asks a model says so and

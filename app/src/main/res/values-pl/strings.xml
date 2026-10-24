@@ -768,6 +768,9 @@
     </plurals>
     <string name="account_ai_mode_admin_unavailable">Operator nie skonfigurował domyślnego dostawcy.</string>
     <string name="account_ai_mode_admin_disabled">Operator nie udostępnił współdzielonego AI użytkownikom tej instancji.</string>
+    <string name="account_ai_mode_admin_confirm_email">Potwierdź adres e-mail, żeby korzystać z AI instancji. Nowy link możesz wysłać przy adresie, na górze ekranu konta.</string>
+    <string name="account_ai_mode_admin_not_approved">Operator udostępnia AI instancji kontom, które zatwierdzi. Napisz do operatora, żeby poprosić o dostęp:</string>
+    <string name="account_ai_mode_admin_no_contact">Ta instancja nie podała kontaktu do operatora.</string>
     <string name="account_ai_mode_byok">Użyj własnego klucza</string>
     <string name="account_ai_mode_byok_hint">Twój klucz OpenAI / Anthropic / OpenRouter lub instancja Ollama. Bez limitu — koszty zużycia po Twojej stronie.</string>
     <string name="account_ai_mode_byok_unavailable">Dodaj co najmniej jeden klucz dostawcy poniżej, zanim przełączysz się na własny klucz.</string>
@@ -784,6 +787,9 @@
     </plurals>
     <string name="account_ai_instance_used_up">Wspólna pula zapytań AI tej instancji na ten miesiąc została wykorzystana.</string>
     <string name="account_ai_allowance_frees">Następne zapytanie odblokuje się %1$s</string>
+    <string name="account_ai_no_access">AI instancji nie jest teraz dostępne dla tego konta.</string>
+    <string name="account_ai_new_account">Do %1$s to konto jest nowe: dzieli mniejszą część puli instancji z innymi nowymi kontami.</string>
+    <string name="account_ai_new_accounts_used_up">Nowe konta wykorzystały na razie swoją część puli instancji. Od %1$s to konto ma pełny limit.</string>
     <string name="account_ai_allowance_unused">Nie użyto jeszcze żadnych zapytań — licznik resetuje się 30 dni po pierwszym wywołaniu.</string>
     <string name="account_ai_providers">Dostawcy AI</string>
     <string name="account_ai_providers_body">Własne klucze do OpenAI, Anthropic, OpenRouter lub Ollama. Klucze są szyfrowane na dysku i nigdy nie są zwracane do klienta.</string>

@@ -5,7 +5,7 @@ package net.whiteravens.dietapp.domain
 /**
  * What the instance allows an account and what its catalogue holds, as `GET /config` says it: how
  * many profiles an account may have, whether it sends mail, and for each diet, at each number of
- * meals a day, how many recipes the meal it has the fewest for can choose from.
+ * meals a day, how many recipes the meal it has the fewest for can choose from; and whom to ask.
  */
 data class InstanceRules(
     val maxProfiles: Int,
@@ -14,6 +14,8 @@ data class InstanceRules(
     val mailsSent: Boolean = false,
     /** The most a recipe repeats in a plan that names no number, where the instance sets one. */
     val maxRepeatsPerRecipe: Int? = null,
+    /** How to reach whoever runs the instance, where they published it: to ask for the use of its AI. */
+    val operatorContact: String? = null,
 ) {
     /**
      * How well the catalogue serves [diet] at [mealCount] meals a day, by the meal it has the fewest

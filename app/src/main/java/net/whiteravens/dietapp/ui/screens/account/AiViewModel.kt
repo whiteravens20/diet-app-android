@@ -74,9 +74,12 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
         val ownProvider: Boolean
             get() = providers.orEmpty().any { it.enabled }
 
-        /** Whether [mode] can be chosen now: the instance's where it is shared, the account's own once it has a provider. */
+        /**
+         * Whether [mode] can be chosen now: the instance's where it is shared and the operator lets
+         * the account use it, the account's own once it has a provider.
+         */
         fun canChoose(mode: String): Boolean = choosing == null && status != null && when (mode) {
-            AiModes.INSTANCE -> status.shared
+            AiModes.INSTANCE -> status.shared && status.granted
             AiModes.OWN -> ownProvider
             else -> true
         }

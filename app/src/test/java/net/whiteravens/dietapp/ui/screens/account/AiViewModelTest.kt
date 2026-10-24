@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AdminAccess
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
@@ -261,6 +262,21 @@ class AiViewModelTest {
         model.chooseMode("admin")
 
         coVerify(exactly = 0) { users.chooseAiMode(any()) }
+    }
+
+    @Test
+    fun `the instance's mode is there and off for an account the operator does not let use it, and is not asked for`() = runTest {
+        coEvery { ai.providers() } returns emptyList()
+        coEvery { ai.status() } returns off.copy(adminAccess = AdminAccess.NOT_APPROVED)
+        val model = AiViewModel(ai, users)
+
+        assertEquals(listOf("none", "admin", "byok"), model.state.value.modes)
+        assertFalse(model.state.value.canChoose("admin"))
+        model.chooseMode("admin")
+
+        coVerify(exactly = 0) { users.chooseAiMode(any()) }
+        assertFalse(model.state.value.copy(status = off.copy(adminAccess = AdminAccess.EMAIL_UNCONFIRMED)).canChoose("admin"))
+        assertTrue(model.state.value.copy(status = off).canChoose("admin"))
     }
 
     @Test

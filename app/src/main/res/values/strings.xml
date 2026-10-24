@@ -709,6 +709,9 @@
     </plurals>
     <string name="account_ai_mode_admin_unavailable">The operator hasn\'t configured a default provider.</string>
     <string name="account_ai_mode_admin_disabled">The operator has not enabled shared AI for users on this instance.</string>
+    <string name="account_ai_mode_admin_confirm_email">Confirm your email address to use the instance\'s AI. You can send a new link next to the address, at the top of the account screen.</string>
+    <string name="account_ai_mode_admin_not_approved">The operator opens the instance\'s AI to the accounts they approve. Write to the operator to ask for it:</string>
+    <string name="account_ai_mode_admin_no_contact">This instance has published no contact.</string>
     <string name="account_ai_mode_byok">Bring your own key</string>
     <string name="account_ai_mode_byok_hint">Use your own OpenAI / Anthropic / OpenRouter key or Ollama instance. No quota — you own the cost.</string>
     <string name="account_ai_mode_byok_unavailable">Add at least one provider key below before switching to bring-your-own.</string>
@@ -723,6 +726,9 @@
     </plurals>
     <string name="account_ai_instance_used_up">This instance\'s shared AI requests for the month are used up.</string>
     <string name="account_ai_allowance_frees">Next request frees up %1$s</string>
+    <string name="account_ai_no_access">The instance\'s AI is not open to this account now.</string>
+    <string name="account_ai_new_account">Until %1$s this account is new: it shares a smaller part of the instance\'s requests with the other new accounts.</string>
+    <string name="account_ai_new_accounts_used_up">New accounts have used their part of the instance\'s requests for now. From %1$s this account has its full limit.</string>
     <string name="account_ai_allowance_unused">No requests used yet — the counter resets thirty days after your first call.</string>
     <string name="account_ai_providers">AI providers</string>
     <string name="account_ai_providers_body">Bring-your-own keys for OpenAI, Anthropic, OpenRouter or Ollama. Keys are encrypted at rest and never returned to the client.</string>
