@@ -148,7 +148,7 @@ fun difficultyLabel(code: String): String = when (code) {
 
 /**
  * What a person is shown for a failure, worded as the web application words it. A request held up
- * says for how long, where the server said; a refused form names the fields it refused; a refusal
+ * says for how long, where the server said and its refusal has no words of its own for it; a refused form names the fields it refused; a refusal
  * is said in the API's own words for its code, in the language of the app's texts
  * (contract/errors.json, written into resources by the build); a code this version has no words for
  * is shown as the API put it, which is English but says something; an answer that is not the API's
@@ -161,9 +161,19 @@ fun errorMessage(error: Throwable): String = when (error) {
     else -> stringResource(R.string.error_generic)
 }
 
+/**
+ * Refusals whose own words say what to do better than a count of minutes would: a wait of a day,
+ * and a mail that is on its way.
+ */
+private val SAYS_ITS_OWN_WAIT = setOf("TOO_MANY_SIGN_UPS", "VERIFICATION_SENT_RECENTLY")
+
+/** How long a refusal asks to wait, in seconds, to be said as a wait; null where it names none, or says it in its own words. */
+internal fun heldUpSeconds(error: ApiException): Int? =
+    error.retryAfterSeconds?.takeIf { error.statusCode == 429 && it > 0 && error.code !in SAYS_ITS_OWN_WAIT }
+
 @Composable
 private fun refusalText(error: ApiException): String {
-    val wait = error.retryAfterSeconds?.takeIf { error.statusCode == 429 && it > 0 }
+    val wait = heldUpSeconds(error)
     if (wait != null) {
         if (wait <= 90) return pluralStringResource(R.plurals.error_held_up_seconds, wait, wait)
         val minutes = (wait + 59) / 60
