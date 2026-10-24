@@ -33,7 +33,8 @@ account once you say on the page that the account it names is yours.
   is kept, and a server whose version the app was not checked against is named on the
   screen.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
-  meals per day and the target macro split; its weight log, today's weight logged in the
+  meals per day and the target macro split, each macronutrient by its share of the energy
+  and its grams; its weight log, today's weight logged in the
   account's unit and the last one taken back, with ninety days of weights drawn beside the
   mean of each seven days and the weight it works towards. A profile's favourite sets are
   made and changed in the web application, which its card opens in the browser.

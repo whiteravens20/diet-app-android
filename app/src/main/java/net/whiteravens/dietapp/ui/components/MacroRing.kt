@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.energyOf
+import net.whiteravens.dietapp.domain.energyPercents
 import androidx.compose.foundation.Canvas
 import kotlin.math.roundToInt
 
@@ -82,10 +83,11 @@ fun MacroRing(
     }
 }
 
-/** Legend row for [MacroRing]: coloured dot, macro name, grams. */
+/** Legend row for [MacroRing]: coloured dot, grams, and the macro's name with its share of the energy. */
 @Composable
 fun MacroLegend(labels: List<String>, grams: List<Double>, modifier: Modifier = Modifier) {
     val colors = macroColors()
+    val percents = energyPercents(grams)
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         labels.forEachIndexed { i, label ->
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -93,7 +95,7 @@ fun MacroLegend(labels: List<String>, grams: List<Double>, modifier: Modifier = 
                 Column(Modifier.padding(start = 6.dp)) {
                     Text("${grams[i].roundToInt()} g", style = MaterialTheme.typography.labelLarge)
                     Text(
-                        label,
+                        percents?.let { "$label · ${it[i]}%" } ?: label,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
