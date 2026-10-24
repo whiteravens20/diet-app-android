@@ -747,6 +747,10 @@
     <string name="account_resend_verification">Wyślij ponownie e-mail weryfikacyjny</string>
     <string name="account_resend_sending">Wysyłanie…</string>
     <string name="account_resend_sent">Wysłano e-mail weryfikacyjny.</string>
+    <string name="confirm_email_notice">Potwierdź adres e-mail %1$s: kliknij link z wiadomości otrzymanej na podany adres. Link jest ważny godzinę.</string>
+    <string name="confirm_email_resend">Wyślij nowy link</string>
+    <string name="confirm_email_sending">Wysyłanie…</string>
+    <string name="confirm_email_sent">Nowy link jest w drodze.</string>
     <string name="account_weight_unit">Jednostka wagi</string>
     <string name="account_weight_unit_by_region">Według mojego regionu</string>
     <string name="account_weight_unit_kg">Kilogramy</string>

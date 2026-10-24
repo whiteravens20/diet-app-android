@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,6 +62,8 @@ import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.ConfirmEmailNotice
+import net.whiteravens.dietapp.ui.components.ConfirmEmailViewModel
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.LocalBrowserCode
 import net.whiteravens.dietapp.ui.components.LocalWebApp
@@ -194,7 +197,13 @@ private val topLevelDestinations = listOf(
 )
 
 @Composable
-private fun MainScaffold(serverVersion: ServerVersion) {
+private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmailViewModel = hiltViewModel()) {
+    val confirmation by confirmEmail.state.collectAsStateWithLifecycle()
+    // Read again whenever the app comes to the front: an address confirmed in the browser takes the notice away.
+    LifecycleResumeEffect(confirmEmail) {
+        confirmEmail.load()
+        onPauseOrDispose {}
+    }
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -205,10 +214,10 @@ private fun MainScaffold(serverVersion: ServerVersion) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            ServerVersionNotice(
-                serverVersion,
-                Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+            Column(Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+                ServerVersionNotice(serverVersion, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                ConfirmEmailNotice(confirmation, onResend = confirmEmail::resend, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            }
         },
         bottomBar = {
             if (onTopLevel) {

@@ -64,7 +64,8 @@ account once you say on the page that the account it names is yours.
   authenticator app on the phone or on another device and its recovery codes, where it is
   signed in with this phone named and one session or all signed out; the app's version,
   the server address and sign-out. Where AI is off, an action that asks a model says so and
-  leads to these settings. The calculator, and the account's password, address, name, the
+  leads to these settings. An address not yet confirmed is said over every screen, on an
+  instance that sends mail, with a button that sends the link again. The calculator, and the account's password, address, name, the
   language of its mails, its theme and palette, its data in a file and its deletion, are
   the web application's, which More and the account's settings open in the browser.
 - **Favourites.** The recipes a profile marked as a favourite, as eaten often or to avoid,

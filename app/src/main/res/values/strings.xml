@@ -690,6 +690,10 @@
     <string name="account_resend_verification">Resend verification email</string>
     <string name="account_resend_sending">Sending…</string>
     <string name="account_resend_sent">Verification email sent.</string>
+    <string name="confirm_email_notice">Confirm your email address %1$s: follow the link in the message received at that address. A link lasts an hour.</string>
+    <string name="confirm_email_resend">Send a new link</string>
+    <string name="confirm_email_sending">Sending…</string>
+    <string name="confirm_email_sent">A new link is on its way.</string>
     <string name="account_weight_unit">Weight unit</string>
     <string name="account_weight_unit_by_region">By where I am</string>
     <string name="account_weight_unit_kg">Kilograms</string>
