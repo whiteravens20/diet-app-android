@@ -6,6 +6,9 @@
 # emulator reaches as 10.0.2.2:4000. Then it loads the catalogue through the admin API, as an
 # administrator does after an installation, so that plans can be made.
 #
+# Every account the tests make may use the operator's AI provider, and none counts as new: the
+# journeys switch fresh accounts to it, and what the operator allows them is not what they test.
+#
 # Usage: .github/scripts/start-diet-app.sh <empty directory> [<commit> <tag of an image built here>]
 # `docker compose --env-file .env -f docker-compose.yml -f api-port.yml logs` in that
 # directory shows what the instance did.
@@ -31,6 +34,8 @@ sed -e "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=$(openssl rand -hex 32)|" \
     -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" \
     -e "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=$admin_password|" \
     -e "s|^IMAGE_TAG=.*|IMAGE_TAG=$DIET_APP_IMAGE_TAG|" \
+    -e "s|^AI_ADMIN_ACCESS=.*|AI_ADMIN_ACCESS=everyone|" \
+    -e "s|^AI_ADMIN_NEW_ACCOUNT_DAYS=.*|AI_ADMIN_NEW_ACCOUNT_DAYS=0|" \
     .env.example > .env
 
 cat > api-port.yml <<'YAML'

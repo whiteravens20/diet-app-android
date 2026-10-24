@@ -98,6 +98,15 @@
       "pl": "Skończył się Twój miesięczny limit zapytań AI."
     }
   },
+  "AI_NEW_ACCOUNTS_LIMIT_REACHED": {
+    "statuses": [
+      403
+    ],
+    "messages": {
+      "en": "New accounts have used their part of this instance's AI requests for now. Once your account is no longer new, it has its full limit.",
+      "pl": "Nowe konta wykorzystały na razie swoją część zapytań AI tej instancji. Gdy konto przestanie być nowe, dostanie pełny limit."
+    }
+  },
   "AI_NOT_CONFIGURED": {
     "statuses": [
       409
@@ -105,6 +114,15 @@
     "messages": {
       "en": "No AI provider is set up for your account — choose one in Settings.",
       "pl": "Nie masz skonfigurowanego dostawcy AI — wybierz go w Ustawieniach."
+    }
+  },
+  "AI_NOT_PERMITTED": {
+    "statuses": [
+      403
+    ],
+    "messages": {
+      "en": "The instance's AI is not open to your account.",
+      "pl": "AI instancji nie jest dostępne dla Twojego konta."
     }
   },
   "AI_PROVIDER_TIMEOUT": {
@@ -1214,6 +1232,15 @@
     "messages": {
       "en": "Too many failed sign-ins. Wait a moment before you try again.",
       "pl": "Zbyt wiele nieudanych prób logowania. Odczekaj chwilę, zanim spróbujesz ponownie."
+    }
+  },
+  "TOO_MANY_SIGN_UPS": {
+    "statuses": [
+      429
+    ],
+    "messages": {
+      "en": "This address has opened as many accounts as it may in a day. Try again later, at most a day from now.",
+      "pl": "Z tego adresu założono już tyle kont, ile można w ciągu doby. Spróbuj ponownie później, najpóźniej za dobę."
     }
   },
   "TRANSLATIONS_IN_PROGRESS": {
