@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.energyOf
 import androidx.compose.foundation.Canvas
 import kotlin.math.roundToInt
 
@@ -38,8 +39,8 @@ fun macroColors(): List<Color> = listOf(
 )
 
 /**
- * Donut of the protein / fat / carb split (grams) with the calorie total in
- * the middle — the Compose take on the web dashboard's pie chart.
+ * Donut of the protein / fat / carb split of the energy, as a profile's split is set, with the
+ * calorie total in the middle: the Compose take on the web dashboard's ring.
  */
 @Composable
 fun MacroRing(
@@ -50,7 +51,7 @@ fun MacroRing(
     strokeWidth: Dp = 16.dp,
 ) {
     val colors = macroColors()
-    val values = listOf(nutrition.protein, nutrition.fat, nutrition.carbs)
+    val values = energyOf(listOf(nutrition.protein, nutrition.fat, nutrition.carbs))
     val total = values.sum().takeIf { it > 0 } ?: 1.0
     val track = MaterialTheme.colorScheme.surfaceVariant
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
