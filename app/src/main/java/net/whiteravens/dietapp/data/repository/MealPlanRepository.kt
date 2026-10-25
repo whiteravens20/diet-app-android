@@ -367,7 +367,7 @@ class MealPlanRepository @Inject constructor(
         kept(apiCall(json) { api.setMealEaten(planId, mealId, SetMealEatenRequest(eaten)) })
 
     /** Adds a meal of the user's own to the day of [date] (yyyy-MM-dd); the day is balanced around it. */
-    suspend fun addCustomMeal(planId: String, date: String, meal: CustomMeal): Rebalanced = kept(
+    suspend fun addCustomMeal(planId: String, date: String, meal: CustomMeal, replaces: String? = null): Rebalanced = kept(
         apiCall(json) {
             api.addCustomMeal(
                 planId,
@@ -377,10 +377,14 @@ class MealPlanRepository @Inject constructor(
                     mealType = meal.slot,
                     nutrition = NutritionDto(meal.perServing.calories, meal.perServing.protein, meal.perServing.fat, meal.perServing.carbs),
                     servings = meal.servings,
+                    replaces = replaces,
                 ),
             )
         },
     )
+
+    /** Takes a meal off its day, whichever it is; the day is balanced again without it. */
+    suspend fun removeMeal(planId: String, mealId: String): Rebalanced = kept(apiCall(json) { api.removeMeal(planId, mealId) })
 
     /**
      * Spreads what the days from [from] (yyyy-MM-dd; today where it is left out) are off their targets

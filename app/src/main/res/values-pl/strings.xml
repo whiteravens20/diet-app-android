@@ -1244,6 +1244,16 @@
     <string name="plans_spread">Rozłóż na resztę planu</string>
     <string name="plans_spread_note_over">Porcje pozostałych dni planu, od dziś do jego końca, zmniejszą się, każdy dzień najwyżej o jedną dziesiątą swojego celu. Dni minione, pominięte i zjedzone posiłki zostają bez zmian.</string>
     <string name="plans_spread_note_under">Porcje pozostałych dni planu, od dziś do jego końca, zwiększą się, każdy dzień najwyżej o jedną dziesiątą swojego celu. Dni minione, pominięte i zjedzone posiłki zostają bez zmian.</string>
+    <string name="plans_remove">Usuń z dnia</string>
+    <string name="plans_remove_title">Usunąć z dnia: %1$s?</string>
+    <string name="plans_remove_note">Posiłek zniknie z tego dnia. Porcje pozostałych niezjedzonych posiłków dnia dopasują się do jego celu, a inne dni zostaną bez zmian.</string>
+    <string name="plans_remove_note_eaten">Ten posiłek jest oznaczony jako zjedzony: zniknie z dnia razem z tym, co wnosi do jego bilansu. Porcje pozostałych niezjedzonych posiłków dnia dopasują się do celu, a inne dni zostaną bez zmian.</string>
+    <string name="plans_remove_confirm">Usuń</string>
+    <string name="plans_custom_place">Miejsce w dniu</string>
+    <string name="plans_custom_beside">Obok posiłków dnia</string>
+    <string name="plans_custom_instead">Zamiast: %1$s · %2$s</string>
+    <string name="plans_custom_beside_note">Posiłek dojdzie do dnia, a porcje jego niezjedzonych posiłków zmniejszą się, żeby dzień został przy swoim celu. Zmniejszą się też posiłki zjedzone, ale nieoznaczone, więc najpierw oznacz to, co już zjedzone. Inne dni się nie zmieniają.</string>
+    <string name="plans_custom_instead_note">Wybrany posiłek zniknie z dnia, a ten zajmie jego miejsce. Porcje pozostałych niezjedzonych posiłków dopasują się do celu dnia. Inne dni się nie zmieniają.</string>
     <string name="plans_rebalance_rest">Rozłóż na resztę planu</string>
     <string name="plans_rebalance_rest_note">Rozłożenie zmienia porcje pozostałych dni planu, od dziś do jego końca, każdego najwyżej o jedną dziesiątą jego celu.</string>
     <string name="plans_rebalance_title_plan">Rozłożono na resztę planu</string>

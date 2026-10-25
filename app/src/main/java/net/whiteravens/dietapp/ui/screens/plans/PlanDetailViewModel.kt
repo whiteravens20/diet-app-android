@@ -198,8 +198,11 @@ class PlanDetailViewModel @Inject constructor(
 
     fun setEaten(mealId: String, eaten: Boolean) = change { plans.setEaten(planId, mealId, eaten) }
 
-    /** Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd). */
-    fun addCustomMeal(date: String, meal: CustomMeal) = change { plans.addCustomMeal(planId, date, meal) }
+    /** Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd), beside its meals or in the place of the meal [replaces]. */
+    fun addCustomMeal(date: String, meal: CustomMeal, replaces: String? = null) = change { plans.addCustomMeal(planId, date, meal, replaces) }
+
+    /** Takes a meal off its day. */
+    fun removeMeal(mealId: String) = change { plans.removeMeal(planId, mealId) }
 
     /** Puts the meals the last change scaled back as they were. */
     fun undoRebalance() {

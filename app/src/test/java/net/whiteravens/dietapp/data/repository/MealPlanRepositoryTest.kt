@@ -226,6 +226,24 @@ class MealPlanRepositoryTest {
         assertEquals("lunch", meal.getValue("mealType").jsonPrimitive.content)
         assertEquals(300.0, meal.getValue("nutrition").jsonObject.getValue("calories").jsonPrimitive.double, 0.0)
         assertEquals(1.5, meal.getValue("servings").jsonPrimitive.double, 0.0)
+        assertFalse("a meal beside the day's names none it is eaten in the place of", "replaces" in meal)
+    }
+
+    @Test
+    fun `a meal of one's own in the place of another names it, and a meal taken off its day is deleted by its path`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.0), replaces = "meal-1")
+            plans.removeMeal("plan-1", "meal-2")
+        }
+
+        assertEquals("meal-1", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("replaces").jsonPrimitive.content)
+        val removed = server.takeRequest()
+        assertEquals("DELETE", removed.method)
+        assertEquals("/api/meal-plans/plan-1/meals/meal-2", removed.path)
     }
 
     @Test

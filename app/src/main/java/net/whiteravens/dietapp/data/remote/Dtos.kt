@@ -1266,7 +1266,14 @@ data class SetMealEatenRequest(val eaten: Boolean)
 
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
 @Serializable
-data class AddCustomMealRequest(val name: String, val mealType: String, val nutrition: NutritionDto, val servings: Double)
+data class AddCustomMealRequest(
+    val name: String,
+    val mealType: String,
+    val nutrition: NutritionDto,
+    val servings: Double,
+    /** A meal of the same day this one is eaten in the place of: it leaves the day. */
+    val replaces: String? = null,
+)
 
 /** A meal's scale put back as it was. */
 @Serializable

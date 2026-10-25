@@ -243,6 +243,10 @@ interface DietApiService {
     @POST("meal-plans/{id}/days/{dayId}/regenerate")
     suspend fun regenerateDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: RegenerateRequest): MealPlanDto
 
+    /** Takes a meal off its day; the day is balanced again without it. */
+    @DELETE("meal-plans/{id}/meals/{mealId}")
+    suspend fun removeMeal(@Path("id") id: String, @Path("mealId") mealId: String): RebalanceResultDto
+
     /** Takes one of the ways a day was offered. */
     @POST("meal-plans/{id}/days/{dayId}/variations/take")
     suspend fun takeDayVariation(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: TakeDayVariationRequest): MealPlanDto

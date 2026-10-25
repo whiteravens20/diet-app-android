@@ -146,11 +146,31 @@ fun PlanDetailScreen(
     addingTo?.let { date ->
         CustomMealDialog(
             date = date,
-            onAdd = { meal ->
+            meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty(),
+            onAdd = { meal, replaces ->
                 addingTo = null
-                viewModel.addCustomMeal(date, meal)
+                viewModel.addCustomMeal(date, meal, replaces)
             },
             onDismiss = { addingTo = null },
+        )
+    }
+
+    // The meal whose removal from its day is to be confirmed, with what it does said in the window.
+    var removing by rememberSaveable { mutableStateOf<String?>(null) }
+    plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == removing }?.let { meal ->
+        AlertDialog(
+            onDismissRequest = { removing = null },
+            title = { Text(stringResource(R.string.plans_remove_title, mealName(meal))) },
+            text = { Text(stringResource(if (meal.eaten) R.string.plans_remove_note_eaten else R.string.plans_remove_note)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        removing = null
+                        viewModel.removeMeal(meal.id)
+                    },
+                ) { Text(stringResource(R.string.plans_remove_confirm), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 
@@ -381,6 +401,7 @@ fun PlanDetailScreen(
                     onChange = { how -> viewModel.offerSwap(meal.id, how) },
                     onPickFavorite = { pickingFor = meal.id },
                     onSubstitute = { substitutingIn = meal.id },
+                    onRemove = { removing = meal.id },
                     onOpen = { openMealId = meal.id },
                 )
             }
@@ -731,6 +752,7 @@ private fun MealCard(
     onChange: (SwapAsk) -> Unit,
     onPickFavorite: () -> Unit,
     onSubstitute: () -> Unit,
+    onRemove: () -> Unit,
     onOpen: () -> Unit,
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
@@ -774,8 +796,8 @@ private fun MealCard(
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else if (!readOnly && !meal.eaten && !meal.custom) {
-                MealChanges(meal, busy, aiOn, onChange, onPickFavorite, onSubstitute)
+            } else if (!readOnly) {
+                MealChanges(meal, busy, aiOn, canSwap = !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
             }
         }
     }
@@ -879,12 +901,15 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
 
 /**
  * A meal of the user's own added to a day: its name, its time of day, what one serving holds and
- * how many servings it is. What that adds to the day is shown before anything is sent, so that
- * nobody types the whole meal as one serving of several.
+ * how many servings it is, and whether it comes beside the day's [meals] or in the place of one of
+ * them. What that adds to the day, and what it does to the day's other meals, is shown before
+ * anything is sent, so that nobody types the whole meal as one serving of several.
  */
 @Composable
-private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismiss: () -> Unit) {
+private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal, replaces: String?) -> Unit, onDismiss: () -> Unit) {
     var form by rememberSaveable(stateSaver = CustomMealFormSaver) { mutableStateOf(CustomMealForm()) }
+    // The meal of the day this one is eaten in the place of; none for one beside them.
+    var replaces by rememberSaveable { mutableStateOf<String?>(null) }
     var showProblems by rememberSaveable { mutableStateOf(false) }
     val problems = if (showProblems) form.problems() else emptySet()
     @Composable
@@ -926,6 +951,16 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
                     optionLabel = { mealTypeLabel(it) },
                     onSelect = { slot -> form = form.copy(slot = slot) },
                 )
+                ChoiceField(
+                    label = stringResource(R.string.plans_custom_place),
+                    options = listOf<String?>(null) + meals.map { it.id },
+                    selected = replaces,
+                    optionLabel = { id ->
+                        meals.firstOrNull { it.id == id }?.let { meal -> stringResource(R.string.plans_custom_instead, mealTypeLabel(meal.slot), mealName(meal)) }
+                            ?: stringResource(R.string.plans_custom_beside)
+                    },
+                    onSelect = { id -> replaces = id },
+                )
                 Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
                 Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, CustomMealBounds.CALORIES, { f, v -> f.copy(calories = v) })
                 Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, CustomMealBounds.PROTEIN, { f, v -> f.copy(protein = v) })
@@ -955,13 +990,19 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
+                // What adding it does to the day, said before it is added.
+                Text(
+                    stringResource(if (replaces != null) R.string.plans_custom_instead_note else R.string.plans_custom_beside_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
                 Button(
                     onClick = {
                         val meal = form.meal()
-                        if (meal != null) onAdd(meal) else showProblems = true
+                        if (meal != null) onAdd(meal, replaces) else showProblems = true
                     },
                 ) { Text(stringResource(R.string.plans_custom_submit)) }
             }
@@ -973,10 +1014,19 @@ private fun CustomMealDialog(date: String, onAdd: (CustomMeal) -> Unit, onDismis
  * The ways to change a meal, behind one button named by the meal, as the web folds them on a narrow
  * screen: any recipe of the plan's diet, a favourite picked by hand, a model's pick (off, and saying
  * why, on an account without a model), one with the profile's favourite ingredients, or one of its
- * ingredients substituted.
+ * ingredients substituted, where it [canSwap]; and taking it off its day, whichever it is.
  */
 @Composable
-private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (SwapAsk) -> Unit, onPickFavorite: () -> Unit, onSubstitute: () -> Unit) {
+private fun MealChanges(
+    meal: Meal,
+    busy: Boolean,
+    aiOn: Boolean,
+    canSwap: Boolean,
+    onChange: (SwapAsk) -> Unit,
+    onPickFavorite: () -> Unit,
+    onSubstitute: () -> Unit,
+    onRemove: () -> Unit,
+) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }, enabled = !busy) {
@@ -991,15 +1041,18 @@ private fun MealChanges(meal: Meal, busy: Boolean, aiOn: Boolean, onChange: (Swa
                 open = false
                 action()
             }
-            Change(stringResource(R.string.plans_swap), null) { pick { onChange(SwapAsk("random")) } }
-            Change("${stringResource(R.string.plans_swap_to_fav)} ★", stringResource(R.string.plans_tooltip_swap_to_fav)) { pick(onPickFavorite) }
-            Change(
-                stringResource(R.string.plans_ai_swap),
-                if (aiOn) stringResource(R.string.plans_tooltip_ai_swap) else aiOffText(),
-                enabled = aiOn,
-            ) { pick { onChange(SwapAsk("ai")) } }
-            Change(stringResource(R.string.plans_swap_fav_ingr), stringResource(R.string.plans_tooltip_swap_by_fav)) { pick { onChange(SwapAsk("favorite_ingredients")) } }
-            Change("${stringResource(R.string.plans_substitute_ingr)} ⇄", stringResource(R.string.plans_tooltip_substitute)) { pick(onSubstitute) }
+            if (canSwap) {
+                Change(stringResource(R.string.plans_swap), null) { pick { onChange(SwapAsk("random")) } }
+                Change("${stringResource(R.string.plans_swap_to_fav)} ★", stringResource(R.string.plans_tooltip_swap_to_fav)) { pick(onPickFavorite) }
+                Change(
+                    stringResource(R.string.plans_ai_swap),
+                    if (aiOn) stringResource(R.string.plans_tooltip_ai_swap) else aiOffText(),
+                    enabled = aiOn,
+                ) { pick { onChange(SwapAsk("ai")) } }
+                Change(stringResource(R.string.plans_swap_fav_ingr), stringResource(R.string.plans_tooltip_swap_by_fav)) { pick { onChange(SwapAsk("favorite_ingredients")) } }
+                Change("${stringResource(R.string.plans_substitute_ingr)} ⇄", stringResource(R.string.plans_tooltip_substitute)) { pick(onSubstitute) }
+            }
+            Change(stringResource(R.string.plans_remove), null) { pick(onRemove) }
         }
     }
 }
