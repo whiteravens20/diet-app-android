@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
@@ -70,7 +71,8 @@ class OfflineTest {
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
         screen.scrollToText(title)
-        screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+        // The way back is at the top of the plan, which the meals may have scrolled out of view.
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
         screen.scrollToText(card, substring = true)
 
         // Opened again without it: the copy, said to be one, with its meals.
