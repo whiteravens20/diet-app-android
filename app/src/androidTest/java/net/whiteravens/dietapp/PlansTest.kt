@@ -106,6 +106,15 @@ class PlansTest {
         screen.waitForTheApi(60_000) { Instance.planRevision(account, planId) > remade }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
 
+        // Opened again on the day, the window offers ways anew and stays open: it does not hand back the way it took.
+        screen.scrollToText(text(R.string.plans_other_ways))
+        screen.onNodeWithText(text(R.string.plans_other_ways)).performClick()
+        screen.waitForText(text(R.string.plans_ways_take), timeoutMillis = 60_000)
+        screen.waitForIdle()
+        assertTrue(screen.onAllNodes(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty())
+        screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
+
         // The first meal of the first day is swapped from the ways to change it, named by the meal:
         // one offer is put away for another, which is taken.
         val before = Instance.firstDayRecipes(account, planId)
@@ -319,6 +328,47 @@ class PlansTest {
         screen.keepScreenshot("plans-a-meal-taken-off-its-day")
         screen.onNode(hasText(text(R.string.plans_remove_confirm)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi(20_000) { Instance.firstDay(account, planId).second.size == wanted - 1 }
+    }
+
+    @Test
+    fun anIngredientIsSubstitutedAndItsWindowOpenedAgainOnTheMealStartsAnew() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 1)
+        val found = Instance.substitutableMeal(account, planId)
+        assumeTrue("The plan has no meal with a substitute that moves nothing of a serving.", found != null)
+        val (title, line, substitute) = found!!
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.nav_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The line leaves for what the catalogue suggests, which moves nothing of a serving.
+        val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), title))
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNodeWithText("${text(R.string.plans_substitute_ingr)} ⇄").performClick()
+        screen.waitForText(text(R.string.substitute_step_pick))
+        screen.onNode(hasText(line) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForText(text(R.string.substitute_catalogue_suggests))
+        screen.onAllNodes(hasText(substitute) and hasClickAction() and hasAnyAncestor(isDialog()))[0].performClick()
+        screen.waitForEnabled(text(R.string.substitute_apply))
+        val before = Instance.planRevision(account, planId)
+        screen.onNode(hasText(text(R.string.substitute_apply)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { Instance.planRevision(account, planId) > before }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }
+        putAwayRebalance()
+
+        // Opened again on the meal, the window starts anew and stays open: it does not hand back the substitution it made.
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNodeWithText("${text(R.string.plans_substitute_ingr)} ⇄").performClick()
+        screen.waitForText(text(R.string.substitute_step_pick))
+        screen.waitForIdle()
+        assertTrue(screen.onAllNodes(hasText(text(R.string.substitute_step_pick)) and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty())
+        screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
     }
 
     @Test

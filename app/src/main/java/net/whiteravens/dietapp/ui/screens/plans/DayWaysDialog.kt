@@ -66,8 +66,10 @@ fun DayWaysDialog(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(day.id) { viewModel.open(planId, day.id) }
-    LaunchedEffect(state.taken) { state.taken?.let(onTaken) }
-    LaunchedEffect(state.stale) { if (state.stale) onStale() }
+    // The window's model outlives it: what the model holds now is read, so that a way an earlier
+    // opening on the same day took is not handed back before the state on the screen catches up.
+    LaunchedEffect(state.taken) { viewModel.state.value.taken?.let(onTaken) }
+    LaunchedEffect(state.stale) { if (viewModel.state.value.stale) onStale() }
 
     ScreenDialog(onDismiss) {
         Column(

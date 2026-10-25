@@ -69,7 +69,9 @@ fun SubstituteDialog(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(meal.id) { viewModel.open(planId, meal.id) }
-    LaunchedEffect(state.done) { state.done?.let(onApplied) }
+    // The window's model outlives it: what the model holds now is read, so that a substitution an
+    // earlier opening on the same meal made is not handed back before the state on the screen catches up.
+    LaunchedEffect(state.done) { viewModel.state.value.done?.let(onApplied) }
 
     ScreenDialog(onDismiss) {
         Column(
