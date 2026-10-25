@@ -808,11 +808,67 @@ data class MealPlanDayDto(
     val calorieDelta: Double,
     /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
     val offTarget: String? = null,
-    /** The user skips the day: no meals, no shortfall, left out of the plan's averages. */
+    /** The user skips the day: no shortfall, left out of the plan's averages; what was eaten of it stays. */
     val skipped: Boolean,
     /** A target somebody typed has put the day under the lowest a calculated plan goes. */
     val belowSafetyFloor: Boolean,
     val overrides: MealPlanDayOverridesDto? = null,
+    /** How many meals the day is set for; none from an instance whose days have no settings to change. */
+    val mealCount: Int? = null,
+)
+
+/** The settings of a day of a running plan, as POST `.../settings/preview` and PUT `.../settings` take them. */
+@Serializable
+data class DaySettingsDto(
+    /** `normal` | `rest` | `training`. */
+    val dayType: String,
+    val skip: Boolean,
+    val mealCount: Int,
+    /** A target of the day's own; null for the one its kind gives. Sent null as null: the API requires it. */
+    val calorieTarget: Int?,
+    /** The most minutes a recipe of the day may take; null for no limit. Sent null as null too. */
+    val cookTimeBudgetMinutes: Int?,
+    val useUpBy: Boolean,
+    /** The plan's revision the preview was for: sent with the change, not with the preview. */
+    val revision: Int? = null,
+    /** The limits that may give way where the day's recipes cannot be drawn inside them. */
+    val allowRelaxations: List<String>? = null,
+)
+
+/** What a change of a day's settings does to one of its meals, and why. */
+@Serializable
+data class DayMealFateDto(
+    val mealId: String,
+    val mealType: String,
+    /** `stays` | `resized` | `redrawn` | `removed`. */
+    val fate: String,
+    /** `eaten` | `own` | `fewer_meals` | `skipped` | `over_cook_time` | `use_up`; null where the day's new target or number of meals says it. */
+    val because: String? = null,
+)
+
+/** A pair of numbers: as a day has it now, and as the change would make it. */
+@Serializable
+data class NowThenDto(val now: Double, val then: Double)
+
+@Serializable
+data class NowThenMacrosDto(val now: MacrosDto, val then: MacrosDto)
+
+/** POST `/meal-plans/:id/days/:dayId/settings/preview`: what a change of the day's settings would do. Nothing is written. */
+@Serializable
+data class DaySettingsPreviewDto(
+    val revision: Int,
+    val date: String,
+    val calorieTarget: NowThenDto,
+    val targetMacros: NowThenMacrosDto,
+    val belowSafetyFloor: Boolean,
+    val meals: List<DayMealFateDto>,
+    /** The meals the day would gain, in the order they are eaten. */
+    val added: List<String>,
+    /** What the day would hold where no recipe is drawn; null where recipes are. */
+    val dayCalories: Double? = null,
+    val fits: Boolean? = null,
+    val listOutOfDate: Boolean,
+    val unchanged: Boolean,
 )
 
 @Serializable

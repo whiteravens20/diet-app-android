@@ -206,6 +206,13 @@ object Instance {
         return (0 until meals.length()).map { meals.getJSONObject(it) }.filter { it.getString("source") == "USER_CUSTOM" }.map { it.getString("customName") }
     }
 
+    /** The first day of a plan: how many meals it is set for, and the times of day of the meals it holds. */
+    fun firstDay(account: Account, planId: String): Pair<Int, List<String>> {
+        val day = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0)
+        val meals = day.getJSONArray("meals")
+        return day.getInt("mealCount") to (0 until meals.length()).map { meals.getJSONObject(it).getString("mealType") }
+    }
+
     /** Whether a plan's menu leaves more than a fifth of a pack that does not keep once opened. */
     fun wastesAPack(account: Account, planId: String): Boolean {
         val open = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("packs").getJSONArray("open")

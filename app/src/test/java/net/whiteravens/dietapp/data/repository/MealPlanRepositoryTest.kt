@@ -23,6 +23,8 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.DaySettings
+import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.Rebalance
@@ -264,6 +266,34 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `what a day's settings do is asked without a revision, and the change is sent with it and kept on the phone`() {
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(DAY_SETTINGS_PREVIEW))
+        server.enqueue(answer("meal-plan"))
+        val cache = Cache()
+        val plans = repository(cache)
+        val settings = DaySettings(dayType = "training", mealCount = 4)
+
+        val preview = runBlocking { plans.previewDaySettings("plan-1", "day-1", settings) }
+        val saved = runBlocking { plans.applyDaySettings("plan-1", "day-1", settings, preview.revision, listOf("cook_time")) }
+
+        val asked = server.takeRequest()
+        assertEquals("POST", asked.method)
+        assertEquals("/api/meal-plans/plan-1/days/day-1/settings/preview", asked.path)
+        assertFalse("revision" in json.parseToJsonElement(asked.body.readUtf8()).jsonObject)
+        val changed = server.takeRequest()
+        assertEquals("PUT", changed.method)
+        assertEquals("/api/meal-plans/plan-1/days/day-1/settings", changed.path)
+        val body = json.parseToJsonElement(changed.body.readUtf8()).jsonObject
+        assertEquals(7, body.getValue("revision").jsonPrimitive.int)
+        assertEquals(listOf("cook_time"), body.getValue("allowRelaxations").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf(saved.id), cache.plans.map { it.id })
+        assertEquals(listOf(MealFate("meal-1", "lunch", "redrawn", "over_cook_time")), preview.meals)
+        assertEquals(listOf("snack"), preview.added)
+        assertEquals(2300.0, preview.targetThen, 0.0)
+        assertNull("no day's total is said before its new recipes are drawn", preview.dayCalories)
+    }
+
+    @Test
     fun `a deleted plan leaves no copy on the phone of itself, of its shopping lists or of its profile's list`() {
         server.enqueue(MockResponse().setResponseCode(204))
         val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan")).toDomain()
@@ -487,5 +517,13 @@ class MealPlanRepositoryTest {
             json.parseToJsonElement(applied.body.readUtf8()),
         )
         assertEquals(listOf(plan.id), cache.plans.map { it.id })
+    }
+
+    private companion object {
+        /** A change of a day's settings that redraws its lunch and gives it a snack, as POST `.../settings/preview` answers it. */
+        const val DAY_SETTINGS_PREVIEW = """{"revision":7,"date":"2026-10-26","calorieTarget":{"now":2000,"then":2300},""" +
+            """"targetMacros":{"now":{"protein":125,"fat":67,"carbs":225},"then":{"protein":144,"fat":77,"carbs":259}},"belowSafetyFloor":false,""" +
+            """"meals":[{"mealId":"meal-1","mealType":"lunch","fate":"redrawn","because":"over_cook_time"}],"added":["snack"],""" +
+            """"dayCalories":null,"fits":null,"listOutOfDate":false,"unchanged":false}"""
     }
 }

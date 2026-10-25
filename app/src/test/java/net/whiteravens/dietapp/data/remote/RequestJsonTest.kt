@@ -62,6 +62,17 @@ class RequestJsonTest {
     }
 
     @Test
+    fun `a day's settings send a target and a limit it has none of as null, and the revision with a change only`() {
+        val asked = written(DaySettingsDto(dayType = "normal", skip = false, mealCount = 3, calorieTarget = null, cookTimeBudgetMinutes = null, useUpBy = false))
+        val changed = written(DaySettingsDto(dayType = "training", skip = false, mealCount = 4, calorieTarget = null, cookTimeBudgetMinutes = 30, useUpBy = false, revision = 7))
+
+        assertEquals(setOf("dayType", "skip", "mealCount", "calorieTarget", "cookTimeBudgetMinutes", "useUpBy"), asked.keys)
+        assertEquals(JsonNull, asked["calorieTarget"])
+        assertEquals(JsonNull, asked["cookTimeBudgetMinutes"])
+        assertEquals(setOf("dayType", "skip", "mealCount", "calorieTarget", "cookTimeBudgetMinutes", "useUpBy", "revision"), changed.keys)
+    }
+
+    @Test
     fun `an optional field the app leaves unset is not sent`() {
         assertEquals(setOf("email", "password"), written(LoginRequest("ala@example.test", "A-long-password-1")).keys)
         assertEquals(setOf("allergens"), written(ProfilePreferencesPatchDto(allergens = listOf("gluten"))).keys)

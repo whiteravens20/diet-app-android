@@ -40,8 +40,11 @@ account once you say on the page that the account it names is yours.
   made and changed in the web application, which its card opens in the browser.
 - **Meal plans.** The plans of a profile and a month of them as a calendar, a new plan
   generated from the phone, each plan day by day with its totals, a meal swapped for
-  another recipe, and a favourite set put on days of the plan. The plan as a table or
-  printed is the web application's, which the plan's menu opens in the browser.
+  another recipe, and a favourite set put on days of the plan. A day under way can be set
+  apart (a training or rest day, skipped, another number of meals, a target of its own),
+  with what that does said before it is saved, and a meal taken off its day or replaced by
+  one of your own. The plan as a table or printed is the web application's, which the
+  plan's menu opens in the browser.
 - **Recipes.** Search in the recipe library; a recipe with its nutrition per serving,
   ingredients and steps, put among a profile's favourites from its view, and the
   ingredients of its lines marked as a profile's favourites or as ones it avoids.

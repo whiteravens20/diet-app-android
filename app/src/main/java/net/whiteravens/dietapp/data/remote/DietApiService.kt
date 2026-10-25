@@ -243,6 +243,14 @@ interface DietApiService {
     @POST("meal-plans/{id}/days/{dayId}/regenerate")
     suspend fun regenerateDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: RegenerateRequest): MealPlanDto
 
+    /** What a change of the settings of a day would do. Nothing is written. */
+    @POST("meal-plans/{id}/days/{dayId}/settings/preview")
+    suspend fun previewDaySettings(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: DaySettingsDto): DaySettingsPreviewDto
+
+    /** Changes the settings of a day, on the plan at the preview's revision. */
+    @PUT("meal-plans/{id}/days/{dayId}/settings")
+    suspend fun applyDaySettings(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: DaySettingsDto): MealPlanDto
+
     /** Takes a meal off its day; the day is balanced again without it. */
     @DELETE("meal-plans/{id}/meals/{mealId}")
     suspend fun removeMeal(@Path("id") id: String, @Path("mealId") mealId: String): RebalanceResultDto

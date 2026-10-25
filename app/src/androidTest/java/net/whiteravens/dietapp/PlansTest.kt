@@ -32,6 +32,7 @@ import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
+import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
@@ -272,6 +273,52 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi(20_000) { Instance.planIds(account, profileId).isEmpty() }
         screen.waitForText(text(R.string.plans_calendar_title))
+    }
+
+    @Test
+    fun aDayOfARunningPlanIsGivenAnotherNumberOfMealsAndAMealTakenOffIt() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 2)
+        val (count, _) = Instance.firstDay(account, planId)
+        val wanted = if (count < 5) count + 1 else count - 1
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.nav_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // Today's settings: another number of meals, and what that does said before it is saved.
+        screen.scrollToText(text(R.string.plans_day_settings))
+        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.waitForText(text(R.string.plans_settings_unchanged))
+        screen.onNode(hasText(text(R.string.plans_settings_meal_count)) and hasAnyAncestor(isDialog())).performClick()
+        screen.onNode(hasText(plural(R.plurals.plans_settings_meal_count_option, wanted, wanted)) and hasAnyAncestor(isPopup())).performClick()
+        screen.waitForText(text(R.string.plans_settings_other_days))
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_unchanged)).fetchSemanticsNodes().isEmpty() }
+        screen.keepScreenshot("plans-the-settings-of-a-day")
+        screen.onNode(hasText(text(R.string.plans_settings_save)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForTheApi(60_000) { Instance.firstDay(account, planId).let { (set, meals) -> set == wanted && meals.size == wanted } }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }
+
+        // Opened again, the window starts from the day as it is now.
+        screen.scrollToText(text(R.string.plans_day_settings))
+        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.waitForText(text(R.string.plans_settings_unchanged))
+        screen.onNode(hasText(text(R.string.common_cancel)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }
+
+        // A meal is taken off its day once that is confirmed, with what it does said first.
+        val (title, _) = Instance.firstMeal(account, planId)
+        val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), title))
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNodeWithText(text(R.string.plans_remove)).performClick()
+        screen.waitForText(text(R.string.plans_remove_note))
+        screen.keepScreenshot("plans-a-meal-taken-off-its-day")
+        screen.onNode(hasText(text(R.string.plans_remove_confirm)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForTheApi(20_000) { Instance.firstDay(account, planId).second.size == wanted - 1 }
     }
 
     @Test

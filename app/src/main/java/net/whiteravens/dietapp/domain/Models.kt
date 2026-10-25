@@ -333,6 +333,45 @@ data class PlanDay(
     val targetMacros: Macros,
     /** The recipe each meal of the day was locked to when the plan was made, by meal. */
     val locks: Map<String, String>,
+    /** What the day is set to; null from an instance whose days have no settings to change. */
+    val settings: DaySettings? = null,
+)
+
+/**
+ * What a day of a running plan is set to: its kind ([dayType] `normal` | `rest` | `training`),
+ * whether it is skipped, how many meals it has, a target of its own, the most minutes a recipe may
+ * take, and whether it uses up what the pantry has to use up.
+ */
+data class DaySettings(
+    val dayType: String = "normal",
+    val skip: Boolean = false,
+    val mealCount: Int,
+    val calorieTarget: Int? = null,
+    val cookTimeMinutes: Int? = null,
+    val useUpBy: Boolean = false,
+)
+
+/** What a change of a day's settings does to one of its meals: [fate] `stays` | `resized` | `redrawn` | `removed`, and [because] where there is more to it than the day's new target. */
+data class MealFate(val mealId: String, val slot: String, val fate: String, val because: String?)
+
+/**
+ * What a change of a day's settings would do, as the API works it out before anything is written:
+ * the day's target now and after, what it then aims at, each meal's fate, the meals the day gains,
+ * what the day would hold where no recipe is drawn and whether that fits the target, and whether a
+ * shopping list goes out of date. [revision] goes back with the change.
+ */
+data class DaySettingsPreview(
+    val revision: Int,
+    val targetNow: Double,
+    val targetThen: Double,
+    val macrosThen: Macros,
+    val belowSafetyFloor: Boolean,
+    val meals: List<MealFate>,
+    val added: List<String>,
+    val dayCalories: Double?,
+    val fits: Boolean?,
+    val listOutOfDate: Boolean,
+    val unchanged: Boolean,
 )
 
 data class MealPlan(

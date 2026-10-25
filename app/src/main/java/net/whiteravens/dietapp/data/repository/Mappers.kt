@@ -4,6 +4,8 @@ package net.whiteravens.dietapp.data.repository
 
 import net.whiteravens.dietapp.data.remote.AiMealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.DaySettingsDto
+import net.whiteravens.dietapp.data.remote.DaySettingsPreviewDto
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
@@ -25,8 +27,11 @@ import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.data.remote.SwapPreviewDto
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.DaySettings
+import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
@@ -205,6 +210,42 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     belowSafetyFloor = belowSafetyFloor,
     targetMacros = targetMacros.toDomain(),
     locks = overrides?.lockedSlots.orEmpty().associate { it.mealType to it.recipeId },
+    settings = mealCount?.let { count ->
+        DaySettings(
+            dayType = overrides?.dayType ?: "normal",
+            skip = overrides?.skip == true,
+            mealCount = count,
+            calorieTarget = overrides?.calorieTarget,
+            cookTimeMinutes = overrides?.cookTimeBudgetMinutes,
+            useUpBy = overrides?.useUpBy == true,
+        )
+    },
+)
+
+fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
+    revision = revision,
+    targetNow = calorieTarget.now,
+    targetThen = calorieTarget.then,
+    macrosThen = targetMacros.then.toDomain(),
+    belowSafetyFloor = belowSafetyFloor,
+    meals = meals.map { MealFate(it.mealId, it.mealType, it.fate, it.because) },
+    added = added,
+    dayCalories = dayCalories,
+    fits = fits,
+    listOutOfDate = listOutOfDate,
+    unchanged = unchanged,
+)
+
+/** The settings as a request carries them; the revision and the limits that may give way go with a change only. */
+fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = null) = DaySettingsDto(
+    dayType = dayType,
+    skip = skip,
+    mealCount = mealCount,
+    calorieTarget = calorieTarget,
+    cookTimeBudgetMinutes = cookTimeMinutes,
+    useUpBy = useUpBy,
+    revision = revision,
+    allowRelaxations = allowRelaxations,
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(

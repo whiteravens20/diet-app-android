@@ -37,6 +37,8 @@ import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
+import net.whiteravens.dietapp.domain.DaySettings
+import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.DayWay
 import net.whiteravens.dietapp.domain.DayWays
 import net.whiteravens.dietapp.domain.IngredientChoice
@@ -393,6 +395,22 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun rebalanceRest(planId: String, from: String? = null): Rebalanced =
         kept(apiCall(json) { api.rebalancePlan(planId, RebalanceRequest(scope = "plan", date = from)) })
+
+    /** What changing the settings of a day of a plan to [settings] would do. Nothing is written. */
+    suspend fun previewDaySettings(planId: String, dayId: String, settings: DaySettings): DaySettingsPreview =
+        apiCall(json) { api.previewDaySettings(planId, dayId, settings.toDto()) }.toDomain()
+
+    /**
+     * Changes the settings of a day, on the plan at the preview's [revision]; the plan is kept for
+     * offline use. A plan changed since is refused with `PLAN_CHANGED`, a day before today with
+     * `DAY_IN_THE_PAST`, and a day that cannot be filled inside the plan's limits with
+     * `PLAN_NEEDS_RELAXATION`, which [allowRelaxations] answers.
+     */
+    suspend fun applyDaySettings(planId: String, dayId: String, settings: DaySettings, revision: Int, allowRelaxations: List<String>? = null): MealPlan {
+        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
 
     /** Puts the meals [rebalance] scaled back as they were. */
     suspend fun undo(planId: String, rebalance: Rebalance): Rebalanced = kept(

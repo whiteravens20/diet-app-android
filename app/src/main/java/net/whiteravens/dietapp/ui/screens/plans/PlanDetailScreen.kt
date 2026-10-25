@@ -174,6 +174,21 @@ fun PlanDetailScreen(
         )
     }
 
+    // The day whose settings are open in a window, while it is open.
+    var settingsFor by rememberSaveable { mutableStateOf<String?>(null) }
+    plan?.days?.firstOrNull { it.id == settingsFor }?.let { day ->
+        DaySettingsDialog(
+            planId = plan.id,
+            day = day,
+            onSaved = { saved ->
+                settingsFor = null
+                viewModel.dayTaken(saved)
+            },
+            onStale = viewModel::readAgain,
+            onDismiss = { settingsFor = null },
+        )
+    }
+
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
@@ -387,6 +402,8 @@ fun PlanDetailScreen(
                     day,
                     onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy },
                     onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy },
+                    // A day before today is history, and an instance without day settings has none to change.
+                    onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
                     onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
                 )
             }
@@ -646,17 +663,26 @@ private fun UseUpPanel(
 }
 
 /**
- * A day against its target: what it holds in kcal and by how much it misses, its macros against
- * theirs, and where it stands; a day off its target can be spread over the remaining days of the
- * plan, with what that does said beside it.
+ * A day against its target: its kind and the settings it has of its own, what it holds in kcal and
+ * by how much it misses, its macros against theirs, and where it stands; a day off its target can
+ * be spread over the remaining days of the plan, with what that does said beside it.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -> Unit)?, onSpread: (() -> Unit)?) {
+private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -> Unit)?, onSettings: (() -> Unit)?, onSpread: (() -> Unit)?) {
     AppCard {
+        val kind = day.settings?.dayType
+        if (kind == "training" || kind == "rest") {
+            PlainChip(stringResource(if (kind == "training") R.string.plans_day_kind_chip_training else R.string.plans_day_kind_chip_rest))
+        }
         if (day.skipped) {
-            // A day the user skips is no shortfall, and there is nothing in it to change.
+            // A day the user skips is no shortfall, and there is nothing in it to fill; its settings can bring it back.
             Text(stringResource(R.string.plans_day_skipped), style = MaterialTheme.typography.titleMedium)
+            onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
             return@AppCard
+        }
+        daySettingsLine(day)?.let { line ->
+            Text(line, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 4.dp))
         }
         Text(
             stringResource(
@@ -715,13 +741,31 @@ private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        if (onOtherWays != null || onChange != null) {
-            Row(modifier = Modifier.padding(top = 4.dp)) {
+        if (onOtherWays != null || onChange != null || onSettings != null) {
+            FlowRow(modifier = Modifier.padding(top = 4.dp)) {
                 onOtherWays?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_other_ways)) } }
                 onChange?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_change_day)) } }
+                onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
             }
         }
     }
+}
+
+/** The settings a day has of its own, in words: what makes it differ from the plan's other days; null where none does. */
+@Composable
+private fun daySettingsLine(day: PlanDay): String? {
+    val settings = day.settings ?: return null
+    val said = listOfNotNull(
+        settings.calorieTarget?.let { stringResource(R.string.plans_settings_line_own_target, formatNumber(it)) }
+            ?: when (settings.dayType) {
+                "training" -> stringResource(R.string.plans_settings_line_training)
+                "rest" -> stringResource(R.string.plans_settings_line_rest)
+                else -> null
+            },
+        settings.cookTimeMinutes?.let { stringResource(R.string.plans_settings_line_cook_time, it) },
+        if (settings.useUpBy) stringResource(R.string.plans_settings_line_use_up) else null,
+    )
+    return said.takeIf { it.isNotEmpty() }?.joinToString(" ")
 }
 
 /** A meal's macros as a sentence: `Protein 25 g · Fat 10 g · Carbs 40 g · 420 kcal`. */

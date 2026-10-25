@@ -272,7 +272,7 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    /** A day filled another way, taken in its window. */
+    /** A day filled another way, taken in its window, or set otherwise in its settings. */
     fun dayTaken(plan: MealPlan) {
         _state.update { it.copy(plan = plan) }
     }
