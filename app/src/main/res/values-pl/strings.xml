@@ -547,6 +547,7 @@
     </plurals>
     <string name="draft_add_to_favorites">Dodaj do ulubionych tego profilu</string>
     <string name="draft_determinism_hint">Wartości odżywcze są przeliczane z bazy składników po wygenerowaniu — AI nigdy nie pisze kalorii ani makro.</string>
+    <string name="draft_curators_note">Korzystasz z AI instancji, więc wygenerowany przepis trafi też do kuratorów biblioteki, z której korzystają wszyscy. Zobaczą jego treść i składniki, ale nie to, kto o niego poprosił. Jeśli go przyjmą, stanie się przepisem biblioteki. W Twoich przepisach zostaje tak czy inaczej.</string>
     <string name="draft_submit">Wygeneruj przepis</string>
     <string name="draft_drafting">Generowanie…</string>
     <string name="cooking_baked">Pieczone</string>

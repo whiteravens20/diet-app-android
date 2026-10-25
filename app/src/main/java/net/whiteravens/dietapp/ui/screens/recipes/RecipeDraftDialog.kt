@@ -124,6 +124,7 @@ fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Un
                 if (allergens > 0) Note(pluralStringResource(R.plurals.draft_allergens_respected, allergens, allergens))
                 CheckRow(stringResource(R.string.draft_add_to_favorites), checked = addToFavorites) { addToFavorites = it }
                 Note(stringResource(R.string.draft_determinism_hint))
+                if (state.toCurators) Note(stringResource(R.string.draft_curators_note))
                 state.error?.let { ErrorBanner(errorMessage(it)) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }

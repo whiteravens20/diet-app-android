@@ -500,6 +500,7 @@
     </plurals>
     <string name="draft_add_to_favorites">Add to favourites for this profile</string>
     <string name="draft_determinism_hint">Nutrition is recomputed from the ingredient database after the draft — AI never writes calorie or macro values.</string>
+    <string name="draft_curators_note">You are using the instance\'s AI, so the drafted recipe also goes to the curators of the library everyone uses. They will see its text and ingredients, not who asked for it. If they accept it, it becomes a recipe of the library. It stays in your recipes either way.</string>
     <string name="draft_submit">Draft recipe</string>
     <string name="draft_drafting">Drafting…</string>
     <string name="cooking_baked">Baked</string>

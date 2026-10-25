@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeDraftAsk
@@ -20,18 +22,22 @@ import javax.inject.Inject
 
 /**
  * A recipe of one's own drafted by a model from choices, as the web's window asks for it: the
- * profiles it can be for, with what each favours, excludes and is allergic to; the draft asked
- * for once; and the recipe the model wrote, which the window opens.
+ * profiles it can be for, with what each favours, excludes and is allergic to; whether the
+ * instance's model writes it, which puts it before the curators as well; the draft asked for
+ * once; and the recipe the model wrote, which the window opens.
  */
 @HiltViewModel
 class RecipeDraftViewModel @Inject constructor(
     private val recipes: RecipeRepository,
     private val profiles: ProfileRepository,
+    private val users: UserRepository,
 ) : ViewModel() {
 
     data class UiState(
         val profiles: List<ProfileDetails> = emptyList(),
         val loading: Boolean = true,
+        /** The instance's model writes the recipe, and it goes before the curators as well: the window says so. */
+        val toCurators: Boolean = false,
         val drafting: Boolean = false,
         /** The recipe the model wrote: the window is done. */
         val drafted: Recipe? = null,
@@ -46,6 +52,9 @@ class RecipeDraftViewModel @Inject constructor(
             attempt { profiles.profiles() }
                 .onSuccess { found -> _state.update { it.copy(profiles = found, loading = false) } }
                 .onFailure { e -> _state.update { it.copy(loading = false, error = e) } }
+        }
+        viewModelScope.launch {
+            attempt { users.me() }.onSuccess { me -> _state.update { it.copy(toCurators = me.aiMode == AiModes.INSTANCE) } }
         }
     }
 
