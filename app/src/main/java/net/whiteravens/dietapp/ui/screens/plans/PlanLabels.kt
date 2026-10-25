@@ -23,6 +23,18 @@ internal fun limitName(limit: String): String = when (limit) {
     else -> limit
 }
 
+/** Where a limit that may give way is set, as the plan form says it beside the limit: the form, a day, the profile, or nowhere. */
+@Composable
+internal fun limitWhere(limit: String): String? = when (limit) {
+    "variety_floor" -> stringResource(R.string.plans_advanced_limit_where_variety_floor)
+    "cook_time" -> stringResource(R.string.plans_advanced_limit_where_cook_time)
+    "same_day" -> stringResource(R.string.plans_advanced_limit_where_same_day)
+    "consecutive_days" -> stringResource(R.string.plans_advanced_limit_where_consecutive_days)
+    "weekly_cap" -> stringResource(R.string.plans_advanced_limit_where_weekly_cap)
+    "ingredient_cap" -> stringResource(R.string.plans_advanced_limit_where_ingredient_cap)
+    else -> null
+}
+
 /** Limits by name, one after another, as the web application names them. */
 @Composable
 internal fun limitNames(limits: List<String>): String = limits.map { limitName(it) }.joinToString(", ")

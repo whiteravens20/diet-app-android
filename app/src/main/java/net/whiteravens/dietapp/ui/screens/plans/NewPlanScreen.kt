@@ -266,7 +266,8 @@ private fun AdvancedOptions(
                 )
                 Text(stringResource(R.string.plans_advanced_may_give_way), style = MaterialTheme.typography.titleSmall)
                 PLAN_RELAXATIONS.forEach { limit ->
-                    CheckRow(limitName(limit), checked = limit in form.mayGiveWay) { ticked ->
+                    // Each limit says where it is set: not all of them are set in this form.
+                    CheckRow(limitName(limit), hint = limitWhere(limit), checked = limit in form.mayGiveWay) { ticked ->
                         onEdit { it.copy(mayGiveWay = PLAN_RELAXATIONS.filter { other -> if (other == limit) ticked else other in it.mayGiveWay }) }
                     }
                 }

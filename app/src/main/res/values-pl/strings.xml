@@ -1211,6 +1211,12 @@
     <string name="plans_advanced_variety_floor">Maks. powtórzeń jednego przepisu</string>
     <string name="plans_advanced_may_give_way">Gdy zabraknie przepisu mieszczącego się w limicie, wolno przekroczyć</string>
     <string name="plans_advanced_may_give_way_hint">Gdy nic nie zaznaczysz, plan wtedy nie powstanie, a zobaczysz, które limity stoją na przeszkodzie.</string>
+    <string name="plans_advanced_limit_where_variety_floor">Ustawiasz wyżej: Maks. powtórzeń jednego przepisu.</string>
+    <string name="plans_advanced_limit_where_cook_time">Ustawiasz niżej, przy każdym dniu: Maks. czas gotowania (min).</string>
+    <string name="plans_advanced_limit_where_same_day">Stała reguła planera, bez ustawienia. Nie obowiązuje w planie z gotowaniem na zapas.</string>
+    <string name="plans_advanced_limit_where_consecutive_days">Ustawiasz w profilu: Maks. dni z rzędu tego samego dania.</string>
+    <string name="plans_advanced_limit_where_weekly_cap">Ustawiasz w profilu: Maks. powtórzeń tego samego dania w tygodniu.</string>
+    <string name="plans_advanced_limit_where_ingredient_cap">Ustawiasz w profilu: Największa ilość jednego składnika w tygodniu (g lub ml).</string>
     <string name="plans_advanced_per_day">Ustawienia poszczególnych dni</string>
     <string name="plans_advanced_meal_count">Posiłki</string>
     <string name="plans_advanced_use_default">Domyślnie</string>

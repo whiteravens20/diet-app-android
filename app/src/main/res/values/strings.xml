@@ -1120,6 +1120,12 @@
     <string name="plans_advanced_variety_floor">Max times one recipe can repeat</string>
     <string name="plans_advanced_may_give_way">If no recipe is left inside a limit, these may give way</string>
     <string name="plans_advanced_may_give_way_hint">With none ticked the plan is not made then, and you are told which limits stand in the way.</string>
+    <string name="plans_advanced_limit_where_variety_floor">Set above: Max times one recipe can repeat.</string>
+    <string name="plans_advanced_limit_where_cook_time">Set below, for each day: Max cook (min).</string>
+    <string name="plans_advanced_limit_where_same_day">A fixed rule of the planner, with no setting. A plan to cook ahead is not held to it.</string>
+    <string name="plans_advanced_limit_where_consecutive_days">Set in the profile: Max same recipe in a row (days).</string>
+    <string name="plans_advanced_limit_where_weekly_cap">Set in the profile: Max times the same recipe per week.</string>
+    <string name="plans_advanced_limit_where_ingredient_cap">Set in the profile: Most of one ingredient in a week (g or ml).</string>
     <string name="plans_advanced_per_day">Per-day options</string>
     <string name="plans_advanced_meal_count">Meals</string>
     <string name="plans_advanced_use_default">Default</string>
