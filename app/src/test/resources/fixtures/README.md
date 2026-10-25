@@ -19,7 +19,9 @@ what it had used, for the one call), `users-me-ai-admin.json` and
 `ai-mode-byok-without-a-provider.json` from API 0.77.0, captured on 2026-10-18 from an instance of
 diet-app's `dev`, whose AI routes are those of `0fb1cef`; `profile-created-as-the-web-does.json`,
 `profile.json` and `profiles.json` from API 0.77.0, captured on 2026-10-25 from an instance of
-diet-app's `dev` at `6a055f3`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+diet-app's `dev` at `6a055f3`; `recipes-mine.json` (a recipe an Ollama server standing in for the
+instance's model wrote, and one made by swapping an ingredient) from API 0.77.0, captured on
+2026-10-25 from an instance of diet-app's `dev` at `b99fae8`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

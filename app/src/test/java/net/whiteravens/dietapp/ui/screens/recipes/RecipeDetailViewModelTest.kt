@@ -62,7 +62,7 @@ class RecipeDetailViewModelTest {
     private val recipes = mockk<RecipeRepository>().also {
         coEvery { it.byId("soup") } returns Recipe(
             "soup", "Soup", "", 2, listOf("lunch"), emptyList(), emptyList(), emptyList(), 10, 10, "easy",
-            Nutrition(410.0, 30.0, 20.0, 50.0), byModel = null, cuisine = null, allergens = emptyList(), source = null,
+            Nutrition(410.0, 30.0, 20.0, 50.0), byModel = null, cuisine = null, allergens = emptyList(), source = null, fromSwap = false,
         )
     }
     private val profiles = mockk<ProfileRepository>().also { coEvery { it.profiles() } returns listOf(ada, bo, cy) }

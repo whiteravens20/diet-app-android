@@ -116,6 +116,15 @@ class RecipeRepositoryTest {
     }
 
     @Test
+    fun `one's own recipe made by swapping an ingredient is told apart from one a model wrote`() {
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(fixture("recipes-mine")))
+
+        val mine = runBlocking { repository().mine(page = 1) }
+
+        assertEquals(listOf(true, false), mine.items.map { it.fromSwap })
+    }
+
+    @Test
     fun `a draft is asked for with what was chosen, the switches only where they differ from the API's own, and the recipe written is read`() {
         // The shape the API answers with: the recipe as the engine worked it out, and the model that wrote it.
         val written = """{"recipe":${fixture("recipe")},"aiMeta":{"provider":"openrouter","model":"m","failoverChain":[],"usedDeterministicFallback":false,"fallbackReason":null,"reason":null}}"""

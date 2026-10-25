@@ -135,6 +135,7 @@ fun RecipeDto.toDomain() = Recipe(
     cuisine = cuisine,
     allergens = allergens,
     source = source?.let { RecipeSource(it.url, it.license) },
+    fromSwap = origin == "swap",
 )
 
 fun RecipeSearchPageDto.toDomain() = RecipePage(

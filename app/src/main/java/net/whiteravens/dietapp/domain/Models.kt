@@ -678,6 +678,8 @@ data class Recipe(
     val allergens: List<String>,
     /** Where a recipe taken in from somewhere else is from; null for one written here. */
     val source: RecipeSource?,
+    /** Made by swapping an ingredient: it stays its owner's and cannot be suggested for the library. */
+    val fromSwap: Boolean,
 ) {
     val totalMinutes: Int get() = prepMinutes + cookMinutes
 }
