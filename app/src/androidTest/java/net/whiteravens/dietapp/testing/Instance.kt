@@ -206,10 +206,15 @@ object Instance {
         return (0 until meals.length()).map { meals.getJSONObject(it) }.filter { it.getString("source") == "USER_CUSTOM" }.map { it.getString("customName") }
     }
 
+    /** Deletes a plan, as its menu does. */
+    fun deletePlan(account: Account, planId: String) {
+        send("DELETE", "meal-plans/$planId", null, account.accessToken, 204, null)
+    }
+
     /**
      * A meal of a plan's first day that is the catalogue's and not eaten, with a substitute the catalogue
-     * suggests for one of its lines that moves nothing of a serving: the meal's title, the line's name
-     * and the substitute's; null where the plan has none.
+     * suggests for one of its lines that the recipe does not hold already: the meal's title, the line's
+     * name and the substitute's; null where the plan has none.
      */
     fun substitutableMeal(account: Account, planId: String): Triple<String, String, String>? {
         val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
@@ -218,8 +223,7 @@ object Instance {
             val lines = meal.getJSONArray("ingredients").let { all -> (0 until all.length()).map(all::getJSONObject) }
             val suggestions = JSONArray(send("GET", "meal-plans/$planId/meals/${meal.getString("id")}/substitutes", null, account.accessToken, 200, null))
             for (suggestion in (0 until suggestions.length()).map(suggestions::getJSONObject)) {
-                // One that moves something of a serving needs a tick more, and one the recipe has already shares its name with a line.
-                if (suggestion.getJSONArray("moved").length() > 0) continue
+                // One the recipe has already shares its name with a line of it.
                 if (lines.any { it.getString("ingredientId") == suggestion.getJSONObject("to").getString("id") }) continue
                 val line = lines.firstOrNull { it.getString("ingredientId") == suggestion.getString("fromIngredientId") } ?: continue
                 return Triple(meal.getJSONObject("recipe").getString("title"), line.getString("name"), suggestion.getJSONObject("to").getString("name"))

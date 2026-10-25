@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.isSelected
@@ -334,9 +335,16 @@ class PlansTest {
     fun anIngredientIsSubstitutedAndItsWindowOpenedAgainOnTheMealStartsAnew() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
-        val planId = Instance.newPlan(account, profileId, days = 1)
-        val found = Instance.substitutableMeal(account, planId)
-        assumeTrue("The plan has no meal with a substitute that moves nothing of a serving.", found != null)
+        // A day the catalogue suggests a substitute for one of its meals: a few plans are made until one has it.
+        var planId = ""
+        var found: Triple<String, String, String>? = null
+        repeat(4) {
+            if (found != null) return@repeat
+            planId = Instance.newPlan(account, profileId, days = 1)
+            found = Instance.substitutableMeal(account, planId)
+            if (found == null) Instance.deletePlan(account, planId)
+        }
+        assumeTrue("No plan made had a meal with a substitute the catalogue suggests.", found != null)
         val (title, line, substitute) = found!!
         screen.startSignedIn(account)
 
@@ -345,7 +353,7 @@ class PlansTest {
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
 
-        // The line leaves for what the catalogue suggests, which moves nothing of a serving.
+        // The line leaves for what the catalogue suggests; where that moves a serving's figures, the change is taken.
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), title))
         screen.scrollTo(change)
         screen.onAllNodes(change)[0].performClick()
@@ -354,6 +362,10 @@ class PlansTest {
         screen.onNode(hasText(line) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForText(text(R.string.substitute_catalogue_suggests))
         screen.onAllNodes(hasText(substitute) and hasClickAction() and hasAnyAncestor(isDialog()))[0].performClick()
+        val accept = hasText(text(R.string.substitute_accept_change)) and hasAnyAncestor(isDialog())
+        val apply = hasText(text(R.string.substitute_apply)) and isEnabled()
+        screen.waitUntil(20_000) { screen.onAllNodes(accept).fetchSemanticsNodes().isNotEmpty() || screen.onAllNodes(apply).fetchSemanticsNodes().isNotEmpty() }
+        if (screen.onAllNodes(accept).fetchSemanticsNodes().isNotEmpty()) screen.onNode(accept).performScrollTo().performClick()
         screen.waitForEnabled(text(R.string.substitute_apply))
         val before = Instance.planRevision(account, planId)
         screen.onNode(hasText(text(R.string.substitute_apply)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
