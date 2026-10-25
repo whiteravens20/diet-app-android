@@ -695,7 +695,7 @@
     <string name="shopping_no_plans">Brak planów dla tego profilu</string>
     <string name="shopping_no_plans_body">Najpierw wygeneruj plan posiłków — lista zakupów powstaje z niego.</string>
     <string name="shopping_no_lists_title">Ten plan nie ma jeszcze listy zakupów</string>
-    <string name="shopping_no_lists">Lista sumuje to, czego potrzebują posiłki planu, i pomija to, co jest już w spiżarni.</string>
+    <string name="shopping_no_lists">Lista sumuje to, czego potrzebują posiłki planu i pomija to, co jest już w spiżarni.</string>
     <string name="shopping_make_list">Utwórz listę</string>
     <string name="shopping_generate_title">Wygeneruj listę</string>
     <string name="shopping_generate_button">Wygeneruj</string>
@@ -736,7 +736,7 @@
         <item quantity="other">o %d opakowania</item>
     </plurals>
     <string name="shopping_proposal_merge_how">Zamień to w planie.</string>
-    <string name="shopping_proposal_merge_then">Ta lista powie wtedy, że nie odpowiada już planowi, i będzie można ją zaktualizować.</string>
+    <string name="shopping_proposal_merge_then">Ta lista powie wtedy, że nie odpowiada już planowi i będzie można ją zaktualizować.</string>
     <string name="shopping_proposal_leftover">%1$s: z opakowania %3$s zostanie %2$s, a po otwarciu szybko się psuje</string>
     <string name="shopping_proposal_leftover_how">Zobacz w planie, co by to zużyło.</string>
 
