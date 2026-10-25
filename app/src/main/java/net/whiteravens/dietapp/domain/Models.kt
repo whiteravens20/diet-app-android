@@ -167,20 +167,38 @@ data class ProfilePreferences(
     val preferredCuisines: List<String>,
     val maxConsecutiveDaysSameMeal: Int,
     val maxTimesPerWeekSameMeal: Int,
-    /** The most of one ingredient, in g or ml, any seven days of a plan hold together. */
-    val maxWeeklyAmountPerIngredient: Int,
+    /** The most meals of a day, and of any seven days of a plan, with the same kind of protein; null for no limit. */
+    val maxMealsPerDaySameKind: Int?,
+    val maxMealsPerWeekSameKind: Int?,
+    /** The kinds of protein held to numbers of their own. */
+    val kindLimits: List<KindLimit>,
     val inventoryBiasResetEvery: Int,
 ) {
     val limits: PlanLimits
-        get() = PlanLimits(maxConsecutiveDaysSameMeal, maxTimesPerWeekSameMeal, maxWeeklyAmountPerIngredient, inventoryBiasResetEvery)
+        get() = PlanLimits(
+            maxConsecutiveDaysSameMeal = maxConsecutiveDaysSameMeal,
+            maxTimesPerWeekSameMeal = maxTimesPerWeekSameMeal,
+            maxMealsPerDaySameKind = maxMealsPerDaySameKind,
+            maxMealsPerWeekSameKind = maxMealsPerWeekSameKind,
+            kindLimits = kindLimits,
+            inventoryBiasResetEvery = inventoryBiasResetEvery,
+        )
 
     fun with(limits: PlanLimits) = copy(
         maxConsecutiveDaysSameMeal = limits.maxConsecutiveDaysSameMeal,
         maxTimesPerWeekSameMeal = limits.maxTimesPerWeekSameMeal,
-        maxWeeklyAmountPerIngredient = limits.maxWeeklyAmountPerIngredient,
+        maxMealsPerDaySameKind = limits.maxMealsPerDaySameKind,
+        maxMealsPerWeekSameKind = limits.maxMealsPerWeekSameKind,
+        kindLimits = limits.kindLimits,
         inventoryBiasResetEvery = limits.inventoryBiasResetEvery,
     )
 }
+
+/**
+ * A kind of protein (`chicken`, `fish`, `eggs` …) held to numbers of its own, for a day, for seven
+ * days or both; a number it leaves out, null, is the profile's own for every kind.
+ */
+data class KindLimit(val kind: String, val perDay: Int?, val perWeek: Int?)
 
 /** A change of some of a profile's preferences: what is set replaces what was there, and the rest stays. */
 data class PreferencesChange(
@@ -193,13 +211,16 @@ data class PreferencesChange(
 
 /**
  * How often a plan may repeat itself: the same recipe on days in a row and in any seven days, the
- * most of one ingredient in any seven days, and after how many plans that leaned on the pantry the
- * next one does not (0: never).
+ * same kind of protein in the meals of a day and of any seven days (null: no limit, and the kinds
+ * held to numbers of their own), and after how many plans that leaned on the pantry the next one
+ * does not (0: never).
  */
 data class PlanLimits(
     val maxConsecutiveDaysSameMeal: Int,
     val maxTimesPerWeekSameMeal: Int,
-    val maxWeeklyAmountPerIngredient: Int,
+    val maxMealsPerDaySameKind: Int?,
+    val maxMealsPerWeekSameKind: Int?,
+    val kindLimits: List<KindLimit>,
     val inventoryBiasResetEvery: Int,
 )
 

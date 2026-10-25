@@ -411,10 +411,24 @@ data class ProfilePreferencesDto(
     val preferredCuisines: List<String> = emptyList(),
     val maxConsecutiveDaysSameMeal: Int = 2,
     val maxTimesPerWeekSameMeal: Int = 3,
-    /** The most of one ingredient, in g or ml, the meals of any seven days of a plan hold together. */
-    val maxWeeklyAmountPerIngredient: Int = 3000,
+    /**
+     * The most meals of a day, and of any seven days of a plan, with the same kind of protein; null
+     * for no limit, which is what a profile starts with.
+     */
+    val maxMealsPerDaySameKind: Int? = null,
+    val maxMealsPerWeekSameKind: Int? = null,
+    /** The kinds of protein held to numbers of their own. */
+    val kindLimits: List<KindLimitDto> = emptyList(),
     val inventoryBiasResetEvery: Int = 5,
 )
+
+/**
+ * A kind of protein held to numbers of its own (packages/shared `KindLimit`): `chicken` | `turkey` |
+ * `beef` | `pork` | `fish` | `seafood` | `eggs` | `dairy` | `legumes`. Both numbers are always sent, a
+ * null one being the profile's own for every kind.
+ */
+@Serializable
+data class KindLimitDto(val kind: String, val perDay: Int?, val perWeek: Int?)
 
 /** The split of a day's energy a profile on the `custom` diet aims at, in percent. */
 @Serializable
@@ -486,7 +500,9 @@ data class NewProfilePreferencesDto(
     val allergens: List<String>,
     val maxConsecutiveDaysSameMeal: Int? = null,
     val maxTimesPerWeekSameMeal: Int? = null,
-    val maxWeeklyAmountPerIngredient: Int? = null,
+    val maxMealsPerDaySameKind: Int? = null,
+    val maxMealsPerWeekSameKind: Int? = null,
+    val kindLimits: List<KindLimitDto>? = null,
     val inventoryBiasResetEvery: Int? = null,
 )
 
@@ -520,7 +536,9 @@ data class ProfilePreferencesUpdateDto(
     val preferredCuisines: List<String>,
     val maxConsecutiveDaysSameMeal: Int,
     val maxTimesPerWeekSameMeal: Int,
-    val maxWeeklyAmountPerIngredient: Int,
+    val maxMealsPerDaySameKind: Int?,
+    val maxMealsPerWeekSameKind: Int?,
+    val kindLimits: List<KindLimitDto>,
     val inventoryBiasResetEvery: Int,
 )
 
@@ -532,7 +550,6 @@ data class ProfilePreferencesPatchDto(
     val allergens: List<String>? = null,
     val dislikedIngredientIds: List<String>? = null,
     val preferredCuisines: List<String>? = null,
-    val maxWeeklyAmountPerIngredient: Int? = null,
 )
 
 /**

@@ -130,7 +130,7 @@ class NewPlanViewModelTest {
         model.letGiveWay()
 
         // In the order limits give way, whatever order they were named in.
-        val allowed = listOf("cook_time", "weekly_cap", "ingredient_cap")
+        val allowed = listOf("ingredient_cap", "cook_time", "weekly_cap")
         assertEquals(allowed, asked.last().allowRelaxations)
         assertEquals(allowed, model.state.value.form.mayGiveWay)
         assertEquals(made.id, model.state.value.made)

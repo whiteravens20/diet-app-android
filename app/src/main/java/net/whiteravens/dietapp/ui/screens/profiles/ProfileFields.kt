@@ -25,6 +25,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -32,6 +33,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +65,7 @@ import net.whiteravens.dietapp.ui.common.allergenLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.noteText
+import net.whiteravens.dietapp.ui.common.proteinKindLabel
 import net.whiteravens.dietapp.ui.common.reminderCadenceLabel
 import net.whiteravens.dietapp.ui.common.sexLabel
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -535,12 +538,30 @@ internal fun LimitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit:
         problem = if (ProfileField.TIMES_PER_WEEK in problems) between(ProfileBounds.TIMES_PER_WEEK.first, ProfileBounds.TIMES_PER_WEEK.last) else null,
     )
     FormField(
-        value = limits.weeklyAmount,
-        onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(weeklyAmount = typed)) } },
-        label = stringResource(R.string.profile_max_weekly_amount),
-        hint = stringResource(R.string.profile_max_weekly_amount_hint),
-        problem = if (ProfileField.WEEKLY_AMOUNT in problems) between(ProfileBounds.WEEKLY_AMOUNT.first, ProfileBounds.WEEKLY_AMOUNT.last) else null,
+        value = limits.kindPerDay,
+        onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(kindPerDay = typed)) } },
+        label = stringResource(R.string.profile_max_meals_per_day_same_kind),
+        placeholder = stringResource(R.string.profile_no_limit),
+        problem = if (ProfileField.KIND_PER_DAY in problems) between(ProfileBounds.KIND_PER_DAY.first, ProfileBounds.KIND_PER_DAY.last) else null,
     )
+    FormField(
+        value = limits.kindPerWeek,
+        onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(kindPerWeek = typed)) } },
+        label = stringResource(R.string.profile_max_meals_per_week_same_kind),
+        placeholder = stringResource(R.string.profile_no_limit),
+        problem = if (ProfileField.KIND_PER_WEEK in problems) between(ProfileBounds.KIND_PER_WEEK.first, ProfileBounds.KIND_PER_WEEK.last) else null,
+    )
+    Text(
+        stringResource(R.string.profile_same_kind_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+        stringResource(R.string.profile_same_kind_blocks_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    KindLimitRows(limits.kindLimits, ProfileField.KIND_LIMITS in problems, onEdit)
     FormField(
         value = limits.pantryCoolDown,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(pantryCoolDown = typed)) } },
@@ -548,6 +569,72 @@ internal fun LimitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit:
         hint = stringResource(R.string.profile_pantry_cool_down_hint),
         problem = if (ProfileField.PANTRY_COOL_DOWN in problems) between(ProfileBounds.PANTRY_COOL_DOWN.first, ProfileBounds.PANTRY_COOL_DOWN.last) else null,
     )
+}
+
+/**
+ * The kinds of protein held to numbers of their own: a row for each, with the kind, a number for a
+ * day and one for seven days, empty for the profile's own, and a button for another row while a
+ * kind is left. A kind another row has is not offered again.
+ */
+@Composable
+private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onEdit: FormEdit) {
+    val change = { index: Int, edit: (KindLimitTyped) -> KindLimitTyped ->
+        onEdit { form -> form.copy(limits = form.limits.copy(kindLimits = form.limits.kindLimits.mapIndexed { at, row -> if (at == index) edit(row) else row })) }
+    }
+    Text(stringResource(R.string.profile_kind_limits), style = MaterialTheme.typography.titleSmall)
+    Text(
+        stringResource(R.string.profile_kind_limits_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    rows.forEachIndexed { index, row ->
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ChoiceField(
+                    label = stringResource(R.string.profile_kind_limit_kind),
+                    options = ProfileBounds.PROTEIN_KINDS.filter { kind -> kind == row.kind || rows.none { it.kind == kind } },
+                    selected = row.kind,
+                    optionLabel = { proteinKindLabel(it) },
+                    onSelect = { kind -> change(index) { it.copy(kind = kind) } },
+                )
+                FormField(
+                    value = row.perDay,
+                    onValueChange = { typed -> change(index) { it.copy(perDay = typed) } },
+                    label = stringResource(R.string.profile_kind_limit_per_day),
+                    placeholder = stringResource(R.string.profile_same_as_above),
+                    problem = if (showProblems && !row.dayHolds) between(ProfileBounds.KIND_PER_DAY.first, ProfileBounds.KIND_PER_DAY.last) else null,
+                )
+                FormField(
+                    value = row.perWeek,
+                    onValueChange = { typed -> change(index) { it.copy(perWeek = typed) } },
+                    label = stringResource(R.string.profile_kind_limit_per_week),
+                    placeholder = stringResource(R.string.profile_same_as_above),
+                    problem = if (showProblems && !row.weekHolds) between(ProfileBounds.KIND_PER_WEEK.first, ProfileBounds.KIND_PER_WEEK.last) else null,
+                )
+                val removing = stringResource(R.string.profile_remove_kind_limit, proteinKindLabel(row.kind))
+                TextButton(
+                    onClick = { onEdit { form -> form.copy(limits = form.limits.copy(kindLimits = form.limits.kindLimits.filterIndexed { at, _ -> at != index })) } },
+                    modifier = Modifier.semantics { contentDescription = removing },
+                ) { Text(stringResource(R.string.profile_remove_kind_limit_short)) }
+            }
+        }
+    }
+    if (rows.size < ProfileBounds.PROTEIN_KINDS.size) {
+        OutlinedButton(
+            onClick = {
+                onEdit { form ->
+                    val kept = form.limits.kindLimits
+                    val kind = ProfileBounds.PROTEIN_KINDS.first { kind -> kept.none { it.kind == kind } }
+                    form.copy(limits = form.limits.copy(kindLimits = kept + KindLimitTyped(kind)))
+                }
+            },
+            shape = MaterialTheme.shapes.medium,
+        ) { Text(stringResource(R.string.profile_add_kind_limit)) }
+    }
 }
 
 /**

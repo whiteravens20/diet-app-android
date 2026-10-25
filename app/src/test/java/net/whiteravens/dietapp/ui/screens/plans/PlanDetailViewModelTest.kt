@@ -408,7 +408,7 @@ class PlanDetailViewModelTest {
 
         model.letGiveWay()
 
-        assertEquals(listOf("cook_time", "weekly_cap", "ingredient_cap"), asked.last().allowRelaxations)
+        assertEquals(listOf("ingredient_cap", "cook_time", "weekly_cap"), asked.last().allowRelaxations)
         assertNull(model.state.value.inTheWay)
     }
 

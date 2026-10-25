@@ -20,6 +20,7 @@ internal fun limitName(limit: String): String = when (limit) {
     "consecutive_days" -> stringResource(R.string.plans_limit_consecutive_days)
     "weekly_cap" -> stringResource(R.string.plans_limit_weekly_cap)
     "ingredient_cap" -> stringResource(R.string.plans_limit_ingredient_cap)
+    "kind_same_day" -> stringResource(R.string.plans_limit_kind_same_day)
     else -> limit
 }
 
@@ -32,6 +33,7 @@ internal fun limitWhere(limit: String): String? = when (limit) {
     "consecutive_days" -> stringResource(R.string.plans_advanced_limit_where_consecutive_days)
     "weekly_cap" -> stringResource(R.string.plans_advanced_limit_where_weekly_cap)
     "ingredient_cap" -> stringResource(R.string.plans_advanced_limit_where_ingredient_cap)
+    "kind_same_day" -> stringResource(R.string.plans_advanced_limit_where_kind_same_day)
     else -> null
 }
 

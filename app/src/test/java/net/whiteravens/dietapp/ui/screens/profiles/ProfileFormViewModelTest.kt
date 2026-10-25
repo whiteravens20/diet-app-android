@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.SessionUser
@@ -194,7 +195,7 @@ class ProfileFormViewModelTest {
         runCurrent()
 
         assertEquals(kept.figures.name, model.state.value.editing)
-        model.edit { it.copy(limits = it.limits.copy(weeklyAmount = "2500")) }
+        model.edit { it.copy(limits = it.limits.copy(kindPerDay = "2", kindLimits = listOf(KindLimitTyped("fish", perWeek = "3")))) }
         model.save()
         runCurrent()
 
@@ -202,7 +203,7 @@ class ProfileFormViewModelTest {
             profiles.update(
                 kept.id,
                 match { it.weightKg == kept.figures.weightKg && it.name == kept.figures.name },
-                kept.preferences.with(PlanLimits(2, 3, 2500, 5)),
+                kept.preferences.with(PlanLimits(2, 3, 2, null, listOf(KindLimit("fish", null, 3)), 5)),
                 null,
             )
         }

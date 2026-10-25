@@ -55,11 +55,21 @@ object MealSlots {
 
 /**
  * The limits of a plan that can give way when no recipe is left for a meal inside them, in the
- * order they do: the most a recipe appears in the plan, the day's cooking time, a recipe twice on
- * one day, days in a row, the times a recipe is eaten in seven days, and the most of one
- * ingredient in seven days last.
+ * order they do: the meals of seven days with the same kind of protein first, then those of one
+ * day, so that a kind comes again before a dish does; then the most a recipe appears in the plan,
+ * the day's cooking time, a recipe twice on one day, days in a row, and the times a recipe is
+ * eaten in seven days last. `ingredient_cap` keeps the name it had when it counted the grams of
+ * one ingredient.
  */
-val PLAN_RELAXATIONS = listOf("variety_floor", "cook_time", "same_day", "consecutive_days", "weekly_cap", "ingredient_cap")
+val PLAN_RELAXATIONS = listOf(
+    "ingredient_cap",
+    "kind_same_day",
+    "variety_floor",
+    "cook_time",
+    "same_day",
+    "consecutive_days",
+    "weekly_cap",
+)
 
 /** A plan that cannot be filled inside its limits: those that would have to give way, in their order, and the meals that would go outside. */
 data class RelaxationNeeded(val needs: List<String>, val meals: List<RelaxedMeal>)

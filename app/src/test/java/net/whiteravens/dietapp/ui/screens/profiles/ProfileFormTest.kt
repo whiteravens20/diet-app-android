@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.profiles
 
 import net.whiteravens.dietapp.domain.MacroSplit
+import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfileFigures
@@ -36,7 +37,8 @@ class ProfileFormTest {
         preferences = ProfilePreferences(
             favoriteIngredientIds = emptyList(), excludedIngredientIds = emptyList(), dislikedIngredientIds = emptyList(),
             preferredCuisines = emptyList(), maxConsecutiveDaysSameMeal = limits.maxConsecutiveDaysSameMeal,
-            maxTimesPerWeekSameMeal = limits.maxTimesPerWeekSameMeal, maxWeeklyAmountPerIngredient = limits.maxWeeklyAmountPerIngredient,
+            maxTimesPerWeekSameMeal = limits.maxTimesPerWeekSameMeal, maxMealsPerDaySameKind = limits.maxMealsPerDaySameKind,
+            maxMealsPerWeekSameKind = limits.maxMealsPerWeekSameKind, kindLimits = limits.kindLimits,
             inventoryBiasResetEvery = limits.inventoryBiasResetEvery,
         ),
         riskAcknowledged = riskAcknowledged,
@@ -69,10 +71,42 @@ class ProfileFormTest {
 
         assertEquals(setOf(ProfileField.CONSECUTIVE_DAYS), limited(first.copy(consecutiveDays = "0")).problems(WeightUnit.KG))
         assertEquals(setOf(ProfileField.TIMES_PER_WEEK), limited(first.copy(timesPerWeek = "8")).problems(WeightUnit.KG))
-        assertEquals(setOf(ProfileField.WEEKLY_AMOUNT), limited(first.copy(weeklyAmount = "499")).problems(WeightUnit.KG))
+        assertEquals(setOf(ProfileField.KIND_PER_DAY), limited(first.copy(kindPerDay = "6")).problems(WeightUnit.KG))
+        assertEquals(setOf(ProfileField.KIND_PER_WEEK), limited(first.copy(kindPerWeek = "0")).problems(WeightUnit.KG))
+        assertEquals(
+            setOf(ProfileField.KIND_LIMITS),
+            limited(first.copy(kindLimits = listOf(KindLimitTyped("fish", perWeek = "36")))).problems(WeightUnit.KG),
+        )
         assertEquals(setOf(ProfileField.PANTRY_COOL_DOWN), limited(first.copy(pantryCoolDown = "21")).problems(WeightUnit.KG))
-        assertNull(limited(first.copy(weeklyAmount = "")).planLimits())
-        assertEquals(PlanLimits(1, 7, 10_000, 0), limited(LimitsTyped("1", "7", "10000", "0")).planLimits())
+        assertNull(limited(first.copy(timesPerWeek = "")).planLimits())
+        assertNull(limited(first.copy(kindLimits = listOf(KindLimitTyped("fish", perDay = "x")))).planLimits())
+        assertEquals(
+            PlanLimits(1, 7, 5, 35, emptyList(), 0),
+            limited(LimitsTyped("1", "7", "5", "35", emptyList(), "0")).planLimits(),
+        )
+    }
+
+    @Test
+    fun `the limits on a kind of protein are none while their fields are empty, and an exception gives what it holds`() {
+        val first = LimitsTyped.of(ProfileBounds.FIRST_LIMITS)
+        assertEquals("", first.kindPerDay)
+        assertEquals(ProfileBounds.FIRST_LIMITS, filled.copy(limits = first).planLimits())
+
+        val exceptions = first.copy(
+            kindPerWeek = "7",
+            kindLimits = listOf(
+                KindLimitTyped("fish", perDay = "1"),
+                KindLimitTyped("eggs", perDay = " ", perWeek = "3"),
+                // A row with neither number says nothing, and is left out.
+                KindLimitTyped("dairy"),
+            ),
+        )
+        val limits = filled.copy(limits = exceptions).planLimits()!!
+
+        assertNull(limits.maxMealsPerDaySameKind)
+        assertEquals(7, limits.maxMealsPerWeekSameKind)
+        assertEquals(listOf(KindLimit("fish", 1, null), KindLimit("eggs", null, 3)), limits.kindLimits)
+        assertEquals(listOf(KindLimitTyped("fish", "1", ""), KindLimitTyped("eggs", "", "3")), LimitsTyped.of(limits).kindLimits)
     }
 
     @Test
@@ -124,7 +158,7 @@ class ProfileFormTest {
 
     @Test
     fun `a kept profile's form holds its choices, limits and whether it acknowledged the risk`() {
-        val limits = PlanLimits(1, 2, 2500, 0)
+        val limits = PlanLimits(1, 2, null, 4, listOf(KindLimit("eggs", 1, null)), 0)
         val form = ProfileForm.of(kept(limits = limits, riskAcknowledged = true), WeightUnit.KG)
 
         assertEquals("female", form.sex)
@@ -154,7 +188,7 @@ class ProfileFormTest {
 
     @Test
     fun `the question of what figures come to leaves out the name, the target weight and the limits, and says the risk acknowledged only where the box shows`() {
-        val untitled = filled.copy(name = "", targetWeight = "9999", limits = LimitsTyped("0", "0", "0", "99"))
+        val untitled = filled.copy(name = "", targetWeight = "9999", limits = LimitsTyped("0", "0", "0", "0", emptyList(), "99"))
 
         val asked = untitled.question(WeightUnit.KG)
         assertNotNull(asked)

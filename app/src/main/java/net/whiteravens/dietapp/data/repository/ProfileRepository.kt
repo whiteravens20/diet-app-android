@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.data.repository
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.CaloriePreviewRequestDto
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.KindLimitDto
 import net.whiteravens.dietapp.data.remote.MacroSplitDto
 import net.whiteravens.dietapp.data.remote.NewProfileDto
 import net.whiteravens.dietapp.data.remote.NewProfilePreferencesDto
@@ -16,6 +17,7 @@ import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.IngredientChoice
+import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.PreferencesChange
@@ -66,7 +68,9 @@ class ProfileRepository @Inject constructor(
                         allergens = figures.allergens,
                         maxConsecutiveDaysSameMeal = limits?.maxConsecutiveDaysSameMeal,
                         maxTimesPerWeekSameMeal = limits?.maxTimesPerWeekSameMeal,
-                        maxWeeklyAmountPerIngredient = limits?.maxWeeklyAmountPerIngredient,
+                        maxMealsPerDaySameKind = limits?.maxMealsPerDaySameKind,
+                        maxMealsPerWeekSameKind = limits?.maxMealsPerWeekSameKind,
+                        kindLimits = limits?.kindLimits?.map { it.toDto() },
                         inventoryBiasResetEvery = limits?.inventoryBiasResetEvery,
                     ),
                 ),
@@ -101,7 +105,9 @@ class ProfileRepository @Inject constructor(
                         preferredCuisines = preferences.preferredCuisines,
                         maxConsecutiveDaysSameMeal = preferences.maxConsecutiveDaysSameMeal,
                         maxTimesPerWeekSameMeal = preferences.maxTimesPerWeekSameMeal,
-                        maxWeeklyAmountPerIngredient = preferences.maxWeeklyAmountPerIngredient,
+                        maxMealsPerDaySameKind = preferences.maxMealsPerDaySameKind,
+                        maxMealsPerWeekSameKind = preferences.maxMealsPerWeekSameKind,
+                        kindLimits = preferences.kindLimits.map { it.toDto() },
                         inventoryBiasResetEvery = preferences.inventoryBiasResetEvery,
                     ),
                 ),
@@ -156,6 +162,8 @@ class ProfileRepository @Inject constructor(
 
 private fun MacroSplit.toDto() = MacroSplitDto(protein = protein, fat = fat, carbs = carbs)
 
+private fun KindLimit.toDto() = KindLimitDto(kind = kind, perDay = perDay, perWeek = perWeek)
+
 fun ProfileDto.toDetails() = ProfileDetails(
     id = id,
     figures = ProfileFigures(
@@ -181,7 +189,9 @@ fun ProfileDto.toDetails() = ProfileDetails(
         preferredCuisines = preferences.preferredCuisines,
         maxConsecutiveDaysSameMeal = preferences.maxConsecutiveDaysSameMeal,
         maxTimesPerWeekSameMeal = preferences.maxTimesPerWeekSameMeal,
-        maxWeeklyAmountPerIngredient = preferences.maxWeeklyAmountPerIngredient,
+        maxMealsPerDaySameKind = preferences.maxMealsPerDaySameKind,
+        maxMealsPerWeekSameKind = preferences.maxMealsPerWeekSameKind,
+        kindLimits = preferences.kindLimits.map { KindLimit(it.kind, it.perDay, it.perWeek) },
         inventoryBiasResetEvery = preferences.inventoryBiasResetEvery,
     ),
     riskAcknowledged = riskAcknowledgedAt != null,

@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.profiles
 
 import net.whiteravens.dietapp.domain.CalorieQuestion
+import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.ProfileDetails
@@ -84,14 +85,22 @@ object ProfileBounds {
 
     val CONSECUTIVE_DAYS = 1..7
     val TIMES_PER_WEEK = 1..7
-    val WEEKLY_AMOUNT = 500..10_000
+
+    /** The most meals of a day, and of seven days, with the same kind of protein: every meal of a day of five, every meal of a week. */
+    val KIND_PER_DAY = 1..5
+    val KIND_PER_WEEK = 1..35
     val PANTRY_COOL_DOWN = 0..20
 
-    /** The limits a new profile starts with, as the API sets them. */
+    /** The kinds of protein a limit can be set for, in the order the API lists them. */
+    val PROTEIN_KINDS = listOf("chicken", "turkey", "beef", "pork", "fish", "seafood", "eggs", "dairy", "legumes")
+
+    /** The limits a new profile starts with, as the API sets them: none on a kind of protein. */
     val FIRST_LIMITS = PlanLimits(
         maxConsecutiveDaysSameMeal = 2,
         maxTimesPerWeekSameMeal = 3,
-        maxWeeklyAmountPerIngredient = 3000,
+        maxMealsPerDaySameKind = null,
+        maxMealsPerWeekSameKind = null,
+        kindLimits = emptyList(),
         inventoryBiasResetEvery = 5,
     )
 }
@@ -99,7 +108,7 @@ object ProfileBounds {
 /** A field of the form that holds something the API would refuse. */
 enum class ProfileField {
     NAME, AGE, HEIGHT, WEIGHT, TARGET_WEIGHT, OWN_TARGET, SPLIT,
-    CONSECUTIVE_DAYS, TIMES_PER_WEEK, WEEKLY_AMOUNT, PANTRY_COOL_DOWN,
+    CONSECUTIVE_DAYS, TIMES_PER_WEEK, KIND_PER_DAY, KIND_PER_WEEK, KIND_LIMITS, PANTRY_COOL_DOWN,
 }
 
 /** The three shares of the custom diet's split, in per cent, as their fields hold them. */
@@ -123,20 +132,47 @@ data class SplitTyped(val protein: String, val fat: String, val carbs: String) {
     }
 }
 
-/** The limits on how often a plan repeats itself, as their fields hold them. */
+/**
+ * The limits on how often a plan repeats itself, as their fields hold them: those on a kind of
+ * protein empty for none.
+ */
 data class LimitsTyped(
     val consecutiveDays: String,
     val timesPerWeek: String,
-    val weeklyAmount: String,
+    val kindPerDay: String,
+    val kindPerWeek: String,
+    val kindLimits: List<KindLimitTyped>,
     val pantryCoolDown: String,
 ) {
     companion object {
         fun of(limits: PlanLimits) = LimitsTyped(
             consecutiveDays = limits.maxConsecutiveDaysSameMeal.toString(),
             timesPerWeek = limits.maxTimesPerWeekSameMeal.toString(),
-            weeklyAmount = limits.maxWeeklyAmountPerIngredient.toString(),
+            kindPerDay = limits.maxMealsPerDaySameKind?.toString().orEmpty(),
+            kindPerWeek = limits.maxMealsPerWeekSameKind?.toString().orEmpty(),
+            kindLimits = limits.kindLimits.map(KindLimitTyped::of),
             pantryCoolDown = limits.inventoryBiasResetEvery.toString(),
         )
+    }
+}
+
+/** A kind of protein held to numbers of its own, as the fields of its row hold them: an empty one is the profile's. */
+data class KindLimitTyped(val kind: String, val perDay: String = "", val perWeek: String = "") {
+    val dayHolds: Boolean
+        get() = perDay.emptyOrWithin(ProfileBounds.KIND_PER_DAY)
+
+    val weekHolds: Boolean
+        get() = perWeek.emptyOrWithin(ProfileBounds.KIND_PER_WEEK)
+
+    /** The limit the row holds, or null for one with neither number, which says nothing. */
+    fun limit(): KindLimit? {
+        val day = perDay.trim().toIntOrNull()
+        val week = perWeek.trim().toIntOrNull()
+        return if (day == null && week == null) null else KindLimit(kind, day, week)
+    }
+
+    companion object {
+        fun of(limit: KindLimit) = KindLimitTyped(limit.kind, limit.perDay?.toString().orEmpty(), limit.perWeek?.toString().orEmpty())
     }
 }
 
@@ -181,7 +217,9 @@ data class ProfileForm(
         }
         if (!limits.consecutiveDays.within(ProfileBounds.CONSECUTIVE_DAYS)) add(ProfileField.CONSECUTIVE_DAYS)
         if (!limits.timesPerWeek.within(ProfileBounds.TIMES_PER_WEEK)) add(ProfileField.TIMES_PER_WEEK)
-        if (!limits.weeklyAmount.within(ProfileBounds.WEEKLY_AMOUNT)) add(ProfileField.WEEKLY_AMOUNT)
+        if (!limits.kindPerDay.emptyOrWithin(ProfileBounds.KIND_PER_DAY)) add(ProfileField.KIND_PER_DAY)
+        if (!limits.kindPerWeek.emptyOrWithin(ProfileBounds.KIND_PER_WEEK)) add(ProfileField.KIND_PER_WEEK)
+        if (!limits.kindLimits.all { it.dayHolds && it.weekHolds }) add(ProfileField.KIND_LIMITS)
         if (!limits.pantryCoolDown.within(ProfileBounds.PANTRY_COOL_DOWN)) add(ProfileField.PANTRY_COOL_DOWN)
     }
 
@@ -255,18 +293,24 @@ data class ProfileForm(
         )
     }
 
-    /** The limits the form holds, or null while one is refused. */
+    /** The limits the form holds, or null while one is refused. An exception with neither number is left out. */
     fun planLimits(): PlanLimits? {
+        val typed = limits
+        val kindsHold = typed.kindPerDay.emptyOrWithin(ProfileBounds.KIND_PER_DAY) &&
+            typed.kindPerWeek.emptyOrWithin(ProfileBounds.KIND_PER_WEEK) &&
+            typed.kindLimits.all { it.dayHolds && it.weekHolds }
+        if (!kindsHold) return null
         val limits = PlanLimits(
-            maxConsecutiveDaysSameMeal = limits.consecutiveDays.trim().toIntOrNull() ?: return null,
-            maxTimesPerWeekSameMeal = limits.timesPerWeek.trim().toIntOrNull() ?: return null,
-            maxWeeklyAmountPerIngredient = limits.weeklyAmount.trim().toIntOrNull() ?: return null,
-            inventoryBiasResetEvery = limits.pantryCoolDown.trim().toIntOrNull() ?: return null,
+            maxConsecutiveDaysSameMeal = typed.consecutiveDays.trim().toIntOrNull() ?: return null,
+            maxTimesPerWeekSameMeal = typed.timesPerWeek.trim().toIntOrNull() ?: return null,
+            maxMealsPerDaySameKind = typed.kindPerDay.trim().toIntOrNull(),
+            maxMealsPerWeekSameKind = typed.kindPerWeek.trim().toIntOrNull(),
+            kindLimits = typed.kindLimits.mapNotNull { it.limit() },
+            inventoryBiasResetEvery = typed.pantryCoolDown.trim().toIntOrNull() ?: return null,
         )
         return limits.takeIf {
             it.maxConsecutiveDaysSameMeal in ProfileBounds.CONSECUTIVE_DAYS &&
                 it.maxTimesPerWeekSameMeal in ProfileBounds.TIMES_PER_WEEK &&
-                it.maxWeeklyAmountPerIngredient in ProfileBounds.WEEKLY_AMOUNT &&
                 it.inventoryBiasResetEvery in ProfileBounds.PANTRY_COOL_DOWN
         }
     }
@@ -318,5 +362,8 @@ private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()
 
 /** Whether the field holds a whole number within [range]. */
 private fun String.within(range: IntRange): Boolean = trim().toIntOrNull()?.let { it in range } == true
+
+/** Whether the field is empty or holds a whole number within [range]. */
+private fun String.emptyOrWithin(range: IntRange): Boolean = isBlank() || within(range)
 
 private fun Double.plain(): String = if (this % 1.0 == 0.0) roundToInt().toString() else toString()

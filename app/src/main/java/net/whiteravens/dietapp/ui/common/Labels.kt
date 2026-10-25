@@ -57,6 +57,21 @@ fun dietTypeLabel(code: String): String = when (code) {
     else -> humanise(code)
 }
 
+/** A kind of protein by name, as the limits on one kind in a day and in seven days name it. */
+@Composable
+fun proteinKindLabel(code: String): String = when (code) {
+    "chicken" -> stringResource(R.string.protein_kind_chicken)
+    "turkey" -> stringResource(R.string.protein_kind_turkey)
+    "beef" -> stringResource(R.string.protein_kind_beef)
+    "pork" -> stringResource(R.string.protein_kind_pork)
+    "fish" -> stringResource(R.string.protein_kind_fish)
+    "seafood" -> stringResource(R.string.protein_kind_seafood)
+    "eggs" -> stringResource(R.string.protein_kind_eggs)
+    "dairy" -> stringResource(R.string.protein_kind_dairy)
+    "legumes" -> stringResource(R.string.protein_kind_legumes)
+    else -> humanise(code)
+}
+
 @Composable
 fun mealTypeLabel(code: String): String = when (code) {
     "breakfast" -> stringResource(R.string.meal_breakfast)

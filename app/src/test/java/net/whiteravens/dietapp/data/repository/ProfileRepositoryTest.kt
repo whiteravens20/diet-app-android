@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.IngredientChoice
+import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.PreferencesChange
 import net.whiteravens.dietapp.domain.ProfileFigures
@@ -24,6 +25,7 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -81,15 +83,26 @@ class ProfileRepositoryTest {
     @Test
     fun `a new profile made in the form is sent with the limits on repeats it chose`() {
         server.enqueue(answer(fixture("profile"), 201))
+        val limits = PlanLimits(
+            maxConsecutiveDaysSameMeal = 1,
+            maxTimesPerWeekSameMeal = 2,
+            maxMealsPerDaySameKind = 2,
+            maxMealsPerWeekSameKind = null,
+            kindLimits = listOf(KindLimit("fish", 1, null)),
+            inventoryBiasResetEvery = 0,
+        )
 
-        runBlocking { repository().create(figures, PlanLimits(1, 2, 2500, 0), acknowledgeRisk = true) }
+        runBlocking { repository().create(figures, limits, acknowledgeRisk = true) }
 
         val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
         assertEquals("true", body.getValue("acknowledgeRisk").jsonPrimitive.content)
         val preferences = body.getValue("preferences").jsonObject
         assertEquals("1", preferences.getValue("maxConsecutiveDaysSameMeal").jsonPrimitive.content)
         assertEquals("2", preferences.getValue("maxTimesPerWeekSameMeal").jsonPrimitive.content)
-        assertEquals("2500", preferences.getValue("maxWeeklyAmountPerIngredient").jsonPrimitive.content)
+        assertEquals("2", preferences.getValue("maxMealsPerDaySameKind").jsonPrimitive.content)
+        // No limit is what a new profile has: it is left to the API.
+        assertFalse("maxMealsPerWeekSameKind" in preferences)
+        assertEquals("""[{"kind":"fish","perDay":1,"perWeek":null}]""", preferences.getValue("kindLimits").toString())
         assertEquals("0", preferences.getValue("inventoryBiasResetEvery").jsonPrimitive.content)
     }
 
@@ -101,7 +114,10 @@ class ProfileRepositoryTest {
 
         assertEquals("/api/profiles", server.takeRequest().path)
         assertTrue(list.isNotEmpty())
-        assertEquals(3000, list.first().preferences.maxWeeklyAmountPerIngredient)
+        val preferences = list.first().preferences
+        assertNull(preferences.maxMealsPerDaySameKind)
+        assertNull(preferences.maxMealsPerWeekSameKind)
+        assertEquals(emptyList<KindLimit>(), preferences.kindLimits)
     }
 
     @Test
@@ -138,14 +154,18 @@ class ProfileRepositoryTest {
         server.enqueue(answer(fixture("profile")))
         val kept = runBlocking { repository().profile("p") }
 
-        runBlocking { repository().update(kept.id, kept.figures.copy(allergens = listOf("milk")), kept.preferences, acknowledgeRisk = null) }
+        val limited = kept.preferences.copy(maxMealsPerWeekSameKind = 7, kindLimits = listOf(KindLimit("eggs", null, 3)))
+
+        runBlocking { repository().update(kept.id, kept.figures.copy(allergens = listOf("milk")), limited, acknowledgeRisk = null) }
 
         server.takeRequest()
         val sent = server.takeRequest()
         assertEquals("PUT", sent.method)
         val preferences = json.parseToJsonElement(sent.body.readUtf8()).jsonObject.getValue("preferences").jsonObject
         assertEquals(listOf("milk"), preferences.getValue("allergens").jsonArray.map { it.jsonPrimitive.content })
-        assertEquals(kept.preferences.maxWeeklyAmountPerIngredient.toString(), preferences.getValue("maxWeeklyAmountPerIngredient").jsonPrimitive.content)
+        assertEquals(JsonNull, preferences.getValue("maxMealsPerDaySameKind"))
+        assertEquals("7", preferences.getValue("maxMealsPerWeekSameKind").jsonPrimitive.content)
+        assertEquals("""[{"kind":"eggs","perDay":null,"perWeek":3}]""", preferences.getValue("kindLimits").toString())
     }
 
     @Test

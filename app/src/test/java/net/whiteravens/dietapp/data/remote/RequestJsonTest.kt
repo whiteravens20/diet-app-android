@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.data.remote
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import net.whiteravens.dietapp.di.AppModule
 import org.junit.Assert.assertEquals
@@ -25,7 +26,9 @@ class RequestJsonTest {
         preferredCuisines = emptyList(),
         maxConsecutiveDaysSameMeal = 2,
         maxTimesPerWeekSameMeal = 3,
-        maxWeeklyAmountPerIngredient = 3000,
+        maxMealsPerDaySameKind = null,
+        maxMealsPerWeekSameKind = 7,
+        kindLimits = listOf(KindLimitDto(kind = "fish", perDay = 1, perWeek = null)),
         inventoryBiasResetEvery = 5,
     )
 
@@ -43,7 +46,13 @@ class RequestJsonTest {
             assertEquals(field, JsonNull, body[field])
         }
         assertFalse("acknowledgeRisk is said only by a form that showed the risk", "acknowledgeRisk" in body)
-        assertEquals(ProfilePreferencesUpdateDto.serializer().descriptor.elementsCount, body.getValue("preferences").jsonObject.size)
+        val sent = body.getValue("preferences").jsonObject
+        assertEquals(ProfilePreferencesUpdateDto.serializer().descriptor.elementsCount, sent.size)
+        // No limit on a kind of protein is a null the API reads, and an exception sends both its numbers.
+        assertEquals(JsonNull, sent["maxMealsPerDaySameKind"])
+        val exception = sent.getValue("kindLimits").jsonArray.single().jsonObject
+        assertEquals(setOf("kind", "perDay", "perWeek"), exception.keys)
+        assertEquals(JsonNull, exception["perWeek"])
     }
 
     @Test
