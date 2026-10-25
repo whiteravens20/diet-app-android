@@ -255,6 +255,15 @@ fun amountLabel(quantity: Double, unit: String): String {
     return when (unit) {
         "g" -> stringResource(R.string.amount_g, number)
         "ml" -> stringResource(R.string.amount_ml, number)
+        "tsp" -> {
+            val (shown, form) = teaspoons(quantity)
+            when (form) {
+                SpoonForm.PART -> stringResource(R.string.amount_tsp_part, shown)
+                SpoonForm.MIXED -> stringResource(R.string.amount_tsp_mixed, shown)
+                SpoonForm.WHOLE -> pluralStringResource(R.plurals.amount_tsp, quantity.toInt(), shown)
+            }
+        }
+        "pinch" -> pluralStringResource(R.plurals.amount_pinch, quantity.toInt(), number)
         else -> {
             val (counted, named) = when (unit) {
                 "slice" -> R.plurals.amount_slice to R.string.unit_name_slice
@@ -269,6 +278,26 @@ fun amountLabel(quantity: Double, unit: String): String {
     }
 }
 
+/** Which form of the noun follows a number of teaspoons: a part of one, a whole one and a part, or whole ones counted. */
+internal enum class SpoonForm { PART, MIXED, WHOLE }
+
+/** A number of teaspoons as a cook writes it, ¼, ½, 1½, 2, and the form of the noun after it. */
+internal fun teaspoons(quantity: Double): Pair<String, SpoonForm> {
+    val whole = kotlin.math.floor(quantity).toInt()
+    val part = quantity - whole
+    val fraction = when {
+        part >= 0.75 -> "¾"
+        part >= 0.5 -> "½"
+        part >= 0.25 -> "¼"
+        else -> ""
+    }
+    return when {
+        fraction.isEmpty() -> whole.toString() to SpoonForm.WHOLE
+        whole == 0 -> fraction to SpoonForm.PART
+        else -> "$whole$fraction" to SpoonForm.MIXED
+    }
+}
+
 /** What a unit is called beside a number somebody types: `g`, `ml`, `pieces`, `slices`. */
 @Composable
 fun unitName(unit: String): String = when (unit) {
@@ -276,6 +305,8 @@ fun unitName(unit: String): String = when (unit) {
     "slice" -> stringResource(R.string.unit_name_slice)
     "clove" -> stringResource(R.string.unit_name_clove)
     "handful" -> stringResource(R.string.unit_name_handful)
+    "tsp" -> stringResource(R.string.unit_name_tsp)
+    "pinch" -> stringResource(R.string.unit_name_pinch)
     else -> stringResource(R.string.unit_name_piece)
 }
 

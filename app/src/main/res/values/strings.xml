@@ -896,6 +896,18 @@
     <string name="unit_name_slice">slices</string>
     <string name="unit_name_clove">cloves</string>
     <string name="unit_name_handful">handfuls</string>
+    <string name="unit_name_tsp">teaspoons</string>
+    <string name="unit_name_pinch">pinches</string>
+    <string name="amount_tsp_part">%1$s teaspoon</string>
+    <string name="amount_tsp_mixed">%1$s teaspoons</string>
+    <plurals name="amount_tsp">
+        <item quantity="one">%1$s teaspoon</item>
+        <item quantity="other">%1$s teaspoons</item>
+    </plurals>
+    <plurals name="amount_pinch">
+        <item quantity="one">%1$s pinch</item>
+        <item quantity="other">%1$s pinches</item>
+    </plurals>
     <plurals name="amount_piece">
         <item quantity="one">%1$s piece</item>
         <item quantity="other">%1$s pieces</item>

@@ -965,6 +965,22 @@
     <string name="unit_name_slice">kromki</string>
     <string name="unit_name_clove">ząbki</string>
     <string name="unit_name_handful">garście</string>
+    <string name="unit_name_tsp">łyżeczki</string>
+    <string name="unit_name_pinch">szczypty</string>
+    <string name="amount_tsp_part">%1$s łyżeczki</string>
+    <string name="amount_tsp_mixed">%1$s łyżeczki</string>
+    <plurals name="amount_tsp">
+        <item quantity="one">%1$s łyżeczka</item>
+        <item quantity="few">%1$s łyżeczki</item>
+        <item quantity="many">%1$s łyżeczek</item>
+        <item quantity="other">%1$s łyżeczki</item>
+    </plurals>
+    <plurals name="amount_pinch">
+        <item quantity="one">%1$s szczypta</item>
+        <item quantity="few">%1$s szczypty</item>
+        <item quantity="many">%1$s szczypt</item>
+        <item quantity="other">%1$s szczypty</item>
+    </plurals>
     <plurals name="amount_piece">
         <item quantity="one">%1$s sztuka</item>
         <item quantity="few">%1$s sztuki</item>
