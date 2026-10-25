@@ -337,7 +337,7 @@ class PlansTest {
         val profileId = Instance.newProfile(account)
         // A day the catalogue suggests a substitute for one of its meals: a few plans are made until one has it.
         var planId = ""
-        var found: Triple<String, String, String>? = null
+        var found: Instance.Substitutable? = null
         repeat(4) {
             if (found != null) return@repeat
             planId = Instance.newPlan(account, profileId, days = 1)
@@ -345,7 +345,7 @@ class PlansTest {
             if (found == null) Instance.deletePlan(account, planId)
         }
         assumeTrue("No plan made had a meal with a substitute the catalogue suggests.", found != null)
-        val (title, line, substitute) = found!!
+        val (mealId, title, line, substitute) = found!!
         screen.startSignedIn(account)
 
         screen.openTab(text(R.string.nav_meal_plans))
@@ -359,9 +359,10 @@ class PlansTest {
         screen.onAllNodes(change)[0].performClick()
         screen.onNodeWithText("${text(R.string.plans_substitute_ingr)} ⇄").performClick()
         screen.waitForText(text(R.string.substitute_step_pick))
-        screen.onNode(hasText(line) and hasAnyAncestor(isDialog())).performClick()
+        // The window scrolls: what is tapped is scrolled into view first, or the tap lands beside it.
+        screen.onNode(hasText(line) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
         screen.waitForText(text(R.string.substitute_catalogue_suggests))
-        screen.onAllNodes(hasText(substitute) and hasClickAction() and hasAnyAncestor(isDialog()))[0].performClick()
+        screen.onAllNodes(hasText(substitute) and hasClickAction() and hasAnyAncestor(isDialog()))[0].performScrollTo().performClick()
         val accept = hasText(text(R.string.substitute_accept_change)) and hasAnyAncestor(isDialog())
         val apply = hasText(text(R.string.substitute_apply)) and isEnabled()
         screen.waitUntil(20_000) { screen.onAllNodes(accept).fetchSemanticsNodes().isNotEmpty() || screen.onAllNodes(apply).fetchSemanticsNodes().isNotEmpty() }
@@ -374,8 +375,10 @@ class PlansTest {
         putAwayRebalance()
 
         // Opened again on the meal, the window starts anew and stays open: it does not hand back the substitution it made.
-        screen.scrollTo(change)
-        screen.onAllNodes(change)[0].performClick()
+        // The substitution may have reworded the meal's title, which names the way to change it.
+        val changed = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), Instance.mealTitle(account, planId, mealId)))
+        screen.scrollTo(changed)
+        screen.onAllNodes(changed)[0].performClick()
         screen.onNodeWithText("${text(R.string.plans_substitute_ingr)} ⇄").performClick()
         screen.waitForText(text(R.string.substitute_step_pick))
         screen.waitForIdle()

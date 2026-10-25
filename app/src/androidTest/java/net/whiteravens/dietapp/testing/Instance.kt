@@ -206,17 +206,26 @@ object Instance {
         return (0 until meals.length()).map { meals.getJSONObject(it) }.filter { it.getString("source") == "USER_CUSTOM" }.map { it.getString("customName") }
     }
 
+    /** The title of a meal of a plan, as the plan answers it now: a substitution can reword it. */
+    fun mealTitle(account: Account, planId: String, mealId: String): String {
+        val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")
+        return (0 until days.length()).flatMap { d -> days.getJSONObject(d).getJSONArray("meals").let { meals -> (0 until meals.length()).map(meals::getJSONObject) } }
+            .first { it.getString("id") == mealId }.getJSONObject("recipe").getString("title")
+    }
+
     /** Deletes a plan, as its menu does. */
     fun deletePlan(account: Account, planId: String) {
         send("DELETE", "meal-plans/$planId", null, account.accessToken, 204, null)
     }
 
+    /** A meal and a substitution the catalogue suggests for one of its lines: the line's name and the substitute's. */
+    data class Substitutable(val mealId: String, val title: String, val line: String, val substitute: String)
+
     /**
      * A meal of a plan's first day that is the catalogue's and not eaten, with a substitute the catalogue
-     * suggests for one of its lines that the recipe does not hold already: the meal's title, the line's
-     * name and the substitute's; null where the plan has none.
+     * suggests for one of its lines that the recipe does not hold already; null where the plan has none.
      */
-    fun substitutableMeal(account: Account, planId: String): Triple<String, String, String>? {
+    fun substitutableMeal(account: Account, planId: String): Substitutable? {
         val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
         for (meal in (0 until meals.length()).map(meals::getJSONObject)) {
             if (meal.getString("source") != "CATALOGUE" || !meal.isNull("eatenAt")) continue
@@ -226,7 +235,7 @@ object Instance {
                 // One the recipe has already shares its name with a line of it.
                 if (lines.any { it.getString("ingredientId") == suggestion.getJSONObject("to").getString("id") }) continue
                 val line = lines.firstOrNull { it.getString("ingredientId") == suggestion.getString("fromIngredientId") } ?: continue
-                return Triple(meal.getJSONObject("recipe").getString("title"), line.getString("name"), suggestion.getJSONObject("to").getString("name"))
+                return Substitutable(meal.getString("id"), meal.getJSONObject("recipe").getString("title"), line.getString("name"), suggestion.getJSONObject("to").getString("name"))
             }
         }
         return null
