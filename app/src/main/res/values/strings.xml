@@ -985,6 +985,10 @@
     <string name="profile_reminder_off">Off</string>
     <string name="profile_reminder_daily">Daily</string>
     <string name="profile_reminder_weekly">Weekly</string>
+    <string name="profile_section_body">About you</string>
+    <string name="profile_section_goal">Your goal</string>
+    <string name="profile_section_food">How you eat</string>
+    <string name="profile_section_variety">Plan variety</string>
     <string name="profile_max_consecutive_days">Max same recipe in a row (days)</string>
     <string name="profile_max_consecutive_days_hint">Forces a different recipe after this many consecutive days.</string>
     <string name="profile_max_times_per_week">Max times the same recipe per week</string>

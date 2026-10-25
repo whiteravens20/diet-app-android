@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,6 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,9 +35,10 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 
 /**
- * A profile's form, for a new profile or one kept: the body, the diet, the goal and how often its
- * plans may repeat themselves, with what the figures come to beside them as they are typed.
- * Nothing is kept before it is saved; a field the API would refuse says why once saving was asked.
+ * A profile's form, for a new profile or one kept, in four parts: the body, the goal, the food and
+ * how often its plans may repeat themselves, with what the figures come to beside them as they are
+ * typed. Nothing is kept before it is saved; a field the API would refuse says why once saving was
+ * asked.
  */
 @Composable
 fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: ProfileFormViewModel = hiltViewModel()) {
@@ -70,9 +74,10 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                 val problems = if (state.showProblems) state.problems else emptySet()
                 AppCard {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FormSection(stringResource(R.string.profile_section_body), first = true)
                         NameField(form, problems, viewModel::edit)
                         BodyFields(form, state.unit, problems, viewModel::edit)
-                        DietFields(form, problems, rules, viewModel::edit)
+                        FormSection(stringResource(R.string.profile_section_goal))
                         PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
                         TargetWeightField(form, state.unit, problems, viewModel::edit)
                         OwnTargetField(form, problems, viewModel::edit)
@@ -82,6 +87,9 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                             onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
                         )
                         ReminderField(form, viewModel::edit)
+                        FormSection(stringResource(R.string.profile_section_food))
+                        DietFields(form, problems, rules, viewModel::edit)
+                        FormSection(stringResource(R.string.profile_section_variety))
                         LimitFields(form, problems, viewModel::edit)
                     }
                 }
@@ -104,4 +112,15 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
             }
         }
     }
+}
+
+/** The heading of a part of the form, with a line above every part but the first. */
+@Composable
+private fun FormSection(title: String, first: Boolean = false) {
+    if (!first) HorizontalDivider(Modifier.padding(top = 8.dp))
+    Text(
+        title,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = if (first) 0.dp else 8.dp).semantics { heading() },
+    )
 }

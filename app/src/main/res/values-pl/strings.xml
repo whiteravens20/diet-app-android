@@ -1072,6 +1072,10 @@
     <string name="profile_reminder_off">Wyłączone</string>
     <string name="profile_reminder_daily">Codziennie</string>
     <string name="profile_reminder_weekly">Co tydzień</string>
+    <string name="profile_section_body">O Tobie</string>
+    <string name="profile_section_goal">Twój cel</string>
+    <string name="profile_section_food">Jak jesz</string>
+    <string name="profile_section_variety">Różnorodność planu</string>
     <string name="profile_max_consecutive_days">Maks. dni z rzędu tego samego dania</string>
     <string name="profile_max_consecutive_days_hint">Po tylu dniach pod rząd planer musi wybrać inny przepis.</string>
     <string name="profile_max_times_per_week">Maks. powtórzeń tego samego dania w tygodniu</string>
