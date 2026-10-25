@@ -1,8 +1,8 @@
 # The contract this client was checked against
 
 `openapi.json` is the description diet-app publishes of its API (`docs/api/openapi.json`),
-copied from diet-app at the version in `API_VERSION` (from commit `2496d44`, the build of the
-`ghcr.io/whiteravens20/diet-app:dev-2496d44` image). The unit tests compare every call of the
+copied from diet-app at the version in `API_VERSION` (from commit `24d38d1`, the build of the
+`ghcr.io/whiteravens20/diet-app:dev-24d38d1` image). The unit tests compare every call of the
 client with it: the route exists, the body is one the API takes, and the class an answer is
 read into can read what the API answers.
 
