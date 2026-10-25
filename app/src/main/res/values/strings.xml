@@ -231,11 +231,10 @@
     <string name="plans_delete_confirm">Delete this plan? This cannot be undone.</string>
     <string name="plans_rebalance_title">Day macros updated</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
-    <string name="plans_rebalance_best_effort">Day still over target — consider editing.</string>
-    <string name="plans_rebalance_left_over">The week is still %1$s kcal over: the other days have no more room inside their own targets.</string>
-    <string name="plans_rebalance_left_under">The week is still %1$s kcal short: the other days have no more room inside their own targets.</string>
+    <string name="plans_rebalance_best_effort">The day is still off its target: sizing its meals could not close the gap.</string>
+    <string name="plans_rebalance_left_over">The rest of the plan is still %1$s kcal over: the other days have no more room inside their own targets.</string>
+    <string name="plans_rebalance_left_under">The rest of the plan is still %1$s kcal short: the other days have no more room inside their own targets.</string>
     <string name="plans_rebalance_undo">Undo last rebalance</string>
-    <string name="plans_rebalance_week">Rebalance the rest of the week</string>
     <string name="plans_rebalance_dismiss">Dismiss</string>
     <string name="plans_custom_modal_title">Add a custom meal</string>
     <string name="plans_custom_name">Meal name</string>
@@ -1151,4 +1150,11 @@
     <string name="web_table_and_print">Table and printing in the browser</string>
     <string name="web_no_browser_title">No browser</string>
     <string name="web_no_browser_body">No browser on this phone opens the page. Its address, to open elsewhere:</string>
+    <string name="plans_spread">Spread over the rest of the plan</string>
+    <string name="plans_spread_note_over">The portions of the plan\'s remaining days, from today to its end, get smaller, each day by a tenth of its target at most. Past days, skipped days and eaten meals stay as they are.</string>
+    <string name="plans_spread_note_under">The portions of the plan\'s remaining days, from today to its end, get larger, each day by a tenth of its target at most. Past days, skipped days and eaten meals stay as they are.</string>
+    <string name="plans_rebalance_rest">Spread over the rest of the plan</string>
+    <string name="plans_rebalance_rest_note">Spreading changes the portions of the plan\'s remaining days, from today to its end, each by a tenth of its target at most.</string>
+    <string name="plans_rebalance_title_plan">Spread over the rest of the plan</string>
+    <string name="plans_rebalance_summary_plan">Meals rescaled on the plan\'s remaining days: %1$s.</string>
 </resources>

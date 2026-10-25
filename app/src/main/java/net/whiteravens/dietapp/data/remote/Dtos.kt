@@ -1094,12 +1094,12 @@ data class RebalanceChangeDto(val mealId: String, val before: Double, val after:
 
 @Serializable
 data class RebalanceSummaryDto(
-    /** `day` | `week`. */
+    /** `day` | `plan`. */
     val scope: String,
     /** `in-window` | `best-effort`. */
     val feasibility: String,
     val changes: List<RebalanceChangeDto>,
-    /** What the balancing could not take back into the day or the week, in kilocalories. */
+    /** What the balancing could not take back into the day or the rest of the plan, in kilocalories. */
     val unabsorbedKcal: Double,
     val macrosBefore: NutritionDto,
     val macrosAfter: NutritionDto,
@@ -1274,7 +1274,7 @@ data class RestoreScaleDto(val mealId: String, val scale: Double)
 
 /**
  * POST `/meal-plans/:id/rebalance`: `day` balances [date], or puts back the scales of [restore];
- * `week` balances the days from [date], today where it is left out, to the end of that week of the plan.
+ * `plan` balances the days from [date], today where it is left out, to the end of the plan.
  */
 @Serializable
 data class RebalanceRequest(val scope: String, val date: String? = null, val restore: List<RestoreScaleDto>? = null)

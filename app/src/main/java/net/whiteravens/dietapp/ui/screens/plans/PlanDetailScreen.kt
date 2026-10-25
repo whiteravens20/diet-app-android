@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.LocalDate
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CustomMeal
@@ -358,11 +359,15 @@ fun PlanDetailScreen(
             }
 
             val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
+            val today = LocalDate.now().toString()
+            // Another day from today on can take a part of what this one is off its target by.
+            val spreadable = plan.days.any { it.id != day.id && it.date >= today && !it.skipped }
             item(key = "summary-${day.id}") {
                 DaySummary(
                     day,
                     onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy },
                     onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy },
+                    onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
                 )
             }
             itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
@@ -400,7 +405,7 @@ fun PlanDetailScreen(
                 notice = state.notice,
                 busy = busy,
                 onUndo = viewModel::undoRebalance,
-                onWeek = viewModel::rebalanceWeek,
+                onRest = { viewModel.spread() },
                 onDismiss = viewModel::dismissRebalance,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
@@ -619,9 +624,13 @@ private fun UseUpPanel(
     }
 }
 
-/** A day against its target: what it holds in kcal and by how much it misses, its macros against theirs, and where it stands. */
+/**
+ * A day against its target: what it holds in kcal and by how much it misses, its macros against
+ * theirs, and where it stands; a day off its target can be spread over the remaining days of the
+ * plan, with what that does said beside it.
+ */
 @Composable
-private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -> Unit)?) {
+private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -> Unit)?, onSpread: (() -> Unit)?) {
     AppCard {
         if (day.skipped) {
             // A day the user skips is no shortfall, and there is nothing in it to change.
@@ -667,6 +676,15 @@ private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            // What spreading does is said beside the button that does it, before it is pressed.
+            onSpread?.let { spread ->
+                OutlinedButton(onClick = spread, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_spread)) }
+                Text(
+                    stringResource(if (standing == "over") R.string.plans_spread_note_over else R.string.plans_spread_note_under),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         if (day.belowSafetyFloor) {
             Text(
@@ -776,7 +794,7 @@ private fun RebalanceCard(
     notice: String?,
     busy: Boolean,
     onUndo: () -> Unit,
-    onWeek: () -> Unit,
+    onRest: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -803,7 +821,7 @@ private fun RebalanceCard(
                 if (rebalance != null) {
                     OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
                     if (rebalance.scope == "day") {
-                        OutlinedButton(onClick = onWeek, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_week)) }
+                        OutlinedButton(onClick = onRest, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_rest)) }
                     }
                 }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.plans_rebalance_dismiss)) }
@@ -812,20 +830,30 @@ private fun RebalanceCard(
     }
 }
 
-/** What a rebalance did: the day's kcal before and after, the meals scaled, and what it could not take back. */
+/**
+ * What a rebalance did: of a day, its kcal before and after, the meals scaled and whether it is still
+ * off its target, with what spreading it over the rest of the plan would do; of the rest of the
+ * plan, the meals scaled. Either way what it could not take back.
+ */
 @Composable
 private fun RebalanceSaid(rebalance: Rebalance) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
-        Hint(
-            stringResource(
-                R.string.plans_rebalance_summary,
-                formatNumber(rebalance.caloriesBefore.roundToInt()),
-                formatNumber(rebalance.caloriesAfter.roundToInt()),
-                formatNumber(rebalance.changes.size),
-            ),
-        )
-        if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
+        if (rebalance.scope == "day") {
+            Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
+            Hint(
+                stringResource(
+                    R.string.plans_rebalance_summary,
+                    formatNumber(rebalance.caloriesBefore.roundToInt()),
+                    formatNumber(rebalance.caloriesAfter.roundToInt()),
+                    formatNumber(rebalance.changes.size),
+                ),
+            )
+            if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
+            Hint(stringResource(R.string.plans_rebalance_rest_note))
+        } else {
+            Text(stringResource(R.string.plans_rebalance_title_plan), style = MaterialTheme.typography.titleSmall)
+            Hint(stringResource(R.string.plans_rebalance_summary_plan, formatNumber(rebalance.changes.size)))
+        }
         if (rebalance.unabsorbedKcal != 0.0) {
             Hint(
                 stringResource(

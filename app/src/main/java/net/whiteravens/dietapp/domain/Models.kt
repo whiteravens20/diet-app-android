@@ -371,7 +371,7 @@ data class MealPlan(
  * where it is above nought).
  */
 data class Rebalance(
-    /** `day` | `week`. */
+    /** `day` | `plan`. */
     val scope: String,
     val bestEffort: Boolean,
     val changes: List<ScaleChange>,

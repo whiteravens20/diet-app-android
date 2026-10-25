@@ -246,11 +246,10 @@
     <string name="plans_delete_confirm">Usunąć ten plan? Tej operacji nie można cofnąć.</string>
     <string name="plans_rebalance_title">Zaktualizowano makro dnia</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
-    <string name="plans_rebalance_best_effort">Dzień nadal przekracza cel — rozważ edycję.</string>
-    <string name="plans_rebalance_left_over">Tydzień nadal ma %1$s kcal nadwyżki: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
-    <string name="plans_rebalance_left_under">W tygodniu nadal brakuje %1$s kcal: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
+    <string name="plans_rebalance_best_effort">Dzień nadal jest poza celem: dopasowanie porcji nie wystarczyło.</string>
+    <string name="plans_rebalance_left_over">Reszta planu nadal ma %1$s kcal nadwyżki: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
+    <string name="plans_rebalance_left_under">W reszcie planu nadal brakuje %1$s kcal: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
     <string name="plans_rebalance_undo">Cofnij ostatnie przeliczenie</string>
-    <string name="plans_rebalance_week">Przelicz resztę tygodnia</string>
     <string name="plans_rebalance_dismiss">Zamknij</string>
     <string name="plans_custom_modal_title">Dodaj własny posiłek</string>
     <string name="plans_custom_name">Nazwa posiłku</string>
@@ -1242,4 +1241,11 @@
     <string name="web_table_and_print">Tabela i druk w przeglądarce</string>
     <string name="web_no_browser_title">Brak przeglądarki</string>
     <string name="web_no_browser_body">Żadna przeglądarka na tym telefonie nie otwiera tej strony. Jej adres, do otwarcia gdzie indziej:</string>
+    <string name="plans_spread">Rozłóż na resztę planu</string>
+    <string name="plans_spread_note_over">Porcje pozostałych dni planu, od dziś do jego końca, zmniejszą się, każdy dzień najwyżej o jedną dziesiątą swojego celu. Dni minione, pominięte i zjedzone posiłki zostają bez zmian.</string>
+    <string name="plans_spread_note_under">Porcje pozostałych dni planu, od dziś do jego końca, zwiększą się, każdy dzień najwyżej o jedną dziesiątą swojego celu. Dni minione, pominięte i zjedzone posiłki zostają bez zmian.</string>
+    <string name="plans_rebalance_rest">Rozłóż na resztę planu</string>
+    <string name="plans_rebalance_rest_note">Rozłożenie zmienia porcje pozostałych dni planu, od dziś do jego końca, każdego najwyżej o jedną dziesiątą jego celu.</string>
+    <string name="plans_rebalance_title_plan">Rozłożono na resztę planu</string>
+    <string name="plans_rebalance_summary_plan">Przeliczono posiłki pozostałych dni planu: %1$s.</string>
 </resources>

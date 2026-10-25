@@ -207,8 +207,8 @@ class PlanDetailViewModel @Inject constructor(
         change(said = false) { plans.undo(planId, rebalance) }
     }
 
-    /** Balances the rest of the week, from today, each day around its own meals. */
-    fun rebalanceWeek() = change { plans.rebalanceWeek(planId) }
+    /** Spreads what the days from [from] (today where it is left out) are off their targets by over the remaining days of the plan. */
+    fun spread(from: String? = null) = change { plans.rebalanceRest(planId, from) }
 
     fun dismissRebalance() {
         _state.update { it.copy(rebalance = null, notice = null) }

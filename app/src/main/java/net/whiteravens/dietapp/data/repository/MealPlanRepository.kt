@@ -382,9 +382,13 @@ class MealPlanRepository @Inject constructor(
         },
     )
 
-    /** Balances the days from today to the end of their week of the plan, each around its own meals. */
-    suspend fun rebalanceWeek(planId: String): Rebalanced =
-        kept(apiCall(json) { api.rebalancePlan(planId, RebalanceRequest(scope = "week")) })
+    /**
+     * Spreads what the days from [from] (yyyy-MM-dd; today where it is left out) are off their targets
+     * by over the remaining days of the plan, each inside its own window; the meals of a day before
+     * today stay as they are.
+     */
+    suspend fun rebalanceRest(planId: String, from: String? = null): Rebalanced =
+        kept(apiCall(json) { api.rebalancePlan(planId, RebalanceRequest(scope = "plan", date = from)) })
 
     /** Puts the meals [rebalance] scaled back as they were. */
     suspend fun undo(planId: String, rebalance: Rebalance): Rebalanced = kept(

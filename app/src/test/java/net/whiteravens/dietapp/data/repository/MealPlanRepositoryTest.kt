@@ -229,14 +229,20 @@ class MealPlanRepositoryTest {
     }
 
     @Test
-    fun `the rest of the week is balanced from the day it is for the phone`() {
+    fun `the rest of the plan is balanced from the day it is for the phone, or from the day given`() {
         server.enqueue(answer("meal-plan-swap-apply"))
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val plans = repository(Cache())
 
-        runBlocking { repository(Cache()).rebalanceWeek("plan-1") }
+        runBlocking {
+            plans.rebalanceRest("plan-1")
+            plans.rebalanceRest("plan-1", from = "2026-10-20")
+        }
 
-        val asked = server.takeRequest()
-        assertEquals("""{"scope":"week"}""", asked.body.readUtf8())
-        assertEquals(LocalDate.now().toString(), asked.getHeader("X-Client-Date"))
+        val today = server.takeRequest()
+        assertEquals("""{"scope":"plan"}""", today.body.readUtf8())
+        assertEquals(LocalDate.now().toString(), today.getHeader("X-Client-Date"))
+        assertEquals("""{"scope":"plan","date":"2026-10-20"}""", server.takeRequest().body.readUtf8())
     }
 
     @Test

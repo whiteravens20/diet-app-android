@@ -223,21 +223,21 @@ class PlanDetailViewModelTest {
     }
 
     @Test
-    fun `the rest of the week is balanced from the card, and the way back puts each meal it scaled back as it was, saying nothing of itself`() {
+    fun `the rest of the plan is balanced from the card, and the way back puts each meal it scaled back as it was, saying nothing of itself`() {
         val api = mockk<DietApiService>()
         val asked = mutableListOf<RebalanceRequest>()
         coEvery { api.mealPlan(plan.id) } returns plan
         coEvery { api.offerSwap(any()) } returns preview
         coEvery { api.swapMeal(any()) } returns swapped.copy(rebalance = scaled)
-        coEvery { api.rebalancePlan(plan.id, capture(asked)) } returns swapped.copy(rebalance = scaled.copy(scope = "week")) andThen swapped
+        coEvery { api.rebalancePlan(plan.id, capture(asked)) } returns swapped.copy(rebalance = scaled.copy(scope = "plan")) andThen swapped
         val model = model(api)
 
         model.offerSwap(meal.id)
         model.takeOffer()
-        model.rebalanceWeek()
+        model.spread()
 
-        assertEquals(RebalanceRequest(scope = "week"), asked[0])
-        assertEquals("week", model.state.value.rebalance?.scope)
+        assertEquals(RebalanceRequest(scope = "plan"), asked[0])
+        assertEquals("plan", model.state.value.rebalance?.scope)
 
         model.undoRebalance()
 
