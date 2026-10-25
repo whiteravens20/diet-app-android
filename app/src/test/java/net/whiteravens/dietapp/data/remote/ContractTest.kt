@@ -184,25 +184,41 @@ class ContractTest(private val call: Call) {
         }
     }
 
-    /** Whether the API takes the body the client's class sends. */
-    private fun checkBody(descriptor: SerialDescriptor, schema: JsonElement, found: MutableList<Problem>) {
-        val shape = deref(schema)
+    /** Whether the API takes the body the client's class sends, and every object the body holds. */
+    private fun checkBody(descriptor: SerialDescriptor, schema: JsonElement, found: MutableList<Problem>, where: String = descriptor.shortName) {
+        val shape = variants(schema).firstOrNull { typeOf(it) == "object" || "properties" in it } ?: return
         val properties = shape["properties"]?.jsonObject.orEmpty()
         val required = shape["required"]?.jsonArray.orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull }
         val strict = shape["additionalProperties"] == JsonPrimitive(false)
         val sends = (0 until descriptor.elementsCount).map(descriptor::getElementName).toSet()
         required.filterNot { it in sends }.forEach {
-            found += Problem("REFUSED", descriptor.shortName, "the API requires \"$it\", the client has no such field")
+            found += Problem("REFUSED", where, "the API requires \"$it\", the client has no such field")
         }
         for (index in 0 until descriptor.elementsCount) {
             val name = descriptor.getElementName(index)
-            if (name in properties) continue
+            val property = properties[name]
+            if (property != null) {
+                checkInside(descriptor.getElementDescriptor(index), property, "$where.$name", found)
+                continue
+            }
             val always = !descriptor.isElementOptional(index) && !descriptor.getElementDescriptor(index).isNullable
             found += when {
-                strict && always -> Problem("REFUSED", descriptor.shortName, "the client always sends \"$name\", and the API takes no field of that name")
-                strict -> Problem("refused when set", descriptor.shortName, "\"$name\" is no field of the API")
-                else -> Problem("ignored", descriptor.shortName, "\"$name\" is no field of the API")
+                strict && always -> Problem("REFUSED", where, "the client always sends \"$name\", and the API takes no field of that name")
+                strict -> Problem("refused when set", where, "\"$name\" is no field of the API")
+                else -> Problem("ignored", where, "\"$name\" is no field of the API")
             }
+        }
+    }
+
+    /** An object of a body, or the objects of a list in it, each held to what the API takes. */
+    private fun checkInside(element: SerialDescriptor, schema: JsonElement, where: String, found: MutableList<Problem>) {
+        when (element.kind) {
+            StructureKind.CLASS -> checkBody(element, schema, found, where)
+            StructureKind.LIST -> {
+                val items = variants(schema).firstOrNull { typeOf(it) == "array" }?.get("items") ?: return
+                checkInside(element.getElementDescriptor(0), items, "$where[]", found)
+            }
+            else -> Unit // a value, or a map, is taken as it comes
         }
     }
 
