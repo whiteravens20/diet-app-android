@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.CaloriePreviewDto
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -57,6 +58,10 @@ class ProfileFormViewModelTest {
 
     private val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
     private val answer = CaloriePreview(target, List(5) { target })
+
+    /** What a running instance answered for the figures of a girl of 16. */
+    private fun preview(name: String) =
+        json.decodeFromString<CaloriePreviewDto>(fixture(name)).let { CaloriePreview(it.calculation.toDomain(), it.paces.map { pace -> pace.toDomain() }) }
     private val profiles = mockk<ProfileRepository>()
     private val users = mockk<UserRepository>().also {
         coEvery { it.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", weightUnit = "kg", aiMode = "none")
@@ -158,14 +163,19 @@ class ProfileFormViewModelTest {
     }
 
     @Test
-    fun `a new profile says whether the risk is acknowledged only when the form showed the risk`() = runTest(main) {
-        coEvery { profiles.preview(any()) } returns answer
+    fun `the risk of a loss is the API's to say, and a new profile says it acknowledged only when the form showed it`() = runTest(main) {
+        coEvery { profiles.preview(match { it.weeklyLossTarget != null }) } returns preview("profile-calories-preview-minor-losing")
+        coEvery { profiles.preview(match { it.weeklyLossTarget == null }) } returns preview("profile-calories-preview-minor-keeping")
         coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
         val model = model()
         runCurrent()
 
         model.type()
         model.edit { it.copy(age = "16") }
+        // Nothing is said of a risk before the API has answered for the figures.
+        assertEquals(emptyList<String>(), model.state.value.risks)
+        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
+        runCurrent()
         assertEquals(listOf("minor"), model.state.value.risks)
         model.save()
         runCurrent()
@@ -173,16 +183,39 @@ class ProfileFormViewModelTest {
         coVerify { profiles.create(any(), ProfileBounds.FIRST_LIMITS, false) }
         assertEquals("p", model.state.value.saved?.id)
 
-        // With no loss asked for there is no risk, and nothing is said of it.
+        // With no loss asked for the API sees no risk in it, although it warns of the age, and nothing is said of it.
         val keep = model()
         runCurrent()
         keep.type()
         keep.edit { it.copy(age = "16", weeklyLossTarget = null) }
+        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
+        runCurrent()
         assertEquals(emptyList<String>(), keep.state.value.risks)
         keep.save()
         runCurrent()
         coVerify { profiles.create(match { it.weeklyLossTarget == null }, any(), null) }
         assertNull(keep.state.value.error)
+    }
+
+    @Test
+    fun `the box ticked is said to the API with the figures, and stays while the API still sees the risk`() = runTest(main) {
+        coEvery { profiles.preview(match { !it.acknowledgeRisk }) } returns preview("profile-calories-preview-minor-losing")
+        coEvery { profiles.preview(match { it.acknowledgeRisk }) } returns preview("profile-calories-preview-minor-losing-acknowledged")
+        val model = model()
+        runCurrent()
+        model.type()
+        model.edit { it.copy(age = "16") }
+        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
+        runCurrent()
+        assertTrue(model.state.value.preview!!.calculation.goalHeld)
+
+        model.edit { it.copy(acknowledgeRisk = true) }
+        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
+        runCurrent()
+
+        coVerify { profiles.preview(match { it.acknowledgeRisk && it.age == 16 }) }
+        assertFalse(model.state.value.preview!!.calculation.goalHeld)
+        assertEquals(listOf("minor"), model.state.value.risks)
     }
 
     @Test

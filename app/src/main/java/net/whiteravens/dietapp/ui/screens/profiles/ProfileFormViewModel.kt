@@ -63,12 +63,15 @@ class ProfileFormViewModel @Inject constructor(
         /** The name of the profile edited, as it is kept; null for a new one. */
         val editing: String? = null,
     ) {
-        /** Why losing weight is a risk for the body the form describes; none when no loss is asked for. */
+        /**
+         * Why losing weight is a risk for the body the form describes, as the API's last answer for
+         * the form's figures says it; none when no loss is asked for, and none before an answer.
+         */
         val risks: List<String>
-            get() = form.risk(unit)
+            get() = if (form.question(unit) == null) emptyList() else answer?.calculation?.lossRisks.orEmpty()
 
         val question: CalorieQuestion?
-            get() = form.question(unit)
+            get() = form.question(unit, riskShown = risks.isNotEmpty())
 
         /** What the form's figures come to: none while they cannot be worked out, rather than what earlier ones came to. */
         val preview: CaloriePreview?

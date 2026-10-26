@@ -291,7 +291,19 @@ data class CalorieTarget(
     val goalHeld: Boolean,
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
-)
+) {
+    /**
+     * Why the loss this target was asked for is a risk, of the API's warnings: under 18, underweight,
+     * both or neither. None where no loss is asked for: no pace, or a target of one's own that is
+     * not under maintenance. Such a target under maintenance is held at maintenance while the risk
+     * is not acknowledged (`goalHeld`), and is the target once it is.
+     */
+    val lossRisks: List<String>
+        get() {
+            val asksForLoss = if (source == "calculated") requestedDeficit > 0 else goalHeld || dailyTarget < maintenance
+            return if (asksForLoss) warnings.filter { it == "minor" || it == "underweight" } else emptyList()
+        }
+}
 
 /** One scheduled meal. [name] is the recipe title or the custom-meal name. */
 data class Meal(

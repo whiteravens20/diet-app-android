@@ -64,12 +64,6 @@ object ProfileBounds {
     val CARBS = 5..70
     const val NAME_LENGTH = 80
 
-    /** Under this age the figures are an approximation, and a loss of weight is a risk. */
-    const val ADULT_AGE = 18
-
-    /** Under this body-mass index a body is underweight, and a loss of weight is a risk. */
-    const val UNDERWEIGHT_BMI = 18.5
-
     /** The paces of loss, slowest first: none at all, then the four in kilograms a week. */
     val PACES: List<String?> = listOf(null, "0.25", "0.5", "0.75", "1.0")
     val ACTIVITY_LEVELS = listOf("sedentary", "light", "moderate", "active", "very_active")
@@ -233,28 +227,12 @@ data class ProfileForm(
     }
 
     /**
-     * Why losing weight is a risk for the body the form describes: under 18, or underweight. None
-     * when no loss is asked for, a pace or a target of one's own, or while the body is not typed.
-     */
-    fun risk(unit: WeightUnit): List<String> {
-        val asksForLoss = weeklyLossTarget != null || ownTarget.isNotBlank()
-        val age = age.number() ?: 0.0
-        val heightCm = height.number() ?: 0.0
-        val weightKg = weightKg(weight, keptWeightKg, unit) ?: 0.0
-        if (!asksForLoss || !(age > 0 && heightCm > 0 && weightKg > 0)) return emptyList()
-        val bmi = weightKg / (heightCm / 100) / (heightCm / 100)
-        return buildList {
-            if (age < ProfileBounds.ADULT_AGE) add("minor")
-            if (bmi < ProfileBounds.UNDERWEIGHT_BMI) add("underweight")
-        }
-    }
-
-    /**
      * What a calorie target is worked out from, as the form holds it at this moment: null while one
      * of those figures is not one the API would take, so that the form asks only with figures it
-     * could also save. The risk is said acknowledged only by a form that shows the box for it.
+     * could also save. The risk is said acknowledged only by a form that shows the box for it,
+     * which it does where the API's answer says there is a risk ([riskShown]).
      */
-    fun question(unit: WeightUnit): CalorieQuestion? {
+    fun question(unit: WeightUnit, riskShown: Boolean = false): CalorieQuestion? {
         if (questionProblems(unit).isNotEmpty()) return null
         return CalorieQuestion(
             age = age.trim().toInt(),
@@ -266,7 +244,7 @@ data class ProfileForm(
             customMacroSplit = if (dietType == "custom") split.split() else null,
             weeklyLossTarget = weeklyLossTarget,
             manualCalorieTarget = ownTarget.trim().toIntOrNull(),
-            acknowledgeRisk = acknowledgeRisk && risk(unit).isNotEmpty(),
+            acknowledgeRisk = acknowledgeRisk && riskShown,
         )
     }
 

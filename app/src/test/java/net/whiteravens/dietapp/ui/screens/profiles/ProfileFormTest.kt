@@ -171,22 +171,6 @@ class ProfileFormTest {
     }
 
     @Test
-    fun `losing weight is a risk under 18 or underweight, as the web works it out, and only when a loss is asked for`() {
-        val minor = filled.copy(age = "16")
-        val underweight = filled.copy(weight = "50")
-
-        assertEquals(listOf("minor"), minor.risk(WeightUnit.KG))
-        assertEquals(listOf("underweight"), underweight.risk(WeightUnit.KG))
-        assertEquals(listOf("minor", "underweight"), minor.copy(weight = "50").risk(WeightUnit.KG))
-        assertEquals(emptyList<String>(), filled.risk(WeightUnit.KG))
-        // No pace and no target of one's own: no loss is asked for.
-        assertEquals(emptyList<String>(), minor.copy(weeklyLossTarget = null).risk(WeightUnit.KG))
-        assertEquals(listOf("minor"), minor.copy(weeklyLossTarget = null, ownTarget = "1500").risk(WeightUnit.KG))
-        // Nothing is said of a body that is not typed yet.
-        assertEquals(emptyList<String>(), minor.copy(weight = "").risk(WeightUnit.KG))
-    }
-
-    @Test
     fun `the question of what figures come to leaves out the name, the target weight and the limits, and says the risk acknowledged only where the box shows`() {
         val untitled = filled.copy(name = "", targetWeight = "9999", limits = LimitsTyped("0", "0", "0", "0", emptyList(), "99"))
 
@@ -195,9 +179,10 @@ class ProfileFormTest {
         assertEquals(30, asked!!.age)
         assertEquals(64.5, asked.weightKg, 0.0)
         assertNull(untitled.figures(WeightUnit.KG))
-        // Ticked with no risk to answer, the box is not on the form: nothing is acknowledged.
-        assertFalse(filled.copy(acknowledgeRisk = true).question(WeightUnit.KG)!!.acknowledgeRisk)
-        assertTrue(filled.copy(age = "16", acknowledgeRisk = true).question(WeightUnit.KG)!!.acknowledgeRisk)
+        // Ticked while the API says of no risk, the box is not on the form: nothing is acknowledged.
+        assertFalse(filled.copy(age = "16", acknowledgeRisk = true).question(WeightUnit.KG)!!.acknowledgeRisk)
+        assertTrue(filled.copy(age = "16", acknowledgeRisk = true).question(WeightUnit.KG, riskShown = true)!!.acknowledgeRisk)
+        assertFalse(filled.copy(age = "16").question(WeightUnit.KG, riskShown = true)!!.acknowledgeRisk)
     }
 
     @Test
