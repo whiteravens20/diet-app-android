@@ -183,8 +183,8 @@ androidComponents {
 }
 
 // The tools the Android plugin runs bring libraries with known vulnerabilities: its test platform
-// (netty) and Lint (Bouncy Castle, HttpClient). They are lifted to the releases that fix them.
-// None of them is in the app.
+// (netty, Commons Lang) and Lint (Bouncy Castle, HttpClient, Commons Lang). They are lifted to the
+// releases that fix them. None of them is in the app.
 configurations.matching { it.name.startsWith("unified-test-platform") || it.name.startsWith("androidLint") }.configureEach {
     resolutionStrategy.eachDependency {
         val fixed = when {
@@ -192,6 +192,7 @@ configurations.matching { it.name.startsWith("unified-test-platform") || it.name
                 !requested.name.startsWith("netty-tcnative") -> "4.1.139.Final"
             requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") -> "1.86"
             requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" -> "4.5.14"
+            requested.group == "org.apache.commons" && requested.name == "commons-lang3" -> "3.18.0"
             else -> null
         }
         if (fixed != null) useVersion(fixed)
