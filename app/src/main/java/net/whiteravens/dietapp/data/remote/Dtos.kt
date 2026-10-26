@@ -690,7 +690,7 @@ data class RecipeDto(
     val allergens: List<String>,
     /** Per-serving nutrition, engine-computed. */
     val nutritionPerServing: NutritionDto,
-    /** `seed` | `ai` | `swap` | `curated`. */
+    /** `seed` | `ai` | `swap` | `curated` | `manual`. */
     val origin: String,
     /**
      * `written`: a recipe of the user's a model wrote; `changed`: one in which a model chose the
