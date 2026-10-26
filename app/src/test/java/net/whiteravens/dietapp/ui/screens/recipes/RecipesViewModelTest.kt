@@ -45,7 +45,7 @@ class RecipesViewModelTest {
     fun reset() = Dispatchers.resetMain()
 
     private fun recipe(id: String) =
-        Recipe(id, id, "", 2, listOf("lunch"), emptyList(), emptyList(), emptyList(), 10, 10, "easy", Nutrition(500.0, 30.0, 20.0, 50.0), byModel = null, cuisine = null, allergens = emptyList(), source = null, fromSwap = false)
+        Recipe(id, id, "", 2, listOf("lunch"), emptyList(), emptyList(), emptyList(), 10, 10, "easy", Nutrition(500.0, 30.0, 20.0, 50.0), byModel = null, cuisine = null, allergens = emptyList(), source = null, fromSwap = false, submitted = false)
 
     private val users = mockk<UserRepository>().also {
         coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null))
@@ -120,6 +120,22 @@ class RecipesViewModelTest {
         model.submit("mine")
 
         assertEquals(refusal, model.state.value.submitted!!.exceptionOrNull())
+    }
+
+    @Test
+    fun `a recipe sent to the curators is offered to them no more, and one refused still is`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.search(any(), any()) } returns RecipePage(emptyList(), 1, 0)
+        coEvery { recipes.mine(1) } returns RecipePage(listOf(recipe("sent"), recipe("refused")), 1, 1)
+        coEvery { recipes.submit("sent") } just runs
+        coEvery { recipes.submit("refused") } throws ApiException(409, "RECIPE_NOT_SUBMITTABLE", "Not in the catalogue.")
+        val model = RecipesViewModel(recipes, users, profiles)
+        model.selectTab(RecipesViewModel.Tab.MINE)
+
+        model.submit("sent")
+        model.submit("refused")
+
+        assertEquals(listOf(true, false), model.state.value.items.map { it.submitted })
     }
 
     @Test

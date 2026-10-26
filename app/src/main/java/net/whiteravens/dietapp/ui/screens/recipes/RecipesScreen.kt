@@ -278,7 +278,7 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, mine: Boolean, busy:
         }
         if (mine) {
             Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!recipe.fromSwap) TextButton(onClick = onSubmit, enabled = !busy) { Text(stringResource(R.string.recipes_submit)) }
+                if (!recipe.fromSwap && !recipe.submitted) TextButton(onClick = onSubmit, enabled = !busy) { Text(stringResource(R.string.recipes_submit)) }
                 TextButton(onClick = onDelete, enabled = !busy) { Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error) }
             }
         }

@@ -680,6 +680,8 @@ data class Recipe(
     val source: RecipeSource?,
     /** Made by swapping an ingredient: it stays its owner's and cannot be suggested for the library. */
     val fromSwap: Boolean,
+    /** One of the account's own the curators have already: it is not offered to them again. */
+    val submitted: Boolean,
 ) {
     val totalMinutes: Int get() = prepMinutes + cookMinutes
 }

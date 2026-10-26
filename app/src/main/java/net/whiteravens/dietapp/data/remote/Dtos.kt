@@ -699,6 +699,11 @@ data class RecipeDto(
     val byModel: String? = null,
     /** To be shown with a recipe taken in from somewhere else; null for one written here. */
     val source: RecipeSourceDto? = null,
+    /**
+     * In the list of the account's own: it was put before the curators already, by its owner or,
+     * one the instance's model wrote, by itself as it was written.
+     */
+    val submitted: Boolean = false,
 )
 
 /**

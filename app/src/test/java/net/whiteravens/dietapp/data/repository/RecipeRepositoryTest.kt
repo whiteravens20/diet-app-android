@@ -116,12 +116,13 @@ class RecipeRepositoryTest {
     }
 
     @Test
-    fun `one's own recipe made by swapping an ingredient is told apart from one a model wrote`() {
+    fun `one's own recipe made by swapping an ingredient is told apart from one the instance's model wrote, which the curators have already`() {
         server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(fixture("recipes-mine")))
 
         val mine = runBlocking { repository().mine(page = 1) }
 
         assertEquals(listOf(true, false), mine.items.map { it.fromSwap })
+        assertEquals(listOf(false, true), mine.items.map { it.submitted })
     }
 
     @Test

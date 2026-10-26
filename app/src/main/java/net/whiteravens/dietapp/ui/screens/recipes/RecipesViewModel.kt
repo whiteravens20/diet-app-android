@@ -148,10 +148,16 @@ class RecipesViewModel @Inject constructor(
         }
     }
 
-    /** Puts a recipe of one's own before the curators for the library everyone shares. */
+    /** Puts a recipe of one's own before the curators for the library everyone shares; it is offered to them no more. */
     fun submit(id: String) = change(id) {
         val sent = attempt { recipes.submit(id) }
-        _state.update { it.copy(changing = null, submitted = sent.map { }) }
+        _state.update { state ->
+            state.copy(
+                changing = null,
+                submitted = sent.map { },
+                items = if (sent.isSuccess) state.items.map { if (it.id == id) it.copy(submitted = true) else it } else state.items,
+            )
+        }
     }
 
     /** Deletes a recipe of one's own; the plans that hold it keep it. */
