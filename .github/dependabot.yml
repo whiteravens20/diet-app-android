@@ -12,13 +12,18 @@ updates:
     directory: /
     target-branch: dev
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "08:00"
       timezone: UTC
     labels: [dependencies, github-actions]
     commit-message:
       prefix: "ci"
+    # Minor and patch bumps come as one pull request, a major on its own, so the
+    # parts of one action (codeql-action's init, analyze and upload-sarif) move
+    # together.
+    groups:
+      actions-non-breaking:
+        update-types: [minor, patch]
 
   - package-ecosystem: gradle
     # Let a newly published version settle for a week before proposing it. A
