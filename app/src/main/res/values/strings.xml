@@ -409,7 +409,7 @@
     <string name="ai_mark_picked">A model chose this recipe for the meal, from the recipes that fit your plan.</string>
     <string name="ai_mark_picked_why">A model chose this recipe for the meal: “%1$s”</string>
     <string name="ai_mark_written">A model wrote this recipe for you. Its ingredients are the catalogue’s and its nutrition was computed from them. Check the amounts and the steps before you rely on it.</string>
-    <string name="ai_mark_changed">A model had a part in this recipe: it chose the ingredient that was swapped in, or reworded the text around it. Check the steps before you rely on it.</string>
+    <string name="ai_mark_changed">A model had a part in this recipe: it wrote an earlier version of it, chose the ingredient that was swapped in, or reworded the text around it. Check the steps before you rely on it.</string>
     <string name="ai_mark_plan">Parts of this plan were chosen with the help of a model.</string>
     <string name="macros_protein">Protein</string>
     <string name="macros_fat">Fat</string>
