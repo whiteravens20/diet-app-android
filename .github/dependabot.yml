@@ -1,4 +1,7 @@
 # ── Dependabot ────────────────────────────────────────────────────────────────
+# No pull request is rebased by itself (`rebase-strategy: disabled`): a push to
+# `dev` would otherwise rebase every open one and run its checks again. One is
+# rebased when it is next to be merged, with a `@dependabot rebase` comment.
 version: 2
 
 updates:
@@ -11,6 +14,7 @@ updates:
       default-days: 7
     directory: /
     target-branch: dev
+    rebase-strategy: disabled
     schedule:
       interval: monthly
       time: "08:00"
@@ -34,6 +38,7 @@ updates:
       default-days: 7
     directory: /
     target-branch: dev
+    rebase-strategy: disabled
     schedule:
       interval: weekly
       day: monday
