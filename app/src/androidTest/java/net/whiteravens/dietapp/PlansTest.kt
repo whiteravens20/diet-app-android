@@ -88,6 +88,15 @@ class PlansTest {
         screen.waitForText(plural(R.plurals.plans_plan_summary, 3, 3, text(R.string.diet_balanced)))
         screen.keepScreenshot("plans-a-plan-made")
 
+        // The plan begins today: its day is marked so, and one press goes back to it from another day.
+        val today = hasText(formatDayDate(LocalDate.now().toString())) and hasText(text(R.string.plans_today))
+        screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNodeWithText(formatDayDate(LocalDate.now().plusDays(1).toString())).performScrollTo().performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isEmpty() }
+        screen.onNodeWithText(text(R.string.plans_go_to_today)).performScrollTo().performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isNotEmpty() }
+        screen.keepScreenshot("plans-today")
+
         // The plan is made again from its facts: what would change is said before it is asked for.
         val made = Instance.planRevision(account, planId)
         screen.scrollToText(text(R.string.plans_recalculate))

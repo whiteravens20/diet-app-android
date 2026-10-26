@@ -179,6 +179,8 @@
     </plurals>
     <string name="plans_card_title">%1$s · %2$d days</string>
     <string name="plans_day_skipped">This day is skipped.</string>
+    <string name="plans_today">Today</string>
+    <string name="plans_go_to_today">Go to today</string>
     <plurals name="plans_plan_summary">
         <item quantity="one">%1$d-day plan · %2$s</item>
         <item quantity="other">%1$d-day plan · %2$s</item>

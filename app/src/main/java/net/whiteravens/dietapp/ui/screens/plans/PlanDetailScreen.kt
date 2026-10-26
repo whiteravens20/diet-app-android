@@ -47,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -76,6 +77,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.LocalDate
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -380,15 +382,40 @@ fun PlanDetailScreen(
 
             item {
                 val chips = rememberLazyListState()
+                val scope = rememberCoroutineScope()
                 // The day the plan opened at is in sight, however far into the plan it lies.
                 LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
-                LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
-                        FilterChip(
-                            selected = index == state.selectedDay,
-                            onClick = { viewModel.selectDay(index) },
-                            label = { Text(formatDayDate(day.date)) },
-                        )
+                // By the phone's date. A long plan is a long way along its days to the one it is now: one press takes the reader there.
+                val todayAt = plan.days.indexOfFirst { it.date == LocalDate.now().toString() }
+                Column {
+                    if (todayAt >= 0) {
+                        TextButton(
+                            onClick = {
+                                viewModel.selectDay(todayAt)
+                                scope.launch { chips.animateScrollToItem(todayAt) }
+                            },
+                            modifier = Modifier.align(Alignment.End),
+                        ) { Text(stringResource(R.string.plans_go_to_today)) }
+                    }
+                    LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
+                            FilterChip(
+                                selected = index == state.selectedDay,
+                                onClick = { viewModel.selectDay(index) },
+                                label = {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(formatDayDate(day.date))
+                                        if (index == todayAt) {
+                                            LabelChip(
+                                                stringResource(R.string.plans_today),
+                                                container = MaterialTheme.colorScheme.primary,
+                                                content = MaterialTheme.colorScheme.onPrimary,
+                                            )
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }
