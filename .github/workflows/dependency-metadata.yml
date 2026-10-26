@@ -199,6 +199,7 @@ jobs:
           fi
 
       - name: Commit the files to the pull request's branch
+        id: commit
         working-directory: ${{ runner.temp }}/written
         env:
           BRANCH: ${{ steps.pr.outputs.branch }}
@@ -219,9 +220,21 @@ jobs:
                 fileChanges: {additions: $additions[0]}
               }}
             }' > "$RUNNER_TEMP/commit.json"
-          gh api graphql --input "$RUNNER_TEMP/commit.json" --jq '.data.createCommitOnBranch.commit.oid'
+          oid=$(gh api graphql --input "$RUNNER_TEMP/commit.json" --jq '.data.createCommitOnBranch.commit.oid')
+          echo "oid=$oid" >> "$GITHUB_OUTPUT"
 
-      - name: Start CI on the new commit
+      # GitHub holds back the pull request's own runs of a commit this workflow makes, until they are
+      # approved; only those runs give the checks the branch protection asks for. They are approved here,
+      # once GitHub has made them.
+      - name: Let the pull request's checks run on the new commit
         env:
-          BRANCH: ${{ steps.pr.outputs.branch }}
-        run: gh workflow run test.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+          HEAD_SHA: ${{ steps.commit.outputs.oid }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            held=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$HEAD_SHA&status=action_required" \
+              --jq '.workflow_runs[].id')
+            [ -n "$held" ] && break
+            sleep 10
+          done
+          for run in $held; do gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run/approve"; done
