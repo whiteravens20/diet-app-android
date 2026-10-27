@@ -124,24 +124,25 @@ private fun NotificationCard(
     onDismiss: () -> Unit,
 ) {
     AppCard {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Column(
-                Modifier
-                    .weight(1f)
-                    .then(if (onOpen != null) Modifier.clickable(enabled = enabled, onClick = onOpen) else Modifier),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                profileName?.let {
-                    Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                }
-                Text(notificationText(notification.about), style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    formatMoment(notification.createdAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        // The text has the card's whole width, which a small phone needs, and the dismissal comes under it.
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .then(if (onOpen != null) Modifier.clickable(enabled = enabled, onClick = onOpen) else Modifier),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            profileName?.let {
+                Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             }
-            TextButton(onClick = onDismiss, enabled = enabled) { Text(stringResource(R.string.notifications_dismiss)) }
+            Text(notificationText(notification.about), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                formatMoment(notification.createdAt),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.align(Alignment.End)) {
+            Text(stringResource(R.string.notifications_dismiss))
         }
     }
 }
