@@ -39,7 +39,8 @@ account once you say on the page that the account it names is yours.
   mean of each seven days and the weight it works towards. A profile's favourite sets are
   made and changed in the web application, which its card opens in the browser.
 - **Meal plans.** The plans of a profile and a month of them as a calendar, a new plan
-  generated from the phone, each plan day by day with its totals, a meal swapped for
+  generated from the phone, each plan day by day with its totals and today marked, with a
+  way to it from any other day, a meal swapped for
   another recipe, and a favourite set put on days of the plan. A day under way can be set
   apart (a training or rest day, skipped, another number of meals, a target of its own),
   with what that does said before it is saved, and a meal taken off its day or replaced by
