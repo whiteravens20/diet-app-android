@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Diet App API",
-    "version": "0.77.0",
+    "version": "0.127.0",
     "description": "What the API of Diet App is asked and what it answers. Written by `npm run contract` from the controllers and from the schemas of `@diet-app/shared`; the integration tests hold every answer to the schema its route names here.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -723,6 +723,46 @@
         }
       }
     },
+    "/api/admin/drafts/ingredient-names/reject": {
+      "post": {
+        "operationId": "Drafts_rejectIngredientNameDrafts",
+        "tags": [
+          "admin/drafts"
+        ],
+        "summary": "Reject up to a hundred drafts of ingredient names with one reason, each in its first language: what the queue is cleared with before the names are written again.",
+        "description": "Reject up to a hundred drafts of ingredient names with one reason, each in its first language: what the queue is cleared with before the names are written again. Answers which were rejected and which were left out, each with the refusal a single rejection would have got.\n\nAsked by the administrator.",
+        "security": [
+          {
+            "administrator": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftBulkRejectBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RejectedDrafts"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
     "/api/admin/drafts/recipes": {
       "get": {
         "operationId": "Drafts_listRecipeDrafts",
@@ -1012,8 +1052,8 @@
         "tags": [
           "admin/drafts"
         ],
-        "summary": "Promote a recipe users made to the shared library: the one draft is shipped into this instance, on the terms of every local ship, and written to the instance's data directory.",
-        "description": "Promote a recipe users made to the shared library: the one draft is shipped into this instance, on the terms of every local ship, and written to the instance's data directory. The personal recipes it stands for are left as they are; whoever makes the recipe again is given the shared one.\n\nAsked by the administrator.",
+        "summary": "Promote a recipe users made to the shared library: the one draft is shipped into this instance, on the terms of every local ship, and the instance's files are written again.",
+        "description": "Promote a recipe users made to the shared library: the one draft is shipped into this instance, on the terms of every local ship, and the instance's files are written again. The personal recipes it stands for are left as they are; whoever makes the recipe again is given the shared one.\n\nAsked by the administrator.",
         "security": [
           {
             "administrator": []
@@ -1453,47 +1493,6 @@
         }
       }
     },
-    "/api/admin/drafts/ship/current-overrides/pull": {
-      "post": {
-        "operationId": "Drafts_pullCurrentOverrides",
-        "tags": [
-          "admin/drafts"
-        ],
-        "summary": "Take names of ingredients in from a repository the operator names, or from the one the instance is set up with, and give them to the ingredients of this instance.",
-        "description": "Take names of ingredients in from a repository the operator names, or from the one the instance is set up with, and give them to the ingredients of this instance. A public repository needs no token; a private one on GitHub is read with the token of the environment.\n\nAsked by the administrator.",
-        "security": [
-          {
-            "administrator": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "default": {},
-                "$ref": "#/components/schemas/PullOverridesRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "What was asked for.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OverridesPulled"
-                }
-              }
-            }
-          },
-          "default": {
-            "$ref": "#/components/responses/Refused"
-          }
-        }
-      }
-    },
     "/api/admin/drafts/ship/mark-shipped": {
       "post": {
         "operationId": "Drafts_shipMarkShipped",
@@ -1540,8 +1539,8 @@
         "tags": [
           "admin/drafts"
         ],
-        "summary": "Read back into the database what local ships copied to the instance's data directory: the way to carry an instance's own recipes and names to a new server.",
-        "description": "Read back into the database what local ships copied to the instance's data directory: the way to carry an instance's own recipes and names to a new server. Repeatable; see `ship/restore.ts`.\n\nAsked by the administrator.",
+        "summary": "Read the instance's own files back into the database: the way to carry the recipes and names it added to a new server.",
+        "description": "Read the instance's own files back into the database: the way to carry the recipes and names it added to a new server. Repeatable; see `ship/restore.ts`.\n\nAsked by the administrator.",
         "security": [
           {
             "administrator": []
@@ -1658,6 +1657,163 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DraftRunnerState"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients": {
+      "get": {
+        "operationId": "Admin_searchIngredients",
+        "tags": [
+          "admin"
+        ],
+        "summary": "The ingredients of the catalogue whose name holds `search`: what a retired one can be replaced by.",
+        "description": "The ingredients of the catalogue whose name holds `search`: what a retired one can be replaced by.\n\nAsked by the administrator.",
+        "security": [
+          {
+            "administrator": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 7400
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Ingredient"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/{id}/replace": {
+      "post": {
+        "operationId": "Admin_replaceIngredient",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Replace a retired ingredient by one of the catalogue: what uses it moves over, with each amount kept, what is worked out from the ingredients of recipes outside the seed is worked out again, the retired ingredient goes, and the instance's files are written again.",
+        "description": "Replace a retired ingredient by one of the catalogue: what uses it moves over, with each amount kept, what is worked out from the ingredients of recipes outside the seed is worked out again, the retired ingredient goes, and the instance's files are written again. The text of a recipe is not changed: one that names the old food is for a person to correct.\n\nAsked by the administrator.",
+        "security": [
+          {
+            "administrator": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceIngredientRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedIngredient"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/retired": {
+      "get": {
+        "operationId": "Admin_retiredIngredients",
+        "tags": [
+          "admin"
+        ],
+        "summary": "The retired ingredients that something of the instance still uses, with what uses them.",
+        "description": "The retired ingredients that something of the instance still uses, with what uses them.\n\nAsked by the administrator.",
+        "security": [
+          {
+            "administrator": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RetiredIngredient"
+                  }
                 }
               }
             }
@@ -5929,8 +6085,8 @@
         "tags": [
           "recipes"
         ],
-        "summary": "The recipes of the account's own, a page at a time: those a model wrote for it, those a substitution left and those written by hand.",
-        "description": "The recipes of the account's own, a page at a time: those a model wrote for it, those a substitution left and those written by hand. A deleted one is not among them.\n\nAsked by an account.",
+        "summary": "The recipes of the account's own, a page at a time: those a model wrote for it, those a substitution left and those written by hand, each saying whether it was put before the curators already.",
+        "description": "The recipes of the account's own, a page at a time: those a model wrote for it, those a substitution left and those written by hand, each saying whether it was put before the curators already. A deleted one is not among them.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -5975,7 +6131,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecipeSearchPage"
+                  "$ref": "#/components/schemas/MyRecipesPage"
                 }
               }
             }
@@ -9345,6 +9501,9 @@
                   "retiredIngredients": {
                     "type": "integer"
                   },
+                  "movedToSuccessors": {
+                    "type": "integer"
+                  },
                   "repairedProfiles": {
                     "type": "integer"
                   },
@@ -9380,6 +9539,7 @@
                   "deletedIngredients",
                   "retiredRecipes",
                   "retiredIngredients",
+                  "movedToSuccessors",
                   "repairedProfiles",
                   "counts",
                   "hash",
@@ -11226,13 +11386,25 @@
           "names": {
             "type": "integer",
             "minimum": 0
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notRestored": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
           "writable",
           "recipeFiles",
           "recipes",
-          "names"
+          "names",
+          "version",
+          "notRestored"
         ],
         "additionalProperties": false
       },
@@ -12299,6 +12471,174 @@
           "carbs"
         ]
       },
+      "MyRecipe": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "servings": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "mealTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MealType"
+            }
+          },
+          "dietTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DietType"
+            }
+          },
+          "ingredients": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeIngredient"
+            }
+          },
+          "steps": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "prepMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cookMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "cuisine": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cuisine"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "nutritionPerServing": {
+            "$ref": "#/components/schemas/Nutrition"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "seed",
+              "ai",
+              "swap",
+              "curated",
+              "manual"
+            ]
+          },
+          "byModel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "written",
+                  "changed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecipeSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "submitted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "servings",
+          "mealTypes",
+          "dietTags",
+          "ingredients",
+          "steps",
+          "prepMinutes",
+          "cookMinutes",
+          "difficulty",
+          "cuisine",
+          "allergens",
+          "nutritionPerServing",
+          "origin",
+          "byModel",
+          "source",
+          "submitted"
+        ],
+        "additionalProperties": false
+      },
+      "MyRecipesPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyRecipe"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "additionalProperties": false
+      },
       "NaturalUnit": {
         "type": "string",
         "enum": [
@@ -12416,64 +12756,6 @@
         },
         "required": [
           "email"
-        ],
-        "additionalProperties": false
-      },
-      "OverridesPulled": {
-        "type": "object",
-        "properties": {
-          "source": {
-            "type": "string"
-          },
-          "resolvedUrl": {
-            "type": "string"
-          },
-          "applied": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "rowsWritten": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "skippedSlugs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "refused": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "slug": {
-                  "type": "string"
-                },
-                "reason": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "slug",
-                "reason"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "total": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "source",
-          "resolvedUrl",
-          "applied",
-          "rowsWritten",
-          "skippedSlugs",
-          "refused",
-          "total"
         ],
         "additionalProperties": false
       },
@@ -14461,16 +14743,6 @@
         ],
         "additionalProperties": false
       },
-      "PullOverridesRequest": {
-        "type": "object",
-        "properties": {
-          "source": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 500
-          }
-        }
-      },
       "QueuedPolicyReports": {
         "maxItems": 100,
         "type": "array",
@@ -14933,6 +15205,12 @@
             "items": {
               "$ref": "#/components/schemas/PastReview"
             }
+          },
+          "libraryBlock": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -15172,6 +15450,9 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80
+          },
+          "cookingMethod": {
+            "$ref": "#/components/schemas/CookingMethod"
           },
           "kcalRange": {
             "type": "object",
@@ -15941,6 +16222,61 @@
         ],
         "additionalProperties": false
       },
+      "ReplaceIngredientRequest": {
+        "type": "object",
+        "properties": {
+          "by": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "by"
+        ],
+        "additionalProperties": false
+      },
+      "ReplacedIngredient": {
+        "type": "object",
+        "properties": {
+          "recipeLines": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "draftLines": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pantryRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "preferences": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "shoppingRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "recomputedRecipes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "recipeLines",
+          "draftLines",
+          "pantryRows",
+          "preferences",
+          "shoppingRows",
+          "deleted",
+          "recomputedRecipes"
+        ],
+        "additionalProperties": false
+      },
       "RestoredFromInstanceData": {
         "type": "object",
         "properties": {
@@ -16050,6 +16386,80 @@
           "recipes",
           "names",
           "unreadable"
+        ],
+        "additionalProperties": false
+      },
+      "RetiredIngredient": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "retiredAt": {
+            "type": "string"
+          },
+          "uses": {
+            "type": "object",
+            "properties": {
+              "libraryRecipes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ownRecipes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "drafts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pantryRows": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "profiles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shoppingRows": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "libraryRecipes",
+              "ownRecipes",
+              "drafts",
+              "pantryRows",
+              "profiles",
+              "shoppingRows"
+            ],
+            "additionalProperties": false
+          },
+          "usedIn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "retiredAt",
+          "uses",
+          "usedIn"
         ],
         "additionalProperties": false
       },
@@ -16328,6 +16738,9 @@
           "locale": {
             "$ref": "#/components/schemas/Locale"
           },
+          "localeChosen": {
+            "type": "boolean"
+          },
           "theme": {
             "$ref": "#/components/schemas/Theme"
           },
@@ -16355,6 +16768,7 @@
           "role",
           "emailVerified",
           "locale",
+          "localeChosen",
           "theme",
           "palette",
           "aiMode",
@@ -16419,27 +16833,6 @@
             ],
             "additionalProperties": false
           },
-          "pull": {
-            "type": "object",
-            "properties": {
-              "available": {
-                "type": "boolean",
-                "const": true
-              },
-              "defaultSource": {
-                "type": "string"
-              },
-              "tokenSet": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "available",
-              "defaultSource",
-              "tokenSet"
-            ],
-            "additionalProperties": false
-          },
           "instanceData": {
             "$ref": "#/components/schemas/InstanceDataState"
           },
@@ -16464,7 +16857,6 @@
         },
         "required": [
           "modes",
-          "pull",
           "instanceData",
           "approvedCounts"
         ],

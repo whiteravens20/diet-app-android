@@ -441,6 +441,24 @@
       "pl": "Ten składnik nie należy do przepisu."
     }
   },
+  "INGREDIENT_NOT_RETIRED": {
+    "statuses": [
+      409
+    ],
+    "messages": {
+      "en": "Only a retired ingredient can be replaced, and this one is not retired any more.",
+      "pl": "Zastąpić można tylko wycofany składnik, a ten nie jest już wycofany."
+    }
+  },
+  "INSTANCE_DATA_NEWER": {
+    "statuses": [
+      409
+    ],
+    "messages": {
+      "en": "These files were written by a newer version of the application. Update the application before restoring them.",
+      "pl": "Te pliki zapisała nowsza wersja aplikacji. Zaktualizuj aplikację, zanim je przywrócisz."
+    }
+  },
   "INTERNAL_ERROR": {
     "statuses": [
       500
@@ -511,15 +529,6 @@
     "messages": {
       "en": "Current password is incorrect.",
       "pl": "Aktualne hasło jest nieprawidłowe."
-    }
-  },
-  "INVALID_PULL_SOURCE": {
-    "statuses": [
-      409
-    ],
-    "messages": {
-      "en": "That's not a repo (owner/repo) or a raw URL.",
-      "pl": "To nie jest ani repozytorium (owner/repo), ani bezpośredni adres pliku."
     }
   },
   "INVALID_REFRESH": {
@@ -936,33 +945,6 @@
       "pl": "Nie znaleziono profilu."
     }
   },
-  "PULL_ADDRESS_NOT_PUBLIC": {
-    "statuses": [
-      409
-    ],
-    "messages": {
-      "en": "That source is not at a public address. A source inside your own network is fetched only when its host is named in OVERRIDES_PULL_ALLOWED_HOSTS.",
-      "pl": "To źródło nie jest pod adresem publicznym. Źródło w sieci wewnętrznej jest pobierane tylko wtedy, gdy jego host jest wpisany w OVERRIDES_PULL_ALLOWED_HOSTS."
-    }
-  },
-  "PULL_FETCH_FAILED": {
-    "statuses": [
-      409
-    ],
-    "messages": {
-      "en": "Could not fetch the overrides file. Check the repo, the branch and the access token; a redirect is not followed, and a file over 2 MB is not read.",
-      "pl": "Nie udało się pobrać pliku nadpisań. Sprawdź repo, gałąź i token dostępu; przekierowania nie są obsługiwane, a plik większy niż 2 MB nie jest czytany."
-    }
-  },
-  "PULL_SHAPE_INVALID": {
-    "statuses": [
-      409
-    ],
-    "messages": {
-      "en": "The fetched file is not a valid ingredient-overrides.json.",
-      "pl": "Pobrany plik nie jest prawidłowym ingredient-overrides.json."
-    }
-  },
   "QUANTITY_TOO_LARGE": {
     "statuses": [
       400
@@ -1060,6 +1042,15 @@
     "messages": {
       "en": "The request refers to something that does not exist or is still in use.",
       "pl": "Żądanie odwołuje się do czegoś, co nie istnieje albo jest nadal używane."
+    }
+  },
+  "REPLACEMENT_NOT_IN_CATALOGUE": {
+    "statuses": [
+      422
+    ],
+    "messages": {
+      "en": "Choose another ingredient of the catalogue to replace it with.",
+      "pl": "Wybierz inny składnik z katalogu, którym go zastąpić."
     }
   },
   "REVIEWER_DISABLED": {
@@ -1241,6 +1232,15 @@
     "messages": {
       "en": "Sign in to continue.",
       "pl": "Zaloguj się, aby kontynuować."
+    }
+  },
+  "UNITS_STAND_IN_THE_WAY": {
+    "statuses": [
+      409
+    ],
+    "messages": {
+      "en": "That ingredient cannot be measured in a unit an amount of the retired one is given in, not even in grams. Choose another.",
+      "pl": "Tego składnika nie da się odmierzyć w jednostce, w której podano ilość wycofanego, nawet w gramach. Wybierz inny."
     }
   },
   "UNIT_CONVERSION_FAILED": {
