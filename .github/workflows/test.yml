@@ -151,6 +151,9 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api-level }}
+          # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
+          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled.
+          profile: pixel_7a
           cores: ${{ matrix.cores }}
           ram-size: ${{ matrix.ram-size }}
           disk-size: ${{ matrix.disk-size }}

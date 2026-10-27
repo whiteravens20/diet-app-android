@@ -84,6 +84,9 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 34
+          # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
+          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled.
+          profile: pixel_7a
           cores: 2
           emulator-boot-timeout: 600
           arch: x86_64
