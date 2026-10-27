@@ -13,8 +13,11 @@
 # weight, and the catalogue update takes the ingredient away and asks both to review their
 # preferences.
 #
-# Every account the tests make may use the operator's AI provider, and none counts as new: the
-# journeys switch fresh accounts to it, and what the operator allows them is not what they test.
+# The operator's AI provider is an Ollama server at the address the settings template gives, where
+# nothing answers: the journeys choose it and read what it allows, and none waits for a model. The
+# template names no provider, so it is set here. Every account the tests make may use it, and none
+# counts as new: the journeys switch fresh accounts to it, and what the operator allows them is not
+# what they test.
 #
 # Usage: .github/scripts/start-diet-app.sh <empty directory> [<commit> <tag of an image built here>]
 # `docker compose --env-file .env -f docker-compose.yml -f api-port.yml logs` in that
@@ -43,6 +46,8 @@ sed -e "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=$(openssl rand -hex 32)|" \
     -e "s|^IMAGE_TAG=.*|IMAGE_TAG=$DIET_APP_IMAGE_TAG|" \
     -e "s|^AI_ADMIN_ACCESS=.*|AI_ADMIN_ACCESS=everyone|" \
     -e "s|^AI_ADMIN_NEW_ACCOUNT_DAYS=.*|AI_ADMIN_NEW_ACCOUNT_DAYS=0|" \
+    -e "s|^AI_DEFAULT_PROVIDER=.*|AI_DEFAULT_PROVIDER=ollama|" \
+    -e "s|^AI_DEFAULT_MODEL=.*|AI_DEFAULT_MODEL=llama3.1:8b|" \
     .env.example > .env
 
 cat > api-port.yml <<'YAML'
