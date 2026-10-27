@@ -19,7 +19,7 @@ import java.net.URLDecoder
 val webApp: String = BuildConfig.API_BASE_URL.removeSuffix("api/")
 
 /** How long the app may take to ask the instance for a code before it gives the browser the page. */
-private const val CODE_WAIT_MILLIS = 15_000L
+private const val CODE_WAIT_MILLIS = 20_000L
 
 /**
  * Checks that [act] opens [next] of the instance's web application in the browser, signed in: the
