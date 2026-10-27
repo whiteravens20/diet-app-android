@@ -19,7 +19,6 @@ import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
-import net.whiteravens.dietapp.testing.waitForNode
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Assume.assumeTrue
@@ -68,15 +67,17 @@ class NotificationsTest {
         val reminder = text(R.string.notifications_weight_first)
         val review = text(R.string.notifications_preferences_review)
 
-        // Each notification is said with the profile it is for.
+        // Each notification is said with the profile it is for. The list is scrolled to each: a small
+        // phone shows some of them only, and a list composes only what is in view.
         openTheBell(4)
         listOf("Ala", "Ola").forEach { profile ->
-            screen.waitForNode(notification(profile, reminder), "notifications-a-reminder-not-found")
-            screen.waitForNode(notification(profile, review), "notifications-a-review-not-found")
+            screen.scrollTo(notification(profile, reminder))
+            screen.scrollTo(notification(profile, review))
         }
         screen.keepScreenshot("notifications")
 
         // A reminder leads to the weights of its profile on the dashboard: Ola's, the second profile's, out of sight before.
+        screen.scrollTo(notification("Ola", reminder))
         screen.onNode(notification("Ola", reminder)).performClick()
         val olasWeights = text(R.string.weight_reference_hint, "${NumberFormat.getNumberInstance(Locale.getDefault()).format(58)} kg")
         screen.waitForText(olasWeights)
@@ -85,13 +86,14 @@ class NotificationsTest {
 
         // A review of preferences leads to the profiles, whose preferences it names.
         openTheBell(3)
+        screen.scrollTo(notification("Ala", review))
         screen.onNode(notification("Ala", review)).performClick()
         screen.waitForText(text(R.string.profiles_title))
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
 
         // One is put away where it stands, Ola's review, the newest; the last is read with the rest.
         openTheBell(2)
-        screen.waitForNode(notification("Ola", review), "notifications-the-review-not-found")
+        screen.scrollTo(notification("Ola", review))
         screen.onAllNodes(hasText(text(R.string.notifications_dismiss)) and hasClickAction())[0].performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(notification("Ola", review)).fetchSemanticsNodes().isEmpty() }
         screen.onNode(notification("Ala", reminder)).assertExists()
