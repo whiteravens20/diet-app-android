@@ -47,7 +47,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -77,7 +76,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.LocalDate
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -382,40 +380,34 @@ fun PlanDetailScreen(
 
             item {
                 val chips = rememberLazyListState()
-                val scope = rememberCoroutineScope()
                 // The day the plan opened at is in sight, however far into the plan it lies.
                 LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
-                // By the phone's date. A long plan is a long way along its days to the one it is now: one press takes the reader there.
+                // And so is a day chosen later, from wherever it was chosen.
+                LaunchedEffect(state.selectedDay) {
+                    val layout = chips.layoutInfo
+                    val shown = layout.visibleItemsInfo.any { it.index == state.selectedDay && it.offset >= 0 && it.offset + it.size <= layout.viewportEndOffset }
+                    if (!shown) chips.animateScrollToItem(state.selectedDay)
+                }
+                // By the phone's date.
                 val todayAt = plan.days.indexOfFirst { it.date == LocalDate.now().toString() }
-                Column {
-                    if (todayAt >= 0) {
-                        TextButton(
-                            onClick = {
-                                viewModel.selectDay(todayAt)
-                                scope.launch { chips.animateScrollToItem(todayAt) }
-                            },
-                            modifier = Modifier.align(Alignment.End),
-                        ) { Text(stringResource(R.string.plans_go_to_today)) }
-                    }
-                    LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
-                            FilterChip(
-                                selected = index == state.selectedDay,
-                                onClick = { viewModel.selectDay(index) },
-                                label = {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text(formatDayDate(day.date))
-                                        if (index == todayAt) {
-                                            LabelChip(
-                                                stringResource(R.string.plans_today),
-                                                container = MaterialTheme.colorScheme.primary,
-                                                content = MaterialTheme.colorScheme.onPrimary,
-                                            )
-                                        }
+                LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
+                        FilterChip(
+                            selected = index == state.selectedDay,
+                            onClick = { viewModel.selectDay(index) },
+                            label = {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(formatDayDate(day.date))
+                                    if (index == todayAt) {
+                                        LabelChip(
+                                            stringResource(R.string.plans_today),
+                                            container = MaterialTheme.colorScheme.primary,
+                                            content = MaterialTheme.colorScheme.onPrimary,
+                                        )
                                     }
-                                },
-                            )
-                        }
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -432,6 +424,8 @@ fun PlanDetailScreen(
                     // A day before today is history, and an instance without day settings has none to change.
                     onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
                     onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
+                    // A long plan is a long way along its days to the one it is now: one press takes the reader there.
+                    onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
                 )
             }
             itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
@@ -696,7 +690,14 @@ private fun UseUpPanel(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -> Unit)?, onSettings: (() -> Unit)?, onSpread: (() -> Unit)?) {
+private fun DaySummary(
+    day: PlanDay,
+    onOtherWays: (() -> Unit)?,
+    onChange: (() -> Unit)?,
+    onSettings: (() -> Unit)?,
+    onSpread: (() -> Unit)?,
+    onToday: (() -> Unit)?,
+) {
     AppCard {
         val kind = day.settings?.dayType
         if (kind == "training" || kind == "rest") {
@@ -706,6 +707,7 @@ private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -
             // A day the user skips is no shortfall, and there is nothing in it to fill; its settings can bring it back.
             Text(stringResource(R.string.plans_day_skipped), style = MaterialTheme.typography.titleMedium)
             onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
+            onToday?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_go_to_today)) } }
             return@AppCard
         }
         daySettingsLine(day)?.let { line ->
@@ -768,11 +770,12 @@ private fun DaySummary(day: PlanDay, onOtherWays: (() -> Unit)?, onChange: (() -
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        if (onOtherWays != null || onChange != null || onSettings != null) {
+        if (onOtherWays != null || onChange != null || onSettings != null || onToday != null) {
             FlowRow(modifier = Modifier.padding(top = 4.dp)) {
                 onOtherWays?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_other_ways)) } }
                 onChange?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_change_day)) } }
                 onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
+                onToday?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_go_to_today)) } }
             }
         }
     }
