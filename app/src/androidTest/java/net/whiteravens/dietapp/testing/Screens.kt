@@ -198,16 +198,27 @@ private fun ByteArray.contains(part: ByteArray): Boolean =
 
 /**
  * Starts the app signed in to the session [account]'s sign-up opened, as a sign-in leaves it, and
- * waits for the dashboard, asking the API for nothing: the instance lets one address sign in thirty
- * times a quarter of an hour, and every screens' test runs from the emulator's one. A test of signing
- * in, or of the session a sign-in on the phone opens, signs in on the screen instead ([signIn]).
+ * waits for the signed-in shell, asking the API for nothing: the instance lets one address sign in
+ * thirty times a quarter of an hour, and every screens' test runs from the emulator's one. A test of
+ * signing in, or of the session a sign-in on the phone opens, signs in on the screen instead ([signIn]).
  */
 fun ComposeTestRule.startSignedIn(account: Account) {
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     runBlocking {
         TokenStore(context, KeystoreSealer()).save(AuthTokens(account.accessToken, account.refreshToken, ACCESS_TOKEN_SECONDS), account.sessionId)
     }
-    waitForText(text(R.string.nav_dashboard))
+    waitForTheShell()
+}
+
+/**
+ * Waits for the signed-in shell: the bar's first tab, which every dashboard has, with profiles or
+ * without. The dashboard's title is not on an empty one, which welcomes the account instead.
+ */
+fun ComposeTestRule.waitForTheShell() {
+    waitUntil(20_000) {
+        onAllNodes(hasText(text(R.string.tab_dashboard)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
+            .fetchSemanticsNodes().isNotEmpty()
+    }
 }
 
 /** How long an access token of the instance holds, as its sign-up answers it. */
@@ -220,13 +231,13 @@ fun ComposeTestRule.openAccountSettings(account: Account) {
     waitForText(account.email)
 }
 
-/** Signs [account] in on the sign-in screen, as a person would, and waits for the dashboard. */
+/** Signs [account] in on the sign-in screen, as a person would, and waits for the signed-in shell. */
 fun ComposeTestRule.signIn(account: Account) {
     onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
     onNodeWithText(text(R.string.auth_password)).performTextInput(account.password)
     putKeyboardAway()
     onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
-    waitForText(text(R.string.nav_dashboard))
+    waitForTheShell()
 }
 
 /**
