@@ -79,7 +79,8 @@ instance it starts for them. Running the app against a backend is described in
 ## Roadmap
 
 The API binding, the DTO mirror, the auth plumbing and the offline-first repositories are
-in place, and the screens for signing in, the dashboard, meal plans, recipes, the
+in place, and the screens for signing in, the dashboard with the account's notifications,
+meal plans, recipes, the
 favourites, the shopping list, the pantry, the profiles with their preferences, the
 account and the About screen are built on them, with tests on the JVM and journeys on
 emulators. What the app
@@ -89,4 +90,4 @@ its mails, data in a file and deletion) it opens there, in the browser, signed i
 one-time code that the page uses once its reader says the account is theirs. Next are the
 rules the app still works out itself taken
 from the API instead, the write-sync outbox described in [sync-strategy.md](sync-strategy.md),
-and notifications the app asks the server for.
+and notifications that arrive by themselves rather than when the dashboard is opened.

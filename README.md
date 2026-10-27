@@ -37,7 +37,11 @@ account once you say on the page that the account it names is yours.
   and its grams; its weight log, today's weight logged in the
   account's unit and the last one taken back, with ninety days of weights drawn beside the
   mean of each seven days and the weight it works towards. A profile's favourite sets are
-  made and changed in the web application, which its card opens in the browser.
+  made and changed in the web application, which its card opens in the browser. The bell
+  in its header counts the notifications not read yet, each with the profile it is for: a
+  reminder to log a weight, which leads to that profile's weights, and a request to review
+  a profile's preferences after a catalogue update took away something it had marked,
+  which leads to the profiles; each can be put away, or all read at once.
 - **Meal plans.** The plans of a profile and a month of them as a calendar, a new plan
   generated from the phone, each plan day by day with its totals and today marked, with a
   way to it from any other day, a meal swapped for
