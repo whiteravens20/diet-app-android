@@ -22,14 +22,17 @@ cd diet-app-android
 
 The screens' tests (`app/src/androidTest/`) open the app on an emulator or a phone and
 sign in to the diet-app instance at the app's address, which they need with its
-catalogue loaded; each test makes the accounts it uses there.
+catalogue loaded; each test makes the accounts it uses there, but for the notifications'
+test, which reads an account made before the instance's worker starts.
 [`start-diet-app.sh`](.github/scripts/start-diet-app.sh) starts such an instance of the
-version in `contract/diet-app.env`, as CI does, on a machine with Docker. With an emulator
-running beside it:
+version in `contract/diet-app.env`, as CI does, on a machine with Docker, makes that
+account and prints the Gradle arguments that name it. With an emulator running beside it:
 
 ```bash
-./gradlew connectedDebugAndroidTest
+./gradlew <the arguments it printed> connectedDebugAndroidTest
 ```
+
+Without the arguments the notifications' test is skipped.
 
 ## Guidelines
 

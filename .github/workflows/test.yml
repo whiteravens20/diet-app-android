@@ -165,7 +165,7 @@ jobs:
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
-            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT connected${{ matrix.variant }}AndroidTest
+            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT connected${{ matrix.variant }}AndroidTest
 
       - name: Keep what diet-app logged
         if: always()

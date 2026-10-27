@@ -6,6 +6,13 @@
 # emulator reaches as 10.0.2.2:4000. Then it loads the catalogue through the admin API, as an
 # administrator does after an installation, so that plans can be made.
 #
+# Before the worker starts it makes an account whose notifications the screens' tests read, and
+# names it to them in the instrumentation arguments `notifiedEmail` and `notifiedPassword`
+# (`$NOTIFIED_ACCOUNT` in the job's environment, or printed outside CI): two profiles, Ala and Ola,
+# each favouring an ingredient no catalogue has. The worker's first pass reminds both to log a
+# weight, and the catalogue update takes the ingredient away and asks both to review their
+# preferences.
+#
 # Every account the tests make may use the operator's AI provider, and none counts as new: the
 # journeys switch fresh accounts to it, and what the operator allows them is not what they test.
 #
@@ -72,6 +79,21 @@ if ! curl -fsS "$api/health" > /dev/null; then
   echo "::error::The API did not come up."
   exit 1
 fi
+
+# The account whose notifications the screens' tests read, its weights in kilograms.
+notified_email="notified-$(openssl rand -hex 4)@example.test"
+notified_password="Notified-$(openssl rand -hex 12)"
+notified_token=$(jq -n --arg email "$notified_email" --arg password "$notified_password" \
+    '{email: $email, password: $password, displayName: "Notified"}' |
+  curl -fsS -H 'Content-Type: application/json' --data @- "$api/auth/register" | jq -r .tokens.accessToken)
+as_notified() { curl -fsS -H "Authorization: Bearer $notified_token" -H 'Content-Type: application/json' "$@"; }
+as_notified -X PATCH --data '{"weightUnit":"kg"}' "$api/users/me" > /dev/null
+for profile in Ala:64 Ola:58; do
+  jq -n --arg name "${profile%%:*}" --argjson kg "${profile##*:}" --arg missing "$(cat /proc/sys/kernel/random/uuid)" \
+      '{name: $name, age: 30, sex: "female", heightCm: 168, weightKg: $kg, preferences: {favoriteIngredientIds: [$missing]}}' |
+    as_notified --data @- "$api/profiles" > /dev/null
+done
+
 compose up -d worker
 
 # The admin API takes requests only from the application's own origin.
@@ -97,5 +119,25 @@ if [ "$status" != "done" ]; then
 fi
 curl -fsS -c "$jar" -b "$jar" -H "$origin" -X DELETE "$api/admin/session" > /dev/null
 rm -f "$jar"
+
+# Two reminders from the worker's first pass and two reviews from the update.
+unread=0
+for _ in $(seq 1 60); do
+  unread=$(as_notified "$api/notifications/unread" | jq length)
+  [ "$unread" = 4 ] && break
+  sleep 1
+done
+if [ "$unread" != 4 ]; then
+  compose logs --no-color --tail 40 worker
+  echo "::error::The account for the notifications has $unread unread, not the 4 the tests read."
+  exit 1
+fi
+arguments="-Pandroid.testInstrumentationRunnerArguments.notifiedEmail=$notified_email -Pandroid.testInstrumentationRunnerArguments.notifiedPassword=$notified_password"
+if [ -n "${GITHUB_ENV:-}" ]; then
+  echo "::add-mask::$notified_password"
+  echo "NOTIFIED_ACCOUNT=$arguments" >> "$GITHUB_ENV"
+else
+  echo "Gradle arguments for the notifications' journey: $arguments"
+fi
 
 echo "diet-app $(curl -fsS "$api/config" | jq -r .instance.version) is up, with its catalogue loaded"
