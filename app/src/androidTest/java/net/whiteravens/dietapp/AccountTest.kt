@@ -90,7 +90,7 @@ class AccountTest {
         // On the dashboard, reached from the bar the account's screen does not show, a weight is typed
         // in pounds, and the API keeps it in kilograms.
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
-        screen.openTab(text(R.string.nav_dashboard))
+        screen.openTab(text(R.string.tab_dashboard))
         val field = hasText(text(R.string.weight_today, "lb"))
         screen.scrollTo(field)
         screen.onNode(field).performScrollTo().performTextInput("180")

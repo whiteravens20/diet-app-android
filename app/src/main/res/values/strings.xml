@@ -11,6 +11,9 @@
     <string name="nav_recipes">Recipes</string>
     <string name="nav_shopping">Shopping</string>
     <string name="nav_more">More</string>
+    <!-- The bottom bar's labels where the screen's title is too long for one line of an item. -->
+    <string name="tab_dashboard">Home</string>
+    <string name="tab_meal_plans">Plans</string>
 
     <!-- Common -->
     <string name="common_retry">Try again</string>

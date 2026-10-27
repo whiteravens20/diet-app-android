@@ -63,7 +63,7 @@ class PlansTest {
         val profileId = Instance.newProfile(account)
         screen.signIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         screen.waitForEnabled(text(R.string.plans_generate))
         screen.onNode(hasText(text(R.string.plans_generate)) and hasClickAction()).performClick()
 
@@ -167,7 +167,7 @@ class PlansTest {
         Instance.newPlan(account, profileId, days = 3, start = month.atDay(10))
         screen.signIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         screen.waitForText(text(R.string.plans_calendar_title))
 
         // The plan's second day says what it holds once the month is read, and opens the plan there.
@@ -200,7 +200,7 @@ class PlansTest {
         val planId = Instance.newPlan(account, profileId, days = 2)
         screen.signIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
@@ -228,7 +228,7 @@ class PlansTest {
         val (title, _) = Instance.firstMeal(account, planId)
         screen.signIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
@@ -303,7 +303,7 @@ class PlansTest {
         val wanted = if (count < 5) count + 1 else count - 1
         screen.startSignedIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
@@ -357,7 +357,7 @@ class PlansTest {
         val (mealId, title, line, substitute) = found!!
         screen.startSignedIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
@@ -405,7 +405,7 @@ class PlansTest {
         val swaps = Instance.useUpSwaps(account, planId)
         screen.signIn(account)
 
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()

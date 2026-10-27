@@ -65,7 +65,7 @@ class OfflineTest {
         screen.signIn(account)
 
         // Opened once with the network: the phone keeps a copy.
-        screen.openTab(text(R.string.nav_meal_plans))
+        screen.openTab(text(R.string.tab_meal_plans))
         // The plan's card names the day it begins on; the list is below the calendar.
         val card = formatDate(startDate)
         screen.scrollToText(card, substring = true)

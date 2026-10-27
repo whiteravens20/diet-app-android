@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -198,8 +199,8 @@ private data class TopLevelDestination(
 )
 
 private val topLevelDestinations = listOf(
-    TopLevelDestination(DashboardRoute, DashboardRoute::class, Icons.Default.Home, R.string.nav_dashboard),
-    TopLevelDestination(PlansRoute, PlansRoute::class, Icons.Default.DateRange, R.string.nav_meal_plans),
+    TopLevelDestination(DashboardRoute, DashboardRoute::class, Icons.Default.Home, R.string.tab_dashboard),
+    TopLevelDestination(PlansRoute, PlansRoute::class, Icons.Default.DateRange, R.string.tab_meal_plans),
     TopLevelDestination(RecipesRoute, RecipesRoute::class, AppIcons.Restaurant, R.string.nav_recipes),
     TopLevelDestination(ShoppingRoute, ShoppingRoute::class, Icons.Default.ShoppingCart, R.string.nav_shopping),
     TopLevelDestination(MoreRoute, MoreRoute::class, Icons.Default.Menu, R.string.nav_more),
@@ -246,7 +247,8 @@ private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmai
                                 }
                             },
                             icon = { Icon(dest.icon, contentDescription = null) },
-                            label = { Text(stringResource(dest.label)) },
+                            // One line: a second one would lift this item's icon above the others'.
+                            label = { Text(stringResource(dest.label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         )
                     }
                 }

@@ -5,11 +5,13 @@
     <string name="api_language">pl</string>
 
     <!-- Navigation -->
-    <string name="nav_dashboard">Panel</string>
+    <string name="nav_dashboard">Pulpit</string>
     <string name="nav_meal_plans">Plany posiłków</string>
     <string name="nav_recipes">Przepisy</string>
     <string name="nav_shopping">Zakupy</string>
     <string name="nav_more">Więcej</string>
+    <string name="tab_dashboard">Pulpit</string>
+    <string name="tab_meal_plans">Plany</string>
 
     <!-- Common -->
     <string name="common_retry">Spróbuj ponownie</string>
