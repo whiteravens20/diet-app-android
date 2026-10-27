@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -185,7 +187,8 @@ private fun ProfileSummary(
             OutlinedButton(onClick = onNewPlan) { Text(stringResource(R.string.dashboard_generate_plan)) }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // As tall as the taller of the two: one has a hint under its value, the other none.
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatCard(
                 label = stringResource(R.string.dashboard_daily_target),
                 value = target?.let { "${it.dailyTarget.roundToInt()} $kcal" } ?: "—",
@@ -196,28 +199,29 @@ private fun ProfileSummary(
                         else R.string.dashboard_calculated_hint,
                     )
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatCard(
                 label = stringResource(R.string.dashboard_maintenance),
                 value = target?.let { "${it.maintenance.roundToInt()} $kcal" } ?: "—",
                 icon = AppIcons.Flame,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // As tall as the taller of the two: one has a hint under its value, the other none.
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             // Under maintenance a deficit, above it a surplus: the label says which, the number how much.
             StatCard(
                 label = stringResource(if (target != null && target.dailyDeficit < 0) R.string.dashboard_daily_surplus else R.string.dashboard_daily_deficit),
                 value = target?.let { "${abs(it.dailyDeficit).roundToInt()} $kcal" } ?: "—",
                 icon = AppIcons.Schedule,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatCard(
                 label = stringResource(R.string.dashboard_meals_per_day),
                 value = profile.mealCount.toString(),
                 icon = AppIcons.Restaurant,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
 
