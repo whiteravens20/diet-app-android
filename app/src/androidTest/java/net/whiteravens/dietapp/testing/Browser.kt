@@ -14,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import java.net.URLDecoder
+import java.util.concurrent.atomic.AtomicReference
 
 /** The instance's web application: the address the app talks to, without its `api/`. */
 val webApp: String = BuildConfig.API_BASE_URL.removeSuffix("api/")
@@ -28,30 +29,18 @@ private const val CODE_WAIT_MILLIS = 20_000L
  * browser's place, as no browser on the emulator has to show the page. Returns the code.
  */
 fun opensSignedInTheBrowser(next: String, act: () -> Unit): String {
-    Intents.init()
-    try {
-        intending(hasAction(Intent.ACTION_VIEW)).respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, null))
-        act()
-        // The app asks the instance for the code first: the browser is given the page a moment later.
-        val deadline = SystemClock.uptimeMillis() + CODE_WAIT_MILLIS
-        var opened = Intents.getIntents().lastOrNull { it.action == Intent.ACTION_VIEW }
-        while (opened == null && SystemClock.uptimeMillis() < deadline) {
-            SystemClock.sleep(100)
-            opened = Intents.getIntents().lastOrNull { it.action == Intent.ACTION_VIEW }
-        }
-        val address = checkNotNull(opened?.data) { "no page was given to the browser" }
-        assertEquals("${webApp}from-the-app", address.buildUpon().fragment(null).build().toString())
-        assertNull(address.query)
-        val fragment = address.encodedFragment.orEmpty().split('&').associate { part ->
-            part.substringBefore('=') to URLDecoder.decode(part.substringAfter('='), "UTF-8")
-        }
-        val code = fragment["code"].orEmpty()
-        assertTrue("a code of the instance's, not \"$code\"", code.matches(Regex("[0-9a-f]{64}")))
-        assertEquals(next, fragment["next"])
-        return code
-    } finally {
-        Intents.release()
+    // The app asks the instance for the code first: the browser is given the page a moment later.
+    val opened = answeringTheBrowser(act)
+    val address = checkNotNull(opened.data) { "no page was given to the browser" }
+    assertEquals("${webApp}from-the-app", address.buildUpon().fragment(null).build().toString())
+    assertNull(address.query)
+    val fragment = address.encodedFragment.orEmpty().split('&').associate { part ->
+        part.substringBefore('=') to URLDecoder.decode(part.substringAfter('='), "UTF-8")
     }
+    val code = fragment["code"].orEmpty()
+    assertTrue("a code of the instance's, not \"$code\"", code.matches(Regex("[0-9a-f]{64}")))
+    assertEquals(next, fragment["next"])
+    return code
 }
 
 /**
@@ -59,17 +48,29 @@ fun opensSignedInTheBrowser(next: String, act: () -> Unit): String {
  * with it. The test answers in the browser's place.
  */
 fun opensTheBrowserAt(address: String, act: () -> Unit) {
+    val opened = answeringTheBrowser(act)
+    assertEquals(address, checkNotNull(opened.data) { "no page was given to the browser" }.toString())
+}
+
+/**
+ * Runs [act] answering, in the browser's place, the intent that would open it, and returns that
+ * intent once it is answered. The runner records an intent before it asks the stubs for an answer
+ * on the main thread (`MonitoringInstrumentation.execStartActivity`): a test that released the stubs
+ * as soon as the intent was recorded left that question without a registry to ask, and the app
+ * failed in `startActivity`. So the stubs are released only once the answer has been given.
+ */
+private fun answeringTheBrowser(act: () -> Unit): Intent {
+    val answered = AtomicReference<Intent?>(null)
     Intents.init()
     try {
-        intending(hasAction(Intent.ACTION_VIEW)).respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, null))
+        intending(hasAction(Intent.ACTION_VIEW)).respondWithFunction { intent ->
+            answered.set(intent)
+            Instrumentation.ActivityResult(Activity.RESULT_OK, null)
+        }
         act()
         val deadline = SystemClock.uptimeMillis() + CODE_WAIT_MILLIS
-        var opened = Intents.getIntents().lastOrNull { it.action == Intent.ACTION_VIEW }
-        while (opened == null && SystemClock.uptimeMillis() < deadline) {
-            SystemClock.sleep(100)
-            opened = Intents.getIntents().lastOrNull { it.action == Intent.ACTION_VIEW }
-        }
-        assertEquals(address, checkNotNull(opened?.data) { "no page was given to the browser" }.toString())
+        while (answered.get() == null && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(100)
+        return checkNotNull(answered.get()) { "no page was given to the browser" }
     } finally {
         Intents.release()
     }
