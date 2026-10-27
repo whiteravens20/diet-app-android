@@ -152,8 +152,9 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
-          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled.
-          profile: pixel_7a
+          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
+          # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
+          profile: pixel_6
           cores: ${{ matrix.cores }}
           ram-size: ${{ matrix.ram-size }}
           disk-size: ${{ matrix.disk-size }}
