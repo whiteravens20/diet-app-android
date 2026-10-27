@@ -107,6 +107,21 @@ class ServerRepositoryTest {
     }
 
     @Test
+    fun `where the instance's users find help is kept where the operator published a page for it`() {
+        val captured = json.parseToJsonElement(fixture("config")).jsonObject
+        val instance = captured.getValue("instance").jsonObject
+        server.enqueue(answer(fixture("config")))
+        server.enqueue(answer(JsonObject(captured + ("instance" to JsonObject(instance + ("supportUrl" to JsonPrimitive("https://help.example.test/diet"))))).toString()))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+        assertEquals(null, repository.rules.value?.supportUrl)
+        runBlocking { repository.refresh() }
+
+        assertEquals("https://help.example.test/diet", repository.rules.value?.supportUrl)
+    }
+
+    @Test
     fun `an instance that does not say how many profiles an account may have allows the API's default`() {
         val captured = json.parseToJsonElement(fixture("config")).jsonObject
         server.enqueue(answer(JsonObject(captured - "accounts" - "catalogue").toString()))

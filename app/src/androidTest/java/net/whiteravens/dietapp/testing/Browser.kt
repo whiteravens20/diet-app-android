@@ -53,3 +53,24 @@ fun opensSignedInTheBrowser(next: String, act: () -> Unit): String {
         Intents.release()
     }
 }
+
+/**
+ * Checks that [act] gives the browser [address], a page outside the instance, as it is: no code goes
+ * with it. The test answers in the browser's place.
+ */
+fun opensTheBrowserAt(address: String, act: () -> Unit) {
+    Intents.init()
+    try {
+        intending(hasAction(Intent.ACTION_VIEW)).respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, null))
+        act()
+        val deadline = SystemClock.uptimeMillis() + CODE_WAIT_MILLIS
+        var opened = Intents.getIntents().lastOrNull { it.action == Intent.ACTION_VIEW }
+        while (opened == null && SystemClock.uptimeMillis() < deadline) {
+            SystemClock.sleep(100)
+            opened = Intents.getIntents().lastOrNull { it.action == Intent.ACTION_VIEW }
+        }
+        assertEquals(address, checkNotNull(opened?.data) { "no page was given to the browser" }.toString())
+    } finally {
+        Intents.release()
+    }
+}

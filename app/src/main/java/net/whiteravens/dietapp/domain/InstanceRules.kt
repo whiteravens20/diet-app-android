@@ -16,6 +16,8 @@ data class InstanceRules(
     val maxRepeatsPerRecipe: Int? = null,
     /** How to reach whoever runs the instance, where they published it: to ask for the use of its AI. */
     val operatorContact: String? = null,
+    /** Where the instance's users find help, where its operator published a page for it. */
+    val supportUrl: String? = null,
 ) {
     /**
      * How well the catalogue serves [diet] at [mealCount] meals a day, by the meal it has the fewest

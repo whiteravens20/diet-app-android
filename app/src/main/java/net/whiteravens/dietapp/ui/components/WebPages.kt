@@ -68,6 +68,9 @@ class WebPages internal constructor(
             if (given == null) show(plain, null, plain) else show(signedInWebPage(app, given, path, *query), where.pkg, plain)
         }
     }
+
+    /** Opens a page outside the instance, at [address], in the browser: no code goes with it. */
+    fun openOutside(address: String) = show(address, null, address)
 }
 
 /**

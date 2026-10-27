@@ -38,7 +38,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.AccentChip
@@ -180,7 +179,6 @@ fun AccountScreen(
                         color = MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.padding(vertical = 10.dp),
                     )
-                    SettingRow(stringResource(R.string.account_app_version), BuildConfig.VERSION_NAME)
                     Text(
                         stringResource(R.string.account_settings_hint),
                         style = MaterialTheme.typography.bodySmall,

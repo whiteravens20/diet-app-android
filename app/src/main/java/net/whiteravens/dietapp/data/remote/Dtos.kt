@@ -72,7 +72,7 @@ data class TurnstileDto(val enabled: Boolean, val siteKey: String? = null)
 
 /** The instance's version, and how to reach whoever runs it where they published it. */
 @Serializable
-data class InstanceDto(val version: String, val operatorContact: String? = null)
+data class InstanceDto(val version: String, val operatorContact: String? = null, val supportUrl: String? = null)
 
 // ── Health (GET /health) ────────────────────────────────────────────────────
 

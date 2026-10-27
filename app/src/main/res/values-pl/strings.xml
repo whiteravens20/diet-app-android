@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Wording mirrors the web app's messages/pl.json wherever a key exists there. -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Diet App</string>
     <string name="api_language">pl</string>
 
@@ -759,7 +759,6 @@
     <string name="account_weight_unit_lb">Funty</string>
     <string name="account_weight_unit_hint">Jednostka, w której waga ciała jest pokazywana i wpisywana, na pulpicie i w profilu. „Według mojego regionu” kieruje się ustawieniami telefonu: funty w krajach, w których się ich używa, kilogramy wszędzie indziej.</string>
     <string name="account_weight_unit_failed">Nie udało się zapisać jednostki.</string>
-    <string name="account_app_version">Wersja aplikacji</string>
     <string name="account_settings_hint">Hasło, adres e-mail, nazwa konta, język maili, dane konta w pliku i usunięcie konta są w aplikacji webowej.</string>
     <string name="account_ai">Asystent AI</string>
     <string name="account_ai_body">Wybierz, jak działają funkcje AI. Kalorie i makroskładniki zawsze przelicza wbudowany silnik aplikacji — AI nigdy nie wymyśla wartości odżywczych.</string>
@@ -1360,4 +1359,34 @@
         <item quantity="many">%1$d posiłków</item>
         <item quantity="other">%1$d posiłku</item>
     </plurals>
+    <string name="about_title">O aplikacji</string>
+    <string name="about_instance">Ta instancja</string>
+    <string name="about_server_version">Wersja serwera</string>
+    <string name="about_server_version_unknown">nieznana</string>
+    <string name="about_max_profiles">Profile na jedno konto</string>
+    <string name="about_max_repeats">Ten sam przepis w planie najwyżej</string>
+    <plurals name="about_max_repeats_times">
+        <item quantity="one">%d raz</item>
+        <item quantity="few">%d razy</item>
+        <item quantity="many">%d razy</item>
+        <item quantity="other">%d razy</item>
+    </plurals>
+    <string name="about_operator">Sprawy tej instancji kieruj do jej operatora:</string>
+    <string name="about_operator_not_set">Operator tej instancji nie opublikował adresu kontaktowego.</string>
+    <string name="about_support">Pomoc dla tej instancji</string>
+    <string name="about_terms">Regulamin tej instancji</string>
+    <string name="about_app">Ta aplikacja</string>
+    <string name="about_app_version">Wersja</string>
+    <string name="about_api_checked">Sprawdzona z API %1$s.</string>
+    <string name="about_legal">Informacje prawne</string>
+    <!-- The copyright line as NOTICE writes it. -->
+    <string name="about_notice" tools:ignore="TypographyOther">Ta aplikacja to %1$s. Jej oryginalny kod źródłowy jest pod adresem %2$s. Copyright (C) 2026 White Ravens.</string>
+    <string name="about_licence">To wolne oprogramowanie: każdy może je rozpowszechniać i zmieniać na warunkach licencji GNU Affero General Public License w wersji 3, z dodatkowym warunkiem, który zachowuje tę atrybucję. Licencja jest w plikach LICENSE i NOTICE kodu źródłowego oraz na stronie gnu.org.</string>
+    <string name="about_warranty">Oprogramowanie nie ma żadnej gwarancji, nawet tej, że nada się do określonego celu. Pełną treść tego zastrzeżenia podaje licencja.</string>
+    <string name="about_changed">Jeśli ta aplikacja jest zmienioną wersją, licencja zobowiązuje tego, kto Ci ją dał, do udostępnienia Ci jej kodu źródłowego.</string>
+    <string name="about_problems">Błąd w aplikacji albo pomysł na nią zgłoś w jej systemie zgłoszeń. Problem z bezpieczeństwem zgłoś prywatnie, jak opisuje polityka bezpieczeństwa.</string>
+    <string name="about_licence_text">Licencja</string>
+    <string name="about_issues">System zgłoszeń</string>
+    <string name="about_security">Polityka bezpieczeństwa</string>
+    <string name="about_source">Kod źródłowy</string>
 </resources>

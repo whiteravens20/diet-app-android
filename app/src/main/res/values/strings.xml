@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Wording mirrors the web app's messages/en.json wherever a key exists there. -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Diet App</string>
     <!-- The language of this set of texts: what the app asks the API to answer in. -->
     <string name="api_language">en</string>
@@ -702,7 +702,6 @@
     <string name="account_weight_unit_lb">Pounds</string>
     <string name="account_weight_unit_hint">The unit body weights are shown and typed in, on the dashboard and in a profile. “By where I am” goes by your phone\'s settings: pounds in the countries that weigh in them, kilograms everywhere else.</string>
     <string name="account_weight_unit_failed">Could not save the unit.</string>
-    <string name="account_app_version">App version</string>
     <string name="account_settings_hint">The password, the address, the name, the language of the mails, the account\'s data in a file and deleting the account are in the web application.</string>
     <string name="account_ai">AI assistant</string>
     <string name="account_ai_body">Pick how AI features behave for you. Calorie and macro values are always recomputed by the deterministic engine — AI never invents nutrition.</string>
@@ -1263,4 +1262,32 @@
         <item quantity="one">%1$d meal</item>
         <item quantity="other">%1$d meals</item>
     </plurals>
+    <string name="about_title">About</string>
+    <string name="about_instance">This instance</string>
+    <string name="about_server_version">Version of the server</string>
+    <string name="about_server_version_unknown">not known</string>
+    <string name="about_max_profiles">Profiles an account may have</string>
+    <string name="about_max_repeats">The most a recipe repeats in a plan</string>
+    <plurals name="about_max_repeats_times">
+        <item quantity="one">%d time</item>
+        <item quantity="other">%d times</item>
+    </plurals>
+    <string name="about_operator">Anything about this instance goes to its operator:</string>
+    <string name="about_operator_not_set">The operator of this instance has not published a contact address.</string>
+    <string name="about_support">Help for this instance</string>
+    <string name="about_terms">Terms of this instance</string>
+    <string name="about_app">This application</string>
+    <string name="about_app_version">Version</string>
+    <string name="about_api_checked">Checked against the API %1$s.</string>
+    <string name="about_legal">Legal notices</string>
+    <!-- The copyright line as NOTICE writes it. -->
+    <string name="about_notice" tools:ignore="TypographyOther">This application is %1$s, whose original source code is at %2$s. Copyright (C) 2026 White Ravens.</string>
+    <string name="about_licence">It is free software: anyone may share and change it under the GNU Affero General Public License, version 3, together with an additional term that keeps this attribution. The licence is in the LICENSE and NOTICE files of the source code and at gnu.org.</string>
+    <string name="about_warranty">It comes with no warranty of any kind, not even that it is fit for a particular purpose; the licence says so in full.</string>
+    <string name="about_changed">If this application is a changed version, the licence requires whoever gave it to you to offer you its source code.</string>
+    <string name="about_problems">A mistake in the application or an idea for it goes to its issue tracker. A security problem is reported privately, as its security policy describes.</string>
+    <string name="about_licence_text">The licence</string>
+    <string name="about_issues">Issue tracker</string>
+    <string name="about_security">Security policy</string>
+    <string name="about_source">Source code</string>
 </resources>

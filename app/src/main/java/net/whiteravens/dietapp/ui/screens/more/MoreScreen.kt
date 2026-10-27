@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -27,6 +28,7 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.rememberWebPages
+import net.whiteravens.dietapp.ui.navigation.AboutRoute
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
 import net.whiteravens.dietapp.ui.navigation.FavoritesRoute
 import net.whiteravens.dietapp.ui.navigation.PantryRoute
@@ -45,8 +47,9 @@ val moreEntries: List<MoreEntry>
     )
 
 /**
- * What the bottom bar's "More" opens: the rest of the app, a tap each, and the calculator, which is
- * the web application's and opens in the browser.
+ * What the bottom bar's "More" opens: the rest of the app, a tap each, the calculator, which is the
+ * web application's and opens in the browser, and last what the app says of the instance and of
+ * itself.
  */
 @Composable
 fun MoreScreen(onOpen: (Any) -> Unit) {
@@ -63,6 +66,7 @@ fun MoreScreen(onOpen: (Any) -> Unit) {
             Entry(AppIcons.Target, stringResource(R.string.calculator_title), stringResource(R.string.web_opens_in_the_browser)) {
                 web.open("calculator")
             }
+            Entry(Icons.Default.Info, stringResource(R.string.about_title)) { onOpen(AboutRoute) }
         }
     }
 }
