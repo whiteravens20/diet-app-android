@@ -57,11 +57,19 @@ fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000, sub
 
 /**
  * Scrolls the screen's list until it shows what [sought] matches, once the list has it, as a person
- * scrolls to what they look for: a list composes only what is in view.
+ * scrolls to what they look for: a list composes only what is in view. When it never comes, what the
+ * screen holds is written to the log before the test fails, each node with a text and what it says
+ * and does, under the tag `ScreenHeld`.
  */
 fun ComposeTestRule.scrollTo(sought: SemanticsMatcher, timeoutMillis: Long = 20_000) {
-    waitUntil(timeoutMillis) {
-        runCatching { onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(sought) }.isSuccess
+    try {
+        waitUntil(timeoutMillis) {
+            runCatching { onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(sought) }.isSuccess
+        }
+    } catch (e: ComposeTimeoutException) {
+        val held = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
+        held.fetchSemanticsNodes().indices.forEach { held[it].printToLog("ScreenHeld", maxDepth = 0) }
+        throw e
     }
 }
 
@@ -88,22 +96,6 @@ private fun keyboardOpen(): Boolean {
 /** [scrollTo] what shows [shown], or a text holding it where [substring]. */
 fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
     scrollTo(hasText(shown, substring = substring), timeoutMillis)
-
-/**
- * Waits for a node [sought] matches, once there is one. When none comes, what the screen holds is
- * written to the log first, each node with a text and what it says and does, and its picture kept
- * as [picture]: a failure then says what was there instead.
- */
-fun ComposeTestRule.waitForNode(sought: SemanticsMatcher, picture: String, timeoutMillis: Long = 20_000) {
-    try {
-        waitUntil(timeoutMillis) { onAllNodes(sought).fetchSemanticsNodes().isNotEmpty() }
-    } catch (e: ComposeTimeoutException) {
-        val held = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
-        held.fetchSemanticsNodes().indices.forEach { held[it].printToLog("ScreenHeld", maxDepth = 0) }
-        keepScreenshot(picture)
-        throw e
-    }
-}
 
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
