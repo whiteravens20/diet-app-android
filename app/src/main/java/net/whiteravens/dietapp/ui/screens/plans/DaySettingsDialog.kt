@@ -73,7 +73,7 @@ fun DaySettingsDialog(
     val skipped = state.kind == DaySettingsViewModel.SKIP
 
     ScreenDialog(onDismiss) {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.plans_settings_title), style = MaterialTheme.typography.titleLarge)

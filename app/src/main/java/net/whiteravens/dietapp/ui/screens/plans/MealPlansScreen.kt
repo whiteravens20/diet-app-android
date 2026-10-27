@@ -80,7 +80,7 @@ fun MealPlansScreen(
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
                 ScreenHeader(
@@ -185,7 +185,7 @@ private fun PlanCard(plan: MealPlanSummary, onClick: () -> Unit) {
 
 @Composable
 private fun ListSkeleton() {
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Skeleton(Modifier.height(32.dp).fillMaxWidth(0.5f))
         Skeleton(Modifier.height(32.dp).fillMaxWidth(0.7f))
         repeat(3) { Skeleton(Modifier.fillMaxWidth().height(88.dp)) }

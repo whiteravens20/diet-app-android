@@ -56,7 +56,7 @@ fun MoreScreen(onOpen: (Any) -> Unit) {
     val web = rememberWebPages()
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         ScreenHeader(title = stringResource(R.string.nav_more))
         AppCard {

@@ -93,11 +93,11 @@ private val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(20.dp),
 )
 
-/** Defaults with the web's tighter, semibold headings. */
+/** Defaults with the web's tighter, semibold headings; a screen's title a size under Material's headline. */
 private val AppTypography = Typography().let { t ->
     t.copy(
         headlineMedium = t.headlineMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = (-0.25).sp),
-        headlineSmall = t.headlineSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = (-0.25).sp),
+        headlineSmall = t.headlineSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = (-0.25).sp, fontSize = 22.sp, lineHeight = 28.sp),
         titleLarge = t.titleLarge.copy(fontWeight = FontWeight.SemiBold, letterSpacing = (-0.25).sp),
         titleMedium = t.titleMedium.copy(fontWeight = FontWeight.SemiBold),
     )

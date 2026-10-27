@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /** Dashboard summary tile — label, big value, optional hint, tinted icon. */
 @Composable
@@ -36,8 +37,8 @@ fun StatCard(
                 )
                 Text(
                     value,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(top = 4.dp),
+                    style = MaterialTheme.typography.titleLarge.copy(lineHeight = 24.sp),
+                    modifier = Modifier.padding(top = 2.dp),
                 )
                 if (hint != null) {
                     Text(

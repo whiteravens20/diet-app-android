@@ -49,7 +49,7 @@ fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutVie
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         ScreenHeader(title = stringResource(R.string.about_title), onBack = onBack)
 

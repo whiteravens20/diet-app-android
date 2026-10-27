@@ -107,7 +107,7 @@ fun ShoppingScreen(
     val web = rememberWebPages()
 
     if (state.loading) {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Skeleton(Modifier.height(32.dp).fillMaxWidth(0.5f))
             repeat(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
         }
@@ -153,7 +153,7 @@ fun ShoppingScreen(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
             ScreenHeader(

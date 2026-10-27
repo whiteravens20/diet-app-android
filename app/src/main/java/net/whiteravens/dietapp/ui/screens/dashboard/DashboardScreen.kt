@@ -111,7 +111,7 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize(),
             state = list,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
                 Row(Modifier.padding(bottom = 4.dp), verticalAlignment = Alignment.Top) {
@@ -174,7 +174,7 @@ private fun ProfileSummary(
     val target = stats.target
     val kcal = stringResource(R.string.unit_kcal)
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -185,7 +185,7 @@ private fun ProfileSummary(
             OutlinedButton(onClick = onNewPlan) { Text(stringResource(R.string.dashboard_generate_plan)) }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatCard(
                 label = stringResource(R.string.dashboard_daily_target),
                 value = target?.let { "${it.dailyTarget.roundToInt()} $kcal" } ?: "—",
@@ -205,7 +205,7 @@ private fun ProfileSummary(
                 modifier = Modifier.weight(1f),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             // Under maintenance a deficit, above it a surplus: the label says which, the number how much.
             StatCard(
                 label = stringResource(if (target != null && target.dailyDeficit < 0) R.string.dashboard_daily_surplus else R.string.dashboard_daily_deficit),
@@ -298,13 +298,13 @@ private fun FavoriteSetsInTheBrowser(onOpen: () -> Unit) {
 
 @Composable
 private fun DashboardSkeleton() {
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Skeleton(Modifier.height(32.dp).fillMaxWidth(0.5f))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Skeleton(Modifier.weight(1f).height(96.dp))
             Skeleton(Modifier.weight(1f).height(96.dp))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Skeleton(Modifier.weight(1f).height(96.dp))
             Skeleton(Modifier.weight(1f).height(96.dp))
         }

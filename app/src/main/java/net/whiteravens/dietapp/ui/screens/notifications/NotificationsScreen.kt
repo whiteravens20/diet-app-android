@@ -61,7 +61,7 @@ fun NotificationsScreen(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item { ScreenHeader(title = stringResource(R.string.notifications_title), onBack = onBack) }
         if (state.items.isNotEmpty()) {

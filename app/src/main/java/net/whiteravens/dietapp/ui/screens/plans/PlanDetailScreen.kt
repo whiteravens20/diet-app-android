@@ -306,7 +306,7 @@ fun PlanDetailScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
                 Header(
@@ -1004,7 +1004,7 @@ private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal
 
     // A window over the whole screen: the form is long, and an open keyboard leaves room for little of it.
     ScreenDialog(onDismiss) {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Column {
                 Text(stringResource(R.string.plans_custom_modal_title), style = MaterialTheme.typography.titleLarge)
                 Text(formatDayDate(date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

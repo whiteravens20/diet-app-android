@@ -27,7 +27,7 @@ fun AppCard(
     val color = MaterialTheme.colorScheme.surfaceContainer
     val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     val inner: @Composable () -> Unit = {
-        Column(Modifier.fillMaxWidth().padding(16.dp), content = content)
+        Column(Modifier.fillMaxWidth().padding(12.dp), content = content)
     }
     if (onClick != null) {
         Surface(
