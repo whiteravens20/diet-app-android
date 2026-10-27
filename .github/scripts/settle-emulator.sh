@@ -10,7 +10,11 @@ for _ in $(seq 1 60); do
     for scale in window_animation_scale transition_animation_scale animator_duration_scale; do
       adb shell settings put global "$scale" 0
     done
-    echo "The emulator's settings answer; animations are off."
+    # No dialog over the app for a crash or an app that stops answering: the launcher's, after a
+    # slow boot, held the window focus through a whole run, and every test that asked Espresso
+    # for the focused window failed.
+    adb shell settings put global hide_error_dialogs 1
+    echo "The emulator's settings answer; animations and error dialogs are off."
     exit 0
   fi
   sleep 5
