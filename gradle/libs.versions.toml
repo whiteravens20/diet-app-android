@@ -18,6 +18,9 @@ room = "2.8.5"
 datastore = "1.2.1"
 coroutines = "1.11.0"
 zxing = "3.5.4"
+# 15.3.0 is signed with a new key that the one of every earlier release did not certify, and
+# nothing of the project says why: held at 15.2.0 until it does.
+aboutLibraries = "15.2.0"
 # Final release — the material-icons artifacts left the Compose BOM after 1.7.x.
 materialIcons = "1.7.8"
 junit = "4.13.2"
@@ -55,6 +58,7 @@ room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 
 # Tests on the JVM only.
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -80,3 +84,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }

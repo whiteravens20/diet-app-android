@@ -25,8 +25,9 @@ import org.junit.runner.RunWith
 
 /**
  * What the application says of the instance and of itself under "More": the server's version and
- * what it allows, the instance's terms in the web application, the application's version, and the
- * legal notices with the attribution the licence's additional term asks for.
+ * what it allows, the instance's terms in the web application, the application's version, the
+ * legal notices with the attribution the licence's additional term asks for, and the libraries it
+ * ships with their licences.
  */
 @RunWith(AndroidJUnit4::class)
 class AboutTest {
@@ -57,5 +58,10 @@ class AboutTest {
         opensSignedInTheBrowser("/terms") {
             screen.onNodeWithText(text(R.string.about_terms)).performScrollTo().performClick()
         }
+
+        // The libraries the application ships, with their licences, as the build listed them.
+        screen.onNodeWithText(text(R.string.about_libraries)).performScrollTo().performClick()
+        screen.waitForText("AboutLibraries Core Library")
+        screen.keepScreenshot("about-the-libraries")
     }
 }

@@ -1389,4 +1389,6 @@
     <string name="about_issues">System zgłoszeń</string>
     <string name="about_security">Polityka bezpieczeństwa</string>
     <string name="about_source">Kod źródłowy</string>
+    <string name="about_libraries">Licencje bibliotek</string>
+    <string name="about_libraries_explain">Biblioteki, z których zbudowano tę aplikację, każda z licencją, na której ją udostępniono.</string>
 </resources>

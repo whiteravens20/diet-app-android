@@ -39,7 +39,7 @@ import net.whiteravens.dietapp.ui.components.rememberWebPages
  * of the original source, the licence, the absence of any warranty and where the source is.
  */
 @Composable
-fun AboutScreen(onBack: () -> Unit, viewModel: AboutViewModel = hiltViewModel()) {
+fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutViewModel = hiltViewModel()) {
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     val version by viewModel.version.collectAsStateWithLifecycle()
     val web = rememberWebPages()
@@ -101,6 +101,7 @@ fun AboutScreen(onBack: () -> Unit, viewModel: AboutViewModel = hiltViewModel())
             TextButton(onClick = { web.openOutside("$SOURCE_URL/issues") }) { Text(stringResource(R.string.about_issues)) }
             TextButton(onClick = { web.openOutside("$SOURCE_URL/security/policy") }) { Text(stringResource(R.string.about_security)) }
             TextButton(onClick = { web.openOutside(SOURCE_URL) }) { Text(stringResource(R.string.about_source)) }
+            TextButton(onClick = onLibraries) { Text(stringResource(R.string.about_libraries)) }
         }
     }
 }

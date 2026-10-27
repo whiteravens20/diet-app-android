@@ -69,6 +69,7 @@ import net.whiteravens.dietapp.ui.components.LocalBrowserCode
 import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.about.AboutScreen
+import net.whiteravens.dietapp.ui.screens.about.LibrariesScreen
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
@@ -98,6 +99,7 @@ import kotlin.reflect.KClass
 @Serializable object MoreRoute
 @Serializable object AccountRoute
 @Serializable object AboutRoute
+@Serializable object LibrariesRoute
 @Serializable object ProfilesRoute
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object FavoritesRoute
@@ -299,7 +301,10 @@ private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmai
             }
             composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
             composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
-            composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }) }
+            composable<AboutRoute> {
+                AboutScreen(onBack = { navController.popBackStack() }, onLibraries = { navController.navigate(LibrariesRoute) })
+            }
+            composable<LibrariesRoute> { LibrariesScreen(onBack = { navController.popBackStack() }) }
             composable<ProfilesRoute> {
                 ProfilesScreen(
                     onBack = { navController.popBackStack() },

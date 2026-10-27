@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 android {
@@ -199,6 +200,17 @@ configurations.matching { it.name.startsWith("unified-test-platform") || it.name
     }
 }
 
+// The libraries the release ships and their licences, for the legal notices, read from the build's own
+// dependency graph as it builds. Nothing is asked of the network: the texts of the licences are in
+// aboutlibraries/licenses, so that a build repeats and fetches nothing the verification does not cover.
+aboutLibraries {
+    offlineMode = true
+    collect {
+        configPath = file("aboutlibraries")
+        filterVariants.add("release")
+    }
+}
+
 // Every version the build resolves, transitive ones included, is written in gradle.lockfile:
 // a build that would resolve another fails, and a change to one shows in the pull request.
 dependencyLocking {
@@ -239,6 +251,9 @@ dependencies {
 
     // QR codes drawn on the phone, for an authenticator app on another device.
     implementation(libs.zxing.core)
+
+    // The libraries' licences, listed for the legal notices.
+    implementation(libs.aboutlibraries.compose.m3)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -1290,4 +1290,6 @@
     <string name="about_issues">Issue tracker</string>
     <string name="about_security">Security policy</string>
     <string name="about_source">Source code</string>
+    <string name="about_libraries">The libraries’ licences</string>
+    <string name="about_libraries_explain">The libraries this application is built with, and the licence each is shared under.</string>
 </resources>
