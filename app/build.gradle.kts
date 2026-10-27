@@ -184,9 +184,13 @@ androidComponents {
 }
 
 // The tools the Android plugin runs bring libraries with known vulnerabilities: its test platform
-// (netty, Commons Lang) and Lint (Bouncy Castle, HttpClient, Commons Lang). They are lifted to the
-// releases that fix them. None of them is in the app.
-configurations.matching { it.name.startsWith("unified-test-platform") || it.name.startsWith("androidLint") }.configureEach {
+// (netty, Commons Lang, Guava), Lint (Bouncy Castle, HttpClient, Commons Lang, Guava) and the
+// annotation processors (Guava). They are lifted to the releases that fix them. None of them is in
+// the app.
+configurations.matching {
+    it.name.startsWith("unified-test-platform") || it.name.startsWith("androidLint") ||
+        it.name.contains("ksp", ignoreCase = true) || it.name.startsWith("hiltAnnotationProcessor")
+}.configureEach {
     resolutionStrategy.eachDependency {
         val fixed = when {
             requested.group == "io.netty" && requested.version?.startsWith("4.1.") == true &&
@@ -194,6 +198,7 @@ configurations.matching { it.name.startsWith("unified-test-platform") || it.name
             requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") -> "1.86"
             requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" -> "4.5.14"
             requested.group == "org.apache.commons" && requested.name == "commons-lang3" -> "3.18.0"
+            requested.group == "com.google.guava" && requested.name == "guava" -> "33.7.2-jre"
             else -> null
         }
         if (fixed != null) useVersion(fixed)
