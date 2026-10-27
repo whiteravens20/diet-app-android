@@ -66,12 +66,15 @@ account once you say on the page that the account it names is yours.
   or providers of its own, each tested before it is saved, its key shown as dots and never
   again), two-step sign-in set up with an
   authenticator app on the phone or on another device and its recovery codes, where it is
-  signed in with this phone named and one session or all signed out; the app's version,
-  the server address and sign-out. Where AI is off, an action that asks a model says so and
+  signed in with this phone named and one session or all signed out; the server address
+  and sign-out. Where AI is off, an action that asks a model says so and
   leads to these settings. An address not yet confirmed is said over every screen, on an
   instance that sends mail, with a button that sends the link again. The calculator, and the account's password, address, name, the
   language of its mails, its theme and palette, its data in a file and its deletion, are
   the web application's, which More and the account's settings open in the browser.
+  Under About, what the instance and the app are: the server's version and what the
+  instance allows, its operator's address, its help page and terms, the app's version, the
+  legal notices the licence asks for and the licences of the libraries the app ships.
 - **Favourites.** The recipes a profile marked as a favourite, as eaten often or to avoid,
   narrowed by words, meal, mark and tag and put in order; each recipe's mark and tags
   changed, or its mark taken off.
