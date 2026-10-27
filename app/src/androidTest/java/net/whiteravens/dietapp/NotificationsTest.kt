@@ -19,6 +19,7 @@ import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
+import net.whiteravens.dietapp.testing.waitForNode
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Assume.assumeTrue
@@ -70,8 +71,8 @@ class NotificationsTest {
         // Each notification is said with the profile it is for.
         openTheBell(4)
         listOf("Ala", "Ola").forEach { profile ->
-            screen.waitUntil(20_000) { screen.onAllNodes(notification(profile, reminder)).fetchSemanticsNodes().isNotEmpty() }
-            screen.onNode(notification(profile, review)).assertExists()
+            screen.waitForNode(notification(profile, reminder), "notifications-a-reminder-not-found")
+            screen.waitForNode(notification(profile, review), "notifications-a-review-not-found")
         }
         screen.keepScreenshot("notifications")
 
@@ -90,7 +91,7 @@ class NotificationsTest {
 
         // One is put away where it stands, Ola's review, the newest; the last is read with the rest.
         openTheBell(2)
-        screen.waitUntil(20_000) { screen.onAllNodes(notification("Ola", review)).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitForNode(notification("Ola", review), "notifications-the-review-not-found")
         screen.onAllNodes(hasText(text(R.string.notifications_dismiss)) and hasClickAction())[0].performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(notification("Ola", review)).fetchSemanticsNodes().isEmpty() }
         screen.onNode(notification("Ala", reminder)).assertExists()

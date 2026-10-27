@@ -11,6 +11,7 @@ import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
@@ -23,6 +24,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.printToLog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
@@ -86,6 +88,22 @@ private fun keyboardOpen(): Boolean {
 /** [scrollTo] what shows [shown], or a text holding it where [substring]. */
 fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
     scrollTo(hasText(shown, substring = substring), timeoutMillis)
+
+/**
+ * Waits for a node [sought] matches, once there is one. When none comes, what the screen holds is
+ * written to the log first, each node with a text and what it says and does, and its picture kept
+ * as [picture]: a failure then says what was there instead.
+ */
+fun ComposeTestRule.waitForNode(sought: SemanticsMatcher, picture: String, timeoutMillis: Long = 20_000) {
+    try {
+        waitUntil(timeoutMillis) { onAllNodes(sought).fetchSemanticsNodes().isNotEmpty() }
+    } catch (e: ComposeTimeoutException) {
+        val held = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
+        held.fetchSemanticsNodes().indices.forEach { held[it].printToLog("ScreenHeld", maxDepth = 0) }
+        keepScreenshot(picture)
+        throw e
+    }
+}
 
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
