@@ -80,8 +80,9 @@ instance it starts for them. Running the app against a backend is described in
 
 The API binding, the DTO mirror, the auth plumbing and the offline-first repositories are
 in place, and the screens for signing in, the dashboard, meal plans, recipes, the
-favourites, the shopping list, the pantry, the profiles with their preferences and the
-account are built on them, with tests on the JVM and journeys on emulators. What the app
+favourites, the shopping list, the pantry, the profiles with their preferences, the
+account and the About screen are built on them, with tests on the JVM and journeys on
+emulators. What the app
 leaves to the web application (the calculator, a plan or a list as a table or printed,
 favourite sets made and changed, and the account's password, address, name, language of
 its mails, data in a file and deletion) it opens there, in the browser, signed in with a
