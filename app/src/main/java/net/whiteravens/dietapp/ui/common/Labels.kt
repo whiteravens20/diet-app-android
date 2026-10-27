@@ -21,6 +21,7 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.domain.TargetNote
 import java.io.IOException
 import java.text.DecimalFormat
@@ -391,4 +392,14 @@ fun fallbackText(reason: String): String? = when (reason) {
     "key_unreadable" -> stringResource(R.string.ai_fallback_key_unreadable)
     "invalid_output" -> stringResource(R.string.ai_fallback_invalid_output)
     else -> null
+}
+
+/** What a notification says, in the words of the web application. */
+@Composable
+fun notificationText(about: NotificationAbout): String = when (about) {
+    is NotificationAbout.WeightReminder -> about.daysSinceLastEntry
+        ?.let { days -> pluralStringResource(R.plurals.notifications_weight_reminder, days, days) }
+        ?: stringResource(R.string.notifications_weight_first)
+    NotificationAbout.PreferencesReview -> stringResource(R.string.notifications_preferences_review)
+    is NotificationAbout.Other -> stringResource(R.string.notifications_unknown)
 }

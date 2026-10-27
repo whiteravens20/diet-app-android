@@ -15,8 +15,10 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
+import net.whiteravens.dietapp.data.remote.NotificationDto
 import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
 import net.whiteravens.dietapp.data.repository.toDomain
@@ -55,6 +57,9 @@ class DashboardViewModelTest {
     /** No profile has logged a weight, unless a test says otherwise. */
     private val weights = mockk<WeightRepository>().also { coEvery { it.entries(any(), any()) } returns emptyList() }
 
+    /** Nothing is unread, unless a test says otherwise. */
+    private val notifications = mockk<NotificationRepository>().also { coEvery { it.unread() } returns emptyList() }
+
     @After
     fun reset() = Dispatchers.resetMain()
 
@@ -68,7 +73,7 @@ class DashboardViewModelTest {
         coEvery { users.calorieTarget(held.id) } throws refusal
         coEvery { users.calorieTarget(whole.id) } returns target
 
-        val state = DashboardViewModel(users, plans, weights).state.value
+        val state = DashboardViewModel(users, plans, weights, notifications).state.value
 
         assertNull(state.error)
         assertEquals(listOf(held, whole), state.profiles.map { it.profile })
@@ -84,7 +89,7 @@ class DashboardViewModelTest {
         val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
         val made = Profile("a", "Ala", "balanced", 4, 70.0, null)
         coEvery { users.profiles() } returns emptyList()
-        val model = DashboardViewModel(users, plans, weights)
+        val model = DashboardViewModel(users, plans, weights, notifications)
         assertEquals(emptyList<DashboardViewModel.ProfileStats>(), model.state.value.profiles)
 
         coEvery { users.profiles() } returns listOf(made)
@@ -116,7 +121,7 @@ class DashboardViewModelTest {
         coEvery { plans.overview(planned.id) } returns overview
         coEvery { plans.overview(unread.id) } throws refusal
 
-        val state = DashboardViewModel(users, plans, weights).state.value
+        val state = DashboardViewModel(users, plans, weights, notifications).state.value
 
         assertEquals(overview, state.profiles[0].overview)
         assertNull(state.profiles[0].overviewError)
@@ -144,7 +149,7 @@ class DashboardViewModelTest {
         val since = slot<Instant>()
         coEvery { weights.entries(ala.id, capture(since)) } returns listOf(logged, earlier)
 
-        val state = DashboardViewModel(users, plans, weights).state.value
+        val state = DashboardViewModel(users, plans, weights, notifications).state.value
 
         assertEquals(WeightUnit.LB, state.unit)
         assertEquals(listOf(logged, earlier), state.profiles.single().weights)
@@ -152,7 +157,7 @@ class DashboardViewModelTest {
 
         val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
         coEvery { weights.entries(ala.id, any()) } throws refusal
-        val unread = DashboardViewModel(users, plans, weights).state.value.profiles.single()
+        val unread = DashboardViewModel(users, plans, weights, notifications).state.value.profiles.single()
 
         assertNull(unread.weights)
         assertSame(refusal, unread.weightsError)
@@ -165,7 +170,7 @@ class DashboardViewModelTest {
         coEvery { weights.entries(ala.id, any()) } returns listOf(earlier)
         val today = logged.copy(kg = 81.65)
         coEvery { weights.log(ala.id, 81.65) } returns today
-        val model = DashboardViewModel(users, plans, weights)
+        val model = DashboardViewModel(users, plans, weights, notifications)
 
         model.typeWeight(ala.id, "1000")
         model.logWeight(ala.id)
@@ -186,7 +191,7 @@ class DashboardViewModelTest {
         val users = users().also { coEvery { it.me() } returns account("kg") }
         val refusal = ApiException(404, "PROFILE_NOT_FOUND", "Profile not found.")
         coEvery { weights.log(ala.id, 80.2) } throws refusal
-        val model = DashboardViewModel(users, plans, weights)
+        val model = DashboardViewModel(users, plans, weights, notifications)
 
         model.typeWeight(ala.id, "80.2")
         model.logWeight(ala.id)
@@ -201,7 +206,7 @@ class DashboardViewModelTest {
         coEvery { weights.delete(logged.id) } just runs
         val gone = ApiException(404, "WEIGHT_ENTRY_NOT_FOUND", "Weight entry not found.")
         coEvery { weights.delete(earlier.id) } throws gone
-        val model = DashboardViewModel(users(), plans, weights)
+        val model = DashboardViewModel(users(), plans, weights, notifications)
 
         model.removeLatestWeight(ala.id)
 
@@ -213,5 +218,20 @@ class DashboardViewModelTest {
         coVerify { weights.delete(earlier.id) }
         assertEquals(WeightLog(problem = WeightProblem.RemoveFailed(gone)), model.state.value.weightLogs[ala.id])
         assertEquals(listOf(earlier), model.state.value.profiles.single().weights)
+    }
+
+    @Test
+    fun `the bell counts the notifications not read yet, read again on coming back, and keeps its count while they cannot be read`() {
+        coEvery { notifications.unread() } returns json.decodeFromString<List<NotificationDto>>(fixture("notifications-unread")).map { it.toDomain() }
+        val model = DashboardViewModel(users(), plans, weights, notifications)
+        assertEquals(3, model.state.value.unread)
+
+        coEvery { notifications.unread() } throws IOException("unreachable")
+        model.refresh()
+        assertEquals(3, model.state.value.unread)
+
+        coEvery { notifications.unread() } returns emptyList()
+        model.refresh()
+        assertEquals(0, model.state.value.unread)
     }
 }

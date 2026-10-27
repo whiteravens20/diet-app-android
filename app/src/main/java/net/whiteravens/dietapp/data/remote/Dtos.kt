@@ -574,6 +574,27 @@ data class CaloriePreviewRequestDto(
 @Serializable
 data class CaloriePreviewDto(val calculation: CalorieCalculationDto, val paces: List<CalorieCalculationDto>)
 
+// ── Notifications (packages/shared/src/notification.ts) ─────────────────────
+
+/**
+ * A notification of one of the account's profiles. [type] is `weight_reminder` (its [payload] holds
+ * `daysSinceLastEntry`) or `preferences_review` (the ingredients and recipes it had marked that the
+ * catalogue no longer has).
+ */
+@Serializable
+data class NotificationDto(
+    val id: String,
+    val profileId: String,
+    val type: String,
+    val payload: JsonElement? = null,
+    val readAt: String? = null,
+    val createdAt: String,
+)
+
+/** How many rows a change touched. */
+@Serializable
+data class UpdatedDto(val updated: Int)
+
 // ── Weights (packages/shared/src/weight.ts) ─────────────────────────────────
 
 /** A weight logged for a profile, in kilograms whatever unit the account reads it in. */

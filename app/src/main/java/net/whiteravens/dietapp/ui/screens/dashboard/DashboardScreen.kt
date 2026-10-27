@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -19,7 +23,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -45,19 +51,25 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
 import net.whiteravens.dietapp.ui.components.rememberWebPages
+import net.whiteravens.dietapp.ui.screens.notifications.NotificationsBell
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
  * Calorie target, deficit and macro split for every profile, what its plan of the moment comes to,
  * and its weights — the web dashboard, whose favourite sets are made and changed there, in the
- * browser. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan].
+ * browser. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan]; the bell in
+ * the header counts the notifications not read yet and opens them on [onOpenNotifications]. With
+ * [showWeightOf], the weights of that profile are brought into view, and [onWeightShown] says so.
  */
 @Composable
 fun DashboardScreen(
     onCreateProfile: () -> Unit,
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: (profileId: String) -> Unit,
+    onOpenNotifications: () -> Unit,
+    showWeightOf: String? = null,
+    onWeightShown: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -67,6 +79,12 @@ fun DashboardScreen(
         onPauseOrDispose {}
     }
     val web = rememberWebPages()
+    val list = rememberLazyListState()
+    // The profile's card is composed first, if it is out of sight, and its weights then brought into view.
+    LaunchedEffect(showWeightOf, state.profiles) {
+        val at = state.profiles.indexOfFirst { it.profile.id == showWeightOf }
+        if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == showWeightOf }) list.scrollToItem(at + 1)
+    }
 
     when {
         state.loading -> DashboardSkeleton()
@@ -91,19 +109,23 @@ fun DashboardScreen(
 
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            state = list,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                ScreenHeader(
-                    title = stringResource(R.string.nav_dashboard),
-                    subtitle = pluralStringResource(
-                        R.plurals.dashboard_subtitle,
-                        state.profiles.size,
-                        state.profiles.size,
-                    ),
-                    modifier = Modifier.padding(bottom = 4.dp),
-                )
+                Row(Modifier.padding(bottom = 4.dp), verticalAlignment = Alignment.Top) {
+                    ScreenHeader(
+                        title = stringResource(R.string.nav_dashboard),
+                        subtitle = pluralStringResource(
+                            R.plurals.dashboard_subtitle,
+                            state.profiles.size,
+                            state.profiles.size,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    NotificationsBell(state.unread, onClick = onOpenNotifications)
+                }
             }
             state.profiles.forEach { stats ->
                 item(key = stats.profile.id) {
@@ -112,14 +134,23 @@ fun DashboardScreen(
                         onOpenPlan,
                         onNewPlan = { onNewPlan(stats.profile.id) },
                         weight = {
-                            WeightCard(
-                                stats,
-                                unit = state.unit,
-                                log = state.weightLogs[stats.profile.id] ?: DashboardViewModel.WeightLog(),
-                                onType = { viewModel.typeWeight(stats.profile.id, it) },
-                                onLog = { viewModel.logWeight(stats.profile.id) },
-                                onRemoveLatest = { viewModel.removeLatestWeight(stats.profile.id) },
-                            )
+                            val inView = remember { BringIntoViewRequester() }
+                            if (stats.profile.id == showWeightOf) {
+                                LaunchedEffect(inView) {
+                                    inView.bringIntoView()
+                                    onWeightShown()
+                                }
+                            }
+                            Box(Modifier.bringIntoViewRequester(inView)) {
+                                WeightCard(
+                                    stats,
+                                    unit = state.unit,
+                                    log = state.weightLogs[stats.profile.id] ?: DashboardViewModel.WeightLog(),
+                                    onType = { viewModel.typeWeight(stats.profile.id, it) },
+                                    onLog = { viewModel.logWeight(stats.profile.id) },
+                                    onRemoveLatest = { viewModel.removeLatestWeight(stats.profile.id) },
+                                )
+                            }
                         },
                     ) {
                         FavoriteSetsInTheBrowser(onOpen = { web.open("dashboard") })

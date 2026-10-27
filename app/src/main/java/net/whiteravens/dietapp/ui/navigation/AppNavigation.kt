@@ -75,6 +75,7 @@ import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.favorites.FavoritesScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
+import net.whiteravens.dietapp.ui.screens.notifications.NotificationsScreen
 import net.whiteravens.dietapp.ui.screens.pantry.PantryScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
@@ -100,11 +101,15 @@ import kotlin.reflect.KClass
 @Serializable object AccountRoute
 @Serializable object AboutRoute
 @Serializable object LibrariesRoute
+@Serializable object NotificationsRoute
 @Serializable object ProfilesRoute
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object FavoritesRoute
 @Serializable object PantryRoute
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
+
+/** The profile whose weights the dashboard brings into view, which a weight reminder opened leaves it. */
+private const val SHOW_WEIGHT_OF = "showWeightOf"
 
 /**
  * Signed-in state for the root switch (null while the token store loads), the version of the
@@ -254,11 +259,15 @@ private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmai
             // An open keyboard shortens every screen, so that what is being typed stays above it.
             modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding(),
         ) {
-            composable<DashboardRoute> {
+            composable<DashboardRoute> { entry ->
+                val weightOf by entry.savedStateHandle.getStateFlow<String?>(SHOW_WEIGHT_OF, null).collectAsStateWithLifecycle()
                 DashboardScreen(
                     onCreateProfile = { navController.navigate(ProfilesRoute) },
                     onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
                     onNewPlan = { profileId -> navController.navigate(NewPlanRoute(profileId)) },
+                    onOpenNotifications = { navController.navigate(NotificationsRoute) },
+                    showWeightOf = weightOf,
+                    onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
                 )
             }
             composable<PlansRoute> {
@@ -305,6 +314,16 @@ private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmai
                 AboutScreen(onBack = { navController.popBackStack() }, onLibraries = { navController.navigate(LibrariesRoute) })
             }
             composable<LibrariesRoute> { LibrariesScreen(onBack = { navController.popBackStack() }) }
+            composable<NotificationsRoute> {
+                NotificationsScreen(
+                    onBack = { navController.popBackStack() },
+                    onWeight = { profileId ->
+                        navController.getBackStackEntry<DashboardRoute>().savedStateHandle[SHOW_WEIGHT_OF] = profileId
+                        navController.popBackStack<DashboardRoute>(inclusive = false)
+                    },
+                    onPreferences = { navController.navigate(ProfilesRoute) { popUpTo<NotificationsRoute> { inclusive = true } } },
+                )
+            }
             composable<ProfilesRoute> {
                 ProfilesScreen(
                     onBack = { navController.popBackStack() },

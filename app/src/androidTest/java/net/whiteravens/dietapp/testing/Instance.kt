@@ -55,6 +55,23 @@ object Instance {
         call("POST", "auth/login", JSONObject().put("email", account.email).put("password", password))
             .getJSONObject("tokens").getString("accessToken")
 
+    /**
+     * The account at [email], signed in to with [password] as another app would, with the session
+     * that opens: for an account a test did not make itself.
+     */
+    fun signedIn(email: String, password: String): Account {
+        val answer = call("POST", "auth/login", JSONObject().put("email", email).put("password", password))
+        val tokens = answer.getJSONObject("tokens")
+        return Account(
+            email,
+            password,
+            answer.getJSONObject("user").optString("displayName"),
+            tokens.getString("accessToken"),
+            tokens.getString("refreshToken"),
+            answer.getString("sessionId"),
+        )
+    }
+
     /** The open sessions of the account [token] is of, each id with its label. */
     fun sessions(token: String): Map<String, String?> {
         val open = JSONArray(send("GET", "users/me/sessions", null, token, 200, null))
@@ -152,6 +169,10 @@ object Instance {
         val list = JSONArray(send("GET", "weights?profileId=$profileId", null, account.accessToken, 200, null))
         return (0 until list.length()).map { list.getJSONObject(it).getDouble("kg") }
     }
+
+    /** How many notifications of [account] are not read yet. */
+    fun unreadNotifications(account: Account): Int =
+        JSONArray(send("GET", "notifications/unread", null, account.accessToken, 200, null)).length()
 
     /** The ids of a profile's plans, as the API lists them. */
     fun planIds(account: Account, profileId: String): List<String> {

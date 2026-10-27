@@ -1292,4 +1292,20 @@
     <string name="about_source">Source code</string>
     <string name="about_libraries">The libraries’ licences</string>
     <string name="about_libraries_explain">The libraries this application is built with, and the licence each is shared under.</string>
+    <!-- The account's notifications, worded as the web application words them. -->
+    <string name="notifications_title">Notifications</string>
+    <plurals name="notifications_unread">
+        <item quantity="one">New notification</item>
+        <item quantity="other">%d new notifications</item>
+    </plurals>
+    <string name="notifications_empty">Nothing new.</string>
+    <string name="notifications_dismiss">Dismiss</string>
+    <string name="notifications_read_all">Mark all read</string>
+    <plurals name="notifications_weight_reminder">
+        <item quantity="one">Time to log your weight — it’s been %d day.</item>
+        <item quantity="other">Time to log your weight — it’s been %d days.</item>
+    </plurals>
+    <string name="notifications_weight_first">Log your first weight to start your trend chart.</string>
+    <string name="notifications_preferences_review">Some ingredients or recipes you had marked are no longer in the catalogue. Check your avoided and favourite ingredients and your favourite sets.</string>
+    <string name="notifications_unknown">A notification this version of the application cannot show.</string>
 </resources>

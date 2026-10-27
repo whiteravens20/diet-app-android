@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
 import net.whiteravens.dietapp.domain.CalorieTarget
@@ -35,6 +36,7 @@ class DashboardViewModel @Inject constructor(
     private val users: UserRepository,
     private val plans: MealPlanRepository,
     private val weights: WeightRepository,
+    private val notifications: NotificationRepository,
 ) : ViewModel() {
 
     /**
@@ -81,6 +83,8 @@ class DashboardViewModel @Inject constructor(
         val unit: WeightUnit = WeightUnit.of(null, Locale.getDefault()),
         /** Each profile's weight log, by the profile's id; one that is not here is empty. */
         val weightLogs: Map<String, WeightLog> = emptyMap(),
+        /** How many of the account's notifications are not read yet, as they were last read. */
+        val unread: Int = 0,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -162,6 +166,7 @@ class DashboardViewModel @Inject constructor(
             if (showLoading) _state.update { it.copy(loading = true, profiles = emptyList(), error = null) }
             // Weights are shown in the account's unit; while it cannot be read, in the one shown before.
             val unit = async { attempt { users.me() }.getOrNull()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) } }
+            val unread = async { attempt { notifications.unread().size }.getOrNull() }
             val since = Instant.now().minus(WEIGHT_DAYS)
             attempt {
                 coroutineScope {
@@ -186,7 +191,7 @@ class DashboardViewModel @Inject constructor(
                         .map { it.await() }
                 }
             }
-                .onSuccess { found -> _state.update { it.copy(loading = false, profiles = found, error = null, unit = unit.await() ?: it.unit) } }
+                .onSuccess { found -> _state.update { it.copy(loading = false, profiles = found, error = null, unit = unit.await() ?: it.unit, unread = unread.await() ?: it.unread) } }
                 .onFailure { e -> if (showLoading || _state.value.profiles.isEmpty()) _state.update { it.copy(loading = false, profiles = emptyList(), error = e) } }
         }
     }

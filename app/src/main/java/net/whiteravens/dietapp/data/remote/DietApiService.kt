@@ -164,6 +164,20 @@ interface DietApiService {
     @DELETE("weights/{id}")
     suspend fun deleteWeight(@Path("id") id: String)
 
+    // ── Notifications ───────────────────────────────────────────────────────
+
+    /** The notifications of the account's profiles that are not read yet. */
+    @GET("notifications/unread")
+    suspend fun unreadNotifications(): List<NotificationDto>
+
+    /** Marks a notification read; answered 204. */
+    @POST("notifications/{id}/read")
+    suspend fun readNotification(@Path("id") id: String)
+
+    /** Marks every notification of the account read, and says how many there were. */
+    @POST("notifications/read-all")
+    suspend fun readAllNotifications(): UpdatedDto
+
     // ── Pantry ──────────────────────────────────────────────────────────────
 
     /** What a profile's pantry holds, in the order of the ingredients' English names, then of their units. */

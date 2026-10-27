@@ -305,6 +305,20 @@ data class CalorieTarget(
         }
 }
 
+/** A notification of one of the account's profiles: what it is about, and when it was made. */
+data class AccountNotification(val id: String, val profileId: String, val about: NotificationAbout, val createdAt: Instant)
+
+sealed interface NotificationAbout {
+    /** Time to log a weight: [daysSinceLastEntry] since the last one, none where nothing is logged yet. */
+    data class WeightReminder(val daysSinceLastEntry: Int?) : NotificationAbout
+
+    /** Ingredients or recipes the profile had marked left the catalogue: its preferences are to be looked at again. */
+    data object PreferencesReview : NotificationAbout
+
+    /** A kind this version of the app does not know, named as the API names it. */
+    data class Other(val type: String) : NotificationAbout
+}
+
 /** One scheduled meal. [name] is the recipe title or the custom-meal name. */
 data class Meal(
     val id: String,

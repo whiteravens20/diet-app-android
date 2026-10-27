@@ -1391,4 +1391,24 @@
     <string name="about_source">Kod źródłowy</string>
     <string name="about_libraries">Licencje bibliotek</string>
     <string name="about_libraries_explain">Biblioteki, z których zbudowano tę aplikację, każda z licencją, na której ją udostępniono.</string>
+    <!-- The account's notifications, worded as the web application words them. -->
+    <string name="notifications_title">Powiadomienia</string>
+    <plurals name="notifications_unread">
+        <item quantity="one">Nowe powiadomienie</item>
+        <item quantity="few">%d nowe powiadomienia</item>
+        <item quantity="many">%d nowych powiadomień</item>
+        <item quantity="other">%d nowego powiadomienia</item>
+    </plurals>
+    <string name="notifications_empty">Brak nowości.</string>
+    <string name="notifications_dismiss">Ukryj</string>
+    <string name="notifications_read_all">Oznacz wszystkie jako przeczytane</string>
+    <plurals name="notifications_weight_reminder">
+        <item quantity="one">Czas się zważyć — od ostatniego wpisu minął %d dzień.</item>
+        <item quantity="few">Czas się zważyć — od ostatniego wpisu minęły %d dni.</item>
+        <item quantity="many">Czas się zważyć — od ostatniego wpisu minęło %d dni.</item>
+        <item quantity="other">Czas się zważyć — od ostatniego wpisu minęło %d dnia.</item>
+    </plurals>
+    <string name="notifications_weight_first">Dodaj pierwszy wpis wagi, aby uruchomić wykres trendu.</string>
+    <string name="notifications_preferences_review">Części składników lub przepisów, które były u Ciebie oznaczone, nie ma już w katalogu. Sprawdź unikane i ulubione składniki oraz zestawy ulubionych.</string>
+    <string name="notifications_unknown">Powiadomienie, którego ta wersja aplikacji nie umie pokazać.</string>
 </resources>
