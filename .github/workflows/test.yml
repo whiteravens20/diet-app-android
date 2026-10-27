@@ -71,8 +71,11 @@ jobs:
           - name: Screens on an emulator
             api-level: 34
             artifact: screens
-            cores: 2
-            ram-size: ''
+            # A phone's screen under software rendering needs the cores and the memory the Android 17
+            # emulator has: with two and the default, the launcher stopped answering and the app's
+            # window lost its focus.
+            cores: 4
+            ram-size: 4096M
             disk-size: ''
             boot-timeout: 600
             emulator-features: ''
@@ -105,8 +108,8 @@ jobs:
           - name: Screens on the release build
             api-level: 34
             artifact: screens-release-build
-            cores: 2
-            ram-size: ''
+            cores: 4
+            ram-size: 4096M
             disk-size: ''
             boot-timeout: 600
             emulator-features: ''

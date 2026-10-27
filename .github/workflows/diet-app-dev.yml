@@ -88,7 +88,8 @@ jobs:
           # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
           # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
           profile: pixel_6
-          cores: 2
+          cores: 4
+          ram-size: 4096M
           emulator-boot-timeout: 600
           arch: x86_64
           target: google_apis
