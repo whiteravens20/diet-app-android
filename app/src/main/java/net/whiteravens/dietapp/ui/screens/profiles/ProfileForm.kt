@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.profiles
 
 import net.whiteravens.dietapp.domain.CalorieQuestion
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
@@ -10,8 +11,6 @@ import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfileFigures
 import net.whiteravens.dietapp.ui.common.Bound
 import java.util.Locale
-import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /** The unit a body weight is typed and shown in; the API keeps kilograms. */
@@ -28,10 +27,6 @@ enum class WeightUnit(val code: String) {
 
     /** A weight typed in this unit, in kilograms to the hundredth, as the API takes it. */
     fun toKilograms(typed: Double): Double = ((if (this == LB) typed * KG_PER_LB else typed) * 100).roundToInt() / 100.0
-
-    /** The least and the most a body weight may be in this unit, the least rounded up and the most down, so that neither is refused. */
-    val bounds: ClosedFloatingPointRange<Double>
-        get() = ceil(shown(ProfileBounds.WEIGHT_KG.start) * 10) / 10..floor(shown(ProfileBounds.WEIGHT_KG.endInclusive) * 10) / 10
 
     /** A weight typed in this unit, with a decimal comma as well as a point, in kilograms; null for what is no number. The API says what it takes. */
     fun typedKg(typed: String): Double? =
@@ -56,17 +51,9 @@ enum class WeightUnit(val code: String) {
     }
 }
 
-/** The bounds the API holds a profile's figures to, and what a new profile starts with. */
-object ProfileBounds {
-    val AGE = 13..120
-    val HEIGHT_CM = 100.0..250.0
-    val WEIGHT_KG = 30.0..400.0
-    val OWN_TARGET = 800..6000
+/** What a profile's form offers to choose from, and what a new profile starts with. */
+object ProfileChoices {
     val MEAL_COUNT = 2..5
-    val PROTEIN = 10..45
-    val FAT = 15..75
-    val CARBS = 5..70
-    const val NAME_LENGTH = 80
 
     /** The paces of loss, slowest first: none at all, then the four in kilograms a week. */
     val PACES: List<String?> = listOf(null, "0.25", "0.5", "0.75", "1.0")
@@ -80,14 +67,6 @@ object ProfileBounds {
 
     /** The split a profile that goes to the custom diet begins with: the balanced diet's. */
     val FIRST_SPLIT = MacroSplit(protein = 25, fat = 30, carbs = 45)
-
-    val CONSECUTIVE_DAYS = 1..7
-    val TIMES_PER_WEEK = 1..7
-
-    /** The most meals of a day, and of seven days, with the same kind of protein: every meal of a day of five, every meal of a week. */
-    val KIND_PER_DAY = 1..5
-    val KIND_PER_WEEK = 1..35
-    val PANTRY_COOL_DOWN = 0..20
 
     /** The kinds of protein a limit can be set for, in the order the API lists them. */
     val PROTEIN_KINDS = listOf("chicken", "turkey", "beef", "pork", "fish", "seafood", "eggs", "dairy", "legumes")
@@ -103,11 +82,33 @@ object ProfileBounds {
     )
 }
 
-/** A field of the form that holds something the API would refuse. */
-enum class ProfileField {
-    NAME, AGE, HEIGHT, WEIGHT, TARGET_WEIGHT, OWN_TARGET, SPLIT,
-    CONSECUTIVE_DAYS, TIMES_PER_WEEK, KIND_PER_DAY, KIND_PER_WEEK, KIND_LIMITS, PANTRY_COOL_DOWN,
+/** A field of the form, by the path the API names it by when it refuses what it holds: [SPLIT] is the split as a whole. */
+enum class ProfileField(val path: String) {
+    NAME("name"),
+    AGE("age"),
+    HEIGHT("heightCm"),
+    WEIGHT("weightKg"),
+    TARGET_WEIGHT("targetWeightKg"),
+    OWN_TARGET("manualCalorieTarget"),
+    SPLIT("customMacroSplit"),
+    SPLIT_PROTEIN("customMacroSplit.protein"),
+    SPLIT_FAT("customMacroSplit.fat"),
+    SPLIT_CARBS("customMacroSplit.carbs"),
+    CONSECUTIVE_DAYS("preferences.maxConsecutiveDaysSameMeal"),
+    TIMES_PER_WEEK("preferences.maxTimesPerWeekSameMeal"),
+    KIND_PER_DAY("preferences.maxMealsPerDaySameKind"),
+    KIND_PER_WEEK("preferences.maxMealsPerWeekSameKind"),
+    PANTRY_COOL_DOWN("preferences.inventoryBiasResetEvery"),
+    ;
+
+    companion object {
+        /** The fields a calorie target is worked out from, which the calorie preview is asked with. */
+        val QUESTION = setOf(AGE, HEIGHT, WEIGHT, OWN_TARGET, SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS)
+    }
 }
+
+/** A part of a kind of protein's limit, by the name the API gives it under the limit's place among those sent. */
+enum class KindPart(val key: String) { DAY("perDay"), WEEK("perWeek") }
 
 /** The three shares of the custom diet's split, in per cent, as their fields hold them. */
 data class SplitTyped(val protein: String, val fat: String, val carbs: String) {
@@ -115,15 +116,20 @@ data class SplitTyped(val protein: String, val fat: String, val carbs: String) {
     val sum: Int
         get() = listOf(protein, fat, carbs).sumOf { it.trim().toIntOrNull() ?: 0 }
 
-    /** The split, when each share is a whole number in its bounds and the three add up to 100. */
-    fun split(): MacroSplit? {
-        val split = MacroSplit(
-            protein = protein.trim().toIntOrNull() ?: return null,
-            fat = fat.trim().toIntOrNull() ?: return null,
-            carbs = carbs.trim().toIntOrNull() ?: return null,
-        )
-        return split.takeIf { it.holds() }
-    }
+    /** The split, when each share is a whole number; what the API takes of it is the API's to say. */
+    fun split(): MacroSplit? = MacroSplit(
+        protein = protein.trim().toIntOrNull() ?: return null,
+        fat = fat.trim().toIntOrNull() ?: return null,
+        carbs = carbs.trim().toIntOrNull() ?: return null,
+    )
+
+    /** The shares that hold no whole number. */
+    val notWhole: Set<ProfileField>
+        get() = buildSet {
+            if (protein.trim().toIntOrNull() == null) add(ProfileField.SPLIT_PROTEIN)
+            if (fat.trim().toIntOrNull() == null) add(ProfileField.SPLIT_FAT)
+            if (carbs.trim().toIntOrNull() == null) add(ProfileField.SPLIT_CARBS)
+        }
 
     companion object {
         fun of(split: MacroSplit) = SplitTyped(split.protein.toString(), split.fat.toString(), split.carbs.toString())
@@ -156,11 +162,14 @@ data class LimitsTyped(
 
 /** A kind of protein held to numbers of its own, as the fields of its row hold them: an empty one is the profile's. */
 data class KindLimitTyped(val kind: String, val perDay: String = "", val perWeek: String = "") {
-    val dayHolds: Boolean
-        get() = perDay.emptyOrWithin(ProfileBounds.KIND_PER_DAY)
+    /** The parts whose field holds what is no whole number. */
+    val notWhole: Set<KindPart>
+        get() = buildSet {
+            if (!perDay.emptyOrWhole()) add(KindPart.DAY)
+            if (!perWeek.emptyOrWhole()) add(KindPart.WEEK)
+        }
 
-    val weekHolds: Boolean
-        get() = perWeek.emptyOrWithin(ProfileBounds.KIND_PER_WEEK)
+    fun valueOf(part: KindPart): String = if (part == KindPart.DAY) perDay else perWeek
 
     /** The limit the row holds, or null for one with neither number, which says nothing. */
     fun limit(): KindLimit? {
@@ -184,6 +193,8 @@ data class KindLimitTyped(val kind: String, val perDay: String = "", val perWeek
  * exactly while it still shows that, so that a weight that went through pounds and back does not
  * move by a hair with every save; and its split, which a profile on another diet keeps for when it
  * goes back.
+ *
+ * Its numbers are numbers; what the API takes of them, and of the name, is the API's to say.
  */
 data class ProfileForm(
     val name: String = "",
@@ -197,44 +208,44 @@ data class ProfileForm(
     val ownTarget: String = "",
     val dietType: String = "balanced",
     val mealCount: Int = 3,
-    val split: SplitTyped = SplitTyped.of(ProfileBounds.FIRST_SPLIT),
+    val split: SplitTyped = SplitTyped.of(ProfileChoices.FIRST_SPLIT),
     val allergens: Set<String> = emptySet(),
     val weightReminderCadence: String = "weekly",
-    val limits: LimitsTyped = LimitsTyped.of(ProfileBounds.FIRST_LIMITS),
+    val limits: LimitsTyped = LimitsTyped.of(ProfileChoices.FIRST_LIMITS),
     val acknowledgeRisk: Boolean = false,
     val keptWeightKg: Double? = null,
     val keptTargetWeightKg: Double? = null,
     val keptSplit: MacroSplit? = null,
 ) {
-    /** The fields that hold something the API would refuse; an empty one that may be empty is none. */
+    /** The fields that hold no number where one is needed, or what is no whole number; an empty one that may be empty is none. */
     fun problems(unit: WeightUnit): Set<ProfileField> = buildSet {
-        if (name.isBlank() || name.trim().length > ProfileBounds.NAME_LENGTH) add(ProfileField.NAME)
         addAll(questionProblems(unit))
-        if (targetWeight.isNotBlank() && weightKg(targetWeight, keptTargetWeightKg, unit)?.let { it in ProfileBounds.WEIGHT_KG } != true) {
-            add(ProfileField.TARGET_WEIGHT)
-        }
-        if (!limits.consecutiveDays.within(ProfileBounds.CONSECUTIVE_DAYS)) add(ProfileField.CONSECUTIVE_DAYS)
-        if (!limits.timesPerWeek.within(ProfileBounds.TIMES_PER_WEEK)) add(ProfileField.TIMES_PER_WEEK)
-        if (!limits.kindPerDay.emptyOrWithin(ProfileBounds.KIND_PER_DAY)) add(ProfileField.KIND_PER_DAY)
-        if (!limits.kindPerWeek.emptyOrWithin(ProfileBounds.KIND_PER_WEEK)) add(ProfileField.KIND_PER_WEEK)
-        if (!limits.kindLimits.all { it.dayHolds && it.weekHolds }) add(ProfileField.KIND_LIMITS)
-        if (!limits.pantryCoolDown.within(ProfileBounds.PANTRY_COOL_DOWN)) add(ProfileField.PANTRY_COOL_DOWN)
+        if (targetWeight.isNotBlank() && weightKg(targetWeight, keptTargetWeightKg, unit) == null) add(ProfileField.TARGET_WEIGHT)
+        if (limits.consecutiveDays.trim().toIntOrNull() == null) add(ProfileField.CONSECUTIVE_DAYS)
+        if (limits.timesPerWeek.trim().toIntOrNull() == null) add(ProfileField.TIMES_PER_WEEK)
+        if (!limits.kindPerDay.emptyOrWhole()) add(ProfileField.KIND_PER_DAY)
+        if (!limits.kindPerWeek.emptyOrWhole()) add(ProfileField.KIND_PER_WEEK)
+        if (limits.pantryCoolDown.trim().toIntOrNull() == null) add(ProfileField.PANTRY_COOL_DOWN)
     }
 
-    /** The refused fields among those a calorie target is worked out from. */
+    /** The kinds of protein whose row holds what is no whole number, with the parts that do. */
+    fun kindProblems(): Map<String, Set<KindPart>> =
+        limits.kindLimits.associate { it.kind to it.notWhole }.filterValues { it.isNotEmpty() }
+
+    /** Those among the fields a calorie target is worked out from that hold no number, or no whole number. */
     private fun questionProblems(unit: WeightUnit): Set<ProfileField> = buildSet {
-        if (!age.within(ProfileBounds.AGE)) add(ProfileField.AGE)
-        if (height.number()?.let { it in ProfileBounds.HEIGHT_CM } != true) add(ProfileField.HEIGHT)
-        if (weightKg(weight, keptWeightKg, unit)?.let { it in ProfileBounds.WEIGHT_KG } != true) add(ProfileField.WEIGHT)
-        if (ownTarget.isNotBlank() && !ownTarget.within(ProfileBounds.OWN_TARGET)) add(ProfileField.OWN_TARGET)
-        if (dietType == "custom" && split.split() == null) add(ProfileField.SPLIT)
+        if (age.trim().toIntOrNull() == null) add(ProfileField.AGE)
+        if (height.number() == null) add(ProfileField.HEIGHT)
+        if (weightKg(weight, keptWeightKg, unit) == null) add(ProfileField.WEIGHT)
+        if (!ownTarget.emptyOrWhole()) add(ProfileField.OWN_TARGET)
+        if (dietType == "custom") addAll(split.notWhole)
     }
 
     /**
      * What a calorie target is worked out from, as the form holds it at this moment: null while one
-     * of those figures is not one the API would take, so that the form asks only with figures it
-     * could also save. The risk is said acknowledged only by a form that shows the box for it,
-     * which it does where the API's answer says there is a risk ([riskShown]).
+     * of those fields holds no number, so that the form asks with the figures it would save, and
+     * the API refuses what it does not take. The risk is said acknowledged only by a form that shows
+     * the box for it, which it does where the API's answer says there is a risk ([riskShown]).
      */
     fun question(unit: WeightUnit, riskShown: Boolean = false): CalorieQuestion? {
         if (questionProblems(unit).isNotEmpty()) return null
@@ -252,7 +263,7 @@ data class ProfileForm(
         )
     }
 
-    /** The figures the form holds, as a profile keeps them, or null while one is refused. */
+    /** The figures the form holds, as a profile keeps them, or null while a field holds no number where one is needed. */
     fun figures(unit: WeightUnit): ProfileFigures? {
         val asked = question(unit) ?: return null
         if (problems(unit).isNotEmpty()) return null
@@ -271,18 +282,15 @@ data class ProfileForm(
             weightReminderCadence = weightReminderCadence,
             // The custom diet's split as the form shows it; on another diet the profile keeps the one it has.
             customMacroSplit = if (dietType == "custom") asked.customMacroSplit else keptSplit,
-            allergens = ProfileBounds.ALLERGENS.filter { it in allergens },
+            allergens = ProfileChoices.ALLERGENS.filter { it in allergens },
         )
     }
 
-    /** The limits the form holds, or null while one is refused. An exception with neither number is left out. */
+    /** The limits the form holds, or null while a field of them holds no whole number. An exception with neither number is left out. */
     fun planLimits(): PlanLimits? {
         val typed = limits
-        val kindsHold = typed.kindPerDay.emptyOrWithin(ProfileBounds.KIND_PER_DAY) &&
-            typed.kindPerWeek.emptyOrWithin(ProfileBounds.KIND_PER_WEEK) &&
-            typed.kindLimits.all { it.dayHolds && it.weekHolds }
-        if (!kindsHold) return null
-        val limits = PlanLimits(
+        if (!typed.kindPerDay.emptyOrWhole() || !typed.kindPerWeek.emptyOrWhole() || typed.kindLimits.any { it.notWhole.isNotEmpty() }) return null
+        return PlanLimits(
             maxConsecutiveDaysSameMeal = typed.consecutiveDays.trim().toIntOrNull() ?: return null,
             maxTimesPerWeekSameMeal = typed.timesPerWeek.trim().toIntOrNull() ?: return null,
             maxMealsPerDaySameKind = typed.kindPerDay.trim().toIntOrNull(),
@@ -290,11 +298,25 @@ data class ProfileForm(
             kindLimits = typed.kindLimits.mapNotNull { it.limit() },
             inventoryBiasResetEvery = typed.pantryCoolDown.trim().toIntOrNull() ?: return null,
         )
-        return limits.takeIf {
-            it.maxConsecutiveDaysSameMeal in ProfileBounds.CONSECUTIVE_DAYS &&
-                it.maxTimesPerWeekSameMeal in ProfileBounds.TIMES_PER_WEEK &&
-                it.inventoryBiasResetEvery in ProfileBounds.PANTRY_COOL_DOWN
-        }
+    }
+
+    /** What the field holds as typed: the split as a whole, or a part of it, or another field. */
+    fun valueOf(field: ProfileField): Any = when (field) {
+        ProfileField.NAME -> name
+        ProfileField.AGE -> age
+        ProfileField.HEIGHT -> height
+        ProfileField.WEIGHT -> weight
+        ProfileField.TARGET_WEIGHT -> targetWeight
+        ProfileField.OWN_TARGET -> ownTarget
+        ProfileField.SPLIT -> dietType to split
+        ProfileField.SPLIT_PROTEIN -> split.protein
+        ProfileField.SPLIT_FAT -> split.fat
+        ProfileField.SPLIT_CARBS -> split.carbs
+        ProfileField.CONSECUTIVE_DAYS -> limits.consecutiveDays
+        ProfileField.TIMES_PER_WEEK -> limits.timesPerWeek
+        ProfileField.KIND_PER_DAY -> limits.kindPerDay
+        ProfileField.KIND_PER_WEEK -> limits.kindPerWeek
+        ProfileField.PANTRY_COOL_DOWN -> limits.pantryCoolDown
     }
 
     companion object {
@@ -313,7 +335,7 @@ data class ProfileForm(
                 ownTarget = figures.manualCalorieTarget?.toString().orEmpty(),
                 dietType = figures.dietType,
                 mealCount = figures.mealCount,
-                split = SplitTyped.of(figures.customMacroSplit ?: ProfileBounds.FIRST_SPLIT),
+                split = SplitTyped.of(figures.customMacroSplit ?: ProfileChoices.FIRST_SPLIT),
                 allergens = figures.allergens.toSet(),
                 weightReminderCadence = figures.weightReminderCadence,
                 limits = LimitsTyped.of(kept.preferences.limits),
@@ -326,9 +348,54 @@ data class ProfileForm(
     }
 }
 
-/** Whether the three shares are each within their bounds and add up to 100. */
-fun MacroSplit.holds(): Boolean =
-    protein in ProfileBounds.PROTEIN && fat in ProfileBounds.FAT && carbs in ProfileBounds.CARBS && protein + fat + carbs == 100
+/**
+ * The fields of a profile's form the API refused, by its answer: the form's own, and a kind of
+ * protein's limits by the kind, from the limit's place among those the form sent. A path the form
+ * has no field for is in [elsewhere].
+ */
+data class ProfileRefusals(
+    val fields: Map<ProfileField, FieldRefusal> = emptyMap(),
+    val kinds: Map<String, Map<KindPart, FieldRefusal>> = emptyMap(),
+    val elsewhere: Set<String> = emptySet(),
+) {
+    /** These, with those among [of] as [answer] says them: an answer about some fields says nothing of the others. */
+    fun with(answer: ProfileRefusals, of: Set<ProfileField>): ProfileRefusals =
+        copy(fields = fields.filterKeys { it !in of } + answer.fields.filterKeys { it in of })
+
+    /** What is left of them once the form is [now] as it was [before]: a field changed since is no longer refused. */
+    fun after(before: ProfileForm, now: ProfileForm): ProfileRefusals = copy(
+        fields = fields.filterKeys { field -> before.valueOf(field) == now.valueOf(field) },
+        kinds = kinds.mapValues { (kind, parts) ->
+            val then = before.limits.kindLimits.find { it.kind == kind }
+            val row = now.limits.kindLimits.find { it.kind == kind }
+            parts.filterKeys { part -> then != null && row != null && then.valueOf(part) == row.valueOf(part) }
+        }.filterValues { it.isNotEmpty() },
+    )
+
+    companion object {
+        private val KIND_PATH = Regex("""(?:preferences\.)?kindLimits\.(\d+)\.(\w+)""")
+
+        /** The fields [refused] names, of [form] as it was sent. */
+        fun of(refused: Map<String, FieldRefusal>, form: ProfileForm): ProfileRefusals {
+            val sent = form.limits.kindLimits.mapNotNull { it.limit() }
+            val fields = mutableMapOf<ProfileField, FieldRefusal>()
+            val kinds = mutableMapOf<String, MutableMap<KindPart, FieldRefusal>>()
+            val elsewhere = mutableSetOf<String>()
+            for ((path, refusal) in refused) {
+                val field = ProfileField.entries.firstOrNull { it.path == path }
+                if (field != null) {
+                    fields[field] = refusal
+                    continue
+                }
+                val match = KIND_PATH.matchEntire(path)
+                val kind = match?.groupValues?.get(1)?.toInt()?.let { sent.getOrNull(it)?.kind }
+                val part = match?.groupValues?.get(2)?.let { key -> KindPart.entries.firstOrNull { it.key == key } }
+                if (kind != null && part != null) kinds.getOrPut(kind) { mutableMapOf() }[part] = refusal else elsewhere += path
+            }
+            return ProfileRefusals(fields, kinds, elsewhere)
+        }
+    }
+}
 
 /**
  * A weight typed in [unit], in kilograms; null for a field that holds no number. While the field
@@ -340,12 +407,9 @@ private fun weightKg(typed: String, kept: Double?, unit: WeightUnit): Double? {
 }
 
 /** A number as it is typed, with a decimal comma as well as a point. */
-private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()
+private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
 
-/** Whether the field holds a whole number within [range]. */
-private fun String.within(range: IntRange): Boolean = trim().toIntOrNull()?.let { it in range } == true
-
-/** Whether the field is empty or holds a whole number within [range]. */
-private fun String.emptyOrWithin(range: IntRange): Boolean = isBlank() || within(range)
+/** Whether the field is empty or holds a whole number. */
+private fun String.emptyOrWhole(): Boolean = isBlank() || trim().toIntOrNull() != null
 
 private fun Double.plain(): String = if (this % 1.0 == 0.0) roundToInt().toString() else toString()

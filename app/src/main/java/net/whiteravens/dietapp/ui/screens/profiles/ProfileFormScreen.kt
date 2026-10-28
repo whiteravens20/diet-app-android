@@ -71,16 +71,16 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
 
             else -> {
                 val form = state.form
-                val problems = if (state.showProblems) state.problems else emptySet()
+                val marks = state.marks
                 AppCard {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         FormSection(stringResource(R.string.profile_section_body), first = true)
-                        NameField(form, problems, viewModel::edit)
-                        BodyFields(form, state.unit, problems, viewModel::edit)
+                        NameField(form, marks, viewModel::edit)
+                        BodyFields(form, state.unit, marks, viewModel::edit)
                         FormSection(stringResource(R.string.profile_section_goal))
                         PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
-                        TargetWeightField(form, state.unit, problems, viewModel::edit)
-                        OwnTargetField(form, problems, viewModel::edit)
+                        TargetWeightField(form, state.unit, marks, viewModel::edit)
+                        OwnTargetField(form, marks, viewModel::edit)
                         RiskBox(
                             reasons = state.risks,
                             acknowledged = form.acknowledgeRisk,
@@ -88,12 +88,12 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                         )
                         ReminderField(form, viewModel::edit)
                         FormSection(stringResource(R.string.profile_section_food))
-                        DietFields(form, problems, rules, viewModel::edit)
+                        DietFields(form, marks, rules, viewModel::edit)
                         FormSection(stringResource(R.string.profile_section_variety))
-                        LimitFields(form, problems, viewModel::edit)
+                        LimitFields(form, marks, viewModel::edit)
                     }
                 }
-                CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed)
+                CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused)
                 state.error?.let { ErrorBanner(errorMessage(it)) }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = viewModel::save, enabled = !state.saving, shape = MaterialTheme.shapes.medium) {

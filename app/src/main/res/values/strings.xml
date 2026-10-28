@@ -887,6 +887,8 @@
     <string name="refusal_other">The server does not take this.</string>
     <string name="refusal_not_a_number">Type a number.</string>
     <string name="refusal_not_whole">Type a whole number.</string>
+    <string name="refusal_split_sum">The three have to add up to 100.</string>
+    <string name="profile_field_between">Between %1$s and %2$s.</string>
     <string name="error_not_the_api">The server answered %1$d, but not with the API\'s answer: something in front of it, such as a proxy, may have answered in its place.</string>
     <plurals name="plans_no_recipe_left">
         <item quantity="one">The profile\'s allergens, skipped ingredients and avoided recipes rule out the only recipe for \"%2$s\" on the \"%3$s\" diet, so the plan could not be made.</item>
@@ -1009,7 +1011,6 @@
     <string name="profile_split_fat">Fat (%)</string>
     <string name="profile_split_carbs">Carbohydrate (%)</string>
     <string name="profile_split_sum">Adds up to %1$d %%.</string>
-    <string name="profile_split_sum_off">The three add up to %1$d %%. They have to add up to 100.</string>
     <string name="profile_reminder">Weight reminder</string>
     <string name="profile_reminder_hint">How often the app nudges you to log your weight.</string>
     <string name="profile_reminder_off">Off</string>
@@ -1043,8 +1044,6 @@
     <string name="profile_save_changes">Save changes</string>
     <string name="profile_create">Create profile</string>
     <!-- What a field the API would refuse says: in the web application, the browser says it. -->
-    <string name="profile_field_name">Type a name of up to %1$d characters.</string>
-    <string name="profile_field_between">Between %1$s and %2$s.</string>
     <string name="profile_wizard_title">Set up your profile</string>
     <string name="profile_wizard_intro">Three short steps. The figures under “What this comes to” follow what you type, and nothing is saved before the last step.</string>
     <string name="profile_wizard_progress">Step %1$d of %2$d: %3$s</string>
@@ -1079,6 +1078,7 @@
     <string name="calorie_preview_pending">Type an age, a height and a weight to see what they come to.</string>
     <string name="calorie_preview_waiting">Working out the figures…</string>
     <string name="calorie_preview_failed">The figures could not be worked out just now. Nothing stops you from going on.</string>
+    <string name="calorie_preview_fix_fields">Correct the marked fields to see what they come to.</string>
     <string name="calorie_preview_daily_target">Daily target</string>
     <string name="calorie_preview_maintenance">Maintenance</string>
     <string name="calorie_preview_at_rest">At rest</string>

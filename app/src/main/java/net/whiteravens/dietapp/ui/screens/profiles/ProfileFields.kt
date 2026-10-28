@@ -65,12 +65,15 @@ import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.notes
+import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.activityLevelLabel
 import net.whiteravens.dietapp.ui.common.allergenLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.noteText
+import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.proteinKindLabel
+import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.reminderCadenceLabel
 import net.whiteravens.dietapp.ui.common.sexLabel
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -79,11 +82,29 @@ import net.whiteravens.dietapp.ui.components.rememberWebPages
 /*
  * The fields a profile is made of, as every form that asks for them shows them: the form of a
  * profile, the first profile's steps and the calculator. Each shows the form as it is and hands a
- * change of it to `onEdit`; a field the API would refuse says why once `problems` names it.
+ * change of it to `onEdit`; a field says what is wrong with it as `marks` say.
  */
 
 /** How a field hands on a change of the form. */
 internal typealias FormEdit = ((ProfileForm) -> ProfileForm) -> Unit
+
+/**
+ * What the fields of a profile's form say is wrong with them: what holds no number where one is
+ * needed ([notNumbers], and by kind of protein [kindNotNumbers]), once going on or saving was
+ * refused for it; and what the API refused ([refusals]), with its reasons.
+ */
+data class ProfileMarks(
+    val notNumbers: Set<ProfileField> = emptySet(),
+    val kindNotNumbers: Map<String, Set<KindPart>> = emptyMap(),
+    val refusals: ProfileRefusals = ProfileRefusals(),
+) {
+    operator fun contains(field: ProfileField): Boolean = field in notNumbers || field in refusals.fields
+}
+
+/** What [field] says is wrong with it: no number where one is needed, or the API's refusal with its bound said as [bound]. */
+@Composable
+private fun ProfileMarks.of(field: ProfileField, bound: Bound = Bound.Number(), whole: Boolean = true): String? =
+    numberProblem(field in notNumbers, refusals.fields[field], bound, whole)
 
 /** A field typed into, with its hint, or what is wrong with it once that is said. */
 @Composable
@@ -157,20 +178,15 @@ internal fun <T> ChoiceField(
     }
 }
 
-/** What a field outside its bounds says. */
-@Composable
-private fun between(least: Number, most: Number, fractionDigits: Int = 0): String =
-    stringResource(R.string.profile_field_between, formatNumber(least, fractionDigits), formatNumber(most, fractionDigits))
-
 /** What the profile is called. */
 @Composable
-internal fun NameField(form: ProfileForm, problems: Set<ProfileField>, onEdit: FormEdit) {
+internal fun NameField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
     FormField(
         value = form.name,
         onValueChange = { typed -> onEdit { it.copy(name = typed) } },
         label = stringResource(R.string.profile_name),
         hint = stringResource(R.string.profile_name_hint),
-        problem = if (ProfileField.NAME in problems) stringResource(R.string.profile_field_name, ProfileBounds.NAME_LENGTH) else null,
+        problem = marks.of(ProfileField.NAME, Bound.Characters),
         keyboardType = KeyboardType.Text,
         capitalization = KeyboardCapitalization.Words,
     )
@@ -181,12 +197,12 @@ internal fun NameField(form: ProfileForm, problems: Set<ProfileField>, onEdit: F
  * The weight is typed in the account's unit.
  */
 @Composable
-internal fun BodyFields(form: ProfileForm, unit: WeightUnit, problems: Set<ProfileField>, onEdit: FormEdit) {
+internal fun BodyFields(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks, onEdit: FormEdit) {
     FormField(
         value = form.age,
         onValueChange = { typed -> onEdit { it.copy(age = typed) } },
         label = stringResource(R.string.profile_age),
-        problem = if (ProfileField.AGE in problems) between(ProfileBounds.AGE.first, ProfileBounds.AGE.last) else null,
+        problem = marks.of(ProfileField.AGE),
     )
     ChoiceField(
         label = stringResource(R.string.profile_sex),
@@ -200,19 +216,19 @@ internal fun BodyFields(form: ProfileForm, unit: WeightUnit, problems: Set<Profi
         value = form.height,
         onValueChange = { typed -> onEdit { it.copy(height = typed) } },
         label = stringResource(R.string.profile_height_cm),
-        problem = if (ProfileField.HEIGHT in problems) between(ProfileBounds.HEIGHT_CM.start, ProfileBounds.HEIGHT_CM.endInclusive) else null,
+        problem = marks.of(ProfileField.HEIGHT, Bound.Number(decimals = 1), whole = false),
         keyboardType = KeyboardType.Decimal,
     )
     FormField(
         value = form.weight,
         onValueChange = { typed -> onEdit { it.copy(weight = typed) } },
         label = stringResource(R.string.profile_weight, unit.code),
-        problem = if (ProfileField.WEIGHT in problems) between(unit.bounds.start, unit.bounds.endInclusive, 1) else null,
+        problem = marks.of(ProfileField.WEIGHT, unit.refusalBound, whole = false),
         keyboardType = KeyboardType.Decimal,
     )
     ChoiceField(
         label = stringResource(R.string.profile_activity_level),
-        options = ProfileBounds.ACTIVITY_LEVELS,
+        options = ProfileChoices.ACTIVITY_LEVELS,
         selected = form.activityLevel,
         optionLabel = { activityLevelLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(activityLevel = chosen) } },
@@ -243,7 +259,7 @@ private fun CalorieTarget.slowed(): Boolean = deficitCapped || safetyFloorApplie
 internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<CalorieTarget>?, onEdit: FormEdit) {
     Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.profile_pace), style = MaterialTheme.typography.titleSmall)
-        ProfileBounds.PACES.forEachIndexed { index, pace ->
+        ProfileChoices.PACES.forEachIndexed { index, pace ->
             val at = paces?.getOrNull(index)
             val chosen = pace == form.weeklyLossTarget
             Surface(
@@ -274,7 +290,7 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
                 }
             }
         }
-        val anySlowed = paces?.withIndex()?.any { (index, at) -> ProfileBounds.PACES.getOrNull(index) != null && !at.goalHeld && at.slowed() } == true
+        val anySlowed = paces?.withIndex()?.any { (index, at) -> ProfileChoices.PACES.getOrNull(index) != null && !at.goalHeld && at.slowed() } == true
         if (anySlowed) {
             Text(
                 stringResource(R.string.profile_pace_slowed_note),
@@ -299,27 +315,27 @@ private fun paceLabel(pace: String?, unit: WeightUnit): String {
 
 /** The weight the profile works towards, in the account's unit; the chart of weights draws it. */
 @Composable
-internal fun TargetWeightField(form: ProfileForm, unit: WeightUnit, problems: Set<ProfileField>, onEdit: FormEdit) {
+internal fun TargetWeightField(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks, onEdit: FormEdit) {
     FormField(
         value = form.targetWeight,
         onValueChange = { typed -> onEdit { it.copy(targetWeight = typed) } },
         label = stringResource(R.string.profile_target_weight, unit.code),
         hint = stringResource(R.string.profile_target_weight_hint),
-        problem = if (ProfileField.TARGET_WEIGHT in problems) between(unit.bounds.start, unit.bounds.endInclusive, 1) else null,
+        problem = marks.of(ProfileField.TARGET_WEIGHT, unit.refusalBound, whole = false),
         keyboardType = KeyboardType.Decimal,
     )
 }
 
 /** A calorie target of one's own, in place of the one the pace comes to. */
 @Composable
-internal fun OwnTargetField(form: ProfileForm, problems: Set<ProfileField>, onEdit: FormEdit) {
+internal fun OwnTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
     FormField(
         value = form.ownTarget,
         onValueChange = { typed -> onEdit { it.copy(ownTarget = typed) } },
         label = stringResource(R.string.profile_own_target),
         hint = stringResource(R.string.profile_own_target_hint),
         placeholder = stringResource(R.string.profile_auto),
-        problem = if (ProfileField.OWN_TARGET in problems) between(ProfileBounds.OWN_TARGET.first, ProfileBounds.OWN_TARGET.last) else null,
+        problem = marks.of(ProfileField.OWN_TARGET),
     )
 }
 
@@ -381,10 +397,10 @@ internal fun RiskBox(reasons: List<String>, acknowledged: Boolean, onAcknowledge
  * energy comes from protein, fat and carbohydrate.
  */
 @Composable
-internal fun DietFields(form: ProfileForm, problems: Set<ProfileField>, rules: InstanceRules?, onEdit: FormEdit, meals: Boolean = true) {
+internal fun DietFields(form: ProfileForm, marks: ProfileMarks, rules: InstanceRules?, onEdit: FormEdit, meals: Boolean = true) {
     ChoiceField(
         label = stringResource(R.string.profile_diet_type),
-        options = ProfileBounds.DIETS,
+        options = ProfileChoices.DIETS,
         selected = form.dietType,
         optionLabel = { diet ->
             val name = dietTypeLabel(diet)
@@ -399,7 +415,7 @@ internal fun DietFields(form: ProfileForm, problems: Set<ProfileField>, rules: I
     if (meals) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(stringResource(R.string.profile_meals_per_day), style = MaterialTheme.typography.titleSmall)
-            val counts = ProfileBounds.MEAL_COUNT.toList()
+            val counts = ProfileChoices.MEAL_COUNT.toList()
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 counts.forEachIndexed { index, count ->
                     SegmentedButton(
@@ -412,7 +428,7 @@ internal fun DietFields(form: ProfileForm, problems: Set<ProfileField>, rules: I
             SupplyNote(rules, form.dietType, form.mealCount)
         }
     }
-    if (form.dietType == "custom") SplitFields(form, problems, onEdit)
+    if (form.dietType == "custom") SplitFields(form, marks, onEdit)
 }
 
 /**
@@ -433,9 +449,9 @@ internal fun SupplyNote(rules: InstanceRules?, diet: String, mealCount: Int) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
 }
 
-/** The three shares of the custom diet, and what they add up to, said while they are typed. */
+/** The three shares of the custom diet, and what they add up to, said while they are typed, with the API's refusal of the three together. */
 @Composable
-private fun SplitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit: FormEdit) {
+private fun SplitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
     val split = form.split
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.profile_custom_split), style = MaterialTheme.typography.titleSmall)
@@ -444,37 +460,39 @@ private fun SplitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit: 
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        val shown = ProfileField.SPLIT in problems
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShareField(split.protein, R.string.profile_split_protein, ProfileBounds.PROTEIN, shown, Modifier.weight(1f)) { typed ->
+            ShareField(split.protein, R.string.profile_split_protein, marks.of(ProfileField.SPLIT_PROTEIN), Modifier.weight(1f)) { typed ->
                 onEdit { it.copy(split = it.split.copy(protein = typed)) }
             }
-            ShareField(split.fat, R.string.profile_split_fat, ProfileBounds.FAT, shown, Modifier.weight(1f)) { typed ->
+            ShareField(split.fat, R.string.profile_split_fat, marks.of(ProfileField.SPLIT_FAT), Modifier.weight(1f)) { typed ->
                 onEdit { it.copy(split = it.split.copy(fat = typed)) }
             }
-            ShareField(split.carbs, R.string.profile_split_carbs, ProfileBounds.CARBS, shown, Modifier.weight(1f)) { typed ->
+            ShareField(split.carbs, R.string.profile_split_carbs, marks.of(ProfileField.SPLIT_CARBS), Modifier.weight(1f)) { typed ->
                 onEdit { it.copy(split = it.split.copy(carbs = typed)) }
             }
         }
-        val sum = split.sum
-        Text(
-            stringResource(if (sum == 100) R.string.profile_split_sum else R.string.profile_split_sum_off, sum),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (sum == 100) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.tertiary,
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        )
+        Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+            Text(stringResource(R.string.profile_split_sum, split.sum), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Refused as a whole, the three are said to have to add up to a hundred.
+            marks.refusals.fields[ProfileField.SPLIT]?.let { refused ->
+                Text(
+                    refusalText(refused, other = stringResource(R.string.refusal_split_sum)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+            }
+        }
     }
 }
 
-/** One share of the custom diet's split, which says its bounds once a refused split is shown. */
+/** One share of the custom diet's split, with what is wrong with it. */
 @Composable
-private fun ShareField(value: String, label: Int, bounds: IntRange, shown: Boolean, modifier: Modifier, onValueChange: (String) -> Unit) {
-    val outside = value.trim().toIntOrNull()?.let { it !in bounds } ?: true
+private fun ShareField(value: String, label: Int, problem: String?, modifier: Modifier, onValueChange: (String) -> Unit) {
     FormField(
         value = value,
         onValueChange = onValueChange,
         label = stringResource(label),
-        problem = if (shown && outside) between(bounds.first, bounds.last) else null,
+        problem = problem,
         modifier = modifier,
     )
 }
@@ -499,11 +517,11 @@ internal fun AllergenChoice(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProfileBounds.ALLERGENS.forEach { allergen ->
+            ProfileChoices.ALLERGENS.forEach { allergen ->
                 val on = allergen in selected
                 FilterChip(
                     selected = on,
-                    onClick = { onChange(ProfileBounds.ALLERGENS.filter { if (it == allergen) !on else it in selected }) },
+                    onClick = { onChange(ProfileChoices.ALLERGENS.filter { if (it == allergen) !on else it in selected }) },
                     label = { Text(allergenLabel(allergen)) },
                     enabled = enabled,
                 )
@@ -517,7 +535,7 @@ internal fun AllergenChoice(
 internal fun ReminderField(form: ProfileForm, onEdit: FormEdit) {
     ChoiceField(
         label = stringResource(R.string.profile_reminder),
-        options = ProfileBounds.REMINDER_CADENCES,
+        options = ProfileChoices.REMINDER_CADENCES,
         selected = form.weightReminderCadence,
         optionLabel = { reminderCadenceLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(weightReminderCadence = chosen) } },
@@ -527,35 +545,35 @@ internal fun ReminderField(form: ProfileForm, onEdit: FormEdit) {
 
 /** How often a plan of the profile may repeat itself. */
 @Composable
-internal fun LimitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit: FormEdit) {
+internal fun LimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
     val limits = form.limits
     FormField(
         value = limits.consecutiveDays,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(consecutiveDays = typed)) } },
         label = stringResource(R.string.profile_max_consecutive_days),
         hint = stringResource(R.string.profile_max_consecutive_days_hint),
-        problem = if (ProfileField.CONSECUTIVE_DAYS in problems) between(ProfileBounds.CONSECUTIVE_DAYS.first, ProfileBounds.CONSECUTIVE_DAYS.last) else null,
+        problem = marks.of(ProfileField.CONSECUTIVE_DAYS),
     )
     FormField(
         value = limits.timesPerWeek,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(timesPerWeek = typed)) } },
         label = stringResource(R.string.profile_max_times_per_week),
         hint = stringResource(R.string.profile_max_times_per_week_hint),
-        problem = if (ProfileField.TIMES_PER_WEEK in problems) between(ProfileBounds.TIMES_PER_WEEK.first, ProfileBounds.TIMES_PER_WEEK.last) else null,
+        problem = marks.of(ProfileField.TIMES_PER_WEEK),
     )
     FormField(
         value = limits.kindPerDay,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(kindPerDay = typed)) } },
         label = stringResource(R.string.profile_max_meals_per_day_same_kind),
         placeholder = stringResource(R.string.profile_no_limit),
-        problem = if (ProfileField.KIND_PER_DAY in problems) between(ProfileBounds.KIND_PER_DAY.first, ProfileBounds.KIND_PER_DAY.last) else null,
+        problem = marks.of(ProfileField.KIND_PER_DAY),
     )
     FormField(
         value = limits.kindPerWeek,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(kindPerWeek = typed)) } },
         label = stringResource(R.string.profile_max_meals_per_week_same_kind),
         placeholder = stringResource(R.string.profile_no_limit),
-        problem = if (ProfileField.KIND_PER_WEEK in problems) between(ProfileBounds.KIND_PER_WEEK.first, ProfileBounds.KIND_PER_WEEK.last) else null,
+        problem = marks.of(ProfileField.KIND_PER_WEEK),
     )
     Text(
         stringResource(R.string.profile_same_kind_hint),
@@ -567,13 +585,13 @@ internal fun LimitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit:
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    KindLimitRows(limits.kindLimits, ProfileField.KIND_LIMITS in problems, onEdit)
+    KindLimitRows(limits.kindLimits, marks, onEdit)
     FormField(
         value = limits.pantryCoolDown,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(pantryCoolDown = typed)) } },
         label = stringResource(R.string.profile_pantry_cool_down),
         hint = stringResource(R.string.profile_pantry_cool_down_hint),
-        problem = if (ProfileField.PANTRY_COOL_DOWN in problems) between(ProfileBounds.PANTRY_COOL_DOWN.first, ProfileBounds.PANTRY_COOL_DOWN.last) else null,
+        problem = marks.of(ProfileField.PANTRY_COOL_DOWN),
     )
 }
 
@@ -583,7 +601,7 @@ internal fun LimitFields(form: ProfileForm, problems: Set<ProfileField>, onEdit:
  * kind is left. A kind another row has is not offered again.
  */
 @Composable
-private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onEdit: FormEdit) {
+private fun KindLimitRows(rows: List<KindLimitTyped>, marks: ProfileMarks, onEdit: FormEdit) {
     val change = { index: Int, edit: (KindLimitTyped) -> KindLimitTyped ->
         onEdit { form -> form.copy(limits = form.limits.copy(kindLimits = form.limits.kindLimits.mapIndexed { at, row -> if (at == index) edit(row) else row })) }
     }
@@ -602,7 +620,7 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onE
             Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ChoiceField(
                     label = stringResource(R.string.profile_kind_limit_kind),
-                    options = ProfileBounds.PROTEIN_KINDS.filter { kind -> kind == row.kind || rows.none { it.kind == kind } },
+                    options = ProfileChoices.PROTEIN_KINDS.filter { kind -> kind == row.kind || rows.none { it.kind == kind } },
                     selected = row.kind,
                     optionLabel = { proteinKindLabel(it) },
                     onSelect = { kind -> change(index) { it.copy(kind = kind) } },
@@ -612,14 +630,14 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onE
                     onValueChange = { typed -> change(index) { it.copy(perDay = typed) } },
                     label = stringResource(R.string.profile_kind_limit_per_day),
                     placeholder = stringResource(R.string.profile_same_as_above),
-                    problem = if (showProblems && !row.dayHolds) between(ProfileBounds.KIND_PER_DAY.first, ProfileBounds.KIND_PER_DAY.last) else null,
+                    problem = numberProblem(KindPart.DAY in marks.kindNotNumbers[row.kind].orEmpty(), marks.refusals.kinds[row.kind]?.get(KindPart.DAY)),
                 )
                 FormField(
                     value = row.perWeek,
                     onValueChange = { typed -> change(index) { it.copy(perWeek = typed) } },
                     label = stringResource(R.string.profile_kind_limit_per_week),
                     placeholder = stringResource(R.string.profile_same_as_above),
-                    problem = if (showProblems && !row.weekHolds) between(ProfileBounds.KIND_PER_WEEK.first, ProfileBounds.KIND_PER_WEEK.last) else null,
+                    problem = numberProblem(KindPart.WEEK in marks.kindNotNumbers[row.kind].orEmpty(), marks.refusals.kinds[row.kind]?.get(KindPart.WEEK)),
                 )
                 val removing = stringResource(R.string.profile_remove_kind_limit, proteinKindLabel(row.kind))
                 TextButton(
@@ -629,12 +647,12 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onE
             }
         }
     }
-    if (rows.size < ProfileBounds.PROTEIN_KINDS.size) {
+    if (rows.size < ProfileChoices.PROTEIN_KINDS.size) {
         OutlinedButton(
             onClick = {
                 onEdit { form ->
                     val kept = form.limits.kindLimits
-                    val kind = ProfileBounds.PROTEIN_KINDS.first { kind -> kept.none { it.kind == kind } }
+                    val kind = ProfileChoices.PROTEIN_KINDS.first { kind -> kept.none { it.kind == kind } }
                     form.copy(limits = form.limits.copy(kindLimits = kept + KindLimitTyped(kind)))
                 }
             },
@@ -648,10 +666,11 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onE
  * the grams of protein, fat and carbohydrate, and what stands behind a target that is not simply
  * maintenance less the pace, and that the figures are no medical advice, with the instance's terms
  * that say more. The warnings for somebody under 18 or underweight are the form's own to give, with
- * the box that answers them. What is shown dims while it belongs to figures typed a moment ago.
+ * the box that answers them. What is shown dims while it belongs to figures typed a moment ago;
+ * figures the API [refused] wait for the marked fields to be corrected.
  */
 @Composable
-internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiting: Boolean, failed: Boolean, modifier: Modifier = Modifier) {
+internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiting: Boolean, failed: Boolean, refused: Boolean, modifier: Modifier = Modifier) {
     val web = rememberWebPages()
     Surface(
         shape = MaterialTheme.shapes.large,
@@ -716,7 +735,13 @@ internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiti
                     Skeleton(Modifier.fillMaxWidth().height(96.dp).semantics { contentDescription = label })
                 }
                 else -> Text(
-                    stringResource(if (failed) R.string.calorie_preview_failed else R.string.calorie_preview_pending),
+                    stringResource(
+                        when {
+                            refused -> R.string.calorie_preview_fix_fields
+                            failed -> R.string.calorie_preview_failed
+                            else -> R.string.calorie_preview_pending
+                        },
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

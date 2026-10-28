@@ -56,7 +56,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
-import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
+import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
 import net.whiteravens.dietapp.ui.screens.profiles.SupplyNote
 import java.time.LocalDate
 
@@ -116,7 +116,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                         ChoiceField(
                             label = stringResource(R.string.plans_diet),
                             // The custom diet is the profile's own split: there is one to plan to, or the diet is not on offer.
-                            options = listOf<String?>(null) + ProfileBounds.DIETS.filter { it != "custom" || custom != null },
+                            options = listOf<String?>(null) + ProfileChoices.DIETS.filter { it != "custom" || custom != null },
                             selected = form.dietType,
                             optionLabel = { diet ->
                                 when {

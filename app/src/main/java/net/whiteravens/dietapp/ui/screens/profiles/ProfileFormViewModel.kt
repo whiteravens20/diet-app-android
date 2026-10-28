@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -31,8 +32,9 @@ import javax.inject.Inject
 /**
  * A profile's form: a new profile, one kept ([PROFILE_ID] in the route), or the first profile of an
  * account, set up in three steps ([STEPS]). What the typed figures come to is asked of the API once
- * typing pauses and they are ones it would take, and each pace of loss says what it comes to in a
- * day; nothing is kept before the form is saved.
+ * typing pauses and they are numbers, and each pace of loss says what it comes to in a day; a field
+ * the API refuses, there or on saving, is marked with its reason until it changes. Nothing is kept
+ * before the form is saved.
  */
 @HiltViewModel
 class ProfileFormViewModel @Inject constructor(
@@ -52,6 +54,10 @@ class ProfileFormViewModel @Inject constructor(
         val asking: Boolean = false,
         /** The question whose answer failed. */
         val failed: CalorieQuestion? = null,
+        /** The question the API refused for its fields, which [refusals] name. */
+        val refusedQuestion: CalorieQuestion? = null,
+        /** The fields the API refused, in the last answer about them, until each is changed. */
+        val refusals: ProfileRefusals = ProfileRefusals(),
         /** The fields say what is wrong with them once going on or saving has been refused for it. */
         val showProblems: Boolean = false,
         /** The step of the first profile's three that is shown. */
@@ -85,12 +91,25 @@ class ProfileFormViewModel @Inject constructor(
         val previewFailed: Boolean
             get() = question != null && question == failed
 
+        /** The API refused the figures as they are: the fields say why. */
+        val previewRefused: Boolean
+            get() = question != null && question == refusedQuestion
+
         /** There are figures to work out, and no answer to show yet. */
         val waiting: Boolean
-            get() = question != null && preview == null && !previewFailed
+            get() = question != null && preview == null && !previewFailed && !previewRefused
 
+        /** The fields that hold no number where one is needed. */
         val problems: Set<ProfileField>
             get() = form.problems(unit)
+
+        /** What the fields say is wrong with them: no number, once going on or saving was refused for it, and what the API refused. */
+        val marks: ProfileMarks
+            get() = ProfileMarks(
+                notNumbers = if (showProblems) problems else emptySet(),
+                kindNotNumbers = if (showProblems) form.kindProblems() else emptyMap(),
+                refusals = refusals,
+            )
     }
 
     private val profileId: String? = savedStateHandle[PROFILE_ID]
@@ -140,7 +159,10 @@ class ProfileFormViewModel @Inject constructor(
     }
 
     fun edit(change: (ProfileForm) -> ProfileForm) {
-        _state.update { it.copy(form = change(it.form), error = null) }
+        _state.update {
+            val now = change(it.form)
+            it.copy(form = now, error = null, refusals = it.refusals.after(it.form, now))
+        }
     }
 
     @OptIn(FlowPreview::class)
@@ -152,16 +174,50 @@ class ProfileFormViewModel @Inject constructor(
                 .collectLatest { question ->
                     if (question == null || question == _state.value.answered) return@collectLatest
                     answers[question]?.let { known ->
-                        _state.update { it.copy(answer = known, answered = question, asking = false, failed = null) }
+                        _state.update {
+                            it.copy(
+                                answer = known,
+                                answered = question,
+                                asking = false,
+                                failed = null,
+                                refusedQuestion = null,
+                                refusals = it.refusals.with(ProfileRefusals(), ProfileField.QUESTION),
+                            )
+                        }
                         return@collectLatest
                     }
                     _state.update { it.copy(asking = true) }
                     attempt { profiles.preview(question) }
                         .onSuccess { answer ->
                             answers[question] = answer
-                            _state.update { it.copy(answer = answer, answered = question, asking = false, failed = null) }
+                            _state.update {
+                                it.copy(
+                                    answer = answer,
+                                    answered = question,
+                                    asking = false,
+                                    failed = null,
+                                    refusedQuestion = null,
+                                    refusals = it.refusals.with(ProfileRefusals(), ProfileField.QUESTION),
+                                )
+                            }
                         }
-                        .onFailure { _state.update { it.copy(answer = null, answered = null, asking = false, failed = question) } }
+                        .onFailure { e ->
+                            val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                            _state.update {
+                                if (refused.isEmpty()) {
+                                    it.copy(answer = null, answered = null, asking = false, failed = question)
+                                } else {
+                                    // The fields the figures are worked out from say why, as they are typed.
+                                    it.copy(
+                                        answer = null,
+                                        answered = null,
+                                        asking = false,
+                                        refusedQuestion = question,
+                                        refusals = it.refusals.with(ProfileRefusals.of(refused, it.form), ProfileField.QUESTION),
+                                    )
+                                }
+                            }
+                        }
                 }
         }
     }
@@ -178,14 +234,14 @@ class ProfileFormViewModel @Inject constructor(
         }
         // Said only by a form that showed the risk: ticked is yes, not ticked is no.
         val acknowledged = current.form.acknowledgeRisk.takeIf { current.risks.isNotEmpty() }
-        send {
+        send(current.form) {
             val before = kept
             if (before == null) profiles.create(figures, limits, acknowledged)
             else profiles.update(before.id, figures, before.preferences.with(limits), acknowledged)
         }
     }
 
-    /** The first profile's next step, once the fields of this one hold what the API would take. */
+    /** The first profile's next step, once the fields of this one hold numbers and none the API refused. */
     fun next() {
         val current = _state.value
         if (current.step >= STEPS.lastIndex) return
@@ -193,6 +249,7 @@ class ProfileFormViewModel @Inject constructor(
             _state.update { it.copy(showProblems = true) }
             return
         }
+        if (current.refusals.fields.keys.any { it in STEPS[current.step] }) return
         _state.update { it.copy(step = it.step + 1, showProblems = false, error = null) }
     }
 
@@ -202,7 +259,8 @@ class ProfileFormViewModel @Inject constructor(
 
     /**
      * Makes the first profile, on the last step: with the allergens chosen there, and every other
-     * preference the API's own. A step behind with a field the API would refuse is shown again.
+     * preference the API's own. A step behind with a field that holds no number, or that the API
+     * refused, is shown again.
      */
     fun make() {
         val current = _state.value
@@ -214,15 +272,33 @@ class ProfileFormViewModel @Inject constructor(
         }
         val figures = current.form.figures(current.unit) ?: return
         val acknowledged = current.form.acknowledgeRisk.takeIf { current.risks.isNotEmpty() }
-        send { profiles.create(figures, limits = null, acknowledgeRisk = acknowledged) }
+        send(current.form) { profiles.create(figures, limits = null, acknowledgeRisk = acknowledged) }
     }
 
-    private fun send(request: suspend () -> Profile) {
+    /** Sends [form] as [request] asks; a field the API refuses is marked, on the step that shows it. */
+    private fun send(form: ProfileForm, request: suspend () -> Profile) {
         viewModelScope.launch {
             _state.update { it.copy(saving = true, error = null) }
             attempt { request() }
                 .onSuccess { saved -> _state.update { it.copy(saving = false, saved = saved) } }
-                .onFailure { e -> _state.update { it.copy(saving = false, error = e) } }
+                .onFailure { e ->
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    val refusals = ProfileRefusals.of(refused, form)
+                    _state.update {
+                        if (refused.isEmpty()) {
+                            it.copy(saving = false, error = e)
+                        } else {
+                            val step = STEPS.indexOfFirst { fields -> refusals.fields.keys.any { field -> field in fields } }
+                            // What the form has no field for is said as well.
+                            it.copy(
+                                saving = false,
+                                refusals = refusals,
+                                error = e.takeIf { refusals.elsewhere.isNotEmpty() },
+                                step = if (step != -1 && step < it.step) step else it.step,
+                            )
+                        }
+                    }
+                }
         }
     }
 
@@ -240,7 +316,7 @@ class ProfileFormViewModel @Inject constructor(
         val STEPS: List<Set<ProfileField>> = listOf(
             setOf(ProfileField.NAME, ProfileField.AGE, ProfileField.HEIGHT, ProfileField.WEIGHT),
             setOf(ProfileField.TARGET_WEIGHT, ProfileField.OWN_TARGET),
-            setOf(ProfileField.SPLIT),
+            setOf(ProfileField.SPLIT, ProfileField.SPLIT_PROTEIN, ProfileField.SPLIT_FAT, ProfileField.SPLIT_CARBS),
         )
     }
 }

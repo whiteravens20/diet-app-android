@@ -59,7 +59,7 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.screens.profiles.AllergenChoice
-import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
+import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
 
 /**
  * Every way the library can be narrowed, as the web's page has them: the diet, the meal, the
@@ -129,7 +129,7 @@ internal fun RecipeFiltersDialog(
                 Icon(if (more) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
             }
             if (more) {
-                Choice(stringResource(R.string.recipes_cuisine), ProfileBounds.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
+                Choice(stringResource(R.string.recipes_cuisine), ProfileChoices.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Figure(stringResource(R.string.recipes_min_protein), protein, PROTEIN_OR_FAT, Modifier.weight(1f)) { protein = it }
                     Figure(stringResource(R.string.recipes_max_fat), fat, PROTEIN_OR_FAT, Modifier.weight(1f)) { fat = it }

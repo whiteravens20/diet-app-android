@@ -29,15 +29,18 @@ import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.CaloriePreview
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.testing.refusal
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -150,16 +153,76 @@ class ProfileFormViewModelTest {
     }
 
     @Test
-    fun `a form with a refused field is not sent, and its fields say what is wrong`() = runTest(main) {
+    fun `a form with a field that holds no number is not sent, and its fields say what is wrong`() = runTest(main) {
         val model = model()
         runCurrent()
 
-        model.edit { it.copy(name = "Ala", age = "200") }
+        model.edit { it.copy(name = "Ala", age = "two hundred", height = "168", weight = "66") }
         model.save()
         runCurrent()
 
         assertTrue(model.state.value.showProblems)
+        assertEquals(setOf(ProfileField.AGE), model.state.value.marks.notNumbers)
         coVerify(exactly = 0) { profiles.create(any(), any(), any()) }
+    }
+
+    @Test
+    fun `a form the API refuses is marked field by field, kinds of protein by their row, and a mark goes once its field changes`() = runTest(main) {
+        coEvery { profiles.preview(any()) } returns answer
+        coEvery { profiles.create(any(), any(), any()) } throws refusal("profile-refused")
+        val model = model()
+        runCurrent()
+
+        // As the API's answer had it: no name, 200 years, a weight of 500 kg to reach, and every limit past its bounds.
+        model.edit {
+            it.copy(
+                name = "", age = "200", height = "168", weight = "66", targetWeight = "500",
+                limits = LimitsTyped("9", "0", "", "", listOf(KindLimitTyped("eggs", "9", "50")), "25"),
+            )
+        }
+        model.save()
+        runCurrent()
+
+        val marks = model.state.value.marks
+        assertEquals(FieldRefusal.TooSmall(1.0, inclusive = true), marks.refusals.fields[ProfileField.NAME])
+        assertEquals(FieldRefusal.TooBig(120.0, inclusive = true), marks.refusals.fields[ProfileField.AGE])
+        assertEquals(FieldRefusal.TooBig(35.0, inclusive = true), marks.refusals.kinds["eggs"]?.get(KindPart.WEEK))
+        // Every field the API named is on the form, so the form says it alone.
+        assertNull(model.state.value.error)
+
+        model.edit { it.copy(age = "30") }
+
+        assertFalse(ProfileField.AGE in model.state.value.marks)
+        assertTrue(ProfileField.NAME in model.state.value.marks)
+    }
+
+    @Test
+    fun `figures the API refuses are marked as they are typed, the card waits for them to be corrected, and a corrected field loses its mark`() = runTest(main) {
+        coEvery { profiles.preview(match { it.age == 5 }) } throws refusal("calorie-preview-refused")
+        coEvery { profiles.preview(match { it.age != 5 }) } returns answer
+        val model = model()
+        runCurrent()
+
+        // As the API's answer had it: five years, 300 cm, 10 kg and a target of 100 kcal.
+        model.edit { it.copy(name = "Ala", age = "5", height = "300", weight = "10", ownTarget = "100") }
+        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
+        runCurrent()
+
+        val marks = model.state.value.marks
+        assertEquals(setOf(ProfileField.AGE, ProfileField.HEIGHT, ProfileField.WEIGHT, ProfileField.OWN_TARGET), marks.refusals.fields.keys)
+        assertTrue(model.state.value.previewRefused)
+        assertFalse(model.state.value.waiting)
+        assertFalse(model.state.value.previewFailed)
+
+        model.edit { it.copy(age = "30") }
+        assertFalse(ProfileField.AGE in model.state.value.marks)
+        assertTrue(ProfileField.HEIGHT in model.state.value.marks)
+        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
+        runCurrent()
+
+        // The figures as they are now came to an answer: nothing of them is refused any longer.
+        assertEquals(emptyMap<ProfileField, FieldRefusal>(), model.state.value.refusals.fields)
+        assertNotNull(model.state.value.preview)
     }
 
     @Test
@@ -180,7 +243,7 @@ class ProfileFormViewModelTest {
         model.save()
         runCurrent()
 
-        coVerify { profiles.create(any(), ProfileBounds.FIRST_LIMITS, false) }
+        coVerify { profiles.create(any(), ProfileChoices.FIRST_LIMITS, false) }
         assertEquals("p", model.state.value.saved?.id)
 
         // With no loss asked for the API sees no risk in it, although it warns of the age, and nothing is said of it.
@@ -243,9 +306,12 @@ class ProfileFormViewModelTest {
     }
 
     @Test
-    fun `the first profile goes on a step only when the step's fields hold what the API would take`() = runTest(main) {
+    fun `the first profile goes on a step only when the step's fields hold numbers the API did not refuse`() = runTest(main) {
         coEvery { profiles.preview(any()) } returns answer
-        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
+        val made = Profile("p", "Ala", "balanced", 3, 70.0, null)
+        // As the API's answer had it: a name of 81 letters.
+        coEvery { profiles.create(match { it.name.length > 80 }, any(), any()) } throws refusal("profile-name-too-long")
+        coEvery { profiles.create(match { it.name == "Ala" }, any(), any()) } returns made
         val model = model()
         runCurrent()
 
@@ -257,18 +323,20 @@ class ProfileFormViewModelTest {
         model.next()
         assertEquals(1, model.state.value.step)
         assertFalse(model.state.value.showProblems)
-        model.edit { it.copy(ownTarget = "500") }
+        model.edit { it.copy(ownTarget = "five hundred") }
         model.next()
         assertEquals(1, model.state.value.step)
         model.edit { it.copy(ownTarget = "") }
         model.next()
         assertEquals(2, model.state.value.step)
 
-        // A field of an earlier step that went wrong takes the steps back to it.
-        model.edit { it.copy(name = "", allergens = setOf("peanuts")) }
+        // A field of an earlier step the API refuses takes the steps back to it, with its reason.
+        model.edit { it.copy(name = "A".repeat(81), allergens = setOf("peanuts")) }
         model.make()
+        runCurrent()
         assertEquals(0, model.state.value.step)
-        coVerify(exactly = 0) { profiles.create(any(), any(), any()) }
+        assertEquals(FieldRefusal.TooBig(80.0, inclusive = true), model.state.value.refusals.fields[ProfileField.NAME])
+        assertNull(model.state.value.saved)
 
         model.edit { it.copy(name = "Ala") }
         model.make()

@@ -171,11 +171,11 @@ class ProfilesViewModel @Inject constructor(
     }
 
     fun changeAllergens(profile: ProfileDetails, allergens: List<String>) =
-        change(profile, PreferencesChange(allergens = ProfileBounds.ALLERGENS.filter { it in allergens }))
+        change(profile, PreferencesChange(allergens = ProfileChoices.ALLERGENS.filter { it in allergens }))
 
     /** The cuisines in the order the application lists them, whatever order they were ticked in. */
     fun changeCuisines(profile: ProfileDetails, cuisines: List<String>) =
-        change(profile, PreferencesChange(preferredCuisines = ProfileBounds.CUISINES.filter { it in cuisines }))
+        change(profile, PreferencesChange(preferredCuisines = ProfileChoices.CUISINES.filter { it in cuisines }))
 
     /** Adds [ingredient] to one of [profile]'s lists, and empties that list's search. */
     fun add(profile: ProfileDetails, list: IngredientList, ingredient: IngredientChoice) {

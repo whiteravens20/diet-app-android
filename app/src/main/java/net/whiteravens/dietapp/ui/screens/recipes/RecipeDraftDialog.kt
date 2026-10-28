@@ -45,7 +45,7 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenDialog
-import net.whiteravens.dietapp.ui.screens.profiles.ProfileBounds
+import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
 import kotlin.math.roundToInt
 
 /**
@@ -97,7 +97,7 @@ fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Un
                 val diet = dietType ?: profile.figures.dietType
                 Choice(stringResource(R.string.draft_diet_type), NAMED_DIETS, diet, { dietTypeLabel(it) }, any = false) { dietType = it }
                 Choice(stringResource(R.string.draft_meal_type), MEAL_TYPES, mealType, { mealTypeLabel(it) }) { mealType = it }
-                Choice(stringResource(R.string.draft_cuisine), ProfileBounds.CUISINES, cuisine, { cuisineLabel(it) }) { cuisine = it }
+                Choice(stringResource(R.string.draft_cuisine), ProfileChoices.CUISINES, cuisine, { cuisineLabel(it) }) { cuisine = it }
                 Choice(stringResource(R.string.draft_cooking_method), COOKING_METHODS, cookingMethod, { cookingLabel(it) }) { cookingMethod = it }
                 Choice(stringResource(R.string.draft_complexity), COMPLEXITIES, complexity, { complexityLabel(it) }) { complexity = it }
 

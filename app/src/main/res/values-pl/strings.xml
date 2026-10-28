@@ -957,6 +957,8 @@
     <string name="refusal_other">Serwer tego nie przyjmuje.</string>
     <string name="refusal_not_a_number">Wpisz liczbę.</string>
     <string name="refusal_not_whole">Wpisz liczbę całkowitą.</string>
+    <string name="refusal_split_sum">Trzy wartości muszą dać razem 100.</string>
+    <string name="profile_field_between">Od %1$s do %2$s.</string>
     <string name="error_not_the_api">Serwer odpowiedział kodem %1$d, ale nie odpowiedzią API: mogło odpowiedzieć coś, co stoi przed nim, na przykład serwer pośredniczący.</string>
     <plurals name="plans_no_recipe_left">
         <item quantity="one">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu jedyny przepis na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
@@ -1099,7 +1101,6 @@
     <string name="profile_split_fat">Tłuszcz (%)</string>
     <string name="profile_split_carbs">Węglowodany (%)</string>
     <string name="profile_split_sum">Suma: %1$d %%.</string>
-    <string name="profile_split_sum_off">Trzy wartości dają razem %1$d %%. Muszą dać 100.</string>
     <string name="profile_reminder">Przypomnienie o wadze</string>
     <string name="profile_reminder_hint">Jak często aplikacja przypomina o zapisaniu wagi.</string>
     <string name="profile_reminder_off">Wyłączone</string>
@@ -1133,8 +1134,6 @@
     <string name="profile_save_changes">Zapisz zmiany</string>
     <string name="profile_create">Utwórz profil</string>
     <!-- What a field the API would refuse says: in the web application, the browser says it. -->
-    <string name="profile_field_name">Wpisz imię, najwyżej %1$d znaków.</string>
-    <string name="profile_field_between">Od %1$s do %2$s.</string>
     <string name="profile_wizard_title">Ustaw swój profil</string>
     <string name="profile_wizard_intro">Trzy krótkie kroki. Liczby pod „Co z tego wynika” zmieniają się wraz z tym, co wpisujesz, a przed ostatnim krokiem nic nie jest zapisywane.</string>
     <string name="profile_wizard_progress">Krok %1$d z %2$d: %3$s</string>
@@ -1169,6 +1168,7 @@
     <string name="calorie_preview_pending">Wpisz wiek, wzrost i wagę, aby zobaczyć, co z nich wynika.</string>
     <string name="calorie_preview_waiting">Liczę wartości…</string>
     <string name="calorie_preview_failed">Nie udało się teraz policzyć wartości. Możesz mimo to przejść dalej.</string>
+    <string name="calorie_preview_fix_fields">Popraw zaznaczone pola, żeby zobaczyć, co z nich wynika.</string>
     <string name="calorie_preview_daily_target">Cel dzienny</string>
     <string name="calorie_preview_maintenance">Zapotrzebowanie</string>
     <string name="calorie_preview_at_rest">W spoczynku</string>

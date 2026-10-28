@@ -221,7 +221,7 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
         }
     }
     val form = state.form
-    val problems = if (state.showProblems) state.problems else emptySet()
+    val marks = state.marks
     val steps = listOf(R.string.profile_wizard_step_body, R.string.profile_wizard_step_goal, R.string.profile_wizard_step_food)
     val last = steps.lastIndex
 
@@ -241,8 +241,8 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
             when (state.step) {
                 0 -> {
                     Lead(R.string.profile_wizard_body_lead)
-                    NameField(form, problems, viewModel::edit)
-                    BodyFields(form, state.unit, problems, viewModel::edit)
+                    NameField(form, marks, viewModel::edit)
+                    BodyFields(form, state.unit, marks, viewModel::edit)
                 }
 
                 1 -> {
@@ -253,13 +253,13 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
                         acknowledged = form.acknowledgeRisk,
                         onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
                     )
-                    TargetWeightField(form, state.unit, problems, viewModel::edit)
-                    OwnTargetField(form, problems, viewModel::edit)
+                    TargetWeightField(form, state.unit, marks, viewModel::edit)
+                    OwnTargetField(form, marks, viewModel::edit)
                 }
 
                 else -> {
                     Lead(R.string.profile_wizard_food_lead)
-                    DietFields(form, problems, rules, viewModel::edit)
+                    DietFields(form, marks, rules, viewModel::edit)
                     AllergenChoice(
                         selected = form.allergens,
                         onChange = { chosen -> viewModel.edit { it.copy(allergens = chosen.toSet()) } },
@@ -292,7 +292,7 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
             }
         }
     }
-    CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed)
+    CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused)
 }
 
 @Composable
@@ -353,11 +353,11 @@ private fun CuisineChoice(selected: List<String>, onChange: (List<String>) -> Un
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProfileBounds.CUISINES.forEach { cuisine ->
+            ProfileChoices.CUISINES.forEach { cuisine ->
                 val on = cuisine in selected
                 FilterChip(
                     selected = on,
-                    onClick = { onChange(ProfileBounds.CUISINES.filter { if (it == cuisine) !on else it in selected }) },
+                    onClick = { onChange(ProfileChoices.CUISINES.filter { if (it == cuisine) !on else it in selected }) },
                     label = { Text(cuisineLabel(cuisine)) },
                     enabled = enabled,
                 )
