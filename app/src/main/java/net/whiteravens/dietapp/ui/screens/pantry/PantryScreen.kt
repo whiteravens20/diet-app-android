@@ -71,6 +71,7 @@ import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import java.text.NumberFormat
@@ -171,7 +172,7 @@ fun PantryScreen(
                             }
                         }
 
-                        state.rows.isEmpty() -> item {
+                        state.shownRows.isEmpty() -> item {
                             EmptyState(
                                 icon = AppIcons.Inventory,
                                 title = stringResource(R.string.pantry_empty_title),
@@ -186,6 +187,8 @@ fun PantryScreen(
                                     if (index > 0) HorizontalDivider()
                                     RowItem(
                                         row = row,
+                                        waiting = row.id in state.waitingRows,
+                                        added = row.id in state.waitingAdditions,
                                         enabled = !state.busy,
                                         onChange = { viewModel.change(row, it) },
                                         onRemove = { viewModel.remove(row) },
@@ -296,11 +299,12 @@ private fun AddCard(state: PantryViewModel.UiState, viewModel: PantryViewModel) 
 
 /**
  * A row of the pantry: what it is, how much of it there is and until when, how near that day is,
- * and its amount and day to change, in fields that open under it, or the row to take out.
+ * and its amount and day to change, in fields that open under it, or the row to take out. A row with
+ * a change [waiting] to be sent says so; one [added] and waiting is changed once the server has it.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RowItem(row: PantryRow, enabled: Boolean, onChange: (PantryChange) -> Unit, onRemove: () -> Unit) {
+private fun RowItem(row: PantryRow, waiting: Boolean, added: Boolean, enabled: Boolean, onChange: (PantryChange) -> Unit, onRemove: () -> Unit) {
     var editing by rememberSaveable(row.id) { mutableStateOf(false) }
     Column(Modifier.padding(vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -311,7 +315,8 @@ private fun RowItem(row: PantryRow, enabled: Boolean, onChange: (PantryChange) -
                 modifier = Modifier.padding(start = 8.dp),
             )
             val muted = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
-            IconButton(onClick = { editing = !editing }, enabled = enabled, colors = muted) {
+            // Something put in that waits to be sent is changed once the server has it.
+            IconButton(onClick = { editing = !editing }, enabled = enabled && !added, colors = muted) {
                 Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.pantry_change_of, row.name))
             }
             IconButton(onClick = onRemove, enabled = enabled, colors = muted) {
@@ -342,7 +347,8 @@ private fun RowItem(row: PantryRow, enabled: Boolean, onChange: (PantryChange) -
                 }
             }
         }
-        if (editing) {
+        if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
+        if (editing && !added) {
             RowFields(row, enabled, onSave = { change ->
                 onChange(change)
                 editing = false

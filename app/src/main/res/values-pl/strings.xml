@@ -158,6 +158,9 @@
     <string name="change_kind_eaten">oznaczenie posiłku jako zjedzonego</string>
     <string name="change_kind_weight_logged">nowy wpis wagi</string>
     <string name="change_kind_weight_deleted">usunięcie wpisu wagi</string>
+    <string name="change_kind_pantry_added">nowa pozycja spiżarni</string>
+    <string name="change_kind_pantry_changed">zmiana pozycji spiżarni</string>
+    <string name="change_kind_pantry_removed">usunięcie pozycji spiżarni</string>
     <string name="change_kind_unreadable">zmiana, której ta wersja aplikacji nie umie odczytać</string>
     <string name="change_unreadable">Wprowadź ją jeszcze raz.</string>
     <string name="change_unsendable">Nie udało się odczytać odpowiedzi serwera: sprawdź, czy zmiana została zapisana.</string>

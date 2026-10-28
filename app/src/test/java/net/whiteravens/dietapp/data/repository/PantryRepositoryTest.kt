@@ -4,25 +4,40 @@ package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.Drained
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.StockableIngredient
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
-/** A profile's pantry read, something put in, a row changed and one taken out, against a local server answering as the backend did. */
+/**
+ * A profile's pantry read, something put in, a row changed and one taken out, without a network as
+ * well, against a local server answering as the backend did.
+ */
 class PantryRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
@@ -39,6 +54,10 @@ class PantryRepositoryTest {
     )
     private val milk = PantryRow("bf795e4d-a979-40bd-8844-17c79108810d", "e37a806f-6e15-443b-982b-ee6957bc2729", "Whole milk", "dairy", 1000.0, "ml", null)
 
+    /** The egg and the milk as the catalogue's search finds them. */
+    private val eggs = StockableIngredient(egg.ingredientId, "Large egg", "dairy", listOf("piece"), "piece", "piece")
+    private val milks = StockableIngredient(milk.ingredientId, "Whole milk", "dairy", listOf("ml", "g"), "ml", "piece")
+
     @Before
     fun start() {
         server = MockWebServer()
@@ -50,10 +69,10 @@ class PantryRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    private fun repository(): PantryRepository {
+    private fun repository(queue: ChangeQueue = changeQueue()): PantryRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return PantryRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json)
+        return PantryRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json, queue)
     }
 
     private fun answer(status: Int, name: String) =
@@ -75,10 +94,10 @@ class PantryRepositoryTest {
     }
 
     @Test
-    fun `something put in is sent with its profile, amount, unit and day, and read back as the row it is kept in`() {
+    fun `something put in is sent with its profile, amount, unit and day, under a key of its own, and read back as the row it is kept in`() {
         server.enqueue(answer(201, "pantry-row-added"))
 
-        val kept = runBlocking { repository().add(profileId, egg.ingredientId, 6.0, "piece", LocalDate.parse("2026-11-02")) }
+        val kept = runBlocking { repository().add(profileId, eggs, 6.0, "piece", LocalDate.parse("2026-11-02")) }
 
         val sent = server.takeRequest()
         assertEquals("POST", sent.method)
@@ -87,14 +106,36 @@ class PantryRepositoryTest {
             json.parseToJsonElement("""{"profileId":"$profileId","ingredientId":"${egg.ingredientId}","quantity":6.0,"unit":"piece","bestBefore":"2026-11-02"}"""),
             json.parseToJsonElement(sent.body.readUtf8()),
         )
-        assertEquals(egg, kept)
+        UUID.fromString(sent.getHeader("Idempotency-Key"))
+        assertEquals(Submitted.Sent(egg), kept)
+    }
+
+    @Test
+    fun `something put in whose answer was lost is kept, and sent again in its turn under the same key`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (answering) answer(201, "pantry-row-added") else MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+        }
+        val queue = changeQueue()
+        val pantry = repository(queue)
+
+        val kept = runBlocking { pantry.add(profileId, eggs, 6.0, "piece", null) }
+
+        assertEquals(Submitted.Kept(offline = true), kept)
+        answering = true
+        assertEquals(Drained.EMPTY, runBlocking { queue.drain { pantry.send(it as QueuedChange.PantryAdded) } })
+        val first = server.takeRequest()
+        val again = generateSequence { server.takeRequest(0, TimeUnit.SECONDS) }.last()
+        assertEquals(first.getHeader("Idempotency-Key"), again.getHeader("Idempotency-Key"))
+        assertEquals(first.body.readUtf8(), again.body.readUtf8())
     }
 
     @Test
     fun `something put in with no day says none, so that a row it adds to keeps its own`() {
         server.enqueue(answer(201, "pantry-row-added"))
 
-        runBlocking { repository().add(profileId, egg.ingredientId, 2.0, "piece", null) }
+        runBlocking { repository().add(profileId, eggs, 2.0, "piece", null) }
 
         assertEquals(json.parseToJsonElement("""{"profileId":"$profileId","ingredientId":"${egg.ingredientId}","quantity":2.0,"unit":"piece"}"""), sentBody())
     }
@@ -104,9 +145,9 @@ class PantryRepositoryTest {
         repeat(3) { server.enqueue(answer(200, "pantry-row-changed")) }
         val pantry = repository()
 
-        val kept = runBlocking { pantry.change(egg.id, PantryChange(quantity = 4.5, newDay = true, bestBefore = null)) }
-        runBlocking { pantry.change(egg.id, PantryChange(quantity = 2.0)) }
-        runBlocking { pantry.change(egg.id, PantryChange(newDay = true, bestBefore = LocalDate.parse("2026-10-30"))) }
+        val kept = runBlocking { pantry.change(profileId, egg.id, PantryChange(quantity = 4.5, newDay = true, bestBefore = null)) }
+        runBlocking { pantry.change(profileId, egg.id, PantryChange(quantity = 2.0)) }
+        runBlocking { pantry.change(profileId, egg.id, PantryChange(newDay = true, bestBefore = LocalDate.parse("2026-10-30"))) }
 
         val first = server.takeRequest()
         assertEquals("PATCH", first.method)
@@ -114,7 +155,7 @@ class PantryRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"quantity":4.5,"bestBefore":null}"""), json.parseToJsonElement(first.body.readUtf8()))
         assertEquals(json.parseToJsonElement("""{"quantity":2.0}"""), sentBody())
         assertEquals(json.parseToJsonElement("""{"bestBefore":"2026-10-30"}"""), sentBody())
-        assertEquals(egg.copy(shown = 4.5, bestBefore = null), kept)
+        assertEquals(Submitted.Sent(egg.copy(shown = 4.5, bestBefore = null)), kept)
     }
 
     @Test
@@ -123,8 +164,8 @@ class PantryRepositoryTest {
         server.enqueue(answer(400, "pantry-unit-not-convertible"))
         val pantry = repository()
 
-        val tooMuch = runCatching { runBlocking { pantry.change(garlic.id, PantryChange(quantity = 2000.0)) } }.exceptionOrNull() as ApiException
-        val notThatUnit = runCatching { runBlocking { pantry.add(profileId, milk.ingredientId, 2.0, "piece", null) } }.exceptionOrNull() as ApiException
+        val tooMuch = runCatching { runBlocking { pantry.change(profileId, garlic.id, PantryChange(quantity = 2000.0)) } }.exceptionOrNull() as ApiException
+        val notThatUnit = runCatching { runBlocking { pantry.add(profileId, milks, 2.0, "piece", null) } }.exceptionOrNull() as ApiException
 
         assertEquals(400 to "QUANTITY_TOO_LARGE", tooMuch.statusCode to tooMuch.code)
         assertEquals(400 to "UNIT_NOT_CONVERTIBLE", notThatUnit.statusCode to notThatUnit.code)
@@ -136,13 +177,31 @@ class PantryRepositoryTest {
         server.enqueue(answer(404, "pantry-row-unknown"))
         val pantry = repository()
 
-        runBlocking { pantry.remove(milk.id) }
-        val refused = runCatching { runBlocking { pantry.remove(milk.id) } }.exceptionOrNull() as ApiException
+        assertEquals(Submitted.Sent(Unit), runBlocking { pantry.remove(profileId, milk.id) })
+        val refused = runCatching { runBlocking { pantry.remove(profileId, milk.id) } }.exceptionOrNull() as ApiException
 
         val sent = server.takeRequest()
         assertEquals("DELETE", sent.method)
         assertEquals("/api/inventory/${milk.id}", sent.requestUrl!!.encodedPath)
         assertEquals(404 to "INVENTORY_ITEM_NOT_FOUND", refused.statusCode to refused.code)
+    }
+
+    @Test
+    fun `a row taken out whose answer was lost is done when the row is gone by the time it is sent again`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (answering) answer(404, "pantry-row-unknown") else MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+        }
+        val queue = changeQueue()
+        val pantry = repository(queue)
+
+        assertEquals(Submitted.Kept(offline = true), runBlocking { pantry.remove(profileId, milk.id) })
+        answering = true
+        assertEquals(Drained.EMPTY, runBlocking { queue.drain { pantry.send(it as QueuedChange.PantryRemoved) } })
+
+        assertTrue(runBlocking { queue.waiting.first() }.isEmpty())
+        assertTrue(runBlocking { queue.refused.first() }.isEmpty())
     }
 
     @Test
@@ -159,8 +218,8 @@ class PantryRepositoryTest {
         assertEquals("large egg", asked.queryParameter("search"))
         assertEquals("whole milk", server.takeRequest().requestUrl!!.queryParameter("search"))
         // Counted: in pieces alone.
-        assertEquals(listOf(StockableIngredient(egg.ingredientId, "Large egg", listOf("piece"), "piece", "piece")), eggs)
+        assertEquals(listOf(this.eggs), eggs)
         // Measured in millilitres, and weighed where a millilitre has a weight: millilitres first.
-        assertEquals(listOf(StockableIngredient(milk.ingredientId, "Whole milk", listOf("ml", "g"), "ml", "piece")), milks)
+        assertEquals(listOf(this.milks), milks)
     }
 }

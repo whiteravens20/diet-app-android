@@ -47,4 +47,38 @@ sealed interface QueuedChange {
     @Serializable
     @SerialName("weight-deleted")
     data class WeightDeleted(val profileId: String, val id: String) : DoneWhenGone
+
+    /**
+     * Some of an ingredient put into a profile's pantry, in [unit], best before [bestBefore]
+     * (yyyy-MM-dd) where it has a day; [name] and [category] as the screen shows it until the server
+     * has it.
+     */
+    @Serializable
+    @SerialName("pantry-added")
+    data class PantryAdded(
+        val profileId: String,
+        val ingredientId: String,
+        val name: String,
+        val category: String,
+        val quantity: Double,
+        val unit: String,
+        val bestBefore: String? = null,
+        override val key: String,
+    ) : Addition
+
+    /** A row of a pantry changed: its amount where [quantity] is given, its day ([bestBefore], or none) where [newDay]. */
+    @Serializable
+    @SerialName("pantry-changed")
+    data class PantryChanged(
+        val profileId: String,
+        val id: String,
+        val quantity: Double? = null,
+        val newDay: Boolean = false,
+        val bestBefore: String? = null,
+    ) : QueuedChange
+
+    /** A row of a pantry taken out. */
+    @Serializable
+    @SerialName("pantry-removed")
+    data class PantryRemoved(val profileId: String, val id: String) : DoneWhenGone
 }

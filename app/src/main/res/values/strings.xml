@@ -154,6 +154,9 @@
     <string name="change_kind_eaten">a meal\'s eaten mark</string>
     <string name="change_kind_weight_logged">a new weight entry</string>
     <string name="change_kind_weight_deleted">a weight entry\'s removal</string>
+    <string name="change_kind_pantry_added">a new pantry item</string>
+    <string name="change_kind_pantry_changed">a change of a pantry item</string>
+    <string name="change_kind_pantry_removed">a pantry item\'s removal</string>
     <string name="change_kind_unreadable">a change this version of the app cannot read</string>
     <string name="change_unreadable">Make it again.</string>
     <string name="change_unsendable">The server\'s answer could not be read: check whether the change was saved.</string>

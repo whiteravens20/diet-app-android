@@ -199,9 +199,12 @@ interface DietApiService {
     @GET("inventory")
     suspend fun pantry(@Query("profileId") profileId: String): List<InventoryItemDto>
 
-    /** Puts some of an ingredient into a profile's pantry; answers the row it is kept in. */
+    /**
+     * Puts some of an ingredient into a profile's pantry; answers the row it is kept in. Sent again
+     * with the same [key], it is answered with that row as it is now and adds nothing.
+     */
     @POST("inventory")
-    suspend fun addToPantry(@Body body: UpsertInventoryItemRequest): InventoryItemDto
+    suspend fun addToPantry(@Header("Idempotency-Key") key: String?, @Body body: UpsertInventoryItemRequest): InventoryItemDto
 
     /** Changes a row of the pantry; answers it as it is kept now. */
     @PATCH("inventory/{id}")

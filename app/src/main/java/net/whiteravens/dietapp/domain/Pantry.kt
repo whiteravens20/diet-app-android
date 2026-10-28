@@ -25,6 +25,8 @@ data class PantryRow(
 data class StockableIngredient(
     val id: String,
     val name: String,
+    /** The category the pantry groups it under. */
+    val category: String,
     val units: List<String>,
     val unit: String,
     val pieceName: String,
