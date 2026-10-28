@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.ListenableWorker
@@ -38,7 +39,7 @@ import org.junit.runner.RunWith
  * The account's notifications on the phone, against the instance the CI starts: it makes an account
  * whose two profiles, Ala and Ola, have two notifications each, and names it in the arguments
  * `phoneEmail` and `phonePassword`. The background work is run by WorkManager's test builder, the
- * way Android would run it once its period came.
+ * way Android would run it once its period came; the read on coming to the front, by WorkManager.
  */
 @RunWith(AndroidJUnit4::class)
 class PhoneNotificationsTest {
@@ -59,6 +60,9 @@ class PhoneNotificationsTest {
             .filter { it.notification.channelId == PhoneNotifier.CHANNEL && (it.notification.flags and Notification.FLAG_GROUP_SUMMARY) == 0 }
             .map { it.notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString() to it.notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString() }
             .sortedBy { it.toString() }
+
+    private fun readAtTheFront(): Boolean =
+        WorkManager.getInstance(context).getWorkInfosForUniqueWork(PhoneNotificationsSwitch.NOW).get().any { it.state == WorkInfo.State.SUCCEEDED }
 
     private fun runTheWork() {
         val worker = TestListenableWorkerBuilder.from(context, NotificationsWorker::class.java).build()
@@ -94,6 +98,12 @@ class PhoneNotificationsTest {
         // Each is shown once: put away, the next run does not show them again.
         context.getSystemService(NotificationManager::class.java).cancelAll()
         runTheWork()
+        assertEquals(emptyList<Pair<String, String>>(), shown())
+
+        // Coming back to the front reads them at once, and shows none of them again either.
+        screen.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        screen.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        screen.waitUntil(15_000) { readAtTheFront() }
         assertEquals(emptyList<Pair<String, String>>(), shown())
 
         // A tap opens the application's list of them.
