@@ -13,6 +13,8 @@ import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.HealthDto
 import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.Supply
+import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import retrofit2.HttpException
@@ -103,8 +105,13 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
                 maxRepeatsPerRecipe = config.plans.maxRepeatsPerRecipe,
                 operatorContact = config.instance.operatorContact,
                 supportUrl = config.instance.supportUrl,
-                catalogueDepth = config.catalogue.depth.mapValues { (_, byCount) ->
-                    byCount.mapNotNull { (count, recipes) -> count.toIntOrNull()?.let { it to recipes } }.toMap()
+                catalogueSupply = config.catalogue.supply.mapValues { (_, byCount) ->
+                    // A level this version does not know says nothing it could show.
+                    byCount.mapNotNull { (count, supply) ->
+                        val meals = count.toIntOrNull()
+                        val level = SupplyLevel.entries.firstOrNull { it.name.equals(supply.level, ignoreCase = true) }
+                        if (meals == null || level == null) null else meals to Supply(level, supply.recipes, supply.fewerMeals)
+                    }.toMap()
                 },
             )
             val version = config.instance.version

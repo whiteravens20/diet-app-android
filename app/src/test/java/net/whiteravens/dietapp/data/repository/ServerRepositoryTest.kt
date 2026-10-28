@@ -16,6 +16,8 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
+import net.whiteravens.dietapp.domain.Supply
+import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
@@ -29,7 +31,7 @@ import javax.net.ssl.SSLHandshakeException
 /**
  * The server's version as the app asks for it, with `GET /config` through the client the app
  * uses for it, against a local server. The answers are the one a running backend gave
- * (`config.json`, API 0.127.0, the version in contract/API_VERSION), and that answer with another
+ * (`config.json`, API 0.136.0, the version in contract/API_VERSION), and that answer with another
  * version in it.
  */
 class ServerRepositoryTest {
@@ -88,7 +90,27 @@ class ServerRepositoryTest {
 
         val rules = checkNotNull(repository.rules.value)
         assertEquals(2, rules.maxProfiles)
-        assertEquals(mapOf(2 to 39, 3 to 39, 4 to 35, 5 to 35), rules.catalogueDepth["balanced"])
+        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 39, fewerMeals = 2), rules.supplyOf("balanced", 3))
+        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 35, fewerMeals = 4), rules.supplyOf("balanced", 5))
+    }
+
+    @Test
+    fun `the catalogue's supply is kept as the API says it, and a level this version does not know is left out`() {
+        val captured = json.parseToJsonElement(fixture("config")).jsonObject
+        val vegan = json.parseToJsonElement(
+            """{"3":{"level":"thin","recipes":2,"fewerMeals":2},"4":{"level":"none","recipes":0,"fewerMeals":3},"5":{"level":"plenty","recipes":50,"fewerMeals":4}}""",
+        )
+        val supply = captured.getValue("catalogue").jsonObject.getValue("supply").jsonObject
+        server.enqueue(answer(JsonObject(captured + ("catalogue" to JsonObject(mapOf("supply" to JsonObject(supply + ("vegan" to vegan)))))).toString()))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+
+        val rules = checkNotNull(repository.rules.value)
+        assertEquals(Supply(SupplyLevel.THIN, recipes = 2, fewerMeals = 2), rules.supplyOf("vegan", 3))
+        assertEquals(Supply(SupplyLevel.NONE, recipes = 0, fewerMeals = 3), rules.supplyOf("vegan", 4))
+        assertEquals(null, rules.supplyOf("vegan", 5))
+        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 39, fewerMeals = 2), rules.supplyOf("balanced", 3))
     }
 
     @Test
@@ -130,7 +152,7 @@ class ServerRepositoryTest {
         runBlocking { repository.refresh() }
 
         assertEquals(InstanceRules.DEFAULT_MAX_PROFILES, repository.rules.value?.maxProfiles)
-        assertEquals(emptyMap<String, Map<Int, Int>>(), repository.rules.value?.catalogueDepth)
+        assertEquals(emptyMap<String, Map<Int, Supply>>(), repository.rules.value?.catalogueSupply)
     }
 
     @Test

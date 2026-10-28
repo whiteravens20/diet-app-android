@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Diet App API",
-    "version": "0.127.0",
+    "version": "0.136.0",
     "description": "What the API of Diet App is asked and what it answers. Written by `npm run contract` from the controllers and from the schemas of `@diet-app/shared`; the integration tests hold every answer to the schema its route names here.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -2874,8 +2874,8 @@
         "tags": [
           "config"
         ],
-        "summary": "What a page has to know before anybody has signed in: whether signing up asks for a challenge, whether mail is on, what AI the instance offers and how deep its catalogue is.",
-        "description": "What a page has to know before anybody has signed in: whether signing up asks for a challenge, whether mail is on, what AI the instance offers and how deep its catalogue is.\n\nAsked by anyone.",
+        "summary": "What a page has to know before anybody has signed in: whether signing up asks for a challenge, whether mail is on, what AI the instance offers and how well its catalogue serves each diet.",
+        "description": "What a page has to know before anybody has signed in: whether signing up asks for a challenge, whether mail is on, what AI the instance offers and how well its catalogue serves each diet.\n\nAsked by anyone.",
         "security": [],
         "responses": {
           "200": {
@@ -3947,6 +3947,80 @@
         }
       }
     },
+    "/api/meal-plans/{id}/days/{dayId}/regenerate/preview": {
+      "post": {
+        "operationId": "MealPlans_previewRegenerateDay",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "What re-rolling the meals of a single day would do, as the preview of the plan says it of that day.",
+        "description": "What re-rolling the meals of a single day would do, as the preview of the plan says it of that day.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateDayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerollPreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 60,
+          "seconds": 60
+        }
+      }
+    },
     "/api/meal-plans/{id}/days/{dayId}/settings": {
       "put": {
         "operationId": "MealPlans_applyDaySettings",
@@ -4594,6 +4668,71 @@
         },
         "x-rate-limit": {
           "times": 20,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/meal-plans/{id}/regenerate/preview": {
+      "post": {
+        "operationId": "MealPlans_previewRegenerate",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "What making a plan again, or the days of it that the request names, would do to it as it stands: the days and the meals replaced, and what is kept and why, read as the re-roll reads the plan.",
+        "description": "What making a plan again, or the days of it that the request names, would do to it as it stands: the days and the meals replaced, and what is kept and why, read as the re-roll reads the plan. Nothing is drawn and nothing is written. Asked again as the choice changes in a window, so it is held to what a window asks for in a minute.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerollPreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 60,
           "seconds": 60
         }
       }
@@ -7855,6 +7994,68 @@
           }
         }
       }
+    },
+    "/api/weights/days": {
+      "get": {
+        "operationId": "Weights_days",
+        "tags": [
+          "weights"
+        ],
+        "summary": "The weights of a profile by day, as a chart draws them: each day's last entry and the mean of the seven days that end with it, the oldest day first.",
+        "description": "The weights of a profile by day, as a chart draws them: each day's last entry and the mean of the seven days that end with it, the oldest day first. A day is one of the time zone the client names (`?timeZone=`); `?since=` leaves out the days before the one it falls on.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "timeZone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeightDay"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8888,20 +9089,7 @@
           "issues": {
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "path",
-                "message"
-              ],
-              "additionalProperties": false
+              "$ref": "#/components/schemas/ApiErrorIssue"
             }
           },
           "details": {
@@ -8916,6 +9104,35 @@
           "statusCode",
           "error",
           "message"
+        ],
+        "additionalProperties": false
+      },
+      "ApiErrorIssue": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "minimum": {
+            "type": "number"
+          },
+          "maximum": {
+            "type": "number"
+          },
+          "inclusive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "message",
+          "code"
         ],
         "additionalProperties": false
       },
@@ -9401,7 +9618,14 @@
           "below_bmr"
         ]
       },
-      "CatalogueDepth": {
+      "CatalogueScope": {
+        "type": "string",
+        "enum": [
+          "curated",
+          "all"
+        ]
+      },
+      "CatalogueSupply": {
         "type": "object",
         "propertyNames": {
           "$ref": "#/components/schemas/DietType"
@@ -9412,8 +9636,7 @@
             "$ref": "#/components/schemas/MealCountKey"
           },
           "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
+            "$ref": "#/components/schemas/Supply"
           },
           "required": [
             "2",
@@ -9431,13 +9654,6 @@
           "keto",
           "mediterranean",
           "custom"
-        ]
-      },
-      "CatalogueScope": {
-        "type": "string",
-        "enum": [
-          "curated",
-          "all"
         ]
       },
       "CatalogueUpdateState": {
@@ -11021,6 +11237,20 @@
               "string",
               "null"
             ]
+          },
+          "recipeUnits": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Unit"
+            }
+          },
+          "pantryUnits": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Unit"
+            }
           }
         },
         "required": [
@@ -11042,7 +11272,9 @@
           "packSize",
           "perishable",
           "brand",
-          "storageHint"
+          "storageHint",
+          "recipeUnits",
+          "pantryUnits"
         ],
         "additionalProperties": false
       },
@@ -14687,12 +14919,12 @@
           "catalogue": {
             "type": "object",
             "properties": {
-              "depth": {
-                "$ref": "#/components/schemas/CatalogueDepth"
+              "supply": {
+                "$ref": "#/components/schemas/CatalogueSupply"
               }
             },
             "required": [
-              "depth"
+              "supply"
             ],
             "additionalProperties": false
           },
@@ -14724,10 +14956,36 @@
                     "type": "null"
                   }
                 ]
+              },
+              "mealSlots": {
+                "type": "object",
+                "propertyNames": {
+                  "$ref": "#/components/schemas/MealCountKey"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MealType"
+                  }
+                },
+                "required": [
+                  "2",
+                  "3",
+                  "4",
+                  "5"
+                ]
+              },
+              "relaxations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PlanRelaxation"
+                }
               }
             },
             "required": [
-              "maxRepeatsPerRecipe"
+              "maxRepeatsPerRecipe",
+              "mealSlots",
+              "relaxations"
             ],
             "additionalProperties": false
           }
@@ -16277,6 +16535,99 @@
         ],
         "additionalProperties": false
       },
+      "RerollPreview": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "replaced": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kept": {
+            "type": "object",
+            "properties": {
+              "outside": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "past": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "eaten": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "custom": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "locked": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "outside",
+              "past",
+              "skipped",
+              "eaten",
+              "custom",
+              "locked"
+            ],
+            "additionalProperties": false
+          },
+          "couldGo": {
+            "type": "object",
+            "properties": {
+              "past": {
+                "type": "boolean"
+              },
+              "eaten": {
+                "type": "boolean"
+              },
+              "custom": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "past",
+              "eaten",
+              "custom"
+            ],
+            "additionalProperties": false
+          },
+          "fromToday": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "not_begun",
+                  "over"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "days",
+          "replaced",
+          "kept",
+          "couldGo",
+          "fromToday"
+        ],
+        "additionalProperties": false
+      },
       "RestoredFromInstanceData": {
         "type": "object",
         "properties": {
@@ -17279,6 +17630,41 @@
           "excluded_ingredient"
         ]
       },
+      "Supply": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "none",
+              "thin",
+              "enough"
+            ]
+          },
+          "recipes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "fewerMeals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 4
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "level",
+          "recipes",
+          "fewerMeals"
+        ],
+        "additionalProperties": false
+      },
       "SwapIngredientRequest": {
         "type": "object",
         "properties": {
@@ -17885,6 +18271,27 @@
             "type": "boolean"
           }
         }
+      },
+      "WeightDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "kg": {
+            "type": "number"
+          },
+          "mean": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "kg",
+          "mean"
+        ],
+        "additionalProperties": false
       },
       "WeightEntry": {
         "type": "object",

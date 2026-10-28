@@ -32,7 +32,7 @@ import java.io.IOException
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConfirmEmailViewModelTest {
     private val users = mockk<UserRepository>()
-    private val rules = MutableStateFlow<InstanceRules?>(InstanceRules(maxProfiles = 2, catalogueDepth = emptyMap(), mailsSent = true))
+    private val rules = MutableStateFlow<InstanceRules?>(InstanceRules(maxProfiles = 2, catalogueSupply = emptyMap(), mailsSent = true))
     private val instance = mockk<ServerRepository> { every { rules } returns this@ConfirmEmailViewModelTest.rules }
 
     private fun account(confirmed: Boolean) = SessionUser("u", "ala@example.test", "Ala", confirmed, "pl", aiMode = "none")

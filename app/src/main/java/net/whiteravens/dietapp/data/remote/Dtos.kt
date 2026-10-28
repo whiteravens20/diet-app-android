@@ -56,11 +56,19 @@ data class PlansConfigDto(val maxRepeatsPerRecipe: Int? = null)
 data class AccountsConfigDto(val maxProfiles: Int = 2)
 
 /**
- * How many recipes the catalogue has for the meal a diet has the fewest for, at each number of
- * meals a day (`"2"` to `"5"`): what tells a diet with no recipe, or few, for a plan.
+ * How well the catalogue serves each diet at each number of meals a day (`"2"` to `"5"`), as the
+ * API says it: what tells a diet with no recipe, or few, for a plan.
  */
 @Serializable
-data class CatalogueConfigDto(val depth: Map<String, Map<String, Int>> = emptyMap())
+data class CatalogueConfigDto(val supply: Map<String, Map<String, SupplyDto>> = emptyMap())
+
+/**
+ * How well the catalogue serves a diet at a number of meals a day: `none`, `thin` or `enough`, by
+ * the recipes the thinnest meal of the day has, and the largest smaller number of meals a day it
+ * can make a plan for.
+ */
+@Serializable
+data class SupplyDto(val level: String, val recipes: Int, val fewerMeals: Int? = null)
 
 /** Whether the instance sends mail at all: a confirmation mail or a password reset needs it. */
 @Serializable

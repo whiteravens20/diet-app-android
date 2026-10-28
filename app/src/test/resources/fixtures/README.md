@@ -1,7 +1,7 @@
 # Answers of a running backend
 
 Each file is what a running diet-app answered one call of this client: `config.json` from API
-0.127.0, captured on 2026-10-27 from an install of 0.108.0 upgraded to the candidate `edge-13beb18`; `weights.json`, `weight-logged.json`,
+0.136.0, captured on 2026-10-28 from an install of 0.127.0 upgraded to the candidate `edge-3b70f02`; `weights.json`, `weight-logged.json`,
 `weight-entry-unknown.json` and `users-me-in-pounds.json` from API 0.19.0, captured on 2026-10-16;
 `account-sessions.json`, `account-session-unknown.json`, `second-factor-off.json`,
 `second-factor-setup.json`, `second-factor-code-wrong.json`, `second-factor-on.json`,
