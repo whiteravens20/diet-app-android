@@ -1,1 +1,0 @@
-{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"currentPassword","message":"Invalid input: expected string, received undefined"}]}

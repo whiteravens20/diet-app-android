@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.data.remote
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import net.whiteravens.dietapp.domain.FieldRefusal
 import retrofit2.HttpException
 
 /**
@@ -23,9 +24,20 @@ class ApiException(
     val details: JsonObject? = null,
 ) : Exception(message) {
 
+    /**
+     * Why each field a refused form named was refused, by the field's path, in the order the refusal
+     * names them: the first refusal of a field that has several. None for a refusal of anything else.
+     */
+    val fieldRefusals: Map<String, FieldRefusal>
+        get() = if (code == VALIDATION_FAILED) {
+            issues.filter { it.path.isNotEmpty() }.distinctBy { it.path }.associate { it.path to it.refusal() }
+        } else {
+            emptyMap()
+        }
+
     /** The fields a refused form named, each once, in the order the refusal names them. */
     val refusedFields: List<String>
-        get() = if (code == VALIDATION_FAILED) issues.map { it.path }.filter { it.isNotEmpty() }.distinct() else emptyList()
+        get() = fieldRefusals.keys.toList()
 
     companion object {
         /** The code given to an answer that is not the API's own refusal (a proxy's page, an HTML error). */
@@ -47,6 +59,13 @@ class ApiException(
             }
         }
     }
+}
+
+/** The kind of refusal and its bound, where the API named one. */
+private fun ApiErrorIssueDto.refusal(): FieldRefusal = when {
+    code == "too_small" && minimum != null -> FieldRefusal.TooSmall(minimum, inclusive ?: true)
+    code == "too_big" && maximum != null -> FieldRefusal.TooBig(maximum, inclusive ?: true)
+    else -> FieldRefusal.Other
 }
 
 /**

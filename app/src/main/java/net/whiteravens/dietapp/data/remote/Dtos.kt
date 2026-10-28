@@ -19,8 +19,23 @@ import kotlinx.serialization.json.JsonObject
 
 // ── Error envelope (packages/shared/src/error.ts) ───────────────────────────
 
+/**
+ * A field a request was refused for: where it is, the API's English sentence, and the kind of
+ * refusal with its bound, which the client words itself.
+ */
 @Serializable
-data class ApiErrorIssueDto(val path: String, val message: String)
+data class ApiErrorIssueDto(
+    val path: String,
+    val message: String,
+    /** Zod's kind of refusal: `too_small`, `too_big`, `custom`, and others. */
+    val code: String,
+    /** The least the field takes, where it held too little. */
+    val minimum: Double? = null,
+    /** The most the field takes, where it held too much. */
+    val maximum: Double? = null,
+    /** Whether the bound itself is taken. */
+    val inclusive: Boolean? = null,
+)
 
 /** Uniform error envelope for every non-2xx API response. */
 @Serializable

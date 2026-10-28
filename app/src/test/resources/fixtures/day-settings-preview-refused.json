@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"calorieTarget","message":"Too small: expected number to be >=800","code":"too_small","minimum":800,"inclusive":true},{"path":"cookTimeBudgetMinutes","message":"Too big: expected number to be <=600","code":"too_big","maximum":600,"inclusive":true}]}

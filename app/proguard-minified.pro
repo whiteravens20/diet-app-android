@@ -8,6 +8,11 @@
 -keep class net.whiteravens.dietapp.BuildConfig { *; }
 -keep class net.whiteravens.dietapp.MainActivity { *; }
 -keep class net.whiteravens.dietapp.ui.common.LabelsKt { *; }
+-keep class net.whiteravens.dietapp.ui.common.FieldRefusalsKt { *; }
+-keep class net.whiteravens.dietapp.ui.common.Bound { *; }
+-keep class net.whiteravens.dietapp.ui.common.Bound$* { *; }
+-keep class net.whiteravens.dietapp.domain.FieldRefusal { *; }
+-keep class net.whiteravens.dietapp.domain.FieldRefusal$* { *; }
 -keep class net.whiteravens.dietapp.data.remote.ApiException { *; }
 -keep class net.whiteravens.dietapp.data.remote.ApiErrorIssueDto { *; }
 -keep class net.whiteravens.dietapp.data.auth.AesGcmSealer { *; }

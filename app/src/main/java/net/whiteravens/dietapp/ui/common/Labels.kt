@@ -197,9 +197,6 @@ private fun refusalText(error: ApiException): String {
         val minutes = (wait + 59) / 60
         return pluralStringResource(R.plurals.error_held_up_minutes, minutes, minutes)
     }
-    if (error.refusedFields.isNotEmpty()) {
-        return stringResource(R.string.error_validation_failed_fields, error.refusedFields.joinToString(", "))
-    }
     unfilledMeal(error)?.let { return it }
     ERROR_TEXTS[error.code]?.let { return stringResource(it) }
     if (error.code.startsWith(ApiException.NOT_THE_API)) return stringResource(R.string.error_not_the_api, error.statusCode)

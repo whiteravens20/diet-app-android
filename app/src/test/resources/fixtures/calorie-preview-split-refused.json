@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"customMacroSplit.protein","message":"Too small: expected number to be >=10","code":"too_small","minimum":10,"inclusive":true},{"path":"customMacroSplit.fat","message":"Too big: expected number to be <=75","code":"too_big","maximum":75,"inclusive":true}]}

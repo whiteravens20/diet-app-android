@@ -4,6 +4,10 @@ package net.whiteravens.dietapp.data.remote
 
 import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.FieldRefusal.Other
+import net.whiteravens.dietapp.domain.FieldRefusal.TooBig
+import net.whiteravens.dietapp.domain.FieldRefusal.TooSmall
+import net.whiteravens.dietapp.testing.fixture
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
@@ -20,32 +24,46 @@ class ApiExceptionTest {
         HttpException(Response.error<Any>(status, body.toResponseBody(type.toMediaType())))
 
     @Test
-    fun `a refused form names each field it refused once, in the order the refusal names them`() {
-        val refusal = ApiException.from(
-            answered(
-                400,
-                """{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.",
-                    "issues":[{"path":"email","message":"Invalid email"},{"path":"password","message":"Too short"},
-                              {"path":"email","message":"Too long"},{"path":"","message":"Unrecognized key"}]}""",
-            ),
-            json,
-        )
+    fun `a refused form names each field it refused once, in the order the refusal names them, with the kind of refusal and its bound`() {
+        val profile = ApiException.from(answered(400, fixture("profile-refused")), json)
 
-        assertEquals("VALIDATION_FAILED", refusal.code)
-        assertEquals(listOf("email", "password"), refusal.refusedFields)
+        assertEquals("VALIDATION_FAILED", profile.code)
+        assertEquals(
+            mapOf(
+                "name" to TooSmall(1.0, inclusive = true),
+                "age" to TooBig(120.0, inclusive = true),
+                "targetWeightKg" to TooBig(400.0, inclusive = true),
+                "preferences.maxConsecutiveDaysSameMeal" to TooBig(7.0, inclusive = true),
+                "preferences.maxTimesPerWeekSameMeal" to TooSmall(1.0, inclusive = true),
+                "preferences.kindLimits.0.perDay" to TooBig(5.0, inclusive = true),
+                "preferences.kindLimits.0.perWeek" to TooBig(35.0, inclusive = true),
+                "preferences.inventoryBiasResetEvery" to TooBig(20.0, inclusive = true),
+            ),
+            profile.fieldRefusals,
+        )
+        assertEquals(profile.fieldRefusals.keys.toList(), profile.refusedFields)
     }
 
     @Test
-    fun `issues of a refusal that is not about fields name no field`() {
-        val refusal = ApiException.from(
-            answered(
-                400,
-                """{"statusCode":400,"error":"BAD_REQUEST","message":"No.","issues":[{"path":"email","message":"Invalid email"}]}""",
-            ),
-            json,
-        )
+    fun `a field refused for several things is named by the first, and one refused for no kind the app words, or for nothing in a field, is told apart`() {
+        // A password too short, without a capital letter and without a digit.
+        val password = ApiException.from(answered(400, fixture("auth-register-weak-password")), json)
+        // A number that is not whole, beside a key the route does not know, which is no field.
+        val preferences = ApiException.from(answered(400, fixture("preferences-not-whole-and-unknown")), json)
+        // Three shares that do not add up to a hundred: the split as a whole is refused.
+        val split = ApiException.from(answered(400, fixture("calorie-preview-split-sum-refused")), json)
 
-        assertEquals(emptyList<String>(), refusal.refusedFields)
+        assertEquals(mapOf("password" to TooSmall(12.0, inclusive = true)), password.fieldRefusals)
+        assertEquals(mapOf("inventoryBiasResetEvery" to Other), preferences.fieldRefusals)
+        assertEquals(mapOf("customMacroSplit" to Other), split.fieldRefusals)
+    }
+
+    @Test
+    fun `a refusal of anything but a form's fields names no field`() {
+        val refusal = ApiException.from(answered(400, fixture("pantry-unit-not-convertible")), json)
+
+        assertEquals("UNIT_NOT_CONVERTIBLE", refusal.code)
+        assertEquals(emptyMap<String, Any>(), refusal.fieldRefusals)
     }
 
     @Test

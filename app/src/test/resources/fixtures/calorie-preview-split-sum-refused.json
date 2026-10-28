@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"customMacroSplit","message":"The three shares have to add up to 100.","code":"custom"}]}

@@ -9,8 +9,15 @@ garlic in twenty days and 212.4 g of oats in two hundred), `pantry-row-added.jso
 three weeks, by day in Europe/Warsaw from ten days back), `reroll-preview.json`,
 `reroll-preview-replace-eaten.json` and `reroll-preview-skipped-day.json` (a plan of three days
 from today, the first day's breakfast eaten and the second skipped with its breakfast eaten: the
-whole plan, the same with the eaten meals replaced, and the skipped day alone) from the same
-version, captured the same day from an instance of diet-app's `dev` at `3b70f02`;
+whole plan, the same with the eaten meals replaced, and the skipped day alone),
+`calorie-preview-refused.json`, `calorie-preview-split-refused.json`,
+`calorie-preview-split-sum-refused.json`, `profile-refused.json`, `profile-name-too-long.json`,
+`preferences-refused.json`, `plan-refused.json`, `custom-meal-refused.json`,
+`day-settings-preview-refused.json`, `weight-refused.json` and `recipes-refused.json` (each form's
+fields sent out of their bounds), `auth-register-weak-password.json` (a password refused for three
+things) and `preferences-not-whole-and-unknown.json` (a number that is not whole beside a key the
+route does not know) from the same version, captured the same day from an instance of diet-app's
+`dev` at `3b70f02`;
 `weights.json`, `weight-logged.json`, `weight-entry-unknown.json` and `users-me-in-pounds.json`
 from API 0.19.0, captured on 2026-10-16;
 `account-sessions.json`, `account-session-unknown.json`, `second-factor-off.json`,
