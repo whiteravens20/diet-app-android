@@ -64,8 +64,9 @@ class ProfilesTest {
         type(text(R.string.profile_age), "30")
         type(text(R.string.profile_height_cm), "168")
         type(text(R.string.profile_weight, unit.code), "70")
-        // What the figures come to is shown as they are typed.
+        // What the figures come to is shown as they are typed, said to be no medical advice.
         screen.waitForText(text(R.string.calorie_preview_daily_target))
+        screen.waitForText(text(R.string.calorie_preview_not_advice, text(R.string.calorie_preview_terms)))
         screen.keepScreenshot("profiles-first-body")
         press(text(R.string.common_next))
 

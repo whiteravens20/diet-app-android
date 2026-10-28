@@ -1075,6 +1075,8 @@
     <string name="calorie_preview_over">%1$s kcal a day over your maintenance.</string>
     <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g a day.</string>
     <string name="calorie_preview_said">Daily target: %1$s kcal.</string>
+    <string name="calorie_preview_not_advice">An approximation for a healthy adult, not medical advice. More in the %1$s.</string>
+    <string name="calorie_preview_terms">terms</string>
     <string name="calculator_title">Calculator</string>
     <string name="pickers_ingredient_search">Search ingredients…</string>
     <string name="pickers_none_yet">None yet.</string>

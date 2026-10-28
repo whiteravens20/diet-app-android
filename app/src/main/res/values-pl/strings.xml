@@ -1161,6 +1161,8 @@
     <string name="calorie_preview_over">%1$s kcal dziennie powyżej Twojego zapotrzebowania.</string>
     <string name="calorie_preview_macros">Białko %1$s g · tłuszcz %2$s g · węglowodany %3$s g dziennie.</string>
     <string name="calorie_preview_said">Cel dzienny: %1$s kcal.</string>
+    <string name="calorie_preview_not_advice">To przybliżenie dla zdrowej osoby dorosłej, a nie porada medyczna. Więcej w %1$s.</string>
+    <string name="calorie_preview_terms">regulaminie</string>
     <string name="calculator_title">Kalkulator</string>
     <string name="pickers_ingredient_search">Szukaj składników…</string>
     <string name="pickers_none_yet">Jeszcze nic.</string>

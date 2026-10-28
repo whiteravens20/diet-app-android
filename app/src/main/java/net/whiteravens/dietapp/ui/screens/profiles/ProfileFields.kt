@@ -49,10 +49,15 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CaloriePreview
@@ -69,6 +74,7 @@ import net.whiteravens.dietapp.ui.common.proteinKindLabel
 import net.whiteravens.dietapp.ui.common.reminderCadenceLabel
 import net.whiteravens.dietapp.ui.common.sexLabel
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.rememberWebPages
 
 /*
  * The fields a profile is made of, as every form that asks for them shows them: the form of a
@@ -640,12 +646,13 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, showProblems: Boolean, onE
 /**
  * What the form's figures come to: the target of a day, maintenance, what the body uses at rest,
  * the grams of protein, fat and carbohydrate, and what stands behind a target that is not simply
- * maintenance less the pace. The warnings for somebody under 18 or underweight are the form's own
- * to give, with the box that answers them. What is shown dims while it belongs to figures typed a
- * moment ago.
+ * maintenance less the pace, and that the figures are no medical advice, with the instance's terms
+ * that say more. The warnings for somebody under 18 or underweight are the form's own to give, with
+ * the box that answers them. What is shown dims while it belongs to figures typed a moment ago.
  */
 @Composable
 internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiting: Boolean, failed: Boolean, modifier: Modifier = Modifier) {
+    val web = rememberWebPages()
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -701,6 +708,7 @@ internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiti
                             }
                         }
                     }
+                    NotAdvice(onTerms = { web.open("terms") })
                 }
                 // There are figures to work out, and the answer is on its way: nothing is asked of the reader.
                 waiting -> {
@@ -730,6 +738,29 @@ internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiti
 
 @Composable
 private fun kcal(value: Double): String = stringResource(R.string.calorie_preview_kcal, formatNumber(value))
+
+/** That the figures are an approximation and no medical advice, with the instance's terms, which say more, as a link. */
+@Composable
+private fun NotAdvice(onTerms: () -> Unit) {
+    val link = stringResource(R.string.calorie_preview_terms)
+    val whole = stringResource(R.string.calorie_preview_not_advice, link)
+    val linked = MaterialTheme.colorScheme.primary
+    val text = buildAnnotatedString {
+        append(whole)
+        val start = whole.indexOf(link)
+        if (start >= 0) {
+            addLink(
+                LinkAnnotation.Clickable(
+                    tag = "terms",
+                    styles = TextLinkStyles(SpanStyle(color = linked, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline)),
+                ) { onTerms() },
+                start,
+                start + link.length,
+            )
+        }
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
 
 @Composable
 private fun Figure(label: String, value: String) {
