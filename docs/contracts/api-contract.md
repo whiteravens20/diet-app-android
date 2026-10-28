@@ -59,7 +59,11 @@ app words it as the web application does, from the code and never from the Engli
 
 - a 429 with `Retry-After` says how long to wait, in seconds, or in minutes past a minute and
   a half;
-- `VALIDATION_FAILED` names the fields its `issues` name, and the sign-in form marks them;
+- `VALIDATION_FAILED` marks each field its `issues` name on the form that sent it, said from
+  the kind of refusal and its bound (at least, at most, a number of characters) in the field's
+  own unit;
+- `RECIPE_INVALID` marks the field of each place its `details` name, by the rule broken there,
+  and `RECIPE_ALREADY_YOURS` offers to open the recipe of one's own its `details` name;
 - `NO_ELIGIBLE_RECIPE` names the meal and the diet its `details` name, and tells a catalogue
   without a recipe for them from a profile that rules out every one there is;
 - any other code reads as its sentence in `contract/errors.json`, in the language of the app;
