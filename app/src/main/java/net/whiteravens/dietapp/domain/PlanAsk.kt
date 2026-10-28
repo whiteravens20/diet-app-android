@@ -116,3 +116,27 @@ data class Reroll(
     val dropIneligibleLocks: Boolean = false,
     val allowRelaxations: List<String>? = null,
 )
+
+/**
+ * What a [Reroll] would do to a plan as it stands, as the API reads it before anything is drawn: the
+ * [days] that get other meals and the meals [replaced] on them, what is [kept] as it is and why, what
+ * the days asked for hold that could go as well ([couldGo]), and why the days from today on are no
+ * choice of their own ([fromToday]: `not_begun` or `over`), null where they are one.
+ */
+data class RerollPreview(
+    val days: Int,
+    val replaced: Int,
+    val kept: RerollKept,
+    val couldGo: RerollCouldGo,
+    val fromToday: String?,
+)
+
+/**
+ * What a re-roll keeps as it is: the days not asked for ([outside]), those before today ([past]),
+ * those the user skips, and on the days filled again the meals eaten, of the user's own ([custom])
+ * and locked to their recipe.
+ */
+data class RerollKept(val outside: Int, val past: Int, val skipped: Int, val eaten: Int, val custom: Int, val locked: Int)
+
+/** Whether the days asked for hold days before today, and on the days filled again meals eaten or of the user's own: what a tick could let go. */
+data class RerollCouldGo(val past: Boolean, val eaten: Boolean, val custom: Boolean)

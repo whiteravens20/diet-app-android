@@ -403,6 +403,7 @@
     <string name="plans_reroll_nothing_past">Wybrane dni już minęły, a dni, które minęły, zostają bez zmian. Zaznacz powyżej „Dni, które już minęły”, żeby ułożyć ponownie również je.</string>
     <string name="plans_reroll_nothing_kept">W wybranych dniach nic by się nie zmieniło.</string>
     <string name="plans_reroll_confirm">Ułóż ponownie</string>
+    <string name="plans_reroll_preview_failed">Nie udało się sprawdzić, co się zmieni.</string>
     <string name="plans_other_ways">Inne warianty…</string>
     <string name="plans_ways_title">Inne warianty dnia %1$s</string>
     <string name="plans_ways_intro">Każdy z nich to dzień, który planer ułożyłby dla tego planu: w jego limitach, wokół tego, co w dniu zostaje. Nic się nie zmienia, dopóki żadnego nie wybierzesz.</string>

@@ -102,6 +102,8 @@ class PlansTest {
         screen.scrollToText(text(R.string.plans_recalculate))
         screen.onNodeWithText(text(R.string.plans_recalculate)).performClick()
         screen.waitForText(text(R.string.plans_reroll_title))
+        // The button waits for the API's answer to the choice on the screen.
+        screen.waitForEnabled(text(R.string.plans_reroll_confirm))
         screen.keepScreenshot("plans-make-again")
         screen.onNodeWithText(text(R.string.plans_reroll_confirm)).performClick()
         screen.waitForTheApi(60_000) { Instance.planRevision(account, planId) > made }

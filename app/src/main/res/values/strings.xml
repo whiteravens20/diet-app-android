@@ -375,6 +375,7 @@
     <string name="plans_reroll_nothing_past">The days chosen have passed, and days that have passed are left as they are. Tick them above to make them again as well.</string>
     <string name="plans_reroll_nothing_kept">Nothing would change on the days chosen.</string>
     <string name="plans_reroll_confirm">Make again</string>
+    <string name="plans_reroll_preview_failed">Could not work out what would change.</string>
     <string name="plans_other_ways">Other ways…</string>
     <string name="plans_ways_title">Other ways to fill %1$s</string>
     <string name="plans_ways_intro">Each of these is a day the planner would make for this plan: inside its limits, around what stays on the day. Nothing changes until you take one.</string>

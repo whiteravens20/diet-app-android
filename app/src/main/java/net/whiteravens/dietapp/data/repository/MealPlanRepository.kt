@@ -53,6 +53,9 @@ import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.Reroll
+import net.whiteravens.dietapp.domain.RerollCouldGo
+import net.whiteravens.dietapp.domain.RerollKept
+import net.whiteravens.dietapp.domain.RerollPreview
 import net.whiteravens.dietapp.domain.Share
 import net.whiteravens.dietapp.domain.Substitution
 import net.whiteravens.dietapp.domain.SubstitutionPreview
@@ -285,20 +288,27 @@ class MealPlanRepository @Inject constructor(
      * every day asked for has passed.
      */
     suspend fun reroll(planId: String, reroll: Reroll): MealPlan {
-        val body = RegenerateRequest(
-            from = reroll.from,
-            to = reroll.to,
-            includePast = reroll.includePast,
-            replaceEaten = reroll.replaceEaten,
-            replaceCustom = reroll.replaceCustom,
-            dropIneligibleLocks = reroll.dropIneligibleLocks,
-            allowRelaxations = reroll.allowRelaxations,
-        )
+        val body = reroll.toRequest()
         val plan = apiCall(json) {
             if (reroll.dayId != null) api.regenerateDay(planId, reroll.dayId, body) else api.regeneratePlan(planId, body)
         }
         mirror(plan)
         return plan.toDomain()
+    }
+
+    /** What [reroll] would do to the plan as it stands, as the API reads it. Nothing is drawn or written. */
+    suspend fun previewReroll(planId: String, reroll: Reroll): RerollPreview {
+        val body = reroll.toRequest()
+        val answer = apiCall(json) {
+            if (reroll.dayId != null) api.previewRegenerateDay(planId, reroll.dayId, body) else api.previewRegeneratePlan(planId, body)
+        }
+        return RerollPreview(
+            days = answer.days,
+            replaced = answer.replaced,
+            kept = answer.kept.let { RerollKept(it.outside, it.past, it.skipped, it.eaten, it.custom, it.locked) },
+            couldGo = answer.couldGo.let { RerollCouldGo(it.past, it.eaten, it.custom) },
+            fromToday = answer.fromToday,
+        )
     }
 
     /** Other ways to fill a day of a plan, put in order by a model where [weigh]. Nothing is written. */
@@ -520,3 +530,14 @@ class MealPlanRepository @Inject constructor(
         )
     }
 }
+
+/** The request a re-roll, and what it would do, are asked with. */
+private fun Reroll.toRequest() = RegenerateRequest(
+    from = from,
+    to = to,
+    includePast = includePast,
+    replaceEaten = replaceEaten,
+    replaceCustom = replaceCustom,
+    dropIneligibleLocks = dropIneligibleLocks,
+    allowRelaxations = allowRelaxations,
+)

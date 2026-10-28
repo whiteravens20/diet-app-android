@@ -1309,6 +1309,30 @@ data class RegenerateRequest(
     val allowRelaxations: List<String>? = null,
 )
 
+/**
+ * POST `/meal-plans/:id/regenerate/preview` and `/meal-plans/:id/days/:dayId/regenerate/preview`:
+ * what the re-roll asked with the same request would do to the plan as it stands. Nothing is drawn.
+ */
+@Serializable
+data class RerollPreviewDto(
+    /** The days that get other meals. */
+    val days: Int,
+    /** The meals on those days that give place to others. */
+    val replaced: Int,
+    val kept: RerollKeptDto,
+    val couldGo: RerollCouldGoDto,
+    /** Why the days from today on are no choice of their own: `not_begun` | `over`; null where they are one. */
+    val fromToday: String?,
+)
+
+/** What a re-roll keeps as it is: days not asked for, before today or skipped, and meals eaten, of one's own or locked on the days filled again. */
+@Serializable
+data class RerollKeptDto(val outside: Int, val past: Int, val skipped: Int, val eaten: Int, val custom: Int, val locked: Int)
+
+/** What the days asked for hold that the request could let go as well. */
+@Serializable
+data class RerollCouldGoDto(val past: Boolean, val eaten: Boolean, val custom: Boolean)
+
 /** Whether a model is asked to put the engine's proposals in order and say a sentence of each. */
 @Serializable
 data class WeighRequest(val weigh: Boolean = false)

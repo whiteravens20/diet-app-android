@@ -30,6 +30,9 @@ import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.domain.Reroll
+import net.whiteravens.dietapp.domain.RerollCouldGo
+import net.whiteravens.dietapp.domain.RerollKept
+import net.whiteravens.dietapp.domain.RerollPreview
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.Substitution
 import net.whiteravens.dietapp.domain.UseUpSwap
@@ -438,6 +441,37 @@ class MealPlanRepositoryTest {
         // An empty list of limits is every limit held: it is sent.
         assertEquals("""{"from":"2026-10-13","to":"2026-10-15","includePast":true,"allowRelaxations":[]}""", part.body.readUtf8())
         assertEquals("{}", server.takeRequest().body.readUtf8())
+    }
+
+    @Test
+    fun `what a re-roll would do is asked with the re-roll's own request, a day at its own address, and read as the API answers it`() {
+        server.enqueue(answer("reroll-preview"))
+        server.enqueue(answer("reroll-preview-replace-eaten"))
+        server.enqueue(answer("reroll-preview-skipped-day"))
+        val plans = repository(Cache())
+
+        val whole = runBlocking { plans.previewReroll("plan-1", Reroll()) }
+        val eatenToo = runBlocking { plans.previewReroll("plan-1", Reroll(replaceEaten = true)) }
+        val skipped = runBlocking { plans.previewReroll("plan-1", Reroll(dayId = "day-2")) }
+
+        val first = server.takeRequest()
+        assertEquals("POST", first.method)
+        assertEquals("/api/meal-plans/plan-1/regenerate/preview", first.path)
+        assertEquals("{}", first.body.readUtf8())
+        val second = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/regenerate/preview", second.path)
+        assertEquals("""{"replaceEaten":true}""", second.body.readUtf8())
+        val day = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/days/day-2/regenerate/preview", day.path)
+        assertEquals("{}", day.body.readUtf8())
+        // A plan of three days from today, the first day's breakfast eaten and the second skipped with its breakfast eaten.
+        val eatenCouldGo = RerollCouldGo(past = false, eaten = true, custom = false)
+        assertEquals(RerollPreview(2, 5, RerollKept(outside = 0, past = 0, skipped = 1, eaten = 1, custom = 0, locked = 0), eatenCouldGo, "not_begun"), whole)
+        assertEquals(RerollPreview(2, 6, RerollKept(outside = 0, past = 0, skipped = 1, eaten = 0, custom = 0, locked = 0), eatenCouldGo, "not_begun"), eatenToo)
+        assertEquals(
+            RerollPreview(0, 0, RerollKept(outside = 2, past = 0, skipped = 1, eaten = 0, custom = 0, locked = 0), RerollCouldGo(past = false, eaten = false, custom = false), "not_begun"),
+            skipped,
+        )
     }
 
     @Test

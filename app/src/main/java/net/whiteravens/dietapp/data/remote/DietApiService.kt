@@ -268,6 +268,14 @@ interface DietApiService {
     @POST("meal-plans/{id}/days/{dayId}/regenerate")
     suspend fun regenerateDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: RegenerateRequest): MealPlanDto
 
+    /** What making a plan again, or the days of it the request names, would do. Nothing is drawn or written. */
+    @POST("meal-plans/{id}/regenerate/preview")
+    suspend fun previewRegeneratePlan(@Path("id") id: String, @Body body: RegenerateRequest): RerollPreviewDto
+
+    /** What making one day of a plan again would do. Nothing is drawn or written. */
+    @POST("meal-plans/{id}/days/{dayId}/regenerate/preview")
+    suspend fun previewRegenerateDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: RegenerateRequest): RerollPreviewDto
+
     /** What a change of the settings of a day would do. Nothing is written. */
     @POST("meal-plans/{id}/days/{dayId}/settings/preview")
     suspend fun previewDaySettings(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: DaySettingsDto): DaySettingsPreviewDto
