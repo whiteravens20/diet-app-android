@@ -339,6 +339,18 @@ interface DietApiService {
     @GET("recipes/mine")
     suspend fun myRecipes(@Query("page") page: Int? = null, @Query("pageSize") pageSize: Int? = null): RecipeSearchPageDto
 
+    /** What a serving of a recipe being written would hold, with its allergens and diets; nothing is kept. */
+    @POST("recipes/preview")
+    suspend fun previewOwnRecipe(@Body body: OwnRecipePreviewRequest): OwnRecipePreviewDto
+
+    /** Writes a recipe of the account's own by hand, in the language of the request. */
+    @POST("recipes")
+    suspend fun writeRecipe(@Body body: OwnRecipeRequest): RecipeDto
+
+    /** Writes a new version of a recipe of the account's own, by hand; the answer is the new version, under an id of its own. */
+    @PUT("recipes/{id}")
+    suspend fun editRecipe(@Path("id") id: String, @Body body: OwnRecipeRequest): RecipeDto
+
     /** Puts a recipe of one's own before the curators, for the library everyone shares. */
     @POST("recipes/{id}/submit")
     suspend fun submitRecipe(@Path("id") id: String)

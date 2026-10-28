@@ -18,7 +18,15 @@ fields sent out of their bounds), `ai-provider-refused.json` (a model, a key and
 bounds), `auth-register-weak-password.json` (a password refused for three things) and
 `preferences-not-whole-and-unknown.json` (a number that is not whole beside a key the
 route does not know) from the same version, captured the same day from an instance of diet-app's
-`dev` at `3b70f02`;
+`dev` at `3b70f02`; `own-recipe-preview.json` and `own-recipe-preview-refused.json` (what a
+serving of oats, milk and eggs holds, and a serving asked about with thirteen servings and a
+hundred kilograms of oats), `own-recipe-created.json`, `own-recipe-already-yours.json` (the same
+recipe saved again), `own-recipe-updated.json` (the recipe edited into three servings and a third
+step), `own-recipe-invalid.json` (a name with markup), `own-recipe-invalid-places.json` (an empty
+name, an empty step before one with markup, more oats than one serving can hold and a note with
+markup), `own-recipe-no-steps.json` (steps that are all empty), `own-recipe-refused.json` (fields
+past their bounds) and `ingredients-of-own-recipe.json` (the recipe's ingredients asked for by
+their ids) from the same version, captured the same day from the same instance;
 `weights.json`, `weight-logged.json`, `weight-entry-unknown.json` and `users-me-in-pounds.json`
 from API 0.19.0, captured on 2026-10-16;
 `account-sessions.json`, `account-session-unknown.json`, `second-factor-off.json`,

@@ -499,7 +499,7 @@
     <string name="recipes_none_at_all">Brak przepisów.</string>
     <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
     <string name="recipes_mine_empty_title">Nie masz jeszcze własnych przepisów</string>
-    <string name="recipes_mine_empty">Trafiają tu przepisy, które model przygotuje dla Ciebie, oraz warianty zachowane po zamianie składnika.</string>
+    <string name="recipes_mine_empty">Trafiają tu przepisy, które napiszesz, te, które model przygotuje dla Ciebie, oraz warianty zachowane po zamianie składnika.</string>
     <string name="recipes_delete_confirm">Usunąć ten przepis? Posiłki zaplanowane w przeszłości pozostaną, ale przepis zniknie z biblioteki i przyszłych planów.</string>
     <string name="recipes_submit">Zgłoś do wspólnej biblioteki</string>
     <string name="recipes_submit_confirm">Zgłosić ten przepis do biblioteki, z której korzystają wszyscy? Kuratorzy zobaczą jego treść i składniki, ale nie to, kto go wysłał. Jeśli go przyjmą, stanie się przepisem biblioteki.</string>
@@ -513,6 +513,7 @@
         <item quantity="other">Filtry: %d aktywnego</item>
     </plurals>
     <string name="recipes_filters_apply">Pokaż przepisy</string>
+    <string name="recipes_write">Napisz przepis</string>
     <string name="recipes_ai_draft">Zaproponuj z AI</string>
     <string name="draft_title">Zaproponuj przepis z AI</string>
     <string name="draft_subhead">Wybierz tylko te filtry, na których Ci zależy — resztę zostaw pustą, a AI dobierze ją samo. Alergeny z profilu są zawsze respektowane.</string>
@@ -585,6 +586,66 @@
     <string name="recipe_mark_favorite">Oznacz jako ulubiony</string>
     <string name="recipe_mark_avoid">Oznacz do unikania</string>
     <string name="recipe_prefs_save_failed">Nie udało się zapisać preferencji składnika.</string>
+    <!-- A recipe of one's own written by hand or edited, worded as the web application words its form. -->
+    <string name="own_recipe_new_title">Napisz przepis</string>
+    <string name="own_recipe_new_intro">Przepis jest tylko Twój, dopóki nie zgłosisz go do biblioteki. Wartości porcji, alergeny i diety liczymy ze składników.</string>
+    <string name="own_recipe_edit_title">Edytuj przepis</string>
+    <string name="own_recipe_edit_intro">Zapis tworzy nową wersję przepisu. Plany, w których już jest, zostają przy starej, a ulubione i zestawy ulubionych przechodzą na nową.</string>
+    <string name="own_recipe_field_title">Nazwa</string>
+    <string name="own_recipe_field_description">Opis</string>
+    <string name="own_recipe_field_meals">Na jakie posiłki</string>
+    <string name="own_recipe_field_servings">Porcje</string>
+    <string name="own_recipe_field_prep">Przygotowanie (min)</string>
+    <string name="own_recipe_field_cook">Gotowanie (min)</string>
+    <string name="own_recipe_cuisine_none">Żadna konkretna</string>
+    <string name="own_recipe_no_ingredients">Dodaj co najmniej jeden składnik z katalogu.</string>
+    <string name="own_recipe_field_amount">Ilość</string>
+    <string name="own_recipe_amount_of">Ilość: %1$s</string>
+    <string name="own_recipe_field_unit">Jednostka</string>
+    <string name="own_recipe_unit_of">Jednostka: %1$s</string>
+    <string name="own_recipe_field_note">Uwaga</string>
+    <string name="own_recipe_note_of">Uwaga: %1$s</string>
+    <string name="own_recipe_remove_ingredient">Usuń: %1$s</string>
+    <string name="own_recipe_add_ingredient">Dodaj składnik</string>
+    <string name="own_recipe_search_hint">Wpisz co najmniej dwie litery nazwy.</string>
+    <string name="own_recipe_nothing_found">W katalogu nie ma takiego składnika.</string>
+    <string name="own_recipe_allergen_hint">Alergeny liczymy tylko z listy składników. Jeśli krok dodaje coś, czego na niej nie ma, na przykład orzechy do posypania, dopisz to jako składnik.</string>
+    <string name="own_recipe_step_number">Krok %1$d</string>
+    <string name="own_recipe_step_up">Przesuń krok %1$d wyżej</string>
+    <string name="own_recipe_step_down">Przesuń krok %1$d niżej</string>
+    <string name="own_recipe_remove_step">Usuń krok %1$d</string>
+    <string name="own_recipe_add_step">Dodaj krok</string>
+    <string name="own_recipe_steps_none">Napisz co najmniej jeden krok.</string>
+    <string name="own_recipe_preview_waiting">Dodaj składniki z ilościami, żeby zobaczyć, co zawiera porcja.</string>
+    <string name="own_recipe_preview_figures">%1$s kcal · białko %2$s g · tłuszcz %3$s g · węglowodany %4$s g</string>
+    <string name="own_recipe_preview_no_allergens">Żaden składnik nie jest alergenem.</string>
+    <string name="own_recipe_preview_diets">Pasuje do diet: %1$s</string>
+    <string name="own_recipe_failed">Nie udało się zapisać przepisu.</string>
+    <string name="own_recipe_fix_fields">Popraw zaznaczone pola i zapisz ponownie.</string>
+    <string name="own_recipe_problem_markup">Usuń nawiasy ostrokątne i ukryte znaki.</string>
+    <string name="own_recipe_problem_too_long">Za długie.</string>
+    <string name="own_recipe_problem_too_much">Więcej, niż zmieści jedna porcja.</string>
+    <string name="own_recipe_open_yours">Otwórz przepis, który już masz</string>
+    <string name="own_recipe_save">Zapisz przepis</string>
+    <string name="own_recipe_saving">Zapisywanie…</string>
+    <plurals name="own_recipe_meals_at_least">
+        <item quantity="one">Wybierz co najmniej jeden posiłek.</item>
+        <item quantity="few">Wybierz co najmniej %1$d posiłki.</item>
+        <item quantity="many">Wybierz co najmniej %1$d posiłków.</item>
+        <item quantity="other">Wybierz co najmniej %1$d posiłku.</item>
+    </plurals>
+    <plurals name="own_recipe_lines_at_most">
+        <item quantity="one">Najwyżej jeden składnik.</item>
+        <item quantity="few">Najwyżej %1$d składniki.</item>
+        <item quantity="many">Najwyżej %1$d składników.</item>
+        <item quantity="other">Najwyżej %1$d składnika.</item>
+    </plurals>
+    <plurals name="own_recipe_steps_at_most">
+        <item quantity="one">Najwyżej jeden krok.</item>
+        <item quantity="few">Najwyżej %1$d kroki.</item>
+        <item quantity="many">Najwyżej %1$d kroków.</item>
+        <item quantity="other">Najwyżej %1$d kroku.</item>
+    </plurals>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
     <string name="favorites_title">Ulubione</string>

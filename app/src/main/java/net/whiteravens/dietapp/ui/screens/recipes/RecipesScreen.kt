@@ -74,12 +74,13 @@ import kotlin.math.roundToInt
  * The recipe library: the shared recipes and the account's own, searched by words and narrowed by
  * every filter the API takes in a window of their own, scrolled without end; the account's own
  * recipes in a tab of their own, each to be suggested for the shared library or deleted; and a
- * recipe of one's own drafted by a model, which opens once it is written.
+ * recipe of one's own written by hand ([onWrite]) or drafted by a model, which opens once it is written.
  */
 @Composable
 fun RecipesScreen(
     onOpenRecipe: (String) -> Unit,
     onTurnAiOn: () -> Unit,
+    onWrite: () -> Unit,
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -154,8 +155,10 @@ fun RecipesScreen(
                 )
             }
             state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
-            // A recipe drafted by a model is of a profile: there is none to draft for without one.
-            if (state.profiles.isNotEmpty()) item { DraftButton(aiOn = state.aiOn, onOpen = { drafting = true }, onTurnAiOn = onTurnAiOn) }
+            item {
+                // A recipe drafted by a model is of a profile: there is none to draft for without one.
+                OwnRecipeButtons(drafts = state.profiles.isNotEmpty(), aiOn = state.aiOn, onWrite = onWrite, onDraft = { drafting = true }, onTurnAiOn = onTurnAiOn)
+            }
             item {
                 TabRow(selectedTabIndex = state.tab.ordinal) {
                     Tab(selected = !mine, onClick = { viewModel.selectTab(RecipesViewModel.Tab.LIBRARY) }, text = { Text(stringResource(R.string.recipes_tab_library)) })
@@ -299,14 +302,19 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, mine: Boolean, busy:
 }
 
 /**
- * The button that opens the draft of a recipe by a model. Where the account has no model to ask, it
- * stays in its place, off, over a line that says what it waits for.
+ * The ways to a recipe of one's own: written by hand, and drafted by a model where there are
+ * [drafts]. Where the account has no model to ask, the draft's button stays in its place, off, over
+ * a line that says what it waits for.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DraftButton(aiOn: Boolean?, onOpen: () -> Unit, onTurnAiOn: () -> Unit) {
+private fun OwnRecipeButtons(drafts: Boolean, aiOn: Boolean?, onWrite: () -> Unit, onDraft: () -> Unit, onTurnAiOn: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        OutlinedButton(onClick = onOpen, enabled = aiOn == true) { Text(stringResource(R.string.recipes_ai_draft)) }
-        if (aiOn == false) AiOffNote(onTurnAiOn)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onWrite) { Text(stringResource(R.string.recipes_write)) }
+            if (drafts) OutlinedButton(onClick = onDraft, enabled = aiOn == true) { Text(stringResource(R.string.recipes_ai_draft)) }
+        }
+        if (drafts && aiOn == false) AiOffNote(onTurnAiOn)
     }
 }
 

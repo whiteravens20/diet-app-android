@@ -114,6 +114,9 @@ fun RecipeIngredientDto.toDomain() = RecipeIngredient(
     note = note,
 )
 
+/** Where the recipes of the library everyone shares come from: nobody's to edit. */
+private val LIBRARY_ORIGINS = setOf("seed", "curated")
+
 fun RecipeDto.toDomain() = Recipe(
     id = id,
     title = title,
@@ -135,6 +138,7 @@ fun RecipeDto.toDomain() = Recipe(
     cuisine = cuisine,
     allergens = allergens,
     source = source?.let { RecipeSource(it.url, it.license) },
+    own = origin !in LIBRARY_ORIGINS,
     fromSwap = origin == "swap",
     submitted = submitted,
 )

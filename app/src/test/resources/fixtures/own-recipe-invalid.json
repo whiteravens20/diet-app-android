@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"RECIPE_INVALID","message":"The recipe would break a rule: titles.en holds markup or a hidden character; only plain text is taken.","details":{"problems":[{"path":"titles.en","rule":"markup","message":"titles.en holds markup or a hidden character; only plain text is taken"}]}}

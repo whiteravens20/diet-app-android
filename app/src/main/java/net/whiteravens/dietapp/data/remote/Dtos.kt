@@ -677,6 +677,11 @@ data class IngredientDto(
     val displayUnit: String? = null,
     val allergens: List<String> = emptyList(),
     /**
+     * The units an amount of it can be given in, in a recipe of one's own: those the API converts
+     * into [canonicalUnit], that one first.
+     */
+    val recipeUnits: List<String>,
+    /**
      * The units the pantry takes it in, the one to offer first first: what is counted ([displayUnit])
      * in its pieces alone. An amount in another unit is refused with `UNIT_NOT_CONVERTIBLE`.
      */
@@ -801,6 +806,56 @@ data class AiDraftRecipeRequest(
 /** The recipe a model wrote, with the nutrition the engine worked out, and what the model was. */
 @Serializable
 data class AiDraftRecipeResponseDto(val recipe: RecipeDto, val aiMeta: AiGenerationMetaDto)
+
+/** A line of a recipe written by hand: how much of an ingredient of the catalogue, in [unit], with a note where there is one. */
+@Serializable
+data class OwnRecipeLineDto(
+    val ingredientId: String,
+    val quantity: Double,
+    /** `g` | `ml` | `piece`, one of the ingredient's `recipeUnits`. */
+    val unit: String,
+    val note: String? = null,
+)
+
+/** POST `/recipes/preview`: what a serving of a recipe being written would hold. */
+@Serializable
+data class OwnRecipePreviewRequest(val servings: Int, val ingredients: List<OwnRecipeLineDto>)
+
+/** What a serving of a recipe being written would hold, its allergens and the diets it fits, as the engine works them out. */
+@Serializable
+data class OwnRecipePreviewDto(val nutritionPerServing: NutritionDto, val allergens: List<String>, val dietTags: List<String>)
+
+/**
+ * POST `/recipes` and PUT `/recipes/:id`: a recipe of the account's own written by hand, or a new
+ * version of one, in the language of the request.
+ */
+@Serializable
+data class OwnRecipeRequest(
+    val title: String,
+    val description: String,
+    val steps: List<String>,
+    val servings: Int,
+    val mealTypes: List<String>,
+    val prepMinutes: Int,
+    val cookMinutes: Int,
+    /** `easy` | `medium` | `hard`. */
+    val difficulty: String,
+    val ingredients: List<OwnRecipeLineDto>,
+    /** The kitchen the recipe belongs to; none where it belongs to none. */
+    val cuisine: String? = null,
+)
+
+/** The details of `RECIPE_INVALID`: each rule the recipe would break, by its place. */
+@Serializable
+data class RecipeProblemsDto(val problems: List<RecipeProblemDto>)
+
+/** A rule a recipe would break: where (`titles.en`, `steps.en[3]`, `ingredients[0].quantity`) and which. */
+@Serializable
+data class RecipeProblemDto(val path: String, val rule: String)
+
+/** The details of `RECIPE_ALREADY_YOURS`: the recipe of the account's own that has these ingredients already. */
+@Serializable
+data class AlreadyYoursDto(val recipeId: String)
 
 /** Paginated recipe list — returned by `GET /recipes`. */
 @Serializable

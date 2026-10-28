@@ -44,6 +44,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -85,6 +86,7 @@ import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileFormScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeDetailScreen
+import net.whiteravens.dietapp.ui.screens.recipes.RecipeFormScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipesScreen
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreen
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -98,6 +100,7 @@ import kotlin.reflect.KClass
 @Serializable data class PlanDetailRoute(val planId: String, val day: String? = null)
 @Serializable object RecipesRoute
 @Serializable data class RecipeDetailRoute(val recipeId: String)
+@Serializable data class RecipeFormRoute(val recipeId: String? = null)
 @Serializable object ShoppingRoute
 @Serializable object MoreRoute
 @Serializable object AccountRoute
@@ -319,10 +322,27 @@ private fun MainScaffold(
                 RecipesScreen(
                     onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
                     onTurnAiOn = { navController.navigate(AccountRoute) },
+                    onWrite = { navController.navigate(RecipeFormRoute()) },
                 )
             }
             composable<RecipeDetailRoute> {
-                RecipeDetailScreen(onBack = { navController.popBackStack() })
+                RecipeDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate(RecipeFormRoute(it)) },
+                )
+            }
+            composable<RecipeFormRoute> { entry ->
+                val edited = entry.toRoute<RecipeFormRoute>().recipeId
+                RecipeFormScreen(
+                    onBack = { navController.popBackStack() },
+                    // The recipe saved opens in place of the form; an edit's old version is gone, and its view with it.
+                    onSaved = { recipeId ->
+                        navController.navigate(RecipeDetailRoute(recipeId)) {
+                            if (edited == null) popUpTo<RecipeFormRoute> { inclusive = true } else popUpTo<RecipeDetailRoute> { inclusive = true }
+                        }
+                    },
+                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                )
             }
             composable<ShoppingRoute> {
                 ShoppingScreen(

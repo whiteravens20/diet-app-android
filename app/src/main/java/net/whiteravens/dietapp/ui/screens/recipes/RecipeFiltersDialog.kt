@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.DIFFICULTIES
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MEAL_TYPES
@@ -202,7 +203,6 @@ internal fun RecipeFiltersDialog(
     }
 }
 
-private val DIFFICULTIES = listOf("easy", "medium", "hard")
 private val MARKS = listOf("marked", "often", "avoid")
 
 @Composable

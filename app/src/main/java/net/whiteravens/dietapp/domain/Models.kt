@@ -704,6 +704,8 @@ data class Recipe(
     val allergens: List<String>,
     /** Where a recipe taken in from somewhere else is from; null for one written here. */
     val source: RecipeSource?,
+    /** One of the account's own, not of the library everyone shares: its owner may edit it. */
+    val own: Boolean,
     /** Made by swapping an ingredient: it stays its owner's and cannot be suggested for the library. */
     val fromSwap: Boolean,
     /** One of the account's own the curators have already: it is not offered to them again. */

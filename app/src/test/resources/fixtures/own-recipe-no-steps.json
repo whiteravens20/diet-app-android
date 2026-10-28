@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"RECIPE_INVALID","message":"The recipe would break a rule: steps.en is missing or empty.","details":{"problems":[{"path":"steps.en","rule":"missing-locale","message":"steps.en is missing or empty"}]}}

@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"servings","message":"Too big: expected number to be <=12","code":"too_big","maximum":12,"inclusive":true},{"path":"ingredients.0.quantity","message":"Too big: expected number to be <=18000","code":"too_big","maximum":18000,"inclusive":true}]}

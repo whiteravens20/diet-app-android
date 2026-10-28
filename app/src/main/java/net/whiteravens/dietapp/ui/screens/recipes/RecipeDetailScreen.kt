@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -73,10 +74,11 @@ import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.favorites.sentimentLabel
 import kotlin.math.roundToInt
 
-/** Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps. */
+/** Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps; one of the account's own to [onEdit]. */
 @Composable
 fun RecipeDetailScreen(
     onBack: () -> Unit,
+    onEdit: (String) -> Unit,
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -101,8 +103,13 @@ fun RecipeDetailScreen(
                     Text(
                         recipe?.title ?: stringResource(R.string.nav_recipes),
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(start = 4.dp),
+                        modifier = Modifier.padding(start = 4.dp).weight(1f),
                     )
+                    if (recipe?.own == true) {
+                        IconButton(onClick = { onEdit(recipe.id) }) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.own_recipe_edit_title))
+                        }
+                    }
                 }
             }
             state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }

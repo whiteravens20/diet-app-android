@@ -461,7 +461,7 @@
     <string name="recipes_none_at_all">No recipes.</string>
     <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
     <string name="recipes_mine_empty_title">No recipes of your own yet</string>
-    <string name="recipes_mine_empty">Recipes a model drafts for you, and the variants you keep after swapping an ingredient, land here.</string>
+    <string name="recipes_mine_empty">The recipes you write, those a model drafts for you and the variants you keep after swapping an ingredient land here.</string>
     <string name="recipes_delete_confirm">Delete this recipe? Past planned meals stay intact — but it won\'t appear in your library or new plans.</string>
     <string name="recipes_submit">Suggest for the shared library</string>
     <string name="recipes_submit_confirm">Suggest this recipe for the library everyone uses? The curators will see its text and ingredients, not who sent it. If they accept it, it becomes a recipe of the library.</string>
@@ -473,6 +473,7 @@
         <item quantity="other">Filters: %d at work</item>
     </plurals>
     <string name="recipes_filters_apply">Show recipes</string>
+    <string name="recipes_write">Write a recipe</string>
     <string name="recipes_ai_draft">Draft with AI</string>
     <string name="draft_title">Draft a recipe with AI</string>
     <string name="draft_subhead">Pick the filters you care about — leave the rest blank and the AI picks freely. Allergens from your profile are always respected.</string>
@@ -537,6 +538,60 @@
     <string name="recipe_mark_favorite">Mark as favorite</string>
     <string name="recipe_mark_avoid">Mark to avoid</string>
     <string name="recipe_prefs_save_failed">Could not save ingredient preference.</string>
+    <!-- A recipe of one's own written by hand or edited, worded as the web application words its form. -->
+    <string name="own_recipe_new_title">Write a recipe</string>
+    <string name="own_recipe_new_intro">The recipe is yours alone until you suggest it for the library. What a serving holds, its allergens and its diets are worked out from the ingredients.</string>
+    <string name="own_recipe_edit_title">Edit the recipe</string>
+    <string name="own_recipe_edit_intro">Saving makes a new version of the recipe. Plans that hold it keep the old one; your favourites and favourite sets move to the new one.</string>
+    <string name="own_recipe_field_title">Name</string>
+    <string name="own_recipe_field_description">Description</string>
+    <string name="own_recipe_field_meals">Meals it suits</string>
+    <string name="own_recipe_field_servings">Servings</string>
+    <string name="own_recipe_field_prep">Preparation (min)</string>
+    <string name="own_recipe_field_cook">Cooking (min)</string>
+    <string name="own_recipe_cuisine_none">None in particular</string>
+    <string name="own_recipe_no_ingredients">Add at least one ingredient from the catalogue.</string>
+    <string name="own_recipe_field_amount">Amount</string>
+    <string name="own_recipe_amount_of">Amount of %1$s</string>
+    <string name="own_recipe_field_unit">Unit</string>
+    <string name="own_recipe_unit_of">Unit of %1$s</string>
+    <string name="own_recipe_field_note">Note</string>
+    <string name="own_recipe_note_of">Note on %1$s</string>
+    <string name="own_recipe_remove_ingredient">Remove %1$s</string>
+    <string name="own_recipe_add_ingredient">Add an ingredient</string>
+    <string name="own_recipe_search_hint">Type at least two letters of its name.</string>
+    <string name="own_recipe_nothing_found">The catalogue has no such ingredient.</string>
+    <string name="own_recipe_allergen_hint">Allergens are worked out from the ingredient list alone. If a step adds something that is not on it, such as nuts to sprinkle over, add it as an ingredient.</string>
+    <string name="own_recipe_step_number">Step %1$d</string>
+    <string name="own_recipe_step_up">Move step %1$d up</string>
+    <string name="own_recipe_step_down" tools:ignore="PluralsCandidate">Move step %1$d down</string>
+    <string name="own_recipe_remove_step">Remove step %1$d</string>
+    <string name="own_recipe_add_step">Add a step</string>
+    <string name="own_recipe_steps_none">Write at least one step.</string>
+    <string name="own_recipe_preview_waiting">Add ingredients with their amounts to see what a serving holds.</string>
+    <string name="own_recipe_preview_figures">%1$s kcal · protein %2$s g · fat %3$s g · carbohydrate %4$s g</string>
+    <string name="own_recipe_preview_no_allergens">None of the ingredients is an allergen.</string>
+    <string name="own_recipe_preview_diets">Fits these diets: %1$s</string>
+    <string name="own_recipe_failed">Could not save the recipe.</string>
+    <string name="own_recipe_fix_fields">Correct the marked fields and save again.</string>
+    <string name="own_recipe_problem_markup">Remove angle brackets and hidden characters.</string>
+    <string name="own_recipe_problem_too_long">Too long.</string>
+    <string name="own_recipe_problem_too_much">More than one serving can hold.</string>
+    <string name="own_recipe_open_yours">Open the recipe you have</string>
+    <string name="own_recipe_save">Save the recipe</string>
+    <string name="own_recipe_saving">Saving…</string>
+    <plurals name="own_recipe_meals_at_least">
+        <item quantity="one">Choose at least one meal.</item>
+        <item quantity="other">Choose at least %1$d meals.</item>
+    </plurals>
+    <plurals name="own_recipe_lines_at_most">
+        <item quantity="one">At most one ingredient.</item>
+        <item quantity="other">At most %1$d ingredients.</item>
+    </plurals>
+    <plurals name="own_recipe_steps_at_most">
+        <item quantity="one">At most one step.</item>
+        <item quantity="other">At most %1$d steps.</item>
+    </plurals>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
     <string name="favorites_title">Favourites</string>
