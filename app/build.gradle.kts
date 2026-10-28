@@ -250,6 +250,7 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
     ksp(libs.room.compiler)
 
     implementation(libs.datastore.preferences)
@@ -272,6 +273,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.services.storage)
     // Answers a window of the platform's, such as where to keep a file, as a person would.
     androidTestImplementation(libs.androidx.test.espresso.intents)
+    androidTestImplementation(libs.androidx.work.testing)
     androidTestImplementation(libs.okhttp.mockwebserver)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     "minifiedImplementation"(libs.androidx.compose.ui.test.manifest)
