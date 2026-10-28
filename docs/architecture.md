@@ -92,7 +92,5 @@ emulators. What the app
 leaves to the web application (the calculator, a plan or a list as a table or printed,
 favourite sets made and changed, and the account's password, address, name, language of
 its mails, data in a file and deletion) it opens there, in the browser, signed in with a
-one-time code that the page uses once its reader says the account is theirs. Next are the
-rules the app still works out itself taken
-from the API instead, the write-sync outbox described in [sync-strategy.md](sync-strategy.md),
-and notifications that arrive by themselves rather than when the dashboard is opened.
+one-time code that the page uses once its reader says the account is theirs. Next is the
+write-sync outbox described in [sync-strategy.md](sync-strategy.md).
