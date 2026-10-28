@@ -14,8 +14,9 @@ whole plan, the same with the eaten meals replaced, and the skipped day alone),
 `calorie-preview-split-sum-refused.json`, `profile-refused.json`, `profile-name-too-long.json`,
 `preferences-refused.json`, `plan-refused.json`, `custom-meal-refused.json`,
 `day-settings-preview-refused.json`, `weight-refused.json` and `recipes-refused.json` (each form's
-fields sent out of their bounds), `auth-register-weak-password.json` (a password refused for three
-things) and `preferences-not-whole-and-unknown.json` (a number that is not whole beside a key the
+fields sent out of their bounds), `ai-provider-refused.json` (a model, a key and a place past their
+bounds), `auth-register-weak-password.json` (a password refused for three things) and
+`preferences-not-whole-and-unknown.json` (a number that is not whole beside a key the
 route does not know) from the same version, captured the same day from an instance of diet-app's
 `dev` at `3b70f02`;
 `weights.json`, `weight-logged.json`, `weight-entry-unknown.json` and `users-me-in-pounds.json`

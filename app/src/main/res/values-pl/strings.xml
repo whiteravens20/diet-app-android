@@ -957,7 +957,6 @@
     <string name="refusal_not_a_number">Wpisz liczbę.</string>
     <string name="refusal_not_whole">Wpisz liczbę całkowitą.</string>
     <string name="refusal_split_sum">Trzy wartości muszą dać razem 100.</string>
-    <string name="profile_field_between">Od %1$s do %2$s.</string>
     <string name="error_not_the_api">Serwer odpowiedział kodem %1$d, ale nie odpowiedzią API: mogło odpowiedzieć coś, co stoi przed nim, na przykład serwer pośredniczący.</string>
     <plurals name="plans_no_recipe_left">
         <item quantity="one">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu jedyny przepis na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>

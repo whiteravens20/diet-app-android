@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AiModes
@@ -47,6 +49,8 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
         val form: ProviderForm? = null,
         val saving: Boolean = false,
         val saveError: Throwable? = null,
+        /** The fields of the form the API refused, by the name it gives them, until the form changes. */
+        val refused: Map<String, FieldRefusal> = emptyMap(),
         val testing: Boolean = false,
         /** How the provider answered a test of what the form holds; null where it was not tested since. */
         val tested: ConnectionTest? = null,
@@ -123,14 +127,14 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
     }
 
     /** Opens the form for a provider to be set up. */
-    fun open() = _state.update { it.copy(form = ProviderForm(), saveError = null, tested = null, testError = null) }
+    fun open() = _state.update { it.copy(form = ProviderForm(), saveError = null, tested = null, testError = null, refused = emptyMap()) }
 
     /** Closes the form, and what was typed in it goes. */
-    fun cancel() = _state.update { it.copy(form = null, saveError = null, tested = null, testError = null) }
+    fun cancel() = _state.update { it.copy(form = null, saveError = null, tested = null, testError = null, refused = emptyMap()) }
 
     /** Changes what the form holds; a test of what it held before no longer says anything of it. */
     fun edit(change: (ProviderForm) -> ProviderForm) =
-        _state.update { state -> state.form?.let { state.copy(form = change(it), tested = null, testError = null) } ?: state }
+        _state.update { state -> state.form?.let { state.copy(form = change(it), tested = null, testError = null, refused = emptyMap()) } ?: state }
 
     /** Takes one of the models the provider listed when its connection was tested. */
     fun chooseModel(model: String) = _state.update { state -> state.form?.let { state.copy(form = it.copy(model = model)) } ?: state }
@@ -145,7 +149,12 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
             val answered = attempt { ai.test(form.asked()) }
             // An answer about what the form held before it was changed says nothing of what it holds.
             _state.update {
-                if (it.form != form) it.copy(testing = false) else it.copy(testing = false, tested = answered.getOrNull(), testError = answered.exceptionOrNull())
+                val refused = (answered.exceptionOrNull() as? ApiException)?.fieldRefusals.orEmpty()
+                if (it.form != form) {
+                    it.copy(testing = false)
+                } else {
+                    it.copy(testing = false, tested = answered.getOrNull(), testError = answered.exceptionOrNull().takeIf { refused.isEmpty() }, refused = refused)
+                }
             }
         }
     }
@@ -162,7 +171,11 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
                     _state.update { it.copy(saving = false, form = null, tested = null, testError = null) }
                     readProviders()
                 }
-                .onFailure { e -> _state.update { it.copy(saving = false, saveError = e) } }
+                .onFailure { e ->
+                    // The fields say why where the API named them.
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    _state.update { it.copy(saving = false, saveError = e.takeIf { refused.isEmpty() }, refused = refused) }
+                }
         }
     }
 
@@ -210,23 +223,19 @@ data class ProviderForm(
     val ollama: Boolean
         get() = provider == "ollama"
 
-    /** The place in the order as a number the API takes, from 0 to 100; null for anything else. */
+    /** The place in the order as typed, a whole number; null for anything else. What the API takes of it is its to say. */
     val place: Int?
-        get() = priority.toIntOrNull()?.takeIf { it in 0..MOST_PRIORITY }
-
-    /** Whether the address typed is one the API takes for an Ollama server: plain or secure HTTP. */
-    val addressValid: Boolean
-        get() = ADDRESS.matches(baseUrl.trim()) && baseUrl.trim().length <= MOST_CHARACTERS
+        get() = priority.trim().toIntOrNull()
 
     /** Whether there is something to test: a key, or an Ollama server's address. */
     val testable: Boolean
-        get() = if (ollama) addressValid else apiKey.isNotBlank()
+        get() = if (ollama) baseUrl.isNotBlank() else apiKey.isNotBlank()
 
-    /** The provider as it is saved; null while the model, the key or the address is missing or one the API would refuse. */
+    /** The provider as it is saved; null while the model, the key or the address is missing, or the place is no whole number. */
     fun setup(): ProviderSetup? {
         val chosen = model.trim()
         val place = place ?: return null
-        if (chosen.isEmpty() || chosen.length > MOST_MODEL_CHARACTERS || !testable || apiKey.trim().length > MOST_CHARACTERS) return null
+        if (chosen.isEmpty() || !testable) return null
         return asked().copy(model = chosen, priority = place)
     }
 
@@ -242,16 +251,5 @@ data class ProviderForm(
     companion object {
         /** The providers an account can bring of its own, in the web's order. */
         val PROVIDERS = listOf("openai", "anthropic", "openrouter", "ollama")
-
-        /** The highest place a provider takes in the order. */
-        const val MOST_PRIORITY = 100
-
-        /** The longest key or address the API keeps. */
-        const val MOST_CHARACTERS = 500
-
-        /** The longest name of a model the API keeps. */
-        const val MOST_MODEL_CHARACTERS = 200
-
-        private val ADDRESS = Regex("https?://\\S+")
     }
 }

@@ -887,7 +887,6 @@
     <string name="refusal_not_a_number">Type a number.</string>
     <string name="refusal_not_whole">Type a whole number.</string>
     <string name="refusal_split_sum">The three have to add up to 100.</string>
-    <string name="profile_field_between">Between %1$s and %2$s.</string>
     <string name="error_not_the_api">The server answered %1$d, but not with the API\'s answer: something in front of it, such as a proxy, may have answered in its place.</string>
     <plurals name="plans_no_recipe_left">
         <item quantity="one">The profile\'s allergens, skipped ingredients and avoided recipes rule out the only recipe for \"%2$s\" on the \"%3$s\" diet, so the plan could not be made.</item>

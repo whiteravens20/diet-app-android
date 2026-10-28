@@ -12,6 +12,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import net.whiteravens.dietapp.domain.FieldRefusal
+import net.whiteravens.dietapp.testing.refusal
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -93,8 +95,9 @@ class AiViewModelTest {
     }
 
     @Test
-    fun `a form without a model, a key or a server's address the API takes, or with a place out of its bounds, is not sent`() = runTest {
+    fun `a form without a model, a key, a server's address or a whole number for its place is not sent, and one past the API's bounds is, for the API to refuse`() = runTest {
         coEvery { ai.providers() } returns emptyList()
+        coEvery { ai.save(any()) } throws refusal("ai-provider-refused")
         val model = AiViewModel(ai, users)
         model.open()
         val whole = ProviderForm(provider = "openai", model = "gpt-4o-mini", apiKey = "sk-typed", priority = "0")
@@ -102,16 +105,31 @@ class AiViewModelTest {
         for (form in listOf(
             whole.copy(model = " "),
             whole.copy(apiKey = "  "),
-            whole.copy(priority = "101"),
             whole.copy(priority = ""),
-            whole.copy(provider = "ollama", baseUrl = "mockai:11434"),
+            whole.copy(priority = "1.5"),
             whole.copy(provider = "ollama", baseUrl = ""),
         )) {
             model.edit { form }
             model.save()
         }
-
         coVerify(exactly = 0) { ai.save(any()) }
+
+        // As the API's answer had it: a model of 201 letters, a key of 501 and the place 101.
+        model.edit { whole.copy(model = "x".repeat(201), apiKey = "k".repeat(501), priority = "101") }
+        model.save()
+
+        coVerify(exactly = 1) { ai.save(any()) }
+        assertEquals(
+            mapOf(
+                "apiKey" to FieldRefusal.TooBig(500.0, inclusive = true),
+                "model" to FieldRefusal.TooBig(200.0, inclusive = true),
+                "priority" to FieldRefusal.TooBig(100.0, inclusive = true),
+            ),
+            model.state.value.refused,
+        )
+        assertNull(model.state.value.saveError)
+        model.edit { it.copy(priority = "1") }
+        assertEquals(emptyMap<String, FieldRefusal>(), model.state.value.refused)
     }
 
     @Test

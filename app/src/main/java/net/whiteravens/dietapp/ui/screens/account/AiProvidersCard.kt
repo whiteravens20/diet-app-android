@@ -34,7 +34,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.AiProviderConfig
+import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.numberProblem
+import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
@@ -223,26 +226,30 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
         } else {
             FormField(
                 value = form.model,
-                onValueChange = { typed -> actions.edit { it.copy(model = typed.take(ProviderForm.MOST_MODEL_CHARACTERS)) } },
+                onValueChange = { typed -> actions.edit { it.copy(model = typed) } },
                 label = stringResource(R.string.account_ai_model),
                 placeholder = if (form.ollama) "llama3.1:8b" else "gpt-4o-mini",
+                problem = state.refused["model"]?.let { refusalText(it, Bound.Characters) },
                 keyboardType = KeyboardType.Uri,
             )
         }
         if (form.ollama) {
             FormField(
                 value = form.baseUrl,
-                onValueChange = { typed -> actions.edit { it.copy(baseUrl = typed.take(ProviderForm.MOST_CHARACTERS)) } },
+                onValueChange = { typed -> actions.edit { it.copy(baseUrl = typed) } },
                 label = stringResource(R.string.account_ai_ollama_url),
                 placeholder = "http://localhost:11434",
-                problem = stringResource(R.string.account_ai_ollama_url_invalid).takeIf { form.baseUrl.isNotBlank() && !form.addressValid },
+                problem = state.refused["baseUrl"]?.let { refusalText(it, Bound.Characters, other = stringResource(R.string.account_ai_ollama_url_invalid)) },
                 keyboardType = KeyboardType.Uri,
             )
         } else {
+            val refusedKey = state.refused["apiKey"]?.let { refusalText(it, Bound.Characters) }
             PasswordField(
                 value = form.apiKey,
-                onValueChange = { typed -> actions.edit { it.copy(apiKey = typed.take(ProviderForm.MOST_CHARACTERS)) } },
+                onValueChange = { typed -> actions.edit { it.copy(apiKey = typed) } },
                 label = stringResource(R.string.account_ai_api_key),
+                isError = refusedKey != null,
+                hint = refusedKey,
             )
         }
         FormField(
@@ -250,7 +257,7 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
             onValueChange = { typed -> if (typed.length <= 3 && typed.all(Char::isDigit)) actions.edit { it.copy(priority = typed) } },
             label = stringResource(R.string.account_ai_priority),
             hint = stringResource(R.string.account_ai_priority_hint),
-            problem = stringResource(R.string.profile_field_between, "0", "${ProviderForm.MOST_PRIORITY}").takeIf { form.place == null },
+            problem = numberProblem(form.place == null, state.refused["priority"]),
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Button(onClick = actions.save, enabled = !state.saving && form.setup() != null, shape = MaterialTheme.shapes.medium) {
