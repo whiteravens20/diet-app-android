@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import net.whiteravens.dietapp.domain.FieldRefusal
+import net.whiteravens.dietapp.testing.refusal
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
@@ -117,6 +119,27 @@ class RecipesViewModelTest {
 
         assertEquals(RecipeFilter(dietType = "vegan", marked = "often", profileId = "ada"), asked[1])
         assertEquals(RecipeFilter(profileId = "ada"), asked.last())
+        assertEquals(listOf("soup"), model.state.value.items.map { it.id })
+    }
+
+    @Test
+    fun `figures of the filters the API refuses are kept for the window of filters, not said as the library's failure`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.search(any(), 1) } returns RecipePage(listOf(recipe("soup")), 1, 1)
+        // As the API's answer had it: every figure past its bounds.
+        val pastTheBounds = RecipeFilter(maxCalories = 20_000, maxPrepMinutes = 2_000, minProtein = 600.0, maxFat = 600.0, maxCarbs = 1_200.0, profileId = "ada")
+        coEvery { recipes.search(pastTheBounds, 1) } throws refusal("recipes-refused")
+        val model = RecipesViewModel(recipes, users, profiles)
+
+        model.narrow(pastTheBounds)
+
+        assertEquals(FieldRefusal.TooBig(10_000.0, inclusive = true), model.state.value.filterRefused["maxCalories"])
+        assertEquals(5, model.state.value.filterRefused.size)
+        assertNull(model.state.value.error)
+
+        model.narrow(RecipeFilter(profileId = "ada"))
+
+        assertEquals(emptyMap<String, FieldRefusal>(), model.state.value.filterRefused)
         assertEquals(listOf("soup"), model.state.value.items.map { it.id })
     }
 

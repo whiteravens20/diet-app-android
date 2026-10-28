@@ -473,7 +473,6 @@
         <item quantity="other">Filters: %d at work</item>
     </plurals>
     <string name="recipes_filters_apply">Show recipes</string>
-    <string name="recipes_filter_between">Between %1$s and %2$s.</string>
     <string name="recipes_ai_draft">Draft with AI</string>
     <string name="draft_title">Draft a recipe with AI</string>
     <string name="draft_subhead">Pick the filters you care about — leave the rest blank and the AI picks freely. Allergens from your profile are always respected.</string>

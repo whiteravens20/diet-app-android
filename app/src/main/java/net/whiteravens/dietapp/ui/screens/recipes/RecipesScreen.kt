@@ -104,9 +104,14 @@ fun RecipesScreen(
             .collect { nearEnd -> if (nearEnd) viewModel.loadMore() }
     }
 
+    // Figures of the filters the API refused open the window again, where they say why.
+    LaunchedEffect(state.filterRefused) {
+        if (state.filterRefused.isNotEmpty()) filtering = true
+    }
     if (filtering) {
         RecipeFiltersDialog(
             filter = state.filter,
+            refused = state.filterRefused,
             profiles = state.profiles,
             ingredientSearch = state.ingredientSearch,
             onSearchIngredients = viewModel::searchIngredients,

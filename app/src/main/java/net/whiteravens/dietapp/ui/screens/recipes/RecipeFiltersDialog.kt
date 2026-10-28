@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.Profile
@@ -54,7 +55,8 @@ import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.ui.common.cuisineLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.difficultyLabel
-import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.common.Bound
+import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ScreenDialog
@@ -65,13 +67,14 @@ import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
  * Every way the library can be narrowed, as the web's page has them: the diet, the meal, the
  * difficulty, the energy and the time of a serving; behind "More filters" the cuisine, what a
  * serving holds, the ingredients every recipe holds and the allergens none holds; and what a
- * profile marked and favours. Nothing is asked of the API until the filters are applied, and a
- * figure outside the bounds the API takes says so in its field instead of being sent.
+ * profile marked and favours. Nothing is asked of the API until the filters are applied; a figure
+ * the API [refused] says why in its field, until it is typed again.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun RecipeFiltersDialog(
     filter: RecipeFilter,
+    refused: Map<String, FieldRefusal>,
     profiles: List<Profile>,
     ingredientSearch: RecipesViewModel.IngredientSearch,
     onSearchIngredients: (String) -> Unit,
@@ -86,6 +89,11 @@ internal fun RecipeFiltersDialog(
     var fat by rememberSaveable { mutableStateOf(filter.maxFat?.let(::plain).orEmpty()) }
     var carbs by rememberSaveable { mutableStateOf(filter.maxCarbs?.let(::plain).orEmpty()) }
     var more by rememberSaveable { mutableStateOf(filter.more > 0) }
+    // The figures typed again since the API refused them say nothing of the refusal any more.
+    var retyped by remember(refused) { mutableStateOf(emptySet<FilterFigure>()) }
+    @Composable
+    fun problemOf(figure: FilterFigure): String? =
+        refused[figure.key]?.takeIf { figure !in retyped }?.let { refusalText(it, Bound.Number(decimals = if (figure.whole) 0 else 1)) }
     fun applied() = draft.copy(
         maxCalories = calories.trim().toIntOrNull(),
         maxPrepMinutes = minutes.trim().toIntOrNull(),
@@ -107,8 +115,14 @@ internal fun RecipeFiltersDialog(
             Choice(stringResource(R.string.recipes_meal_type), MEAL_TYPES, draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
             Choice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Figure(stringResource(R.string.recipes_max_calories), calories, CALORIES, Modifier.weight(1f)) { calories = it }
-                Figure(stringResource(R.string.recipes_max_prep), minutes, MINUTES, Modifier.weight(1f)) { minutes = it }
+                Figure(stringResource(R.string.recipes_max_calories), calories, FilterFigure.CALORIES, problemOf(FilterFigure.CALORIES), Modifier.weight(1f)) {
+                    calories = it
+                    retyped += FilterFigure.CALORIES
+                }
+                Figure(stringResource(R.string.recipes_max_prep), minutes, FilterFigure.MINUTES, problemOf(FilterFigure.MINUTES), Modifier.weight(1f)) {
+                    minutes = it
+                    retyped += FilterFigure.MINUTES
+                }
             }
 
             // The narrower ways to look stay folded until they are wanted; the count says when one of them is at work.
@@ -131,9 +145,18 @@ internal fun RecipeFiltersDialog(
             if (more) {
                 Choice(stringResource(R.string.recipes_cuisine), ProfileChoices.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Figure(stringResource(R.string.recipes_min_protein), protein, PROTEIN_OR_FAT, Modifier.weight(1f)) { protein = it }
-                    Figure(stringResource(R.string.recipes_max_fat), fat, PROTEIN_OR_FAT, Modifier.weight(1f)) { fat = it }
-                    Figure(stringResource(R.string.recipes_max_carbs), carbs, CARBS, Modifier.weight(1f)) { carbs = it }
+                    Figure(stringResource(R.string.recipes_min_protein), protein, FilterFigure.PROTEIN, problemOf(FilterFigure.PROTEIN), Modifier.weight(1f)) {
+                        protein = it
+                        retyped += FilterFigure.PROTEIN
+                    }
+                    Figure(stringResource(R.string.recipes_max_fat), fat, FilterFigure.FAT, problemOf(FilterFigure.FAT), Modifier.weight(1f)) {
+                        fat = it
+                        retyped += FilterFigure.FAT
+                    }
+                    Figure(stringResource(R.string.recipes_max_carbs), carbs, FilterFigure.CARBS, problemOf(FilterFigure.CARBS), Modifier.weight(1f)) {
+                        carbs = it
+                        retyped += FilterFigure.CARBS
+                    }
                 }
                 Text(stringResource(R.string.recipes_per_serving), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 IngredientChooser(
@@ -173,8 +196,7 @@ internal fun RecipeFiltersDialog(
                         carbs = ""
                     },
                 ) { Text(stringResource(R.string.recipes_clear_filters)) }
-                val within = listOf(calories to CALORIES, minutes to MINUTES, protein to PROTEIN_OR_FAT, fat to PROTEIN_OR_FAT, carbs to CARBS).none { (typed, bounds) -> outside(typed, bounds) }
-                Button(onClick = { onApply(applied()) }, enabled = within) { Text(stringResource(R.string.recipes_filters_apply)) }
+                Button(onClick = { onApply(applied()) }) { Text(stringResource(R.string.recipes_filters_apply)) }
             }
         }
     }
@@ -213,20 +235,29 @@ private fun Choice(
     }
 }
 
-/** A figure typed in, whole or with decimals as [bounds] says; outside them it says what they are. */
+/** A figure of the filters, by the name the API gives it, and whether it is whole or has decimals. */
+internal enum class FilterFigure(val key: String, val whole: Boolean) {
+    CALORIES("maxCalories", whole = true),
+    MINUTES("maxPrepMinutes", whole = true),
+    PROTEIN("minProtein", whole = false),
+    FAT("maxFat", whole = false),
+    CARBS("maxCarbs", whole = false),
+}
+
+/** A number typed with a comma or a point; nothing where it is not one. */
+internal fun decimal(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
+
+/** A figure typed in, whole or with decimals as [figure] is, with [problem] where the API refused it. */
 @Composable
-private fun Figure(label: String, value: String, bounds: Bounds, modifier: Modifier, onValue: (String) -> Unit) {
-    val wrong = outside(value, bounds)
+private fun Figure(label: String, value: String, figure: FilterFigure, problem: String?, modifier: Modifier, onValue: (String) -> Unit) {
     OutlinedTextField(
         value = value,
-        onValueChange = { typed -> if (typed.isEmpty() || typed.all { it.isDigit() || (!bounds.whole && (it == '.' || it == ',')) }) onValue(typed) },
+        onValueChange = { typed -> if (typed.isEmpty() || typed.all { it.isDigit() || (!figure.whole && (it == '.' || it == ',')) }) onValue(typed) },
         label = { Text(label) },
         singleLine = true,
-        isError = wrong,
-        supportingText = if (wrong) {
-            { Text(stringResource(R.string.recipes_filter_between, formatNumber(bounds.least), formatNumber(bounds.most))) }
-        } else null,
-        keyboardOptions = KeyboardOptions(keyboardType = if (bounds.whole) KeyboardType.Number else KeyboardType.Decimal),
+        isError = problem != null,
+        supportingText = problem?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = if (figure.whole) KeyboardType.Number else KeyboardType.Decimal),
         modifier = modifier,
     )
 }

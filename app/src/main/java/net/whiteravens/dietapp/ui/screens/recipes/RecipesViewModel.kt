@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -66,6 +68,8 @@ class RecipesViewModel @Inject constructor(
         /** What came of suggesting a recipe for the shared library: sent, or why not. */
         val submitted: Result<Unit>? = null,
         val error: Throwable? = null,
+        /** The figures of the filters the API refused in the last reading, by the name it gives them, with its reasons. */
+        val filterRefused: Map<String, FieldRefusal> = emptyMap(),
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
         /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
@@ -226,7 +230,7 @@ class RecipesViewModel @Inject constructor(
         again.begun()
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            _state.update { it.copy(loading = true, items = emptyList(), page = 1, hasMore = false, error = null) }
+            _state.update { it.copy(loading = true, items = emptyList(), page = 1, hasMore = false, error = null, filterRefused = emptyMap()) }
             attempt { page(_state.value, 1) }
                 .onSuccess { pageResult ->
                     _state.update {
@@ -240,7 +244,11 @@ class RecipesViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e -> _state.update { it.copy(loading = false, error = e) } }
+                .onFailure { e ->
+                    // Figures of the filters the API refused are said in the window of filters, where they are typed.
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    _state.update { it.copy(loading = false, error = e.takeIf { refused.isEmpty() }, filterRefused = refused) }
+                }
         }
     }
 
