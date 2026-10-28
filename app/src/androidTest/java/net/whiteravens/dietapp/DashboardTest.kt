@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -20,8 +21,10 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
+import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.pullDown
 import net.whiteravens.dietapp.testing.pullable
 import net.whiteravens.dietapp.testing.putKeyboardAway
@@ -33,6 +36,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.ui.common.formatDate
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +48,9 @@ import java.util.Locale
 class DashboardTest {
     @get:Rule
     val screen = createAndroidComposeRule<MainActivity>()
+
+    @After
+    fun backOnline() = screen.airplaneMode(false)
 
     @Test
     fun aProfileIsShownWithTheDailyTargetTheServerComputedForIt() {
@@ -165,5 +172,43 @@ class DashboardTest {
         screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(80.6) }
         val before = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(80.6)
         screen.waitForText("(${text(R.string.weight_remove_latest_label, "$before kg", formatDate(threeDaysAgo.toString()))})")
+    }
+
+    @Test
+    fun aWeightLoggedWithoutANetworkWaitsAndIsLoggedOnTheServerOnceTheNetworkIsBack() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        Instance.logWeight(account, profileId, 80.6, LocalDate.now().minusDays(3))
+        Instance.chooseWeightUnit(account, "kg")
+        screen.signIn(account)
+        screen.scrollToText(text(R.string.weight_title))
+        val field = hasText(text(R.string.weight_today, "kg"))
+        screen.scrollTo(field)
+
+        // Without a network the weight is logged all the same: it is the last one, and says that it
+        // waits to be sent; the dashboard says it is offline, and how many changes wait.
+        screen.airplaneMode(true)
+        screen.onNode(field).performScrollTo().performTextInput("81,5")
+        screen.putKeyboardAway()
+        screen.onNode(hasText(text(R.string.weight_log)) and hasClickAction()).performScrollTo().performClick()
+        val today = formatDate(LocalDate.now().toString())
+        val kg = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(81.5)
+        val latest = "(${text(R.string.weight_remove_latest_label, "$kg kg", today)})"
+        screen.waitForText(latest)
+        screen.waitForText(text(R.string.change_waiting))
+        screen.onNodeWithText(text(R.string.change_waiting)).performScrollTo()
+        screen.keepScreenshot("dashboard-a-weight-logged-offline")
+        val waiting = hasText(plural(R.plurals.changes_waiting, 1, 1), substring = true)
+        screen.scrollTo(waiting)
+
+        // With the network back, the weight goes by itself, the dashboard is no longer offline, and
+        // the chart's days are read again, today among them.
+        screen.airplaneMode(false)
+        screen.waitForTheApi(90_000) { Instance.weights(account, profileId) == listOf(81.5, 80.6) }
+        screen.waitUntil(30_000) { screen.onAllNodes(waiting).fetchSemanticsNodes().isEmpty() }
+        screen.scrollTo(hasText(latest))
+        screen.waitUntil(30_000) { screen.onAllNodesWithText(text(R.string.change_waiting)).fetchSemanticsNodes().isEmpty() }
+        screen.scrollTo(hasContentDescription(today, substring = true))
+        screen.keepScreenshot("dashboard-a-weight-logged-offline-sent")
     }
 }
