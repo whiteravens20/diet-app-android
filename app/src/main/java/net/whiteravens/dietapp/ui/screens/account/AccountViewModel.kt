@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -18,6 +19,9 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.ChangeSender
+import net.whiteravens.dietapp.data.sync.Drained
 import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.ui.common.ReadingAnew
@@ -25,7 +29,11 @@ import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import javax.inject.Inject
 
-/** Session account details, the confirmation mail sent again, the unit weights are shown in, the server setting and sign-out. */
+/**
+ * Session account details, the confirmation mail sent again, the unit weights are shown in, the
+ * server setting and sign-out. Signing out, or going to another server, with changes made on the
+ * phone that wait to be sent asks first: they are sent, then the session ends, or they are dropped.
+ */
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val users: UserRepository,
@@ -33,12 +41,29 @@ class AccountViewModel @Inject constructor(
     private val server: ServerConfigStore,
     instance: ServerRepository,
     @ApplicationScope private val application: CoroutineScope,
+    private val changes: ChangeQueue,
+    private val sender: ChangeSender,
 ) : ViewModel() {
+
+    /** Where the session goes once the changes waiting are sent or dropped: it ends, or goes to another server. */
+    sealed interface Leaving {
+        data object SignOut : Leaving
+
+        data class ToServer(val url: String) : Leaving
+    }
+
+    /**
+     * Leaving asked about, as [count] changes wait to be sent: whether they are being sent, and
+     * whether sending them failed for now.
+     */
+    data class Asked(val then: Leaving, val count: Int, val sending: Boolean = false, val notSent: Boolean = false)
 
     data class UiState(
         val loading: Boolean = true,
         val user: SessionUser? = null,
         val signingOut: Boolean = false,
+        /** Leaving asked about first, as changes wait to be sent; null while nothing is asked. */
+        val leaving: Asked? = null,
         val error: Throwable? = null,
         val resending: Boolean = false,
         /** The mail that confirms the address was sent again. */
@@ -125,11 +150,7 @@ class AccountViewModel @Inject constructor(
      */
     fun changeServer(url: String) {
         if (url == serverUrl.value) return
-        _state.update { it.copy(signingOut = true) }
-        application.launch {
-            auth.signOut()
-            server.save(url)
-        }
+        leave(Leaving.ToServer(url))
     }
 
     fun load() {
@@ -166,11 +187,57 @@ class AccountViewModel @Inject constructor(
     }
 
     /** Clears tokens + cache; the root auth switch does the "navigation". */
-    fun signOut() {
-        if (_state.value.signingOut) return
+    fun signOut() = leave(Leaving.SignOut)
+
+    /** Sends the changes waiting, then leaves as asked; where they cannot be sent now, says so and stays. */
+    fun sendThenLeave() {
+        val asked = _state.value.leaving ?: return
+        if (asked.sending) return
+        _state.update { it.copy(leaving = asked.copy(sending = true, notSent = false)) }
         viewModelScope.launch {
-            _state.update { it.copy(signingOut = true) }
-            auth.signOut()
+            if (changes.drain(sender::send) == Drained.EMPTY) {
+                go(asked.then)
+            } else {
+                val left = changes.waiting.first().size
+                _state.update { it.copy(leaving = asked.copy(count = left, sending = false, notSent = true)) }
+            }
+        }
+    }
+
+    /** Drops the changes waiting, and leaves as asked. */
+    fun dropThenLeave() {
+        val asked = _state.value.leaving ?: return
+        if (asked.sending) return
+        viewModelScope.launch {
+            changes.dropAll()
+            go(asked.then)
+        }
+    }
+
+    /** Stays signed in, the changes waiting kept. */
+    fun stay() = _state.update { if (it.leaving?.sending == true) it else it.copy(leaving = null) }
+
+    /** Leaves as [then] says, asking first where changes wait to be sent. */
+    private fun leave(then: Leaving) {
+        if (_state.value.signingOut || _state.value.leaving != null) return
+        viewModelScope.launch {
+            val count = changes.waiting.first().size
+            if (count > 0) _state.update { it.copy(leaving = Asked(then, count)) } else go(then)
+        }
+    }
+
+    /**
+     * Ends the session, then goes to another server where asked. Going to another server takes this
+     * screen away, so that runs in the application's scope, where it is finished.
+     */
+    private fun go(then: Leaving) {
+        _state.update { it.copy(signingOut = true, leaving = null) }
+        when (then) {
+            Leaving.SignOut -> viewModelScope.launch { auth.signOut() }
+            is Leaving.ToServer -> application.launch {
+                auth.signOut()
+                server.save(then.url)
+            }
         }
     }
 }

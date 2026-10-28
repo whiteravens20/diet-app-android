@@ -146,6 +146,26 @@
 
     <!-- Offline -->
     <string name="offline_cached">Offline — as of %1$s</string>
+    <!-- Changes made on the phone that wait for a network, and those the server refused. -->
+    <string name="change_waiting">Waiting to be sent</string>
+    <string name="change_refused">Not saved: %1$s. %2$s</string>
+    <string name="change_refused_seen">OK</string>
+    <string name="change_kind_shopping_row">a change of a shopping list\'s row</string>
+    <string name="change_kind_unreadable">a change this version of the app cannot read</string>
+    <string name="change_unreadable">Make it again.</string>
+    <string name="change_unsendable">The server\'s answer could not be read: check whether the change was saved.</string>
+    <string name="account_leave_not_sent">They could not be sent now. Try again once there is a network, or drop them.</string>
+    <string name="account_leave_send">Send, then sign out</string>
+    <string name="account_leave_sending">Sending…</string>
+    <string name="account_leave_drop">Drop and sign out</string>
+    <plurals name="changes_waiting">
+        <item quantity="one">%1$d change waits to be sent</item>
+        <item quantity="other">%1$d changes wait to be sent</item>
+    </plurals>
+    <plurals name="account_leave_waiting">
+        <item quantity="one">%1$d change made on this phone waits to be sent. Send it before signing out, or drop it?</item>
+        <item quantity="other">%1$d changes made on this phone wait to be sent. Send them before signing out, or drop them?</item>
+    </plurals>
     <string name="offline_readonly">Offline — as of %1$s; changes are disabled.</string>
 
     <!-- Meal plans -->

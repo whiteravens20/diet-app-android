@@ -18,6 +18,9 @@ import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.UpdateShoppingItemRequest
 import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.ListProposal
 import net.whiteravens.dietapp.domain.ListProposals
 import net.whiteravens.dietapp.domain.ProposalMeal
@@ -28,9 +31,9 @@ import javax.inject.Singleton
 
 /**
  * Offline-first shopping-list access. Same cache-mirror pattern as
- * [MealPlanRepository]. Item edits call the API directly and mirror the full
- * updated list the server returns; the queue of changes made offline, which
- * docs/sync-strategy.md describes, is not built yet.
+ * [MealPlanRepository]. A row's change goes through the [ChangeQueue]: sent at once
+ * where it can be, kept to be sent in its turn where it cannot; sent, the full list
+ * the server returns is mirrored.
  */
 @Singleton
 class ShoppingListRepository @Inject constructor(
@@ -38,6 +41,7 @@ class ShoppingListRepository @Inject constructor(
     private val model: ModelApiService,
     private val cache: CacheDao,
     private val json: Json,
+    private val queue: ChangeQueue,
 ) {
     /** The cached copy, or null before the first [refresh]. */
     suspend fun cached(id: String): ShoppingList? = cache.shoppingList(id)?.let { row -> read(row) }
@@ -128,14 +132,21 @@ class ShoppingListRepository @Inject constructor(
     /**
      * Changes a row: its tick, what is at home, everything the user has for it (cleared where 0).
      * The pantry follows on the server; the list as the server then has it is kept and given back.
+     * Without a network, or behind changes waiting, the change is kept to be sent in its turn.
      */
-    suspend fun change(listId: String, itemId: String, change: RowChange): ShoppingList {
+    suspend fun change(listId: String, itemId: String, change: RowChange): Submitted<ShoppingList> {
+        val queued = QueuedChange.ShoppingRow(listId, itemId, change.checked, change.atHome, change.have)
+        return queue.submit(queued) { send(queued) }
+    }
+
+    /** Sends a row's change; the list as the server then has it is kept and given back. */
+    suspend fun send(change: QueuedChange.ShoppingRow): ShoppingList {
         val request = UpdateShoppingItemRequest(
             purchasedQuantity = change.have?.let { have -> if (have > 0) JsonPrimitive(have) else JsonNull },
             checked = change.checked,
             alreadyHaveQuantity = change.atHome,
         )
-        val list = apiCall(json) { api.updateShoppingItem(listId, itemId, request) }
+        val list = apiCall(json) { api.updateShoppingItem(change.listId, change.itemId, request) }
         mirror(list)
         return list.toDomain()
     }

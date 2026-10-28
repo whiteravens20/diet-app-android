@@ -15,19 +15,28 @@ import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.Drained
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.ListProposal
 import net.whiteravens.dietapp.domain.ProposalMeal
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.testing.clientHeaders
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.fixture
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 /** The shopping lists of a plan, and the copies the phone keeps of them, against a local server answering what the backend answered. */
 class ShoppingListRepositoryTest {
@@ -64,11 +73,11 @@ class ShoppingListRepositoryTest {
         }
     }
 
-    private fun repository(cache: CacheDao): ShoppingListRepository {
+    private fun repository(cache: CacheDao, queue: ChangeQueue = changeQueue()): ShoppingListRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
         val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
-        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json)
+        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json, queue)
     }
 
     /** The captured list of a plan, its days and id those given: another list of the same plan. */
@@ -167,6 +176,31 @@ class ShoppingListRepositoryTest {
         assertEquals("""{"checked":true,"alreadyHaveQuantity":100.0}""", ticked.body.readUtf8())
         assertEquals("""{"purchasedQuantity":null}""", server.takeRequest().body.readUtf8())
         assertEquals("""{"purchasedQuantity":350.0,"checked":true}""", server.takeRequest().body.readUtf8())
+    }
+
+    @Test
+    fun `a row change whose answer was lost is kept, and sent again as it is in its turn`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (answering) MockResponse().setHeader("Content-Type", "application/json").setBody(fixture("shopping-item-ticked"))
+                else MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+        }
+        val cache = Cache(emptyList())
+        val queue = changeQueue()
+        val lists = repository(cache, queue)
+
+        val kept = runBlocking { lists.change("list", "row", RowChange(checked = true, atHome = 100.0)) }
+
+        assertEquals(Submitted.Kept(offline = true), kept)
+        answering = true
+        val drained = runBlocking { queue.drain { lists.send(it as QueuedChange.ShoppingRow) } }
+        assertEquals(Drained.EMPTY, drained)
+        val sent = generateSequence { server.takeRequest(0, TimeUnit.SECONDS) }.last()
+        assertEquals("/api/shopping-lists/list/items/row", sent.path)
+        assertEquals("""{"checked":true,"alreadyHaveQuantity":100.0}""", sent.body.readUtf8())
+        // The list as the server answered it is kept for the screen to read.
+        assertEquals(1, cache.lists.size)
     }
 
     @Test

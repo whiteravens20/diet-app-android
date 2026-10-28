@@ -8,17 +8,23 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.ListProposals
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.RowChange
+import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
@@ -30,14 +36,16 @@ import javax.inject.Inject
  * newest first. A list is made for the whole plan or for some of its days, and replaces the lists
  * that share a day with it; a list the plan's menu changed under is made again for its days; a list
  * is deleted. What a list could do without is asked of it, weighed by a model on request. Reads are
- * offline-first; a row ticked waits for the server (changes made offline are not kept yet), so what
- * changes a list is off while offline.
+ * offline-first. A row's change is made without a network as well: it waits to be sent, shown over
+ * the list as read, and the list is read again from the copy kept as the server answered once the
+ * change is sent; making, changing or deleting a list is off while offline.
  */
 @HiltViewModel
 class ShoppingViewModel @Inject constructor(
     private val users: UserRepository,
     private val plans: MealPlanRepository,
     private val lists: ShoppingListRepository,
+    private val queue: ChangeQueue,
 ) : ViewModel() {
 
     data class UiState(
@@ -60,6 +68,8 @@ class ShoppingViewModel @Inject constructor(
         val readAt: Long? = null,
         /** Ids of items with an update in flight. */
         val updating: Set<String> = emptySet(),
+        /** The changes of rows that wait to be sent, the oldest first. */
+        val waitingRows: List<QueuedChange.ShoppingRow> = emptyList(),
         /** What a list could do without, as it was asked of the list (its id and when it was made). */
         val proposals: Pair<String, ListProposals>? = null,
         val askingProposals: Boolean = false,
@@ -71,6 +81,12 @@ class ShoppingViewModel @Inject constructor(
 
         /** The list shown: the one chosen, or the newest. */
         val list: ShoppingList? get() = lists.firstOrNull { it.id == selectedListId } ?: lists.firstOrNull()
+
+        /** The list shown with the changes of its rows that wait to be sent over what was read. */
+        val shown: ShoppingList? get() = list?.withWaiting(waitingRows)
+
+        /** The rows of the list shown with a change that waits to be sent. */
+        val waitingItems: Set<String> get() = list?.let { shown -> waitingRows.filter { it.listId == shown.id }.mapTo(mutableSetOf()) { it.itemId } }.orEmpty()
 
         /** What the list shown could do without, where it was asked of that list as it is: another list, or the list made anew, begins without. */
         val shownProposals: ListProposals? get() = proposals?.takeIf { (asked, _) -> list?.let(::keyOf) == asked }?.second
@@ -84,6 +100,32 @@ class ShoppingViewModel @Inject constructor(
     init {
         load()
         followAiMode()
+        followWaiting()
+    }
+
+    /**
+     * Follows the changes of rows that wait to be sent. Once one is sent, the server has answered:
+     * the screen is no longer offline, and the list shown is read again as the server answered it.
+     */
+    private fun followWaiting() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.mapNotNull { it.change as? QueuedChange.ShoppingRow } }
+                .distinctUntilChanged()
+                .collect { rows ->
+                    val sent = _state.value.waitingRows.size > rows.size
+                    _state.update { it.copy(waitingRows = rows, offline = it.offline && !sent) }
+                    if (sent) readSent()
+                }
+        }
+    }
+
+    /** The list shown as the copy kept of it now holds it: as the server answered the changes sent. */
+    private fun readSent() {
+        val id = _state.value.list?.id ?: return
+        viewModelScope.launch {
+            val kept = attempt { lists.cached(id) }.getOrNull() ?: return@launch
+            _state.update { it.copy(lists = it.lists.map { list -> if (list.id == kept.id) kept else list }) }
+        }
     }
 
     fun load() {
@@ -288,7 +330,15 @@ class ShoppingViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(updating = it.updating + itemId, error = null) }
             attempt { lists.change(listId, itemId, change) }
-                .onSuccess { updated -> _state.update { it.copy(lists = it.lists.map { list -> if (list.id == updated.id) updated else list }, updating = it.updating - itemId) } }
+                .onSuccess { submitted ->
+                    _state.update {
+                        when (submitted) {
+                            is Submitted.Sent -> it.copy(lists = it.lists.map { list -> if (list.id == submitted.answer.id) submitted.answer else list }, updating = it.updating - itemId)
+                            // Kept to be sent: shown over the list as one of the changes waiting.
+                            is Submitted.Kept -> it.copy(updating = it.updating - itemId, offline = it.offline || submitted.offline)
+                        }
+                    }
+                }
                 .onFailure { e ->
                     _state.update {
                         it.copy(
@@ -318,3 +368,24 @@ class ShoppingViewModel @Inject constructor(
 
 /** What tells a list apart from another, and from itself made anew. */
 private fun keyOf(list: ShoppingList): String = "${list.id}@${list.createdAt}"
+
+/** The list with the changes of its rows that wait to be sent, each over what was read, in the order they were made. */
+internal fun ShoppingList.withWaiting(rows: List<QueuedChange.ShoppingRow>): ShoppingList {
+    val mine = rows.filter { it.listId == id }
+    if (mine.isEmpty()) return this
+    return copy(
+        groups = groups.map { group ->
+            group.copy(items = group.items.map { item -> mine.filter { it.itemId == item.id }.fold(item) { row, change -> row.with(change) } })
+        },
+    )
+}
+
+/** The row with what [change] sets of it: everything bought cleared by a nought, as the server clears it. */
+private fun ShoppingItem.with(change: QueuedChange.ShoppingRow): ShoppingItem = copy(
+    checked = change.checked ?: checked,
+    atHome = change.atHome ?: atHome,
+    purchasedQuantity = when (val have = change.have) {
+        null -> purchasedQuantity
+        else -> have.takeIf { it > 0 }
+    },
+)

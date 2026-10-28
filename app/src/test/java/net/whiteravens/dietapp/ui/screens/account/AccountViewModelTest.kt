@@ -27,10 +27,14 @@ import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.toDomain
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.ChangeSender
+import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.testing.changeQueue
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -57,7 +61,7 @@ class AccountViewModelTest {
         val users = mockk<UserRepository>()
         coEvery { users.me() } throws IOException("no network")
         coEvery { users.resendVerification() } returns Unit
-        val model = AccountViewModel(users, mockk(), servers(), instance(), this)
+        val model = AccountViewModel(users, mockk(), servers(), instance(), this, changeQueue(), mockk())
 
         model.resendVerification()
         assertTrue(model.state.value.resent)
@@ -66,7 +70,7 @@ class AccountViewModelTest {
         val again = mockk<UserRepository>()
         coEvery { again.me() } throws IOException("no network")
         coEvery { again.resendVerification() } throws held
-        val refused = AccountViewModel(again, mockk(), servers(), instance(), this)
+        val refused = AccountViewModel(again, mockk(), servers(), instance(), this, changeQueue(), mockk())
         refused.resendVerification()
         assertFalse(refused.state.value.resent)
         assertEquals(held, refused.state.value.resendError)
@@ -94,7 +98,7 @@ class AccountViewModelTest {
         val factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                AccountViewModel(users, auth, servers, instance(), application) as T
+                AccountViewModel(users, auth, servers, instance(), application, changeQueue(), mockk()) as T
         }
         val model = ViewModelProvider(screen, factory)[AccountViewModel::class.java]
 
@@ -112,7 +116,7 @@ class AccountViewModelTest {
         coEvery { users.me() } returns json.decodeFromString<SessionUserDto>(fixture("users-me")).toDomain()
         val answer = CompletableDeferred<SessionUser>()
         coEvery { users.chooseWeightUnit("lb") } coAnswers { answer.await() }
-        val model = AccountViewModel(users, mockk(), servers(), instance(), this)
+        val model = AccountViewModel(users, mockk(), servers(), instance(), this, changeQueue(), mockk())
         assertNull(model.state.value.weightUnit)
 
         model.chooseWeightUnit("lb")
@@ -130,5 +134,100 @@ class AccountViewModelTest {
 
         assertEquals("lb", model.state.value.weightUnit)
         assertSame(refusal, model.state.value.unitError)
+    }
+
+    /** A queue with a row ticked off without a network, waiting to be sent. */
+    private suspend fun waiting(): ChangeQueue = changeQueue().also { queue ->
+        queue.submit(QueuedChange.ShoppingRow("list", "bread", checked = true)) { throw IOException("no network") }
+    }
+
+    private fun signedOut() = mockk<AuthRepository>().also { coEvery { it.signOut() } returns Unit }
+
+    private fun noAccount() = mockk<UserRepository>().also { coEvery { it.me() } throws IOException("no network") }
+
+    @Test
+    fun `signing out with nothing waiting asks nothing`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val auth = signedOut()
+        val model = AccountViewModel(noAccount(), auth, servers(), instance(), this, changeQueue(), mockk())
+
+        model.signOut()
+
+        assertNull(model.state.value.leaving)
+        coVerify(exactly = 1) { auth.signOut() }
+    }
+
+    @Test
+    fun `signing out with changes waiting asks first, and the session ends once they are sent`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val auth = signedOut()
+        val sender = mockk<ChangeSender>()
+        coEvery { sender.send(any()) } returns Unit
+        val queue = waiting()
+        val model = AccountViewModel(noAccount(), auth, servers(), instance(), this, queue, sender)
+
+        model.signOut()
+
+        assertEquals(AccountViewModel.Asked(AccountViewModel.Leaving.SignOut, count = 1), model.state.value.leaving)
+        coVerify(exactly = 0) { auth.signOut() }
+
+        model.sendThenLeave()
+
+        coVerify { sender.send(QueuedChange.ShoppingRow("list", "bread", checked = true)) }
+        coVerify(exactly = 1) { auth.signOut() }
+        assertFalse(queue.anyWaiting())
+    }
+
+    @Test
+    fun `changes that cannot be sent now are said, and the session is kept with them`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val auth = signedOut()
+        val sender = mockk<ChangeSender>()
+        coEvery { sender.send(any()) } throws IOException("no network")
+        val queue = waiting()
+        val model = AccountViewModel(noAccount(), auth, servers(), instance(), this, queue, sender)
+
+        model.signOut()
+        model.sendThenLeave()
+
+        assertEquals(AccountViewModel.Asked(AccountViewModel.Leaving.SignOut, count = 1, notSent = true), model.state.value.leaving)
+        coVerify(exactly = 0) { auth.signOut() }
+        assertTrue(queue.anyWaiting())
+
+        model.stay()
+
+        assertNull(model.state.value.leaving)
+        assertTrue(queue.anyWaiting())
+    }
+
+    @Test
+    fun `changes dropped are not sent, and the session ends`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val auth = signedOut()
+        val sender = mockk<ChangeSender>()
+        val queue = waiting()
+        val model = AccountViewModel(noAccount(), auth, servers(), instance(), this, queue, sender)
+
+        model.signOut()
+        model.dropThenLeave()
+
+        coVerify(exactly = 0) { sender.send(any()) }
+        coVerify(exactly = 1) { auth.signOut() }
+        assertFalse(queue.anyWaiting())
+    }
+
+    @Test
+    fun `going to another server with changes waiting asks the same first`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val auth = signedOut()
+        val model = AccountViewModel(noAccount(), auth, servers(), instance(), this, waiting(), mockk())
+
+        model.changeServer("https://new.example.test/api/")
+
+        assertEquals(
+            AccountViewModel.Asked(AccountViewModel.Leaving.ToServer("https://new.example.test/api/"), count = 1),
+            model.state.value.leaving,
+        )
+        coVerify(exactly = 0) { auth.signOut() }
     }
 }

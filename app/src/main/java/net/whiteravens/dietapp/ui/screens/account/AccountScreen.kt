@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -91,6 +93,9 @@ fun AccountScreen(
             onDismiss = { showServerDialog = false },
             warning = stringResource(R.string.server_change_signs_out),
         )
+    }
+    state.leaving?.let { asked ->
+        LeaveWithChangesDialog(asked, onSend = viewModel::sendThenLeave, onDrop = viewModel::dropThenLeave, onStay = viewModel::stay)
     }
 
     PullToRead(state.pulled, onPull = {
@@ -345,4 +350,35 @@ private fun SettingRow(label: String, value: String) {
         )
         Text(value, style = MaterialTheme.typography.bodyMedium)
     }
+}
+
+/**
+ * Leaving with changes made on the phone that wait to be sent: they are sent first, the session
+ * ending once they are; or dropped; or the session is kept. Where they could not be sent now, it
+ * says so.
+ */
+@Composable
+private fun LeaveWithChangesDialog(asked: AccountViewModel.Asked, onSend: () -> Unit, onDrop: () -> Unit, onStay: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onStay,
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(pluralStringResource(R.plurals.account_leave_waiting, asked.count, asked.count))
+                if (asked.notSent) Text(stringResource(R.string.account_leave_not_sent), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSend, enabled = !asked.sending) {
+                Text(stringResource(if (asked.sending) R.string.account_leave_sending else R.string.account_leave_send))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onStay, enabled = !asked.sending) { Text(stringResource(R.string.common_cancel)) }
+                TextButton(onClick = onDrop, enabled = !asked.sending) {
+                    Text(stringResource(R.string.account_leave_drop), color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+    )
 }

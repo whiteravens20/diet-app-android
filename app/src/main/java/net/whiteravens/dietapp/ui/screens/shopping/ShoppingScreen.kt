@@ -76,7 +76,7 @@ import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
-import net.whiteravens.dietapp.ui.components.OfflineBanner
+import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -207,12 +207,7 @@ fun ShoppingScreen(
             }
 
             state.error?.let { item { ErrorBanner(errorMessage(it)) } }
-            if (state.offline) {
-                item {
-                    state.readAt?.let { readAt -> OfflineAsOf(readAt) }
-                        ?: OfflineBanner(stringResource(R.string.offline_cached, "—"))
-                }
-            }
+            if (state.offline) item { OfflineAsOf(state.readAt) }
 
             when {
                 state.plans.isEmpty() && state.selectedProfileId != null && state.error == null -> item {
@@ -253,7 +248,7 @@ fun ShoppingScreen(
                     )
                 }
 
-                else -> state.list?.let { list ->
+                else -> state.shown?.let { list ->
                     if (state.lists.size > 1) {
                         item(key = "lists") {
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -352,7 +347,9 @@ fun ShoppingScreen(
                                     ShoppingItemRow(
                                         item = item,
                                         busy = item.id in state.updating,
-                                        readOnly = state.offline || busy,
+                                        // A row is changed without a network as well: the change waits to be sent.
+                                        readOnly = busy,
+                                        waiting = item.id in state.waitingItems,
                                         onChange = { change -> viewModel.change(item.id, change) },
                                     )
                                 }
@@ -435,13 +432,15 @@ private fun ListDaysDialog(plan: MealPlanSummary, onMake: (from: String, to: Str
  * for bought with a tap; and what is at home and what was bought, told in a part that opens under
  * it. The API keeps one number for everything the user has for a row; the row shows it as its two
  * parts, and sends the part that changed. What is at home starts at what the pantry had when the
- * list was made, and is the user's to correct: a pantry does not know everything in a kitchen.
+ * list was made, and is the user's to correct: a pantry does not know everything in a kitchen. A
+ * row whose change waits to be sent says so.
  */
 @Composable
 private fun ShoppingItemRow(
     item: ShoppingItem,
     busy: Boolean,
     readOnly: Boolean,
+    waiting: Boolean,
     onChange: (RowChange) -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -497,6 +496,7 @@ private fun ShoppingItemRow(
                     item.pantryBestBefore?.takeIf { item.atHome > 0 }?.let { day ->
                         LabelChip(stringResource(R.string.shopping_best_before, formatDate(day)), modifier = Modifier.padding(top = 2.dp))
                     }
+                    if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
                 }
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {
                     Text(amountLabel(remaining, item.displayUnit), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
+import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.notify.PhoneNotifier
 import net.whiteravens.dietapp.ui.common.Returns
 import net.whiteravens.dietapp.ui.navigation.DietAppRoot
@@ -28,6 +29,9 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var phoneNotifications: PhoneNotificationsSwitch
+
+    @Inject
+    lateinit var changes: ChangeQueue
 
     /** A tap on a phone's notification asked for the list of notifications, not opened yet. */
     private var openNotifications by mutableStateOf(false)
@@ -58,6 +62,8 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         Returns.started()
         lifecycleScope.launch { phoneNotifications.readNow() }
+        // The changes made on the phone that wait go as soon as there is a network.
+        lifecycleScope.launch { changes.sendSoon() }
     }
 
     override fun onStop() {

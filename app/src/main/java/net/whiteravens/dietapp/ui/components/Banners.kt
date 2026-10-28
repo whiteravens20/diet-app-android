@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
@@ -165,7 +166,13 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
     }
 }
 
-/** The screen shows what it read at [readAt], as the server cannot be reached now. */
+/**
+ * The screen shows what it read at [readAt] (not said where it is not known), as the server cannot
+ * be reached now; and how many changes made on the phone wait to be sent, where any does.
+ */
 @Composable
-fun OfflineAsOf(readAt: Long, modifier: Modifier = Modifier) =
-    OfflineBanner(stringResource(R.string.offline_cached, formatSyncedAt(readAt)), modifier)
+fun OfflineAsOf(readAt: Long?, modifier: Modifier = Modifier) {
+    val asOf = stringResource(R.string.offline_cached, readAt?.let(::formatSyncedAt) ?: "—")
+    val waiting = LocalWaitingChanges.current
+    OfflineBanner(if (waiting > 0) "$asOf · ${pluralStringResource(R.plurals.changes_waiting, waiting, waiting)}" else asOf, modifier)
+}

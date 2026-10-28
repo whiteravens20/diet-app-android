@@ -11,6 +11,7 @@ import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.fixture
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -96,7 +97,7 @@ class CachedRowsTest {
                 CachedShoppingList("unreadable", "plan", unreadable, 1L),
             ),
         )
-        val lists = ShoppingListRepository(api, asking, cache, json)
+        val lists = ShoppingListRepository(api, asking, cache, json, changeQueue())
 
         val cached = runBlocking { lists.cachedForPlan("plan") }
 

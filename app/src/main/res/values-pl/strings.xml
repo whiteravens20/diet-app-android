@@ -150,6 +150,30 @@
 
     <!-- Offline -->
     <string name="offline_cached">Offline — stan z %1$s</string>
+    <!-- Changes made on the phone that wait for a network, and those the server refused. -->
+    <string name="change_waiting">Czeka na wysłanie</string>
+    <string name="change_refused">Nie zapisano: %1$s. %2$s</string>
+    <string name="change_refused_seen">OK</string>
+    <string name="change_kind_shopping_row">zmiana wiersza listy zakupów</string>
+    <string name="change_kind_unreadable">zmiana, której ta wersja aplikacji nie umie odczytać</string>
+    <string name="change_unreadable">Wprowadź ją jeszcze raz.</string>
+    <string name="change_unsendable">Nie udało się odczytać odpowiedzi serwera: sprawdź, czy zmiana została zapisana.</string>
+    <string name="account_leave_not_sent">Nie udało się ich teraz wysłać. Spróbuj ponownie, gdy będzie sieć, albo je porzuć.</string>
+    <string name="account_leave_send">Wyślij i wyloguj</string>
+    <string name="account_leave_sending">Wysyłanie…</string>
+    <string name="account_leave_drop">Porzuć i wyloguj</string>
+    <plurals name="changes_waiting">
+        <item quantity="one">%1$d zmiana czeka na wysłanie</item>
+        <item quantity="few">%1$d zmiany czekają na wysłanie</item>
+        <item quantity="many">%1$d zmian czeka na wysłanie</item>
+        <item quantity="other">%1$d zmiany czeka na wysłanie</item>
+    </plurals>
+    <plurals name="account_leave_waiting">
+        <item quantity="one">%1$d zmiana zrobiona na tym telefonie czeka na wysłanie. Wysłać ją przed wylogowaniem czy porzucić?</item>
+        <item quantity="few">%1$d zmiany zrobione na tym telefonie czekają na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
+        <item quantity="many">%1$d zmian zrobionych na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
+        <item quantity="other">%1$d zmiany zrobionej na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
+    </plurals>
     <string name="offline_readonly">Offline — stan z %1$s; zmiany są wyłączone.</string>
 
     <!-- Meal plans -->

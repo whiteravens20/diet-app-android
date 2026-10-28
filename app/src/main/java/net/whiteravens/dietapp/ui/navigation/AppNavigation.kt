@@ -65,7 +65,10 @@ import net.whiteravens.dietapp.data.repository.AuthRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.ChangesViewModel
 import net.whiteravens.dietapp.ui.components.ConfirmEmailNotice
+import net.whiteravens.dietapp.ui.components.LocalWaitingChanges
+import net.whiteravens.dietapp.ui.components.RefusedChangesNotice
 import net.whiteravens.dietapp.ui.components.ConfirmEmailViewModel
 import net.whiteravens.dietapp.ui.components.LocalBrowserCode
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
@@ -224,8 +227,11 @@ private fun MainScaffold(
     openNotifications: Boolean,
     onNotificationsOpened: () -> Unit,
     confirmEmail: ConfirmEmailViewModel = hiltViewModel(),
+    changes: ChangesViewModel = hiltViewModel(),
 ) {
     val confirmation by confirmEmail.state.collectAsStateWithLifecycle()
+    val waiting by changes.waiting.collectAsStateWithLifecycle()
+    val refused by changes.refused.collectAsStateWithLifecycle()
     // Read again whenever the app comes to the front: an address confirmed in the browser takes the notice away.
     LifecycleResumeEffect(confirmEmail) {
         confirmEmail.load()
@@ -250,6 +256,7 @@ private fun MainScaffold(
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
                 ServerVersionNotice(serverVersion, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                 ConfirmEmailNotice(confirmation, onResend = confirmEmail::resend, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                RefusedChangesNotice(refused, onSeen = changes::dismiss, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
         },
         bottomBar = {
@@ -278,125 +285,128 @@ private fun MainScaffold(
             }
         },
     ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = DashboardRoute,
-            // An open keyboard shortens every screen, so that what is being typed stays above it.
-            modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding(),
-        ) {
-            composable<DashboardRoute> { entry ->
-                val weightOf by entry.savedStateHandle.getStateFlow<String?>(SHOW_WEIGHT_OF, null).collectAsStateWithLifecycle()
-                DashboardScreen(
-                    onCreateProfile = { navController.navigate(ProfilesRoute) },
-                    onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
-                    onNewPlan = { profileId -> navController.navigate(NewPlanRoute(profileId)) },
-                    onOpenNotifications = { navController.navigate(NotificationsRoute) },
-                    showWeightOf = weightOf,
-                    onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
-                )
-            }
-            composable<PlansRoute> {
-                MealPlansScreen(
-                    onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
-                    onNewPlan = { profileId, startDate -> navController.navigate(NewPlanRoute(profileId, startDate)) },
-                    onCreateProfile = { navController.navigate(ProfilesRoute) },
-                )
-            }
-            composable<NewPlanRoute> {
-                NewPlanScreen(
-                    onBack = { navController.popBackStack() },
-                    // The plan made opens in place of the form.
-                    onMade = { planId ->
-                        navController.navigate(PlanDetailRoute(planId)) { popUpTo<NewPlanRoute> { inclusive = true } }
-                    },
-                )
-            }
-            composable<PlanDetailRoute> {
-                PlanDetailScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
-                    onTurnAiOn = { navController.navigate(AccountRoute) },
-                )
-            }
-            composable<RecipesRoute> {
-                RecipesScreen(
-                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
-                    onTurnAiOn = { navController.navigate(AccountRoute) },
-                    onWrite = { navController.navigate(RecipeFormRoute()) },
-                )
-            }
-            composable<RecipeDetailRoute> {
-                RecipeDetailScreen(
-                    onBack = { navController.popBackStack() },
-                    onEdit = { navController.navigate(RecipeFormRoute(it)) },
-                )
-            }
-            composable<RecipeFormRoute> { entry ->
-                val edited = entry.toRoute<RecipeFormRoute>().recipeId
-                RecipeFormScreen(
-                    onBack = { navController.popBackStack() },
-                    // The recipe saved opens in place of the form; an edit's old version is gone, and its view with it.
-                    onSaved = { recipeId ->
-                        navController.navigate(RecipeDetailRoute(recipeId)) {
-                            if (edited == null) popUpTo<RecipeFormRoute> { inclusive = true } else popUpTo<RecipeDetailRoute> { inclusive = true }
-                        }
-                    },
-                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
-                )
-            }
-            composable<ShoppingRoute> {
-                ShoppingScreen(
-                    onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
-                    onTurnAiOn = { navController.navigate(AccountRoute) },
-                )
-            }
-            composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
-            composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
-            composable<AboutRoute> {
-                AboutScreen(onBack = { navController.popBackStack() }, onLibraries = { navController.navigate(LibrariesRoute) })
-            }
-            composable<LibrariesRoute> { LibrariesScreen(onBack = { navController.popBackStack() }) }
-            composable<NotificationsRoute> {
-                NotificationsScreen(
-                    onBack = { navController.popBackStack() },
-                    onWeight = { profileId ->
-                        navController.getBackStackEntry<DashboardRoute>().savedStateHandle[SHOW_WEIGHT_OF] = profileId
-                        navController.popBackStack<DashboardRoute>(inclusive = false)
-                    },
-                    onPreferences = { navController.navigate(ProfilesRoute) { popUpTo<NotificationsRoute> { inclusive = true } } },
-                )
-            }
-            composable<ProfilesRoute> {
-                ProfilesScreen(
-                    onBack = { navController.popBackStack() },
-                    onAdd = { navController.navigate(ProfileFormRoute()) },
-                    onEdit = { navController.navigate(ProfileFormRoute(it)) },
-                    onFirstPlan = {
-                        navController.navigate(PlansRoute) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                        }
-                    },
-                )
-            }
-            composable<ProfileFormRoute> {
-                ProfileFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
-            }
-            composable<FavoritesRoute> {
-                FavoritesScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
-                    onRecipes = {
-                        navController.navigate(RecipesRoute) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    onProfiles = { navController.navigate(ProfilesRoute) },
-                )
-            }
-            composable<PantryRoute> {
-                PantryScreen(onBack = { navController.popBackStack() }, onProfiles = { navController.navigate(ProfilesRoute) })
+        // Each screen's bar for when it is offline says how many changes made on the phone wait to be sent.
+        CompositionLocalProvider(LocalWaitingChanges provides waiting) {
+            NavHost(
+                navController = navController,
+                startDestination = DashboardRoute,
+                // An open keyboard shortens every screen, so that what is being typed stays above it.
+                modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding(),
+            ) {
+                composable<DashboardRoute> { entry ->
+                    val weightOf by entry.savedStateHandle.getStateFlow<String?>(SHOW_WEIGHT_OF, null).collectAsStateWithLifecycle()
+                    DashboardScreen(
+                        onCreateProfile = { navController.navigate(ProfilesRoute) },
+                        onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
+                        onNewPlan = { profileId -> navController.navigate(NewPlanRoute(profileId)) },
+                        onOpenNotifications = { navController.navigate(NotificationsRoute) },
+                        showWeightOf = weightOf,
+                        onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
+                    )
+                }
+                composable<PlansRoute> {
+                    MealPlansScreen(
+                        onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
+                        onNewPlan = { profileId, startDate -> navController.navigate(NewPlanRoute(profileId, startDate)) },
+                        onCreateProfile = { navController.navigate(ProfilesRoute) },
+                    )
+                }
+                composable<NewPlanRoute> {
+                    NewPlanScreen(
+                        onBack = { navController.popBackStack() },
+                        // The plan made opens in place of the form.
+                        onMade = { planId ->
+                            navController.navigate(PlanDetailRoute(planId)) { popUpTo<NewPlanRoute> { inclusive = true } }
+                        },
+                    )
+                }
+                composable<PlanDetailRoute> {
+                    PlanDetailScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                        onTurnAiOn = { navController.navigate(AccountRoute) },
+                    )
+                }
+                composable<RecipesRoute> {
+                    RecipesScreen(
+                        onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                        onTurnAiOn = { navController.navigate(AccountRoute) },
+                        onWrite = { navController.navigate(RecipeFormRoute()) },
+                    )
+                }
+                composable<RecipeDetailRoute> {
+                    RecipeDetailScreen(
+                        onBack = { navController.popBackStack() },
+                        onEdit = { navController.navigate(RecipeFormRoute(it)) },
+                    )
+                }
+                composable<RecipeFormRoute> { entry ->
+                    val edited = entry.toRoute<RecipeFormRoute>().recipeId
+                    RecipeFormScreen(
+                        onBack = { navController.popBackStack() },
+                        // The recipe saved opens in place of the form; an edit's old version is gone, and its view with it.
+                        onSaved = { recipeId ->
+                            navController.navigate(RecipeDetailRoute(recipeId)) {
+                                if (edited == null) popUpTo<RecipeFormRoute> { inclusive = true } else popUpTo<RecipeDetailRoute> { inclusive = true }
+                            }
+                        },
+                        onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                    )
+                }
+                composable<ShoppingRoute> {
+                    ShoppingScreen(
+                        onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
+                        onTurnAiOn = { navController.navigate(AccountRoute) },
+                    )
+                }
+                composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
+                composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
+                composable<AboutRoute> {
+                    AboutScreen(onBack = { navController.popBackStack() }, onLibraries = { navController.navigate(LibrariesRoute) })
+                }
+                composable<LibrariesRoute> { LibrariesScreen(onBack = { navController.popBackStack() }) }
+                composable<NotificationsRoute> {
+                    NotificationsScreen(
+                        onBack = { navController.popBackStack() },
+                        onWeight = { profileId ->
+                            navController.getBackStackEntry<DashboardRoute>().savedStateHandle[SHOW_WEIGHT_OF] = profileId
+                            navController.popBackStack<DashboardRoute>(inclusive = false)
+                        },
+                        onPreferences = { navController.navigate(ProfilesRoute) { popUpTo<NotificationsRoute> { inclusive = true } } },
+                    )
+                }
+                composable<ProfilesRoute> {
+                    ProfilesScreen(
+                        onBack = { navController.popBackStack() },
+                        onAdd = { navController.navigate(ProfileFormRoute()) },
+                        onEdit = { navController.navigate(ProfileFormRoute(it)) },
+                        onFirstPlan = {
+                            navController.navigate(PlansRoute) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                }
+                composable<ProfileFormRoute> {
+                    ProfileFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
+                }
+                composable<FavoritesRoute> {
+                    FavoritesScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                        onRecipes = {
+                            navController.navigate(RecipesRoute) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onProfiles = { navController.navigate(ProfilesRoute) },
+                    )
+                }
+                composable<PantryRoute> {
+                    PantryScreen(onBack = { navController.popBackStack() }, onProfiles = { navController.navigate(ProfilesRoute) })
+                }
             }
         }
     }
