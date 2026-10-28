@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.testing.MemoryChanges
 import net.whiteravens.dietapp.testing.changeQueue
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -26,6 +27,8 @@ class ChangeQueueTest {
     private val queue = changeQueue(changes, work)
 
     private fun row(item: String, checked: Boolean = true) = QueuedChange.ShoppingRow("list", item, checked = checked)
+
+    private fun removal(id: String) = QueuedChange.WeightDeleted("profile", id)
 
     private val offline: suspend () -> Nothing = { throw IOException("no network") }
 
@@ -151,6 +154,52 @@ class ChangeQueueTest {
             assertEquals(Drained.LATER, queue.drain { throw refusal })
             assertEquals(listOf(row("bread")), queue.waiting.first().map { it.change })
         }
+    }
+
+    @Test
+    fun `a removal of what the server no longer has was made, unless the answer is not the API's`() = runBlocking {
+        listOf("gone", "behind-a-proxy").forEach { queue.submit(removal(it), offline) }
+
+        val drained = queue.drain { change ->
+            if (change == removal("gone")) throw ApiException(404, "WEIGHT_ENTRY_NOT_FOUND", "Weight entry not found.")
+            throw ApiException(404, "${ApiException.NOT_THE_API}404", "Not Found")
+        }
+
+        assertEquals(Drained.LATER, drained)
+        assertEquals(listOf(removal("behind-a-proxy")), queue.waiting.first().map { it.change })
+        assertTrue(queue.refused.first().isEmpty())
+    }
+
+    @Test
+    fun `a change taken back while it waits leaves unsent, and one sent meanwhile is not taken back`() = runBlocking {
+        listOf("bread", "milk").forEach { queue.submit(row(it), offline) }
+        val (bread, milk) = queue.waiting.first()
+        val sent = mutableListOf<QueuedChange>()
+
+        assertTrue(queue.withdraw(bread.id))
+        queue.drain { sent += it }
+
+        assertEquals(listOf(row("milk")), sent)
+        assertFalse(queue.withdraw(milk.id))
+    }
+
+    @Test
+    fun `a change is taken back only once the sending under way has ended`() = runTest {
+        queue.submit(row("bread"), offline)
+        val bread = queue.waiting.first().single()
+        val held = CompletableDeferred<Unit>()
+        val sent = mutableListOf<QueuedChange>()
+
+        val sending = async { queue.drain { change -> held.await(); sent += change } }
+        testScheduler.runCurrent()
+        val taking = async { queue.withdraw(bread.id) }
+        testScheduler.runCurrent()
+        assertFalse(taking.isCompleted)
+        held.complete(Unit)
+
+        assertEquals(Drained.EMPTY, sending.await())
+        assertFalse(taking.await())
+        assertEquals(listOf(row("bread")), sent)
     }
 
     @Test

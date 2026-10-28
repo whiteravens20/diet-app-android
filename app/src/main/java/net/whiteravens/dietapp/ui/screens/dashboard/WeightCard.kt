@@ -48,6 +48,7 @@ import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.weightLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightProblem
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
@@ -60,11 +61,13 @@ import kotlin.math.floor
  * unit and logged, the last one taken back once it is confirmed, and ninety days of them as a chart
  * with the mean of each seven days and a line at the weight the profile works towards, or at the one
  * it registered with while it names none. The API keeps kilograms, and says the days and their means.
+ * The last weight [waiting] to be sent says so; the chart has it once it is sent.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun WeightCard(
     stats: DashboardViewModel.ProfileStats,
+    waiting: Boolean,
     unit: WeightUnit,
     log: DashboardViewModel.WeightLog,
     onType: (String) -> Unit,
@@ -132,6 +135,7 @@ internal fun WeightCard(
                             modifier = Modifier.padding(start = 4.dp),
                         )
                     }
+                    if (waiting) WaitingMark()
                 }
             }
 

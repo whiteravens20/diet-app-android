@@ -652,9 +652,9 @@ data class WeightDayDto(
     val mean: Double,
 )
 
-/** POST `/weights`: a weight of a profile, taken the moment it is logged. */
+/** POST `/weights`: a weight of a profile, taken at [recordedAt] (an instant as ISO 8601). */
 @Serializable
-data class LogWeightRequest(val profileId: String, val kg: Double)
+data class LogWeightRequest(val profileId: String, val kg: Double, val recordedAt: String)
 
 // ── Ingredients (packages/shared/src/ingredient.ts) ─────────────────────────
 

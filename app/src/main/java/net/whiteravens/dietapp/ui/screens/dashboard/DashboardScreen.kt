@@ -134,7 +134,7 @@ fun DashboardScreen(
                     }
                 }
                 state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
-                state.profiles.forEach { stats ->
+                state.shown.forEach { stats ->
                     item(key = stats.profile.id) {
                         ProfileSummary(
                             stats,
@@ -151,6 +151,7 @@ fun DashboardScreen(
                                 Box(Modifier.bringIntoViewRequester(inView)) {
                                     WeightCard(
                                         stats,
+                                        waiting = stats.weights?.firstOrNull()?.id in state.waitingEntries,
                                         unit = state.unit,
                                         log = state.weightLogs[stats.profile.id] ?: DashboardViewModel.WeightLog(),
                                         onType = { viewModel.typeWeight(stats.profile.id, it) },

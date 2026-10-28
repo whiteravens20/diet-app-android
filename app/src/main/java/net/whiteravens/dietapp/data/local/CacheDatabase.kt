@@ -124,6 +124,10 @@ interface PendingChangeDao {
     @Query("DELETE FROM pending_change WHERE id = :id")
     suspend fun remove(id: Long)
 
+    /** Takes away a change that still waits: how many it took away, none where it was sent or refused meanwhile. */
+    @Query("DELETE FROM pending_change WHERE id = :id AND refusedCode IS NULL")
+    suspend fun removeWaiting(id: Long): Int
+
     @Query("DELETE FROM pending_change")
     suspend fun removeAll()
 }

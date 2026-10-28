@@ -6,6 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -167,9 +168,12 @@ interface DietApiService {
         @Query("timeZone") timeZone: String,
     ): List<WeightDayDto>
 
-    /** Logs a weight of a profile, taken now; answers it as the API keeps it. */
+    /**
+     * Logs a weight of a profile; answers it as the API keeps it. Sent again with the same [key], it
+     * is answered with the weight the first request logged.
+     */
     @POST("weights")
-    suspend fun logWeight(@Body body: LogWeightRequest): WeightEntryDto
+    suspend fun logWeight(@Header("Idempotency-Key") key: String?, @Body body: LogWeightRequest): WeightEntryDto
 
     /** Removes a logged weight; answered 204. */
     @DELETE("weights/{id}")

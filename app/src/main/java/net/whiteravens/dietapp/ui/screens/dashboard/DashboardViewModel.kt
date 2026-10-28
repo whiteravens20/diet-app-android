@@ -10,6 +10,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
@@ -17,6 +19,10 @@ import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
+import net.whiteravens.dietapp.data.sync.Waiting
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanOverview
@@ -35,7 +41,8 @@ import javax.inject.Inject
 
 /**
  * Profiles with their engine-computed calorie targets, what their plan of the moment comes to and their
- * weights, fetched in parallel; a weight is logged and the last one taken back from its profile's card.
+ * weights, fetched in parallel; a weight is logged and the last one taken back from its profile's card,
+ * without a network as well, where the change waits to be sent.
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -43,6 +50,7 @@ class DashboardViewModel @Inject constructor(
     private val plans: MealPlanRepository,
     private val weights: WeightRepository,
     private val notifications: NotificationRepository,
+    private val queue: ChangeQueue,
 ) : ViewModel() {
 
     /**
@@ -102,7 +110,15 @@ class DashboardViewModel @Inject constructor(
         val readAt: Long? = null,
         /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
         val offline: Boolean = false,
-    )
+        /** The weights logged and removed that wait to be sent, in the order they were made. */
+        val waitingWeights: List<Waiting> = emptyList(),
+    ) {
+        /** The profiles as shown: their weights as read, with those logged and removed that wait to be sent over them. */
+        val shown: List<ProfileStats> get() = profiles.map { it.withWaiting(waitingWeights.map(Waiting::change)) }
+
+        /** The weights logged that wait to be sent, by the ids they are shown under. */
+        val waitingEntries: Set<String> get() = waitingWeights.mapNotNullTo(mutableSetOf()) { (it.change as? QueuedChange.WeightLogged)?.key }
+    }
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -112,8 +128,29 @@ class DashboardViewModel @Inject constructor(
     /** How many times each profile's weights by day were read again after a change, by the profile's id. */
     private val daysRead = mutableMapOf<String, Int>()
 
+    /** The weights logged that were taken back while they waited: they leave the queue unsent. */
+    private val withdrawn = mutableSetOf<Long>()
+
     init {
         load()
+        followWaiting()
+    }
+
+    /**
+     * Follows the weights logged and removed that wait to be sent. Once one is sent, the server has
+     * answered: the screen is no longer offline, and its profile's weights are read again.
+     */
+    private fun followWaiting() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.filter { it.change is QueuedChange.WeightLogged || it.change is QueuedChange.WeightDeleted } }
+                .distinctUntilChanged()
+                .collect { waiting ->
+                    val sent = _state.value.waitingWeights.filter { before -> waiting.none { it.id == before.id } && before.id !in withdrawn }
+                    withdrawn.retainAll { id -> waiting.any { it.id == id } }
+                    _state.update { it.copy(waitingWeights = waiting, offline = it.offline && sent.isEmpty()) }
+                    sent.mapNotNull { profileOf(it.change) }.distinct().forEach(::readWeightsAgain)
+                }
+        }
     }
 
     fun load() = read(showLoading = true)
@@ -153,17 +190,20 @@ class DashboardViewModel @Inject constructor(
         changeLog(profileId) { it.copy(logging = true, problem = null) }
         viewModelScope.launch {
             attempt { weights.log(profileId, kg) }
-                .onSuccess { logged ->
+                .onSuccess { submitted ->
+                    val logged = (submitted as? Submitted.Sent)?.answer
                     _state.update { state ->
                         state.copy(
                             weightLogs = state.weightLogs + (profileId to (state.weightLogs[profileId] ?: WeightLog()).copy(typed = "", logging = false)),
                             profiles = state.profiles.map { stats ->
-                                if (stats.profile.id != profileId || stats.weights == null) stats
+                                if (stats.profile.id != profileId || stats.weights == null || logged == null) stats
                                 else stats.copy(weights = (stats.weights + logged).sortedByDescending { it.recordedAt })
                             },
+                            // Kept to be sent: shown over the card's weights as one of the changes waiting.
+                            offline = state.offline || (submitted as? Submitted.Kept)?.offline == true,
                         )
                     }
-                    readDaysAgain(profileId)
+                    if (logged != null) readDaysAgain(profileId)
                 }
                 .onFailure { e ->
                     val refused = (e as? ApiException)?.fieldRefusals?.get("kg")
@@ -172,23 +212,43 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    /** Takes back the newest weight of [profileId], and reads the days of the chart again; asked again, the one before it. */
+    /**
+     * Takes back the newest weight of [profileId], and reads the days of the chart again; asked again,
+     * the one before it. One that waits to be sent is taken out of the queue instead, unless it was
+     * sent meanwhile: then the weights are read again, with it among them.
+     */
     fun removeLatestWeight(profileId: String) {
-        val latest = _state.value.profiles.firstOrNull { it.profile.id == profileId }?.weights?.firstOrNull() ?: return
+        val latest = _state.value.shown.firstOrNull { it.profile.id == profileId }?.weights?.firstOrNull() ?: return
         if (_state.value.weightLogs[profileId]?.removing == true) return
         changeLog(profileId) { it.copy(removing = true, problem = null) }
+        val waiting = _state.value.waitingWeights.firstOrNull { (it.change as? QueuedChange.WeightLogged)?.key == latest.id }
+        if (waiting != null) {
+            withdrawn += waiting.id
+            viewModelScope.launch {
+                val taken = queue.withdraw(waiting.id)
+                changeLog(profileId) { it.copy(removing = false) }
+                if (!taken) {
+                    withdrawn -= waiting.id
+                    readWeightsAgain(profileId)
+                }
+            }
+            return
+        }
         viewModelScope.launch {
-            attempt { weights.delete(latest.id) }
-                .onSuccess {
+            attempt { weights.delete(profileId, latest.id) }
+                .onSuccess { submitted ->
+                    val sent = submitted is Submitted.Sent
                     _state.update { state ->
                         state.copy(
                             weightLogs = state.weightLogs + (profileId to (state.weightLogs[profileId] ?: WeightLog()).copy(removing = false)),
                             profiles = state.profiles.map { stats ->
-                                if (stats.profile.id == profileId) stats.copy(weights = stats.weights?.filterNot { it.id == latest.id }) else stats
+                                if (stats.profile.id == profileId && sent) stats.copy(weights = stats.weights?.filterNot { it.id == latest.id }) else stats
                             },
+                            // Kept to be sent: left out of the card's weights as one of the changes waiting.
+                            offline = state.offline || (submitted as? Submitted.Kept)?.offline == true,
                         )
                     }
-                    readDaysAgain(profileId)
+                    if (sent) readDaysAgain(profileId)
                 }
                 .onFailure { e -> changeLog(profileId) { it.copy(removing = false, problem = WeightProblem.RemoveFailed(e)) } }
         }
@@ -210,6 +270,29 @@ class DashboardViewModel @Inject constructor(
                     profiles = state.profiles.map { stats ->
                         if (stats.profile.id != profileId) stats
                         else read.fold({ stats.copy(days = it, weightsError = null) }, { stats.copy(weightsError = it) })
+                    },
+                )
+            }
+        }
+    }
+
+    /**
+     * Reads [profileId]'s weights again, and their days, where its card has its weights: after a
+     * change of them was sent, what the server has now takes the place of what was shown. A reading a
+     * later one overtook is dropped.
+     */
+    private fun readWeightsAgain(profileId: String) {
+        if (_state.value.profiles.firstOrNull { it.profile.id == profileId }?.weights == null) return
+        val reading = (daysRead[profileId] ?: 0) + 1
+        daysRead[profileId] = reading
+        viewModelScope.launch {
+            val read = attempt { weightsOf(profileId, Instant.now().minus(WEIGHT_DAYS)) }
+            if (daysRead[profileId] != reading) return@launch
+            _state.update { state ->
+                state.copy(
+                    profiles = state.profiles.map { stats ->
+                        if (stats.profile.id != profileId) stats
+                        else read.fold({ (entries, days) -> stats.copy(weights = entries, days = days, weightsError = null) }, { stats.copy(weightsError = it) })
                     },
                 )
             }
@@ -293,4 +376,24 @@ class DashboardViewModel @Inject constructor(
         /** How far back the weights of a card go, as the web's chart does. */
         val WEIGHT_DAYS: Duration = Duration.ofDays(90)
     }
+}
+
+/** The profile a change of weights is about; null for a change of anything else. */
+private fun profileOf(change: QueuedChange): String? = when (change) {
+    is QueuedChange.WeightLogged -> change.profileId
+    is QueuedChange.WeightDeleted -> change.profileId
+    else -> null
+}
+
+/**
+ * The profile with the weights that wait to be sent over those read: one logged among them, under
+ * its key, and one removed left out. Nothing is put over weights that could not be read.
+ */
+internal fun DashboardViewModel.ProfileStats.withWaiting(waiting: List<QueuedChange>): DashboardViewModel.ProfileStats {
+    val read = weights ?: return this
+    val removed = waiting.mapNotNullTo(mutableSetOf()) { change -> (change as? QueuedChange.WeightDeleted)?.takeIf { it.profileId == profile.id }?.id }
+    val logged = waiting.mapNotNull { change -> (change as? QueuedChange.WeightLogged)?.takeIf { it.profileId == profile.id } }
+        .map { WeightEntry(id = it.key, kg = it.kg, recordedAt = Instant.parse(it.recordedAt)) }
+    if (removed.isEmpty() && logged.isEmpty()) return this
+    return copy(weights = (read.filterNot { it.id in removed } + logged).sortedByDescending { it.recordedAt })
 }

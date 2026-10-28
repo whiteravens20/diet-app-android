@@ -40,6 +40,12 @@ class MemoryChanges : PendingChangeDao {
 
     override suspend fun remove(id: Long) = rows.update { list -> list.filterNot { it.id == id } }
 
+    override suspend fun removeWaiting(id: Long): Int {
+        val waiting = rows.value.any { it.id == id && it.refusedCode == null }
+        if (waiting) remove(id)
+        return if (waiting) 1 else 0
+    }
+
     override suspend fun removeAll() = rows.update { emptyList() }
 }
 

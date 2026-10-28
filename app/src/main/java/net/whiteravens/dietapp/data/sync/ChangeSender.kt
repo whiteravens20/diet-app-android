@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.sync
 
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
+import net.whiteravens.dietapp.data.repository.WeightRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,11 +16,14 @@ import javax.inject.Singleton
 class ChangeSender @Inject constructor(
     private val lists: ShoppingListRepository,
     private val plans: MealPlanRepository,
+    private val weights: WeightRepository,
 ) {
     suspend fun send(change: QueuedChange) {
         when (change) {
             is QueuedChange.ShoppingRow -> lists.send(change)
             is QueuedChange.Eaten -> plans.send(change)
+            is QueuedChange.WeightLogged -> weights.send(change)
+            is QueuedChange.WeightDeleted -> weights.send(change)
         }
     }
 }

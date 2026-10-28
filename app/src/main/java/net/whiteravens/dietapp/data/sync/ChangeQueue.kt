@@ -43,9 +43,9 @@ enum class Drained { EMPTY, OFFLINE, LATER }
  * kept in the cache's database. A change is sent at once where nothing waits before it and the
  * network is there; where either is not, it is kept and sent in its turn, by [ChangesWork] as soon
  * as there is a network and whenever the application comes to the front. They are sent one at a
- * time, the oldest first, and a change another one overlapped on the server goes again. A change
- * the server refuses otherwise is kept as refused, with why, until the user has seen it, and the
- * ones after it go on.
+ * time, the oldest first, and a change another one overlapped on the server goes again. A deletion
+ * of something the server no longer has was made. A change the server refuses otherwise is kept as
+ * refused, with why, until the user has seen it, and the ones after it go on.
  */
 @Singleton
 class ChangeQueue @Inject constructor(
@@ -110,6 +110,11 @@ class ChangeQueue @Inject constructor(
                 return Drained.OFFLINE
             } catch (e: ApiException) {
                 when {
+                    // What the change takes away is gone already: it was made.
+                    change is QueuedChange.DoneWhenGone && e.statusCode == 404 && !e.code.startsWith(ApiException.NOT_THE_API) -> {
+                        dao.remove(row.id)
+                        overlapped = 0
+                    }
                     // Another change was written while this one was: nothing of this one was, so it goes again.
                     e.code in OVERLAPPED && overlapped < MOST_OVERLAPS -> overlapped++
                     e.code in OVERLAPPED || e.statusCode == 401 || e.statusCode == 429 || e.statusCode >= 500 ||
@@ -133,6 +138,13 @@ class ChangeQueue @Inject constructor(
 
     /** Forgets a refused change, once the user has seen why. */
     suspend fun dismiss(id: Long) = dao.remove(id)
+
+    /**
+     * Takes back the change [id] while it waits, as if it had not been made: false where it was sent
+     * or refused meanwhile. A sending under way is let finish first, so that a change is never taken
+     * back while it is on its way.
+     */
+    suspend fun withdraw(id: Long): Boolean = sending.withLock { dao.removeWaiting(id) > 0 }
 
     /** Drops every change, waiting or refused: when the user signs out without sending them. */
     suspend fun dropAll() {
