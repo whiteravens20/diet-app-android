@@ -44,8 +44,8 @@ account once you say on the page that the account it names is yours.
   which leads to the profiles; each can be put away, or all read at once.
 - **Notifications on the phone**, off until you turn them on in the account's settings
   (Android 13 and later ask for the permission then): the app asks the server for new
-  notifications about every fifteen minutes and shows each once, with the profile it is
-  for, and a tap opens the list. Android may put the checks off for hours on a phone at
+  notifications about every fifteen minutes and whenever you come back to it, and shows
+  each once, with the profile it is for, and a tap opens the list. Android may put the checks off for hours on a phone at
   rest; the settings say when the system holds the app back to save battery, and open the
   page where that is changed. Signing out turns them off.
 - **Meal plans.** The plans of a profile and a month of them as a calendar, a new plan

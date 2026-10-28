@@ -30,7 +30,9 @@ when one returns.
 - Off until the user turns them on in the account's settings. Turned on, a periodic job of
   WorkManager reads `GET /notifications/unread` every fifteen minutes, the shortest period
   Android runs, when there is a network; on a phone at rest Android may put it off for hours.
-  The app reads the same route whenever the dashboard is shown again, for its bell.
+  The same read runs at once whenever the application comes to the front, at most every
+  thirty seconds, as the screens read anew. The app reads the route also whenever the
+  dashboard is shown again, for its bell.
 - Each notification is shown on the phone once, known by its id and the time it was made;
   the phone keeps the keys of the unread ones alone. Nothing is marked read from the
   phone's notification: a tap opens the application's list.
