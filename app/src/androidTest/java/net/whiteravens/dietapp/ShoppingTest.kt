@@ -14,24 +14,29 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
+import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -41,6 +46,49 @@ import org.junit.runner.RunWith
 class ShoppingTest {
     @get:Rule
     val screen = createAndroidComposeRule<MainActivity>()
+
+    @After
+    fun backOnline() = screen.airplaneMode(false)
+
+    @Test
+    fun aRowTickedWithoutANetworkWaitsAndIsTickedOnTheServerOnceTheNetworkIsBack() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId)
+        val language = text(R.string.api_language)
+        screen.signIn(account)
+
+        screen.openTab(text(R.string.nav_shopping))
+        screen.waitForEnabled(text(R.string.shopping_make_list))
+        screen.onNode(hasText(text(R.string.shopping_make_list)) and hasClickAction()).performClick()
+        val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(isToggleable()) }.isSuccess }
+        val name = Instance.shoppingRows(account, planId, language).keys.first()
+        val row = hasText(name) and isToggleable()
+
+        // Without a network the row is ticked all the same, and says that it waits to be sent; the
+        // screen says it is offline, and how many changes wait.
+        screen.airplaneMode(true)
+        list.performScrollToNode(row)
+        screen.onNode(row).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(row and isOn()).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitForText(text(R.string.change_waiting))
+        val waiting = hasText(plural(R.plurals.changes_waiting, 1, 1), substring = true)
+        screen.waitUntil(20_000) { runCatching { list.performScrollToNode(waiting) }.isSuccess }
+        list.performScrollToNode(row)
+        screen.keepScreenshot("shopping-a-row-ticked-offline")
+
+        // With the network back, the change goes by itself, the row no longer waits, and the screen
+        // is no longer offline.
+        screen.airplaneMode(false)
+        screen.waitForTheApi(90_000) { Instance.shoppingRows(account, planId, language)[name] == true }
+        screen.waitUntil(30_000) { screen.onAllNodesWithText(text(R.string.change_waiting)).fetchSemanticsNodes().isEmpty() }
+        screen.onNode(row).assertIsOn()
+        list.performScrollToIndex(0)
+        screen.waitUntil(10_000) { screen.onAllNodes(waiting).fetchSemanticsNodes().isEmpty() }
+        list.performScrollToNode(row)
+        screen.keepScreenshot("shopping-a-row-ticked-offline-sent")
+    }
 
     @Test
     fun aListIsMadeForThePlanAndARowTickedIsTickedOnTheServer() {

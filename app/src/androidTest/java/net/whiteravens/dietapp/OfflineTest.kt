@@ -2,7 +2,6 @@
 
 package net.whiteravens.dietapp
 
-import android.os.ParcelFileDescriptor
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -10,8 +9,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.scrollToText
@@ -24,10 +23,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.net.URI
 
 /** What the phone keeps of a plan is there to read when the network is not. */
 @RunWith(AndroidJUnit4::class)
@@ -35,27 +30,8 @@ class OfflineTest {
     @get:Rule
     val screen = createAndroidComposeRule<MainActivity>()
 
-    /** Whether the instance answers a connection at all, as the app would reach it. */
-    private fun instanceReachable(): Boolean {
-        val address = URI(BuildConfig.API_BASE_URL)
-        return try {
-            Socket().use { it.connect(InetSocketAddress(address.host, address.port), 1_000) }
-            true
-        } catch (e: IOException) {
-            false
-        }
-    }
-
-    /** Turns airplane mode on or off, and waits until the instance is out of reach or back. */
-    private fun airplaneMode(on: Boolean) {
-        val command = "cmd connectivity airplane-mode ${if (on) "enable" else "disable"}"
-        ParcelFileDescriptor.AutoCloseInputStream(InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command))
-            .use { it.readBytes() }
-        screen.waitUntil(30_000) { instanceReachable() != on }
-    }
-
     @After
-    fun backOnline() = airplaneMode(false)
+    fun backOnline() = screen.airplaneMode(false)
 
     private companion object {
         /** Stands in the read-only text where the time goes, to be split at. */
@@ -83,7 +59,7 @@ class OfflineTest {
         screen.scrollToText(card, substring = true)
 
         // Opened again without it: the copy, said to be one with the time it was read, and its meals.
-        airplaneMode(true)
+        screen.airplaneMode(true)
         screen.onNodeWithText(card, substring = true).performClick()
         // The text around the time, with the time itself told by the clock's form alone.
         val (asOf, readOnly) = text(R.string.offline_readonly, TIME).split(TIME)
