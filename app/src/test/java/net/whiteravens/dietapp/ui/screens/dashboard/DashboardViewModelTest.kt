@@ -8,6 +8,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -29,6 +30,7 @@ import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Share
 import net.whiteravens.dietapp.domain.WeightEntry
+import net.whiteravens.dietapp.domain.WeightPoint
 import net.whiteravens.dietapp.testing.fixture
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightLog
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightProblem
@@ -45,6 +47,8 @@ import org.junit.Test
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
@@ -57,7 +61,10 @@ class DashboardViewModelTest {
     private val plans = mockk<MealPlanRepository>().also { coEvery { it.overview(any()) } returns null }
 
     /** No profile has logged a weight, unless a test says otherwise. */
-    private val weights = mockk<WeightRepository>().also { coEvery { it.entries(any(), any()) } returns emptyList() }
+    private val weights = mockk<WeightRepository>().also {
+        coEvery { it.entries(any(), any()) } returns emptyList()
+        coEvery { it.days(any(), any(), any()) } returns emptyList()
+    }
 
     /** Nothing is unread, unless a test says otherwise. */
     private val notifications = mockk<NotificationRepository>().also { coEvery { it.unread() } returns emptyList() }
@@ -164,31 +171,53 @@ class DashboardViewModelTest {
     private val logged = WeightEntry("logged", 79.85, Instant.parse("2026-10-16T21:51:18.696Z"))
     private val earlier = WeightEntry("earlier", 80.6, Instant.parse("2026-10-13T07:30:00Z"))
 
+    /** The days of the chart as the API reads them from [earlier] and [logged]. */
+    private val earlierDay = WeightPoint(LocalDate.parse("2026-10-13"), 80.6, 80.6)
+    private val loggedDay = WeightPoint(LocalDate.parse("2026-10-16"), 79.85, 80.23)
+
     @Test
     fun `each profile's weights of the last ninety days are read with it in the account's unit, and ones that cannot be read are said on its card`() {
         val users = users().also { coEvery { it.me() } returns account("lb") }
         val since = slot<Instant>()
+        val daysSince = slot<Instant>()
+        val zone = slot<ZoneId>()
         coEvery { weights.entries(ala.id, capture(since)) } returns listOf(logged, earlier)
+        coEvery { weights.days(ala.id, capture(daysSince), capture(zone)) } returns listOf(earlierDay, loggedDay)
 
         val state = DashboardViewModel(users, plans, weights, notifications).state.value
 
         assertEquals(WeightUnit.LB, state.unit)
         assertEquals(listOf(logged, earlier), state.profiles.single().weights)
+        assertEquals(listOf(earlierDay, loggedDay), state.profiles.single().days)
         assertEquals(90L, Duration.between(since.captured, Instant.now()).toDays())
+        // The days of the same span, where the phone is.
+        assertEquals(since.captured, daysSince.captured)
+        assertEquals(ZoneId.systemDefault(), zone.captured)
 
         val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
         coEvery { weights.entries(ala.id, any()) } throws refusal
         val unread = DashboardViewModel(users, plans, weights, notifications).state.value.profiles.single()
 
         assertNull(unread.weights)
+        assertNull(unread.days)
         assertSame(refusal, unread.weightsError)
         assertNotNull(unread.target)
+
+        coEvery { weights.entries(ala.id, any()) } returns listOf(logged, earlier)
+        coEvery { weights.days(ala.id, any(), any()) } throws refusal
+        val noDays = DashboardViewModel(users, plans, weights, notifications).state.value.profiles.single()
+
+        assertNull(noDays.weights)
+        assertNull(noDays.days)
+        assertSame(refusal, noDays.weightsError)
     }
 
     @Test
-    fun `a weight typed in the account's unit is logged in kilograms, empties the field and is the newest, and one out of bounds is said and not sent`() {
+    fun `a weight typed in the account's unit is logged in kilograms, empties the field, is the newest and the chart's days are read again, and one out of bounds is said and not sent`() {
         val users = users().also { coEvery { it.me() } returns account("lb") }
         coEvery { weights.entries(ala.id, any()) } returns listOf(earlier)
+        val todayDay = WeightPoint(LocalDate.parse("2026-10-16"), 81.65, 81.13)
+        coEvery { weights.days(ala.id, any(), any()) } returnsMany listOf(listOf(earlierDay), listOf(earlierDay, todayDay))
         val today = logged.copy(kg = 81.65)
         coEvery { weights.log(ala.id, 81.65) } returns today
         val model = DashboardViewModel(users, plans, weights, notifications)
@@ -205,6 +234,8 @@ class DashboardViewModelTest {
         coVerify { weights.log(ala.id, 81.65) }
         assertEquals(WeightLog(), model.state.value.weightLogs[ala.id])
         assertEquals(listOf(today, earlier), model.state.value.profiles.single().weights)
+        assertEquals(listOf(earlierDay, todayDay), model.state.value.profiles.single().days)
+        coVerify(exactly = 2) { weights.days(ala.id, any(), any()) }
     }
 
     @Test
@@ -219,11 +250,13 @@ class DashboardViewModelTest {
 
         assertEquals(WeightLog(typed = "80.2", problem = WeightProblem.LogFailed(refusal)), model.state.value.weightLogs[ala.id])
         assertEquals(emptyList<WeightEntry>(), model.state.value.profiles.single().weights)
+        coVerify(exactly = 1) { weights.days(ala.id, any(), any()) }
     }
 
     @Test
-    fun `the newest weight is taken back, then the one before it, and a refusal is said on the card`() {
+    fun `the newest weight is taken back, the chart's days read again, then the one before it, and a refusal is said on the card`() {
         coEvery { weights.entries(ala.id, any()) } returns listOf(logged, earlier)
+        coEvery { weights.days(ala.id, any(), any()) } returnsMany listOf(listOf(earlierDay, loggedDay), listOf(earlierDay))
         coEvery { weights.delete(logged.id) } just runs
         val gone = ApiException(404, "WEIGHT_ENTRY_NOT_FOUND", "Weight entry not found.")
         coEvery { weights.delete(earlier.id) } throws gone
@@ -233,11 +266,62 @@ class DashboardViewModelTest {
 
         coVerify { weights.delete(logged.id) }
         assertEquals(listOf(earlier), model.state.value.profiles.single().weights)
+        assertEquals(listOf(earlierDay), model.state.value.profiles.single().days)
 
         model.removeLatestWeight(ala.id)
 
         coVerify { weights.delete(earlier.id) }
         assertEquals(WeightLog(problem = WeightProblem.RemoveFailed(gone)), model.state.value.weightLogs[ala.id])
+        assertEquals(listOf(earlier), model.state.value.profiles.single().weights)
+        coVerify(exactly = 2) { weights.days(ala.id, any(), any()) }
+    }
+
+    @Test
+    fun `days that cannot be read again after a change are said on the card, which keeps its weights, until a later reading has them`() {
+        val users = users().also { coEvery { it.me() } returns account("kg") }
+        coEvery { weights.entries(ala.id, any()) } returns listOf(earlier)
+        val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
+        val today = logged.copy(kg = 80.2)
+        val todayDay = WeightPoint(LocalDate.parse("2026-10-16"), 80.2, 80.4)
+        coEvery { weights.days(ala.id, any(), any()) } returns listOf(earlierDay) andThenThrows refusal andThen listOf(earlierDay, todayDay)
+        coEvery { weights.log(ala.id, 80.2) } returns today
+        val model = DashboardViewModel(users, plans, weights, notifications)
+
+        model.typeWeight(ala.id, "80.2")
+        model.logWeight(ala.id)
+
+        val unread = model.state.value.profiles.single()
+        assertSame(refusal, unread.weightsError)
+        assertEquals(listOf(today, earlier), unread.weights)
+
+        model.typeWeight(ala.id, "80.2")
+        model.logWeight(ala.id)
+
+        val read = model.state.value.profiles.single()
+        assertNull(read.weightsError)
+        assertEquals(listOf(earlierDay, todayDay), read.days)
+    }
+
+    @Test
+    fun `days read again after a change and answered after a later reading's are left out`() {
+        val users = users().also { coEvery { it.me() } returns account("kg") }
+        coEvery { weights.entries(ala.id, any()) } returns listOf(earlier)
+        val today = logged.copy(kg = 80.2)
+        coEvery { weights.log(ala.id, 80.2) } returns today
+        coEvery { weights.delete(today.id) } just runs
+        val afterTheLog = CompletableDeferred<List<WeightPoint>>()
+        val afterTheRemoval = CompletableDeferred<List<WeightPoint>>()
+        val answers = ArrayDeque(listOf(CompletableDeferred(listOf(earlierDay)), afterTheLog, afterTheRemoval))
+        coEvery { weights.days(ala.id, any(), any()) } coAnswers { answers.removeFirst().await() }
+        val model = DashboardViewModel(users, plans, weights, notifications)
+
+        model.typeWeight(ala.id, "80.2")
+        model.logWeight(ala.id)
+        model.removeLatestWeight(ala.id)
+        afterTheRemoval.complete(listOf(earlierDay))
+        afterTheLog.complete(listOf(earlierDay, WeightPoint(LocalDate.parse("2026-10-16"), 80.2, 80.4)))
+
+        assertEquals(listOf(earlierDay), model.state.value.profiles.single().days)
         assertEquals(listOf(earlier), model.state.value.profiles.single().weights)
     }
 

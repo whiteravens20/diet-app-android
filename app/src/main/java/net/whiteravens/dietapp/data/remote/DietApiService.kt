@@ -156,6 +156,17 @@ interface DietApiService {
     @GET("weights")
     suspend fun weights(@Query("profileId") profileId: String, @Query("since") since: String? = null): List<WeightEntryDto>
 
+    /**
+     * The weights of a profile by day in [timeZone] (as IANA names it), the oldest day first: from the
+     * day [since] falls on, where it is given.
+     */
+    @GET("weights/days")
+    suspend fun weightDays(
+        @Query("profileId") profileId: String,
+        @Query("since") since: String?,
+        @Query("timeZone") timeZone: String,
+    ): List<WeightDayDto>
+
     /** Logs a weight of a profile, taken now; answers it as the API keeps it. */
     @POST("weights")
     suspend fun logWeight(@Body body: LogWeightRequest): WeightEntryDto

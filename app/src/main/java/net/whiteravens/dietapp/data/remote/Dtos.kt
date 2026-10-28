@@ -624,6 +624,19 @@ data class WeightEntryDto(
     val createdAt: String,
 )
 
+/**
+ * A day of a profile's weights, as a chart draws it, in the time zone the client named: its last
+ * entry, and the mean of the seven days of the calendar that end with it, both in kilograms to the
+ * hundredth.
+ */
+@Serializable
+data class WeightDayDto(
+    /** The day (`YYYY-MM-DD`). */
+    val date: String,
+    val kg: Double,
+    val mean: Double,
+)
+
 /** POST `/weights`: a weight of a profile, taken the moment it is logged. */
 @Serializable
 data class LogWeightRequest(val profileId: String, val kg: Double)

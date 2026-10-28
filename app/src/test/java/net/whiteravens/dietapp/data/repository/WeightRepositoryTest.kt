@@ -10,6 +10,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.WeightEntry
+import net.whiteravens.dietapp.domain.WeightPoint
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
@@ -19,8 +20,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
-/** A profile's weights read from a moment on, one logged and one removed, against a local server answering as the backend did. */
+/** A profile's weights read from a moment on, also by day, one logged and one removed, against a local server answering as the backend did. */
 class WeightRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
@@ -62,6 +65,32 @@ class WeightRepositoryTest {
             asked.queryParameterNames.associateWith { asked.queryParameter(it) },
         )
         assertEquals(listOf(logged, earlier), read)
+    }
+
+    @Test
+    fun `the weights by day are asked for where the phone is, from the day a moment falls on, and read the oldest day first, each with its mean`() {
+        server.enqueue(answer(200, "weights-days"))
+
+        val read = runBlocking { repository().days(profileId, Instant.parse("2026-10-18T00:00:00Z"), ZoneId.of("Europe/Warsaw")) }
+
+        val asked = server.takeRequest().requestUrl!!
+        assertEquals("/api/weights/days", asked.encodedPath)
+        assertEquals(
+            mapOf("profileId" to profileId, "since" to "2026-10-18T00:00:00Z", "timeZone" to "Europe/Warsaw"),
+            asked.queryParameterNames.associateWith { asked.queryParameter(it) },
+        )
+        // A weight every other day: the mean of the first day counts the days of its week before the day asked from.
+        assertEquals(
+            listOf(
+                WeightPoint(LocalDate.parse("2026-10-18"), 66.5, 66.65),
+                WeightPoint(LocalDate.parse("2026-10-20"), 66.4, 66.55),
+                WeightPoint(LocalDate.parse("2026-10-22"), 66.3, 66.45),
+                WeightPoint(LocalDate.parse("2026-10-24"), 66.2, 66.35),
+                WeightPoint(LocalDate.parse("2026-10-26"), 66.1, 66.25),
+                WeightPoint(LocalDate.parse("2026-10-28"), 66.0, 66.15),
+            ),
+            read,
+        )
     }
 
     @Test

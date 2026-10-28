@@ -24,7 +24,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,7 +41,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.WeightPoint
-import net.whiteravens.dietapp.domain.weightSeries
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatNumber
@@ -60,7 +58,7 @@ import kotlin.math.floor
  * The weights a profile logged, as the web's card keeps them: today's weight typed in the account's
  * unit and logged, the last one taken back once it is confirmed, and ninety days of them as a chart
  * with the mean of each seven days and a line at the weight the profile works towards, or at the one
- * it registered with while it names none. The API keeps kilograms.
+ * it registered with while it names none. The API keeps kilograms, and says the days and their means.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -136,13 +134,13 @@ internal fun WeightCard(
                 }
             }
 
-            val weights = stats.weights
+            val days = stats.days
             when {
                 stats.weightsError != null -> {
                     Text(stringResource(R.string.weight_read_failed), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                     Text(errorMessage(stats.weightsError), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                weights.isNullOrEmpty() -> Box(
+                days.isNullOrEmpty() -> Box(
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = 160.dp)
@@ -160,7 +158,7 @@ internal fun WeightCard(
                 else -> {
                     val target = profile.targetWeightKg
                     WeightChart(
-                        points = remember(weights) { weightSeries(weights, zone) },
+                        points = days,
                         lineKg = target ?: profile.weightKg,
                         lineLabel = stringResource(if (target != null) R.string.weight_target_label else R.string.weight_reference_label),
                         unit = unit,

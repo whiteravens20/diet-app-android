@@ -155,6 +155,8 @@ class DashboardTest {
         screen.waitUntil(20_000) {
             screen.onAllNodes(field and SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))).fetchSemanticsNodes().isNotEmpty()
         }
+        // The chart's days are read again, and today is one of them.
+        screen.scrollTo(hasContentDescription(formatDate(LocalDate.now().toString()), substring = true))
         screen.keepScreenshot("dashboard-a-weight-logged")
 
         // The last entry taken back once it is confirmed; the one before it stays, and is the one offered next.

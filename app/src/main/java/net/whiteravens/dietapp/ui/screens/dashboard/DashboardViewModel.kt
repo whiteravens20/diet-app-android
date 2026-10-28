@@ -20,12 +20,14 @@ import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.WeightEntry
+import net.whiteravens.dietapp.domain.WeightPoint
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import java.util.Locale
 import javax.inject.Inject
 
@@ -44,7 +46,8 @@ class DashboardViewModel @Inject constructor(
     /**
      * A profile, its calorie target or why there is none to show, what its plan of the moment
      * comes to (null where it has no plan) or why that could not be read, and the weights it
-     * logged in the last ninety days, the newest first, or why they could not be read.
+     * logged in the last ninety days, the newest first, with the same by day as the API draws them
+     * for the chart, or why they could not be read.
      */
     data class ProfileStats(
         val profile: Profile,
@@ -53,6 +56,7 @@ class DashboardViewModel @Inject constructor(
         val overview: PlanOverview? = null,
         val overviewError: Throwable? = null,
         val weights: List<WeightEntry>? = null,
+        val days: List<WeightPoint>? = null,
         val weightsError: Throwable? = null,
     )
 
@@ -100,6 +104,9 @@ class DashboardViewModel @Inject constructor(
 
     private val again = ReadingAnew()
 
+    /** How many times each profile's weights by day were read again after a change, by the profile's id. */
+    private val daysRead = mutableMapOf<String, Int>()
+
     init {
         load()
     }
@@ -127,7 +134,8 @@ class DashboardViewModel @Inject constructor(
 
     /**
      * Logs what is typed for [profileId], read in the account's unit and sent in kilograms. A weight out
-     * of the unit's bounds is said and not sent; one logged empties the field and is the newest.
+     * of the unit's bounds is said and not sent; one logged empties the field, is the newest, and the
+     * days of the chart are read again.
      */
     fun logWeight(profileId: String) {
         val log = _state.value.weightLogs[profileId] ?: WeightLog()
@@ -150,12 +158,13 @@ class DashboardViewModel @Inject constructor(
                             },
                         )
                     }
+                    readDaysAgain(profileId)
                 }
                 .onFailure { e -> changeLog(profileId) { it.copy(logging = false, problem = WeightProblem.LogFailed(e)) } }
         }
     }
 
-    /** Takes back the newest weight of [profileId]; asked again, the one before it. */
+    /** Takes back the newest weight of [profileId], and reads the days of the chart again; asked again, the one before it. */
     fun removeLatestWeight(profileId: String) {
         val latest = _state.value.profiles.firstOrNull { it.profile.id == profileId }?.weights?.firstOrNull() ?: return
         if (_state.value.weightLogs[profileId]?.removing == true) return
@@ -171,9 +180,39 @@ class DashboardViewModel @Inject constructor(
                             },
                         )
                     }
+                    readDaysAgain(profileId)
                 }
                 .onFailure { e -> changeLog(profileId) { it.copy(removing = false, problem = WeightProblem.RemoveFailed(e)) } }
         }
+    }
+
+    /**
+     * Reads [profileId]'s weights by day again after one was logged or taken back, where its card has
+     * its weights: the chart's days and means are the API's. A reading a later one overtook is dropped.
+     */
+    private fun readDaysAgain(profileId: String) {
+        if (_state.value.profiles.firstOrNull { it.profile.id == profileId }?.weights == null) return
+        val reading = (daysRead[profileId] ?: 0) + 1
+        daysRead[profileId] = reading
+        viewModelScope.launch {
+            val read = attempt { weights.days(profileId, Instant.now().minus(WEIGHT_DAYS), ZoneId.systemDefault()) }
+            if (daysRead[profileId] != reading) return@launch
+            _state.update { state ->
+                state.copy(
+                    profiles = state.profiles.map { stats ->
+                        if (stats.profile.id != profileId) stats
+                        else read.fold({ stats.copy(days = it, weightsError = null) }, { stats.copy(weightsError = it) })
+                    },
+                )
+            }
+        }
+    }
+
+    /** [profileId]'s weights since [since], the newest first, and the same by day where the phone is. */
+    private suspend fun weightsOf(profileId: String, since: Instant) = coroutineScope {
+        val entries = async { weights.entries(profileId, since) }
+        val days = async { weights.days(profileId, since, ZoneId.systemDefault()) }
+        entries.await() to days.await()
     }
 
     private fun changeLog(profileId: String, change: (WeightLog) -> WeightLog) =
@@ -196,14 +235,15 @@ class DashboardViewModel @Inject constructor(
                                 // A failed read degrades one card, not the screen, and the card says why.
                                 val target = async { attempt { users.calorieTarget(profile.id) } }
                                 val overview = async { attempt { plans.overview(profile.id) } }
-                                val logged = async { attempt { weights.entries(profile.id, since) } }
+                                val logged = async { attempt { weightsOf(profile.id, since) } }
                                 ProfileStats(
                                     profile,
                                     target.await().getOrNull(),
                                     target.await().exceptionOrNull(),
                                     overview.await().getOrNull(),
                                     overview.await().exceptionOrNull(),
-                                    weights = logged.await().getOrNull(),
+                                    weights = logged.await().getOrNull()?.first,
+                                    days = logged.await().getOrNull()?.second,
                                     weightsError = logged.await().exceptionOrNull(),
                                 )
                             }
