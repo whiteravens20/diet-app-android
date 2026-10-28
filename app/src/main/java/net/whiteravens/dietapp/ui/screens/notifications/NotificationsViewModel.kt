@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AccountNotification
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
@@ -35,23 +36,52 @@ class NotificationsViewModel @Inject constructor(
         val error: Throwable? = null,
         /** The notification being marked read, [ALL] for every one; null while none is. */
         val marking: String? = null,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
     )
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    private val again = ReadingAnew()
+
     init {
         load()
     }
 
-    fun load() {
+    fun load() = read(showLoading = true)
+
+    /**
+     * Reads the notifications again when the screen is shown again, keeping what is shown until the
+     * answer is there; on coming back to the front only as often as [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (!_state.value.loading && again.due(cameToTheFront)) read(showLoading = false)
+    }
+
+    /** Reads the notifications again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        read(showLoading = false)
+    }
+
+    private fun read(showLoading: Boolean) {
+        again.begun()
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            if (showLoading) _state.update { it.copy(loading = true, error = null) }
+            val before = _state.value.items
             // A profile whose name cannot be read leaves its notifications without one, nothing more.
             val names = async { attempt { users.profiles() }.getOrDefault(emptyList()).associate { it.id to it.name } }
             attempt { notifications.unread() }
-                .onSuccess { found -> _state.update { it.copy(loading = false, items = found, names = names.await()) } }
-                .onFailure { e -> _state.update { it.copy(loading = false, error = e) } }
+                .onSuccess { found ->
+                    val named = names.await()
+                    // One read or put away while this was read was answered after it: what is shown is newer.
+                    _state.update { if (it.items === before) it.copy(loading = false, items = found, names = named, error = null, pulled = false) else it.copy(loading = false, pulled = false) }
+                }
+                .onFailure { e ->
+                    _state.update { if (showLoading || it.items.isEmpty()) it.copy(loading = false, error = e, pulled = false) else it.copy(pulled = false) }
+                }
         }
     }
 

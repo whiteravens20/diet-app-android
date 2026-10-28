@@ -164,4 +164,37 @@ class NotificationsViewModelTest {
         assertEquals(listOf(alasReminder, olasReminder), model.state.value.items)
         assertNull(model.state.value.marking)
     }
+
+    @Test
+    fun `pulled down, the list is read again, and one put away meanwhile stays away from the older answer`() {
+        val model = NotificationsViewModel(notifications, users)
+        val answer = CompletableDeferred<Unit>()
+        coEvery { notifications.unread() } coAnswers {
+            answer.await()
+            unread
+        }
+        coEvery { notifications.read(review.id) } just runs
+
+        model.pull()
+        assertTrue(model.state.value.pulled)
+        model.dismiss(review)
+        answer.complete(Unit)
+
+        assertEquals(listOf(alasReminder, olasReminder), model.state.value.items)
+        assertFalse(model.state.value.pulled)
+    }
+
+    @Test
+    fun `shown again after another screen the list is read again, and a list that cannot be read keeps what was shown`() {
+        val model = NotificationsViewModel(notifications, users)
+        coEvery { notifications.unread() } returns listOf(olasReminder)
+
+        model.shownAgain(cameToTheFront = false)
+        assertEquals(listOf(olasReminder), model.state.value.items)
+
+        coEvery { notifications.unread() } throws IOException("unreachable")
+        model.shownAgain(cameToTheFront = false)
+        assertEquals(listOf(olasReminder), model.state.value.items)
+        assertNull(model.state.value.error)
+    }
 }

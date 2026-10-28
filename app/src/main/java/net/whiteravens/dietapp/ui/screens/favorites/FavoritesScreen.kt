@@ -49,12 +49,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealSlots
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
@@ -62,6 +62,7 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
@@ -82,132 +83,131 @@ fun FavoritesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
-    // Read again on coming back: a recipe opened from the list may have been marked otherwise in its view.
-    LifecycleResumeEffect(viewModel) {
-        viewModel.refresh()
-        onPauseOrDispose {}
-    }
+    // Read again on being shown again: a recipe opened from the list may have been marked otherwise in its view.
+    WhenShownAgain(viewModel::shownAgain)
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item {
-            ScreenHeader(
-                title = stringResource(R.string.favorites_title),
-                subtitle = stringResource(R.string.favorites_subhead),
-                onBack = onBack,
-            )
-        }
-
-        when {
-            state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
-
-            state.profilesError != null -> item {
-                Column {
-                    ErrorBanner(errorMessage(state.profilesError!!))
-                    Button(onClick = viewModel::loadProfiles, modifier = Modifier.padding(top = 12.dp)) {
-                        Text(stringResource(R.string.common_retry))
-                    }
-                }
-            }
-
-            state.profiles.isEmpty() -> item {
-                EmptyState(
-                    icon = Icons.Default.Star,
-                    title = stringResource(R.string.favorites_no_profile),
-                    description = stringResource(R.string.favorites_no_profile_body),
-                    cta = { Button(onClick = onProfiles) { Text(stringResource(R.string.favorites_no_profile_cta)) } },
+    PullToRead(state.pulled, viewModel::pull) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item {
+                ScreenHeader(
+                    title = stringResource(R.string.favorites_title),
+                    subtitle = stringResource(R.string.favorites_subhead),
+                    onBack = onBack,
                 )
             }
 
-            else -> {
-                // The profiles to choose among, only where there are two or more.
-                if (state.profiles.size > 1) {
-                    item {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            state.profiles.forEach { profile ->
-                                FilterChip(
-                                    selected = profile.id == state.profileId,
-                                    onClick = { viewModel.pickProfile(profile.id) },
-                                    enabled = !state.busy,
-                                    label = { Text(profile.name) },
-                                )
-                            }
+            when {
+                state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
+
+                state.profilesError != null -> item {
+                    Column {
+                        ErrorBanner(errorMessage(state.profilesError!!))
+                        Button(onClick = viewModel::loadProfiles, modifier = Modifier.padding(top = 12.dp)) {
+                            Text(stringResource(R.string.common_retry))
                         }
                     }
                 }
-                item {
-                    Filters(
-                        query = query,
-                        onQuery = { viewModel.query.value = it.take(FavoriteFilter.SEARCH_LENGTH) },
-                        filter = state.filter,
-                        tags = state.tags,
-                        onNarrow = viewModel::narrow,
+
+                state.profiles.isEmpty() -> item {
+                    EmptyState(
+                        icon = Icons.Default.Star,
+                        title = stringResource(R.string.favorites_no_profile),
+                        description = stringResource(R.string.favorites_no_profile_body),
+                        cta = { Button(onClick = onProfiles) { Text(stringResource(R.string.favorites_no_profile_cta)) } },
                     )
                 }
-                item {
-                    Text(
-                        stringResource(R.string.favorites_legend),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                state.failed?.let { (what, error) ->
-                    item {
-                        val lead = stringResource(if (what == FavoritesViewModel.Failure.SAVE) R.string.favorites_err_save else R.string.favorites_err_remove)
-                        ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                    }
-                }
 
-                when {
-                    state.loading -> items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
-
-                    state.error != null -> item {
-                        Column {
-                            ErrorBanner(errorMessage(state.error!!))
-                            Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
-                                Text(stringResource(R.string.common_retry))
+                else -> {
+                    // The profiles to choose among, only where there are two or more.
+                    if (state.profiles.size > 1) {
+                        item {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                state.profiles.forEach { profile ->
+                                    FilterChip(
+                                        selected = profile.id == state.profileId,
+                                        onClick = { viewModel.pickProfile(profile.id) },
+                                        enabled = !state.busy,
+                                        label = { Text(profile.name) },
+                                    )
+                                }
                             }
                         }
                     }
-
-                    state.items.isEmpty() && state.filter.narrowed -> item {
+                    item {
+                        Filters(
+                            query = query,
+                            onQuery = { viewModel.query.value = it.take(FavoriteFilter.SEARCH_LENGTH) },
+                            filter = state.filter,
+                            tags = state.tags,
+                            onNarrow = viewModel::narrow,
+                        )
+                    }
+                    item {
                         Text(
-                            stringResource(R.string.favorites_none_filtered),
-                            style = MaterialTheme.typography.bodyMedium,
+                            stringResource(R.string.favorites_legend),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-
-                    state.items.isEmpty() -> item {
-                        EmptyState(
-                            icon = Icons.Default.Star,
-                            title = stringResource(R.string.favorites_empty_title),
-                            description = stringResource(R.string.favorites_empty_body),
-                            cta = { Button(onClick = onRecipes) { Text(stringResource(R.string.favorites_empty_cta)) } },
-                        )
+                    state.failed?.let { (what, error) ->
+                        item {
+                            val lead = stringResource(if (what == FavoritesViewModel.Failure.SAVE) R.string.favorites_err_save else R.string.favorites_err_remove)
+                            ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                        }
                     }
 
-                    else -> {
-                        item {
+                    when {
+                        state.loading -> items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
+
+                        state.error != null -> item {
+                            Column {
+                                ErrorBanner(errorMessage(state.error!!))
+                                Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
+                                    Text(stringResource(R.string.common_retry))
+                                }
+                            }
+                        }
+
+                        state.items.isEmpty() && state.filter.narrowed -> item {
                             Text(
-                                pluralStringResource(R.plurals.favorites_count, state.items.size, state.items.size),
+                                stringResource(R.string.favorites_none_filtered),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        items(state.items, key = { it.recipeId }) { kept ->
-                            MarkCard(
-                                item = state.shown(kept),
-                                busy = state.busy,
-                                onOpen = { onOpenRecipe(kept.recipeId) },
-                                onSentiment = { viewModel.setSentiment(kept, it) },
-                                onAddTag = { viewModel.addTag(kept, it) },
-                                onRemoveTag = { viewModel.removeTag(kept, it) },
-                                onRemove = { viewModel.remove(kept) },
+
+                        state.items.isEmpty() -> item {
+                            EmptyState(
+                                icon = Icons.Default.Star,
+                                title = stringResource(R.string.favorites_empty_title),
+                                description = stringResource(R.string.favorites_empty_body),
+                                cta = { Button(onClick = onRecipes) { Text(stringResource(R.string.favorites_empty_cta)) } },
                             )
+                        }
+
+                        else -> {
+                            item {
+                                Text(
+                                    pluralStringResource(R.plurals.favorites_count, state.items.size, state.items.size),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            items(state.items, key = { it.recipeId }) { kept ->
+                                MarkCard(
+                                    item = state.shown(kept),
+                                    busy = state.busy,
+                                    onOpen = { onOpenRecipe(kept.recipeId) },
+                                    onSentiment = { viewModel.setSentiment(kept, it) },
+                                    onAddTag = { viewModel.addTag(kept, it) },
+                                    onRemoveTag = { viewModel.removeTag(kept, it) },
+                                    onRemove = { viewModel.remove(kept) },
+                                )
+                            }
                         }
                     }
                 }

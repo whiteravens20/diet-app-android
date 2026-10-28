@@ -46,12 +46,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ProfileDetails
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.cuisineLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -59,6 +59,7 @@ import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.weightLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel.IngredientList
@@ -78,78 +79,77 @@ fun ProfilesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val rules by viewModel.rules.collectAsStateWithLifecycle()
-    // Read anew on opening and on coming back, from a form that saved a profile among others.
-    LifecycleResumeEffect(viewModel) {
-        viewModel.load()
-        onPauseOrDispose {}
-    }
+    // Read again on being shown again, from a form that saved a profile among others.
+    WhenShownAgain(viewModel::shownAgain)
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     val maxProfiles = rules?.maxProfiles ?: InstanceRules.DEFAULT_MAX_PROFILES
     val list = state.list
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        ScreenHeader(
-            title = stringResource(R.string.profiles_title),
-            subtitle = pluralStringResource(R.plurals.profiles_subhead, maxProfiles, maxProfiles),
-            onBack = onBack,
-        )
-        // A change refused outside a form (a preference, a profile that could not be deleted) is said here.
-        state.error?.let { ErrorBanner(errorMessage(it)) }
+    PullToRead(state.pulled, viewModel::pull) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ScreenHeader(
+                title = stringResource(R.string.profiles_title),
+                subtitle = pluralStringResource(R.plurals.profiles_subhead, maxProfiles, maxProfiles),
+                onBack = onBack,
+            )
+            // A change refused outside a form (a preference, a profile that could not be deleted) is said here.
+            state.error?.let { ErrorBanner(errorMessage(it)) }
 
-        when {
-            state.loading && list.isEmpty() -> {
-                Skeleton(Modifier.fillMaxWidth().height(96.dp))
-                Skeleton(Modifier.fillMaxWidth().height(96.dp))
-            }
-
-            state.loadError != null && list.isEmpty() -> {
-                ErrorBanner(errorMessage(state.loadError!!))
-                Button(onClick = viewModel::load) { Text(stringResource(R.string.common_retry)) }
-            }
-
-            else -> {
-                list.forEach { profile ->
-                    ProfileCard(
-                        profile = profile,
-                        unit = state.unit,
-                        deleting = state.deleting,
-                        onEdit = { onEdit(profile.id) },
-                        onDelete = { deleting = profile.id },
-                    )
-                }
-                if (list.isEmpty()) FirstProfile(rules = rules, onMade = viewModel::made)
-
-                state.made?.takeIf { made -> list.any { it.id == made.id } }?.let { made -> MadeCard(made, onFirstPlan) }
-
-                if (list.isNotEmpty() && list.size < maxProfiles) {
-                    Button(onClick = onAdd, shape = MaterialTheme.shapes.medium) { Text(stringResource(R.string.profiles_add)) }
-                }
-                if (list.size >= maxProfiles) {
-                    Text(
-                        pluralStringResource(R.plurals.profiles_at_limit, maxProfiles, maxProfiles),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            when {
+                state.loading && list.isEmpty() -> {
+                    Skeleton(Modifier.fillMaxWidth().height(96.dp))
+                    Skeleton(Modifier.fillMaxWidth().height(96.dp))
                 }
 
-                if (list.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.profile_preferences_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(top = 8.dp).semantics { heading() },
-                    )
-                    Text(
-                        stringResource(R.string.profile_preferences_subhead),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    list.forEach { profile -> PreferencesCard(profile, state, viewModel) }
+                state.loadError != null && list.isEmpty() -> {
+                    ErrorBanner(errorMessage(state.loadError!!))
+                    Button(onClick = viewModel::load) { Text(stringResource(R.string.common_retry)) }
+                }
+
+                else -> {
+                    list.forEach { profile ->
+                        ProfileCard(
+                            profile = profile,
+                            unit = state.unit,
+                            deleting = state.deleting,
+                            onEdit = { onEdit(profile.id) },
+                            onDelete = { deleting = profile.id },
+                        )
+                    }
+                    if (list.isEmpty()) FirstProfile(rules = rules, onMade = viewModel::made)
+
+                    state.made?.takeIf { made -> list.any { it.id == made.id } }?.let { made -> MadeCard(made, onFirstPlan) }
+
+                    if (list.isNotEmpty() && list.size < maxProfiles) {
+                        Button(onClick = onAdd, shape = MaterialTheme.shapes.medium) { Text(stringResource(R.string.profiles_add)) }
+                    }
+                    if (list.size >= maxProfiles) {
+                        Text(
+                            pluralStringResource(R.plurals.profiles_at_limit, maxProfiles, maxProfiles),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    if (list.isNotEmpty()) {
+                        Text(
+                            stringResource(R.string.profile_preferences_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(top = 8.dp).semantics { heading() },
+                        )
+                        Text(
+                            stringResource(R.string.profile_preferences_subhead),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        list.forEach { profile -> PreferencesCard(profile, state, viewModel) }
+                    }
                 }
             }
         }

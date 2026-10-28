@@ -10,6 +10,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
@@ -26,9 +27,9 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.ApplyFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
-import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
+import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.PackTallyDto
 import net.whiteravens.dietapp.data.remote.PacksBeforeAfterDto
@@ -48,6 +49,7 @@ import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.repository.toDomain
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -61,6 +63,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -200,6 +203,43 @@ class PlanDetailViewModelTest {
         assertEquals(plan.id, model.state.value.plan?.id)
         assertTrue(model.state.value.offline)
         assertNull(model.state.value.error)
+    }
+
+    @Test
+    fun `pulled down, the plan is read again, and a meal eaten meanwhile keeps its plan from the older answer`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setMealEaten(plan.id, meal.id, SetMealEatenRequest(true)) } returns swapped
+        val model = model(api)
+        val answer = CompletableDeferred<Unit>()
+        coEvery { api.mealPlan(plan.id) } coAnswers {
+            answer.await()
+            plan
+        }
+
+        model.pull()
+        assertTrue(model.state.value.pulled)
+        model.setEaten(meal.id, true)
+        answer.complete(Unit)
+
+        val eatenPlan = swapped.plan.toDomain()
+        assertNotEquals(plan.toDomain(), eatenPlan)
+        assertEquals(eatenPlan, model.state.value.plan)
+        assertFalse(model.state.value.pulled)
+    }
+
+    @Test
+    fun `shown again after another screen, the plan is read again, and one that cannot be reached stays with changes waiting`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val model = model(api)
+
+        coEvery { api.mealPlan(plan.id) } throws IOException("no network")
+        model.shownAgain(cameToTheFront = false)
+
+        assertEquals(plan.id, model.state.value.plan?.id)
+        assertTrue(model.state.value.offline)
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
     }
 
     @Test

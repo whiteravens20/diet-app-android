@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.SessionUser
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
@@ -45,6 +46,8 @@ class AccountViewModel @Inject constructor(
         /** The unit chosen and on its way to the API, shown at once; null while none is. */
         val choosing: UnitChoice? = null,
         val unitError: Throwable? = null,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
     ) {
         /** The unit weights are shown in as the account has it, or as it was just chosen: `kg`, `lb`, or null for where the phone is. */
         val weightUnit: String?
@@ -71,8 +74,41 @@ class AccountViewModel @Inject constructor(
     val serverUrl: StateFlow<String> = server.baseUrl
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
+    private val again = ReadingAnew()
+
     init {
         load()
+    }
+
+    /**
+     * Reads the account again when the screen is shown again, on coming back to the front only as often
+     * as [ReadingAnew] lets it; says whether it did, so that the screen reads its other cards with it.
+     */
+    fun shownAgain(cameToTheFront: Boolean): Boolean {
+        if (_state.value.loading || !again.due(cameToTheFront)) return false
+        readAnew()
+        return true
+    }
+
+    /** Reads the account again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    /** Reads the account again, keeping what is shown until the answer is there; one that could not be read is asked for whole. */
+    private fun readAnew() {
+        if (_state.value.user == null) {
+            _state.update { it.copy(pulled = false) }
+            return load()
+        }
+        again.begun()
+        viewModelScope.launch {
+            attempt { users.me() }
+                .onSuccess { me -> _state.update { it.copy(user = me, pulled = false) } }
+                .onFailure { _state.update { it.copy(pulled = false) } }
+        }
     }
 
     /**
@@ -92,6 +128,7 @@ class AccountViewModel @Inject constructor(
     }
 
     fun load() {
+        again.begun()
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             attempt { users.me() }

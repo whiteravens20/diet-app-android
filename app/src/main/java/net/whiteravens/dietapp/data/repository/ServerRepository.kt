@@ -50,6 +50,17 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
     }
 
     /**
+     * Asks the same server again, keeping what it said before until it answers, so that a screen read
+     * anew keeps what it shows when the server cannot be reached. Says whether it answered.
+     */
+    suspend fun readAgain(): Boolean {
+        val asked = ask()
+        if (asked == ServerVersion.Unknown) return false
+        _version.value = asked
+        return true
+    }
+
+    /**
      * What answers at [baseUrl], an address typed for the server, with `GET /health`: asked before
      * the address is kept, so that a wrong one is named at once. Its version is asked with
      * `GET /config` once it is kept, as for every server.

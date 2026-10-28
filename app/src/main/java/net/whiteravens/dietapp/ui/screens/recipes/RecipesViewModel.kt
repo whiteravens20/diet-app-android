@@ -25,6 +25,7 @@ import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.domain.RecipePage
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import javax.inject.Inject
 
@@ -64,6 +65,8 @@ class RecipesViewModel @Inject constructor(
         /** What came of suggesting a recipe for the shared library: sent, or why not. */
         val submitted: Result<Unit>? = null,
         val error: Throwable? = null,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
     )
 
     /** The words of the search field as typed; looked for once typing pauses. */
@@ -74,6 +77,7 @@ class RecipesViewModel @Inject constructor(
 
     private var searchJob: Job? = null
     private var ingredientJob: Job? = null
+    private val again = ReadingAnew()
 
     init {
         viewModelScope.launch {
@@ -96,6 +100,46 @@ class RecipesViewModel @Inject constructor(
     }
 
     fun retry() = load()
+
+    /**
+     * Reads the recipes shown again when the screen is shown again, a mark or a recipe of one's own
+     * changed elsewhere; on coming back to the front only as often as [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (again.due(cameToTheFront)) readAnew()
+    }
+
+    /** Reads the recipes shown again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    /**
+     * Reads again every page shown so far, so that the list keeps its place, and puts them in the
+     * place of what is shown once all are there. Nothing while the list is being read anew from its
+     * first page; what changed on this screen while they were read stays.
+     */
+    private fun readAnew() {
+        val shown = _state.value
+        if (shown.loading || shown.loadingMore || shown.error != null && shown.items.isEmpty()) {
+            if (shown.error != null && !shown.loading) load()
+            return _state.update { it.copy(pulled = false) }
+        }
+        again.begun()
+        searchJob = viewModelScope.launch {
+            attempt { (1..shown.page).map { page(shown, it) } }
+                .onSuccess { pages ->
+                    _state.update {
+                        if (it.items !== shown.items || it.tab != shown.tab || it.filter != shown.filter) return@update it.copy(pulled = false)
+                        val last = pages.last()
+                        it.copy(items = pages.flatMap { page -> page.items }, page = last.page, hasMore = last.page < last.totalPages, pulled = false)
+                    }
+                }
+                .onFailure { _state.update { it.copy(pulled = false) } }
+        }
+    }
 
     /** AI turned on or off in the account's settings shows here as soon as it is. */
     private fun followAiMode() {
@@ -174,6 +218,7 @@ class RecipesViewModel @Inject constructor(
     }
 
     private fun load() {
+        again.begun()
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             _state.update { it.copy(loading = true, items = emptyList(), page = 1, hasMore = false, error = null) }

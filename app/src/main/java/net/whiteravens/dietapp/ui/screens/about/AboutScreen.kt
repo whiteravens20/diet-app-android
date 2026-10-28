@@ -29,7 +29,9 @@ import net.whiteravens.dietapp.ui.common.ATTRIBUTION
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION_URL
 import net.whiteravens.dietapp.ui.common.LICENCE_URL
 import net.whiteravens.dietapp.ui.common.SOURCE_URL
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 
@@ -42,66 +44,71 @@ import net.whiteravens.dietapp.ui.components.rememberWebPages
 fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutViewModel = hiltViewModel()) {
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     val version by viewModel.version.collectAsStateWithLifecycle()
+    val pulled by viewModel.pulled.collectAsStateWithLifecycle()
     val web = rememberWebPages()
+    // Read again on being shown again: the instance may have changed what it publishes.
+    WhenShownAgain(viewModel::shownAgain)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        ScreenHeader(title = stringResource(R.string.about_title), onBack = onBack)
+    PullToRead(pulled, viewModel::pull) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ScreenHeader(title = stringResource(R.string.about_title), onBack = onBack)
 
-        AppCard {
-            Title(stringResource(R.string.about_instance))
-            Fact(
-                stringResource(R.string.about_server_version),
-                when (val v = version) {
-                    ServerVersion.Checked -> BuildConfig.API_VERSION
-                    is ServerVersion.Other -> v.server
-                    ServerVersion.Unsupported, ServerVersion.Unknown -> stringResource(R.string.about_server_version_unknown)
-                },
-            )
-            rules?.let { r ->
-                Fact(stringResource(R.string.about_max_profiles), r.maxProfiles.toString())
-                r.maxRepeatsPerRecipe?.let { most ->
-                    Fact(stringResource(R.string.about_max_repeats), pluralStringResource(R.plurals.about_max_repeats_times, most, most))
+            AppCard {
+                Title(stringResource(R.string.about_instance))
+                Fact(
+                    stringResource(R.string.about_server_version),
+                    when (val v = version) {
+                        ServerVersion.Checked -> BuildConfig.API_VERSION
+                        is ServerVersion.Other -> v.server
+                        ServerVersion.Unsupported, ServerVersion.Unknown -> stringResource(R.string.about_server_version_unknown)
+                    },
+                )
+                rules?.let { r ->
+                    Fact(stringResource(R.string.about_max_profiles), r.maxProfiles.toString())
+                    r.maxRepeatsPerRecipe?.let { most ->
+                        Fact(stringResource(R.string.about_max_repeats), pluralStringResource(R.plurals.about_max_repeats_times, most, most))
+                    }
                 }
+                Said(stringResource(R.string.about_operator), Modifier.padding(top = 12.dp))
+                val contact = rules?.operatorContact
+                if (contact != null) {
+                    SelectionContainer { Text(contact, style = MaterialTheme.typography.bodyMedium) }
+                } else {
+                    Said(stringResource(R.string.about_operator_not_set))
+                }
+                rules?.supportUrl?.let { address ->
+                    TextButton(onClick = { web.openOutside(address) }) { Text(stringResource(R.string.about_support)) }
+                }
+                TextButton(onClick = { web.open("terms") }) { Text(stringResource(R.string.about_terms)) }
             }
-            Said(stringResource(R.string.about_operator), Modifier.padding(top = 12.dp))
-            val contact = rules?.operatorContact
-            if (contact != null) {
-                SelectionContainer { Text(contact, style = MaterialTheme.typography.bodyMedium) }
-            } else {
-                Said(stringResource(R.string.about_operator_not_set))
-            }
-            rules?.supportUrl?.let { address ->
-                TextButton(onClick = { web.openOutside(address) }) { Text(stringResource(R.string.about_support)) }
-            }
-            TextButton(onClick = { web.open("terms") }) { Text(stringResource(R.string.about_terms)) }
-        }
 
-        AppCard {
-            Title(stringResource(R.string.about_app))
-            Fact(stringResource(R.string.about_app_version), BuildConfig.VERSION_NAME)
-            Said(stringResource(R.string.about_api_checked, BuildConfig.API_VERSION))
-        }
-
-        AppCard {
-            Title(stringResource(R.string.about_legal))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SelectionContainer { Said(stringResource(R.string.about_notice, ATTRIBUTION, ATTRIBUTION_URL)) }
-                Said(stringResource(R.string.about_licence))
-                Said(stringResource(R.string.about_warranty))
-                Said(stringResource(R.string.about_changed))
-                Said(stringResource(R.string.about_problems))
+            AppCard {
+                Title(stringResource(R.string.about_app))
+                Fact(stringResource(R.string.about_app_version), BuildConfig.VERSION_NAME)
+                Said(stringResource(R.string.about_api_checked, BuildConfig.API_VERSION))
             }
-            TextButton(onClick = { web.openOutside(LICENCE_URL) }) { Text(stringResource(R.string.about_licence_text)) }
-            TextButton(onClick = { web.openOutside("$SOURCE_URL/issues") }) { Text(stringResource(R.string.about_issues)) }
-            TextButton(onClick = { web.openOutside("$SOURCE_URL/security/policy") }) { Text(stringResource(R.string.about_security)) }
-            TextButton(onClick = { web.openOutside(SOURCE_URL) }) { Text(stringResource(R.string.about_source)) }
-            TextButton(onClick = onLibraries) { Text(stringResource(R.string.about_libraries)) }
+
+            AppCard {
+                Title(stringResource(R.string.about_legal))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SelectionContainer { Said(stringResource(R.string.about_notice, ATTRIBUTION, ATTRIBUTION_URL)) }
+                    Said(stringResource(R.string.about_licence))
+                    Said(stringResource(R.string.about_warranty))
+                    Said(stringResource(R.string.about_changed))
+                    Said(stringResource(R.string.about_problems))
+                }
+                TextButton(onClick = { web.openOutside(LICENCE_URL) }) { Text(stringResource(R.string.about_licence_text)) }
+                TextButton(onClick = { web.openOutside("$SOURCE_URL/issues") }) { Text(stringResource(R.string.about_issues)) }
+                TextButton(onClick = { web.openOutside("$SOURCE_URL/security/policy") }) { Text(stringResource(R.string.about_security)) }
+                TextButton(onClick = { web.openOutside(SOURCE_URL) }) { Text(stringResource(R.string.about_source)) }
+                TextButton(onClick = onLibraries) { Text(stringResource(R.string.about_libraries)) }
+            }
         }
     }
 }

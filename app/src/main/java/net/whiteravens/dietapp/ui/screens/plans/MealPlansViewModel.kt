@@ -17,6 +17,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import java.time.DayOfWeek
@@ -58,6 +59,8 @@ class MealPlansViewModel @Inject constructor(
         /** When the list on screen was fetched, if it came from the cache. */
         val syncedAt: Long? = null,
         val refreshing: Boolean = false,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
         val loadingMore: Boolean = false,
         val offline: Boolean = false,
         val error: Throwable? = null,
@@ -71,12 +74,14 @@ class MealPlansViewModel @Inject constructor(
 
     private var listing: Job? = null
     private var reading: Job? = null
+    private val again = ReadingAnew()
 
     init {
         load()
     }
 
     fun load() {
+        again.begun()
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             attempt { users.profiles() }
@@ -89,25 +94,41 @@ class MealPlansViewModel @Inject constructor(
     }
 
     /**
-     * Reads the profiles, the list and the month again when the screen comes back, from a plan made,
-     * changed or deleted elsewhere, keeping what is shown until the answer is there; nothing while the
-     * first reading runs.
+     * Reads the profiles, the list and the month again when the screen is shown again, from a plan
+     * made, changed or deleted elsewhere; on coming back to the front only as often as [ReadingAnew]
+     * lets it.
      */
-    fun refresh() {
-        if (_state.value.loading) return
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (again.due(cameToTheFront)) readAnew()
+    }
+
+    /** Reads the profiles, the list and the month again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    /** Reads what the screen shows again, keeping it until the answer is there; nothing while the first reading runs. */
+    private fun readAnew() {
+        if (_state.value.loading) return _state.update { it.copy(pulled = false) }
+        again.begun()
         viewModelScope.launch {
-            attempt { users.profiles() }.onSuccess { profiles ->
-                val shown = _state.value.selectedProfileId
-                _state.update { it.copy(profiles = profiles) }
-                when {
-                    profiles.isEmpty() -> _state.update { it.copy(selectedProfileId = null, plans = emptyList(), error = null) }
-                    profiles.none { it.id == shown } -> selectProfile(profiles.first().id)
-                    else -> shown?.let {
-                        list(it, fromCache = false)
-                        readCalendar()
+            attempt { users.profiles() }
+                .onSuccess { profiles ->
+                    val shown = _state.value.selectedProfileId
+                    _state.update { it.copy(profiles = profiles) }
+                    when {
+                        profiles.isEmpty() -> _state.update { it.copy(selectedProfileId = null, plans = emptyList(), error = null, pulled = false) }
+                        profiles.none { it.id == shown } -> selectProfile(profiles.first().id)
+                        shown == null -> _state.update { it.copy(pulled = false) }
+                        else -> {
+                            list(shown, fromCache = false)
+                            readCalendar()
+                        }
                     }
                 }
-            }
+                .onFailure { _state.update { it.copy(pulled = false) } }
         }
     }
 
@@ -142,7 +163,7 @@ class MealPlansViewModel @Inject constructor(
             attempt { plans.plans(profileId) }
                 .onSuccess { fresh ->
                     ifStillShown(profileId) {
-                        it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = null, refreshing = false, error = null)
+                        it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = null, refreshing = false, pulled = false, error = null)
                     }
                 }
                 .onFailure { e ->
@@ -152,6 +173,7 @@ class MealPlansViewModel @Inject constructor(
                         it.copy(
                             plans = if (gone) emptyList() else it.plans,
                             refreshing = false,
+                            pulled = false,
                             offline = e is IOException,
                             error = e.takeIf { _ -> e !is IOException },
                         )

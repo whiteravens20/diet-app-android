@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -60,6 +62,7 @@ import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -74,6 +77,7 @@ import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.rememberWebPages
@@ -95,6 +99,8 @@ fun ShoppingScreen(
     viewModel: ShoppingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Read again on being shown again: a plan or a list may have been made, changed or deleted in the meantime.
+    WhenShownAgain(viewModel::shownAgain)
     // The window that makes a list for some of the plan's days, while it is open.
     var choosingDays by rememberSaveable { mutableStateOf(false) }
     // The list to delete, while that waits for a yes.
@@ -115,11 +121,15 @@ fun ShoppingScreen(
     }
 
     if (state.profiles.isEmpty() && state.error == null) {
-        EmptyState(
-            icon = Icons.Default.ShoppingCart,
-            title = stringResource(R.string.shopping_no_profile),
-            description = stringResource(R.string.shopping_no_profile_body),
-        )
+        PullToRead(state.pulled, viewModel::pull) {
+            Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                EmptyState(
+                    icon = Icons.Default.ShoppingCart,
+                    title = stringResource(R.string.shopping_no_profile),
+                    description = stringResource(R.string.shopping_no_profile_body),
+                )
+            }
+        }
         return
     }
 
@@ -150,204 +160,206 @@ fun ShoppingScreen(
     }
 
     val busy = state.generating || state.deleting
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item {
-            ScreenHeader(
-                title = stringResource(R.string.nav_shopping),
-                subtitle = stringResource(R.string.shopping_subtitle),
-            )
-        }
-        // The profiles to choose among, where there is more than one.
-        if (state.profiles.size > 1) item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.profiles, key = { it.id }) { profile ->
-                    FilterChip(
-                        selected = profile.id == state.selectedProfileId,
-                        onClick = { viewModel.selectProfile(profile.id) },
-                        label = { Text(profile.name) },
-                    )
-                }
-            }
-        }
-        if (state.plans.isNotEmpty()) {
+    PullToRead(state.pulled, viewModel::pull) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             item {
+                ScreenHeader(
+                    title = stringResource(R.string.nav_shopping),
+                    subtitle = stringResource(R.string.shopping_subtitle),
+                )
+            }
+            // The profiles to choose among, where there is more than one.
+            if (state.profiles.size > 1) item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.plans, key = { it.id }) { plan ->
+                    items(state.profiles, key = { it.id }) { profile ->
                         FilterChip(
-                            selected = plan.id == state.selectedPlanId,
-                            onClick = { viewModel.selectPlan(plan.id) },
-                            label = { Text(stringResource(R.string.plans_card_title, formatDate(plan.startDate), plan.durationDays)) },
+                            selected = profile.id == state.selectedProfileId,
+                            onClick = { viewModel.selectProfile(profile.id) },
+                            label = { Text(profile.name) },
                         )
                     }
                 }
             }
-        }
-        // A list for some of the plan's days; the whole plan's is made where it has none.
-        if (state.plan != null && !state.offline && state.lists.isNotEmpty()) {
-            item {
-                TextButton(onClick = { choosingDays = true }, enabled = !busy) {
-                    Text(stringResource(if (state.generating) R.string.shopping_generating else R.string.shopping_generate_title))
-                }
-            }
-        }
-
-        state.error?.let { item { ErrorBanner(errorMessage(it)) } }
-        if (state.offline) {
-            item {
-                OfflineBanner(
-                    stringResource(
-                        R.string.offline_cached,
-                        state.list?.syncedAt?.let(::formatSyncedAt) ?: "—",
-                    ),
-                )
-            }
-        }
-
-        when {
-            state.plans.isEmpty() && state.selectedProfileId != null && state.error == null -> item {
-                EmptyState(
-                    icon = Icons.Default.ShoppingCart,
-                    title = stringResource(R.string.shopping_no_plans),
-                    description = stringResource(R.string.shopping_no_plans_body),
-                )
-            }
-
-            state.listLoading && state.lists.isEmpty() -> items(2) {
-                Skeleton(Modifier.fillMaxWidth().height(120.dp))
-            }
-
-            state.lists.isEmpty() && state.selectedPlanId != null -> item {
-                EmptyState(
-                    icon = Icons.Default.ShoppingCart,
-                    title = stringResource(R.string.shopping_no_lists_title),
-                    description = stringResource(R.string.shopping_no_lists),
-                    cta = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Button(onClick = { viewModel.generate() }, enabled = !busy && !state.offline) {
-                                if (state.generating) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                    )
-                                } else {
-                                    Text(stringResource(R.string.shopping_make_list))
-                                }
-                            }
-                            TextButton(onClick = { choosingDays = true }, enabled = !busy && !state.offline) {
-                                Text(stringResource(R.string.shopping_generate_title))
-                            }
-                        }
-                    },
-                )
-            }
-
-            else -> state.list?.let { list ->
-                if (state.lists.size > 1) {
-                    item(key = "lists") {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(state.lists, key = { it.id }) { other ->
-                                FilterChip(
-                                    selected = other.id == list.id,
-                                    onClick = { viewModel.selectList(other.id) },
-                                    label = { Text(formatDates(other.fromDate, other.toDate)) },
-                                )
-                            }
-                        }
-                    }
-                }
-                item(key = "list") {
-                    val words = listWords(list)
-                    ListHeader(
-                        list,
-                        onShare = { shareText(context, words.title, listText(list, words), chooser) },
-                        onTableAndPrint = { web.open("shopping-lists") },
-                        onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
-                    )
-                }
-                if (list.stale) {
-                    item(key = "stale") {
-                        AppCard {
-                            Text(stringResource(R.string.shopping_stale), style = MaterialTheme.typography.bodyMedium)
-                            if (!state.offline) {
-                                Text(
-                                    stringResource(R.string.shopping_stale_hint),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                                Button(
-                                    onClick = { viewModel.update(list) },
-                                    enabled = !busy,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                ) { Text(stringResource(R.string.shopping_stale_update)) }
-                            }
-                        }
-                    }
-                }
-                item(key = "proposals") {
-                    ListProposalsPanel(
-                        found = state.shownProposals,
-                        asking = state.askingProposals,
-                        aiOn = state.aiOn,
-                        enabled = !state.offline && !busy,
-                        listFrom = list.fromDate,
-                        onAsk = viewModel::findProposals,
-                        onOpenPlanAt = { day -> onOpenPlan(list.planId, day) },
-                        onTurnAiOn = onTurnAiOn,
-                    )
-                }
-                item(key = "find") {
-                    OutlinedTextField(
-                        value = find,
-                        onValueChange = { find = it },
-                        label = { Text(stringResource(R.string.shopping_find_entry)) },
-                        placeholder = { Text(stringResource(R.string.shopping_find_entry_placeholder)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                val everyItem = list.groups.flatMap { it.items }
-                if (everyItem.any { it.packsStand }) {
-                    item(key = "packs") {
-                        Text(stringResource(R.string.shopping_packs_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                val wanted = find.trim().lowercase()
-                val groups = if (wanted.isEmpty()) list.groups
-                else list.groups.map { group -> group.copy(items = group.items.filter { wanted in it.name.lowercase() }) }.filter { it.items.isNotEmpty() }
-                if (groups.isEmpty()) {
-                    item(key = "none") {
-                        Text(stringResource(R.string.shopping_find_entry_none, find.trim()), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                groups.forEach { group ->
-                    item(key = "header-${group.category}") {
-                        Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
-                            Text(categoryLabel(group.category), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                            // What the whole aisle comes to, whatever part of it is looked for.
-                            val aisle = list.groups.first { it.category == group.category }
-                            Text(
-                                stringResource(R.string.shopping_aisle_energy, formatNumber(aisle.estimatedCalories.roundToInt())),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (state.plans.isNotEmpty()) {
+                item {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(state.plans, key = { it.id }) { plan ->
+                            FilterChip(
+                                selected = plan.id == state.selectedPlanId,
+                                onClick = { viewModel.selectPlan(plan.id) },
+                                label = { Text(stringResource(R.string.plans_card_title, formatDate(plan.startDate), plan.durationDays)) },
                             )
                         }
                     }
-                    item(key = "group-${group.category}") {
-                        AppCard {
-                            group.items.forEach { item ->
-                                ShoppingItemRow(
-                                    item = item,
-                                    busy = item.id in state.updating,
-                                    readOnly = state.offline || busy,
-                                    onChange = { change -> viewModel.change(item.id, change) },
+                }
+            }
+            // A list for some of the plan's days; the whole plan's is made where it has none.
+            if (state.plan != null && !state.offline && state.lists.isNotEmpty()) {
+                item {
+                    TextButton(onClick = { choosingDays = true }, enabled = !busy) {
+                        Text(stringResource(if (state.generating) R.string.shopping_generating else R.string.shopping_generate_title))
+                    }
+                }
+            }
+
+            state.error?.let { item { ErrorBanner(errorMessage(it)) } }
+            if (state.offline) {
+                item {
+                    OfflineBanner(
+                        stringResource(
+                            R.string.offline_cached,
+                            state.list?.syncedAt?.let(::formatSyncedAt) ?: "—",
+                        ),
+                    )
+                }
+            }
+
+            when {
+                state.plans.isEmpty() && state.selectedProfileId != null && state.error == null -> item {
+                    EmptyState(
+                        icon = Icons.Default.ShoppingCart,
+                        title = stringResource(R.string.shopping_no_plans),
+                        description = stringResource(R.string.shopping_no_plans_body),
+                    )
+                }
+
+                state.listLoading && state.lists.isEmpty() -> items(2) {
+                    Skeleton(Modifier.fillMaxWidth().height(120.dp))
+                }
+
+                state.lists.isEmpty() && state.selectedPlanId != null -> item {
+                    EmptyState(
+                        icon = Icons.Default.ShoppingCart,
+                        title = stringResource(R.string.shopping_no_lists_title),
+                        description = stringResource(R.string.shopping_no_lists),
+                        cta = {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Button(onClick = { viewModel.generate() }, enabled = !busy && !state.offline) {
+                                    if (state.generating) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    } else {
+                                        Text(stringResource(R.string.shopping_make_list))
+                                    }
+                                }
+                                TextButton(onClick = { choosingDays = true }, enabled = !busy && !state.offline) {
+                                    Text(stringResource(R.string.shopping_generate_title))
+                                }
+                            }
+                        },
+                    )
+                }
+
+                else -> state.list?.let { list ->
+                    if (state.lists.size > 1) {
+                        item(key = "lists") {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(state.lists, key = { it.id }) { other ->
+                                    FilterChip(
+                                        selected = other.id == list.id,
+                                        onClick = { viewModel.selectList(other.id) },
+                                        label = { Text(formatDates(other.fromDate, other.toDate)) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    item(key = "list") {
+                        val words = listWords(list)
+                        ListHeader(
+                            list,
+                            onShare = { shareText(context, words.title, listText(list, words), chooser) },
+                            onTableAndPrint = { web.open("shopping-lists") },
+                            onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
+                        )
+                    }
+                    if (list.stale) {
+                        item(key = "stale") {
+                            AppCard {
+                                Text(stringResource(R.string.shopping_stale), style = MaterialTheme.typography.bodyMedium)
+                                if (!state.offline) {
+                                    Text(
+                                        stringResource(R.string.shopping_stale_hint),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                    )
+                                    Button(
+                                        onClick = { viewModel.update(list) },
+                                        enabled = !busy,
+                                        modifier = Modifier.padding(top = 8.dp),
+                                    ) { Text(stringResource(R.string.shopping_stale_update)) }
+                                }
+                            }
+                        }
+                    }
+                    item(key = "proposals") {
+                        ListProposalsPanel(
+                            found = state.shownProposals,
+                            asking = state.askingProposals,
+                            aiOn = state.aiOn,
+                            enabled = !state.offline && !busy,
+                            listFrom = list.fromDate,
+                            onAsk = viewModel::findProposals,
+                            onOpenPlanAt = { day -> onOpenPlan(list.planId, day) },
+                            onTurnAiOn = onTurnAiOn,
+                        )
+                    }
+                    item(key = "find") {
+                        OutlinedTextField(
+                            value = find,
+                            onValueChange = { find = it },
+                            label = { Text(stringResource(R.string.shopping_find_entry)) },
+                            placeholder = { Text(stringResource(R.string.shopping_find_entry_placeholder)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    val everyItem = list.groups.flatMap { it.items }
+                    if (everyItem.any { it.packsStand }) {
+                        item(key = "packs") {
+                            Text(stringResource(R.string.shopping_packs_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    val wanted = find.trim().lowercase()
+                    val groups = if (wanted.isEmpty()) list.groups
+                    else list.groups.map { group -> group.copy(items = group.items.filter { wanted in it.name.lowercase() }) }.filter { it.items.isNotEmpty() }
+                    if (groups.isEmpty()) {
+                        item(key = "none") {
+                            Text(stringResource(R.string.shopping_find_entry_none, find.trim()), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    groups.forEach { group ->
+                        item(key = "header-${group.category}") {
+                            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
+                                Text(categoryLabel(group.category), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                                // What the whole aisle comes to, whatever part of it is looked for.
+                                val aisle = list.groups.first { it.category == group.category }
+                                Text(
+                                    stringResource(R.string.shopping_aisle_energy, formatNumber(aisle.estimatedCalories.roundToInt())),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                            }
+                        }
+                        item(key = "group-${group.category}") {
+                            AppCard {
+                                group.items.forEach { item ->
+                                    ShoppingItemRow(
+                                        item = item,
+                                        busy = item.id in state.updating,
+                                        readOnly = state.offline || busy,
+                                        onChange = { change -> viewModel.change(item.id, change) },
+                                    )
+                                }
                             }
                         }
                     }

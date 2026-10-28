@@ -21,6 +21,7 @@ import net.whiteravens.dietapp.domain.PreferencesChange
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfilePreferences
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import java.util.Locale
 import javax.inject.Inject
@@ -58,6 +59,8 @@ class ProfilesViewModel @Inject constructor(
         /** The profile the first profile's steps have just made: the screen says what comes next. */
         val made: Profile? = null,
         val unit: WeightUnit = WeightUnit.of(null, Locale.getDefault()),
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
     ) {
         /** The preferences of [profile] as the screen shows them: what is kept, with what is being sent on top. */
         fun preferencesOf(profile: ProfileDetails): Shown {
@@ -95,19 +98,43 @@ class ProfilesViewModel @Inject constructor(
     val rules: StateFlow<InstanceRules?> = server.rules
 
     private val searching = mutableMapOf<Pair<String, IngredientList>, Job>()
+    private val again = ReadingAnew()
+
+    init {
+        load()
+    }
 
     /** Reads the profiles again: on opening, on coming back from a form, and on asking. */
     fun load() {
+        again.begun()
         viewModelScope.launch {
             if (server.rules.value == null) launch { server.refresh() }
+            val before = _state.value.list
             val unit = attempt { users.me() }.getOrNull()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) }
             attempt { profiles.profiles() }
                 .onSuccess { list ->
-                    _state.update { it.copy(loading = false, list = list, loadError = null, unit = unit ?: it.unit) }
-                    nameIngredientsOf(list)
+                    // A preference changed or a profile deleted while this was read was answered after it: what is shown is newer.
+                    val current = _state.value.loading || _state.value.list === before
+                    _state.update { if (current) it.copy(loading = false, list = list, loadError = null, unit = unit ?: it.unit, pulled = false) else it.copy(pulled = false) }
+                    if (current) nameIngredientsOf(list)
                 }
-                .onFailure { e -> _state.update { it.copy(loading = false, loadError = e, unit = unit ?: it.unit) } }
+                .onFailure { e -> _state.update { it.copy(loading = false, loadError = e, unit = unit ?: it.unit, pulled = false) } }
         }
+    }
+
+    /**
+     * Reads the profiles again when the screen is shown again, from a form that saved one among others;
+     * on coming back to the front only as often as [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (again.due(cameToTheFront)) load()
+    }
+
+    /** Reads the profiles again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        load()
     }
 
     /** The first profile's steps made [profile]: the list is read again, and says what comes next. */

@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -35,10 +37,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.notes
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.noteText
@@ -49,6 +51,7 @@ import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
@@ -75,11 +78,8 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // Read again on coming back: a profile may have been made or changed in the meantime.
-    LifecycleResumeEffect(viewModel) {
-        viewModel.refresh()
-        onPauseOrDispose {}
-    }
+    // Read again on being shown again: a profile may have been made or changed in the meantime.
+    WhenShownAgain(viewModel::shownAgain)
     val web = rememberWebPages()
     val list = rememberLazyListState()
     // The profile's card is composed first, if it is out of sight, and its weights then brought into view.
@@ -88,74 +88,78 @@ fun DashboardScreen(
         if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == showWeightOf }) list.scrollToItem(at + 1)
     }
 
-    when {
-        state.loading -> DashboardSkeleton()
+    PullToRead(state.pulled, viewModel::pull) {
+        when {
+            state.loading -> DashboardSkeleton()
 
-        state.error != null -> Column(Modifier.fillMaxSize().padding(16.dp)) {
-            ErrorBanner(errorMessage(state.error!!))
-            Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
-                Text(stringResource(R.string.common_retry))
-            }
-        }
-
-        state.profiles.isEmpty() -> EmptyState(
-            icon = Icons.Default.Person,
-            title = stringResource(R.string.dashboard_welcome),
-            description = stringResource(R.string.dashboard_no_profiles),
-            cta = {
-                Button(onClick = onCreateProfile, shape = MaterialTheme.shapes.medium) {
-                    Text(stringResource(R.string.dashboard_create_first_profile_cta))
-                }
-            },
-        )
-
-        else -> LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = list,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                Row(Modifier.padding(bottom = 4.dp), verticalAlignment = Alignment.Top) {
-                    ScreenHeader(
-                        title = stringResource(R.string.nav_dashboard),
-                        subtitle = pluralStringResource(
-                            R.plurals.dashboard_subtitle,
-                            state.profiles.size,
-                            state.profiles.size,
-                        ),
-                        modifier = Modifier.weight(1f),
-                    )
-                    NotificationsBell(state.unread, onClick = onOpenNotifications)
+            state.error != null -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                ErrorBanner(errorMessage(state.error!!))
+                Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
+                    Text(stringResource(R.string.common_retry))
                 }
             }
-            state.profiles.forEach { stats ->
-                item(key = stats.profile.id) {
-                    ProfileSummary(
-                        stats,
-                        onOpenPlan,
-                        onNewPlan = { onNewPlan(stats.profile.id) },
-                        weight = {
-                            val inView = remember { BringIntoViewRequester() }
-                            if (stats.profile.id == showWeightOf) {
-                                LaunchedEffect(inView) {
-                                    inView.bringIntoView()
-                                    onWeightShown()
+
+            state.profiles.isEmpty() -> Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                EmptyState(
+                    icon = Icons.Default.Person,
+                    title = stringResource(R.string.dashboard_welcome),
+                    description = stringResource(R.string.dashboard_no_profiles),
+                    cta = {
+                        Button(onClick = onCreateProfile, shape = MaterialTheme.shapes.medium) {
+                            Text(stringResource(R.string.dashboard_create_first_profile_cta))
+                        }
+                    },
+                )
+            }
+
+            else -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = list,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    Row(Modifier.padding(bottom = 4.dp), verticalAlignment = Alignment.Top) {
+                        ScreenHeader(
+                            title = stringResource(R.string.nav_dashboard),
+                            subtitle = pluralStringResource(
+                                R.plurals.dashboard_subtitle,
+                                state.profiles.size,
+                                state.profiles.size,
+                            ),
+                            modifier = Modifier.weight(1f),
+                        )
+                        NotificationsBell(state.unread, onClick = onOpenNotifications)
+                    }
+                }
+                state.profiles.forEach { stats ->
+                    item(key = stats.profile.id) {
+                        ProfileSummary(
+                            stats,
+                            onOpenPlan,
+                            onNewPlan = { onNewPlan(stats.profile.id) },
+                            weight = {
+                                val inView = remember { BringIntoViewRequester() }
+                                if (stats.profile.id == showWeightOf) {
+                                    LaunchedEffect(inView) {
+                                        inView.bringIntoView()
+                                        onWeightShown()
+                                    }
                                 }
-                            }
-                            Box(Modifier.bringIntoViewRequester(inView)) {
-                                WeightCard(
-                                    stats,
-                                    unit = state.unit,
-                                    log = state.weightLogs[stats.profile.id] ?: DashboardViewModel.WeightLog(),
-                                    onType = { viewModel.typeWeight(stats.profile.id, it) },
-                                    onLog = { viewModel.logWeight(stats.profile.id) },
-                                    onRemoveLatest = { viewModel.removeLatestWeight(stats.profile.id) },
-                                )
-                            }
-                        },
-                    ) {
-                        FavoriteSetsInTheBrowser(onOpen = { web.open("dashboard") })
+                                Box(Modifier.bringIntoViewRequester(inView)) {
+                                    WeightCard(
+                                        stats,
+                                        unit = state.unit,
+                                        log = state.weightLogs[stats.profile.id] ?: DashboardViewModel.WeightLog(),
+                                        onType = { viewModel.typeWeight(stats.profile.id, it) },
+                                        onLog = { viewModel.logWeight(stats.profile.id) },
+                                        onRemoveLatest = { viewModel.removeLatestWeight(stats.profile.id) },
+                                    )
+                                }
+                            },
+                        ) {
+                            FavoriteSetsInTheBrowser(onOpen = { web.open("dashboard") })
+                        }
                     }
                 }
             }

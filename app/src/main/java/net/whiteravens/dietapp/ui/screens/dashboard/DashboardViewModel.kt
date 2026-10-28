@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.WeightEntry
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import java.time.Duration
@@ -85,10 +86,14 @@ class DashboardViewModel @Inject constructor(
         val weightLogs: Map<String, WeightLog> = emptyMap(),
         /** How many of the account's notifications are not read yet, as they were last read. */
         val unread: Int = 0,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
     )
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
+
+    private val again = ReadingAnew()
 
     init {
         load()
@@ -97,11 +102,19 @@ class DashboardViewModel @Inject constructor(
     fun load() = read(showLoading = true)
 
     /**
-     * Reads the profiles again when the screen comes back, from a profile made or changed elsewhere,
-     * keeping what is shown until the answer is there; nothing while the first reading runs.
+     * Reads the profiles again when the screen is shown again, from a profile made or changed
+     * elsewhere, keeping what is shown until the answer is there; nothing while the first reading runs,
+     * and on coming back to the front only as often as [ReadingAnew] lets it.
      */
-    fun refresh() {
-        if (!_state.value.loading) read(showLoading = false)
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (!_state.value.loading && again.due(cameToTheFront)) read(showLoading = false)
+    }
+
+    /** Reads the profiles again at once, the screen pulled down; what is shown stays until the answer is there. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        read(showLoading = false)
     }
 
     /** What is typed into [profileId]'s weight log. */
@@ -162,8 +175,10 @@ class DashboardViewModel @Inject constructor(
         _state.update { it.copy(weightLogs = it.weightLogs + (profileId to change(it.weightLogs[profileId] ?: WeightLog()))) }
 
     private fun read(showLoading: Boolean) {
+        again.begun()
         viewModelScope.launch {
             if (showLoading) _state.update { it.copy(loading = true, profiles = emptyList(), error = null) }
+            val before = _state.value.profiles
             // Weights are shown in the account's unit; while it cannot be read, in the one shown before.
             val unit = async { attempt { users.me() }.getOrNull()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) } }
             val unread = async { attempt { notifications.unread().size }.getOrNull() }
@@ -191,8 +206,23 @@ class DashboardViewModel @Inject constructor(
                         .map { it.await() }
                 }
             }
-                .onSuccess { found -> _state.update { it.copy(loading = false, profiles = found, error = null, unit = unit.await() ?: it.unit, unread = unread.await() ?: it.unread) } }
-                .onFailure { e -> if (showLoading || _state.value.profiles.isEmpty()) _state.update { it.copy(loading = false, profiles = emptyList(), error = e) } }
+                .onSuccess { found ->
+                    val inUnit = unit.await()
+                    val notRead = unread.await()
+                    // A weight logged or taken back while this was read was answered after it: what is shown is newer.
+                    _state.update {
+                        if (showLoading || it.profiles === before) {
+                            it.copy(loading = false, profiles = found, error = null, unit = inUnit ?: it.unit, unread = notRead ?: it.unread, pulled = false)
+                        } else {
+                            it.copy(loading = false, unread = notRead ?: it.unread, pulled = false)
+                        }
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        if (showLoading || it.profiles.isEmpty()) it.copy(loading = false, profiles = emptyList(), error = e, pulled = false) else it.copy(pulled = false)
+                    }
+                }
         }
     }
 

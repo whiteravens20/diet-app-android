@@ -73,6 +73,39 @@ class RecipesViewModelTest {
     }
 
     @Test
+    fun `pulled down, every page shown is read again and put in the place of what was shown, so that the list keeps its place`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.search(any(), 1) } returns RecipePage(listOf(recipe("soup")), 1, 3)
+        coEvery { recipes.search(any(), 2) } returns RecipePage(listOf(recipe("stew")), 2, 3)
+        val model = RecipesViewModel(recipes, users, profiles)
+        model.loadMore()
+        coEvery { recipes.search(any(), 1) } returns RecipePage(listOf(recipe("soup again")), 1, 3)
+        coEvery { recipes.search(any(), 2) } returns RecipePage(listOf(recipe("stew again")), 2, 3)
+
+        model.pull()
+
+        assertEquals(listOf("soup again", "stew again"), model.state.value.items.map { it.id })
+        assertEquals(2, model.state.value.page)
+        assertTrue(model.state.value.hasMore)
+        assertFalse(model.state.value.pulled)
+        coVerify(exactly = 0) { recipes.search(any(), 3) }
+    }
+
+    @Test
+    fun `pulled down while a page cannot be read, the list stays as it was`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.search(any(), 1) } returns RecipePage(listOf(recipe("soup")), 1, 1)
+        val model = RecipesViewModel(recipes, users, profiles)
+        coEvery { recipes.search(any(), 1) } throws IOException("no network")
+
+        model.pull()
+
+        assertEquals(listOf("soup"), model.state.value.items.map { it.id })
+        assertNull(model.state.value.error)
+        assertFalse(model.state.value.pulled)
+    }
+
+    @Test
     fun `the library narrowed is asked for from its first page with the profile's marks, and cleared it keeps the words and the profile`() {
         val recipes = mockk<RecipeRepository>()
         val asked = mutableListOf<RecipeFilter>()

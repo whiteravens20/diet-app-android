@@ -49,13 +49,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Freshness
 import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.freshness
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -67,6 +67,7 @@ import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
@@ -88,107 +89,106 @@ fun PantryScreen(
     viewModel: PantryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // Read again on coming back: a shopping list ticked in the meantime changes the pantry too.
-    LifecycleResumeEffect(viewModel) {
-        viewModel.refresh()
-        onPauseOrDispose {}
-    }
+    // Read again on being shown again: a shopping list ticked in the meantime changes the pantry too.
+    WhenShownAgain(viewModel::shownAgain)
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item {
-            ScreenHeader(
-                title = stringResource(R.string.pantry_title),
-                subtitle = stringResource(R.string.pantry_subhead),
-                onBack = onBack,
-            )
-        }
-
-        when {
-            state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
-
-            state.profilesError != null -> item {
-                Column {
-                    ErrorBanner(errorMessage(state.profilesError!!))
-                    Button(onClick = viewModel::loadProfiles, modifier = Modifier.padding(top = 12.dp)) {
-                        Text(stringResource(R.string.common_retry))
-                    }
-                }
-            }
-
-            state.profiles.isEmpty() -> item {
-                EmptyState(
-                    icon = AppIcons.Inventory,
-                    title = stringResource(R.string.pantry_no_profile),
-                    description = stringResource(R.string.pantry_no_profile_body),
-                    cta = { Button(onClick = onProfiles) { Text(stringResource(R.string.pantry_no_profile_cta)) } },
+    PullToRead(state.pulled, viewModel::pull) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item {
+                ScreenHeader(
+                    title = stringResource(R.string.pantry_title),
+                    subtitle = stringResource(R.string.pantry_subhead),
+                    onBack = onBack,
                 )
             }
 
-            else -> {
-                // The profiles to choose among, only where there are two or more.
-                if (state.profiles.size > 1) {
-                    item {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            state.profiles.forEach { profile ->
-                                FilterChip(
-                                    selected = profile.id == state.profileId,
-                                    onClick = { viewModel.pickProfile(profile.id) },
-                                    enabled = !state.busy,
-                                    label = { Text(profile.name) },
-                                )
-                            }
+            when {
+                state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
+
+                state.profilesError != null -> item {
+                    Column {
+                        ErrorBanner(errorMessage(state.profilesError!!))
+                        Button(onClick = viewModel::loadProfiles, modifier = Modifier.padding(top = 12.dp)) {
+                            Text(stringResource(R.string.common_retry))
                         }
                     }
                 }
-                state.failed?.let { (what, error) ->
-                    item {
-                        val lead = stringResource(
-                            when (what) {
-                                PantryViewModel.Failure.ADD -> R.string.pantry_err_add
-                                PantryViewModel.Failure.CHANGE -> R.string.pantry_err_change
-                                PantryViewModel.Failure.REMOVE -> R.string.pantry_err_remove
-                            },
-                        )
-                        ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                    }
+
+                state.profiles.isEmpty() -> item {
+                    EmptyState(
+                        icon = AppIcons.Inventory,
+                        title = stringResource(R.string.pantry_no_profile),
+                        description = stringResource(R.string.pantry_no_profile_body),
+                        cta = { Button(onClick = onProfiles) { Text(stringResource(R.string.pantry_no_profile_cta)) } },
+                    )
                 }
-                item { AddCard(state, viewModel) }
 
-                when {
-                    state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
-
-                    state.error != null -> item {
-                        Column {
-                            ErrorBanner(errorMessage(state.error!!))
-                            Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
-                                Text(stringResource(R.string.common_retry))
+                else -> {
+                    // The profiles to choose among, only where there are two or more.
+                    if (state.profiles.size > 1) {
+                        item {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                state.profiles.forEach { profile ->
+                                    FilterChip(
+                                        selected = profile.id == state.profileId,
+                                        onClick = { viewModel.pickProfile(profile.id) },
+                                        enabled = !state.busy,
+                                        label = { Text(profile.name) },
+                                    )
+                                }
                             }
                         }
                     }
-
-                    state.rows.isEmpty() -> item {
-                        EmptyState(
-                            icon = AppIcons.Inventory,
-                            title = stringResource(R.string.pantry_empty_title),
-                            description = stringResource(R.string.pantry_empty_body),
-                        )
+                    state.failed?.let { (what, error) ->
+                        item {
+                            val lead = stringResource(
+                                when (what) {
+                                    PantryViewModel.Failure.ADD -> R.string.pantry_err_add
+                                    PantryViewModel.Failure.CHANGE -> R.string.pantry_err_change
+                                    PantryViewModel.Failure.REMOVE -> R.string.pantry_err_remove
+                                },
+                            )
+                            ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                        }
                     }
+                    item { AddCard(state, viewModel) }
 
-                    else -> items(state.groups, key = { (category, _) -> "group-$category" }) { (category, rows) ->
-                        AppCard {
-                            Text(categoryLabel(category), style = MaterialTheme.typography.titleMedium)
-                            rows.forEachIndexed { index, row ->
-                                if (index > 0) HorizontalDivider()
-                                RowItem(
-                                    row = row,
-                                    enabled = !state.busy,
-                                    onChange = { viewModel.change(row, it) },
-                                    onRemove = { viewModel.remove(row) },
-                                )
+                    when {
+                        state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
+
+                        state.error != null -> item {
+                            Column {
+                                ErrorBanner(errorMessage(state.error!!))
+                                Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
+                                    Text(stringResource(R.string.common_retry))
+                                }
+                            }
+                        }
+
+                        state.rows.isEmpty() -> item {
+                            EmptyState(
+                                icon = AppIcons.Inventory,
+                                title = stringResource(R.string.pantry_empty_title),
+                                description = stringResource(R.string.pantry_empty_body),
+                            )
+                        }
+
+                        else -> items(state.groups, key = { (category, _) -> "group-$category" }) { (category, rows) ->
+                            AppCard {
+                                Text(categoryLabel(category), style = MaterialTheme.typography.titleMedium)
+                                rows.forEachIndexed { index, row ->
+                                    if (index > 0) HorizontalDivider()
+                                    RowItem(
+                                        row = row,
+                                        enabled = !state.busy,
+                                        onChange = { viewModel.change(row, it) },
+                                        onRemove = { viewModel.remove(row) },
+                                    )
+                                }
                             }
                         }
                     }

@@ -21,6 +21,7 @@ import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.PreferencesChange
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.RecipeDetailRoute
 import javax.inject.Inject
@@ -63,6 +64,8 @@ class RecipeDetailViewModel @Inject constructor(
         /** A change of the profile's ingredients on its way to the API. */
         val savingPrefs: Boolean = false,
         val prefsFailed: Throwable? = null,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
     ) {
         /** The profile the lines' ingredients are marked for. */
         val prefsProfile: ProfileDetails? get() = profiles.firstOrNull { it.id == prefsProfileId } ?: profiles.firstOrNull()
@@ -71,17 +74,52 @@ class RecipeDetailViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    private val again = ReadingAnew()
+
     init {
         load()
         readProfiles()
     }
 
     fun load() {
+        again.begun()
         viewModelScope.launch {
             _state.update { it.copy(loading = true, recipe = null, error = null) }
             attempt { recipes.byId(recipeId) }
                 .onSuccess { recipe -> _state.update { it.copy(loading = false, recipe = recipe) } }
                 .onFailure { e -> _state.update { it.copy(loading = false, error = e) } }
+        }
+    }
+
+    /**
+     * Reads the recipe and the profiles' marks again when the screen is shown again; on coming back to
+     * the front only as often as [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (!_state.value.loading && again.due(cameToTheFront)) readAnew()
+    }
+
+    /** Reads the recipe and the profiles' marks again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    /** Reads what the screen shows again, keeping it until the answers are there; a recipe that could not be read is asked for whole. */
+    private fun readAnew() {
+        if (_state.value.recipe == null) {
+            _state.update { it.copy(pulled = false) }
+            load()
+            readProfiles()
+            return
+        }
+        again.begun()
+        readProfiles()
+        viewModelScope.launch {
+            attempt { recipes.byId(recipeId) }
+                .onSuccess { recipe -> _state.update { it.copy(recipe = recipe, pulled = false) } }
+                .onFailure { _state.update { it.copy(pulled = false) } }
         }
     }
 
@@ -150,8 +188,11 @@ class RecipeDetailViewModel @Inject constructor(
      */
     private fun readProfiles() {
         viewModelScope.launch {
+            val before = _state.value.marks
+            val kept = _state.value.profiles
             val found = attempt { profiles.profiles() }.getOrNull() ?: return@launch
-            _state.update { it.copy(profiles = found) }
+            // An ingredient favoured or avoided while this was read was answered after it: the profiles shown are newer.
+            _state.update { if (it.profiles === kept) it.copy(profiles = found) else it }
             val marks = coroutineScope {
                 found.map { profile ->
                     async {
@@ -161,7 +202,8 @@ class RecipeDetailViewModel @Inject constructor(
                     }
                 }.awaitAll().filterNotNull()
             }
-            _state.update { it.copy(marks = marks) }
+            // A mark put on or taken off while these were read was answered after them: the marks shown are newer.
+            _state.update { if (it.marks === before) it.copy(marks = marks) else it }
         }
     }
 

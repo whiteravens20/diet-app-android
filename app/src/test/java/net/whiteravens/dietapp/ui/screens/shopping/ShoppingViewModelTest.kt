@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
@@ -24,6 +25,7 @@ import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingList
 import org.junit.After
@@ -87,6 +89,39 @@ class ShoppingViewModelTest {
         assertEquals(emptyList<ShoppingList>(), model.state.value.lists)
         assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
         assertFalse(model.state.value.offline)
+    }
+
+    @Test
+    fun `a row changed while the lists were read again keeps its change, the older answer left aside`() {
+        val model = ShoppingViewModel(users, plans, lists)
+        val answer = CompletableDeferred<Unit>()
+        coEvery { lists.refreshForPlan("plan") } coAnswers {
+            answer.await()
+            listOf(early, later)
+        }
+        val ticked = early.copy(totalEstimatedCalories = 1.0)
+        coEvery { lists.change("early", "row", RowChange(checked = true)) } returns ticked
+
+        model.pull()
+        model.change("row", RowChange(checked = true))
+        answer.complete(Unit)
+
+        assertEquals(listOf(ticked, later), model.state.value.lists)
+        assertFalse(model.state.value.pulled)
+    }
+
+    @Test
+    fun `read again, a plan the profile no longer has gives way to its newest, whose lists are read`() {
+        val model = ShoppingViewModel(users, plans, lists)
+        val newer = MealPlanSummary("newer", "2026-10-20", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0), 0.4, false)
+        coEvery { plans.plans(any(), any()) } returns MealPlanPage(listOf(newer), 1, 1, null)
+        coEvery { lists.cachedForPlan("newer") } returns emptyList()
+        coEvery { lists.refreshForPlan("newer") } returns listOf(later.copy(id = "of-newer", planId = "newer"))
+
+        model.shownAgain(cameToTheFront = false)
+
+        assertEquals("newer", model.state.value.selectedPlanId)
+        assertEquals(listOf("of-newer"), model.state.value.lists.map { it.id })
     }
 
     @Test

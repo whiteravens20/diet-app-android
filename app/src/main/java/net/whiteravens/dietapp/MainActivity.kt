@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
+import net.whiteravens.dietapp.ui.common.Returns
 import net.whiteravens.dietapp.ui.navigation.DietAppRoot
 import net.whiteravens.dietapp.ui.theme.DietAppTheme
 
@@ -26,5 +27,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // Counted before the screens resume, so that they know the application came back to the front.
+    override fun onStart() {
+        super.onStart()
+        Returns.started()
+    }
+
+    override fun onStop() {
+        Returns.stopped()
+        super.onStop()
     }
 }

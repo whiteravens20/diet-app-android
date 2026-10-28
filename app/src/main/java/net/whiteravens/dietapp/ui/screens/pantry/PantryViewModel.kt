@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.StockableIngredient
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import java.time.LocalDate
@@ -55,6 +56,8 @@ class PantryViewModel @Inject constructor(
 
     data class UiState(
         val loadingProfiles: Boolean = true,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
         val profiles: List<Profile> = emptyList(),
         val profilesError: Throwable? = null,
         /** The profile whose pantry is shown. */
@@ -88,6 +91,8 @@ class PantryViewModel @Inject constructor(
     private var reading: Job? = null
     private var searching: Job? = null
 
+    private val again = ReadingAnew()
+
     init {
         loadProfiles()
     }
@@ -100,15 +105,32 @@ class PantryViewModel @Inject constructor(
                     _state.update { it.copy(loadingProfiles = false, profiles = found, profileId = it.profileId?.takeIf { id -> found.any { p -> p.id == id } } ?: found.firstOrNull()?.id) }
                     read()
                 }
-                .onFailure { e -> _state.update { it.copy(loadingProfiles = false, profilesError = e) } }
+                .onFailure { e -> _state.update { it.copy(loadingProfiles = false, profilesError = e, pulled = false) } }
         }
     }
 
-    /** Reads the pantry again on coming back to it, keeping what is shown until the answer is there. */
-    fun refresh() {
+    /**
+     * Reads the pantry again when the screen is shown again, keeping what is shown until the answer is
+     * there; on coming back to the front only as often as [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (again.due(cameToTheFront)) readAnew()
+    }
+
+    /** Reads the pantry again at once, the screen pulled down; the profiles too where they could not be read. */
+    fun pull() {
+        if (_state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    private fun readAnew() {
         val current = _state.value
-        if (current.loadingProfiles || current.loading || current.busy) return
-        if (current.profileId != null) read(showLoading = false)
+        when {
+            current.profilesError != null -> loadProfiles()
+            current.loadingProfiles || current.loading || current.busy || current.profileId == null -> _state.update { it.copy(pulled = false) }
+            else -> read(showLoading = false)
+        }
     }
 
     fun retry() = read()
@@ -197,14 +219,19 @@ class PantryViewModel @Inject constructor(
      * there, and stays where none comes.
      */
     private fun read(showLoading: Boolean = true) {
-        val profileId = _state.value.profileId ?: return
+        val profileId = _state.value.profileId ?: return _state.update { it.copy(pulled = false) }
+        again.begun()
         reading?.cancel()
         reading = viewModelScope.launch {
             if (showLoading) _state.update { it.copy(loading = true, error = null) }
+            val before = _state.value.rows
             attempt { pantry.rows(profileId) }
-                .onSuccess { rows -> _state.update { it.copy(loading = false, rows = rows, error = null) } }
+                .onSuccess { rows ->
+                    // A row changed while this was read was answered after it: what is shown is newer.
+                    _state.update { if (showLoading || it.rows === before) it.copy(loading = false, rows = rows, error = null, pulled = false) else it.copy(loading = false, pulled = false) }
+                }
                 .onFailure { e ->
-                    _state.update { if (showLoading || it.rows.isEmpty()) it.copy(loading = false, rows = emptyList(), error = e) else it.copy(loading = false) }
+                    _state.update { if (showLoading || it.rows.isEmpty()) it.copy(loading = false, rows = emptyList(), error = e, pulled = false) else it.copy(loading = false, pulled = false) }
                 }
         }
     }

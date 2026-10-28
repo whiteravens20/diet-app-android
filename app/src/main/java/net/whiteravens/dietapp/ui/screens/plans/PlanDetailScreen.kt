@@ -74,7 +74,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.time.LocalDate
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CustomMeal
@@ -92,6 +91,7 @@ import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
 import net.whiteravens.dietapp.ui.common.MARK
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.emphasized
@@ -110,6 +110,7 @@ import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineBanner
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.aiOffText
@@ -117,6 +118,7 @@ import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
+import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -132,6 +134,8 @@ fun PlanDetailScreen(
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Read again on being shown again: the plan may have been changed elsewhere in the meantime.
+    WhenShownAgain(viewModel::shownAgain)
     val plan = state.plan
     var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
     // The day a meal of one's own is being added to, while its form is open.
@@ -303,158 +307,160 @@ fun PlanDetailScreen(
     val shownCard = state.rebalance != null || state.notice != null
     val underCard = if (shownCard) with(LocalDensity.current) { cardHeight.toDp() + 16.dp } else 0.dp
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                Header(
-                    plan,
-                    onBack,
-                    onTableAndPrint = { plan?.let { web.open("meal-plans", "profile" to it.profileId, "plan" to it.id) } },
-                    onApplySet = { viewModel.openSetWindow() }.takeUnless { readOnly || busy },
-                    onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
-                )
-            }
-
-            state.error?.let {
+        PullToRead(state.pulled, viewModel::pull) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 item {
-                    Column {
-                        ErrorBanner(errorMessage(it))
-                        if (plan == null) {
-                            Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
-                                Text(stringResource(R.string.common_retry))
+                    Header(
+                        plan,
+                        onBack,
+                        onTableAndPrint = { plan?.let { web.open("meal-plans", "profile" to it.profileId, "plan" to it.id) } },
+                        onApplySet = { viewModel.openSetWindow() }.takeUnless { readOnly || busy },
+                        onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
+                    )
+                }
+
+                state.error?.let {
+                    item {
+                        Column {
+                            ErrorBanner(errorMessage(it))
+                            if (plan == null) {
+                                Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
+                                    Text(stringResource(R.string.common_retry))
+                                }
                             }
                         }
                     }
                 }
-            }
-            if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly)) }
-            // A re-roll refused for something the user can allow: asked again with it allowed.
-            state.refused?.let { refused ->
-                item {
-                    OutlinedButton(onClick = viewModel::allowRefused, enabled = !busy) {
-                        Text(
-                            stringResource(
-                                if (refused.allow == PlanDetailViewModel.INCLUDE_PAST) R.string.plans_include_past_and_retry else R.string.plans_drop_lock_and_retry,
-                            ),
-                        )
-                    }
-                }
-            }
-            state.inTheWay?.let { inTheWay ->
-                item { InTheWayBox(inTheWay.needed, busy = busy, onLetGiveWay = viewModel::letGiveWay, onCancel = viewModel::dismissInTheWay) }
-            }
-
-            if (plan == null) {
-                if (state.loading) {
-                    item { Skeleton(Modifier.fillMaxWidth().height(40.dp)) }
-                    items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
-                }
-                return@LazyColumn
-            }
-
-            item {
-                PlanFacts(
-                    plan,
-                    onReroll = openReroll.takeUnless { readOnly || busy },
-                    useUp = if (readOnly) null else {
-                        {
-                            UseUpPanel(
-                                found = state.useUp,
-                                finding = state.findingUseUp,
-                                aiOn = state.aiOn,
-                                busy = busy,
-                                onFind = viewModel::findUseUp,
-                                onTake = viewModel::takeUseUp,
-                                onTurnAiOn = onTurnAiOn,
+                if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly)) }
+                // A re-roll refused for something the user can allow: asked again with it allowed.
+                state.refused?.let { refused ->
+                    item {
+                        OutlinedButton(onClick = viewModel::allowRefused, enabled = !busy) {
+                            Text(
+                                stringResource(
+                                    if (refused.allow == PlanDetailViewModel.INCLUDE_PAST) R.string.plans_include_past_and_retry else R.string.plans_drop_lock_and_retry,
+                                ),
                             )
                         }
-                    },
-                )
-            }
-            if (plan.conflicts > 0) {
-                item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
-            }
-
-            item {
-                val chips = rememberLazyListState()
-                // The day the plan opened at is in sight, however far into the plan it lies.
-                LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
-                // And so is a day chosen later, from wherever it was chosen.
-                LaunchedEffect(state.selectedDay) {
-                    val layout = chips.layoutInfo
-                    val shown = layout.visibleItemsInfo.any { it.index == state.selectedDay && it.offset >= 0 && it.offset + it.size <= layout.viewportEndOffset }
-                    if (!shown) chips.animateScrollToItem(state.selectedDay)
-                }
-                // By the phone's date.
-                val todayAt = plan.days.indexOfFirst { it.date == LocalDate.now().toString() }
-                LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
-                        FilterChip(
-                            selected = index == state.selectedDay,
-                            onClick = { viewModel.selectDay(index) },
-                            label = {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text(formatDayDate(day.date))
-                                    if (index == todayAt) {
-                                        LabelChip(
-                                            stringResource(R.string.plans_today),
-                                            container = MaterialTheme.colorScheme.primary,
-                                            content = MaterialTheme.colorScheme.onPrimary,
-                                        )
-                                    }
-                                }
-                            },
-                        )
                     }
                 }
-            }
-
-            val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
-            val today = LocalDate.now().toString()
-            // Another day from today on can take a part of what this one is off its target by.
-            val spreadable = plan.days.any { it.id != day.id && it.date >= today && !it.skipped }
-            item(key = "summary-${day.id}") {
-                DaySummary(
-                    day,
-                    onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy },
-                    onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy },
-                    // A day before today is history, and an instance without day settings has none to change.
-                    onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
-                    onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
-                    // A long plan is a long way along its days to the one it is now: one press takes the reader there.
-                    onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
-                )
-            }
-            itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
-                MealCard(
-                    meal = meal,
-                    swapping = meal.id == state.offering,
-                    readOnly = readOnly,
-                    busy = busy,
-                    aiOn = state.aiOn == true,
-                    onEaten = { eaten -> viewModel.setEaten(meal.id, eaten) },
-                    onChange = { how -> viewModel.offerSwap(meal.id, how) },
-                    onPickFavorite = { pickingFor = meal.id },
-                    onSubstitute = { substitutingIn = meal.id },
-                    onRemove = { removing = meal.id },
-                    onOpen = { openMealId = meal.id },
-                )
-            }
-            if (!readOnly) {
-                item(key = "add-${day.id}") {
-                    TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
+                state.inTheWay?.let { inTheWay ->
+                    item { InTheWayBox(inTheWay.needed, busy = busy, onLetGiveWay = viewModel::letGiveWay, onCancel = viewModel::dismissInTheWay) }
                 }
-                // What every swap of the plan puts first: under the meals, out of their way.
-                item(key = "pantry") {
-                    CheckRow(
-                        label = stringResource(R.string.plans_swap_with_pantry),
-                        hint = stringResource(R.string.plans_swap_with_pantry_hint),
-                        checked = state.swapWithPantry,
-                        onChange = viewModel::setSwapWithPantry,
+
+                if (plan == null) {
+                    if (state.loading) {
+                        item { Skeleton(Modifier.fillMaxWidth().height(40.dp)) }
+                        items(3) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
+                    }
+                    return@LazyColumn
+                }
+
+                item {
+                    PlanFacts(
+                        plan,
+                        onReroll = openReroll.takeUnless { readOnly || busy },
+                        useUp = if (readOnly) null else {
+                            {
+                                UseUpPanel(
+                                    found = state.useUp,
+                                    finding = state.findingUseUp,
+                                    aiOn = state.aiOn,
+                                    busy = busy,
+                                    onFind = viewModel::findUseUp,
+                                    onTake = viewModel::takeUseUp,
+                                    onTurnAiOn = onTurnAiOn,
+                                )
+                            }
+                        },
                     )
+                }
+                if (plan.conflicts > 0) {
+                    item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
+                }
+
+                item {
+                    val chips = rememberLazyListState()
+                    // The day the plan opened at is in sight, however far into the plan it lies.
+                    LaunchedEffect(plan.id) { chips.scrollToItem(state.selectedDay) }
+                    // And so is a day chosen later, from wherever it was chosen.
+                    LaunchedEffect(state.selectedDay) {
+                        val layout = chips.layoutInfo
+                        val shown = layout.visibleItemsInfo.any { it.index == state.selectedDay && it.offset >= 0 && it.offset + it.size <= layout.viewportEndOffset }
+                        if (!shown) chips.animateScrollToItem(state.selectedDay)
+                    }
+                    // By the phone's date.
+                    val todayAt = plan.days.indexOfFirst { it.date == LocalDate.now().toString() }
+                    LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
+                            FilterChip(
+                                selected = index == state.selectedDay,
+                                onClick = { viewModel.selectDay(index) },
+                                label = {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(formatDayDate(day.date))
+                                        if (index == todayAt) {
+                                            LabelChip(
+                                                stringResource(R.string.plans_today),
+                                                container = MaterialTheme.colorScheme.primary,
+                                                content = MaterialTheme.colorScheme.onPrimary,
+                                            )
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+
+                val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
+                val today = LocalDate.now().toString()
+                // Another day from today on can take a part of what this one is off its target by.
+                val spreadable = plan.days.any { it.id != day.id && it.date >= today && !it.skipped }
+                item(key = "summary-${day.id}") {
+                    DaySummary(
+                        day,
+                        onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy },
+                        onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy },
+                        // A day before today is history, and an instance without day settings has none to change.
+                        onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
+                        onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
+                        // A long plan is a long way along its days to the one it is now: one press takes the reader there.
+                        onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
+                    )
+                }
+                itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
+                    MealCard(
+                        meal = meal,
+                        swapping = meal.id == state.offering,
+                        readOnly = readOnly,
+                        busy = busy,
+                        aiOn = state.aiOn == true,
+                        onEaten = { eaten -> viewModel.setEaten(meal.id, eaten) },
+                        onChange = { how -> viewModel.offerSwap(meal.id, how) },
+                        onPickFavorite = { pickingFor = meal.id },
+                        onSubstitute = { substitutingIn = meal.id },
+                        onRemove = { removing = meal.id },
+                        onOpen = { openMealId = meal.id },
+                    )
+                }
+                if (!readOnly) {
+                    item(key = "add-${day.id}") {
+                        TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
+                    }
+                    // What every swap of the plan puts first: under the meals, out of their way.
+                    item(key = "pantry") {
+                        CheckRow(
+                            label = stringResource(R.string.plans_swap_with_pantry),
+                            hint = stringResource(R.string.plans_swap_with_pantry_hint),
+                            checked = state.swapWithPantry,
+                            onChange = viewModel::setSwapWithPantry,
+                        )
+                    }
                 }
             }
         }

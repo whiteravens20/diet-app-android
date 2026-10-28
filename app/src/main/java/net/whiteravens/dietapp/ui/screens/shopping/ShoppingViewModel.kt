@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import javax.inject.Inject
@@ -53,6 +54,8 @@ class ShoppingViewModel @Inject constructor(
         val generating: Boolean = false,
         val deleting: Boolean = false,
         val offline: Boolean = false,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
         /** Ids of items with an update in flight. */
         val updating: Set<String> = emptySet(),
         /** What a list could do without, as it was asked of the list (its id and when it was made). */
@@ -74,12 +77,15 @@ class ShoppingViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    private val again = ReadingAnew()
+
     init {
         load()
         followAiMode()
     }
 
     fun load() {
+        again.begun()
         viewModelScope.launch {
             _state.update { UiState(loading = true, aiOn = it.aiOn) }
             attempt { users.profiles() }
@@ -92,6 +98,66 @@ class ShoppingViewModel @Inject constructor(
         viewModelScope.launch {
             val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { it.copy(aiOn = aiOn) }
+        }
+    }
+
+    /**
+     * Reads the profile's plans and the chosen plan's lists again when the screen is shown again, from a
+     * plan or a list made, changed or deleted elsewhere; on coming back to the front only as often as
+     * [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (again.due(cameToTheFront)) readAnew()
+    }
+
+    /** Reads the profile's plans and the chosen plan's lists again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    /**
+     * Reads what the screen shows again, keeping it until the answers are there. A plan chosen that the
+     * profile no longer has gives way to its newest; a list changed while it was read keeps the change.
+     */
+    private fun readAnew() {
+        val current = _state.value
+        if (current.loading) return _state.update { it.copy(pulled = false) }
+        val profileId = current.selectedProfileId ?: return load().also { _state.update { it.copy(pulled = false) } }
+        again.begun()
+        viewModelScope.launch {
+            attempt { plans.plans(profileId) }.onSuccess { fresh ->
+                applyPlans(profileId, fresh.plans)
+                val chosen = _state.value.selectedPlanId
+                if (_state.value.selectedProfileId == profileId && chosen != null && fresh.plans.none { it.id == chosen }) {
+                    _state.update { it.copy(pulled = false) }
+                    fresh.plans.firstOrNull()?.let { selectPlan(it.id) }
+                        ?: _state.update { it.copy(selectedPlanId = null, lists = emptyList(), selectedListId = null) }
+                    return@launch
+                }
+            }
+            val planId = _state.value.selectedPlanId ?: return@launch _state.update { it.copy(pulled = false) }
+            val before = _state.value.lists
+            attempt { lists.refreshForPlan(planId) }
+                .onSuccess { fresh ->
+                    _state.update {
+                        if (it.selectedPlanId == planId && it.lists === before) it.copy(lists = fresh.newestFirst(), offline = false, pulled = false)
+                        else it.copy(pulled = false)
+                    }
+                }
+                .onFailure { e ->
+                    val gone = e is ApiException && e.code == "PLAN_NOT_FOUND"
+                    _state.update {
+                        if (it.selectedPlanId != planId) return@update it.copy(pulled = false)
+                        it.copy(
+                            lists = if (gone) emptyList() else it.lists,
+                            offline = e is IOException,
+                            error = e.takeIf { _ -> e !is IOException },
+                            pulled = false,
+                        )
+                    }
+                }
         }
     }
 

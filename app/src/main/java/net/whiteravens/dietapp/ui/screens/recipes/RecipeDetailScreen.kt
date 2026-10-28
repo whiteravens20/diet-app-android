@@ -50,6 +50,7 @@ import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
 import net.whiteravens.dietapp.domain.RecipeSource
 import net.whiteravens.dietapp.ui.common.MARK
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.allergenLabel
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.cuisineLabel
@@ -65,6 +66,7 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.favorites.sentimentLabel
@@ -77,66 +79,70 @@ fun RecipeDetailScreen(
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Read again on being shown again: the recipe or its marks may have been changed elsewhere.
+    WhenShownAgain(viewModel::shownAgain)
     val recipe = state.recipe
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.common_back),
-                    )
-                }
-                Text(
-                    recipe?.title ?: stringResource(R.string.nav_recipes),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
-
-        state.error?.let {
+    PullToRead(state.pulled, viewModel::pull) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             item {
-                Column {
-                    ErrorBanner(errorMessage(it))
-                    Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
-                        Text(stringResource(R.string.common_retry))
-                    }
-                }
-            }
-        }
-
-        if (recipe == null) {
-            if (state.loading) skeletonItems()
-            return@LazyColumn
-        }
-
-        item {
-            val prefs = state.prefsProfile
-            RecipeBody(
-                recipe,
-                marks = { Marks(state.marks, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark) },
-                prefsFor = {
-                    if (prefs != null) PrefsFor(state.profiles, prefs.id, state.savingPrefs, state.prefsFailed, onPick = viewModel::pickPrefsProfile)
-                },
-                lineMarks = if (prefs == null) {
-                    null
-                } else {
-                    { line ->
-                        LineMarks(
-                            favourite = line.ingredientId in prefs.preferences.favoriteIngredientIds,
-                            avoided = line.ingredientId in prefs.preferences.excludedIngredientIds,
-                            saving = state.savingPrefs,
-                            onToggle = { avoid -> viewModel.toggleIngredient(line.ingredientId, avoid) },
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_back),
                         )
                     }
-                },
-            )
+                    Text(
+                        recipe?.title ?: stringResource(R.string.nav_recipes),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                }
+            }
+
+            state.error?.let {
+                item {
+                    Column {
+                        ErrorBanner(errorMessage(it))
+                        Button(onClick = viewModel::load, modifier = Modifier.padding(top = 12.dp)) {
+                            Text(stringResource(R.string.common_retry))
+                        }
+                    }
+                }
+            }
+
+            if (recipe == null) {
+                if (state.loading) skeletonItems()
+                return@LazyColumn
+            }
+
+            item {
+                val prefs = state.prefsProfile
+                RecipeBody(
+                    recipe,
+                    marks = { Marks(state.marks, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark) },
+                    prefsFor = {
+                        if (prefs != null) PrefsFor(state.profiles, prefs.id, state.savingPrefs, state.prefsFailed, onPick = viewModel::pickPrefsProfile)
+                    },
+                    lineMarks = if (prefs == null) {
+                        null
+                    } else {
+                        { line ->
+                            LineMarks(
+                                favourite = line.ingredientId in prefs.preferences.favoriteIngredientIds,
+                                avoided = line.ingredientId in prefs.preferences.excludedIngredientIds,
+                                saving = state.savingPrefs,
+                                onToggle = { avoid -> viewModel.toggleIngredient(line.ingredientId, avoid) },
+                            )
+                        }
+                    },
+                )
+            }
         }
     }
 }

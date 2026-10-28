@@ -35,6 +35,7 @@ import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightPro
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -94,13 +95,27 @@ class DashboardViewModelTest {
 
         coEvery { users.profiles() } returns listOf(made)
         coEvery { users.calorieTarget(made.id) } returns target
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
         assertEquals(listOf(made), model.state.value.profiles.map { it.profile })
 
         coEvery { users.profiles() } throws IOException("unreachable")
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
         assertEquals(listOf(made), model.state.value.profiles.map { it.profile })
         assertNull(model.state.value.error)
+    }
+
+    @Test
+    fun `coming back to the front right after the last read reads nothing, while a pull reads at once and ends with the answer`() {
+        val users = mockk<UserRepository>()
+        coEvery { users.profiles() } returns emptyList()
+        val model = DashboardViewModel(users, plans, weights, notifications)
+
+        model.shownAgain(cameToTheFront = true)
+        coVerify(exactly = 1) { users.profiles() }
+
+        model.pull()
+        coVerify(exactly = 2) { users.profiles() }
+        assertFalse(model.state.value.pulled)
     }
 
     @Test
@@ -227,11 +242,11 @@ class DashboardViewModelTest {
         assertEquals(3, model.state.value.unread)
 
         coEvery { notifications.unread() } throws IOException("unreachable")
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
         assertEquals(3, model.state.value.unread)
 
         coEvery { notifications.unread() } returns emptyList()
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
         assertEquals(0, model.state.value.unread)
     }
 }

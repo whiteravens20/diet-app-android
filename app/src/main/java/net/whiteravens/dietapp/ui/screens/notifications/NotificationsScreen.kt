@@ -35,11 +35,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.domain.NotificationAbout
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatMoment
 import net.whiteravens.dietapp.ui.common.notificationText
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 
@@ -57,59 +59,63 @@ fun NotificationsScreen(
     viewModel: NotificationsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Read again on being shown again: a notification may have come, or been read elsewhere.
+    WhenShownAgain(viewModel::shownAgain)
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item { ScreenHeader(title = stringResource(R.string.notifications_title), onBack = onBack) }
-        if (state.items.isNotEmpty()) {
-            item {
-                // On a line of its own: beside the title, the words would squeeze it on a narrow phone.
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = viewModel::readAll, enabled = state.marking == null) {
-                        Text(stringResource(R.string.notifications_read_all))
+    PullToRead(state.pulled, viewModel::pull) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item { ScreenHeader(title = stringResource(R.string.notifications_title), onBack = onBack) }
+            if (state.items.isNotEmpty()) {
+                item {
+                    // On a line of its own: beside the title, the words would squeeze it on a narrow phone.
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = viewModel::readAll, enabled = state.marking == null) {
+                            Text(stringResource(R.string.notifications_read_all))
+                        }
                     }
                 }
             }
-        }
-        state.error?.let { error ->
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ErrorBanner(errorMessage(error))
-                    // What could not be read is asked for again; a notification not marked read stays to try again.
-                    if (state.items.isEmpty()) {
-                        Button(onClick = viewModel::load) { Text(stringResource(R.string.common_retry)) }
+            state.error?.let { error ->
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ErrorBanner(errorMessage(error))
+                        // What could not be read is asked for again; a notification not marked read stays to try again.
+                        if (state.items.isEmpty()) {
+                            Button(onClick = viewModel::load) { Text(stringResource(R.string.common_retry)) }
+                        }
                     }
                 }
             }
-        }
-        when {
-            state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(72.dp)) }
+            when {
+                state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(72.dp)) }
 
-            state.items.isEmpty() && state.error == null -> item {
-                Text(
-                    stringResource(R.string.notifications_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            else -> items(state.items, key = { it.id }) { notification ->
-                val go: (() -> Unit)? = when (notification.about) {
-                    is NotificationAbout.WeightReminder -> { { onWeight(notification.profileId) } }
-                    NotificationAbout.PreferencesReview -> onPreferences
-                    is NotificationAbout.Other -> null
+                state.items.isEmpty() && state.error == null -> item {
+                    Text(
+                        stringResource(R.string.notifications_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
-                NotificationCard(
-                    notification,
-                    profileName = state.names[notification.profileId],
-                    enabled = state.marking == null,
-                    onOpen = go?.let { { viewModel.open(notification, it) } },
-                    onDismiss = { viewModel.dismiss(notification) },
-                )
+
+                else -> items(state.items, key = { it.id }) { notification ->
+                    val go: (() -> Unit)? = when (notification.about) {
+                        is NotificationAbout.WeightReminder -> { { onWeight(notification.profileId) } }
+                        NotificationAbout.PreferencesReview -> onPreferences
+                        is NotificationAbout.Other -> null
+                    }
+                    NotificationCard(
+                        notification,
+                        profileName = state.names[notification.profileId],
+                        enabled = state.marking == null,
+                        onOpen = go?.let { { viewModel.open(notification, it) } },
+                        onDismiss = { viewModel.dismiss(notification) },
+                    )
+                }
             }
         }
     }

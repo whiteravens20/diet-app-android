@@ -218,16 +218,28 @@ class MealPlansViewModelTest {
         val model = MealPlansViewModel(users, plans)
         coEvery { plans.plans("ada", 1) } returns page("p1", "new")
 
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
 
         assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
         assertEquals(2, asked.size)
 
         coEvery { plans.plans("ada", 1) } throws IOException("no network")
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
 
         assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
         assertTrue(model.state.value.offline)
+    }
+
+    @Test
+    fun `a pull reads the list and the month again at once, and ends with the list's answer`() {
+        val model = MealPlansViewModel(users, plans)
+        coEvery { plans.plans("ada", 1) } returns page("p1", "pulled")
+
+        model.pull()
+
+        assertEquals(listOf("p1", "pulled"), model.state.value.plans.map { it.id })
+        assertEquals(2, asked.size)
+        assertFalse(model.state.value.pulled)
     }
 
     @Test
@@ -236,7 +248,7 @@ class MealPlansViewModelTest {
         model.selectProfile("bo")
         coEvery { users.profiles() } returns listOf(ada)
 
-        model.refresh()
+        model.shownAgain(cameToTheFront = false)
 
         assertEquals("ada", model.state.value.selectedProfileId)
         assertEquals(listOf(ada), model.state.value.profiles)

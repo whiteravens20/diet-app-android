@@ -66,7 +66,7 @@ class ProfilesViewModelTest {
         coEvery { it.refresh() } just runs
     }
 
-    private fun loaded(): ProfilesViewModel = ProfilesViewModel(profiles, users, server).also { it.load() }
+    private fun loaded(): ProfilesViewModel = ProfilesViewModel(profiles, users, server)
 
     @Test
     fun `the profiles are read with the names of the ingredients they keep, in the account's unit`() = runTest(main) {

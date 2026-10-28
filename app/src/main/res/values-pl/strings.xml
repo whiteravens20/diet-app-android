@@ -15,6 +15,7 @@
 
     <!-- Common -->
     <string name="common_retry">Spróbuj ponownie</string>
+    <string name="pull_to_read">Odśwież</string>
     <string name="common_cancel">Anuluj</string>
     <string name="common_back">Wstecz</string>
     <string name="common_save">Zapisz</string>

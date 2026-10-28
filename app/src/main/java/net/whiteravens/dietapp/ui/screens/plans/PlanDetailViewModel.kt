@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
+import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
@@ -77,6 +78,8 @@ class PlanDetailViewModel @Inject constructor(
         val plan: MealPlan? = null,
         val selectedDay: Int = 0,
         val offline: Boolean = false,
+        /** A read asked for by pulling the screen down is under way. */
+        val pulled: Boolean = false,
         /** The meal an offer is being asked for, while it is asked. */
         val offering: String? = null,
         /** A recipe offered in the place of a meal, until it is taken or put away. */
@@ -112,9 +115,50 @@ class PlanDetailViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    private val again = ReadingAnew()
+
     init {
         load()
         followAiMode()
+    }
+
+    /**
+     * Reads the plan again when the screen is shown again, from a change made elsewhere; on coming back
+     * to the front only as often as [ReadingAnew] lets it.
+     */
+    fun shownAgain(cameToTheFront: Boolean) {
+        if (!_state.value.loading && again.due(cameToTheFront)) readAnew()
+    }
+
+    /** Reads the plan again at once, the screen pulled down. */
+    fun pull() {
+        if (_state.value.loading || _state.value.pulled) return
+        _state.update { it.copy(pulled = true) }
+        readAnew()
+    }
+
+    /**
+     * Reads the plan again, keeping what is shown until the answer is there. A change made on this
+     * screen while it was read was answered after it, so its plan is the newer one and stays.
+     */
+    private fun readAnew() {
+        again.begun()
+        val before = _state.value.plan
+        viewModelScope.launch {
+            attempt { plans.refreshPlan(planId) }
+                .onSuccess { fresh ->
+                    _state.update {
+                        if (it.plan !== before) return@update it.copy(pulled = false)
+                        it.copy(plan = fresh, selectedDay = it.selectedDay.coerceIn(0, (fresh.days.size - 1).coerceAtLeast(0)), offline = false, pulled = false)
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        if (e.isPlanGone()) it.copy(plan = null, error = e, offline = false, pulled = false)
+                        else it.copy(offline = it.offline || (e is IOException && it.plan != null), pulled = false)
+                    }
+                }
+        }
     }
 
     /** AI turned on or off in the account's settings shows here as soon as it is. */
@@ -123,6 +167,7 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     fun load() {
+        again.begun()
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             val cached = plans.cachedPlan(planId)
