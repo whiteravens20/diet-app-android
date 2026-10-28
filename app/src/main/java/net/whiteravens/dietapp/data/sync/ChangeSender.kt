@@ -29,6 +29,8 @@ class ChangeSender @Inject constructor(
             is QueuedChange.PantryAdded -> pantry.send(change)
             is QueuedChange.PantryChanged -> pantry.send(change)
             is QueuedChange.PantryRemoved -> pantry.send(change)
+            is QueuedChange.OwnMealAdded -> plans.send(change)
+            is QueuedChange.MealRemoved -> plans.send(change)
         }
     }
 }

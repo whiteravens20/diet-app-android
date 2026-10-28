@@ -303,9 +303,17 @@ interface DietApiService {
     @PATCH("meal-plans/{id}/meals/{mealId}/eaten")
     suspend fun setMealEaten(@Path("id") id: String, @Path("mealId") mealId: String, @Body body: SetMealEatenRequest): RebalanceResultDto
 
-    /** Adds a meal of the user's own to the day of [date]; a day the plan skipped is skipped no longer. */
+    /**
+     * Adds a meal of the user's own to the day of [date]; a day the plan skipped is skipped no longer.
+     * Sent again with the same [key], it is answered with the plan as it is now, without a rebalance.
+     */
     @POST("meal-plans/{id}/days/{date}/custom-meal")
-    suspend fun addCustomMeal(@Path("id") id: String, @Path("date") date: String, @Body body: AddCustomMealRequest): RebalanceResultDto
+    suspend fun addCustomMeal(
+        @Path("id") id: String,
+        @Path("date") date: String,
+        @Header("Idempotency-Key") key: String?,
+        @Body body: AddCustomMealRequest,
+    ): RebalanceResultDto
 
     @POST("meal-plans/{id}/rebalance")
     suspend fun rebalancePlan(@Path("id") id: String, @Body body: RebalanceRequest): RebalanceResultDto

@@ -81,4 +81,29 @@ sealed interface QueuedChange {
     @Serializable
     @SerialName("pantry-removed")
     data class PantryRemoved(val profileId: String, val id: String) : DoneWhenGone
+
+    /**
+     * A meal of one's own added to the day of [date] (yyyy-MM-dd) of a plan, beside its meals or in
+     * the place of [replaces]: what one serving holds, and how many servings it is.
+     */
+    @Serializable
+    @SerialName("own-meal-added")
+    data class OwnMealAdded(
+        val planId: String,
+        val date: String,
+        val name: String,
+        val slot: String,
+        val calories: Double,
+        val protein: Double,
+        val fat: Double,
+        val carbs: Double,
+        val servings: Double,
+        val replaces: String? = null,
+        override val key: String,
+    ) : Addition
+
+    /** A meal taken off its day. */
+    @Serializable
+    @SerialName("meal-removed")
+    data class MealRemoved(val planId: String, val mealId: String) : DoneWhenGone
 }

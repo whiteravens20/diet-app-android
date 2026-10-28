@@ -18,6 +18,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -37,6 +38,7 @@ import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.data.remote.PackTallyDto
@@ -684,9 +686,9 @@ class PlanDetailViewModelTest {
         // As the API's own answer had it: a name too long, and every number past its bounds.
         val tooMuch = CustomMeal("A".repeat(121), "snack", Nutrition(6000.0, 600.0, 600.0, 1200.0), 30.0)
         val soup = CustomMeal("Soup", "snack", Nutrition(300.0, 12.0, 8.0, 40.0), 2.0)
-        coEvery { api.addCustomMeal(plan.id, date, match { it.name == tooMuch.name }) } throws
+        coEvery { api.addCustomMeal(plan.id, date, any(), match { it.name == tooMuch.name }) } throws
             HttpException(Response.error<Any>(400, fixture("custom-meal-refused").toResponseBody("application/json".toMediaType())))
-        coEvery { api.addCustomMeal(plan.id, date, match { it.name == "Soup" }) } returns swapped
+        coEvery { api.addCustomMeal(plan.id, date, any(), match { it.name == "Soup" }) } returns swapped
         val model = model(api)
 
         model.addCustomMeal(date, tooMuch)
@@ -706,5 +708,56 @@ class PlanDetailViewModelTest {
         assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
         model.customMealClosed()
         assertNull(model.state.value.customMeal)
+    }
+
+    @Test
+    fun `a meal of one's own that waits goes among its day's meals by its time of day, or in the place of the meal it replaces`() {
+        val read = plan.toDomain()
+        val day = read.days.first()
+        val beside = QueuedChange.OwnMealAdded(read.id, day.date, "Soup", "snack", 300.0, 12.0, 8.0, 40.0, 1.0, key = "soup")
+        val instead = beside.copy(name = "Stew", replaces = day.meals.first().id, key = "stew")
+
+        val besideThem = read.withWaiting(listOf(beside)).days.first().meals
+        val inThePlace = read.withWaiting(listOf(instead)).days.first().meals
+
+        assertEquals(day.meals.size + 1, besideThem.size)
+        assertEquals(besideThem.map { it.slot }.sortedBy { MEAL_TYPES.indexOf(it) }, besideThem.map { it.slot })
+        assertEquals(listOf("stew") + day.meals.drop(1).map { it.id }, inThePlace.map { it.id })
+        assertEquals(read.days.drop(1), read.withWaiting(listOf(beside)).days.drop(1))
+    }
+
+    @Test
+    fun `without a network a meal of one's own is shown on its day, waiting, and a meal taken off it left out, each going once the network is back`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.addCustomMeal(any(), any(), any(), any()) } throws IOException("no network")
+        coEvery { api.removeMeal(any(), any()) } throws IOException("no network")
+        val queue = changeQueue()
+        val model = model(api, queue = queue)
+        val day = plan.days.first()
+        val other = day.meals.last { it.id != meal.id }
+
+        model.addCustomMeal(day.date, CustomMeal("Soup", "snack", Nutrition(300.0, 12.0, 8.0, 40.0), 2.0))
+        assertEquals(PlanDetailViewModel.CustomMealSent(added = true), model.state.value.customMeal)
+        model.customMealClosed()
+        model.removeMeal(other.id)
+
+        val shownDay = model.state.value.shown!!.days.first()
+        val own = shownDay.meals.single { it.custom && it.name == "Soup" }
+        assertEquals(Nutrition(600.0, 24.0, 16.0, 80.0), own.nutrition)
+        assertTrue(own.id in model.state.value.waitingAdditions)
+        assertTrue(own.id in model.state.value.waitingMeals)
+        assertTrue(shownDay.meals.none { it.id == other.id })
+        assertTrue(model.state.value.offline)
+        // What was read stays as read.
+        assertEquals(day.meals.size, model.state.value.plan!!.days.first().meals.size)
+
+        // Not marked eaten before the server has it, and taken back out of the queue when taken off its day.
+        model.setEaten(own.id, true)
+        coVerify(exactly = 0) { api.setMealEaten(any(), own.id, any()) }
+        model.removeMeal(own.id)
+
+        assertTrue(model.state.value.shown!!.days.first().meals.none { it.name == "Soup" })
+        assertEquals(listOf(QueuedChange.MealRemoved(plan.id, other.id)), runBlocking { queue.waiting.first() }.map { it.change })
     }
 }

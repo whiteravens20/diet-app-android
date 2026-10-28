@@ -160,7 +160,8 @@ fun PlanDetailScreen(
         }
         CustomMealDialog(
             date = date,
-            meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty(),
+            // A meal of one's own that waits to be added is not one the server can put another in the place of.
+            meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty().filterNot { it.id in state.waitingAdditions },
             sent = state.customMeal,
             sending = state.changing,
             onAdd = { meal, replaces -> viewModel.addCustomMeal(date, meal, replaces) },
@@ -450,6 +451,7 @@ fun PlanDetailScreen(
                         meal = meal,
                         swapping = meal.id == state.offering,
                         waiting = meal.id in state.waitingMeals,
+                        added = meal.id in state.waitingAdditions,
                         readOnly = readOnly,
                         busy = busy,
                         aiOn = state.aiOn == true,
@@ -461,10 +463,10 @@ fun PlanDetailScreen(
                         onOpen = { openMealId = meal.id },
                     )
                 }
+                item(key = "add-${day.id}") {
+                    TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
+                }
                 if (!readOnly) {
-                    item(key = "add-${day.id}") {
-                        TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
-                    }
                     // What every swap of the plan puts first: under the meals, out of their way.
                     item(key = "pantry") {
                         CheckRow(
@@ -832,7 +834,8 @@ private fun mealName(meal: Meal): String = meal.name.ifEmpty { stringResource(R.
 /**
  * A meal of the day: its time of day and the chips that say at a glance what there is to say of it,
  * its name and macros; one that is neither eaten nor the user's own can be swapped. It is marked
- * eaten or not without a network as well, where the mark [waiting] to be sent says so.
+ * eaten or not and taken off its day without a network as well, where a change [waiting] to be sent
+ * says so; one of one's own [added] and waiting is marked eaten once the server has it.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -840,6 +843,7 @@ private fun MealCard(
     meal: Meal,
     swapping: Boolean,
     waiting: Boolean,
+    added: Boolean,
     readOnly: Boolean,
     busy: Boolean,
     aiOn: Boolean,
@@ -856,7 +860,7 @@ private fun MealCard(
             Checkbox(
                 checked = meal.eaten,
                 onCheckedChange = onEaten,
-                enabled = !busy,
+                enabled = !busy && !added,
                 modifier = Modifier.semantics { contentDescription = markEaten },
             )
             Column(Modifier.weight(1f)) {
@@ -892,8 +896,9 @@ private fun MealCard(
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else if (!readOnly) {
-                MealChanges(meal, busy, aiOn, canSwap = !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
+            } else {
+                // Without a network a meal is only taken off its day.
+                MealChanges(meal, busy, aiOn, canSwap = !readOnly && !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
             }
         }
     }

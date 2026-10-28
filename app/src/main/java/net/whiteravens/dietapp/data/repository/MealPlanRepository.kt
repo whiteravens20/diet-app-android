@@ -70,6 +70,7 @@ import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.UseUpTake
 import net.whiteravens.dietapp.domain.WayMeal
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,8 +79,9 @@ import javax.inject.Singleton
  * cache immediately; [refresh] re-fetches and re-mirrors. Writes (generate,
  * swap) are backend operations — the response is mirrored into the cache so the
  * next offline read sees it. The raw response JSON is what gets cached, so the
- * cache never diverges from the wire contract. A meal marked eaten or not goes
- * through the queue of changes, and waits there for a network where there is none.
+ * cache never diverges from the wire contract. A meal marked eaten or not, a meal
+ * of one's own added and a meal taken off its day go through the queue of changes,
+ * and wait there for a network where there is none.
  */
 @Singleton
 class MealPlanRepository @Inject constructor(
@@ -411,25 +413,57 @@ class MealPlanRepository @Inject constructor(
     suspend fun send(change: QueuedChange.Eaten): Rebalanced =
         kept(apiCall(json) { api.setMealEaten(change.planId, change.mealId, SetMealEatenRequest(change.eaten)) })
 
-    /** Adds a meal of the user's own to the day of [date] (yyyy-MM-dd); the day is balanced around it. */
-    suspend fun addCustomMeal(planId: String, date: String, meal: CustomMeal, replaces: String? = null): Rebalanced = kept(
+    /**
+     * Adds a meal of the user's own to the day of [date] (yyyy-MM-dd); the day is balanced around it.
+     * Without a network, or behind changes waiting, it is kept to be sent in its turn, with a key that
+     * has the server add it once however often it is sent.
+     */
+    suspend fun addCustomMeal(planId: String, date: String, meal: CustomMeal, replaces: String? = null): Submitted<Rebalanced> {
+        val queued = QueuedChange.OwnMealAdded(
+            planId = planId,
+            date = date,
+            name = meal.name.trim(),
+            slot = meal.slot,
+            calories = meal.perServing.calories,
+            protein = meal.perServing.protein,
+            fat = meal.perServing.fat,
+            carbs = meal.perServing.carbs,
+            servings = meal.servings,
+            replaces = replaces,
+            key = UUID.randomUUID().toString(),
+        )
+        return queue.submit(queued) { send(queued) }
+    }
+
+    /** Sends a meal of one's own; the plan as the server then has it is kept and given back. */
+    suspend fun send(change: QueuedChange.OwnMealAdded): Rebalanced = kept(
         apiCall(json) {
             api.addCustomMeal(
-                planId,
-                date,
+                change.planId,
+                change.date,
+                change.key,
                 AddCustomMealRequest(
-                    name = meal.name.trim(),
-                    mealType = meal.slot,
-                    nutrition = NutritionDto(meal.perServing.calories, meal.perServing.protein, meal.perServing.fat, meal.perServing.carbs),
-                    servings = meal.servings,
-                    replaces = replaces,
+                    name = change.name,
+                    mealType = change.slot,
+                    nutrition = NutritionDto(change.calories, change.protein, change.fat, change.carbs),
+                    servings = change.servings,
+                    replaces = change.replaces,
                 ),
             )
         },
     )
 
-    /** Takes a meal off its day, whichever it is; the day is balanced again without it. */
-    suspend fun removeMeal(planId: String, mealId: String): Rebalanced = kept(apiCall(json) { api.removeMeal(planId, mealId) })
+    /**
+     * Takes a meal off its day, whichever it is; the day is balanced again without it. Without a
+     * network, or behind changes waiting, it is kept to be sent in its turn.
+     */
+    suspend fun removeMeal(planId: String, mealId: String): Submitted<Rebalanced> {
+        val queued = QueuedChange.MealRemoved(planId, mealId)
+        return queue.submit(queued) { send(queued) }
+    }
+
+    /** Sends a meal's taking off its day; the plan as the server then has it is kept and given back. */
+    suspend fun send(change: QueuedChange.MealRemoved): Rebalanced = kept(apiCall(json) { api.removeMeal(change.planId, change.mealId) })
 
     /**
      * Spreads what the days from [from] (yyyy-MM-dd; today where it is left out) are off their targets

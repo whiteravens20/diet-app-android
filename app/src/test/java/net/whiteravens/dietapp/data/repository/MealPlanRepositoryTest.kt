@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -59,6 +60,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /** The plans of a profile, a page at a time, from a local server answering what the backend answered. */
@@ -286,7 +288,7 @@ class MealPlanRepositoryTest {
     }
 
     @Test
-    fun `a meal of one's own is sent with what one serving holds and how many servings it is, named without the spaces around it`() {
+    fun `a meal of one's own is sent with what one serving holds and how many servings it is, named without the spaces around it, under a key of its own`() {
         server.enqueue(answer("meal-plan-swap-apply"))
 
         runBlocking { repository(Cache()).addCustomMeal("plan-1", "2026-10-13", CustomMeal(" Soup ", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.5)) }
@@ -299,6 +301,44 @@ class MealPlanRepositoryTest {
         assertEquals(300.0, meal.getValue("nutrition").jsonObject.getValue("calories").jsonPrimitive.double, 0.0)
         assertEquals(1.5, meal.getValue("servings").jsonPrimitive.double, 0.0)
         assertFalse("a meal beside the day's names none it is eaten in the place of", "replaces" in meal)
+        UUID.fromString(own.getHeader("Idempotency-Key"))
+    }
+
+    @Test
+    fun `a meal of one's own whose answer was lost is kept, sent again under the same key, and a removal of a meal gone is done`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                !answering -> MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+                request.method == "DELETE" -> MockResponse().setResponseCode(404).setHeader("Content-Type", "application/json")
+                    .setBody("""{"statusCode":404,"error":"MEAL_NOT_FOUND","message":"Meal not found."}""")
+                else -> answer("meal-plan-swap-apply")
+            }
+        }
+        val queue = changeQueue()
+        val plans = repository(Cache(), queue)
+
+        val kept = runBlocking { plans.addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.0)) }
+        runBlocking { plans.removeMeal("plan-1", "meal-2") }
+
+        assertEquals(Submitted.Kept(offline = true), kept)
+        answering = true
+        val drained = runBlocking {
+            queue.drain { change ->
+                when (change) {
+                    is QueuedChange.OwnMealAdded -> plans.send(change)
+                    is QueuedChange.MealRemoved -> plans.send(change)
+                    else -> error("not a change of a plan")
+                }
+            }
+        }
+        assertEquals(Drained.EMPTY, drained)
+        val first = server.takeRequest()
+        val again = generateSequence { server.takeRequest(0, TimeUnit.SECONDS) }.toList()
+        val sentAgain = again.first { it.method == "POST" }
+        assertEquals(first.getHeader("Idempotency-Key"), sentAgain.getHeader("Idempotency-Key"))
+        assertEquals("DELETE", again.last().method)
+        assertTrue(runBlocking { queue.refused.first() }.isEmpty())
     }
 
     @Test

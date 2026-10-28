@@ -157,6 +157,8 @@
     <string name="change_kind_pantry_added">a new pantry item</string>
     <string name="change_kind_pantry_changed">a change of a pantry item</string>
     <string name="change_kind_pantry_removed">a pantry item\'s removal</string>
+    <string name="change_kind_own_meal_added">a custom meal added to a day</string>
+    <string name="change_kind_meal_removed">a meal removed from its day</string>
     <string name="change_kind_unreadable">a change this version of the app cannot read</string>
     <string name="change_unreadable">Make it again.</string>
     <string name="change_unsendable">The server\'s answer could not be read: check whether the change was saved.</string>
@@ -172,7 +174,7 @@
         <item quantity="one">%1$d change made on this phone waits to be sent. Send it before signing out, or drop it?</item>
         <item quantity="other">%1$d changes made on this phone wait to be sent. Send them before signing out, or drop them?</item>
     </plurals>
-    <string name="offline_readonly">Offline — as of %1$s; meals can be marked eaten, other changes need a connection</string>
+    <string name="offline_readonly">Offline — as of %1$s; meals can be marked eaten, added and removed, other changes need a connection</string>
 
     <!-- Meal plans -->
     <string name="plans_subtitle">Plans built against each profile’s calorie target.</string>
