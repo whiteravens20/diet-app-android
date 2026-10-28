@@ -44,8 +44,9 @@ when one returns.
 ## Changes made without a network (being built)
 
 Some changes are made without a network as well, as they are in a shop or a kitchen without
-a signal: so far a shopping list's row, its tick and its amounts. Everything else that
-changes something asks the server first, and is off while there is no network.
+a signal: so far a shopping list's row, its tick and its amounts, and a meal of a plan
+marked eaten or not. Everything else that changes something asks the server first, and is
+off while there is no network.
 
 1. A change goes to the server at once when nothing waits before it. When the server cannot
    be reached, or another change waits, it is kept in the cache's database
