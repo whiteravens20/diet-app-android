@@ -37,7 +37,10 @@ class SessionsTest {
         screen.openAccountSettings(account)
 
         screen.waitForText(text(R.string.account_session_current))
-        screen.onNodeWithText(text(R.string.account_session_current)).performScrollTo().assertIsDisplayed()
+        // The cards above the sessions read what they show on their own and can grow after this phone's
+        // row was scrolled to: it is scrolled to again until it stays in view.
+        val thisPhone = screen.onNodeWithText(text(R.string.account_session_current))
+        screen.waitUntil(20_000) { runCatching { thisPhone.performScrollTo().assertIsDisplayed() }.isSuccess }
         screen.keepScreenshot("account-sessions")
 
         // The other session signed out from its row: asked again, the account no longer has it.
