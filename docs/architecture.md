@@ -27,12 +27,15 @@ di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
 
 ## Offline-first flow
 
-1. A screen's ViewModel asks a repository for data.
-2. The repository returns the **Room cache** immediately (instant render, works offline).
-3. In the background it calls the API; on success it updates the cache and re-emits.
-4. On network failure the cached copy stands; the UI shows an "offline" indicator.
+1. A screen's ViewModel asks a repository for data when the screen opens, when it is pulled
+   down, and when it is shown again (from another screen at once, on coming back to the front
+   at most every thirty seconds).
+2. For plans and shopping lists the repository returns the **Room cache** first (instant
+   render, works offline), then calls the API and, on success, updates the cache.
+3. On network failure what the screen read last stands, and the UI says it is offline and
+   since what time; a "not found" answer drops the copy of what was deleted elsewhere.
 
-See [sync-strategy.md](sync-strategy.md) for write-sync (next).
+See [sync-strategy.md](sync-strategy.md) for the whole of reading, and for write-sync (next).
 
 ## Tech choices
 

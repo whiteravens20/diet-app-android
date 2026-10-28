@@ -8,11 +8,22 @@ when one returns.
 
 ## Read sync (implemented)
 
-- Every API read is mirrored into the Room cache (`CachedMealPlan`, `CachedShoppingList`),
-  stored as the raw response JSON with a `syncedAt` timestamp.
-- Repositories serve the cache first, then refresh from the API in the background.
-- Offline → the cached copy is shown with an "offline / last synced …" indicator.
-- A pull-to-refresh forces a network fetch.
+- A screen reads what it shows anew when it opens, when it is pulled down, and when it is
+  shown again: at once after another screen of the app, which may have changed what it
+  shows, and at most every thirty seconds when the app comes back to the front, so that
+  switching between apps does not spend the API's limit of requests. There are no change
+  cursors: one account's data is a few small pages.
+- The first page of each profile's plans, every plan opened and the shopping lists are
+  mirrored into the Room cache (`CachedPlanList`, `CachedMealPlan`, `CachedShoppingList`)
+  as the raw response JSON with the time they were read. Those screens show the copy first
+  and the answer of the network when it comes.
+- A screen whose reading anew fails for want of a network keeps what it read and says
+  when: "Offline — as of 14:32". Plans and lists are read-only offline.
+- A read answered "not found" (the plan, the list or the profile was deleted elsewhere, or
+  is not the account's) drops the copy of it; a list read anew replaces the copies of its
+  lists whole; signing out drops every copy.
+- An answer read from before a change made on the same screen is left aside, so that a
+  row ticked or a mark set while the screen was being read stays as it is.
 
 ## Write sync (next)
 

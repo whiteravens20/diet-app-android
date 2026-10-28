@@ -88,8 +88,11 @@ account once you say on the page that the account it names is yours.
   unit the server can count it in, and the day it is best eaten before; each row's amount
   and day changed, or the row taken out, and a row whose day is near or gone said so. The
   plans, swaps and shopping lists the server makes count on it.
-- **Offline.** Meal plans and shopping lists you have opened stay readable without a
-  connection, marked with the time they were last synced. Offline they are read-only.
+- **Up to date, and offline.** Every screen reads what it shows anew when it opens, when you
+  pull it down, and when you come back to it: at once from another screen of the app, and at
+  most every thirty seconds when you return to the app. A screen that cannot reach the
+  server keeps what it read last and says what time that was. Meal plans and shopping lists
+  you have opened stay readable without a connection, read-only.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 
