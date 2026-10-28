@@ -45,8 +45,9 @@ when one returns.
 
 Some changes are made without a network as well, as they are in a shop or a kitchen without
 a signal: so far a shopping list's row, its tick and its amounts, a meal of a plan marked
-eaten or not, and a weight logged or removed. Everything else that changes something asks
-the server first, and is off while there is no network.
+eaten or not, a weight logged or removed, and a pantry's row put in, changed or taken out.
+Everything else that changes something asks the server first, and is off while there is no
+network.
 
 1. A change goes to the server at once when nothing waits before it. When the server cannot
    be reached, or another change waits, it is kept in the cache's database
@@ -58,7 +59,7 @@ the server first, and is off while there is no network.
    front. Sent, the copy the server answers is kept, and the screen reads it and is no
    longer offline.
 3. A value set, such as a tick or an amount, is sent again as it is. An addition, such as a
-   weight, is sent every time with the key it was given when it was made
+   weight or a pantry's row, is sent every time with the key it was given when it was made
    (`Idempotency-Key`), and with the moment it was made, so that the server writes it once
    however often it comes. A removal of something the server no longer has (404) was made.
    A change another write overlapped on the server (`PLAN_CHANGED`, `WRITE_CONFLICT`) is
@@ -66,8 +67,9 @@ the server first, and is off while there is no network.
    session for it keeps the changes for later.
 4. A change the server refuses otherwise is not sent again: it stays, with the server's
    words for why, in a notice over every screen until it is seen.
-5. A weight logged that still waits is removed by taking it out of the queue. One sent
-   meanwhile stays logged, and is removed as any other is.
+5. A weight logged or a pantry's row put in that still waits is removed by taking it out of
+   the queue, and such a row is changed once the server has it. One sent meanwhile stays,
+   and is removed as any other is.
 6. Signing out, or going to another server, while changes wait asks first: send them and
    sign out, or drop them. A session the server ends takes them with it, as it takes every
    copy.
