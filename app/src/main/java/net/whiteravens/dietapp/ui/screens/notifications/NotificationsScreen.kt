@@ -71,7 +71,7 @@ fun NotificationsScreen(
         ) {
             item { ScreenHeader(title = stringResource(R.string.notifications_title), onBack = onBack) }
             state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
-            if (state.items.isNotEmpty()) {
+            if (state.shownItems.isNotEmpty()) {
                 item {
                     // On a line of its own: beside the title, the words would squeeze it on a narrow phone.
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -86,7 +86,7 @@ fun NotificationsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ErrorBanner(errorMessage(error))
                         // What could not be read is asked for again; a notification not marked read stays to try again.
-                        if (state.items.isEmpty()) {
+                        if (state.shownItems.isEmpty()) {
                             Button(onClick = viewModel::load) { Text(stringResource(R.string.common_retry)) }
                         }
                     }
@@ -95,7 +95,7 @@ fun NotificationsScreen(
             when {
                 state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(72.dp)) }
 
-                state.items.isEmpty() && state.error == null -> item {
+                state.shownItems.isEmpty() && state.error == null -> item {
                     Text(
                         stringResource(R.string.notifications_empty),
                         style = MaterialTheme.typography.bodyMedium,
@@ -104,7 +104,7 @@ fun NotificationsScreen(
                     )
                 }
 
-                else -> items(state.items, key = { it.id }) { notification ->
+                else -> items(state.shownItems, key = { it.id }) { notification ->
                     val go: (() -> Unit)? = when (notification.about) {
                         is NotificationAbout.WeightReminder -> { { onWeight(notification.profileId) } }
                         NotificationAbout.PreferencesReview -> onPreferences

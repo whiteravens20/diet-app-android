@@ -112,7 +112,12 @@ class DashboardViewModel @Inject constructor(
         val offline: Boolean = false,
         /** The weights logged and removed that wait to be sent, in the order they were made. */
         val waitingWeights: List<Waiting> = emptyList(),
+        /** How many notifications were read on the phone and wait for that to be sent. */
+        val readsWaiting: Int = 0,
     ) {
+        /** How many notifications the bell counts: those not read yet, less those read on the phone. */
+        val shownUnread: Int get() = (unread - readsWaiting).coerceAtLeast(0)
+
         /** The profiles as shown: their weights as read, with those logged and removed that wait to be sent over them. */
         val shown: List<ProfileStats> get() = profiles.map { it.withWaiting(waitingWeights.map(Waiting::change)) }
 
@@ -134,6 +139,21 @@ class DashboardViewModel @Inject constructor(
     init {
         load()
         followWaiting()
+        followReads()
+    }
+
+    /**
+     * Follows the notifications read on the phone that wait to be sent. Once one is sent, the count
+     * read from the server holds it no longer.
+     */
+    private fun followReads() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.count { it.change is QueuedChange.NotificationRead } }
+                .distinctUntilChanged()
+                .collect { reads ->
+                    _state.update { it.copy(unread = (it.unread - (it.readsWaiting - reads).coerceAtLeast(0)).coerceAtLeast(0), readsWaiting = reads) }
+                }
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.sync
 
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
@@ -21,6 +22,7 @@ class ChangeSender @Inject constructor(
     private val weights: WeightRepository,
     private val pantry: PantryRepository,
     private val favorites: FavoriteRepository,
+    private val notifications: NotificationRepository,
 ) {
     suspend fun send(change: QueuedChange) {
         when (change) {
@@ -35,6 +37,7 @@ class ChangeSender @Inject constructor(
             is QueuedChange.MealRemoved -> plans.send(change)
             is QueuedChange.Marked -> favorites.send(change)
             is QueuedChange.Unmarked -> favorites.send(change)
+            is QueuedChange.NotificationRead -> notifications.send(change)
         }
     }
 }

@@ -161,6 +161,7 @@
     <string name="change_kind_meal_removed">a meal removed from its day</string>
     <string name="change_kind_marked">a recipe\'s mark</string>
     <string name="change_kind_unmarked">a recipe\'s mark taken off</string>
+    <string name="change_kind_notification_read">a notification read</string>
     <string name="change_kind_unreadable">a change this version of the app cannot read</string>
     <string name="change_unreadable">Make it again.</string>
     <string name="change_unsendable">The server\'s answer could not be read: check whether the change was saved.</string>

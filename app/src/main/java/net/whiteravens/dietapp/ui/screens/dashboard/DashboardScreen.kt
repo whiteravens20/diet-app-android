@@ -130,7 +130,7 @@ fun DashboardScreen(
                             ),
                             modifier = Modifier.weight(1f),
                         )
-                        NotificationsBell(state.unread, onClick = onOpenNotifications)
+                        NotificationsBell(state.shownUnread, onClick = onOpenNotifications)
                     }
                 }
                 state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }

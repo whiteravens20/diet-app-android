@@ -4,25 +4,37 @@ package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.data.remote.NotificationDto
+import net.whiteravens.dietapp.data.sync.Drained
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.domain.NotificationAbout
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 
-/** The account's notifications read, one marked read and all at once, against a local server answering as the backend did. */
+/**
+ * The account's notifications read, one marked read, without a network as well, and all at once,
+ * against a local server answering as the backend did.
+ */
 class NotificationRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
@@ -41,10 +53,12 @@ class NotificationRepositoryTest {
         runCatching { server.shutdown() }
     }
 
+    private val queue = changeQueue()
+
     private fun repository(): NotificationRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return NotificationRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json)
+        return NotificationRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json, queue)
     }
 
     private fun answer(status: Int, name: String) =
@@ -82,7 +96,7 @@ class NotificationRepositoryTest {
         server.enqueue(answer(404, "notification-unknown"))
         val notifications = repository()
 
-        runBlocking { notifications.read("e287e6ab-8278-4d07-8894-9770a91fe2fe") }
+        assertEquals(Submitted.Sent(Unit), runBlocking { notifications.read("e287e6ab-8278-4d07-8894-9770a91fe2fe") })
         val refused = runCatching { runBlocking { notifications.read("1b7b7bb0-3c41-4e0b-9bd7-0e1f3c1b4e55") } }.exceptionOrNull() as ApiException
 
         val sent = server.takeRequest()
@@ -90,6 +104,23 @@ class NotificationRepositoryTest {
         assertEquals("/api/notifications/e287e6ab-8278-4d07-8894-9770a91fe2fe/read", sent.requestUrl!!.encodedPath)
         assertEquals(404, refused.statusCode)
         assertEquals("NOTIFICATION_NOT_FOUND", refused.code)
+    }
+
+    @Test
+    fun `a notification read without a network is kept, and is done once sent when the account no longer has it`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (answering) answer(404, "notification-unknown") else MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+        }
+        val notifications = repository()
+
+        assertEquals(Submitted.Kept(offline = true), runBlocking { notifications.read("1b7b7bb0-3c41-4e0b-9bd7-0e1f3c1b4e55") })
+        answering = true
+        assertEquals(Drained.EMPTY, runBlocking { queue.drain { notifications.send(it as QueuedChange.NotificationRead) } })
+
+        assertTrue(runBlocking { queue.waiting.first() }.isEmpty())
+        assertTrue(runBlocking { queue.refused.first() }.isEmpty())
     }
 
     @Test

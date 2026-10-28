@@ -9,23 +9,37 @@ import kotlinx.serialization.json.intOrNull
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.NotificationDto
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.domain.NotificationAbout
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** The notifications of the account's profiles: those not read yet, one read, all read. */
+/**
+ * The notifications of the account's profiles: those not read yet, one read, all read. One read goes
+ * through the queue of changes, and waits there for a network where there is none; all are read
+ * with a network alone, as the server would read those that came after them too.
+ */
 @Singleton
 class NotificationRepository @Inject constructor(
     private val api: DietApiService,
     private val json: Json,
+    private val queue: ChangeQueue,
 ) {
     /** The notifications not read yet, as the API orders them. */
     suspend fun unread(): List<AccountNotification> = apiCall(json) { api.unreadNotifications() }.map { it.toDomain() }
 
-    /** Marks [id] read; marking it again changes nothing. */
-    suspend fun read(id: String) = apiCall(json) { api.readNotification(id) }
+    /** Marks [id] read, or keeps that to be sent in its turn; marking it again changes nothing. */
+    suspend fun read(id: String): Submitted<Unit> {
+        val queued = QueuedChange.NotificationRead(id)
+        return queue.submit(queued) { send(queued) }
+    }
+
+    /** Sends a notification's reading. */
+    suspend fun send(change: QueuedChange.NotificationRead) = apiCall(json) { api.readNotification(change.id) }
 
     /** Marks every notification of the account read; answers how many there were. */
     suspend fun readAll(): Int = apiCall(json) { api.readAllNotifications() }.updated

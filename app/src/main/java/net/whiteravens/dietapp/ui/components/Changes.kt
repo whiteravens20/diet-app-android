@@ -117,6 +117,7 @@ private fun changeKind(change: QueuedChange?): String = when (change) {
     is QueuedChange.MealRemoved -> stringResource(R.string.change_kind_meal_removed)
     is QueuedChange.Marked -> stringResource(R.string.change_kind_marked)
     is QueuedChange.Unmarked -> stringResource(R.string.change_kind_unmarked)
+    is QueuedChange.NotificationRead -> stringResource(R.string.change_kind_notification_read)
     null -> stringResource(R.string.change_kind_unreadable)
 }
 

@@ -19,7 +19,7 @@ sealed interface QueuedChange {
         val key: String
     }
 
-    /** A change that is made where what it changes is gone: a deletion. */
+    /** A change that is made where what it changes is gone: a deletion, or a notification read. */
     sealed interface DoneWhenGone : QueuedChange
 
     /** A row of a shopping list ticked or not, or what of it is at home or was bought (0 for nothing). */
@@ -116,4 +116,9 @@ sealed interface QueuedChange {
     @Serializable
     @SerialName("unmarked")
     data class Unmarked(val profileId: String, val recipeId: String) : DoneWhenGone
+
+    /** A notification of the account read. */
+    @Serializable
+    @SerialName("notification-read")
+    data class NotificationRead(val id: String) : DoneWhenGone
 }

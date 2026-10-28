@@ -9,11 +9,16 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
@@ -22,12 +27,14 @@ import javax.inject.Inject
 
 /**
  * The account's notifications that are not read yet, with the names of the profiles they are for:
- * one opened is marked read first, one put away is marked read, and all can be at once.
+ * one opened is marked read first, one put away is marked read, without a network as well, where
+ * the reading waits to be sent; and all can be at once, with a network.
  */
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val notifications: NotificationRepository,
     private val users: UserRepository,
+    private val queue: ChangeQueue,
 ) : ViewModel() {
     data class UiState(
         val loading: Boolean = true,
@@ -43,7 +50,12 @@ class NotificationsViewModel @Inject constructor(
         val readAt: Long? = null,
         /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
         val offline: Boolean = false,
-    )
+        /** The notifications whose reading waits to be sent. */
+        val waiting: Set<String> = emptySet(),
+    ) {
+        /** The notifications shown: those read from the server, less those whose reading waits to be sent. */
+        val shownItems: List<AccountNotification> get() = items.filterNot { it.id in waiting }
+    }
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -52,6 +64,23 @@ class NotificationsViewModel @Inject constructor(
 
     init {
         load()
+        followWaiting()
+    }
+
+    /**
+     * Follows the notifications whose reading waits to be sent. Once one is sent, the server has
+     * answered: the screen is no longer offline, and the list is read again as the server has it.
+     */
+    private fun followWaiting() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.mapNotNullTo(mutableSetOf()) { (it.change as? QueuedChange.NotificationRead)?.id } }
+                .distinctUntilChanged()
+                .collect { waiting ->
+                    val sent = _state.value.waiting.any { it !in waiting }
+                    _state.update { it.copy(waiting = waiting, offline = it.offline && !sent) }
+                    if (sent) read(showLoading = false)
+                }
+        }
     }
 
     fun load() = read(showLoading = true)
@@ -93,11 +122,17 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
-    /** Marks [notification] read and, once it is, takes the reader where it points ([go]). */
-    fun open(notification: AccountNotification, go: () -> Unit) = mark(notification.id, then = go) { notifications.read(notification.id) }
+    /** Marks [notification] read and, once it is or waits to be, takes the reader where it points ([go]). */
+    fun open(notification: AccountNotification, go: () -> Unit) = mark(notification.id, then = go) { read(notification.id) }
 
     /** Marks [notification] read without going anywhere. */
-    fun dismiss(notification: AccountNotification) = mark(notification.id) { notifications.read(notification.id) }
+    fun dismiss(notification: AccountNotification) = mark(notification.id) { read(notification.id) }
+
+    /** Marks [id] read, or keeps that to be sent in its turn: the screen is offline where there was no network. */
+    private suspend fun read(id: String) {
+        val submitted = notifications.read(id)
+        if (submitted is Submitted.Kept) _state.update { it.copy(offline = it.offline || submitted.offline) }
+    }
 
     fun readAll() = mark(ALL) { notifications.readAll() }
 

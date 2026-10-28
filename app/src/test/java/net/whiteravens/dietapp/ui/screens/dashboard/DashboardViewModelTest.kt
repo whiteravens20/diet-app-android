@@ -403,6 +403,19 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `the bell counts a notification read on the phone as read, while its reading waits and once it is sent`() {
+        coEvery { notifications.unread() } returns json.decodeFromString<List<NotificationDto>>(fixture("notifications-unread")).map { it.toDomain() }
+        val model = DashboardViewModel(users(), plans, weights, notifications, queue)
+        assertEquals(3, model.state.value.shownUnread)
+
+        runBlocking { queue.submit(QueuedChange.NotificationRead("read-on-the-phone"), offline) }
+        assertEquals(2, model.state.value.shownUnread)
+
+        runBlocking { queue.drain { } }
+        assertEquals(2, model.state.value.shownUnread)
+    }
+
+    @Test
     fun `the bell counts the notifications not read yet, read again on coming back, and keeps its count while they cannot be read`() {
         coEvery { notifications.unread() } returns json.decodeFromString<List<NotificationDto>>(fixture("notifications-unread")).map { it.toDomain() }
         val model = DashboardViewModel(users(), plans, weights, notifications, queue)
