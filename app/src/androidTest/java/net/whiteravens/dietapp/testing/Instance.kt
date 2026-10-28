@@ -332,6 +332,12 @@ object Instance {
         }
     }
 
+    /** The account's own recipes: each one's id and how many servings it makes. */
+    fun ownRecipes(account: Account): List<Pair<String, Int>> {
+        val items = call("GET", "recipes/mine", token = account.accessToken).getJSONArray("items")
+        return (0 until items.length()).map(items::getJSONObject).map { it.getString("id") to it.getInt("servings") }
+    }
+
     /** The ingredients of a recipe's lines, in the order the recipe lists them. */
     fun recipeIngredients(account: Account, recipeId: String): List<String> {
         val lines = call("GET", "recipes/$recipeId", token = account.accessToken).getJSONArray("ingredients")
