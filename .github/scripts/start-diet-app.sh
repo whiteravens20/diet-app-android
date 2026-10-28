@@ -6,8 +6,9 @@
 # emulator reaches as 10.0.2.2:4000. Then it loads the catalogue through the admin API, as an
 # administrator does after an installation, so that plans can be made.
 #
-# Before the worker starts it makes an account whose notifications the screens' tests read, and
-# names it to them in the instrumentation arguments `notifiedEmail` and `notifiedPassword`
+# Before the worker starts it makes two accounts whose notifications the screens' tests read, and
+# names them in the instrumentation arguments `notifiedEmail` and `notifiedPassword`, and
+# `phoneEmail` and `phonePassword`
 # (`$NOTIFIED_ACCOUNT` in the job's environment, or printed outside CI): two profiles, Ala and Ola,
 # each favouring an ingredient no catalogue has. The worker's first pass reminds both to log a
 # weight, and the catalogue update takes the ingredient away and asks both to review their
@@ -85,19 +86,29 @@ if ! curl -fsS "$api/health" > /dev/null; then
   exit 1
 fi
 
-# The account whose notifications the screens' tests read, its weights in kilograms.
-notified_email="notified-$(openssl rand -hex 4)@example.test"
-notified_password="Notified-$(openssl rand -hex 12)"
-notified_token=$(jq -n --arg email "$notified_email" --arg password "$notified_password" \
-    '{email: $email, password: $password, displayName: "Notified"}' |
-  curl -fsS -H 'Content-Type: application/json' --data @- "$api/auth/register" | jq -r .tokens.accessToken)
-as_notified() { curl -fsS -H "Authorization: Bearer $notified_token" -H 'Content-Type: application/json' "$@"; }
-as_notified -X PATCH --data '{"weightUnit":"kg"}' "$api/users/me" > /dev/null
-for profile in Ala:64 Ola:58; do
-  jq -n --arg name "${profile%%:*}" --argjson kg "${profile##*:}" --arg missing "$(cat /proc/sys/kernel/random/uuid)" \
-      '{name: $name, age: 30, sex: "female", heightCm: 168, weightKg: $kg, preferences: {favoriteIngredientIds: [$missing]}}' |
-    as_notified --data @- "$api/profiles" > /dev/null
-done
+# Two accounts with notifications, their weights in kilograms: the bell's journey reads the first
+# and marks its notifications read, and the phone's journey shows those of the second.
+# Prints the account's address, password and access token.
+notified_account() {
+  local email password token missing profile
+  email="notified-$(openssl rand -hex 4)@example.test"
+  password="Notified-$(openssl rand -hex 12)"
+  token=$(jq -n --arg email "$email" --arg password "$password" \
+      '{email: $email, password: $password, displayName: "Notified"}' |
+    curl -fsS -H 'Content-Type: application/json' --data @- "$api/auth/register" | jq -r .tokens.accessToken)
+  curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+    -X PATCH --data '{"weightUnit":"kg"}' "$api/users/me" > /dev/null
+  for profile in Ala:64 Ola:58; do
+    missing=$(cat /proc/sys/kernel/random/uuid)
+    jq -n --arg name "${profile%%:*}" --argjson kg "${profile##*:}" --arg missing "$missing" \
+        '{name: $name, age: 30, sex: "female", heightCm: 168, weightKg: $kg, preferences: {favoriteIngredientIds: [$missing]}}' |
+      curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data @- "$api/profiles" > /dev/null
+  done
+  echo "$email $password $token"
+}
+read -r notified_email notified_password notified_token <<< "$(notified_account)"
+read -r phone_email phone_password phone_token <<< "$(notified_account)"
+unread_of() { curl -fsS -H "Authorization: Bearer $1" "$api/notifications/unread" | jq length; }
 
 compose up -d worker
 
@@ -125,21 +136,25 @@ fi
 curl -fsS -c "$jar" -b "$jar" -H "$origin" -X DELETE "$api/admin/session" > /dev/null
 rm -f "$jar"
 
-# Two reminders from the worker's first pass and two reviews from the update.
+# Two reminders from the worker's first pass and two reviews from the update, for each account.
 unread=0
+phone_unread=0
 for _ in $(seq 1 60); do
-  unread=$(as_notified "$api/notifications/unread" | jq length)
-  [ "$unread" = 4 ] && break
+  unread=$(unread_of "$notified_token")
+  phone_unread=$(unread_of "$phone_token")
+  [ "$unread" = 4 ] && [ "$phone_unread" = 4 ] && break
   sleep 1
 done
-if [ "$unread" != 4 ]; then
+if [ "$unread" != 4 ] || [ "$phone_unread" != 4 ]; then
   compose logs --no-color --tail 40 worker
-  echo "::error::The account for the notifications has $unread unread, not the 4 the tests read."
+  echo "::error::The accounts for the notifications have $unread and $phone_unread unread, not the 4 the tests read."
   exit 1
 fi
 arguments="-Pandroid.testInstrumentationRunnerArguments.notifiedEmail=$notified_email -Pandroid.testInstrumentationRunnerArguments.notifiedPassword=$notified_password"
+arguments="$arguments -Pandroid.testInstrumentationRunnerArguments.phoneEmail=$phone_email -Pandroid.testInstrumentationRunnerArguments.phonePassword=$phone_password"
 if [ -n "${GITHUB_ENV:-}" ]; then
   echo "::add-mask::$notified_password"
+  echo "::add-mask::$phone_password"
   echo "NOTIFIED_ACCOUNT=$arguments" >> "$GITHUB_ENV"
 else
   echo "Gradle arguments for the notifications' journey: $arguments"

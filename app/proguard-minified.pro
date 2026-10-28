@@ -19,6 +19,8 @@
 -keep class net.whiteravens.dietapp.ui.screens.profiles.WeightUnit$Companion { *; }
 -keep class net.whiteravens.dietapp.domain.NotificationAbout { *; }
 -keep class net.whiteravens.dietapp.domain.NotificationAbout$* { *; }
+-keep class net.whiteravens.dietapp.notify.PhoneNotifier { *; }
+-keep class net.whiteravens.dietapp.notify.NotificationsWorker { *; }
 
 # The libraries the tests share with the app, whose copy in the app they use: AndroidX (Compose,
 # the test runner's own), Kotlin's, Guava's and the injection annotations Espresso builds on.
