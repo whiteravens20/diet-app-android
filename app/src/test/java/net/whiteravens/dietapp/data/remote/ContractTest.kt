@@ -26,6 +26,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -53,6 +54,7 @@ class ContractTest(private val call: Call) {
         val route: String,
         val name: String,
         val queries: List<String>,
+        val headers: List<String>,
         val body: Type?,
         val answer: Type?,
     ) {
@@ -89,6 +91,12 @@ class ContractTest(private val call: Call) {
         parameters.filter { it["required"] == JsonPrimitive(true) }.mapNotNull { it.string("name") }
             .filterNot { it in call.queries }
             .forEach { found += Problem("REFUSED", "query $it", "the API requires it, the client does not send it") }
+
+        // A header the route does not name is one the API does not act on: what the client sends it for would not happen.
+        val headers = operation["parameters"]?.jsonArray.orEmpty().map { it.jsonObject }
+            .filter { it.string("in") == "header" }.mapNotNull { it.string("name") }
+        call.headers.filterNot { sent -> headers.any { it.equals(sent, ignoreCase = true) } }
+            .forEach { found += Problem("IGNORED", "header $it", "the route names no such header") }
 
         val requestBody = operation["requestBody"]?.jsonObject
         val bodySchema = requestBody?.jsonSchemaOf()
@@ -223,7 +231,7 @@ class ContractTest(private val call: Call) {
     }
 
     private companion object {
-        val FAULTS = setOf("NO ROUTE", "REFUSED", "FAILS")
+        val FAULTS = setOf("NO ROUTE", "REFUSED", "FAILS", "IGNORED")
 
         /** Calls that do not fit the contract yet, each with why; the change that fixes one removes it here. */
         val KNOWN_DEFECTS: Map<String, String> = emptyMap()
@@ -258,11 +266,13 @@ class ContractTest(private val call: Call) {
                 val types = method.genericParameterTypes
                 var body: Type? = null
                 val queries = mutableListOf<String>()
+                val headers = mutableListOf<String>()
                 method.parameterAnnotations.forEachIndexed { index, annotations ->
                     annotations.forEach { annotation ->
                         when (annotation) {
                             is Body -> body = types[index]
                             is Query -> queries += annotation.value
+                            is Header -> headers += annotation.value
                         }
                     }
                 }
@@ -276,7 +286,7 @@ class ContractTest(private val call: Call) {
                     returned?.rawType == retrofit2.Call::class.java -> returned.actualTypeArguments.single()
                     else -> method.genericReturnType
                 }
-                Call(verb, route, method.name, queries, body, answer.takeUnless { it == Unit::class.java || it == Void.TYPE })
+                Call(verb, route, method.name, queries, headers, body, answer.takeUnless { it == Unit::class.java || it == Void.TYPE })
             }
             .sortedBy { "${it.route} ${it.method}" }
 
