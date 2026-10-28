@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -65,8 +66,8 @@ import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ConfirmEmailNotice
 import net.whiteravens.dietapp.ui.components.ConfirmEmailViewModel
-import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.LocalBrowserCode
+import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.screens.about.AboutScreen
@@ -170,7 +171,11 @@ class RootViewModel @Inject constructor(
  * land on the right flow without explicit navigation.
  */
 @Composable
-fun DietAppRoot(viewModel: RootViewModel = hiltViewModel()) {
+fun DietAppRoot(
+    openNotifications: Boolean = false,
+    onNotificationsOpened: () -> Unit = {},
+    viewModel: RootViewModel = hiltViewModel(),
+) {
     val signedIn by viewModel.isSignedIn.collectAsStateWithLifecycle()
     val serverVersion by viewModel.serverVersion.collectAsStateWithLifecycle()
     val localNetworkMissing by viewModel.localNetworkMissing.collectAsStateWithLifecycle()
@@ -184,7 +189,7 @@ fun DietAppRoot(viewModel: RootViewModel = hiltViewModel()) {
         when (signedIn) {
             null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
             false -> AuthScreen(serverVersion = serverVersion)
-            true -> MainScaffold(serverVersion)
+            true -> MainScaffold(serverVersion, openNotifications, onNotificationsOpened)
         }
     }
 }
@@ -206,8 +211,17 @@ private val topLevelDestinations = listOf(
     TopLevelDestination(MoreRoute, MoreRoute::class, Icons.Default.Menu, R.string.nav_more),
 )
 
+/**
+ * The tabs and what opens from them. With [openNotifications], a tap on a phone's notification
+ * asked for the list of notifications: it is opened, and [onNotificationsOpened] says so.
+ */
 @Composable
-private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmailViewModel = hiltViewModel()) {
+private fun MainScaffold(
+    serverVersion: ServerVersion,
+    openNotifications: Boolean,
+    onNotificationsOpened: () -> Unit,
+    confirmEmail: ConfirmEmailViewModel = hiltViewModel(),
+) {
     val confirmation by confirmEmail.state.collectAsStateWithLifecycle()
     // Read again whenever the app comes to the front: an address confirmed in the browser takes the notice away.
     LifecycleResumeEffect(confirmEmail) {
@@ -215,6 +229,12 @@ private fun MainScaffold(serverVersion: ServerVersion, confirmEmail: ConfirmEmai
         onPauseOrDispose {}
     }
     val navController = rememberNavController()
+    LaunchedEffect(openNotifications) {
+        if (openNotifications) {
+            navController.navigate(NotificationsRoute) { launchSingleTop = true }
+            onNotificationsOpened()
+        }
+    }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val onTopLevel = topLevelDestinations.any { dest ->

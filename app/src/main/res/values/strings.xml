@@ -1305,6 +1305,15 @@
     <string name="notifications_empty">Nothing new.</string>
     <string name="notifications_dismiss">Dismiss</string>
     <string name="notifications_read_all">Mark all read</string>
+    <string name="phone_notifications_title">Notifications on the phone</string>
+    <string name="phone_notifications_about">When they are on, the app asks the server for new ones about every 15 minutes; on a phone at rest Android may put that off for hours. A tap opens the list.</string>
+    <string name="phone_notifications_show">Show them on the phone</string>
+    <string name="phone_notifications_not_allowed">Android does not let the app show notifications. You can allow them in the system\'s settings.</string>
+    <string name="phone_notifications_open_settings">Open the settings</string>
+    <string name="phone_notifications_battery">To save battery, Android may ask for new notifications rarely. In the settings you can let the app run without that limit.</string>
+    <string name="phone_notifications_battery_samsung">On a Samsung phone, also check in the battery settings that the app is not put to sleep.</string>
+    <string name="phone_notifications_channel">Notifications from the server</string>
+    <string name="phone_notifications_channel_about">What the server has to tell the account, such as a weight to log.</string>
     <plurals name="notifications_weight_reminder">
         <item quantity="one">Time to log your weight — it’s been %d day.</item>
         <item quantity="other">Time to log your weight — it’s been %d days.</item>

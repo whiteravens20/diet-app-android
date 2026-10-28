@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.local.CacheDatabase
+import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.AuthTokens
@@ -136,13 +137,15 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `the end of a session clears the cached copies before the tokens`() {
+    fun `the end of a session takes the phone's notifications away and clears the cached copies, before the tokens`() {
         val cache = mockk<CacheDatabase>(relaxed = true)
         val tokens = mockk<TokenStore>(relaxed = true)
+        val phoneNotifications = mockk<PhoneNotificationsSwitch>(relaxed = true)
 
-        runBlocking { SessionEnd(tokens, cache).end() }
+        runBlocking { SessionEnd(tokens, cache, phoneNotifications).end() }
 
         coVerifyOrder {
+            phoneNotifications.forget()
             cache.clearAllTables()
             tokens.clear()
         }

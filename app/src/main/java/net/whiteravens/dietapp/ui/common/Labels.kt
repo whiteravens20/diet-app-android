@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.common
 
+import android.content.res.Resources
 import android.icu.text.DateFormat
 import android.icu.text.DateIntervalFormat
 import android.icu.text.ListFormatter
@@ -9,6 +10,7 @@ import android.icu.util.DateInterval
 import android.icu.util.TimeZone
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -397,10 +399,13 @@ fun fallbackText(reason: String): String? = when (reason) {
 
 /** What a notification says, in the words of the web application. */
 @Composable
-fun notificationText(about: NotificationAbout): String = when (about) {
+fun notificationText(about: NotificationAbout): String = notificationText(LocalResources.current, about)
+
+/** [notificationText] where there is no composition: the phone's notification of it says the same. */
+fun notificationText(resources: Resources, about: NotificationAbout): String = when (about) {
     is NotificationAbout.WeightReminder -> about.daysSinceLastEntry
-        ?.let { days -> pluralStringResource(R.plurals.notifications_weight_reminder, days, days) }
-        ?: stringResource(R.string.notifications_weight_first)
-    NotificationAbout.PreferencesReview -> stringResource(R.string.notifications_preferences_review)
-    is NotificationAbout.Other -> stringResource(R.string.notifications_unknown)
+        ?.let { days -> resources.getQuantityString(R.plurals.notifications_weight_reminder, days, days) }
+        ?: resources.getString(R.string.notifications_weight_first)
+    NotificationAbout.PreferencesReview -> resources.getString(R.string.notifications_preferences_review)
+    is NotificationAbout.Other -> resources.getString(R.string.notifications_unknown)
 }

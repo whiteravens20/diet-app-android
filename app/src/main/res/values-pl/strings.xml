@@ -1405,6 +1405,15 @@
     <string name="notifications_empty">Brak nowości.</string>
     <string name="notifications_dismiss">Ukryj</string>
     <string name="notifications_read_all">Oznacz wszystkie jako przeczytane</string>
+    <string name="phone_notifications_title">Powiadomienia w telefonie</string>
+    <string name="phone_notifications_about">Gdy są włączone, aplikacja pyta serwer o nowe mniej więcej co 15 minut, a gdy telefon leży nieużywany, Android może to odłożyć nawet o kilka godzin. Dotknięcie otwiera listę.</string>
+    <string name="phone_notifications_show">Pokazuj je w telefonie</string>
+    <string name="phone_notifications_not_allowed">Android nie pozwala aplikacji pokazywać powiadomień. Możesz na to zezwolić w ustawieniach systemu.</string>
+    <string name="phone_notifications_open_settings">Otwórz ustawienia</string>
+    <string name="phone_notifications_battery">Aby oszczędzać baterię, Android może rzadko pytać o nowe powiadomienia. W ustawieniach możesz zdjąć z aplikacji to ograniczenie.</string>
+    <string name="phone_notifications_battery_samsung">Na telefonie Samsung sprawdź też w ustawieniach baterii, czy aplikacja nie jest usypiana.</string>
+    <string name="phone_notifications_channel">Powiadomienia z serwera</string>
+    <string name="phone_notifications_channel_about">To, co serwer ma do przekazania kontu, na przykład przypomnienie o wadze.</string>
     <plurals name="notifications_weight_reminder">
         <item quantity="one">Czas się zważyć — od ostatniego wpisu minął %d dzień.</item>
         <item quantity="few">Czas się zważyć — od ostatniego wpisu minęły %d dni.</item>

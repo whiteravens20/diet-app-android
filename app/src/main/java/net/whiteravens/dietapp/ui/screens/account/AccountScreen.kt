@@ -65,6 +65,7 @@ fun AccountScreen(
     secondFactor: SecondFactorViewModel = hiltViewModel(),
     sessions: SessionsViewModel = hiltViewModel(),
     ai: AiViewModel = hiltViewModel(),
+    phoneNotifications: PhoneNotificationsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val twoStep by secondFactor.state.collectAsStateWithLifecycle()
@@ -208,6 +209,8 @@ fun AccountScreen(
                             Text(stringResource(R.string.web_open))
                         }
                     }
+
+                    PhoneNotificationsCard(phoneNotifications)
 
                     AiModeCard(aiState, operatorContact, onChoose = ai::chooseMode, onRetry = ai::load)
 
