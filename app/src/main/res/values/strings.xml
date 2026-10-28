@@ -709,11 +709,11 @@
     <string name="account_weight_unit_failed">Could not save the unit.</string>
     <string name="account_settings_hint">The password, the address, the name, the language of the mails, the account\'s data in a file and deleting the account are in the web application.</string>
     <string name="account_ai">AI assistant</string>
-    <string name="account_ai_body">Pick how AI features behave for you. Calorie and macro values are always recomputed by the deterministic engine — AI never invents nutrition.</string>
+    <string name="account_ai_body">Pick how AI features behave for you. Calorie and macro values are always recomputed by the app\'s built-in engine — AI never invents nutrition.</string>
     <string name="account_ai_status_failed">Could not read the account\'s AI settings.</string>
     <string name="account_ai_mode">Mode</string>
     <string name="account_ai_mode_none">Off</string>
-    <string name="account_ai_mode_none_hint">Every AI feature falls back to the deterministic engine. No request leaves the instance.</string>
+    <string name="account_ai_mode_none_hint">Every AI feature uses the built-in engine instead. No request leaves the instance.</string>
     <string name="account_ai_mode_admin">Use the instance default</string>
     <plurals name="account_ai_mode_admin_hint">
         <item quantity="one">Borrow the operator\'s provider, capped at %1$d request per month.</item>
@@ -744,14 +744,14 @@
     <string name="account_ai_allowance_unused">No requests used yet — the counter resets thirty days after your first call.</string>
     <string name="account_ai_providers">AI providers</string>
     <string name="account_ai_providers_body">Bring-your-own keys for OpenAI, Anthropic, OpenRouter or Ollama. Keys are encrypted at rest and never returned to the client.</string>
-    <string name="account_ai_providers_none">No providers configured. The deterministic engine handles every feature without one.</string>
+    <string name="account_ai_providers_none">No providers configured. The built-in engine handles every feature without one.</string>
     <string name="account_ai_providers_failed">Could not read the providers.</string>
     <string name="account_ai_key_set">Key set</string>
     <string name="account_ai_no_key">No key (Ollama)</string>
     <string name="account_ai_key_unreadable">Key can no longer be read — enter it again</string>
     <string name="account_ai_add">Add provider</string>
     <string name="account_ai_model_warning_title">You choose the model — and the quality.</string>
-    <string name="account_ai_model_warning">Weak or undersized models can hallucinate ingredients, invent quantities, or produce poor translations. Pick a model you trust; the deterministic engine still owns every nutrition number, but AI-touched text (recipe drafts, swap rewrites, translations) is only as good as the model you choose.</string>
+    <string name="account_ai_model_warning">Weak or undersized models can hallucinate ingredients, invent quantities, or produce poor translations. Pick a model you trust; the app\'s built-in engine still works out every nutrition number, but AI-touched text (recipe drafts, swap rewrites, translations) is only as good as the model you choose.</string>
     <string name="account_ai_provider">Provider</string>
     <string name="account_ai_replaces">You have %1$s set up already: saving replaces it.</string>
     <string name="account_ai_model">Model</string>
@@ -943,8 +943,8 @@
     <!-- Profiles: the list, the form, the first profile's steps, the preferences and the calculator, worded as the web application words them. -->
     <string name="profiles_title">Profiles</string>
     <plurals name="profiles_subhead">
-        <item quantity="one">A profile drives the deterministic calorie engine. An account on this instance can have one profile. Editing a profile recalculates its targets; deleting one also removes its meal plans and shopping lists.</item>
-        <item quantity="other">A profile drives the deterministic calorie engine. An account on this instance can have up to %1$d profiles: one for each member of a household, or to compare diet scenarios. Editing a profile recalculates its targets; deleting one also removes its meal plans and shopping lists.</item>
+        <item quantity="one">A profile holds the figures your calorie target is worked out from. An account on this instance can have one profile. Editing a profile recalculates its targets; deleting one also removes its meal plans and shopping lists.</item>
+        <item quantity="other">A profile holds the figures your calorie target is worked out from. An account on this instance can have up to %1$d profiles: one for each member of a household, or to compare diet scenarios. Editing a profile recalculates its targets; deleting one also removes its meal plans and shopping lists.</item>
     </plurals>
     <plurals name="profiles_at_limit">
         <item quantity="one">You have reached the limit of one profile that this instance allows an account. Edit one above, or delete a profile to create a new one.</item>
