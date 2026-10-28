@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         Returns.started()
+        lifecycleScope.launch { phoneNotifications.readNow() }
     }
 
     override fun onStop() {

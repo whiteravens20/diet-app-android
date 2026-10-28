@@ -18,8 +18,9 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 
 /**
  * Reads the account's unread notifications in the background, as often as Android lets periodic
- * work run, and shows on the phone those it has not shown yet. Nothing while the notifications are
- * off or nobody is signed in; a read that fails waits for the next run.
+ * work run and whenever the application comes to the front, and shows on the phone those it has not
+ * shown yet. Nothing while the notifications are off or nobody is signed in; a read that fails waits
+ * for the next run.
  */
 class NotificationsWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     /** What the work takes from the application's graph: WorkManager makes the worker itself. */
