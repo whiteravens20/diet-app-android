@@ -79,7 +79,7 @@ interface CacheDao {
 @Database(
     entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class],
     version = 2,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class CacheDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao

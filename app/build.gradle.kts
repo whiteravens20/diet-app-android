@@ -176,6 +176,20 @@ val writeErrorTexts = tasks.register<WriteErrorTexts>("writeErrorTexts") {
     codes.set(rootProject.layout.projectDirectory.file("contract/errors.json"))
 }
 
+/**
+ * Where Room writes the schema of each version of the cache's database, kept in the repository: a
+ * migration between two versions is generated, and checked, from their two schemas.
+ */
+class RoomSchemas(
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    val directory: File,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> = listOf("room.schemaLocation=${directory.path}")
+}
+
+ksp { arg(RoomSchemas(file("schemas"))) }
+
 androidComponents {
     onVariants { variant ->
         variant.sources.res?.addGeneratedSourceDirectory(writeErrorTexts, WriteErrorTexts::resources)
