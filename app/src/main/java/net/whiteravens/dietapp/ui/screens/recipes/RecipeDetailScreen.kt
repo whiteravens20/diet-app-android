@@ -71,6 +71,7 @@ import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
+import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.favorites.sentimentLabel
 import kotlin.math.roundToInt
 
@@ -134,7 +135,7 @@ fun RecipeDetailScreen(
                 val prefs = state.prefsProfile
                 RecipeBody(
                     recipe,
-                    marks = { Marks(state.marks, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark) },
+                    marks = { Marks(state.shownMarks, state.waitingProfiles, marking = state.marking, failed = state.markFailed, onToggle = viewModel::toggleMark) },
                     prefsFor = {
                         if (prefs != null) PrefsFor(state.profiles, prefs.id, state.savingPrefs, state.prefsFailed, onPick = viewModel::pickPrefsProfile)
                     },
@@ -205,12 +206,14 @@ private fun LineMarks(favourite: Boolean, avoided: Boolean, saving: Boolean, onT
 
 /**
  * Each profile of the account, as a chip that puts the recipe among its favourites or takes its mark
- * off, as the web's view has them; a mark other than a favourite is said by its name.
+ * off, as the web's view has them; a mark other than a favourite is said by its name, and one whose
+ * change is [waiting] to be sent says so.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Marks(
     marks: List<RecipeDetailViewModel.ProfileMark>,
+    waiting: Set<String>,
     marking: String?,
     failed: RecipeDetailViewModel.MarkFailed?,
     onToggle: (profileId: String) -> Unit,
@@ -239,6 +242,7 @@ private fun Marks(
                     null
                 },
             )
+            if (mark.profileId in waiting) WaitingMark()
         }
     }
     failed?.let {

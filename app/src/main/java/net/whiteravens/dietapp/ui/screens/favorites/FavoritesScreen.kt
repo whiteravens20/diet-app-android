@@ -66,6 +66,7 @@ import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 
 /**
@@ -174,7 +175,7 @@ fun FavoritesScreen(
                             }
                         }
 
-                        state.items.isEmpty() && state.filter.narrowed -> item {
+                        state.shownItems.isEmpty() && state.filter.narrowed -> item {
                             Text(
                                 stringResource(R.string.favorites_none_filtered),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -182,7 +183,7 @@ fun FavoritesScreen(
                             )
                         }
 
-                        state.items.isEmpty() -> item {
+                        state.shownItems.isEmpty() -> item {
                             EmptyState(
                                 icon = Icons.Default.Star,
                                 title = stringResource(R.string.favorites_empty_title),
@@ -194,14 +195,15 @@ fun FavoritesScreen(
                         else -> {
                             item {
                                 Text(
-                                    pluralStringResource(R.plurals.favorites_count, state.items.size, state.items.size),
+                                    pluralStringResource(R.plurals.favorites_count, state.shownItems.size, state.shownItems.size),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            items(state.items, key = { it.recipeId }) { kept ->
+                            items(state.shownItems, key = { it.recipeId }) { kept ->
                                 MarkCard(
                                     item = state.shown(kept),
+                                    waiting = kept.recipeId in state.waitingRecipes,
                                     busy = state.busy,
                                     onOpen = { onOpenRecipe(kept.recipeId) },
                                     onSentiment = { viewModel.setSentiment(kept, it) },
@@ -264,11 +266,15 @@ private fun Filters(query: String, onQuery: (String) -> Unit, filter: FavoriteFi
     }
 }
 
-/** A marked recipe: what it is, how it is marked and under which tags, each to change, and its mark to take off. */
+/**
+ * A marked recipe: what it is, how it is marked and under which tags, each to change, and its mark
+ * to take off; a change of it [waiting] to be sent says so.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MarkCard(
     item: MarkedRecipe,
+    waiting: Boolean,
     busy: Boolean,
     onOpen: () -> Unit,
     onSentiment: (String) -> Unit,
@@ -289,6 +295,7 @@ private fun MarkCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 2.dp),
         )
+        if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
         val removeLabel = stringResource(R.string.favorites_remove_of, item.title)
         Row(
             verticalAlignment = Alignment.CenterVertically,

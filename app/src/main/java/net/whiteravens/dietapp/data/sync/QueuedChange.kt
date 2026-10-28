@@ -106,4 +106,14 @@ sealed interface QueuedChange {
     @Serializable
     @SerialName("meal-removed")
     data class MealRemoved(val planId: String, val mealId: String) : DoneWhenGone
+
+    /** A recipe marked for a profile (`favorite`, `often`, `avoid`), with its tags: what was said of it before is replaced. */
+    @Serializable
+    @SerialName("marked")
+    data class Marked(val profileId: String, val recipeId: String, val sentiment: String, val tags: List<String>) : QueuedChange
+
+    /** A profile's mark taken off a recipe. */
+    @Serializable
+    @SerialName("unmarked")
+    data class Unmarked(val profileId: String, val recipeId: String) : DoneWhenGone
 }

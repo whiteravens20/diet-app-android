@@ -163,6 +163,8 @@
     <string name="change_kind_pantry_removed">usunięcie pozycji spiżarni</string>
     <string name="change_kind_own_meal_added">własny posiłek dodany do dnia</string>
     <string name="change_kind_meal_removed">usunięcie posiłku z dnia</string>
+    <string name="change_kind_marked">oznaczenie przepisu</string>
+    <string name="change_kind_unmarked">usunięcie oznaczenia przepisu</string>
     <string name="change_kind_unreadable">zmiana, której ta wersja aplikacji nie umie odczytać</string>
     <string name="change_unreadable">Wprowadź ją jeszcze raz.</string>
     <string name="change_unsendable">Nie udało się odczytać odpowiedzi serwera: sprawdź, czy zmiana została zapisana.</string>

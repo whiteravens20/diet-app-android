@@ -12,12 +12,18 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
+import net.whiteravens.dietapp.ui.screens.favorites.markOf
 import net.whiteravens.dietapp.domain.PreferencesChange
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Recipe
@@ -30,7 +36,8 @@ import javax.inject.Inject
 /**
  * One recipe, fetched by id (network-only, like the catalogue), and what the account's profiles say
  * of it, as the web's view has it: each profile puts it among its favourites or takes its mark off,
- * and the ingredients of its lines are marked as a profile's favourites or as ones it avoids.
+ * without a network as well, where the change waits to be sent; and the ingredients of its lines are
+ * marked as a profile's favourites or as ones it avoids.
  */
 @HiltViewModel
 class RecipeDetailViewModel @Inject constructor(
@@ -38,6 +45,7 @@ class RecipeDetailViewModel @Inject constructor(
     private val recipes: RecipeRepository,
     private val profiles: ProfileRepository,
     private val favorites: FavoriteRepository,
+    private val queue: ChangeQueue,
 ) : ViewModel() {
 
     // Read by its name: `toRoute` needs Android's own classes, which the tests on the JVM do not have.
@@ -71,9 +79,25 @@ class RecipeDetailViewModel @Inject constructor(
         val readAt: Long? = null,
         /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
         val offline: Boolean = false,
+        /** The changes of the recipe's marks that wait to be sent, in the order they were made. */
+        val waiting: List<QueuedChange> = emptyList(),
     ) {
         /** The profile the lines' ingredients are marked for. */
         val prefsProfile: ProfileDetails? get() = profiles.firstOrNull { it.id == prefsProfileId } ?: profiles.firstOrNull()
+
+        /** How each profile has marked the recipe, as shown: as read, with the changes that wait to be sent over it. */
+        val shownMarks: List<ProfileMark> get() = marks.map { mark ->
+            waiting.fold(mark) { shown, change ->
+                when {
+                    markOf(change)?.first != mark.profileId -> shown
+                    change is QueuedChange.Marked -> shown.copy(sentiment = change.sentiment)
+                    else -> shown.copy(sentiment = null)
+                }
+            }
+        }
+
+        /** The profiles whose mark of the recipe has a change that waits to be sent. */
+        val waitingProfiles: Set<String> get() = waiting.mapNotNullTo(mutableSetOf()) { markOf(it)?.first }
     }
 
     private val _state = MutableStateFlow(UiState())
@@ -84,6 +108,23 @@ class RecipeDetailViewModel @Inject constructor(
     init {
         load()
         readProfiles()
+        followWaiting()
+    }
+
+    /**
+     * Follows the changes of the recipe's marks that wait to be sent. Once one is sent, the server has
+     * answered: the screen is no longer offline, and the marks are read again as the server has them.
+     */
+    private fun followWaiting() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.map { it.change }.filter { markOf(it)?.second == recipeId } }
+                .distinctUntilChanged()
+                .collect { waiting ->
+                    val sent = _state.value.waiting.size > waiting.size
+                    _state.update { it.copy(waiting = waiting, offline = it.offline && !sent) }
+                    if (sent) readProfiles()
+                }
+        }
     }
 
     fun load() {
@@ -133,13 +174,19 @@ class RecipeDetailViewModel @Inject constructor(
      * was marked. A mark that was gone already is off, which is what was asked.
      */
     fun toggleMark(profileId: String) {
-        val mark = _state.value.marks.firstOrNull { it.profileId == profileId } ?: return
+        val mark = _state.value.shownMarks.firstOrNull { it.profileId == profileId } ?: return
         if (_state.value.marking != null) return
         val removing = mark.sentiment != null
         _state.update { it.copy(marking = profileId, markFailed = null) }
         viewModelScope.launch {
             attempt { if (removing) favorites.unmark(profileId, recipeId) else favorites.mark(profileId, recipeId, FAVORITE, emptyList()) }
-                .onSuccess { marked(profileId, if (removing) null else FAVORITE) }
+                .onSuccess { submitted ->
+                    when (submitted) {
+                        is Submitted.Sent -> marked(profileId, if (removing) null else FAVORITE)
+                        // Kept to be sent: shown over the profile's mark as one of the changes waiting.
+                        is Submitted.Kept -> _state.update { it.copy(marking = null, offline = it.offline || submitted.offline) }
+                    }
+                }
                 .onFailure { e ->
                     if (removing && e is ApiException && e.code == "FAVORITE_NOT_FOUND") {
                         marked(profileId, null)
