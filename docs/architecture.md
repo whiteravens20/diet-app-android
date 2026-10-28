@@ -95,7 +95,7 @@ emulators. What the app
 leaves to the web application (the calculator, a plan or a list as a table or printed,
 favourite sets made and changed, and the account's password, address, name, language of
 its mails, data in a file and deletion) it opens there, in the browser, signed in with a
-one-time code that the page uses once its reader says the account is theirs. The queue of
-changes made without a network, described in [sync-strategy.md](sync-strategy.md), takes a
-shopping list's rows; next are the meals eaten, weights, the pantry, a day's own meals,
-recipes' marks and notifications read.
+one-time code that the page uses once its reader says the account is theirs. The changes
+that make sense without a network (a shopping list's rows, meals eaten, a day's own meals
+and meals taken off it, weights, the pantry, recipes' marks and notifications read) wait for
+one in a queue, described in [sync-strategy.md](sync-strategy.md).

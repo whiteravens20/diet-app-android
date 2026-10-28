@@ -41,13 +41,15 @@ when one returns.
   the notifications for the app to read. Signing out turns them off and forgets what was
   shown.
 
-## Changes made without a network (being built)
+## Changes made without a network
 
 Some changes are made without a network as well, as they are in a shop or a kitchen without
-a signal: so far a shopping list's row, its tick and its amounts, a meal of a plan marked
-eaten or not, a meal of one's own added to a day and a meal taken off its day, a weight
-logged or removed, and a pantry's row put in, changed or taken out. Everything else that
-changes something asks the server first, and is off while there is no network.
+a signal: a shopping list's row, its tick and its amounts, a meal of a plan marked eaten or
+not, a meal of one's own added to a day and a meal taken off its day, a weight logged or
+removed, a pantry's row put in, changed or taken out, a recipe's mark put on or taken off,
+and a notification read. Everything else that changes something asks the server first, and
+is off while there is no network: reading every notification at once among it, as the
+server would read those that came after them too.
 
 1. A change goes to the server at once when nothing waits before it. When the server cannot
    be reached, or another change waits, it is kept in the cache's database

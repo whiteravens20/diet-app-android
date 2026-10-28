@@ -104,11 +104,11 @@ account once you say on the page that the account it names is yours.
   server keeps what it read last and says what time that was. Meal plans and shopping lists
   you have opened stay readable without a connection. A meal is marked eaten, a meal of
   your own added to a day or a meal taken off it, a weight logged or the last one removed, a
-  pantry's rows put in, changed or taken out, and a shopping list's rows are ticked and their
-  amounts told, without one as well: each change is marked as waiting, the screen says how
-  many wait, and each goes by itself once there is a network; one the server refuses is
-  said, with why. Signing out while changes wait asks first whether to send them or drop
-  them.
+  pantry's rows put in, changed or taken out, a recipe's mark set or taken off, a
+  notification read, and a shopping list's rows are ticked and their amounts told, without
+  one as well: each change is marked as waiting, the screen says how many wait, and each
+  goes by itself once there is a network; one the server refuses is said, with why. Signing
+  out while changes wait asks first whether to send them or drop them.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 
