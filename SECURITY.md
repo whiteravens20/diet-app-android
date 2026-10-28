@@ -22,6 +22,11 @@ The companion app holds an authenticated session and cached personal data.
   network, which the system otherwise does not let it reach.
 - **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
   It is cleared on sign-out.
+- **Notifications on the phone** — off until the user turns them on, when Android 13 and
+  later ask for the permission to show them. The background work reads the account's
+  unread notifications over the same session as the screens, and the app keeps whether they
+  are on and which it has shown, by their ids alone. Signing out turns them off, takes the
+  account's notifications off the phone and forgets what was shown.
 - **AI provider keys** — a key typed for one of the account's own AI providers is shown
   as dots, held in memory while its form is open and kept out of the screen's saved
   state, which the system may write to disk. It goes to the server alone, which tries it

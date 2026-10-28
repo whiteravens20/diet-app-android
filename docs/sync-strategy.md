@@ -25,6 +25,19 @@ when one returns.
 - An answer read from before a change made on the same screen is left aside, so that a
   row ticked or a mark set while the screen was being read stays as it is.
 
+## Notifications on the phone (implemented)
+
+- Off until the user turns them on in the account's settings. Turned on, a periodic job of
+  WorkManager reads `GET /notifications/unread` every fifteen minutes, the shortest period
+  Android runs, when there is a network; on a phone at rest Android may put it off for hours.
+  The app reads the same route whenever the dashboard is shown again, for its bell.
+- Each notification is shown on the phone once, known by its id and the time it was made;
+  the phone keeps the keys of the unread ones alone. Nothing is marked read from the
+  phone's notification: a tap opens the application's list.
+- No device registers anywhere and no service of a third party takes part: the server keeps
+  the notifications for the app to read. Signing out turns them off and forgets what was
+  shown.
+
 ## Write sync (next)
 
 Most actions (generate a plan, swap a meal, edit a shopping item) are backend operations.

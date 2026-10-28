@@ -35,7 +35,8 @@ di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
 3. On network failure what the screen read last stands, and the UI says it is offline and
    since what time; a "not found" answer drops the copy of what was deleted elsewhere.
 
-See [sync-strategy.md](sync-strategy.md) for the whole of reading, and for write-sync (next).
+See [sync-strategy.md](sync-strategy.md) for the whole of reading, the phone's notifications,
+and write-sync (next).
 
 ## Tech choices
 
@@ -59,6 +60,7 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 | New screen | `ui/screens/`, with a Hilt ViewModel and a repository behind it |
 | New API call | `data/remote/DietApiService.kt`, or `ModelApiService.kt` where the server waits for an AI provider, and `Dtos.kt` |
 | Caching or offline behaviour | `data/local/` and `data/repository/` |
+| The phone's notifications | `data/notify/` (on or off, what was shown, the schedule) and `notify/` (the background work, what the phone shows) |
 | Dependency wiring | `di/AppModule.kt` |
 | A library or plugin, or its version | `gradle/libs.versions.toml`, then the verification metadata and the lockfiles ([CONTRIBUTING.md](../CONTRIBUTING.md#dependencies)) |
 | Contract change | `contract/`, then `Dtos.kt` until `ContractTest` passes ([contracts/api-contract.md](contracts/api-contract.md)) |
