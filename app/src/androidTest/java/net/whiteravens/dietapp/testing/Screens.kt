@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Parcel
 import android.view.Choreographer
+import android.view.View
+import android.view.inspector.WindowInspector
 import androidx.activity.ComponentActivity
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
@@ -109,6 +111,7 @@ fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, time
  */
 fun ComposeTestRule.keepScreenshot(name: String) {
     waitForIdle()
+    awaitCommittedFrames()
     awaitDrawnFrames()
     val picture = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
     if (picture == null) {
@@ -123,9 +126,28 @@ fun ComposeTestRule.keepScreenshot(name: String) {
 }
 
 /**
+ * Waits until every window of the app on the screen has drawn what it holds now and handed the frame
+ * to the display. An emulator that draws without a graphics card can take most of a second over a
+ * frame, the more so while the system is busy, as it is when airplane mode goes on or off: frames
+ * counted on the main thread pass long before the one with what the screen holds now is drawn.
+ */
+private fun awaitCommittedFrames() {
+    var committed = CountDownLatch(0)
+    InstrumentationRegistry.getInstrumentation().runOnMainSync {
+        val shown = WindowInspector.getGlobalWindowViews().filter { it.isAttachedToWindow && it.windowVisibility == View.VISIBLE }
+        committed = CountDownLatch(shown.size)
+        shown.forEach { window ->
+            window.viewTreeObserver.registerFrameCommitCallback { committed.countDown() }
+            window.invalidate()
+        }
+    }
+    committed.await(5, TimeUnit.SECONDS)
+}
+
+/**
  * Waits for the window to draw three frames. What Compose has laid out is on the screen only once a
  * frame has drawn it, and a picture taken at once after a scroll the test's clock ran through can
- * show the frame before it.
+ * show the frame before it; a frame handed to the display is on it from the display's next frame.
  */
 private fun awaitDrawnFrames() {
     val drawn = CountDownLatch(3)
