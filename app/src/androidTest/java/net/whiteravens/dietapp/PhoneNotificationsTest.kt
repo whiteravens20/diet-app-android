@@ -8,6 +8,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -28,7 +29,6 @@ import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
-import net.whiteravens.dietapp.testing.waitForText
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -106,9 +106,13 @@ class PhoneNotificationsTest {
         screen.waitUntil(15_000) { readAtTheFront() }
         assertEquals(emptyList<Pair<String, String>>(), shown())
 
-        // A tap opens the application's list of them.
+        // A tap opens the application's list of them. The activity takes the tap as a new intent, paused
+        // for it and resumed, and for that moment there is no screen to read.
         context.startActivity(PhoneNotifier.opening(context))
-        screen.waitForText(text(R.string.notifications_title))
+        screen.waitUntil(20_000) {
+            runCatching { screen.onAllNodesWithText(text(R.string.notifications_title)).fetchSemanticsNodes().isNotEmpty() }
+                .getOrDefault(false)
+        }
 
         // Turned off, the work stops.
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
