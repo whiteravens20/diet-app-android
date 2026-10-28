@@ -102,7 +102,6 @@ import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSigned
-import net.whiteravens.dietapp.ui.common.formatSyncedAt
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AccentChip
@@ -112,9 +111,10 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
-import net.whiteravens.dietapp.ui.components.OfflineBanner
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenDialog
+import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.aiOffText
 import net.whiteravens.dietapp.ui.components.modelPartText
@@ -139,7 +139,7 @@ fun PlanDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Read again on being shown again: the plan may have been changed elsewhere in the meantime.
     WhenShownAgain(viewModel::shownAgain)
-    val plan = state.plan
+    val plan = state.shown
     var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
     // The day a meal of one's own is being added to, while its form is open.
     var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
@@ -347,7 +347,7 @@ fun PlanDetailScreen(
                         }
                     }
                 }
-                if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly, state.readAt?.let { formatSyncedAt(it) } ?: "—")) }
+                if (state.offline) item { OfflineAsOf(state.readAt, says = R.string.offline_readonly) }
                 // A re-roll refused for something the user can allow: asked again with it allowed.
                 state.refused?.let { refused ->
                     item {
@@ -449,6 +449,7 @@ fun PlanDetailScreen(
                     MealCard(
                         meal = meal,
                         swapping = meal.id == state.offering,
+                        waiting = meal.id in state.waitingMeals,
                         readOnly = readOnly,
                         busy = busy,
                         aiOn = state.aiOn == true,
@@ -830,13 +831,15 @@ private fun mealName(meal: Meal): String = meal.name.ifEmpty { stringResource(R.
 
 /**
  * A meal of the day: its time of day and the chips that say at a glance what there is to say of it,
- * its name and macros; one that is neither eaten nor the user's own can be swapped.
+ * its name and macros; one that is neither eaten nor the user's own can be swapped. It is marked
+ * eaten or not without a network as well, where the mark [waiting] to be sent says so.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MealCard(
     meal: Meal,
     swapping: Boolean,
+    waiting: Boolean,
     readOnly: Boolean,
     busy: Boolean,
     aiOn: Boolean,
@@ -853,7 +856,7 @@ private fun MealCard(
             Checkbox(
                 checked = meal.eaten,
                 onCheckedChange = onEaten,
-                enabled = !readOnly && !busy,
+                enabled = !busy,
                 modifier = Modifier.semantics { contentDescription = markEaten },
             )
             Column(Modifier.weight(1f)) {
@@ -871,6 +874,7 @@ private fun MealCard(
                     }
                     meal.cookAhead?.let { PlainChip(stringResource(if (it == "cook") R.string.plans_cook_once_chip else R.string.plans_cooked_chip)) }
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
+                    if (waiting) WaitingMark()
                 }
                 Text(
                     mealName(meal),

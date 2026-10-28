@@ -18,6 +18,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -57,6 +58,8 @@ import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.toDomain
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -64,6 +67,7 @@ import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.SwapAsk
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -131,8 +135,13 @@ class PlanDetailViewModelTest {
         every { it.rules } returns MutableStateFlow(InstanceRules(maxProfiles = 2, catalogueSupply = emptyMap(), relaxations = relaxations))
     }
 
-    private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id), asking: ModelApiService = mockk()) =
-        PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, NoCache, json), favorites, users, server)
+    private fun model(
+        api: DietApiService,
+        at: Map<String, String> = mapOf("planId" to plan.id),
+        asking: ModelApiService = mockk(),
+        cache: CacheDao = NoCache,
+        queue: ChangeQueue = changeQueue(),
+    ) = PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, cache, json, queue), favorites, users, server, queue)
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
@@ -195,7 +204,7 @@ class PlanDetailViewModelTest {
             }
         }
 
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users, server)
+        val model = model(api, cache = kept)
 
         assertNull(model.state.value.plan)
         assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
@@ -211,7 +220,7 @@ class PlanDetailViewModelTest {
             override suspend fun mealPlan(id: String) = CachedMealPlan(plan.id, plan.profileId, json.encodeToString(plan), 1L).takeIf { id == plan.id }
         }
 
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users, server)
+        val model = model(api, cache = kept)
 
         assertEquals(plan.id, model.state.value.plan?.id)
         assertTrue(model.state.value.offline)
@@ -294,6 +303,39 @@ class PlanDetailViewModelTest {
         assertEquals(listOf(ScaleChange(meal.id, 1.0, 0.8)), said.changes)
         assertTrue(said.bestEffort)
         assertFalse(model.state.value.changing)
+    }
+
+    @Test
+    fun `a meal marked eaten without a network is shown eaten and waiting, the screen offline, and the plan read again from its copy once the mark is sent`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setMealEaten(plan.id, meal.id, SetMealEatenRequest(true)) } throws IOException("no network")
+        var copy: CachedMealPlan? = null
+        val kept = object : CacheDao by NoCache {
+            override suspend fun upsertMealPlan(plan: CachedMealPlan) {
+                copy = plan
+            }
+            override suspend fun mealPlan(id: String) = copy?.takeIf { it.id == id }
+        }
+        val queue = changeQueue()
+        val plans = MealPlanRepository(api, mockk(), kept, json, queue)
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue)
+
+        model.setEaten(meal.id, true)
+
+        assertTrue(model.state.value.shown!!.days.first().meals.single { it.id == meal.id }.eaten)
+        assertEquals(setOf(meal.id), model.state.value.waitingMeals)
+        assertTrue(model.state.value.offline)
+        assertFalse(model.state.value.changing)
+        // What was read stays as read.
+        assertFalse(model.state.value.plan!!.days.first().meals.single { it.id == meal.id }.eaten)
+
+        coEvery { api.setMealEaten(plan.id, meal.id, SetMealEatenRequest(true)) } returns swapped
+        runBlocking { queue.drain { plans.send(it as QueuedChange.Eaten) } }
+
+        assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
+        assertEquals(emptySet<String>(), model.state.value.waitingMeals)
+        assertFalse(model.state.value.offline)
     }
 
     @Test

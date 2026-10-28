@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -90,7 +91,7 @@ class MealPlansViewModelTest {
         val before = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { _, e -> escaped = e }
         val model = try {
-            MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, mockk(), cache, json))
+            MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, mockk(), cache, json, changeQueue()))
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(before)
         }
@@ -113,7 +114,7 @@ class MealPlansViewModelTest {
         val kept = json.encodeToString(json.decodeFromString<MealPlanPageDto>(fixture("meal-plans")))
         val cache = Cache(CachedPlanList(profile.id, kept, 1L))
 
-        val model = MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, mockk(), cache, json))
+        val model = MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, mockk(), cache, json, changeQueue()))
 
         assertEquals(emptyList<MealPlanSummary>(), model.state.value.plans)
         assertEquals("PROFILE_NOT_FOUND", (model.state.value.error as ApiException).code)

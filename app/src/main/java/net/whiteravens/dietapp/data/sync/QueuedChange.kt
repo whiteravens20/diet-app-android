@@ -22,4 +22,9 @@ sealed interface QueuedChange {
         val atHome: Double? = null,
         val have: Double? = null,
     ) : QueuedChange
+
+    /** A meal of a plan marked eaten or not. */
+    @Serializable
+    @SerialName("eaten")
+    data class Eaten(val planId: String, val mealId: String, val eaten: Boolean) : QueuedChange
 }

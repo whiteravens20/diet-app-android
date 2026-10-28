@@ -9,6 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
@@ -16,6 +18,9 @@ import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.FavoriteSet
@@ -41,9 +46,9 @@ import javax.inject.Inject
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
  * swaps one: a recipe is offered (any of the plan's diet, a favourite picked by hand, one with the
  * profile's favourite ingredients, or a model's pick), another can be asked for, and nothing is
- * written until the offer is taken. A meal is marked eaten or not, a meal of one's own is added to
- * a day, and a change that balanced the day again says how, with the way back and the rest of the
- * week to balance as well. The plan, a part of it or a day is made again; a refusal for something
+ * written until the offer is taken. A meal is marked eaten or not, without a network as well, where
+ * the mark waits to be sent; a meal of one's own is added to a day, and a change that balanced the
+ * day again says how, with the way back and the rest of the week to balance as well. The plan, a part of it or a day is made again; a refusal for something
  * the user can allow offers to allow it. Swaps that would use up the packs the plan opens are looked
  * for, and one is taken as any swap is. A favourite set of the profile is put on days of the plan.
  * The plan can be deleted.
@@ -55,6 +60,7 @@ class PlanDetailViewModel @Inject constructor(
     private val favorites: FavoriteRepository,
     private val users: UserRepository,
     private val server: ServerRepository,
+    private val queue: ChangeQueue,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -119,10 +125,18 @@ class PlanDetailViewModel @Inject constructor(
         val setWindow: SetWindow? = null,
         /** What came of a meal of one's own sent from its window, until the window is put away. */
         val customMeal: CustomMealSent? = null,
+        /** The eaten marks of the plan's meals that wait to be sent, in the order they were made. */
+        val waitingEaten: List<QueuedChange.Eaten> = emptyList(),
         val error: Throwable? = null,
     ) {
         /** The swaps found that would use up what the plan opens, while the plan is the one they were found for. */
         val useUp: UseUpFound? get() = useUpFound?.takeIf { it.revision == plan?.revision }
+
+        /** The plan shown: as read, with the eaten marks that wait to be sent over it. */
+        val shown: MealPlan? get() = plan?.withWaiting(waitingEaten)
+
+        /** The meals with an eaten mark that waits to be sent. */
+        val waitingMeals: Set<String> get() = waitingEaten.mapTo(mutableSetOf()) { it.mealId }
     }
 
     private val _state = MutableStateFlow(UiState())
@@ -133,6 +147,7 @@ class PlanDetailViewModel @Inject constructor(
     init {
         load()
         followAiMode()
+        followWaiting()
     }
 
     /**
@@ -171,6 +186,30 @@ class PlanDetailViewModel @Inject constructor(
                         else it.copy(offline = it.offline || (e is IOException && it.plan != null), pulled = false)
                     }
                 }
+        }
+    }
+
+    /**
+     * Follows the plan's eaten marks that wait to be sent. Once one is sent, the server has answered:
+     * the screen is no longer offline, and the plan is read again as the server answered it.
+     */
+    private fun followWaiting() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.mapNotNull { (it.change as? QueuedChange.Eaten)?.takeIf { eaten -> eaten.planId == planId } } }
+                .distinctUntilChanged()
+                .collect { eaten ->
+                    val sent = _state.value.waitingEaten.size > eaten.size
+                    _state.update { it.copy(waitingEaten = eaten, offline = it.offline && !sent) }
+                    if (sent) readSent()
+                }
+        }
+    }
+
+    /** The plan as the copy kept of it now holds it: as the server answered the changes sent. */
+    private fun readSent() {
+        viewModelScope.launch {
+            val kept = attempt { plans.cachedPlan(planId) }.getOrNull() ?: return@launch
+            _state.update { it.copy(plan = kept) }
         }
     }
 
@@ -257,7 +296,29 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    fun setEaten(mealId: String, eaten: Boolean) = change { plans.setEaten(planId, mealId, eaten) }
+    /**
+     * Marks a meal eaten or not: the plan the server leaves is shown with how its day was balanced,
+     * or, without a network, the mark is shown over the plan as one of the changes waiting.
+     */
+    fun setEaten(mealId: String, eaten: Boolean) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.setEaten(planId, mealId, eaten) }
+                .onSuccess { submitted ->
+                    _state.update {
+                        when (submitted) {
+                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown())
+                            is Submitted.Kept -> it.copy(changing = false, offline = it.offline || submitted.offline)
+                        }
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
 
     /**
      * Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd), beside its meals or in the
@@ -473,4 +534,11 @@ class PlanDetailViewModel @Inject constructor(
         /** What a re-roll refused because every day asked for has passed is asked again with. */
         const val INCLUDE_PAST = "includePast"
     }
+}
+
+/** The plan with the eaten marks that wait to be sent, each over what was read, the last made of a meal counting. */
+internal fun MealPlan.withWaiting(eaten: List<QueuedChange.Eaten>): MealPlan {
+    val marks = eaten.filter { it.planId == id }.associate { it.mealId to it.eaten }
+    if (marks.isEmpty()) return this
+    return copy(days = days.map { day -> day.copy(meals = day.meals.map { meal -> marks[meal.id]?.let { meal.copy(eaten = it) } ?: meal }) })
 }

@@ -155,6 +155,7 @@
     <string name="change_refused">Nie zapisano: %1$s. %2$s</string>
     <string name="change_refused_seen">OK</string>
     <string name="change_kind_shopping_row">zmiana wiersza listy zakupów</string>
+    <string name="change_kind_eaten">oznaczenie posiłku jako zjedzonego</string>
     <string name="change_kind_unreadable">zmiana, której ta wersja aplikacji nie umie odczytać</string>
     <string name="change_unreadable">Wprowadź ją jeszcze raz.</string>
     <string name="change_unsendable">Nie udało się odczytać odpowiedzi serwera: sprawdź, czy zmiana została zapisana.</string>
@@ -174,7 +175,7 @@
         <item quantity="many">%1$d zmian zrobionych na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
         <item quantity="other">%1$d zmiany zrobionej na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
     </plurals>
-    <string name="offline_readonly">Offline — stan z %1$s; zmiany są wyłączone.</string>
+    <string name="offline_readonly">Offline — stan z %1$s; posiłki można oznaczać jako zjedzone, inne zmiany wymagają połączenia</string>
 
     <!-- Meal plans -->
     <string name="plans_subtitle">Plany dopasowane do celu kalorycznego każdego profilu.</string>

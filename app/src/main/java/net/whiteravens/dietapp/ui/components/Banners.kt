@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -168,11 +169,12 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
 
 /**
  * The screen shows what it read at [readAt] (not said where it is not known), as the server cannot
- * be reached now; and how many changes made on the phone wait to be sent, where any does.
+ * be reached now, in the words of [says], which take the time; and how many changes made on the
+ * phone wait to be sent, where any does.
  */
 @Composable
-fun OfflineAsOf(readAt: Long?, modifier: Modifier = Modifier) {
-    val asOf = stringResource(R.string.offline_cached, readAt?.let(::formatSyncedAt) ?: "—")
+fun OfflineAsOf(readAt: Long?, modifier: Modifier = Modifier, @StringRes says: Int = R.string.offline_cached) {
+    val asOf = stringResource(says, readAt?.let(::formatSyncedAt) ?: "—")
     val waiting = LocalWaitingChanges.current
     OfflineBanner(if (waiting > 0) "$asOf · ${pluralStringResource(R.plurals.changes_waiting, waiting, waiting)}" else asOf, modifier)
 }

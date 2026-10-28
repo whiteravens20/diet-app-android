@@ -107,6 +107,7 @@ fun RefusedChangesNotice(refused: List<Refused>, onSeen: (Long) -> Unit, modifie
 @Composable
 private fun changeKind(change: QueuedChange?): String = when (change) {
     is QueuedChange.ShoppingRow -> stringResource(R.string.change_kind_shopping_row)
+    is QueuedChange.Eaten -> stringResource(R.string.change_kind_eaten)
     null -> stringResource(R.string.change_kind_unreadable)
 }
 

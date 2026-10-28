@@ -64,7 +64,7 @@ class CachedRowsTest {
                 CachedPlanList("unreadable", unreadable, 1L),
             ),
         )
-        val plans = MealPlanRepository(api, asking, cache, json)
+        val plans = MealPlanRepository(api, asking, cache, json, changeQueue())
 
         assertNull(runBlocking { plans.cachedPlans("unreadable") })
         val readable = runBlocking { plans.cachedPlans("readable") }
@@ -82,7 +82,7 @@ class CachedRowsTest {
                 CachedMealPlan("unreadable", "profile", unreadable, 1L),
             ),
         )
-        val plans = MealPlanRepository(api, asking, cache, json)
+        val plans = MealPlanRepository(api, asking, cache, json, changeQueue())
 
         assertNull(runBlocking { plans.cachedPlan("unreadable") })
         assertNotNull(runBlocking { plans.cachedPlan("readable") })

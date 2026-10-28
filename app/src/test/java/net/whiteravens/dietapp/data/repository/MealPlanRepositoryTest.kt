@@ -21,6 +21,10 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.data.remote.MealPlanDto
+import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.sync.Drained
+import net.whiteravens.dietapp.data.sync.QueuedChange
+import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.DaySettings
@@ -39,10 +43,14 @@ import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.UseUpTake
 import net.whiteravens.dietapp.domain.WayMeal
 import net.whiteravens.dietapp.domain.SwapAsk
+import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,6 +59,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 
 /** The plans of a profile, a page at a time, from a local server answering what the backend answered. */
 class MealPlanRepositoryTest {
@@ -95,11 +104,11 @@ class MealPlanRepositoryTest {
         }
     }
 
-    private fun repository(cache: CacheDao): MealPlanRepository {
+    private fun repository(cache: CacheDao, queue: ChangeQueue = changeQueue()): MealPlanRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
         val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
-        return MealPlanRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json)
+        return MealPlanRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json, queue)
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))
@@ -250,6 +259,30 @@ class MealPlanRepositoryTest {
         assertEquals("PATCH", eaten.method)
         assertEquals("/api/meal-plans/plan-1/meals/meal-1/eaten", eaten.path)
         assertEquals("""{"eaten":true}""", eaten.body.readUtf8())
+    }
+
+    @Test
+    fun `an eaten mark whose answer was lost is kept, and sent again as it is in its turn`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (answering) answer("meal-plan-swap-apply") else MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+        }
+        val cache = Cache()
+        val queue = changeQueue()
+        val plans = repository(cache, queue)
+
+        val kept = runBlocking { plans.setEaten("plan-1", "meal-1", eaten = true) }
+
+        assertEquals(Submitted.Kept(offline = true), kept)
+        answering = true
+        val drained = runBlocking { queue.drain { plans.send(it as QueuedChange.Eaten) } }
+        assertEquals(Drained.EMPTY, drained)
+        val sent = generateSequence { server.takeRequest(0, TimeUnit.SECONDS) }.last()
+        assertEquals("/api/meal-plans/plan-1/meals/meal-1/eaten", sent.path)
+        assertEquals("""{"eaten":true}""", sent.body.readUtf8())
+        // The plan as the server answered it is kept for the screen to read.
+        assertEquals(1, cache.plans.size)
     }
 
     @Test

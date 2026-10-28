@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.data.sync
 
+import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -11,10 +12,14 @@ import javax.inject.Singleton
  * the phone kept as its answer says.
  */
 @Singleton
-class ChangeSender @Inject constructor(private val lists: ShoppingListRepository) {
+class ChangeSender @Inject constructor(
+    private val lists: ShoppingListRepository,
+    private val plans: MealPlanRepository,
+) {
     suspend fun send(change: QueuedChange) {
         when (change) {
             is QueuedChange.ShoppingRow -> lists.send(change)
+            is QueuedChange.Eaten -> plans.send(change)
         }
     }
 }
