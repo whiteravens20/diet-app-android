@@ -31,7 +31,9 @@ import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Share
 import net.whiteravens.dietapp.domain.WeightEntry
 import net.whiteravens.dietapp.domain.WeightPoint
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.testing.refusal
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightLog
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightProblem
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
@@ -213,20 +215,31 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun `a weight typed in the account's unit is logged in kilograms, empties the field, is the newest and the chart's days are read again, and one out of bounds is said and not sent`() {
+    fun `a weight typed in the account's unit is logged in kilograms, empties the field, is the newest and the chart's days are read again, what is no number is said and not sent, and a refusal says its bound`() {
         val users = users().also { coEvery { it.me() } returns account("lb") }
         coEvery { weights.entries(ala.id, any()) } returns listOf(earlier)
         val todayDay = WeightPoint(LocalDate.parse("2026-10-16"), 81.65, 81.13)
         coEvery { weights.days(ala.id, any(), any()) } returnsMany listOf(listOf(earlierDay), listOf(earlierDay, todayDay))
         val today = logged.copy(kg = 81.65)
         coEvery { weights.log(ala.id, 81.65) } returns today
+        // A thousand pounds is more than the 400 kg the API takes.
+        coEvery { weights.log(ala.id, 453.59) } throws refusal("weight-refused")
         val model = DashboardViewModel(users, plans, weights, notifications)
+
+        model.typeWeight(ala.id, "eighty")
+        model.logWeight(ala.id)
+
+        assertEquals(WeightLog(typed = "eighty", problem = WeightProblem.NotANumber), model.state.value.weightLogs[ala.id])
+        coVerify(exactly = 0) { weights.log(any(), any()) }
 
         model.typeWeight(ala.id, "1000")
         model.logWeight(ala.id)
 
-        assertEquals(WeightLog(typed = "1000", problem = WeightProblem.OutOfBounds), model.state.value.weightLogs[ala.id])
-        coVerify(exactly = 0) { weights.log(any(), any()) }
+        assertEquals(
+            WeightLog(typed = "1000", problem = WeightProblem.Refused(FieldRefusal.TooBig(400.0, inclusive = true))),
+            model.state.value.weightLogs[ala.id],
+        )
+        coVerify(exactly = 1) { weights.days(ala.id, any(), any()) }
 
         model.typeWeight(ala.id, "180,0")
         model.logWeight(ala.id)

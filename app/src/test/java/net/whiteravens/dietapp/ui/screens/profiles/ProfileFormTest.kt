@@ -202,14 +202,15 @@ class ProfileFormTest {
     }
 
     @Test
-    fun `a weight typed in a unit is read with a comma or a point, in kilograms to the hundredth, and none outside the unit's bounds`() {
+    fun `a weight typed in a unit is read with a comma or a point, in kilograms to the hundredth, whatever its size, and what is no number is none`() {
         assertEquals(80.5, WeightUnit.KG.typedKg(" 80,5 ")!!, 0.0)
         assertEquals(81.65, WeightUnit.LB.typedKg("180")!!, 0.0)
         assertEquals(30.03, WeightUnit.LB.typedKg("66.2")!!, 0.0)
-        assertNull(WeightUnit.LB.typedKg("66.1"))
-        assertNull(WeightUnit.KG.typedKg("29.9"))
-        assertNull(WeightUnit.KG.typedKg("400.1"))
+        // The API says what it takes, and refuses the rest with its bound.
+        assertEquals(29.98, WeightUnit.LB.typedKg("66.1")!!, 0.0)
+        assertEquals(400.1, WeightUnit.KG.typedKg("400.1")!!, 0.0)
         assertNull(WeightUnit.KG.typedKg("eighty"))
         assertNull(WeightUnit.KG.typedKg("NaN"))
+        assertNull(WeightUnit.KG.typedKg("Infinity"))
     }
 }

@@ -44,6 +44,7 @@ import net.whiteravens.dietapp.domain.WeightPoint
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.weightLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
@@ -105,10 +106,10 @@ internal fun WeightCard(
                 placeholder = formatNumber(unit.shownToOne(profile.weightKg), 1),
                 hint = profile.targetWeightKg?.let { stringResource(R.string.weight_target_hint, registered, weightLabel(it, unit.code)) }
                     ?: stringResource(R.string.weight_reference_hint, registered),
-                problem = if (log.problem == WeightProblem.OutOfBounds) {
-                    stringResource(R.string.weight_range, "${formatNumber(unit.bounds.start, 1)} ${unit.code}", "${formatNumber(unit.bounds.endInclusive, 1)} ${unit.code}")
-                } else {
-                    null
+                problem = when (val problem = log.problem) {
+                    WeightProblem.NotANumber -> stringResource(R.string.refusal_not_a_number)
+                    is WeightProblem.Refused -> refusalText(problem.refusal, unit.refusalBound)
+                    else -> null
                 },
                 keyboardType = KeyboardType.Decimal,
             )

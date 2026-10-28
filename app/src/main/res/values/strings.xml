@@ -627,7 +627,6 @@
     <string name="weight_log">Log</string>
     <string name="weight_logging">Logging…</string>
     <string name="weight_log_failed">Could not log weight.</string>
-    <string name="weight_range">Enter a weight between %1$s and %2$s.</string>
     <string name="weight_reference_hint">Registered weight: %1$s</string>
     <string name="weight_target_hint">Registered weight: %1$s · working towards %2$s</string>
     <string name="weight_reference_label">registered</string>

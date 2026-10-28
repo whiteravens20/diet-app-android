@@ -12,11 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.WeightEntry
@@ -71,8 +73,11 @@ class DashboardViewModel @Inject constructor(
 
     /** What went wrong in a profile's weight log. */
     sealed interface WeightProblem {
-        /** What was typed is no weight within the bounds of the account's unit; nothing was sent. */
-        data object OutOfBounds : WeightProblem
+        /** What was typed is no number; nothing was sent. */
+        data object NotANumber : WeightProblem
+
+        /** The API refused the weight typed, for the reason it gives. */
+        data class Refused(val refusal: FieldRefusal) : WeightProblem
 
         /** The weight typed could not be logged. */
         data class LogFailed(val error: Throwable) : WeightProblem
@@ -133,16 +138,16 @@ class DashboardViewModel @Inject constructor(
     fun typeWeight(profileId: String, typed: String) = changeLog(profileId) { it.copy(typed = typed) }
 
     /**
-     * Logs what is typed for [profileId], read in the account's unit and sent in kilograms. A weight out
-     * of the unit's bounds is said and not sent; one logged empties the field, is the newest, and the
-     * days of the chart are read again.
+     * Logs what is typed for [profileId], read in the account's unit and sent in kilograms. What is no
+     * number is said and not sent, and a weight the API refuses is said with the bound it gives; one
+     * logged empties the field, is the newest, and the days of the chart are read again.
      */
     fun logWeight(profileId: String) {
         val log = _state.value.weightLogs[profileId] ?: WeightLog()
         if (log.logging || log.typed.isBlank()) return
         val kg = _state.value.unit.typedKg(log.typed)
         if (kg == null) {
-            changeLog(profileId) { it.copy(problem = WeightProblem.OutOfBounds) }
+            changeLog(profileId) { it.copy(problem = WeightProblem.NotANumber) }
             return
         }
         changeLog(profileId) { it.copy(logging = true, problem = null) }
@@ -160,7 +165,10 @@ class DashboardViewModel @Inject constructor(
                     }
                     readDaysAgain(profileId)
                 }
-                .onFailure { e -> changeLog(profileId) { it.copy(logging = false, problem = WeightProblem.LogFailed(e)) } }
+                .onFailure { e ->
+                    val refused = (e as? ApiException)?.fieldRefusals?.get("kg")
+                    changeLog(profileId) { it.copy(logging = false, problem = refused?.let(WeightProblem::Refused) ?: WeightProblem.LogFailed(e)) }
+                }
         }
     }
 

@@ -679,7 +679,6 @@
     <string name="weight_log">Zapisz</string>
     <string name="weight_logging">Zapisywanie…</string>
     <string name="weight_log_failed">Nie udało się zapisać wagi.</string>
-    <string name="weight_range">Podaj wagę między %1$s a %2$s.</string>
     <string name="weight_reference_hint">Waga z profilu: %1$s</string>
     <string name="weight_target_hint">Waga z profilu: %1$s · cel: %2$s</string>
     <string name="weight_reference_label">z profilu</string>

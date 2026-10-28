@@ -8,6 +8,7 @@ import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfileFigures
+import net.whiteravens.dietapp.ui.common.Bound
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -32,9 +33,12 @@ enum class WeightUnit(val code: String) {
     val bounds: ClosedFloatingPointRange<Double>
         get() = ceil(shown(ProfileBounds.WEIGHT_KG.start) * 10) / 10..floor(shown(ProfileBounds.WEIGHT_KG.endInclusive) * 10) / 10
 
-    /** A weight typed in this unit, with a decimal comma as well as a point, in kilograms; null for one that is no number within [bounds]. */
+    /** A weight typed in this unit, with a decimal comma as well as a point, in kilograms; null for what is no number. The API says what it takes. */
     fun typedKg(typed: String): Double? =
-        typed.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it in bounds }?.let(::toKilograms)
+        typed.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }?.let(::toKilograms)
+
+    /** How a refusal of a weight says its bound: in this unit, to one decimal. */
+    val refusalBound: Bound get() = Bound.Number(decimals = 1, unit = code, inUnit = ::shown)
 
     companion object {
         /** One pound in kilograms, as the pound is defined. */
