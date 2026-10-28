@@ -40,6 +40,10 @@ android {
         testInstrumentationRunnerArguments["useTestStorageService"] = "true"
     }
 
+    // The schemas of the cache's versions: the screens' tests open a cache of an older version as the
+    // app migrates it.
+    sourceSets.getByName("androidTest").assets.srcDir("schemas")
+
     // The server a build starts with: the emulator's host in a debug build, and none in a release
     // build, whose first screen asks for one. `-PapiBaseUrl=<address>` gives another, such as a
     // backend on a phone's own network: http://<host-lan-ip>:4000/api/.

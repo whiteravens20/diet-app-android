@@ -3,7 +3,6 @@
 package net.whiteravens.dietapp.di
 
 import android.content.Context
-import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -180,12 +179,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun database(@ApplicationContext context: Context): CacheDatabase =
-        Room.databaseBuilder(context, CacheDatabase::class.java, "diet-app-cache.db")
-            // The cache holds copies of what the server has: a version with other tables starts it empty.
-            .fallbackToDestructiveMigration(dropAllTables = true)
-            .build()
+    fun database(@ApplicationContext context: Context): CacheDatabase = CacheDatabase.open(context)
 
     @Provides
     fun cacheDao(db: CacheDatabase) = db.cacheDao()
+
+    @Provides
+    fun pendingChangeDao(db: CacheDatabase) = db.pendingChanges()
 }

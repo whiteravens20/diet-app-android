@@ -2,21 +2,26 @@
 
 package net.whiteravens.dietapp.data.local
 
+import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 /**
- * Offline cache. The first page of a profile's plans, the plans opened, and
- * shopping lists are stored as the raw JSON the API returned, so the UI can
- * render them without a network connection. `syncedAt` says how old a copy is.
- * The cache holds nothing the server does not, so a version of the app that
- * changes its tables starts it empty (see `AppModule.database`).
+ * Offline cache, and the changes made on the phone that wait to be sent. The first page of a
+ * profile's plans, the plans opened, and shopping lists are stored as the raw JSON the API
+ * returned, so the UI can render them without a network connection. `syncedAt` says how old a copy
+ * is. A change waiting is the one thing here the server does not have yet, so a new version of the
+ * tables migrates them from the one before (see [CacheDatabase.open]); all of it goes when the
+ * session ends.
  */
 
 /** The first page of a profile's plans, as `GET /meal-plans` answered it. */
@@ -76,11 +81,77 @@ interface CacheDao {
     suspend fun deleteShoppingList(id: String)
 }
 
+/**
+ * A change made on the phone that the server does not have yet, in the order it was made ([id]):
+ * what kind it is, and the change itself as JSON, which holds the key an addition is sent with
+ * every time. A change the server refused is not sent again: it stays, with the code it was
+ * refused with and the server's own words, until the user has seen why.
+ */
+@Entity(tableName = "pending_change")
+data class PendingChangeRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val kind: String,
+    val change: String,
+    val madeAt: Long,
+    val refusedCode: String? = null,
+    val refusedMessage: String? = null,
+)
+
+@Dao
+interface PendingChangeDao {
+    @Insert
+    suspend fun add(row: PendingChangeRow): Long
+
+    /** The changes waiting to be sent, the oldest first, as they come and go. */
+    @Query("SELECT * FROM pending_change WHERE refusedCode IS NULL ORDER BY id")
+    fun waiting(): Flow<List<PendingChangeRow>>
+
+    /** The changes the server refused, the oldest first, until each is seen. */
+    @Query("SELECT * FROM pending_change WHERE refusedCode IS NOT NULL ORDER BY id")
+    fun refused(): Flow<List<PendingChangeRow>>
+
+    /** The oldest change waiting: the one to send next. */
+    @Query("SELECT * FROM pending_change WHERE refusedCode IS NULL ORDER BY id LIMIT 1")
+    suspend fun next(): PendingChangeRow?
+
+    /** Whether a change waits to be sent. */
+    @Query("SELECT EXISTS(SELECT 1 FROM pending_change WHERE refusedCode IS NULL)")
+    suspend fun anyWaiting(): Boolean
+
+    @Query("UPDATE pending_change SET refusedCode = :code, refusedMessage = :message WHERE id = :id")
+    suspend fun refuse(id: Long, code: String, message: String?)
+
+    @Query("DELETE FROM pending_change WHERE id = :id")
+    suspend fun remove(id: Long)
+
+    @Query("DELETE FROM pending_change")
+    suspend fun removeAll()
+}
+
 @Database(
-    entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class],
-    version = 2,
+    entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class, PendingChangeRow::class],
+    version = 3,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 2, to = 3)],
 )
 abstract class CacheDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao
+
+    abstract fun pendingChanges(): PendingChangeDao
+
+    companion object {
+        /** The file the app keeps it in. */
+        const val NAME = "diet-app-cache.db"
+
+        /**
+         * The database in the file [name], its tables migrated from the version before. A version
+         * from before the changes waiting were kept, and a newer one an older app finds, held copies
+         * alone: those start empty.
+         */
+        fun open(context: Context, name: String = NAME): CacheDatabase =
+            Room.databaseBuilder(context, CacheDatabase::class.java, name)
+                .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1)
+                .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
+                .build()
+    }
 }
