@@ -43,6 +43,14 @@ fun refusalText(refusal: FieldRefusal, bound: Bound = Bound.Number(), other: Str
         FieldRefusal.Other -> other
     }
 
+/** What a field of numbers says: that what it holds is no number ([notANumber]), or why the API refused it. */
+@Composable
+fun numberProblem(notANumber: Boolean, refused: FieldRefusal?, bound: Bound = Bound.Number(), whole: Boolean = true): String? = when {
+    notANumber -> stringResource(if (whole) R.string.refusal_not_whole else R.string.refusal_not_a_number)
+    refused != null -> refusalText(refused, bound)
+    else -> null
+}
+
 /**
  * [figure] in the field's unit and to its places, rounded towards what the field takes: a least
  * up and a most down, so that what the bound says is never itself refused.

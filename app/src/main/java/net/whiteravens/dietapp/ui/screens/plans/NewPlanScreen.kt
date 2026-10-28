@@ -38,6 +38,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.inGiveWayOrder
 import net.whiteravens.dietapp.domain.SupplyLevel
@@ -46,6 +47,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.DateField
@@ -94,6 +96,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                 val form = state.form
                 val problems = if (state.showProblems) form.problems() else emptySet()
                 val dayProblems = if (state.showProblems) form.dayProblems() else emptyMap()
+                val refusals = state.refusals
                 AppCard {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         DateField(stringResource(R.string.plans_start_date), form.startDate, onPick = { day -> viewModel.edit { it.copy(startDate = day) } })
@@ -101,7 +104,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             value = form.durationDays,
                             onValueChange = { typed -> viewModel.edit { it.copy(durationDays = typed) } },
                             label = stringResource(R.string.plans_duration_days),
-                            problem = if (PlanField.DURATION in problems) between(PlanBounds.DURATION_DAYS) else null,
+                            problem = numberProblem(PlanField.DURATION in problems, refusals.plan[PlanField.DURATION]),
                         )
                         CheckRow(
                             label = stringResource(R.string.plans_meal_prep),
@@ -130,7 +133,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                         )
                         ChoiceField(
                             label = stringResource(R.string.plans_meals_a_day),
-                            options = listOf<Int?>(null) + PlanBounds.MEAL_COUNTS.toList(),
+                            options = listOf<Int?>(null) + PlanChoices.MEAL_COUNTS.toList(),
                             selected = form.mealCount,
                             optionLabel = { count ->
                                 count?.toString() ?: stringResource(R.string.plans_as_in_profile, profile.figures.mealCount.toString())
@@ -142,7 +145,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             onValueChange = { typed -> viewModel.edit { it.copy(calorieTarget = typed) } },
                             label = stringResource(R.string.plans_calorie_target),
                             placeholder = state.profileTarget?.toString(),
-                            problem = if (PlanField.CALORIE_TARGET in problems) between(PlanBounds.CALORIE_TARGET) else null,
+                            problem = numberProblem(PlanField.CALORIE_TARGET in problems, refusals.plan[PlanField.CALORIE_TARGET]),
                         )
                         Text(
                             stringResource(R.string.plans_choices_hint) +
@@ -171,6 +174,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             form = form,
                             problems = problems,
                             dayProblems = dayProblems,
+                            refusals = refusals,
                             liked = state.liked,
                             sets = state.sets,
                             defaultMaxRepeats = rules?.maxRepeatsPerRecipe,
@@ -200,10 +204,6 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
     }
 }
 
-@Composable
-private fun between(range: IntRange): String =
-    stringResource(R.string.profile_field_between, formatNumber(range.first), formatNumber(range.last))
-
 /**
  * The options of a plan beyond the usual ones, folded away until asked for: the most a recipe
  * repeats, the limits that may give way, and each day's own kind, meals, calories, cooking time,
@@ -214,6 +214,7 @@ private fun AdvancedOptions(
     form: NewPlanForm,
     problems: Set<PlanField>,
     dayProblems: Map<LocalDate, Set<DayField>>,
+    refusals: PlanRefusals,
     liked: List<MarkedRecipe>,
     sets: List<FavoriteSet>,
     defaultMaxRepeats: Int?,
@@ -224,6 +225,8 @@ private fun AdvancedOptions(
     onEditDay: (LocalDate, (DayDraft) -> DayDraft) -> Unit,
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
+    // A field inside that is marked keeps the options open.
+    val marked = PlanField.MAX_REPEATS in problems || PlanField.MAX_REPEATS in refusals.plan || dayProblems.isNotEmpty() || refusals.days.isNotEmpty()
     Surface(
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -235,9 +238,9 @@ private fun AdvancedOptions(
                 modifier = Modifier.fillMaxWidth().clickable { open = !open }.padding(horizontal = 12.dp, vertical = 10.dp),
             ) {
                 Text(stringResource(R.string.plans_advanced_toggle), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                Icon(if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
+                Icon(if (open || marked) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
             }
-            if (!open) return@Column
+            if (!open && !marked) return@Column
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.plans_advanced_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
@@ -265,7 +268,7 @@ private fun AdvancedOptions(
                     placeholder = defaultMaxRepeats?.toString(),
                     hint = defaultMaxRepeats?.let { stringResource(R.string.plans_advanced_variety_floor_hint_most, it.toString()) }
                         ?: stringResource(R.string.plans_advanced_variety_floor_hint_none),
-                    problem = if (PlanField.MAX_REPEATS in problems) between(PlanBounds.MAX_REPEATS) else null,
+                    problem = numberProblem(PlanField.MAX_REPEATS in problems, refusals.plan[PlanField.MAX_REPEATS]),
                 )
                 Text(stringResource(R.string.plans_advanced_may_give_way), style = MaterialTheme.typography.titleSmall)
                 // The limits as the instance names them, in the order in which they give way.
@@ -278,7 +281,9 @@ private fun AdvancedOptions(
                 Text(stringResource(R.string.plans_advanced_may_give_way_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(stringResource(R.string.plans_advanced_per_day), style = MaterialTheme.typography.titleSmall)
                 form.dates.forEach { date ->
-                    DayOptions(date, form.day(date), dayProblems[date].orEmpty(), liked, sets, planMealCount, mealSlots) { change -> onEditDay(date, change) }
+                    DayOptions(date, form.day(date), dayProblems[date].orEmpty(), refusals.days[date].orEmpty(), liked, sets, planMealCount, mealSlots) { change ->
+                        onEditDay(date, change)
+                    }
                 }
             }
         }
@@ -304,6 +309,7 @@ private fun DayOptions(
     date: LocalDate,
     day: DayDraft,
     problems: Set<DayField>,
+    refused: Map<DayField, FieldRefusal>,
     liked: List<MarkedRecipe>,
     sets: List<FavoriteSet>,
     planMealCount: Int,
@@ -311,6 +317,7 @@ private fun DayOptions(
     onEdit: ((DayDraft) -> DayDraft) -> Unit,
 ) {
     var open by rememberSaveable(date.toString()) { mutableStateOf(false) }
+    val marked = problems.isNotEmpty() || refused.isNotEmpty()
     Surface(
         shape = MaterialTheme.shapes.small,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
@@ -325,13 +332,13 @@ private fun DayOptions(
                 if (day != DayDraft()) {
                     Text(dayKindLabel(day.kind), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
-                Icon(if (open || problems.isNotEmpty()) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
+                Icon(if (open || marked) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
             }
-            if (!open && problems.isEmpty()) return@Column
+            if (!open && !marked) return@Column
             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 ChoiceField(
                     label = stringResource(R.string.plans_advanced_day_kind),
-                    options = PlanBounds.DAY_KINDS,
+                    options = PlanChoices.DAY_KINDS,
                     selected = day.kind,
                     optionLabel = { dayKindLabel(it) },
                     onSelect = { kind -> onEdit { it.copy(kind = kind) } },
@@ -339,7 +346,7 @@ private fun DayOptions(
                 if (day.skipped) return@Column
                 ChoiceField(
                     label = stringResource(R.string.plans_advanced_meal_count),
-                    options = listOf<Int?>(null) + PlanBounds.MEAL_COUNTS.toList(),
+                    options = listOf<Int?>(null) + PlanChoices.MEAL_COUNTS.toList(),
                     selected = day.mealCount,
                     optionLabel = { it?.toString() ?: stringResource(R.string.plans_advanced_use_default) },
                     // The meals the day has change, and with them the meal a recipe was locked to.
@@ -349,13 +356,13 @@ private fun DayOptions(
                     value = day.calorieTarget,
                     onValueChange = { typed -> onEdit { it.copy(calorieTarget = typed) } },
                     label = stringResource(R.string.plans_advanced_calories),
-                    problem = if (DayField.CALORIE_TARGET in problems) between(PlanBounds.CALORIE_TARGET) else null,
+                    problem = numberProblem(DayField.CALORIE_TARGET in problems, refused[DayField.CALORIE_TARGET]),
                 )
                 FormField(
                     value = day.cookTime,
                     onValueChange = { typed -> onEdit { it.copy(cookTime = typed) } },
                     label = stringResource(R.string.plans_advanced_cook_time),
-                    problem = if (DayField.COOK_TIME in problems) between(PlanBounds.COOK_TIME_MINUTES) else null,
+                    problem = numberProblem(DayField.COOK_TIME in problems, refused[DayField.COOK_TIME]),
                 )
                 CheckRow(stringResource(R.string.plans_advanced_use_up_by), checked = day.useUpBy) { ticked -> onEdit { it.copy(useUpBy = ticked) } }
                 if (sets.isNotEmpty()) {

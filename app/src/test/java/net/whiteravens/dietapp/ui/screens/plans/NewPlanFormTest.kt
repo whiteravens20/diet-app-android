@@ -6,7 +6,10 @@ import net.whiteravens.dietapp.data.remote.PublicConfigDto
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.domain.FieldRefusal.TooBig
+import net.whiteravens.dietapp.domain.FieldRefusal.TooSmall
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.testing.refusal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -42,19 +45,47 @@ class NewPlanFormTest {
     }
 
     @Test
-    fun `figures outside the API's bounds are refused, and no plan is asked for`() {
-        assertEquals(setOf(PlanField.DURATION), form.copy(durationDays = "29").problems())
-        assertEquals(setOf(PlanField.DURATION), form.copy(durationDays = "0").problems())
-        assertEquals(setOf(PlanField.CALORIE_TARGET), form.copy(calorieTarget = "700").problems())
-        assertEquals(setOf(PlanField.MAX_REPEATS), form.copy(maxRepeats = "29").problems())
+    fun `a field that holds no whole number asks for no plan, and whole numbers are sent for the API to say what it takes`() {
+        assertEquals(setOf(PlanField.DURATION), form.copy(durationDays = "").problems())
+        assertEquals(setOf(PlanField.CALORIE_TARGET, PlanField.MAX_REPEATS), form.copy(calorieTarget = "lots", maxRepeats = "2.5").problems())
         assertNull(form.copy(durationDays = "").ask("p", 3, sets, mealSlots))
         assertEquals(emptyList<LocalDate>(), form.copy(durationDays = "x").dates)
+        val unread = form.copy(days = mapOf(monday to DayDraft(calorieTarget = "x", cookTime = "1,5")))
+        assertEquals(mapOf(monday to setOf(DayField.CALORIE_TARGET, DayField.COOK_TIME)), unread.dayProblems())
+        assertNull(unread.ask("p", 3, sets, mealSlots))
+        // A skipped day shows none of its fields, and none of them counts.
+        assertEquals(emptyMap<LocalDate, Set<DayField>>(), unread.copy(days = mapOf(monday to DayDraft(calorieTarget = "x", kind = "skip"))).dayProblems())
 
-        val tooMuch = form.copy(days = mapOf(monday to DayDraft(calorieTarget = "7000", cookTime = "601")))
-        assertEquals(mapOf(monday to setOf(DayField.CALORIE_TARGET, DayField.COOK_TIME)), tooMuch.dayProblems())
-        assertNull(tooMuch.ask("p", 3, sets, mealSlots))
-        // A skipped day shows none of its fields, and none of them is held against the plan.
-        assertEquals(emptyMap<LocalDate, Set<DayField>>(), tooMuch.copy(days = mapOf(monday to DayDraft(calorieTarget = "7000", kind = "skip"))).dayProblems())
+        val outOfBounds = form.copy(durationDays = "29", calorieTarget = "700", maxRepeats = "29")
+        assertEquals(emptySet<PlanField>(), outOfBounds.problems())
+        assertEquals(29, outOfBounds.ask("p", 3, sets, mealSlots)!!.durationDays)
+        // A number typed by mistake draws no more days than the form draws.
+        assertEquals(emptyList<LocalDate>(), form.copy(durationDays = "100000").dates)
+    }
+
+    @Test
+    fun `the API's refusal names the plan's fields and a day's by the day's place among the days sent, until each is changed`() {
+        // As the API's answer had it: forty days, a target of 100, fifty repeats, and a first day sent with 7000 kcal and 700 minutes.
+        val tuesday = monday.plusDays(1)
+        val chosen = form.copy(durationDays = "40", calorieTarget = "100", maxRepeats = "50", days = mapOf(tuesday to DayDraft(calorieTarget = "7000", cookTime = "700")))
+        val ask = chosen.ask("p", 3, sets, mealSlots)!!
+
+        val refusals = PlanRefusals.of(refusal("plan-refused").fieldRefusals, ask)
+
+        assertEquals(
+            mapOf(
+                PlanField.DURATION to TooBig(28.0, inclusive = true),
+                PlanField.CALORIE_TARGET to TooSmall(800.0, inclusive = true),
+                PlanField.MAX_REPEATS to TooBig(28.0, inclusive = true),
+            ),
+            refusals.plan,
+        )
+        assertEquals(mapOf(tuesday to mapOf(DayField.CALORIE_TARGET to TooBig(6000.0, inclusive = true), DayField.COOK_TIME to TooBig(600.0, inclusive = true))), refusals.days)
+        assertEquals(emptySet<String>(), refusals.elsewhere)
+
+        val changed = refusals.after(chosen, chosen.copy(durationDays = "28", days = mapOf(tuesday to DayDraft(calorieTarget = "7000", cookTime = "60"))))
+        assertEquals(setOf(PlanField.CALORIE_TARGET, PlanField.MAX_REPEATS), changed.plan.keys)
+        assertEquals(mapOf(tuesday to setOf(DayField.CALORIE_TARGET)), changed.days.mapValues { it.value.keys })
     }
 
     @Test

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ProfileRepository
@@ -34,7 +35,8 @@ import kotlin.math.roundToInt
  * ([START_DATE]) or from today: its days, what it is made for where that differs from the
  * profile, the preferences it applies and each day's own options. A plan that could only be
  * filled outside its limits is not made: what stands in the way is said, and the same plan is
- * asked for again once the user lets those limits give way.
+ * asked for again once the user lets those limits give way. A field the API refuses is marked
+ * with the reason it gives until it is changed.
  */
 @HiltViewModel
 class NewPlanViewModel @Inject constructor(
@@ -59,6 +61,8 @@ class NewPlanViewModel @Inject constructor(
         val sets: List<FavoriteSet> = emptyList(),
         val form: NewPlanForm = NewPlanForm(startDate = LocalDate.now()),
         val showProblems: Boolean = false,
+        /** The fields the API refused in the last plan asked for, until each is changed. */
+        val refusals: PlanRefusals = PlanRefusals(),
         val generating: Boolean = false,
         val error: Throwable? = null,
         val inTheWay: InTheWay? = null,
@@ -110,7 +114,10 @@ class NewPlanViewModel @Inject constructor(
     }
 
     fun edit(change: (NewPlanForm) -> NewPlanForm) {
-        _state.update { it.copy(form = change(it.form), error = null) }
+        _state.update {
+            val now = change(it.form)
+            it.copy(form = now, error = null, refusals = it.refusals.after(it.form, now))
+        }
     }
 
     fun editDay(date: LocalDate, change: (DayDraft) -> DayDraft) = edit { form -> form.copy(days = form.days + (date to change(form.day(date)))) }
@@ -145,15 +152,20 @@ class NewPlanViewModel @Inject constructor(
     }
 
     private fun send(ask: PlanAsk) {
-        _state.update { it.copy(generating = true, error = null, inTheWay = null) }
+        _state.update { it.copy(generating = true, error = null, inTheWay = null, refusals = PlanRefusals()) }
         viewModelScope.launch {
             attempt { plans.generate(ask) }
                 .onSuccess { plan -> _state.update { it.copy(generating = false, made = plan.id) } }
                 .onFailure { e ->
                     val needed = plans.relaxationNeeded(e)
+                    val refusals = PlanRefusals.of((e as? ApiException)?.fieldRefusals.orEmpty(), ask)
                     _state.update {
-                        if (needed != null) it.copy(generating = false, inTheWay = InTheWay(needed, ask.allowRelaxations, ask))
-                        else it.copy(generating = false, error = e)
+                        when {
+                            needed != null -> it.copy(generating = false, inTheWay = InTheWay(needed, ask.allowRelaxations, ask))
+                            // The fields say why; what the form has no field for is said as well.
+                            refusals != PlanRefusals() -> it.copy(generating = false, refusals = refusals, error = e.takeIf { refusals.elsewhere.isNotEmpty() })
+                            else -> it.copy(generating = false, error = e)
+                        }
                     }
                 }
         }

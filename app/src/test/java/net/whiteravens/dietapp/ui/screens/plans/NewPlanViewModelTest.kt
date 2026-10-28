@@ -29,12 +29,15 @@ import net.whiteravens.dietapp.data.repository.toDetails
 import net.whiteravens.dietapp.data.repository.toDomain
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.domain.FieldRefusal.TooBig
+import net.whiteravens.dietapp.domain.FieldRefusal.TooSmall
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.testing.refusal
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -109,14 +112,34 @@ class NewPlanViewModelTest {
     }
 
     @Test
-    fun `a form with a refused field asks for nothing and says what is wrong`() {
+    fun `a field that holds no whole number asks for nothing, and one the API refuses is marked with its reason until it is changed`() {
+        val refused = refusal("plan-refused")
+        coEvery { plans.generate(capture(asked)) } throws refused
+        every { plans.relaxationNeeded(refused) } returns null
         val model = model()
 
-        model.edit { it.copy(durationDays = "40") }
+        model.edit { it.copy(durationDays = "forty") }
         model.generate()
 
         assertEquals(true, model.state.value.showProblems)
         coVerify(exactly = 0) { plans.generate(any()) }
+
+        // As the API's answer had it: forty days, a target of 100, fifty repeats, and a first day sent with 7000 kcal and 700 minutes.
+        val first = model.state.value.form.startDate
+        model.edit { it.copy(durationDays = "40", calorieTarget = "100", maxRepeats = "50", days = mapOf(first to DayDraft(calorieTarget = "7000", cookTime = "700"))) }
+        model.generate()
+
+        val refusals = model.state.value.refusals
+        assertEquals(TooBig(28.0, inclusive = true), refusals.plan[PlanField.DURATION])
+        assertEquals(TooSmall(800.0, inclusive = true), refusals.plan[PlanField.CALORIE_TARGET])
+        assertEquals(TooBig(600.0, inclusive = true), refusals.days[first]?.get(DayField.COOK_TIME))
+        // Every field the API named is on the form, so the form says it alone.
+        assertNull(model.state.value.error)
+
+        model.edit { it.copy(durationDays = "28") }
+
+        assertNull(model.state.value.refusals.plan[PlanField.DURATION])
+        assertEquals(TooSmall(800.0, inclusive = true), model.state.value.refusals.plan[PlanField.CALORIE_TARGET])
     }
 
     @Test

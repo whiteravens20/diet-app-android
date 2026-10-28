@@ -4,27 +4,37 @@ package net.whiteravens.dietapp.ui.screens.plans
 
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanAsk
 import java.time.LocalDate
 
-/** The bounds the API holds a new plan to. */
-object PlanBounds {
-    val DURATION_DAYS = 1..28
-    val CALORIE_TARGET = 800..6000
-    val MAX_REPEATS = 1..28
-    val COOK_TIME_MINUTES = 0..600
+/** What the form offers and begins with. */
+object PlanChoices {
     val MEAL_COUNTS = 2..5
     const val FIRST_DURATION = 7
 
     /** The kinds of a day: a rest day aims at fewer calories, a training day at more, a skipped day is left empty. */
     val DAY_KINDS = listOf("normal", "rest", "training", "skip")
+
+    /**
+     * The most days the form draws a day's options for. It holds no plan to a length, which is the
+     * API's to say; it keeps a number typed by mistake from drawing that many days.
+     */
+    const val MOST_DAYS_DRAWN = 60
 }
 
-/** A field of the form that holds something the API would refuse. */
-enum class PlanField { DURATION, CALORIE_TARGET, MAX_REPEATS }
+/** A field of the form, by the path the API names it by when it refuses what it holds. */
+enum class PlanField(val path: String) {
+    DURATION("durationDays"),
+    CALORIE_TARGET("calorieTargetOverride"),
+    MAX_REPEATS("maxRepeatsPerRecipe"),
+}
 
-/** A field of a day that holds something the API would refuse. */
-enum class DayField { CALORIE_TARGET, COOK_TIME }
+/** A field of a day, by the name the API gives it under the day's place among the days sent (`dayOverrides.0.calorieTarget`). */
+enum class DayField(val key: String) {
+    CALORIE_TARGET("calorieTarget"),
+    COOK_TIME("cookTimeBudgetMinutes"),
+}
 
 /** One day of the form as it is chosen; a day nobody touched follows the plan. */
 data class DayDraft(
@@ -40,10 +50,10 @@ data class DayDraft(
 ) {
     val skipped: Boolean get() = kind == "skip"
 
-    /** A skipped day shows no field, and none of its fields is held against the plan. */
+    /** The fields that hold what is no whole number; a skipped day shows no field, and none of its fields counts. */
     fun problems(): Set<DayField> = if (skipped) emptySet() else buildSet {
-        if (calorieTarget.isNotBlank() && !calorieTarget.within(PlanBounds.CALORIE_TARGET)) add(DayField.CALORIE_TARGET)
-        if (cookTime.isNotBlank() && !cookTime.within(PlanBounds.COOK_TIME_MINUTES)) add(DayField.COOK_TIME)
+        if (!calorieTarget.emptyOrWhole()) add(DayField.CALORIE_TARGET)
+        if (!cookTime.emptyOrWhole()) add(DayField.COOK_TIME)
     }
 
     /**
@@ -66,10 +76,11 @@ data class DayDraft(
 /**
  * A new plan's form as it is chosen: its days, what it is made for where that differs from the
  * profile (empty: as the profile has it), the preferences it applies, and each day's own options.
+ * Its numbers are whole numbers; what the API takes of them is the API's to say.
  */
 data class NewPlanForm(
     val startDate: LocalDate,
-    val durationDays: String = PlanBounds.FIRST_DURATION.toString(),
+    val durationDays: String = PlanChoices.FIRST_DURATION.toString(),
     val mealPrepFriendly: Boolean = false,
     val dietType: String? = null,
     val mealCount: Int? = null,
@@ -82,27 +93,28 @@ data class NewPlanForm(
     val mayGiveWay: List<String> = emptyList(),
     val days: Map<LocalDate, DayDraft> = emptyMap(),
 ) {
-    /** The plan's days, as many as the duration says while it is one the API takes. */
+    /** The plan's days, as many as the duration says, while that is a number of days the form draws. */
     val dates: List<LocalDate>
         get() {
-            val count = durationDays.trim().toIntOrNull()?.takeIf { it in PlanBounds.DURATION_DAYS } ?: return emptyList()
+            val count = durationDays.trim().toIntOrNull()?.takeIf { it in 1..PlanChoices.MOST_DAYS_DRAWN } ?: return emptyList()
             return (0 until count).map { startDate.plusDays(it.toLong()) }
         }
 
     fun day(date: LocalDate): DayDraft = days[date] ?: DayDraft()
 
+    /** The fields that hold what is no whole number: the duration is needed, the others may be empty. */
     fun problems(): Set<PlanField> = buildSet {
-        if (!durationDays.within(PlanBounds.DURATION_DAYS)) add(PlanField.DURATION)
-        if (calorieTarget.isNotBlank() && !calorieTarget.within(PlanBounds.CALORIE_TARGET)) add(PlanField.CALORIE_TARGET)
-        if (maxRepeats.isNotBlank() && !maxRepeats.within(PlanBounds.MAX_REPEATS)) add(PlanField.MAX_REPEATS)
+        if (durationDays.trim().toIntOrNull() == null) add(PlanField.DURATION)
+        if (!calorieTarget.emptyOrWhole()) add(PlanField.CALORIE_TARGET)
+        if (!maxRepeats.emptyOrWhole()) add(PlanField.MAX_REPEATS)
     }
 
-    /** The days of the plan whose fields hold something the API would refuse. */
+    /** The days of the plan whose fields hold what is no whole number. */
     fun dayProblems(): Map<LocalDate, Set<DayField>> =
         dates.associateWith { day(it).problems() }.filterValues { it.isNotEmpty() }
 
     /**
-     * The plan as the API is asked for it, or null while a field is refused. Only a day that
+     * The plan as the API is asked for it, or null while a field holds no whole number. Only a day that
      * differs from the plan in something is sent. [profileMealCount] is how many meals a day the
      * plan has where the form leaves it to the profile; [sets] are the profile's favourite sets;
      * [mealSlots] the meals of a day at each number of meals, as the instance says them.
@@ -143,5 +155,51 @@ data class NewPlanForm(
     }
 }
 
-/** Whether the field holds a whole number within [range]. */
-private fun String.within(range: IntRange): Boolean = trim().toIntOrNull()?.let { it in range } == true
+/**
+ * The fields of a plan the API refused, by its answer to [ask]: the plan's own, and a day's by the
+ * day's place among the days [ask] sent. A path the form has no field for is in [elsewhere].
+ */
+data class PlanRefusals(
+    val plan: Map<PlanField, FieldRefusal> = emptyMap(),
+    val days: Map<LocalDate, Map<DayField, FieldRefusal>> = emptyMap(),
+    val elsewhere: Set<String> = emptySet(),
+) {
+    /** What is left of them once the form is [now] as it was [before]: a field changed since is no longer refused. */
+    fun after(before: NewPlanForm, now: NewPlanForm): PlanRefusals = copy(
+        plan = plan.filterKeys { field -> before.valueOf(field) == now.valueOf(field) },
+        days = days.mapValues { (date, fields) -> fields.filterKeys { field -> before.day(date).valueOf(field) == now.day(date).valueOf(field) } }
+            .filterValues { it.isNotEmpty() },
+    )
+
+    companion object {
+        private val DAY_PATH = Regex("""dayOverrides\.(\d+)\.(\w+)""")
+
+        fun of(refused: Map<String, FieldRefusal>, ask: PlanAsk): PlanRefusals {
+            val plan = PlanField.entries.mapNotNull { field -> refused[field.path]?.let { field to it } }.toMap()
+            val days = mutableMapOf<LocalDate, MutableMap<DayField, FieldRefusal>>()
+            val elsewhere = mutableSetOf<String>()
+            for ((path, refusal) in refused) {
+                if (PlanField.entries.any { it.path == path }) continue
+                val match = DAY_PATH.matchEntire(path)
+                val date = match?.groupValues?.get(1)?.toInt()?.let { ask.days.getOrNull(it)?.date }
+                val field = match?.groupValues?.get(2)?.let { name -> DayField.entries.firstOrNull { it.key == name } }
+                if (date != null && field != null) days.getOrPut(date) { mutableMapOf() }[field] = refusal else elsewhere += path
+            }
+            return PlanRefusals(plan, days, elsewhere)
+        }
+    }
+}
+
+private fun NewPlanForm.valueOf(field: PlanField): String = when (field) {
+    PlanField.DURATION -> durationDays
+    PlanField.CALORIE_TARGET -> calorieTarget
+    PlanField.MAX_REPEATS -> maxRepeats
+}
+
+private fun DayDraft.valueOf(field: DayField): String = when (field) {
+    DayField.CALORIE_TARGET -> calorieTarget
+    DayField.COOK_TIME -> cookTime
+}
+
+/** Whether the field is empty or holds a whole number. */
+private fun String.emptyOrWhole(): Boolean = isBlank() || trim().toIntOrNull() != null
