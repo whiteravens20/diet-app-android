@@ -63,6 +63,7 @@ import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -147,6 +148,7 @@ fun RecipesScreen(
                     subtitle = stringResource(R.string.recipes_subtitle),
                 )
             }
+            state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
             // A recipe drafted by a model is of a profile: there is none to draft for without one.
             if (state.profiles.isNotEmpty()) item { DraftButton(aiOn = state.aiOn, onOpen = { drafting = true }, onTurnAiOn = onTurnAiOn) }
             item {

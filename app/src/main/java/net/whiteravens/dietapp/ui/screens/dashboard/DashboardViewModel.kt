@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.domain.WeightEntry
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
+import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.util.Locale
@@ -88,6 +89,10 @@ class DashboardViewModel @Inject constructor(
         val unread: Int = 0,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
+        val readAt: Long? = null,
+        /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
+        val offline: Boolean = false,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -212,7 +217,16 @@ class DashboardViewModel @Inject constructor(
                     // A weight logged or taken back while this was read was answered after it: what is shown is newer.
                     _state.update {
                         if (showLoading || it.profiles === before) {
-                            it.copy(loading = false, profiles = found, error = null, unit = inUnit ?: it.unit, unread = notRead ?: it.unread, pulled = false)
+                            it.copy(
+                                loading = false,
+                                profiles = found,
+                                error = null,
+                                unit = inUnit ?: it.unit,
+                                unread = notRead ?: it.unread,
+                                pulled = false,
+                                readAt = System.currentTimeMillis(),
+                                offline = false,
+                            )
                         } else {
                             it.copy(loading = false, unread = notRead ?: it.unread, pulled = false)
                         }
@@ -220,7 +234,8 @@ class DashboardViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _state.update {
-                        if (showLoading || it.profiles.isEmpty()) it.copy(loading = false, profiles = emptyList(), error = e, pulled = false) else it.copy(pulled = false)
+                        if (showLoading || it.profiles.isEmpty()) it.copy(loading = false, profiles = emptyList(), error = e, pulled = false)
+                        else it.copy(pulled = false, offline = e is IOException)
                     }
                 }
         }

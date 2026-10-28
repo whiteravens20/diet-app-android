@@ -39,6 +39,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -98,10 +99,15 @@ class DashboardViewModelTest {
         model.shownAgain(cameToTheFront = false)
         assertEquals(listOf(made), model.state.value.profiles.map { it.profile })
 
+        val readAt = model.state.value.readAt
+        assertNotNull(readAt)
+        assertFalse(model.state.value.offline)
         coEvery { users.profiles() } throws IOException("unreachable")
         model.shownAgain(cameToTheFront = false)
         assertEquals(listOf(made), model.state.value.profiles.map { it.profile })
         assertNull(model.state.value.error)
+        assertTrue(model.state.value.offline)
+        assertEquals(readAt, model.state.value.readAt)
     }
 
     @Test

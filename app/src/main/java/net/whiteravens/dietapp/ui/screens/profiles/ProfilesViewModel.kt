@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfilePreferences
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
+import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
 
@@ -61,6 +62,10 @@ class ProfilesViewModel @Inject constructor(
         val unit: WeightUnit = WeightUnit.of(null, Locale.getDefault()),
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
+        val readAt: Long? = null,
+        /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
+        val offline: Boolean = false,
     ) {
         /** The preferences of [profile] as the screen shows them: what is kept, with what is being sent on top. */
         fun preferencesOf(profile: ProfileDetails): Shown {
@@ -115,10 +120,13 @@ class ProfilesViewModel @Inject constructor(
                 .onSuccess { list ->
                     // A preference changed or a profile deleted while this was read was answered after it: what is shown is newer.
                     val current = _state.value.loading || _state.value.list === before
-                    _state.update { if (current) it.copy(loading = false, list = list, loadError = null, unit = unit ?: it.unit, pulled = false) else it.copy(pulled = false) }
+                    _state.update {
+                        if (current) it.copy(loading = false, list = list, loadError = null, unit = unit ?: it.unit, pulled = false, readAt = System.currentTimeMillis(), offline = false)
+                        else it.copy(pulled = false)
+                    }
                     if (current) nameIngredientsOf(list)
                 }
-                .onFailure { e -> _state.update { it.copy(loading = false, loadError = e, unit = unit ?: it.unit, pulled = false) } }
+                .onFailure { e -> _state.update { it.copy(loading = false, loadError = e, unit = unit ?: it.unit, pulled = false, offline = e is IOException && it.list.isNotEmpty()) } }
         }
     }
 

@@ -25,6 +25,7 @@ import net.whiteravens.dietapp.testing.fixture
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -192,9 +193,13 @@ class NotificationsViewModelTest {
         model.shownAgain(cameToTheFront = false)
         assertEquals(listOf(olasReminder), model.state.value.items)
 
+        val readAt = model.state.value.readAt
+        assertNotNull(readAt)
         coEvery { notifications.unread() } throws IOException("unreachable")
         model.shownAgain(cameToTheFront = false)
         assertEquals(listOf(olasReminder), model.state.value.items)
         assertNull(model.state.value.error)
+        assertTrue(model.state.value.offline)
+        assertEquals(readAt, model.state.value.readAt)
     }
 }

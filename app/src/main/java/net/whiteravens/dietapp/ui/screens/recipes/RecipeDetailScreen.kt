@@ -66,6 +66,7 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
@@ -104,6 +105,7 @@ fun RecipeDetailScreen(
                     )
                 }
             }
+            state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
 
             state.error?.let {
                 item {

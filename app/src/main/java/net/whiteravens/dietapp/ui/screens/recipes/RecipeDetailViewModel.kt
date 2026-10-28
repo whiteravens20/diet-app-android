@@ -24,6 +24,7 @@ import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.RecipeDetailRoute
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -66,6 +67,10 @@ class RecipeDetailViewModel @Inject constructor(
         val prefsFailed: Throwable? = null,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
+        val readAt: Long? = null,
+        /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
+        val offline: Boolean = false,
     ) {
         /** The profile the lines' ingredients are marked for. */
         val prefsProfile: ProfileDetails? get() = profiles.firstOrNull { it.id == prefsProfileId } ?: profiles.firstOrNull()
@@ -86,7 +91,7 @@ class RecipeDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(loading = true, recipe = null, error = null) }
             attempt { recipes.byId(recipeId) }
-                .onSuccess { recipe -> _state.update { it.copy(loading = false, recipe = recipe) } }
+                .onSuccess { recipe -> _state.update { it.copy(loading = false, recipe = recipe, readAt = System.currentTimeMillis(), offline = false) } }
                 .onFailure { e -> _state.update { it.copy(loading = false, error = e) } }
         }
     }
@@ -118,8 +123,8 @@ class RecipeDetailViewModel @Inject constructor(
         readProfiles()
         viewModelScope.launch {
             attempt { recipes.byId(recipeId) }
-                .onSuccess { recipe -> _state.update { it.copy(recipe = recipe, pulled = false) } }
-                .onFailure { _state.update { it.copy(pulled = false) } }
+                .onSuccess { recipe -> _state.update { it.copy(recipe = recipe, pulled = false, readAt = System.currentTimeMillis(), offline = false) } }
+                .onFailure { e -> _state.update { it.copy(pulled = false, offline = e is IOException) } }
         }
     }
 

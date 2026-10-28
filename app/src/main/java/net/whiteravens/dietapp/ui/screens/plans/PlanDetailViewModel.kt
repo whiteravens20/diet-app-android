@@ -80,6 +80,8 @@ class PlanDetailViewModel @Inject constructor(
         val offline: Boolean = false,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When the plan shown was read: from the server, or into the copy shown before its answer. */
+        val readAt: Long? = null,
         /** The meal an offer is being asked for, while it is asked. */
         val offering: String? = null,
         /** A recipe offered in the place of a meal, until it is taken or put away. */
@@ -149,7 +151,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { fresh ->
                     _state.update {
                         if (it.plan !== before) return@update it.copy(pulled = false)
-                        it.copy(plan = fresh, selectedDay = it.selectedDay.coerceIn(0, (fresh.days.size - 1).coerceAtLeast(0)), offline = false, pulled = false)
+                        it.copy(plan = fresh, selectedDay = it.selectedDay.coerceIn(0, (fresh.days.size - 1).coerceAtLeast(0)), offline = false, pulled = false, readAt = System.currentTimeMillis())
                     }
                 }
                 .onFailure { e ->
@@ -171,10 +173,10 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             val cached = plans.cachedPlan(planId)
-            if (cached != null) _state.value = UiState(loading = false, plan = cached, selectedDay = dayOf(cached))
+            if (cached != null) _state.value = UiState(loading = false, plan = cached, selectedDay = dayOf(cached), readAt = cached.syncedAt)
             attempt { plans.refreshPlan(planId) }
                 .onSuccess { fresh ->
-                    _state.update { it.copy(loading = false, plan = fresh, selectedDay = if (it.plan == null) dayOf(fresh) else it.selectedDay) }
+                    _state.update { it.copy(loading = false, plan = fresh, selectedDay = if (it.plan == null) dayOf(fresh) else it.selectedDay, readAt = System.currentTimeMillis()) }
                     readSwapChoices(fresh.profileId)
                 }
                 .onFailure { e ->

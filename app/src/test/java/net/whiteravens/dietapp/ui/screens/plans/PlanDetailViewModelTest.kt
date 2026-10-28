@@ -203,6 +203,8 @@ class PlanDetailViewModelTest {
         assertEquals(plan.id, model.state.value.plan?.id)
         assertTrue(model.state.value.offline)
         assertNull(model.state.value.error)
+        // The copy says when it was read: the time of its row.
+        assertEquals(1L, model.state.value.readAt)
     }
 
     @Test

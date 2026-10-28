@@ -51,6 +51,7 @@ import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -132,6 +133,7 @@ fun DashboardScreen(
                         NotificationsBell(state.unread, onClick = onOpenNotifications)
                     }
                 }
+                state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
                 state.profiles.forEach { stats ->
                     item(key = stats.profile.id) {
                         ProfileSummary(

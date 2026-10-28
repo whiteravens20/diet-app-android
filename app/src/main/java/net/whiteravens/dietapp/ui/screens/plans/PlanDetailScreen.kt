@@ -101,6 +101,7 @@ import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSigned
+import net.whiteravens.dietapp.ui.common.formatSyncedAt
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
@@ -335,7 +336,7 @@ fun PlanDetailScreen(
                         }
                     }
                 }
-                if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly)) }
+                if (state.offline) item { OfflineBanner(stringResource(R.string.offline_readonly, state.readAt?.let { formatSyncedAt(it) } ?: "—")) }
                 // A re-roll refused for something the user can allow: asked again with it allowed.
                 state.refused?.let { refused ->
                     item {

@@ -33,6 +33,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -223,11 +224,14 @@ class MealPlansViewModelTest {
         assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
         assertEquals(2, asked.size)
 
+        val readAt = model.state.value.syncedAt
+        assertNotNull(readAt)
         coEvery { plans.plans("ada", 1) } throws IOException("no network")
         model.shownAgain(cameToTheFront = false)
 
         assertEquals(listOf("p1", "new"), model.state.value.plans.map { it.id })
         assertTrue(model.state.value.offline)
+        assertEquals(readAt, model.state.value.syncedAt)
     }
 
     @Test

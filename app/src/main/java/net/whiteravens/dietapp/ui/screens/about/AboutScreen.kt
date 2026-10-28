@@ -31,6 +31,7 @@ import net.whiteravens.dietapp.ui.common.LICENCE_URL
 import net.whiteravens.dietapp.ui.common.SOURCE_URL
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.rememberWebPages
@@ -45,6 +46,7 @@ fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutVie
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     val version by viewModel.version.collectAsStateWithLifecycle()
     val pulled by viewModel.pulled.collectAsStateWithLifecycle()
+    val reading by viewModel.reading.collectAsStateWithLifecycle()
     val web = rememberWebPages()
     // Read again on being shown again: the instance may have changed what it publishes.
     WhenShownAgain(viewModel::shownAgain)
@@ -58,6 +60,7 @@ fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutVie
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ScreenHeader(title = stringResource(R.string.about_title), onBack = onBack)
+            reading.readAt?.takeIf { reading.offline }?.let { readAt -> OfflineAsOf(readAt) }
 
             AppCard {
                 Title(stringResource(R.string.about_instance))

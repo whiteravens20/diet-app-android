@@ -17,6 +17,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -38,6 +39,10 @@ class NotificationsViewModel @Inject constructor(
         val marking: String? = null,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
+        val readAt: Long? = null,
+        /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
+        val offline: Boolean = false,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -77,10 +82,13 @@ class NotificationsViewModel @Inject constructor(
                 .onSuccess { found ->
                     val named = names.await()
                     // One read or put away while this was read was answered after it: what is shown is newer.
-                    _state.update { if (it.items === before) it.copy(loading = false, items = found, names = named, error = null, pulled = false) else it.copy(loading = false, pulled = false) }
+                    _state.update {
+                        if (it.items === before) it.copy(loading = false, items = found, names = named, error = null, pulled = false, readAt = System.currentTimeMillis(), offline = false)
+                        else it.copy(loading = false, pulled = false)
+                    }
                 }
                 .onFailure { e ->
-                    _state.update { if (showLoading || it.items.isEmpty()) it.copy(loading = false, error = e, pulled = false) else it.copy(pulled = false) }
+                    _state.update { if (showLoading || it.items.isEmpty()) it.copy(loading = false, error = e, pulled = false) else it.copy(pulled = false, offline = e is IOException) }
                 }
         }
     }

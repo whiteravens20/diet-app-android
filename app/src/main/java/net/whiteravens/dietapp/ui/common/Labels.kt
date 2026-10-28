@@ -250,11 +250,12 @@ fun formatDates(from: String, to: String): String {
 fun formatDayDate(iso: String): String =
     LocalDate.parse(iso).format(DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()))
 
-/** Cache timestamp → `12 Jul, 14:03` for the offline banner. */
-fun formatSyncedAt(epochMillis: Long): String =
-    Instant.ofEpochMilli(epochMillis)
-        .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.getDefault()))
+/** When what a screen shows was read, for its offline banner: `14:03` today, `12 Jul, 14:03` on another day. */
+fun formatSyncedAt(epochMillis: Long, today: LocalDate = LocalDate.now()): String {
+    val at = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault())
+    val pattern = if (at.toLocalDate() == today) "HH:mm" else "d MMM, HH:mm"
+    return at.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+}
 
 /** A moment in the phone's time zone, as the language of the app's texts writes a day and an hour: `17 Oct 2026, 10:42`. */
 @Composable

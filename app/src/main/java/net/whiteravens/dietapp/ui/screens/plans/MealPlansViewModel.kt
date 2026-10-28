@@ -56,7 +56,7 @@ class MealPlansViewModel @Inject constructor(
         /** The last page of the list fetched, and how many there are. */
         val page: Int = 1,
         val totalPages: Int = 1,
-        /** When the list on screen was fetched, if it came from the cache. */
+        /** When the list shown was read: from the server, or into the copy shown before its answer. */
         val syncedAt: Long? = null,
         val refreshing: Boolean = false,
         /** A read asked for by pulling the screen down is under way. */
@@ -128,7 +128,7 @@ class MealPlansViewModel @Inject constructor(
                         }
                     }
                 }
-                .onFailure { _state.update { it.copy(pulled = false) } }
+                .onFailure { e -> _state.update { it.copy(pulled = false, offline = it.offline || e is IOException) } }
         }
     }
 
@@ -163,7 +163,7 @@ class MealPlansViewModel @Inject constructor(
             attempt { plans.plans(profileId) }
                 .onSuccess { fresh ->
                     ifStillShown(profileId) {
-                        it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = null, refreshing = false, pulled = false, error = null)
+                        it.copy(plans = fresh.plans, page = 1, totalPages = fresh.totalPages, syncedAt = System.currentTimeMillis(), refreshing = false, pulled = false, offline = false, error = null)
                     }
                 }
                 .onFailure { e ->

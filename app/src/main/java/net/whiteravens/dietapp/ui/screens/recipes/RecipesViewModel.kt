@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.domain.RecipeFilter
 import net.whiteravens.dietapp.domain.RecipePage
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -67,6 +68,10 @@ class RecipesViewModel @Inject constructor(
         val error: Throwable? = null,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
+        val readAt: Long? = null,
+        /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
+        val offline: Boolean = false,
     )
 
     /** The words of the search field as typed; looked for once typing pauses. */
@@ -134,10 +139,10 @@ class RecipesViewModel @Inject constructor(
                     _state.update {
                         if (it.items !== shown.items || it.tab != shown.tab || it.filter != shown.filter) return@update it.copy(pulled = false)
                         val last = pages.last()
-                        it.copy(items = pages.flatMap { page -> page.items }, page = last.page, hasMore = last.page < last.totalPages, pulled = false)
+                        it.copy(items = pages.flatMap { page -> page.items }, page = last.page, hasMore = last.page < last.totalPages, pulled = false, readAt = System.currentTimeMillis(), offline = false)
                     }
                 }
-                .onFailure { _state.update { it.copy(pulled = false) } }
+                .onFailure { e -> _state.update { it.copy(pulled = false, offline = e is IOException) } }
         }
     }
 
@@ -228,6 +233,8 @@ class RecipesViewModel @Inject constructor(
                         it.copy(
                             loading = false,
                             items = pageResult.items,
+                            readAt = System.currentTimeMillis(),
+                            offline = false,
                             page = pageResult.page,
                             hasMore = pageResult.page < pageResult.totalPages,
                         )

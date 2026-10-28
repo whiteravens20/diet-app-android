@@ -67,6 +67,7 @@ import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -105,6 +106,7 @@ fun PantryScreen(
                     onBack = onBack,
                 )
             }
+            state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
 
             when {
                 state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }

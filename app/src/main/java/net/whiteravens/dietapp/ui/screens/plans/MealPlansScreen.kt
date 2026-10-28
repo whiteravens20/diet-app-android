@@ -39,11 +39,11 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.formatSyncedAt
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
@@ -106,12 +106,8 @@ fun MealPlansScreen(
                 state.error?.let { item { ErrorBanner(errorMessage(it)) } }
                 if (state.offline) {
                     item {
-                        OfflineBanner(
-                            stringResource(
-                                R.string.offline_cached,
-                                state.syncedAt?.let(::formatSyncedAt) ?: "—",
-                            ),
-                        )
+                        state.syncedAt?.let { readAt -> OfflineAsOf(readAt) }
+                            ?: OfflineBanner(stringResource(R.string.offline_cached, "—"))
                     }
                 }
                 val profileId = state.selectedProfileId

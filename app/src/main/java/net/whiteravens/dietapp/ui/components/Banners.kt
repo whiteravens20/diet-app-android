@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.formatSyncedAt
 
 /** Inline error strip (destructive tint), matching the web's error notices. */
 @Composable
@@ -163,3 +164,8 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
         }
     }
 }
+
+/** The screen shows what it read at [readAt], as the server cannot be reached now. */
+@Composable
+fun OfflineAsOf(readAt: Long, modifier: Modifier = Modifier) =
+    OfflineBanner(stringResource(R.string.offline_cached, formatSyncedAt(readAt)), modifier)

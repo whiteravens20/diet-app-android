@@ -59,6 +59,7 @@ import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.weightLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -100,6 +101,7 @@ fun ProfilesScreen(
             )
             // A change refused outside a form (a preference, a profile that could not be deleted) is said here.
             state.error?.let { ErrorBanner(errorMessage(it)) }
+            state.readAt?.takeIf { state.offline }?.let { readAt -> OfflineAsOf(readAt) }
 
             when {
                 state.loading && list.isEmpty() -> {

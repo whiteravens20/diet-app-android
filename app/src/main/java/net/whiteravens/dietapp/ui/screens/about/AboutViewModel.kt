@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.domain.InstanceRules
@@ -28,6 +29,12 @@ class AboutViewModel @Inject constructor(private val server: ServerRepository) :
 
     /** A read asked for by pulling the screen down is under way. */
     val pulled: StateFlow<Boolean> = _pulled.asStateFlow()
+
+    /** When what the instance publishes was read, and whether reading it anew failed for want of a network. */
+    data class Reading(val readAt: Long? = null, val offline: Boolean = false)
+
+    private val _reading = MutableStateFlow(Reading())
+    val reading: StateFlow<Reading> = _reading.asStateFlow()
 
     private val again = ReadingAnew()
 
@@ -50,7 +57,8 @@ class AboutViewModel @Inject constructor(private val server: ServerRepository) :
     private fun read() {
         again.begun()
         viewModelScope.launch {
-            server.readAgain()
+            val answered = server.readAgain()
+            _reading.update { if (answered) Reading(readAt = System.currentTimeMillis()) else it.copy(offline = it.readAt != null) }
             _pulled.value = false
         }
     }

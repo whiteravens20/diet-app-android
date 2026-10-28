@@ -56,6 +56,8 @@ class ShoppingViewModel @Inject constructor(
         val offline: Boolean = false,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When the lists shown were read: from the server, or into the copies shown before its answer. */
+        val readAt: Long? = null,
         /** Ids of items with an update in flight. */
         val updating: Set<String> = emptySet(),
         /** What a list could do without, as it was asked of the list (its id and when it was made). */
@@ -142,7 +144,7 @@ class ShoppingViewModel @Inject constructor(
             attempt { lists.refreshForPlan(planId) }
                 .onSuccess { fresh ->
                     _state.update {
-                        if (it.selectedPlanId == planId && it.lists === before) it.copy(lists = fresh.newestFirst(), offline = false, pulled = false)
+                        if (it.selectedPlanId == planId && it.lists === before) it.copy(lists = fresh.newestFirst(), offline = false, pulled = false, readAt = System.currentTimeMillis())
                         else it.copy(pulled = false)
                     }
                 }
@@ -195,12 +197,12 @@ class ShoppingViewModel @Inject constructor(
             _state.update { it.copy(listLoading = true) }
             val cached = lists.cachedForPlan(planId).newestFirst()
             if (cached.isNotEmpty()) {
-                _state.update { if (it.selectedPlanId == planId) it.copy(lists = cached, listLoading = false) else it }
+                _state.update { if (it.selectedPlanId == planId) it.copy(lists = cached, listLoading = false, readAt = cached.mapNotNull { list -> list.syncedAt }.maxOrNull()) else it }
             }
             attempt { lists.refreshForPlan(planId) }
                 .onSuccess { fresh ->
                     _state.update {
-                        if (it.selectedPlanId == planId) it.copy(lists = fresh.newestFirst(), listLoading = false, offline = false) else it
+                        if (it.selectedPlanId == planId) it.copy(lists = fresh.newestFirst(), listLoading = false, offline = false, readAt = System.currentTimeMillis()) else it
                     }
                 }
                 .onFailure { e ->

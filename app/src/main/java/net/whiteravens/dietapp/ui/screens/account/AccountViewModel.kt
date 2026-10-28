@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
+import java.io.IOException
 import javax.inject.Inject
 
 /** Session account details, the confirmation mail sent again, the unit weights are shown in, the server setting and sign-out. */
@@ -48,6 +49,10 @@ class AccountViewModel @Inject constructor(
         val unitError: Throwable? = null,
         /** A read asked for by pulling the screen down is under way. */
         val pulled: Boolean = false,
+        /** When what is shown was read, in the phone's milliseconds; null before the first answer. */
+        val readAt: Long? = null,
+        /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
+        val offline: Boolean = false,
     ) {
         /** The unit weights are shown in as the account has it, or as it was just chosen: `kg`, `lb`, or null for where the phone is. */
         val weightUnit: String?
@@ -106,8 +111,8 @@ class AccountViewModel @Inject constructor(
         again.begun()
         viewModelScope.launch {
             attempt { users.me() }
-                .onSuccess { me -> _state.update { it.copy(user = me, pulled = false) } }
-                .onFailure { _state.update { it.copy(pulled = false) } }
+                .onSuccess { me -> _state.update { it.copy(user = me, pulled = false, readAt = System.currentTimeMillis(), offline = false) } }
+                .onFailure { e -> _state.update { it.copy(pulled = false, offline = e is IOException) } }
         }
     }
 
@@ -132,7 +137,7 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             attempt { users.me() }
-                .onSuccess { _state.value = UiState(loading = false, user = it) }
+                .onSuccess { _state.value = UiState(loading = false, user = it, readAt = System.currentTimeMillis()) }
                 .onFailure { _state.value = UiState(loading = false, error = it) }
         }
     }

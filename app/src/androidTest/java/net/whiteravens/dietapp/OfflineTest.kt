@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp
 
 import android.os.ParcelFileDescriptor
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -19,6 +20,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.common.formatDate
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,6 +57,11 @@ class OfflineTest {
     @After
     fun backOnline() = airplaneMode(false)
 
+    private companion object {
+        /** Stands in the read-only text where the time goes, to be split at. */
+        const val TIME = "\u0000"
+    }
+
     @Test
     fun aPlanOpenedOnceIsReadWithoutANetworkFromTheCopyOnThePhone() {
         val account = Instance.newAccount()
@@ -75,10 +82,14 @@ class OfflineTest {
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
         screen.scrollToText(card, substring = true)
 
-        // Opened again without it: the copy, said to be one, with its meals.
+        // Opened again without it: the copy, said to be one with the time it was read, and its meals.
         airplaneMode(true)
         screen.onNodeWithText(card, substring = true).performClick()
-        screen.waitForText(text(R.string.offline_readonly), timeoutMillis = 40_000)
+        // The text around the time, with the time itself told by the clock's form alone.
+        val (asOf, readOnly) = text(R.string.offline_readonly, TIME).split(TIME)
+        screen.waitForText(readOnly, substring = true, timeoutMillis = 40_000)
+        val said = screen.onNodeWithText(readOnly, substring = true).fetchSemanticsNode().config[SemanticsProperties.Text].joinToString("")
+        assertTrue(said, said.matches(Regex(Regex.escape(asOf) + ".*\\d{2}:\\d{2}" + Regex.escape(readOnly))))
         screen.scrollToText(title)
         screen.keepScreenshot("offline-a-plan-from-the-copy")
     }

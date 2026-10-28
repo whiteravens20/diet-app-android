@@ -149,8 +149,8 @@
     <string name="unit_kcal">kcal</string>
 
     <!-- Offline -->
-    <string name="offline_cached">Offline — dane z synchronizacji %1$s</string>
-    <string name="offline_readonly">Offline — wyświetlana jest kopia z pamięci; zmiany są wyłączone.</string>
+    <string name="offline_cached">Offline — stan z %1$s</string>
+    <string name="offline_readonly">Offline — stan z %1$s; zmiany są wyłączone.</string>
 
     <!-- Meal plans -->
     <string name="plans_subtitle">Plany dopasowane do celu kalorycznego każdego profilu.</string>

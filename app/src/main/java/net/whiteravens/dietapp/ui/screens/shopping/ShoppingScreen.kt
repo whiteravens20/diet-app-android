@@ -69,13 +69,13 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatNumber
-import net.whiteravens.dietapp.ui.common.formatSyncedAt
 import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.OfflineBanner
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
@@ -209,12 +209,8 @@ fun ShoppingScreen(
             state.error?.let { item { ErrorBanner(errorMessage(it)) } }
             if (state.offline) {
                 item {
-                    OfflineBanner(
-                        stringResource(
-                            R.string.offline_cached,
-                            state.list?.syncedAt?.let(::formatSyncedAt) ?: "—",
-                        ),
-                    )
+                    state.readAt?.let { readAt -> OfflineAsOf(readAt) }
+                        ?: OfflineBanner(stringResource(R.string.offline_cached, "—"))
                 }
             }
 

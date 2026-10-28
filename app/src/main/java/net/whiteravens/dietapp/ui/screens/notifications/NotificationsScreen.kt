@@ -41,6 +41,7 @@ import net.whiteravens.dietapp.ui.common.formatMoment
 import net.whiteravens.dietapp.ui.common.notificationText
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
@@ -69,6 +70,7 @@ fun NotificationsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item { ScreenHeader(title = stringResource(R.string.notifications_title), onBack = onBack) }
+            state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
             if (state.items.isNotEmpty()) {
                 item {
                     // On a line of its own: beside the title, the words would squeeze it on a narrow phone.

@@ -45,6 +45,7 @@ import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
@@ -103,6 +104,7 @@ fun AccountScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ScreenHeader(title = stringResource(R.string.account_title), onBack = onBack)
+            state.readAt?.takeIf { state.offline }?.let { readAt -> OfflineAsOf(readAt) }
 
             state.error?.let {
                 ErrorBanner(errorMessage(it))
