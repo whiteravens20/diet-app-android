@@ -33,6 +33,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DaySettingsPreview
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
@@ -40,6 +41,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -103,7 +105,7 @@ fun DaySettingsDialog(
                         onValueChange = viewModel::setTarget,
                         label = stringResource(R.string.plans_settings_own_target),
                         hint = stringResource(R.string.plans_settings_own_target_hint),
-                        problem = if (state.targetProblem) between(DaySettingsViewModel.TARGET_RANGE) else null,
+                        problem = fieldProblem(state.targetNotWhole, state.refused["calorieTarget"]),
                         keyboardType = KeyboardType.Number,
                     )
                     FormField(
@@ -111,7 +113,7 @@ fun DaySettingsDialog(
                         onValueChange = viewModel::setCookTime,
                         label = stringResource(R.string.plans_settings_cook_time),
                         hint = stringResource(R.string.plans_settings_cook_time_hint),
-                        problem = if (state.cookTimeProblem) between(DaySettingsViewModel.COOK_TIME_RANGE) else null,
+                        problem = fieldProblem(state.cookTimeNotWhole, state.refused["cookTimeBudgetMinutes"]),
                         keyboardType = KeyboardType.Number,
                     )
                     CheckRow(
@@ -125,7 +127,7 @@ fun DaySettingsDialog(
                 Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     val preview = state.preview
                     when {
-                        state.settings == null -> Note(stringResource(R.string.plans_settings_fix_fields))
+                        state.settings == null || state.refused.isNotEmpty() -> Note(stringResource(R.string.plans_settings_fix_fields))
                         preview == null && state.previewError != null -> ErrorBanner(errorMessage(state.previewError!!))
                         preview == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
                         else -> Column(Modifier.alpha(if (state.current) 1f else 0.6f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -213,8 +215,13 @@ private fun kindLabel(kind: String): String = stringResource(
     },
 )
 
+/** What a field of whole numbers says: that what it holds is none, or why the API refused it. */
 @Composable
-private fun between(range: IntRange): String = stringResource(R.string.profile_field_between, formatNumber(range.first), formatNumber(range.last))
+private fun fieldProblem(notWhole: Boolean, refused: FieldRefusal?): String? = when {
+    notWhole -> stringResource(R.string.refusal_not_whole)
+    refused != null -> refusalText(refused)
+    else -> null
+}
 
 @Composable
 private fun Note(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {

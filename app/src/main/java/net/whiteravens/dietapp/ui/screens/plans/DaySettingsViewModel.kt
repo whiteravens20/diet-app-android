@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.RelaxationNeeded
@@ -26,7 +27,8 @@ import javax.inject.Inject
  * The settings of a day of a running plan, as the web's window changes them: the day's kind, its
  * number of meals, a target of its own, a limit on cooking time and whether it uses up what the
  * pantry has to use up. What a change would do is the API's answer to the settings on the screen,
- * asked once the typing has paused; nothing changes until the settings are saved.
+ * asked once the typing has paused, and a field the API refuses is marked with the reason it gives;
+ * nothing changes until the settings are saved.
  */
 @HiltViewModel
 class DaySettingsViewModel @Inject constructor(private val plans: MealPlanRepository) : ViewModel() {
@@ -46,7 +48,10 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         val preview: DaySettingsPreview? = null,
         /** The preview is for the settings on the screen; false while a newer one is on its way. */
         val current: Boolean = false,
+        /** Why the preview could not be had, where it was not for the fields the API refused. */
         val previewError: Throwable? = null,
+        /** The fields the API refused, by the path it names them by (`calorieTarget`, `cookTimeBudgetMinutes`). */
+        val refused: Map<String, FieldRefusal> = emptyMap(),
         val saving: Boolean = false,
         val error: Throwable? = null,
         /** The limits that stood in the way of a save, which the user may let give way. */
@@ -56,11 +61,11 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         /** A save was refused as the plan had changed: it is to be read anew. */
         val stale: Boolean = false,
     ) {
-        /** The settings on the screen, or null while a typed number is none the API takes. */
+        /** The settings on the screen, or null while a field holds what is no whole number. */
         val settings: DaySettings?
             get() {
                 val start = start ?: return null
-                if (targetProblem || cookTimeProblem) return null
+                if (targetNotWhole || cookTimeNotWhole) return null
                 val own = target.typed()!!
                 val minutes = cookTime.typed()!!
                 return DaySettings(
@@ -73,9 +78,9 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
                 )
             }
 
-        /** Whether the typed target, or the typed minutes, is what the API refuses; an empty field is none. */
-        val targetProblem: Boolean get() = target.typed().refused(TARGET_RANGE)
-        val cookTimeProblem: Boolean get() = cookTime.typed().refused(COOK_TIME_RANGE)
+        /** Whether the typed target, or the typed minutes, is no whole number; an empty field is none. The API says what it takes. */
+        val targetNotWhole: Boolean get() = target.typed() == null
+        val cookTimeNotWhole: Boolean get() = cookTime.typed() == null
     }
 
     private val _state = MutableStateFlow(UiState())
@@ -115,7 +120,7 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
     }
 
     private fun edit(change: (UiState) -> UiState) {
-        _state.update { change(it).copy(current = false, inTheWay = null, error = null) }
+        _state.update { change(it).copy(current = false, inTheWay = null, error = null, refused = emptyMap()) }
         ask(pause = true)
     }
 
@@ -127,8 +132,13 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         asking = viewModelScope.launch {
             if (pause) delay(PAUSE_MILLIS)
             attempt { plans.previewDaySettings(current.planId, current.dayId, asked) }
-                .onSuccess { preview -> _state.update { if (it.settings == asked) it.copy(preview = preview, current = true, previewError = null) else it } }
-                .onFailure { e -> _state.update { if (it.settings == asked) it.copy(previewError = e) else it } }
+                .onSuccess { preview ->
+                    _state.update { if (it.settings == asked) it.copy(preview = preview, current = true, previewError = null, refused = emptyMap()) else it }
+                }
+                .onFailure { e ->
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    _state.update { if (it.settings == asked) it.copy(previewError = e.takeIf { refused.isEmpty() }, refused = refused) else it }
+                }
         }
     }
 
@@ -145,7 +155,10 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
                     val needed = plans.relaxationNeeded(e)
                     // The preview was for the plan as it was: where the plan changed, both are read anew.
                     val changed = e is ApiException && e.code == "PLAN_CHANGED"
-                    _state.update { it.copy(saving = false, inTheWay = needed, error = e.takeIf { needed == null }, stale = changed) }
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    _state.update {
+                        it.copy(saving = false, inTheWay = needed, error = e.takeIf { needed == null && refused.isEmpty() }, stale = changed, refused = refused)
+                    }
                     if (changed) ask(pause = false)
                 }
         }
@@ -160,10 +173,6 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         /** The numbers of meals a day can have. */
         val MEAL_COUNTS = listOf(2, 3, 4, 5)
 
-        /** The target of a day of its own, and the most minutes of cooking, as the API takes them. */
-        val TARGET_RANGE = 800..6000
-        val COOK_TIME_RANGE = 0..600
-
         /** How long the typing has to pause before the API is asked. */
         const val PAUSE_MILLIS = 300L
     }
@@ -173,6 +182,3 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
 private data class Typed(val value: Int?)
 
 private fun String.typed(): Typed? = if (isBlank()) Typed(null) else trim().toIntOrNull()?.let { Typed(it) }
-
-/** A field holds what the API refuses: no whole number, or one outside [range]. */
-private fun Typed?.refused(range: IntRange): Boolean = this == null || (value != null && value !in range)

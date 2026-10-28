@@ -18,11 +18,13 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.RelaxationNeeded
+import net.whiteravens.dietapp.testing.refusal
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -121,26 +123,49 @@ class DaySettingsViewModelTest {
     }
 
     @Test
-    fun `an empty field is none, and a number the API refuses asks nothing`() = runTest(main) {
+    fun `an empty field is none, what is no whole number asks nothing, and the fields the API refuses are marked with its reasons`() = runTest(main) {
+        val outOfBounds = asItIs.copy(calorieTarget = 100, cookTimeMinutes = 1000)
+        coEvery { plans.previewDaySettings("plan", "day", outOfBounds) } answers {
+            asked += thirdArg<DaySettings>()
+            throw refusal("day-settings-preview-refused")
+        }
         val model = opened(asItIs.copy(calorieTarget = 2500, cookTimeMinutes = 30))
         runCurrent()
         asked.clear()
 
-        model.setTarget("700")
+        model.setTarget("100")
         model.setCookTime("thirty")
         advanceTimeBy(DaySettingsViewModel.PAUSE_MILLIS * 2)
         runCurrent()
-        assertTrue(model.state.value.targetProblem)
-        assertTrue(model.state.value.cookTimeProblem)
+        assertFalse(model.state.value.targetNotWhole)
+        assertTrue(model.state.value.cookTimeNotWhole)
         assertNull(model.state.value.settings)
         assertEquals(emptyList<DaySettings>(), asked)
 
-        model.setTarget("")
-        model.setCookTime(" 45 ")
+        model.setCookTime("1000")
         advanceTimeBy(DaySettingsViewModel.PAUSE_MILLIS * 2)
         runCurrent()
 
-        assertEquals(listOf(asItIs.copy(cookTimeMinutes = 45)), asked)
+        assertEquals(listOf(outOfBounds), asked)
+        assertEquals(
+            mapOf(
+                "calorieTarget" to FieldRefusal.TooSmall(800.0, inclusive = true),
+                "cookTimeBudgetMinutes" to FieldRefusal.TooBig(600.0, inclusive = true),
+            ),
+            model.state.value.refused,
+        )
+        // The fields say why; the answer before is no longer the settings' own, so nothing is saved.
+        assertNull(model.state.value.previewError)
+        assertFalse(model.state.value.current)
+
+        model.setTarget("")
+        model.setCookTime(" 45 ")
+        assertEquals(emptyMap<String, FieldRefusal>(), model.state.value.refused)
+        advanceTimeBy(DaySettingsViewModel.PAUSE_MILLIS * 2)
+        runCurrent()
+
+        assertEquals(listOf(outOfBounds, asItIs.copy(cookTimeMinutes = 45)), asked)
+        assertTrue(model.state.value.current)
     }
 
     @Test
