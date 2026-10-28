@@ -4,11 +4,12 @@ package net.whiteravens.dietapp.ui.screens.plans
 
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.testing.refusal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** A meal of one's own as its form is filled in, held to what the API takes, as the web's form holds it. */
+/** A meal of one's own as its form is filled in: numbers where numbers are asked for, and what the API takes of them is the API's to say. */
 class CustomMealFormTest {
     private val filled = CustomMealForm(name = " Mum's lasagne ", slot = "dinner", calories = "450", protein = "22,5", fat = "18", carbs = "48", servings = "1.5")
 
@@ -26,13 +27,22 @@ class CustomMealFormTest {
     }
 
     @Test
-    fun `every field is needed, and each is held to the API's bounds`() {
-        val refused = CustomMealForm(name = "   ", calories = "5001", protein = "-1", fat = "x", carbs = "", servings = "0.2")
+    fun `each number is needed and has to be one, and what the API takes of them or of the name is left to the API`() {
+        val unread = CustomMealForm(name = "Soup", calories = "x", protein = "", fat = "NaN", carbs = "40", servings = "two")
 
-        assertEquals(CustomMealField.entries.toSet(), refused.problems())
-        assertNull(refused.meal())
-        assertEquals(setOf(CustomMealField.NAME), filled.copy(name = "x".repeat(121)).problems())
-        assertEquals(setOf(CustomMealField.SERVINGS), filled.copy(servings = "20.5").problems())
-        assertEquals(emptySet<CustomMealField>(), filled.copy(calories = "0", servings = "0.25").problems())
+        assertEquals(setOf(CustomMealField.CALORIES, CustomMealField.PROTEIN, CustomMealField.FAT, CustomMealField.SERVINGS), unread.problems())
+        assertNull(unread.meal())
+        // Sent as typed, for the API to refuse with its reasons: a name of spaces, numbers past its bounds.
+        val outOfBounds = CustomMealForm(name = "   ", calories = "6000", protein = "600", fat = "600", carbs = "1200", servings = "30")
+        assertEquals(emptySet<CustomMealField>(), outOfBounds.problems())
+        assertEquals(CustomMeal("", "lunch", Nutrition(6000.0, 600.0, 600.0, 1200.0), 30.0), outOfBounds.meal())
+    }
+
+    @Test
+    fun `each field is the one the API names when it refuses what it holds`() {
+        // The API's answer to a name too long and every number past its bounds.
+        val refused = refusal("custom-meal-refused").fieldRefusals.keys
+
+        assertEquals(CustomMealField.entries.map { it.path }, refused.toList())
     }
 }

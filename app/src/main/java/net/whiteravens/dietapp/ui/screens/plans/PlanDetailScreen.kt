@@ -90,6 +90,7 @@ import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
+import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
@@ -103,6 +104,7 @@ import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatSigned
 import net.whiteravens.dietapp.ui.common.formatSyncedAt
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AiOffNote
@@ -149,14 +151,23 @@ fun PlanDetailScreen(
     val busy = state.changing || state.taking
 
     addingTo?.let { date ->
+        // The window stays until the meal is added: a refusal is said by its fields.
+        LaunchedEffect(state.customMeal?.added) {
+            if (state.customMeal?.added == true) {
+                addingTo = null
+                viewModel.customMealClosed()
+            }
+        }
         CustomMealDialog(
             date = date,
             meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty(),
-            onAdd = { meal, replaces ->
+            sent = state.customMeal,
+            sending = state.changing,
+            onAdd = { meal, replaces -> viewModel.addCustomMeal(date, meal, replaces) },
+            onDismiss = {
                 addingTo = null
-                viewModel.addCustomMeal(date, meal, replaces)
+                viewModel.customMealClosed()
             },
-            onDismiss = { addingTo = null },
         )
     }
 
@@ -984,27 +995,39 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
  * A meal of the user's own added to a day: its name, its time of day, what one serving holds and
  * how many servings it is, and whether it comes beside the day's [meals] or in the place of one of
  * them. What that adds to the day, and what it does to the day's other meals, is shown before
- * anything is sent, so that nobody types the whole meal as one serving of several.
+ * anything is sent, so that nobody types the whole meal as one serving of several. A field the API
+ * refused says why, from what came of the meal [sent] last.
  */
 @Composable
-private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal, replaces: String?) -> Unit, onDismiss: () -> Unit) {
+private fun CustomMealDialog(
+    date: String,
+    meals: List<Meal>,
+    sent: PlanDetailViewModel.CustomMealSent?,
+    sending: Boolean,
+    onAdd: (CustomMeal, replaces: String?) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var form by rememberSaveable(stateSaver = CustomMealFormSaver) { mutableStateOf(CustomMealForm()) }
     // The meal of the day this one is eaten in the place of; none for one beside them.
     var replaces by rememberSaveable { mutableStateOf<String?>(null) }
     var showProblems by rememberSaveable { mutableStateOf(false) }
     val problems = if (showProblems) form.problems() else emptySet()
-    @Composable
-    fun between(range: ClosedFloatingPointRange<Double>): String =
-        stringResource(R.string.profile_field_between, formatNumber(range.start, fractionDigits = 2), formatNumber(range.endInclusive, fractionDigits = 2))
+    val refused = sent?.refused.orEmpty()
 
     @Composable
-    fun Amount(value: String, label: String, field: CustomMealField, range: ClosedFloatingPointRange<Double>, change: (CustomMealForm, String) -> CustomMealForm, hint: String? = null) {
+    fun problemOf(field: CustomMealField, bound: Bound): String? = when {
+        field in problems -> stringResource(R.string.refusal_not_a_number)
+        else -> refused[field.path]?.let { refusalText(it, bound) }
+    }
+
+    @Composable
+    fun Amount(value: String, label: String, field: CustomMealField, change: (CustomMealForm, String) -> CustomMealForm, hint: String? = null) {
         FormField(
             value = value,
             onValueChange = { typed -> form = change(form, typed) },
             label = label,
             hint = hint,
-            problem = if (field in problems) between(range) else null,
+            problem = problemOf(field, Bound.Number(decimals = 2)),
             keyboardType = KeyboardType.Decimal,
         )
     }
@@ -1021,7 +1044,7 @@ private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal
                     value = form.name,
                     onValueChange = { typed -> form = form.copy(name = typed) },
                     label = stringResource(R.string.plans_custom_name),
-                    problem = if (CustomMealField.NAME in problems) stringResource(R.string.plans_custom_name_problem, CustomMealBounds.NAME_LENGTH) else null,
+                    problem = problemOf(CustomMealField.NAME, Bound.Characters),
                     keyboardType = KeyboardType.Text,
                     capitalization = KeyboardCapitalization.Sentences,
                 )
@@ -1043,15 +1066,14 @@ private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal
                     onSelect = { id -> replaces = id },
                 )
                 Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
-                Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, CustomMealBounds.CALORIES, { f, v -> f.copy(calories = v) })
-                Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, CustomMealBounds.PROTEIN, { f, v -> f.copy(protein = v) })
-                Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, CustomMealBounds.FAT, { f, v -> f.copy(fat = v) })
-                Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, CustomMealBounds.CARBS, { f, v -> f.copy(carbs = v) })
+                Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
+                Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) })
+                Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) })
+                Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) })
                 Amount(
                     form.servings,
                     stringResource(R.string.plans_custom_servings),
                     CustomMealField.SERVINGS,
-                    CustomMealBounds.SERVINGS,
                     { f, v -> f.copy(servings = v) },
                     hint = stringResource(R.string.plans_custom_servings_hint),
                 )
@@ -1077,6 +1099,7 @@ private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                sent?.error?.let { ErrorBanner(errorMessage(it)) }
             }
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
@@ -1085,6 +1108,7 @@ private fun CustomMealDialog(date: String, meals: List<Meal>, onAdd: (CustomMeal
                         val meal = form.meal()
                         if (meal != null) onAdd(meal, replaces) else showProblems = true
                     },
+                    enabled = !sending,
                 ) { Text(stringResource(R.string.plans_custom_submit)) }
             }
         }

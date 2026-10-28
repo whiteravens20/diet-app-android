@@ -6,22 +6,20 @@ import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.Nutrition
 import kotlin.math.roundToInt
 
-/** The bounds the API holds a meal of one's own to: what one serving holds, and how many servings it is. */
-object CustomMealBounds {
-    const val NAME_LENGTH = 120
-    val CALORIES = 0.0..5000.0
-    val PROTEIN = 0.0..500.0
-    val FAT = 0.0..500.0
-    val CARBS = 0.0..1000.0
-    val SERVINGS = 0.25..20.0
+/** A field of a meal of one's own, by the path the API names it by when it refuses what it holds. */
+enum class CustomMealField(val path: String) {
+    NAME("name"),
+    CALORIES("nutrition.calories"),
+    PROTEIN("nutrition.protein"),
+    FAT("nutrition.fat"),
+    CARBS("nutrition.carbs"),
+    SERVINGS("servings"),
 }
-
-/** A field of a meal of one's own that holds what the API would refuse. */
-enum class CustomMealField { NAME, CALORIES, PROTEIN, FAT, CARBS, SERVINGS }
 
 /**
  * A meal of the user's own as its form is filled in. Such a meal has no ingredients, so what it
- * holds is what the user says: the numbers of one serving, and how many servings the meal is.
+ * holds is what the user says: the numbers of one serving, and how many servings the meal is. What
+ * the API takes of them is the API's to say.
  */
 data class CustomMealForm(
     val name: String = "",
@@ -32,14 +30,13 @@ data class CustomMealForm(
     val carbs: String = "",
     val servings: String = "1",
 ) {
-    /** The fields that hold what the API would refuse; every field is needed. */
+    /** The fields that hold no number where one is asked for; each number is needed. */
     fun problems(): Set<CustomMealField> = buildSet {
-        if (name.isBlank() || name.trim().length > CustomMealBounds.NAME_LENGTH) add(CustomMealField.NAME)
-        if (!calories.within(CustomMealBounds.CALORIES)) add(CustomMealField.CALORIES)
-        if (!protein.within(CustomMealBounds.PROTEIN)) add(CustomMealField.PROTEIN)
-        if (!fat.within(CustomMealBounds.FAT)) add(CustomMealField.FAT)
-        if (!carbs.within(CustomMealBounds.CARBS)) add(CustomMealField.CARBS)
-        if (!servings.within(CustomMealBounds.SERVINGS)) add(CustomMealField.SERVINGS)
+        if (calories.number() == null) add(CustomMealField.CALORIES)
+        if (protein.number() == null) add(CustomMealField.PROTEIN)
+        if (fat.number() == null) add(CustomMealField.FAT)
+        if (carbs.number() == null) add(CustomMealField.CARBS)
+        if (servings.number() == null) add(CustomMealField.SERVINGS)
     }
 
     /**
@@ -47,13 +44,13 @@ data class CustomMealForm(
      * once both are filled in; it does not wait for a name.
      */
     fun adds(): Nutrition? {
-        if (problems().any { it != CustomMealField.NAME }) return null
+        if (problems().isNotEmpty()) return null
         val times = servings.number()!!
         fun of(field: String) = (field.number()!! * times).roundToInt().toDouble()
         return Nutrition(calories = of(calories), protein = of(protein), fat = of(fat), carbs = of(carbs))
     }
 
-    /** The meal to add, or null while a field holds what the API would refuse. */
+    /** The meal to add, or null while a field holds no number where one is asked for. */
     fun meal(): CustomMeal? = if (problems().isNotEmpty()) {
         null
     } else {
@@ -67,6 +64,4 @@ data class CustomMealForm(
 }
 
 /** A number as a person types it, with a point or a comma. */
-private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()
-
-private fun String.within(range: ClosedFloatingPointRange<Double>): Boolean = number()?.let { it in range } == true
+private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }

@@ -255,7 +255,6 @@
     <string name="plans_custom_total">The meal adds to the day: %1$s kcal · protein %2$s g · fat %3$s g · carbs %4$s g.</string>
     <string name="plans_custom_total_pending">What the meal adds to the day shows here once one serving and the number of servings are filled in.</string>
     <string name="plans_custom_submit">Add meal</string>
-    <string name="plans_custom_name_problem">Type a name of up to %1$d characters.</string>
     <string name="plans_change_meal">Change</string>
     <string name="plans_swap">Swap</string>
     <string name="plans_swap_to_fav">Swap from</string>

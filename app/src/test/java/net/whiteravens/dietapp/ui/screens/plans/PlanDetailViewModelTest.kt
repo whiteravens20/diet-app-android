@@ -35,6 +35,9 @@ import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealSwapPreviewDto
 import net.whiteravens.dietapp.data.remote.ModelApiService
 import net.whiteravens.dietapp.data.remote.NutritionDto
+import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.FieldRefusal
+import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.data.remote.PackTallyDto
 import net.whiteravens.dietapp.data.remote.PacksBeforeAfterDto
 import net.whiteravens.dietapp.data.remote.RebalanceChangeDto
@@ -629,5 +632,37 @@ class PlanDetailViewModelTest {
         model.openSetWindow()
         assertEquals(emptyList<FavoriteSet>(), model.state.value.setWindow?.sets)
         assertTrue(model.state.value.setWindow?.readError is IOException)
+    }
+
+    @Test
+    fun `a meal of one's own is added and its window is done, and one the API refuses keeps it open with the fields it named`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val date = plan.days.first().date
+        // As the API's own answer had it: a name too long, and every number past its bounds.
+        val tooMuch = CustomMeal("A".repeat(121), "snack", Nutrition(6000.0, 600.0, 600.0, 1200.0), 30.0)
+        val soup = CustomMeal("Soup", "snack", Nutrition(300.0, 12.0, 8.0, 40.0), 2.0)
+        coEvery { api.addCustomMeal(plan.id, date, match { it.name == tooMuch.name }) } throws
+            HttpException(Response.error<Any>(400, fixture("custom-meal-refused").toResponseBody("application/json".toMediaType())))
+        coEvery { api.addCustomMeal(plan.id, date, match { it.name == "Soup" }) } returns swapped
+        val model = model(api)
+
+        model.addCustomMeal(date, tooMuch)
+
+        val refused = model.state.value.customMeal!!
+        assertFalse(refused.added)
+        assertNull(refused.error)
+        assertEquals(FieldRefusal.TooBig(120.0, inclusive = true), refused.refused["name"])
+        assertEquals(FieldRefusal.TooBig(20.0, inclusive = true), refused.refused["servings"])
+        assertEquals(6, refused.refused.size)
+        // The window says why; the screen behind it says nothing of it.
+        assertNull(model.state.value.error)
+
+        model.addCustomMeal(date, soup)
+
+        assertEquals(PlanDetailViewModel.CustomMealSent(added = true), model.state.value.customMeal)
+        assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
+        model.customMealClosed()
+        assertNull(model.state.value.customMeal)
     }
 }

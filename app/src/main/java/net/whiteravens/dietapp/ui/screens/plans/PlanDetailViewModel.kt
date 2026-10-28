@@ -19,6 +19,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.inGiveWayOrder
@@ -75,6 +76,12 @@ class PlanDetailViewModel @Inject constructor(
      */
     data class SetWindow(val sets: List<FavoriteSet>? = null, val readError: Throwable? = null, val applying: Boolean = false, val error: Throwable? = null)
 
+    /**
+     * What came of the last meal of one's own sent from its window: [added], so that the window is
+     * done; or the fields the API [refused], by their paths, or why it could not be added otherwise.
+     */
+    data class CustomMealSent(val added: Boolean = false, val refused: Map<String, FieldRefusal> = emptyMap(), val error: Throwable? = null)
+
     data class UiState(
         val loading: Boolean = true,
         val plan: MealPlan? = null,
@@ -110,6 +117,8 @@ class PlanDetailViewModel @Inject constructor(
         val findingUseUp: Boolean = false,
         /** The window that puts a favourite set on days of the plan, while it is open. */
         val setWindow: SetWindow? = null,
+        /** What came of a meal of one's own sent from its window, until the window is put away. */
+        val customMeal: CustomMealSent? = null,
         val error: Throwable? = null,
     ) {
         /** The swaps found that would use up what the plan opens, while the plan is the one they were found for. */
@@ -250,8 +259,31 @@ class PlanDetailViewModel @Inject constructor(
 
     fun setEaten(mealId: String, eaten: Boolean) = change { plans.setEaten(planId, mealId, eaten) }
 
-    /** Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd), beside its meals or in the place of the meal [replaces]. */
-    fun addCustomMeal(date: String, meal: CustomMeal, replaces: String? = null) = change { plans.addCustomMeal(planId, date, meal, replaces) }
+    /**
+     * Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd), beside its meals or in the
+     * place of the meal [replaces]; what came of it is [UiState.customMeal], for its window.
+     */
+    fun addCustomMeal(date: String, meal: CustomMeal, replaces: String? = null) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null, customMeal = CustomMealSent()) }
+            attempt { plans.addCustomMeal(planId, date, meal, replaces) }
+                .onSuccess { changed ->
+                    _state.update { it.copy(plan = changed.plan, changing = false, rebalance = changed.rebalance.shown(), customMeal = CustomMealSent(added = true)) }
+                }
+                .onFailure { e ->
+                    // The window says why: by its fields where the API named them.
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    _state.update { it.copy(changing = false, customMeal = CustomMealSent(refused = refused, error = e.takeIf { refused.isEmpty() })) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
+
+    /** The window of a meal of one's own put away, or done: what came of the meal goes with it. */
+    fun customMealClosed() {
+        _state.update { it.copy(customMeal = null) }
+    }
 
     /** Takes a meal off its day. */
     fun removeMeal(mealId: String) = change { plans.removeMeal(planId, mealId) }
