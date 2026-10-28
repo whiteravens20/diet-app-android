@@ -17,7 +17,6 @@ import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.MealPlan
-import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.ui.common.attempt
@@ -111,7 +110,8 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
     /** Saves them again, letting the limits that stood in the way give way. */
     fun letGiveWay() {
         val needed = _state.value.inTheWay ?: return
-        send(allowRelaxations = PLAN_RELAXATIONS.filter { it in needed.needs })
+        // The refusal names them in the order in which they give way.
+        send(allowRelaxations = needed.needs)
     }
 
     private fun edit(change: (UiState) -> UiState) {

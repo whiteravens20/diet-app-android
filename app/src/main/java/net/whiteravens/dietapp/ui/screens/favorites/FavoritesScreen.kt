@@ -53,7 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.MarkedRecipe
-import net.whiteravens.dietapp.domain.MealSlots
+import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatList
@@ -235,7 +235,7 @@ private fun Filters(query: String, onQuery: (String) -> Unit, filter: FavoriteFi
         )
         ChoiceField(
             label = stringResource(R.string.favorites_meal_type),
-            options = listOf(null) + MealSlots.BY_COUNT.getValue(5),
+            options = listOf(null) + MEAL_TYPES,
             selected = filter.mealType,
             optionLabel = { meal -> meal?.let { mealTypeLabel(it) } ?: any },
             onSelect = { onNarrow(filter.copy(mealType = it)) },

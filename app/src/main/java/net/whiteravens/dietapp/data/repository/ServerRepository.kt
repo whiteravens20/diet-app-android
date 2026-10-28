@@ -103,6 +103,8 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
                 maxProfiles = config.accounts.maxProfiles,
                 mailsSent = config.email.enabled,
                 maxRepeatsPerRecipe = config.plans.maxRepeatsPerRecipe,
+                mealSlots = config.plans.mealSlots.mapNotNull { (count, meals) -> count.toIntOrNull()?.let { it to meals } }.toMap(),
+                relaxations = config.plans.relaxations,
                 operatorContact = config.instance.operatorContact,
                 supportUrl = config.instance.supportUrl,
                 catalogueSupply = config.catalogue.supply.mapValues { (_, byCount) ->

@@ -14,13 +14,14 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
-import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
+import net.whiteravens.dietapp.domain.inGiveWayOrder
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.RelaxationNeeded
@@ -52,6 +53,7 @@ class PlanDetailViewModel @Inject constructor(
     private val plans: MealPlanRepository,
     private val favorites: FavoriteRepository,
     private val users: UserRepository,
+    private val server: ServerRepository,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -366,7 +368,7 @@ class PlanDetailViewModel @Inject constructor(
     /** Asks for the same re-roll again, letting the limits that stood in the way give way too, in the order they do. */
     fun letGiveWay() {
         val inTheWay = _state.value.inTheWay ?: return
-        reroll(inTheWay.reroll.copy(allowRelaxations = PLAN_RELAXATIONS.filter { it in inTheWay.allowed || it in inTheWay.needed.needs }))
+        reroll(inTheWay.reroll.copy(allowRelaxations = inGiveWayOrder(server.rules.value?.relaxations.orEmpty(), inTheWay.allowed + inTheWay.needed.needs)))
     }
 
     fun dismissInTheWay() {

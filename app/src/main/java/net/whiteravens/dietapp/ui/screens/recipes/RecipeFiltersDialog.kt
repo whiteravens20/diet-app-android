@@ -47,7 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.IngredientChoice
-import net.whiteravens.dietapp.domain.MealSlots
+import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.RECIPE_DIET_TAGS
 import net.whiteravens.dietapp.domain.RecipeFilter
@@ -104,7 +104,7 @@ internal fun RecipeFiltersDialog(
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
             }
             Choice(stringResource(R.string.recipes_diet_type), RECIPE_DIET_TAGS.toList(), draft.dietType, { dietTypeLabel(it) }) { draft = draft.copy(dietType = it) }
-            Choice(stringResource(R.string.recipes_meal_type), MealSlots.BY_COUNT.getValue(5), draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
+            Choice(stringResource(R.string.recipes_meal_type), MEAL_TYPES, draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
             Choice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Figure(stringResource(R.string.recipes_max_calories), calories, CALORIES, Modifier.weight(1f)) { calories = it }

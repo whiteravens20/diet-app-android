@@ -20,7 +20,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.MarkedRecipe
-import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
+import net.whiteravens.dietapp.domain.inGiveWayOrder
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.RelaxationNeeded
@@ -43,7 +43,7 @@ class NewPlanViewModel @Inject constructor(
     private val users: UserRepository,
     private val favorites: FavoriteRepository,
     private val plans: MealPlanRepository,
-    server: ServerRepository,
+    private val server: ServerRepository,
 ) : ViewModel() {
 
     /** A plan refused for its limits: what stands in the way, what was let give way already, and what was asked. */
@@ -118,18 +118,23 @@ class NewPlanViewModel @Inject constructor(
     fun generate() {
         val current = _state.value
         if (current.generating || current.profile == null) return
-        val ask = current.form.ask(profileId, current.planMealCount, current.sets)
-        if (ask == null) {
-            _state.update { it.copy(showProblems = true) }
-            return
+        _state.update { it.copy(generating = true, error = null, inTheWay = null) }
+        viewModelScope.launch {
+            // The meals of a day are the instance's to say: read where they have not been yet.
+            if (server.rules.value == null) server.refresh()
+            val ask = current.form.ask(profileId, current.planMealCount, current.sets, server.rules.value?.mealSlots.orEmpty())
+            if (ask == null) {
+                _state.update { it.copy(generating = false, showProblems = true) }
+                return@launch
+            }
+            send(ask)
         }
-        send(ask)
     }
 
     /** Asks for the same plan again, letting the limits that stood in the way give way too. */
     fun letGiveWay() {
         val inTheWay = _state.value.inTheWay ?: return
-        val allowed = PLAN_RELAXATIONS.filter { it in inTheWay.allowed || it in inTheWay.needed.needs }
+        val allowed = inGiveWayOrder(server.rules.value?.relaxations.orEmpty(), inTheWay.allowed + inTheWay.needed.needs)
         // The form says from here on what the plan was let do.
         edit { it.copy(mayGiveWay = allowed) }
         send(inTheWay.ask.copy(allowRelaxations = allowed))

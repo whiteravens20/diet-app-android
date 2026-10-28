@@ -47,9 +47,17 @@ data class PublicConfigDto(
     val plans: PlansConfigDto = PlansConfigDto(),
 )
 
-/** The most a recipe repeats in a plan that names no number, where the instance sets one. */
+/**
+ * What the instance says of plans: the most a recipe repeats in a plan that names no number, where
+ * it sets one; the meals of a day at each number of meals a day (`"2"` to `"5"`), in the order of
+ * the day; and the limits of a plan that can give way, in the order in which they do.
+ */
 @Serializable
-data class PlansConfigDto(val maxRepeatsPerRecipe: Int? = null)
+data class PlansConfigDto(
+    val maxRepeatsPerRecipe: Int? = null,
+    val mealSlots: Map<String, List<String>> = emptyMap(),
+    val relaxations: List<String> = emptyList(),
+)
 
 /** How many profiles an account may have on the instance; two where it does not say, as the API's default. */
 @Serializable

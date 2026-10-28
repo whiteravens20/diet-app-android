@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
-import net.whiteravens.dietapp.domain.MealSlots
+import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.RecipeDraftAsk
 import net.whiteravens.dietapp.ui.common.cuisineLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
@@ -96,7 +96,7 @@ fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Un
                 }
                 val diet = dietType ?: profile.figures.dietType
                 Choice(stringResource(R.string.draft_diet_type), NAMED_DIETS, diet, { dietTypeLabel(it) }, any = false) { dietType = it }
-                Choice(stringResource(R.string.draft_meal_type), MealSlots.BY_COUNT.getValue(5), mealType, { mealTypeLabel(it) }) { mealType = it }
+                Choice(stringResource(R.string.draft_meal_type), MEAL_TYPES, mealType, { mealTypeLabel(it) }) { mealType = it }
                 Choice(stringResource(R.string.draft_cuisine), ProfileBounds.CUISINES, cuisine, { cuisineLabel(it) }) { cuisine = it }
                 Choice(stringResource(R.string.draft_cooking_method), COOKING_METHODS, cookingMethod, { cookingLabel(it) }) { cookingMethod = it }
                 Choice(stringResource(R.string.draft_complexity), COMPLEXITIES, complexity, { complexityLabel(it) }) { complexity = it }

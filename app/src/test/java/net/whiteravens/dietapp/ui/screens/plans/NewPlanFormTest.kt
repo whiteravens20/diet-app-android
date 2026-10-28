@@ -2,8 +2,11 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import net.whiteravens.dietapp.data.remote.PublicConfigDto
+import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.testing.fixture
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -17,9 +20,13 @@ class NewPlanFormTest {
     private val form = NewPlanForm(startDate = monday)
     private val sets = listOf(FavoriteSet("s", "Weekday", mapOf("breakfast" to "oats", "lunch" to "soup", "snack" to "nuts")))
 
+    /** The meals of a day at each number of meals, as a running backend says them (`config.json`). */
+    private val mealSlots = AppModule.json().decodeFromString<PublicConfigDto>(fixture("config")).plans.mealSlots
+        .mapKeys { (count, _) -> count.toInt() }
+
     @Test
     fun `an untouched form asks for a week from its day, the rest left to the profile`() {
-        val ask = form.ask("p", profileMealCount = 3, sets = sets)!!
+        val ask = form.ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
 
         assertEquals(7, ask.durationDays)
         assertEquals(monday, ask.startDate)
@@ -40,12 +47,12 @@ class NewPlanFormTest {
         assertEquals(setOf(PlanField.DURATION), form.copy(durationDays = "0").problems())
         assertEquals(setOf(PlanField.CALORIE_TARGET), form.copy(calorieTarget = "700").problems())
         assertEquals(setOf(PlanField.MAX_REPEATS), form.copy(maxRepeats = "29").problems())
-        assertNull(form.copy(durationDays = "").ask("p", 3, sets))
+        assertNull(form.copy(durationDays = "").ask("p", 3, sets, mealSlots))
         assertEquals(emptyList<LocalDate>(), form.copy(durationDays = "x").dates)
 
         val tooMuch = form.copy(days = mapOf(monday to DayDraft(calorieTarget = "7000", cookTime = "601")))
         assertEquals(mapOf(monday to setOf(DayField.CALORIE_TARGET, DayField.COOK_TIME)), tooMuch.dayProblems())
-        assertNull(tooMuch.ask("p", 3, sets))
+        assertNull(tooMuch.ask("p", 3, sets, mealSlots))
         // A skipped day shows none of its fields, and none of them is held against the plan.
         assertEquals(emptyMap<LocalDate, Set<DayField>>(), tooMuch.copy(days = mapOf(monday to DayDraft(calorieTarget = "7000", kind = "skip"))).dayProblems())
     }
@@ -62,7 +69,7 @@ class NewPlanFormTest {
             ),
         )
 
-        val days = chosen.ask("p", 3, sets)!!.days
+        val days = chosen.ask("p", 3, sets, mealSlots)!!.days
 
         assertEquals(
             listOf(
@@ -78,12 +85,12 @@ class NewPlanFormTest {
     fun `a day is given its set's recipes for the meals it has, and a meal locked by hand goes before the set's`() {
         val day = DayDraft(setId = "s", lockSlot = "lunch", lockRecipeId = "salad")
 
-        assertEquals(mapOf("breakfast" to "oats", "lunch" to "salad"), day.locks(sets, planMealCount = 3))
+        assertEquals(mapOf("breakfast" to "oats", "lunch" to "salad"), day.locks(sets, planMealCount = 3, mealSlots))
         // Four meals a day have a snack, which the set has a recipe for.
-        assertEquals(mapOf("breakfast" to "oats", "lunch" to "salad", "snack" to "nuts"), day.copy(mealCount = 4).locks(sets, planMealCount = 3))
-        assertEquals(mapOf("breakfast" to "oats"), DayDraft(setId = "s", mealCount = 2).locks(sets, planMealCount = 3))
+        assertEquals(mapOf("breakfast" to "oats", "lunch" to "salad", "snack" to "nuts"), day.copy(mealCount = 4).locks(sets, planMealCount = 3, mealSlots))
+        assertEquals(mapOf("breakfast" to "oats"), DayDraft(setId = "s", mealCount = 2).locks(sets, planMealCount = 3, mealSlots))
 
-        val asked = form.copy(days = mapOf(monday to day)).ask("p", profileMealCount = 3, sets = sets)!!
+        val asked = form.copy(days = mapOf(monday to day)).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
         assertEquals(listOf(DayAsk(monday, locks = mapOf("breakfast" to "oats", "lunch" to "salad"))), asked.days)
     }
 
@@ -101,7 +108,7 @@ class NewPlanFormTest {
             days = mapOf(monday to DayDraft(setId = "s")),
         )
 
-        val ask = chosen.ask("p", profileMealCount = 3, sets = sets)!!
+        val ask = chosen.ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
 
         assertEquals(3, ask.durationDays)
         assertEquals("vegan", ask.dietType)

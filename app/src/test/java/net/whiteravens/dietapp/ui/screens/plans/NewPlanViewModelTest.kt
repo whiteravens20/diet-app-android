@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
+import net.whiteravens.dietapp.data.remote.PublicConfigDto
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.toDetails
 import net.whiteravens.dietapp.data.repository.toDomain
@@ -67,8 +68,16 @@ class NewPlanViewModelTest {
         )
         coEvery { it.sets(profile.id) } returns listOf(FavoriteSet("s", "Weekday", mapOf("breakfast" to "oats")))
     }
+    /** The instance as a running backend describes it (`config.json`): the meals of a day and the order limits give way in. */
     private val server = mockk<ServerRepository>().also {
-        every { it.rules } returns MutableStateFlow<InstanceRules?>(InstanceRules(2, emptyMap()))
+        val plans = AppModule.json().decodeFromString<PublicConfigDto>(fixture("config")).plans
+        val rules = InstanceRules(
+            maxProfiles = 2,
+            catalogueSupply = emptyMap(),
+            mealSlots = plans.mealSlots.mapKeys { (count, _) -> count.toInt() },
+            relaxations = plans.relaxations,
+        )
+        every { it.rules } returns MutableStateFlow<InstanceRules?>(rules)
         coEvery { it.refresh() } just runs
     }
 

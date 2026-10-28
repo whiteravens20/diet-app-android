@@ -185,9 +185,10 @@ class DaySettingsViewModelTest {
     }
 
     @Test
-    fun `the limits in the way are offered to give way, and saving again lets them, in the API's order`() = runTest(main) {
+    fun `the limits in the way are offered to give way, and saving again lets them, as the refusal names them`() = runTest(main) {
         val refusal = ApiException(422, "PLAN_NEEDS_RELAXATION", "The plan cannot be filled inside its limits.")
-        val needed = RelaxationNeeded(listOf("same_day", "cook_time"), emptyList())
+        // The API names them in the order in which they give way.
+        val needed = RelaxationNeeded(listOf("cook_time", "same_day"), emptyList())
         every { plans.relaxationNeeded(refusal) } returns needed
         coEvery { plans.applyDaySettings("plan", "day", training, 7, null) } throws refusal
         coEvery { plans.applyDaySettings("plan", "day", training, 7, listOf("cook_time", "same_day")) } returns mockk()

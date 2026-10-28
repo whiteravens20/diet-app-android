@@ -5,7 +5,7 @@ package net.whiteravens.dietapp.domain
 /**
  * What the instance allows an account and what its catalogue holds, as `GET /config` says it: how
  * many profiles an account may have, whether it sends mail, how well the catalogue serves each
- * diet at each number of meals a day; and whom to ask.
+ * diet at each number of meals a day, how a plan's days are laid out; and whom to ask.
  */
 data class InstanceRules(
     val maxProfiles: Int,
@@ -19,6 +19,10 @@ data class InstanceRules(
     val operatorContact: String? = null,
     /** Where the instance's users find help, where its operator published a page for it. */
     val supportUrl: String? = null,
+    /** The meals of a day at each number of meals a day, in the order of the day. */
+    val mealSlots: Map<Int, List<String>> = emptyMap(),
+    /** The limits of a plan that can give way when no recipe is left inside them, in the order in which they do. */
+    val relaxations: List<String> = emptyList(),
 ) {
     /** How well the catalogue serves [diet] at [mealCount] meals a day; null where the API does not say. */
     fun supplyOf(diet: String, mealCount: Int): Supply? = catalogueSupply[diet]?.get(mealCount)

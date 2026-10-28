@@ -4,6 +4,10 @@ package net.whiteravens.dietapp.ui.screens.plans
 
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
+import kotlinx.coroutines.flow.MutableStateFlow
+import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.data.repository.ServerRepository
+import net.whiteravens.dietapp.data.remote.PublicConfigDto
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
@@ -118,8 +122,14 @@ class PlanDetailViewModelTest {
 
     private fun account(aiMode: String) = SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = aiMode)
 
+    /** The instance as a running backend describes it (`config.json`): the order in which a plan's limits give way. */
+    private val server = mockk<ServerRepository>().also {
+        val relaxations = json.decodeFromString<PublicConfigDto>(fixture("config")).plans.relaxations
+        every { it.rules } returns MutableStateFlow(InstanceRules(maxProfiles = 2, catalogueSupply = emptyMap(), relaxations = relaxations))
+    }
+
     private fun model(api: DietApiService, at: Map<String, String> = mapOf("planId" to plan.id), asking: ModelApiService = mockk()) =
-        PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, NoCache, json), favorites, users)
+        PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, NoCache, json), favorites, users, server)
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
@@ -182,7 +192,7 @@ class PlanDetailViewModelTest {
             }
         }
 
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users)
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users, server)
 
         assertNull(model.state.value.plan)
         assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
@@ -198,7 +208,7 @@ class PlanDetailViewModelTest {
             override suspend fun mealPlan(id: String) = CachedMealPlan(plan.id, plan.profileId, json.encodeToString(plan), 1L).takeIf { id == plan.id }
         }
 
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users)
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users, server)
 
         assertEquals(plan.id, model.state.value.plan?.id)
         assertTrue(model.state.value.offline)

@@ -39,8 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.MarkedRecipe
-import net.whiteravens.dietapp.domain.MealSlots
-import net.whiteravens.dietapp.domain.PLAN_RELAXATIONS
+import net.whiteravens.dietapp.domain.inGiveWayOrder
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -176,6 +175,8 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             sets = state.sets,
                             defaultMaxRepeats = rules?.maxRepeatsPerRecipe,
                             planMealCount = state.planMealCount,
+                            mealSlots = rules?.mealSlots.orEmpty(),
+                            relaxations = rules?.relaxations.orEmpty(),
                             onEdit = viewModel::edit,
                             onEditDay = viewModel::editDay,
                         )
@@ -217,6 +218,8 @@ private fun AdvancedOptions(
     sets: List<FavoriteSet>,
     defaultMaxRepeats: Int?,
     planMealCount: Int,
+    mealSlots: Map<Int, List<String>>,
+    relaxations: List<String>,
     onEdit: ((NewPlanForm) -> NewPlanForm) -> Unit,
     onEditDay: (LocalDate, (DayDraft) -> DayDraft) -> Unit,
 ) {
@@ -265,16 +268,17 @@ private fun AdvancedOptions(
                     problem = if (PlanField.MAX_REPEATS in problems) between(PlanBounds.MAX_REPEATS) else null,
                 )
                 Text(stringResource(R.string.plans_advanced_may_give_way), style = MaterialTheme.typography.titleSmall)
-                PLAN_RELAXATIONS.forEach { limit ->
+                // The limits as the instance names them, in the order in which they give way.
+                relaxations.forEach { limit ->
                     // Each limit says where it is set: not all of them are set in this form.
                     CheckRow(limitName(limit), hint = limitWhere(limit), checked = limit in form.mayGiveWay) { ticked ->
-                        onEdit { it.copy(mayGiveWay = PLAN_RELAXATIONS.filter { other -> if (other == limit) ticked else other in it.mayGiveWay }) }
+                        onEdit { it.copy(mayGiveWay = inGiveWayOrder(relaxations, if (ticked) it.mayGiveWay + limit else it.mayGiveWay - limit)) }
                     }
                 }
                 Text(stringResource(R.string.plans_advanced_may_give_way_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(stringResource(R.string.plans_advanced_per_day), style = MaterialTheme.typography.titleSmall)
                 form.dates.forEach { date ->
-                    DayOptions(date, form.day(date), dayProblems[date].orEmpty(), liked, sets, planMealCount) { change -> onEditDay(date, change) }
+                    DayOptions(date, form.day(date), dayProblems[date].orEmpty(), liked, sets, planMealCount, mealSlots) { change -> onEditDay(date, change) }
                 }
             }
         }
@@ -303,6 +307,7 @@ private fun DayOptions(
     liked: List<MarkedRecipe>,
     sets: List<FavoriteSet>,
     planMealCount: Int,
+    mealSlots: Map<Int, List<String>>,
     onEdit: ((DayDraft) -> DayDraft) -> Unit,
 ) {
     var open by rememberSaveable(date.toString()) { mutableStateOf(false) }
@@ -362,7 +367,7 @@ private fun DayOptions(
                         onSelect = { id -> onEdit { it.copy(setId = id) } },
                     )
                 }
-                val slots = MealSlots.BY_COUNT[day.mealCount ?: planMealCount].orEmpty()
+                val slots = mealSlots[day.mealCount ?: planMealCount].orEmpty()
                 ChoiceField(
                     label = stringResource(R.string.plans_advanced_lock_slot),
                     options = listOf<String?>(null) + slots,

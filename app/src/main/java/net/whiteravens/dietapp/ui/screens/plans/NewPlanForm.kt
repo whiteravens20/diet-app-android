@@ -4,7 +4,6 @@ package net.whiteravens.dietapp.ui.screens.plans
 
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.FavoriteSet
-import net.whiteravens.dietapp.domain.MealSlots
 import net.whiteravens.dietapp.domain.PlanAsk
 import java.time.LocalDate
 
@@ -50,11 +49,12 @@ data class DayDraft(
     /**
      * The recipes the day is given before the plan is made: those of its favourite set for the
      * meals the day has, and the meal locked by hand, which goes before the set's recipe for the
-     * same meal. A skipped day has none.
+     * same meal. A skipped day has none. [mealSlots] are the meals of a day at each number of
+     * meals, as the instance says them.
      */
-    fun locks(sets: List<FavoriteSet>, planMealCount: Int): Map<String, String> {
+    fun locks(sets: List<FavoriteSet>, planMealCount: Int, mealSlots: Map<Int, List<String>>): Map<String, String> {
         if (skipped) return emptyMap()
-        val meals = MealSlots.BY_COUNT[mealCount ?: planMealCount].orEmpty()
+        val meals = mealSlots[mealCount ?: planMealCount].orEmpty()
         val set = sets.find { it.id == setId }
         val locked = LinkedHashMap<String, String>()
         for (meal in meals) set?.slots?.get(meal)?.let { locked[meal] = it }
@@ -104,9 +104,10 @@ data class NewPlanForm(
     /**
      * The plan as the API is asked for it, or null while a field is refused. Only a day that
      * differs from the plan in something is sent. [profileMealCount] is how many meals a day the
-     * plan has where the form leaves it to the profile; [sets] are the profile's favourite sets.
+     * plan has where the form leaves it to the profile; [sets] are the profile's favourite sets;
+     * [mealSlots] the meals of a day at each number of meals, as the instance says them.
      */
-    fun ask(profileId: String, profileMealCount: Int, sets: List<FavoriteSet>): PlanAsk? {
+    fun ask(profileId: String, profileMealCount: Int, sets: List<FavoriteSet>, mealSlots: Map<Int, List<String>>): PlanAsk? {
         if (problems().isNotEmpty() || dayProblems().isNotEmpty()) return null
         val planMealCount = mealCount ?: profileMealCount
         val asked = dates.mapNotNull { date ->
@@ -120,7 +121,7 @@ data class NewPlanForm(
                 // An empty field and a nought both leave the day's cooking time to the plan, as the web's form does.
                 cookTimeMinutes = draft.cookTime.trim().toIntOrNull()?.takeIf { it > 0 && !draft.skipped },
                 useUpBy = draft.useUpBy && !draft.skipped,
-                locks = draft.locks(sets, planMealCount),
+                locks = draft.locks(sets, planMealCount, mealSlots),
             )
             day.takeIf { it != DayAsk(date) }
         }

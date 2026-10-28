@@ -43,33 +43,15 @@ data class DayAsk(
     val locks: Map<String, String> = emptyMap(),
 )
 
-/** The meals a day has at each number of meals a day, in the order of the day. */
-object MealSlots {
-    val BY_COUNT: Map<Int, List<String>> = mapOf(
-        2 to listOf("breakfast", "dinner"),
-        3 to listOf("breakfast", "lunch", "dinner"),
-        4 to listOf("breakfast", "lunch", "dinner", "snack"),
-        5 to listOf("breakfast", "second_breakfast", "lunch", "snack", "dinner"),
-    )
-}
+/** The meals there are, in the order of a day: what a list of meals offers to choose from. */
+val MEAL_TYPES = listOf("breakfast", "second_breakfast", "lunch", "snack", "dinner")
 
 /**
- * The limits of a plan that can give way when no recipe is left for a meal inside them, in the
- * order they do: the meals of seven days with the same kind of protein first, then those of one
- * day, so that a kind comes again before a dish does; then the most a recipe appears in the plan,
- * the day's cooking time, a recipe twice on one day, days in a row, and the times a recipe is
- * eaten in seven days last. `ingredient_cap` keeps the name it had when it counted the grams of
- * one ingredient.
+ * [kinds] of a plan's limits in [order], the order in which the instance says they give way; a kind
+ * [order] does not name follows the others, as it came.
  */
-val PLAN_RELAXATIONS = listOf(
-    "ingredient_cap",
-    "kind_same_day",
-    "variety_floor",
-    "cook_time",
-    "same_day",
-    "consecutive_days",
-    "weekly_cap",
-)
+fun inGiveWayOrder(order: List<String>, kinds: Collection<String>): List<String> =
+    order.filter { it in kinds } + kinds.filter { it !in order }.distinct()
 
 /** A plan that cannot be filled inside its limits: those that would have to give way, in their order, and the meals that would go outside. */
 data class RelaxationNeeded(val needs: List<String>, val meals: List<RelaxedMeal>)
