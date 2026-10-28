@@ -58,7 +58,11 @@ account once you say on the page that the account it names is yours.
   plan's menu opens in the browser.
 - **Recipes.** Search in the recipe library; a recipe with its nutrition per serving,
   ingredients and steps, put among a profile's favourites from its view, and the
-  ingredients of its lines marked as a profile's favourites or as ones it avoids.
+  ingredients of its lines marked as a profile's favourites or as ones it avoids. Your own
+  recipes in a tab of their own: written by hand from the catalogue's ingredients, with
+  what a serving holds worked out as you write, or drafted by a model; each edited into a
+  new version from its view, suggested for the shared library unless a swap made it, or
+  deleted.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, items ticked off as you shop, and what is left to buy sent as a
   text. The list as a table or printed is the web application's, which the list's menu
