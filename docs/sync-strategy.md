@@ -44,9 +44,9 @@ when one returns.
 ## Changes made without a network (being built)
 
 Some changes are made without a network as well, as they are in a shop or a kitchen without
-a signal: so far a shopping list's row, its tick and its amounts, and a meal of a plan
-marked eaten or not. Everything else that changes something asks the server first, and is
-off while there is no network.
+a signal: so far a shopping list's row, its tick and its amounts, a meal of a plan marked
+eaten or not, and a weight logged or removed. Everything else that changes something asks
+the server first, and is off while there is no network.
 
 1. A change goes to the server at once when nothing waits before it. When the server cannot
    be reached, or another change waits, it is kept in the cache's database
@@ -57,16 +57,21 @@ off while there is no network.
    `WorkManager` job as soon as there is a network, and whenever the app comes to the
    front. Sent, the copy the server answers is kept, and the screen reads it and is no
    longer offline.
-3. A value set, such as a tick or an amount, is sent again as it is. A change another write
-   overlapped on the server (`PLAN_CHANGED`, `WRITE_CONFLICT`) is sent again. A server that
-   cannot be reached, asks to wait (429), fails (5xx) or has no session for it keeps the
-   changes for later.
+3. A value set, such as a tick or an amount, is sent again as it is. An addition, such as a
+   weight, is sent every time with the key it was given when it was made
+   (`Idempotency-Key`), and with the moment it was made, so that the server writes it once
+   however often it comes. A removal of something the server no longer has (404) was made.
+   A change another write overlapped on the server (`PLAN_CHANGED`, `WRITE_CONFLICT`) is
+   sent again. A server that cannot be reached, asks to wait (429), fails (5xx) or has no
+   session for it keeps the changes for later.
 4. A change the server refuses otherwise is not sent again: it stays, with the server's
    words for why, in a notice over every screen until it is seen.
-5. Signing out, or going to another server, while changes wait asks first: send them and
+5. A weight logged that still waits is removed by taking it out of the queue. One sent
+   meanwhile stays logged, and is removed as any other is.
+6. Signing out, or going to another server, while changes wait asks first: send them and
    sign out, or drop them. A session the server ends takes them with it, as it takes every
    copy.
-6. The cache's tables are migrated from one version to the next, the schema of each kept in
+7. The cache's tables are migrated from one version to the next, the schema of each kept in
    `app/schemas/`, so that an update keeps the changes waiting.
 
 ## Auth

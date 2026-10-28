@@ -102,11 +102,11 @@ account once you say on the page that the account it names is yours.
   pull it down, and when you come back to it: at once from another screen of the app, and at
   most every thirty seconds when you return to the app. A screen that cannot reach the
   server keeps what it read last and says what time that was. Meal plans and shopping lists
-  you have opened stay readable without a connection. A meal is marked eaten, and a shopping
-  list's rows are ticked and their amounts told, without one as well: each change is marked
-  as waiting, the screen says how many wait, and each goes by itself once there is a
-  network; one the server refuses is said, with why. Signing out while changes wait asks
-  first whether to send them or drop them.
+  you have opened stay readable without a connection. A meal is marked eaten, a weight
+  logged or the last one removed, and a shopping list's rows are ticked and their amounts
+  told, without one as well: each change is marked as waiting, the screen says how many
+  wait, and each goes by itself once there is a network; one the server refuses is said,
+  with why. Signing out while changes wait asks first whether to send them or drop them.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 
