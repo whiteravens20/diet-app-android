@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.ListProposal
@@ -91,6 +92,39 @@ class ShoppingListRepositoryTest {
         assertEquals("/api/shopping-lists/generate", asked.path)
         assertEquals("""{"planId":"$planId","fromDate":"2026-10-13","toDate":"2026-10-19"}""", asked.body.readUtf8())
         assertEquals(setOf("after", made.id), cache.lists.keys)
+    }
+
+    @Test
+    fun `the lists of a plan the API says is not there leave no copy, and the lists of another plan stay`() {
+        server.enqueue(MockResponse().setResponseCode(404).setHeader("Content-Type", "application/json").setBody(fixture("shopping-lists-of-an-unknown-plan")))
+        val other = CachedShoppingList("other-plans", "another-plan", "{}", 1L)
+        val cache = Cache(listOf(kept("first", "2026-10-13", "2026-10-19"), kept("second", "2026-10-20", "2026-10-21"), other))
+
+        val refused = runCatching { runBlocking { repository(cache).refreshForPlan(planId) } }.exceptionOrNull() as ApiException
+
+        assertEquals("PLAN_NOT_FOUND", refused.code)
+        assertEquals(setOf(other.id), cache.lists.keys)
+    }
+
+    @Test
+    fun `a list the API says is not there leaves no copy, and the other lists of its plan stay`() {
+        server.enqueue(MockResponse().setResponseCode(404).setHeader("Content-Type", "application/json").setBody(fixture("shopping-list-unknown")))
+        val cache = Cache(listOf(kept("gone", "2026-10-13", "2026-10-19"), kept("kept", "2026-10-20", "2026-10-21")))
+
+        val refused = runCatching { runBlocking { repository(cache).refresh("gone") } }.exceptionOrNull() as ApiException
+
+        assertEquals("LIST_NOT_FOUND", refused.code)
+        assertEquals(setOf("kept"), cache.lists.keys)
+    }
+
+    @Test
+    fun `a list read while the server cannot say whether it is there keeps its copy`() {
+        server.enqueue(MockResponse().setResponseCode(503).setHeader("Content-Type", "text/html").setBody("<html>Service Unavailable</html>"))
+        val cache = Cache(listOf(kept("list", "2026-10-13", "2026-10-19")))
+
+        runCatching { runBlocking { repository(cache).refresh("list") } }
+
+        assertEquals(setOf("list"), cache.lists.keys)
     }
 
     @Test

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -27,6 +28,7 @@ import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.domain.ShoppingList
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -73,6 +75,18 @@ class ShoppingViewModelTest {
 
         assertEquals(listOf(made, later), model.state.value.lists)
         assertEquals(made, model.state.value.list)
+    }
+
+    @Test
+    fun `the lists of a plan deleted elsewhere leave the screen, the copies shown first with them`() {
+        coEvery { lists.cachedForPlan("plan") } returns listOf(early, later)
+        coEvery { lists.refreshForPlan("plan") } throws ApiException(404, "PLAN_NOT_FOUND", "Meal plan not found.")
+
+        val model = ShoppingViewModel(users, plans, lists)
+
+        assertEquals(emptyList<ShoppingList>(), model.state.value.lists)
+        assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
+        assertFalse(model.state.value.offline)
     }
 
     @Test

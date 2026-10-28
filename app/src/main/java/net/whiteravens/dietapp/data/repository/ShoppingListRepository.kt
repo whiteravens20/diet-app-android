@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedShoppingList
 import net.whiteravens.dietapp.data.local.readOrDrop
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.GenerateShoppingListRequest
 import net.whiteravens.dietapp.data.remote.ModelApiService
@@ -50,9 +51,17 @@ class ShoppingListRepository @Inject constructor(
             cache.deleteShoppingList(row.id)
         }
 
-    /** Fetch a plan's lists from the API and mirror them; a list kept of the plan that the API no longer has goes. Throws when offline. */
+    /**
+     * Fetch a plan's lists from the API and mirror them; a list kept of the plan that the API no longer
+     * has goes, and every list of a plan the API says is not there. Throws when offline.
+     */
     suspend fun refreshForPlan(planId: String): List<ShoppingList> {
-        val lists = apiCall(json) { api.shoppingLists(planId) }
+        val lists = try {
+            apiCall(json) { api.shoppingLists(planId) }
+        } catch (e: ApiException) {
+            if (e.code == PLAN_NOT_FOUND) cache.shoppingListsForPlan(planId).forEach { cache.deleteShoppingList(it.id) }
+            throw e
+        }
         val ids = lists.map { it.id }.toSet()
         cache.shoppingListsForPlan(planId).filter { it.id !in ids }.forEach { cache.deleteShoppingList(it.id) }
         lists.forEach { mirror(it) }
@@ -104,9 +113,14 @@ class ShoppingListRepository @Inject constructor(
         cache.deleteShoppingList(listId)
     }
 
-    /** Fetch from the API and mirror into the cache. Throws when offline. */
+    /** Fetch from the API and mirror into the cache; a list the API says is not there leaves no copy. Throws when offline. */
     suspend fun refresh(id: String): ShoppingList {
-        val list = apiCall(json) { api.shoppingList(id) }
+        val list = try {
+            apiCall(json) { api.shoppingList(id) }
+        } catch (e: ApiException) {
+            if (e.code == LIST_NOT_FOUND) cache.deleteShoppingList(id)
+            throw e
+        }
         mirror(list)
         return list.toDomain()
     }
@@ -135,5 +149,13 @@ class ShoppingListRepository @Inject constructor(
                 syncedAt = System.currentTimeMillis(),
             ),
         )
+    }
+
+    private companion object {
+        /** The plan asked for is not there, or is not the account's. */
+        const val PLAN_NOT_FOUND = "PLAN_NOT_FOUND"
+
+        /** The list asked for is not there, or is not the account's. */
+        const val LIST_NOT_FOUND = "LIST_NOT_FOUND"
     }
 }

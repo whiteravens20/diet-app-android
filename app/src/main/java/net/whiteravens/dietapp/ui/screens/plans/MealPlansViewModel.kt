@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.MealPlanSummary
@@ -145,8 +146,11 @@ class MealPlansViewModel @Inject constructor(
                     }
                 }
                 .onFailure { e ->
+                    // A profile the API says is not there was deleted elsewhere, and its plans with it.
+                    val gone = e is ApiException && e.code == "PROFILE_NOT_FOUND"
                     ifStillShown(profileId) {
                         it.copy(
+                            plans = if (gone) emptyList() else it.plans,
                             refreshing = false,
                             offline = e is IOException,
                             error = e.takeIf { _ -> e !is IOException },

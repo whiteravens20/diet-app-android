@@ -31,7 +31,10 @@ acknowledged, and keeping her weight) from the same build, captured on 2026-10-2
 diet-app's `dev` at `a1c7df4`: the worker's first pass reminded two profiles of their weights,
 one with none logged and one reminded daily whose last weight was logged three days before, and
 the catalogue update asked the first to review its preferences, which favoured an ingredient no
-catalogue has; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+catalogue has; `meal-plans-of-an-unknown-profile.json`, `shopping-lists-of-an-unknown-plan.json` and
+`shopping-list-unknown.json` (each asked by an id the account does not have) from API 0.127.0,
+captured on 2026-10-28 from a local build of diet-app's API at `a1c7df4`, whose code the candidate
+`13beb18` left as it was; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

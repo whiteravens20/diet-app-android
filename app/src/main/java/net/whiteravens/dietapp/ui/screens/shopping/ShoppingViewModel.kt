@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -137,9 +138,16 @@ class ShoppingViewModel @Inject constructor(
                     }
                 }
                 .onFailure { e ->
+                    // A plan the API says is not there was deleted elsewhere, and its lists with it.
+                    val gone = e is ApiException && e.code == "PLAN_NOT_FOUND"
                     _state.update {
                         if (it.selectedPlanId == planId) {
-                            it.copy(listLoading = false, offline = e is IOException, error = e.takeIf { _ -> e !is IOException })
+                            it.copy(
+                                lists = if (gone) emptyList() else it.lists,
+                                listLoading = false,
+                                offline = e is IOException,
+                                error = e.takeIf { _ -> e !is IOException },
+                            )
                         } else it
                     }
                 }

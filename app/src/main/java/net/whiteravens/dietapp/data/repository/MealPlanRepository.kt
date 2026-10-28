@@ -97,16 +97,35 @@ class MealPlanRepository @Inject constructor(
             cache.deleteMealPlan(row.id)
         }
 
-    /** Fetch one plan from the API and mirror it. Throws when offline. */
+    /**
+     * Fetch one plan from the API and mirror it. A plan the API says is not there is gone, or is not
+     * the account's: the copies of it and of its shopping lists go. Throws when offline.
+     */
     suspend fun refreshPlan(id: String): MealPlan {
-        val plan = apiCall(json) { api.mealPlan(id) }
+        val plan = try {
+            apiCall(json) { api.mealPlan(id) }
+        } catch (e: ApiException) {
+            if (e.code == PLAN_NOT_FOUND) {
+                cache.shoppingListsForPlan(id).forEach { cache.deleteShoppingList(it.id) }
+                cache.deleteMealPlan(id)
+            }
+            throw e
+        }
         mirror(plan)
         return plan.toDomain()
     }
 
-    /** A page of a profile's plans from the API; the first page is kept for offline use. Throws when offline. */
+    /**
+     * A page of a profile's plans from the API; the first page is kept for offline use. A profile the
+     * API says is not there takes the copy of its list with it. Throws when offline.
+     */
     suspend fun plans(profileId: String, page: Int = 1): MealPlanPage {
-        val answer = apiCall(json) { api.mealPlans(profileId, page, PAGE_SIZE) }
+        val answer = try {
+            apiCall(json) { api.mealPlans(profileId, page, PAGE_SIZE) }
+        } catch (e: ApiException) {
+            if (e.code == PROFILE_NOT_FOUND) cache.deletePlanList(profileId)
+            throw e
+        }
         if (page == 1) {
             cache.upsertPlanList(CachedPlanList(profileId, json.encodeToString(answer), System.currentTimeMillis()))
         }
@@ -482,6 +501,12 @@ class MealPlanRepository @Inject constructor(
 
         /** Any recipe of the plan's diet that fits the meal. */
         const val RANDOM_STRATEGY = "random"
+
+        /** The plan asked for is not there, or is not the account's. */
+        const val PLAN_NOT_FOUND = "PLAN_NOT_FOUND"
+
+        /** The profile asked for is not there, or is not the account's. */
+        const val PROFILE_NOT_FOUND = "PROFILE_NOT_FOUND"
     }
 
     private suspend fun mirror(plan: MealPlanDto) {

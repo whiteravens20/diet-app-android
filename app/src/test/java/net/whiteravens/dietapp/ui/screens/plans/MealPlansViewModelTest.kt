@@ -10,11 +10,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.encodeToString
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
 import net.whiteravens.dietapp.data.local.CachedPlanList
 import net.whiteravens.dietapp.data.local.CachedShoppingList
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -25,6 +28,8 @@ import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanCalendarDay
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.testing.fixture
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,6 +37,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -90,6 +97,25 @@ class MealPlansViewModelTest {
         assertNull(escaped)
         assertFalse(model.state.value.loading)
         assertEquals(emptyList<MealPlanSummary>(), model.state.value.plans)
+        assertEquals(listOf(profile.id), cache.dropped)
+    }
+
+    @Test
+    fun `the plans of a profile deleted elsewhere leave the screen and the phone, the copy shown first with them`() {
+        val profile = json.decodeFromString<List<ProfileDto>>(fixture("profiles")).first()
+        val api = mockk<DietApiService>()
+        coEvery { api.profiles() } returns listOf(profile)
+        coEvery { api.mealPlans(any(), any(), any()) } throws HttpException(
+            Response.error<Any>(404, fixture("meal-plans-of-an-unknown-profile").toResponseBody("application/json".toMediaType())),
+        )
+        coEvery { api.planCalendar(any(), any(), any()) } throws IOException("not asked here")
+        val kept = json.encodeToString(json.decodeFromString<MealPlanPageDto>(fixture("meal-plans")))
+        val cache = Cache(CachedPlanList(profile.id, kept, 1L))
+
+        val model = MealPlansViewModel(UserRepository(api, json), MealPlanRepository(api, mockk(), cache, json))
+
+        assertEquals(emptyList<MealPlanSummary>(), model.state.value.plans)
+        assertEquals("PROFILE_NOT_FOUND", (model.state.value.error as ApiException).code)
         assertEquals(listOf(profile.id), cache.dropped)
     }
 

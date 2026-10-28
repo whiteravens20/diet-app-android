@@ -166,6 +166,43 @@ class PlanDetailViewModelTest {
     }
 
     @Test
+    fun `a plan the API says is not there leaves the screen, the copy shown before the answer with it`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } throws HttpException(
+            Response.error<Any>(404, fixture("meal-plan-of-another-account").toResponseBody("application/json".toMediaType())),
+        )
+        val dropped = mutableListOf<String>()
+        val kept = object : CacheDao by NoCache {
+            override suspend fun mealPlan(id: String) = CachedMealPlan(plan.id, plan.profileId, json.encodeToString(plan), 1L).takeIf { id == plan.id }
+            override suspend fun deleteMealPlan(id: String) {
+                dropped += id
+            }
+        }
+
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users)
+
+        assertNull(model.state.value.plan)
+        assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
+        assertFalse(model.state.value.offline)
+        assertEquals(listOf(plan.id), dropped)
+    }
+
+    @Test
+    fun `a plan whose server cannot be reached stays as its copy shows it, and changes wait`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } throws IOException("no network")
+        val kept = object : CacheDao by NoCache {
+            override suspend fun mealPlan(id: String) = CachedMealPlan(plan.id, plan.profileId, json.encodeToString(plan), 1L).takeIf { id == plan.id }
+        }
+
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), MealPlanRepository(api, mockk(), kept, json), favorites, users)
+
+        assertEquals(plan.id, model.state.value.plan?.id)
+        assertTrue(model.state.value.offline)
+        assertNull(model.state.value.error)
+    }
+
+    @Test
     fun `a plan opened at a day of the calendar shows that day, and one opened from the list its first`() {
         val api = mockk<DietApiService>()
         coEvery { api.mealPlan(plan.id) } returns plan

@@ -119,6 +119,40 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a plan the API says is not there takes its copy and those of its shopping lists with it`() {
+        server.enqueue(answer("meal-plan-of-another-account").setResponseCode(404))
+        val cache = Cache(
+            listOf(CachedShoppingList("list-1", "plan-1", "{}", 1L), CachedShoppingList("list-2", "plan-2", "{}", 1L)),
+        )
+
+        val refused = runCatching { runBlocking { repository(cache).refreshPlan("plan-1") } }.exceptionOrNull() as ApiException
+
+        assertEquals("PLAN_NOT_FOUND", refused.code)
+        assertEquals(listOf("shopping list list-1", "plan plan-1"), cache.dropped)
+    }
+
+    @Test
+    fun `the plans of a profile the API says is not there take the copy of its list with it`() {
+        server.enqueue(answer("meal-plans-of-an-unknown-profile").setResponseCode(404))
+        val cache = Cache()
+
+        val refused = runCatching { runBlocking { repository(cache).plans("profile-1") } }.exceptionOrNull() as ApiException
+
+        assertEquals("PROFILE_NOT_FOUND", refused.code)
+        assertEquals(listOf("list of profile-1"), cache.dropped)
+    }
+
+    @Test
+    fun `a plan read while the server cannot say whether it is there keeps its copies`() {
+        server.enqueue(MockResponse().setResponseCode(503).setHeader("Content-Type", "text/html").setBody("<html>Service Unavailable</html>"))
+        val cache = Cache(listOf(CachedShoppingList("list-1", "plan-1", "{}", 1L)))
+
+        runCatching { runBlocking { repository(cache).refreshPlan("plan-1") } }
+
+        assertEquals(emptyList<String>(), cache.dropped)
+    }
+
+    @Test
     fun `a swap is offered without the recipes offered before, and taken with the recipe and the plan's revision`() {
         server.enqueue(answer("meal-plan-swap-preview"))
         server.enqueue(answer("meal-plan-swap-apply"))

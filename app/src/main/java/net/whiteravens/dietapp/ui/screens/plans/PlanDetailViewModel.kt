@@ -133,11 +133,14 @@ class PlanDetailViewModel @Inject constructor(
                     readSwapChoices(fresh.profileId)
                 }
                 .onFailure { e ->
+                    // A plan the API says is not there was deleted elsewhere: its copy is gone too, and so is the screen's.
+                    val gone = e.isPlanGone()
                     _state.update {
                         it.copy(
                             loading = false,
+                            plan = it.plan.takeUnless { gone },
                             offline = e is IOException && it.plan != null,
-                            error = e.takeIf { _ -> it.plan == null },
+                            error = e.takeIf { _ -> it.plan == null || gone },
                         )
                     }
                 }
@@ -374,10 +377,13 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             attempt { plans.refreshPlan(planId) }
                 .onSuccess { fresh -> _state.update { it.copy(plan = fresh) } }
+                .onFailure { e -> if (e.isPlanGone()) _state.update { it.copy(plan = null, error = e) } }
         }
     }
 
     private fun Throwable.isPlanChanged() = this is ApiException && code == "PLAN_CHANGED"
+
+    private fun Throwable.isPlanGone() = this is ApiException && code == "PLAN_NOT_FOUND"
 
     companion object {
         /** What a re-roll refused for a lock that may no longer hold is asked again with. */
