@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -20,10 +22,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
+import net.whiteravens.dietapp.testing.pullDown
+import net.whiteravens.dietapp.testing.pullable
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
+import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
@@ -64,6 +69,53 @@ class DashboardTest {
         screen.waitForText(text(R.string.overview_none))
         screen.onNodeWithText(text(R.string.overview_none_cta)).performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_start_date))
+    }
+
+    @Test
+    fun aProfileMadeElsewhereShowsWhenTheDashboardIsPulledDown() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        screen.waitForText("Ala")
+
+        Instance.newProfile(account, name = "Ola")
+        screen.pullDown()
+
+        // A second profile's card is below the first, out of view: the list composes only what is in view.
+        screen.scrollToText("Ola")
+        screen.keepScreenshot("dashboard-pulled-down")
+    }
+
+    @Test
+    fun aProfileMadeElsewhereShowsOnComingBackFromAnotherScreen() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        screen.waitForText("Ala")
+
+        // The notifications open on the bell, which says no more than their name while none is unread.
+        screen.onNode(hasContentDescription(text(R.string.notifications_title)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.notifications_title))
+        Instance.newProfile(account, name = "Ola")
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+
+        // A second profile's card is below the first, out of view: the list composes only what is in view.
+        screen.scrollToText("Ola")
+    }
+
+    @Test
+    fun aScreenReaderReadsTheDashboardAnewByTheActionThePullOffers() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        screen.waitForText("Ala")
+
+        Instance.newProfile(account, name = "Ola")
+        val actions = screen.onNode(pullable).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        screen.runOnIdle { actions.first { it.label == text(R.string.pull_to_read) }.action() }
+
+        // A second profile's card is below the first, out of view: the list composes only what is in view.
+        screen.scrollToText("Ola")
     }
 
     @Test

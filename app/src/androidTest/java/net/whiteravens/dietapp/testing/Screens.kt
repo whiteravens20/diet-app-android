@@ -9,8 +9,11 @@ import android.view.Choreographer
 import androidx.activity.ComponentActivity
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -24,7 +27,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToLog
+import androidx.compose.ui.test.swipe
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
@@ -33,6 +38,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
+import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.auth.KeystoreSealer
 import net.whiteravens.dietapp.data.auth.TokenStore
@@ -40,7 +46,6 @@ import net.whiteravens.dietapp.data.remote.AuthTokens
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
 
 /** A text of the app's, in the language the device runs in, with [args] put in. */
 fun text(@StringRes id: Int, vararg args: Any): String =
@@ -247,3 +252,19 @@ fun ComposeTestRule.signIn(account: Account) {
 fun ComposeTestRule.openTab(label: String) {
     onNode(hasText(label) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)).performClick()
 }
+
+/** The box a screen is pulled down in to read it anew: it offers a screen reader the same as an action. */
+val pullable: SemanticsMatcher = SemanticsMatcher("can be pulled down to read anew") { node ->
+    node.config.getOrNull(SemanticsActions.CustomActions)?.any { it.label == text(R.string.pull_to_read) } == true
+}
+
+/**
+ * Pulls the screen down from near its top, as a finger does, to read it anew: below the top edge,
+ * which the system takes for the pull of its notifications.
+ */
+fun ComposeTestRule.pullDown() {
+    onNode(pullable).performTouchInput {
+        swipe(start = Offset(centerX, height * 0.3f), end = Offset(centerX, height * 0.9f), durationMillis = 400)
+    }
+}
+
