@@ -16,8 +16,8 @@ account once you say on the page that the account it names is yours.
 
 > **Status: the main screens work; nothing is released yet.** Signing in, the dashboard,
 > meal plans, recipes, the shopping list and the profile are built and talk to the
-> backend. Meal plans and shopping lists stay readable offline. Changes made offline are
-> not queued yet.
+> backend. Meal plans and shopping lists stay readable offline, and a shopping list's rows
+> are changed offline as well: each change waits to be sent.
 
 > [!WARNING]
 > **Early development — not production ready.** This app and the Diet App
@@ -102,7 +102,11 @@ account once you say on the page that the account it names is yours.
   pull it down, and when you come back to it: at once from another screen of the app, and at
   most every thirty seconds when you return to the app. A screen that cannot reach the
   server keeps what it read last and says what time that was. Meal plans and shopping lists
-  you have opened stay readable without a connection, read-only.
+  you have opened stay readable without a connection. A shopping list's rows are ticked and
+  their amounts told without one as well: each change is marked as waiting, the screen says
+  how many wait, and each goes by itself once there is a network; one the server refuses is
+  said, with why. Signing out
+  while changes wait asks first whether to send them or drop them.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 

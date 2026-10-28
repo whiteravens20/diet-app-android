@@ -18,7 +18,8 @@ when one returns.
   as the raw response JSON with the time they were read. Those screens show the copy first
   and the answer of the network when it comes.
 - A screen whose reading anew fails for want of a network keeps what it read and says
-  when: "Offline — as of 14:32". Plans and lists are read-only offline.
+  when: "Offline — as of 14:32", and how many changes made on the phone wait to be sent.
+  Plans are read-only offline; a shopping list's rows are changed offline as well (below).
 - A read answered "not found" (the plan, the list or the profile was deleted elsewhere, or
   is not the account's) drops the copy of it; a list read anew replaces the copies of its
   lists whole; signing out drops every copy.
@@ -40,18 +41,32 @@ when one returns.
   the notifications for the app to read. Signing out turns them off and forgets what was
   shown.
 
-## Write sync (next)
+## Changes made without a network (being built)
 
-Most actions (generate a plan, swap a meal, edit a shopping item) are backend operations.
-Offline writes are queued and replayed:
+Some changes are made without a network as well, as they are in a shop or a kitchen without
+a signal: so far a shopping list's row, its tick and its amounts. Everything else that
+changes something asks the server first, and is off while there is no network.
 
-1. The user action is applied **optimistically** to the local cache and an entry is
-   appended to an outbox table (`operation`, `payload`, `createdAt`).
-2. A `WorkManager` job drains the outbox when connectivity returns, calling the API.
-3. Conflicts are resolved **server-wins** — the backend is authoritative; on a rejected
-   replay the local optimistic change is rolled back and the user is notified.
-4. Checkbox-style state (shopping item `checked`, `alreadyHaveQuantity`) uses
-   last-write-wins, which is acceptable for single-user data.
+1. A change goes to the server at once when nothing waits before it. When the server cannot
+   be reached, or another change waits, it is kept in the cache's database
+   (`pending_change`: the change as JSON, in the order it was made) and shown at once over
+   what the screen read, marked "Waiting to be sent". A screen whose change met no network
+   says it is offline, and how many changes wait.
+2. The changes waiting are sent in the order they were made, one at a time, by a
+   `WorkManager` job as soon as there is a network, and whenever the app comes to the
+   front. Sent, the copy the server answers is kept, and the screen reads it and is no
+   longer offline.
+3. A value set, such as a tick or an amount, is sent again as it is. A change another write
+   overlapped on the server (`PLAN_CHANGED`, `WRITE_CONFLICT`) is sent again. A server that
+   cannot be reached, asks to wait (429), fails (5xx) or has no session for it keeps the
+   changes for later.
+4. A change the server refuses otherwise is not sent again: it stays, with the server's
+   words for why, in a notice over every screen until it is seen.
+5. Signing out, or going to another server, while changes wait asks first: send them and
+   sign out, or drop them. A session the server ends takes them with it, as it takes every
+   copy.
+6. The cache's tables are migrated from one version to the next, the schema of each kept in
+   `app/schemas/`, so that an update keeps the changes waiting.
 
 ## Auth
 

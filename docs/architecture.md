@@ -20,8 +20,11 @@ data/
            app opens in the browser what it leaves to it.
   auth/    `TokenStore` (DataStore) + OkHttp interceptor/authenticator pair —
            attaches the bearer token and transparently refreshes it on 401.
-  local/   Room `CacheDatabase` — offline copies of meal plans / shopping lists.
+  local/   Room `CacheDatabase` — offline copies of meal plans / shopping lists, and
+           the changes made on the phone that wait to be sent.
   repository/  Offline-first repositories: serve the cache, refresh from the API.
+  sync/    `ChangeQueue` — a change sent at once, or kept and sent in its turn by
+           `ChangesWorker` once there is a network.
 di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
 ```
 
@@ -36,7 +39,7 @@ di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
    since what time; a "not found" answer drops the copy of what was deleted elsewhere.
 
 See [sync-strategy.md](sync-strategy.md) for the whole of reading, the phone's notifications,
-and write-sync (next).
+and the changes made without a network.
 
 ## Tech choices
 
@@ -92,5 +95,7 @@ emulators. What the app
 leaves to the web application (the calculator, a plan or a list as a table or printed,
 favourite sets made and changed, and the account's password, address, name, language of
 its mails, data in a file and deletion) it opens there, in the browser, signed in with a
-one-time code that the page uses once its reader says the account is theirs. Next is the
-write-sync outbox described in [sync-strategy.md](sync-strategy.md).
+one-time code that the page uses once its reader says the account is theirs. The queue of
+changes made without a network, described in [sync-strategy.md](sync-strategy.md), takes a
+shopping list's rows; next are the meals eaten, weights, the pantry, a day's own meals,
+recipes' marks and notifications read.
