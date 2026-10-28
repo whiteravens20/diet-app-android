@@ -1,14 +1,18 @@
 # Answers of a running backend
 
 Each file is what a running diet-app answered one call of this client: `config.json` from API
-0.136.0, captured on 2026-10-28 from an install of 0.127.0 upgraded to the candidate `edge-3b70f02`; `weights.json`, `weight-logged.json`,
+0.136.0, captured on 2026-10-28 from an install of 0.127.0 upgraded to the candidate `edge-3b70f02`;
+`ingredients-search-egg.json`, `ingredients-search-milk.json`, `ingredients-by-ids.json`,
+`pantry.json` (six eggs best before in five days, a litre of milk with no day, three cloves of
+garlic in twenty days and 212.4 g of oats in two hundred), `pantry-row-added.json` and
+`pantry-row-changed.json` from the same version, captured the same day from an instance of
+diet-app's `dev` at `3b70f02`; `weights.json`, `weight-logged.json`,
 `weight-entry-unknown.json` and `users-me-in-pounds.json` from API 0.19.0, captured on 2026-10-16;
 `account-sessions.json`, `account-session-unknown.json`, `second-factor-off.json`,
 `second-factor-setup.json`, `second-factor-code-wrong.json`, `second-factor-on.json`,
-`second-factor-state-on.json`, `second-factor-new-codes.json`, `ingredients-search-egg.json`,
-`ingredients-by-ids.json`, `pantry.json`, `pantry-row-added.json`, `pantry-row-changed.json`,
-`pantry-quantity-too-large.json`, `pantry-unit-not-convertible.json` and `pantry-row-unknown.json`
-from API 0.19.0, captured on 2026-10-17; `ai-providers.json`, `ai-providers-none.json`,
+`second-factor-state-on.json`, `second-factor-new-codes.json`, `pantry-quantity-too-large.json`,
+`pantry-unit-not-convertible.json` and `pantry-row-unknown.json` from API 0.19.0, captured on
+2026-10-17; `ai-providers.json`, `ai-providers-none.json`,
 `ai-providers-key-unreadable.json` (the stored key damaged in the instance's database first),
 `ai-provider-saved.json`, `ai-provider-ollama-saved.json`, `ai-provider-replaced.json`,
 `ai-provider-host-not-allowed.json`, `ai-provider-unknown.json`, `ai-test-connected.json` (an Ollama

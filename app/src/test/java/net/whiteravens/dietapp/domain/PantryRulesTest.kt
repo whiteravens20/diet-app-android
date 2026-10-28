@@ -6,56 +6,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
 
-/**
- * The units the pantry offers an ingredient in, held to what the API converts (engine/units.ts:
- * a piece needs the weight of one, grams and millilitres the weight of a millilitre) and to its
- * pieces alone for what is counted, the unit offered first, and how near a row's best-before day
- * is.
- */
+/** How near a pantry row's best-before day is. */
 class PantryRulesTest {
-
-    @Test
-    fun `an ingredient is kept in the unit it is weighed in, and in pieces where a piece has a weight`() {
-        assertEquals(listOf("g"), pantryUnits("g", gramsPerPiece = null, density = null, displayUnit = null))
-        assertEquals(listOf("g", "piece"), pantryUnits("g", gramsPerPiece = 55.0, density = null, displayUnit = null))
-        assertEquals(listOf("g", "ml", "piece"), pantryUnits("g", gramsPerPiece = 55.0, density = 1.03, displayUnit = null))
-    }
-
-    @Test
-    fun `what is measured is kept in grams where a millilitre has a weight, and in pieces only where a piece has one too`() {
-        assertEquals(listOf("ml"), pantryUnits("ml", gramsPerPiece = null, density = null, displayUnit = null))
-        assertEquals(listOf("g", "ml"), pantryUnits("ml", gramsPerPiece = null, density = 1.03, displayUnit = null))
-        assertEquals(listOf("ml"), pantryUnits("ml", gramsPerPiece = 200.0, density = null, displayUnit = null))
-        assertEquals(listOf("g", "ml", "piece"), pantryUnits("ml", gramsPerPiece = 200.0, density = 1.03, displayUnit = null))
-    }
-
-    @Test
-    fun `what is measured in pieces is kept in grams where a piece has a weight, and in millilitres where a millilitre has one too`() {
-        assertEquals(listOf("piece"), pantryUnits("piece", gramsPerPiece = null, density = 1.0, displayUnit = null))
-        assertEquals(listOf("g", "piece"), pantryUnits("piece", gramsPerPiece = 30.0, density = null, displayUnit = null))
-        assertEquals(listOf("g", "ml", "piece"), pantryUnits("piece", gramsPerPiece = 30.0, density = 1.0, displayUnit = null))
-    }
-
-    @Test
-    fun `what is counted is kept in its pieces alone, where a piece of it can be kept`() {
-        assertEquals(listOf("piece"), pantryUnits("g", gramsPerPiece = 55.0, density = null, displayUnit = "piece"))
-        assertEquals(listOf("piece"), pantryUnits("g", gramsPerPiece = 5.0, density = 1.0, displayUnit = "clove"))
-        assertEquals(listOf("piece"), pantryUnits("ml", gramsPerPiece = 500.0, density = 1.0, displayUnit = "piece"))
-        // A bottle with no weight of a millilitre cannot be counted into millilitres: kept as it is measured.
-        assertEquals(listOf("ml"), pantryUnits("ml", gramsPerPiece = 400.0, density = null, displayUnit = "piece"))
-    }
-
-    @Test
-    fun `a weight of nothing converts nothing`() {
-        assertEquals(listOf("g"), pantryUnits("g", gramsPerPiece = 0.0, density = 0.0, displayUnit = null))
-    }
-
-    @Test
-    fun `what is counted is put in in pieces of its own, where a piece of it can be kept, and the rest as it is weighed or measured`() {
-        assertEquals("piece", firstPantryUnit(listOf("g", "piece"), "g", displayUnit = "clove"))
-        assertEquals("g", firstPantryUnit(listOf("g", "piece"), "g", displayUnit = null))
-        assertEquals("ml", firstPantryUnit(listOf("ml"), "ml", displayUnit = "piece"))
-    }
 
     @Test
     fun `a row goes soon from two days before its day to the day itself, and is past it from the day after`() {

@@ -14,8 +14,6 @@ import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.StockableIngredient
-import net.whiteravens.dietapp.domain.firstPantryUnit
-import net.whiteravens.dietapp.domain.pantryUnits
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,7 +27,7 @@ class PantryRepository @Inject constructor(
     /** What [profileId]'s pantry holds, in the order the API gives. */
     suspend fun rows(profileId: String): List<PantryRow> = apiCall(json) { api.pantry(profileId) }.map { it.toDomain() }
 
-    /** The catalogue's ingredients whose name holds [search], in the app's language, each with the units the pantry keeps it in. */
+    /** The catalogue's ingredients whose name holds [search], in the app's language, each with the units the API says the pantry keeps it in. */
     suspend fun ingredients(search: String): List<StockableIngredient> =
         apiCall(json) { api.ingredients(search = search) }.map { it.toStockable() }
 
@@ -62,7 +60,4 @@ private fun InventoryItemDto.toDomain() = PantryRow(
     bestBefore = bestBefore?.let(LocalDate::parse),
 )
 
-private fun IngredientDto.toStockable(): StockableIngredient {
-    val units = pantryUnits(canonicalUnit, gramsPerPiece, density, displayUnit)
-    return StockableIngredient(id, name, units, firstPantryUnit(units, canonicalUnit, displayUnit), displayUnit ?: "piece")
-}
+private fun IngredientDto.toStockable() = StockableIngredient(id, name, pantryUnits, pantryUnits.first(), displayUnit ?: "piece")

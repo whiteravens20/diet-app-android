@@ -648,6 +648,11 @@ data class IngredientDto(
     /** What a piece of it is called where it is counted: `piece` | `slice` | `clove` | `handful`. */
     val displayUnit: String? = null,
     val allergens: List<String> = emptyList(),
+    /**
+     * The units the pantry takes it in, the one to offer first first: what is counted ([displayUnit])
+     * in its pieces alone. An amount in another unit is refused with `UNIT_NOT_CONVERTIBLE`.
+     */
+    val pantryUnits: List<String>,
 )
 
 // ── Pantry (packages/shared/src/inventory.ts) ───────────────────────────────
