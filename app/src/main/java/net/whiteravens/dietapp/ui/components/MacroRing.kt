@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.energyOf
 import net.whiteravens.dietapp.domain.energyPercents
+import net.whiteravens.dietapp.ui.theme.ChartAmber
 import androidx.compose.foundation.Canvas
 import kotlin.math.roundToInt
 
@@ -36,7 +37,7 @@ import kotlin.math.roundToInt
 fun macroColors(): List<Color> = listOf(
     MaterialTheme.colorScheme.primary,
     MaterialTheme.colorScheme.secondary,
-    MaterialTheme.colorScheme.tertiary,
+    ChartAmber,
 )
 
 /**

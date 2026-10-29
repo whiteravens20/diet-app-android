@@ -3,11 +3,15 @@
 package net.whiteravens.dietapp.ui.theme
 
 import androidx.compose.ui.graphics.toArgb
+import net.whiteravens.dietapp.domain.Palette
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File
 
-/** The window shows the interface's own background before the interface does, in the light theme and the dark. */
+/**
+ * The window shows the interface's own background before the interface does, in the light theme and
+ * the dark: the default scheme's, since the window is drawn before the scheme chosen is read.
+ */
 class WindowColoursTest {
     /** The window's colour in the resources of [folder], as Android reads it: opaque. */
     private fun windowColour(folder: String): Int {
@@ -17,8 +21,8 @@ class WindowColoursTest {
     }
 
     @Test
-    fun `the window is the colour of the interface's background in either theme`() {
-        assertEquals(LightBackground.toArgb(), windowColour("values"))
-        assertEquals(DarkBackground.toArgb(), windowColour("values-night"))
+    fun `the window is the colour of the default scheme's background in either theme`() {
+        assertEquals(colorSchemeOf(Palette.DEFAULT, dark = false).background.toArgb(), windowColour("values"))
+        assertEquals(colorSchemeOf(Palette.DEFAULT, dark = true).background.toArgb(), windowColour("values-night"))
     }
 }

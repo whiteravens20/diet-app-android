@@ -52,6 +52,7 @@ import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardViewModel.WeightProblem
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
+import net.whiteravens.dietapp.ui.theme.ChartAmber
 import java.time.ZoneId
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -186,7 +187,7 @@ private fun Failure(said: String) = Text(said, style = MaterialTheme.typography.
 private fun WeightChart(points: List<WeightPoint>, lineKg: Double, lineLabel: String, unit: WeightUnit) {
     val logged = MaterialTheme.colorScheme.onSurfaceVariant
     val mean = MaterialTheme.colorScheme.primary
-    val line = MaterialTheme.colorScheme.tertiary
+    val line = ChartAmber
     val edge = MaterialTheme.colorScheme.outlineVariant
     val values = points.flatMap { listOf(unit.shown(it.kg), unit.shown(it.mean)) } + unit.shown(lineKg)
     // Room above and below the weights, whole units at both ends, so that a steady weight is not drawn along an edge.
