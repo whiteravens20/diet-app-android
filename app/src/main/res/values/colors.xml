@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The interface's background in the light theme, LightBackground in ui/theme. -->
+    <color name="window_background">#FBFCF9</color>
+</resources>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Bridge theme; the real UI theming is Compose Material 3 (see ui/theme). -->
-    <style name="Theme.DietApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+        Bridge theme; the real UI theming is Compose Material 3 (see ui/theme). The window is the
+        colour of the interface's background, also as the system's starting screen, so that nothing
+        of another colour shows before the interface does.
+    -->
+    <style name="Theme.DietApp" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>
