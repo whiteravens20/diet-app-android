@@ -4,8 +4,10 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasParent
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -91,10 +93,13 @@ class NotificationsTest {
         screen.waitForText(text(R.string.profiles_title))
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
 
-        // One is put away where it stands, Ola's review, the newest; the last is read with the rest.
+        // One is put away where it stands, Ola's review; the last is read with the rest. The two reviews come from
+        // one catalogue update, often in one millisecond, so which of them is newer is not said: the dismissal
+        // taken is the one on Ola's review.
         openTheBell(2)
         screen.scrollTo(notification("Ola", review))
-        screen.onAllNodes(hasText(text(R.string.notifications_dismiss)) and hasClickAction())[0].performClick()
+        screen.onNode(hasText(text(R.string.notifications_dismiss)) and hasClickAction() and hasParent(hasAnyDescendant(notification("Ola", review))))
+            .performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(notification("Ola", review)).fetchSemanticsNodes().isEmpty() }
         screen.onNode(notification("Ala", reminder)).assertExists()
         screen.onNodeWithText(text(R.string.notifications_read_all)).performClick()
