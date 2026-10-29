@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 # Writes the GitHub Pages site of an edge build into <directory>: the APK under a name that stays the
-# same from build to build, its SHA-256 in the form `sha256sum -c` reads, and a page that says what
-# the build is and how to check it. Used by .github/workflows/edge-apk.yml.
+# same from build to build, its SHA-256 in the form `sha256sum -c` reads, `version.json`, which the
+# application reads to learn of a newer build, and a page that says what the build is and how to
+# check it. Used by .github/workflows/edge-apk.yml.
 #
-# Usage: .github/scripts/edge-page.sh <apk> <directory> <version name> <commit> <signer's SHA-256> [preset]
+# Usage: .github/scripts/edge-page.sh <apk> <directory> <version name> <version code> <commit> <signer's SHA-256> [preset]
 # `preset` when the build starts with the testers' server set (EDGE_SERVER in the workflow).
 set -euo pipefail
 
 apk=$1
 site=$2
 version=$3
-commit=$4
-signer=$5
-if [ "${6:-}" = preset ]; then
+code=$4
+commit=$5
+signer=$6
+if [ "${7:-}" = preset ]; then
   server_en="It starts with the testers' server set; the <em>Server:</em> button under the sign-in form changes it."
   server_pl='Ma od razu ustawiony serwer testów, a przycisk „Serwer:” pod formularzem logowania pozwala go zmienić.'
 else
@@ -25,6 +27,7 @@ cp "$apk" "$site/diet-app-edge.apk"
 (cd "$site" && sha256sum diet-app-edge.apk > diet-app-edge.apk.sha256)
 sha256=$(cut -d' ' -f1 "$site/diet-app-edge.apk.sha256")
 size=$(du -m "$site/diet-app-edge.apk" | cut -f1)
+bytes=$(stat -c %s "$site/diet-app-edge.apk")
 api=$(tr -d '[:space:]' < contract/API_VERSION)
 built=$(date -u +%Y-%m-%d)
 repo=https://github.com/whiteravens20/diet-app-android
@@ -82,7 +85,7 @@ ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
       <li>If Android says that for your security your phone isn't allowed to install unknown apps from this source, tap <em>Settings</em>, turn on <em>Allow from this source</em> and go back. The permission is for that one app (the browser or the file app) and can be turned off afterwards.</li>
       <li>On a Samsung phone, Auto Blocker may stop the install: turn it off in Settings &rarr; Security and privacy &rarr; Auto Blocker. While it is on, it stops every later edge build as well.</li>
       <li>Tap <em>Install</em>. If Google Play Protect offers to scan the app, you can let it: it sends the app's details to Google and shows the result.</li>
-      <li>The app is called Diet App Edge. A later edge build installs the same way, over this one: Android asks whether you want to update the app.</li>
+      <li>The app is called Diet App Edge. A later edge build installs over this one: the app says on its dashboard when one is out and, once you allow it to install apps, downloads it, and Android asks whether you want to update the app. Downloading it from this page works too.</li>
     </ol>
     <p class="muted">Menus can differ between makers and models of phones.</p>
   </section>
@@ -106,7 +109,7 @@ ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
       <li>Jeśli telefon pokaże komunikat „Ze względów bezpieczeństwa na Twoim telefonie nie można obecnie instalować nieznanych aplikacji z tego źródła”, stuknij „Ustawienia”, włącz „Zezwalaj z tego źródła” i wróć. To zezwolenie dotyczy tylko tej jednej aplikacji (przeglądarki albo aplikacji z plikami) i można je potem wyłączyć.</li>
       <li>Na Samsungu instalację może zatrzymać Automatyczna blokada. Wyłącz ją w Ustawienia &rarr; Bezpieczeństwo i prywatność &rarr; Automatyczna blokada. Dopóki jest włączona, zatrzymuje też każdą kolejną wersję edge.</li>
       <li>Na pytanie „Zainstalować tę aplikację?” stuknij „Zainstaluj”. Jeśli Google Play Protect zaproponuje sprawdzenie aplikacji, można się zgodzić: wysyła dane aplikacji do Google i pokazuje wynik.</li>
-      <li>Aplikacja nazywa się Diet App Edge. Kolejną wersję edge instaluje się tak samo, na tej: telefon zapyta „Zaktualizować tę aplikację?”.</li>
+      <li>Aplikacja nazywa się Diet App Edge. Kolejna wersja edge instaluje się na tej: aplikacja sama pokaże na pulpicie, że jest nowsza, a gdy pozwolisz jej instalować aplikacje, pobierze ją i telefon zapyta „Zaktualizować tę aplikację?”. Można ją też pobrać z tej strony jak za pierwszym razem.</li>
     </ol>
     <p class="muted">Nazwy menu mogą się różnić w zależności od producenta i modelu telefonu.</p>
   </section>
@@ -114,4 +117,9 @@ ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
 </body>
 </html>
 HTML
-echo "edge page written: $version, ${size} MB"
+# What the application compares its own version code with, and checks a download against.
+cat > "$site/version.json" <<JSON
+{"versionCode":$code,"versionName":"$version","apiVersion":"$api","apk":"diet-app-edge.apk","sha256":"$sha256","size":$bytes}
+JSON
+
+echo "edge page written: $version ($code), ${size} MB"
