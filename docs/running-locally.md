@@ -16,13 +16,28 @@ How to build the app, point it at a backend, and run it on a device.
 
 ## 1. Run the backend
 
-The app is a client; it needs a running Diet App platform instance. From the
-[platform repo](https://github.com/whiteravens20/diet-app):
+The app is a client: it needs a running Diet App instance with its catalogue loaded, since
+without a catalogue no plan can be made.
+
+**For an emulator**, the quickest is the instance the screens' tests use. On a machine with
+Docker, `curl`, `jq` and `openssl`:
 
 ```bash
-docker compose -f infra/docker-compose.dev.yml up -d   # postgres
-npm run dev                                             # API on :4000
+.github/scripts/start-diet-app.sh /tmp/diet-app-instance   # an empty directory of its own
 ```
+
+It starts the API and the worker of the diet-app version that `contract/diet-app.env` names,
+the version this app is checked against, publishes the API on `127.0.0.1:4000`, which the
+emulator reaches as `10.0.2.2:4000`, and loads the catalogue. It also makes the two accounts
+the notifications' tests read and prints the Gradle arguments that name them. In that
+directory, `docker compose --env-file .env -f docker-compose.yml -f api-port.yml down`
+stops it.
+
+**For a phone on your network**, or for another version of the backend, run diet-app from
+its own checkout as its README says: [Install](https://github.com/whiteravens20/diet-app#install),
+[Run](https://github.com/whiteravens20/diet-app#run) (with Docker, or with Node for the
+local loop), and [load the catalogue](https://github.com/whiteravens20/diet-app#first-run-populate-the-curated-database).
+Its API listens on port 4000 of every address of the machine.
 
 ## 2. Build the APK
 
@@ -45,11 +60,11 @@ The debug build allows cleartext HTTP so a plain `http://…:4000` backend works
 development; release builds do not.
 
 The baked-in value is only the default: the server address is editable **in the app**
-— the **Server** button on the login screen, or More → Account settings → Server once
-signed in. The
-app asks `GET /api/health` at the address before it keeps it, and names what answers
-there when it is not a Diet App API. The value persists on the device; changing it while
-signed in signs you out, since tokens and the offline cache belong to the old instance.
+— the **Server:** button under the sign-in form, which shows the address, or More →
+Account settings → Server once signed in. The app asks `GET /api/health` at the address
+before it keeps it, and names what answers there when it is not a Diet App API. The value
+persists on the device; changing it while signed in signs you out, since tokens and the
+offline cache belong to the old instance.
 
 ## 3. Install on a device
 
@@ -60,12 +75,6 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Enable **USB debugging** on the phone (Developer options). Make sure the phone and the
 backend host are on the same network and any host firewall allows port 4000.
-
-## On-demand cloud build
-
-No local toolchain? Trigger the **Build debug APK** workflow
-(`.github/workflows/build-apk.yml`, `workflow_dispatch`) from the Actions tab and
-download the `diet-app-debug-apk` artifact.
 
 ## About the Android emulator
 
@@ -102,7 +111,8 @@ the emulator:
    image (API 34+) → finish, then press ▶ to run the `app` configuration on it.
 5. Backend reachability from the emulator: `http://10.0.2.2:4000/api/` (the default)
    reaches the Windows host's `localhost`. If the backend runs on another machine on
-   the LAN, set that machine's address in-app (login screen → **Server**).
+   the LAN, set that machine's address in the app, with the **Server:** button under the
+   sign-in form.
 
 Command-line equivalent (PowerShell, from the repo root):
 
@@ -110,11 +120,11 @@ Command-line equivalent (PowerShell, from the repo root):
 .\gradlew.bat assembleDebug          # -> app\build\outputs\apk\debug\app-debug.apk
 ```
 
-## Just build the APK (no local toolchain at all)
+## Without a local toolchain
 
-Trigger the **Build debug APK** workflow (Actions tab → *Build debug APK* → *Run workflow*) and
-download the `diet-app-debug-apk` artifact — a ready-to-install debug APK. Install it
-on a phone with `adb install -r app-debug.apk` (or copy it over and open it), then
-point it at your backend from the login screen's **Server** button. Each run signs the
-APK with a debug key of its own, so a copy from another run does not install over it:
-uninstall the app first.
+Trigger the **Build debug APK** workflow (Actions tab → *Build debug APK* → *Run workflow*,
+`.github/workflows/build-apk.yml`) and download the `diet-app-debug-apk` artifact, a debug
+APK ready to install. Install it on a phone with `adb install -r app-debug.apk` (or copy it
+over and open it), then point it at your backend from the **Server:** button under the
+sign-in form. Each run signs the APK with a debug key of its own, so a copy from another run
+does not install over it: uninstall the app first.
