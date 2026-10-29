@@ -6,6 +6,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -46,8 +47,15 @@ class SecondFactorTest {
         screen.startSignedIn(account)
         screen.openAccountSettings(account)
 
-        screen.onNodeWithText(text(R.string.account_second_factor_set_up)).performScrollTo().performClick()
-        screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
+        // The cards above read what they show on their own and can grow after the button was scrolled to, so
+        // that the tap lands beside it: it is tapped again until the password is asked for.
+        val setUp = screen.onNodeWithText(text(R.string.account_second_factor_set_up))
+        val password = text(R.string.account_password_current)
+        screen.waitUntil(20_000) {
+            runCatching { setUp.performScrollTo().performClick() }
+            screen.onAllNodesWithText(password).fetchSemanticsNodes().isNotEmpty()
+        }
+        screen.onNodeWithText(password).performScrollTo().performTextInput(account.password)
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_continue)).performScrollTo().performClick()
 
