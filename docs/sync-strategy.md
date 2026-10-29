@@ -15,11 +15,12 @@ when one returns.
   cursors: one account's data is a few small pages.
 - The first page of each profile's plans, every plan opened and the shopping lists are
   mirrored into the Room cache (`CachedPlanList`, `CachedMealPlan`, `CachedShoppingList`)
-  as the raw response JSON with the time they were read. Those screens show the copy first
-  and the answer of the network when it comes.
+  as JSON of the app's own wire class, which holds what the app read of the answer, with the
+  time they were read. Those screens show the copy first and the answer of the network when
+  it comes.
 - A screen whose reading anew fails for want of a network keeps what it read and says
   when: "Offline — as of 14:32", and how many changes made on the phone wait to be sent.
-  Plans are read-only offline; a shopping list's rows are changed offline as well (below).
+  Offline, the changes listed below are made as well; everything else waits for a network.
 - A read answered "not found" (the plan, the list or the profile was deleted elsewhere, or
   is not the account's) drops the copy of it; a list read anew replaces the copies of its
   lists whole; signing out drops every copy.
@@ -82,10 +83,11 @@ server would read those that came after them too.
 ## Auth
 
 Access + refresh tokens live in `DataStore`, sealed with AES-GCM under a key the Android
-Keystore holds. An OkHttp interceptor attaches the access token and transparently refreshes
-it on a 401 — the same contract as the web client. Sign-out clears tokens and the cache.
+Keystore holds. An OkHttp interceptor attaches the access token, and an authenticator
+refreshes it on a 401 that says it is no good. A session that ends, signed out or refused a
+refresh, takes the tokens and every copy with it; signing out while changes wait asks first.
 
 ## What is never synced
 
-Nutrition math. The app never computes calories or macros — it only renders values the
-backend returns. This preserves the platform's determinism guarantee.
+Nutrition math. The app never computes calories or macros: it shows the values the backend
+returns, so the app and the web application show the same figures.

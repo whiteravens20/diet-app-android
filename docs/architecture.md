@@ -7,26 +7,29 @@ produces — it never computes nutrition itself. The backend is the single sourc
 
 ## Layers
 
-```
-ui/        Jetpack Compose screens + Material 3 theme + components.
-           Each screen has a Hilt ViewModel exposing UI state as a StateFlow.
-domain/    Plain app models, decoupled from the wire format.
-data/
-  remote/  Retrofit `DietApiService` (authenticated), `ModelApiService` (the
-           routes the server waits for an AI provider on, given two minutes) +
-           `AuthApiService` (token-free) + DTOs — the Kotlin mirror of the platform's
-           `packages/shared` contract. `ApiException` types the error envelope.
-  config/  The server's address, and the address of its web application, where the
-           app opens in the browser what it leaves to it.
-  auth/    `TokenStore` (DataStore) + OkHttp interceptor/authenticator pair —
-           attaches the bearer token and transparently refreshes it on 401.
-  local/   Room `CacheDatabase` — offline copies of meal plans / shopping lists, and
-           the changes made on the phone that wait to be sent.
-  repository/  Offline-first repositories: serve the cache, refresh from the API.
-  sync/    `ChangeQueue` — a change sent at once, or kept and sent in its turn by
-           `ChangesWorker` once there is a network.
-di/        Hilt modules wiring networking, JSON, auth plumbing, the cache DB.
-```
+- `ui/` holds the Jetpack Compose screens, the Material 3 theme and the shared components.
+  Each screen has a Hilt ViewModel that exposes its state as a `StateFlow`.
+- `domain/` holds the app's own models, which do not depend on the wire format.
+- `data/remote/` holds the Retrofit services: `DietApiService` for the signed-in calls,
+  `ModelApiService` for the routes on which the server waits for an AI provider, given two
+  minutes, and `AuthApiService` for the calls without a token. Its DTOs are held by the
+  unit tests to a copy of the contract the API publishes, in `contract/`, and
+  `ApiException` types the API's envelope of a refusal.
+- `data/config/` keeps the server's address, and the address of its web application, where
+  the app opens in the browser what it leaves to it.
+- `data/auth/` keeps the tokens in `TokenStore` (DataStore, sealed under a key of the
+  Android Keystore), and an OkHttp interceptor and authenticator attach the access token and
+  refresh it on a 401 that says it is no good.
+- `data/local/` is the Room `CacheDatabase`: copies of meal plans and shopping lists, and the
+  changes made on the phone that wait to be sent.
+- `data/sync/` is `ChangeQueue`: a change goes to the server at once, or is kept and sent in
+  its turn by `ChangesWorker` once there is a network.
+- `data/repository/` joins them: a repository asks the API, and for meal plans and shopping
+  lists keeps a copy in the cache that is shown first.
+- `data/notify/` keeps whether the phone's notifications are on and which were shown, and
+  `notify/` holds the background work that reads them and what the phone shows.
+- `di/` holds the Hilt modules that wire the network, JSON, the tokens and the cache's
+  database together.
 
 ## Offline-first flow
 
@@ -46,9 +49,10 @@ and the changes made without a network.
 - **Kotlin + Jetpack Compose + Material 3** — modern, declarative, themable. The Compose
   theme mirrors the web design system (emerald-forward palette).
 - **Hilt** — compile-time DI.
-- **Retrofit + OkHttp + kotlinx.serialization** — typed networking; DTOs mirror the
-  platform contract.
-- **Room** — the offline cache; plans/lists stored as the raw API JSON keyed by id.
+- **Retrofit + OkHttp + kotlinx.serialization** — typed networking; the DTOs are held to
+  the copy of the API's contract.
+- **Room** — the offline cache: each copy of a plan or a list is the app's own wire class
+  as JSON under its id, and each change waiting to be sent is JSON as well.
 - **DataStore** — auth tokens, sealed under a key of the Android Keystore.
 
 ## Module boundaries
@@ -78,11 +82,11 @@ Check a change before sending it:
 ./gradlew -PtestBuildType=minified connectedMinifiedAndroidTest  # the same, on the release build as R8 shrinks it
 ```
 
-CI builds the debug APK and the release variant, shrunk by R8 with the rules in
-`app/proguard-rules.pro`, runs the unit tests and Android Lint on every push and pull
-request to `main` and `dev`, and the screens' tests on an emulator against a diet-app
-instance it starts for them. Running the app against a backend is described in
-[running-locally.md](running-locally.md).
+CI builds the debug APK and the release variant, its code and resources shrunk by R8 with
+the rules in `app/proguard-rules.pro`, runs the unit tests and Android Lint on every push
+and pull request to `main` and `dev`, and the screens' tests on Android 14 and 17 emulators
+and on the release build as R8 shrinks it, against a diet-app instance it starts for them.
+Running the app against a backend is described in [running-locally.md](running-locally.md).
 
 ## Roadmap
 
@@ -99,3 +103,6 @@ one-time code that the page uses once its reader says the account is theirs. The
 that make sense without a network (a shopping list's rows, meals eaten, a day's own meals
 and meals taken off it, weights, the pantry, recipes' marks and notifications read) wait for
 one in a queue, described in [sync-strategy.md](sync-strategy.md).
+
+Still to come is the first release: a signing key, a release workflow and the round with
+testers before it.
