@@ -53,6 +53,7 @@ dt { color: var(--muted); }
 dd { margin: 0; overflow-wrap: anywhere; }
 code { font: 13px/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 section { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 18px; }
+ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
 </style>
 </head>
 <body>
@@ -60,6 +61,7 @@ section { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-to
   <header>
     <h1>Diet App Edge</h1>
     <p class="muted">A test build of the <a href="$repo">Diet App Android companion</a>, for the testers' round before the first release. It changes during the tests, which is expected.</p>
+    <p lang="pl"><a href="#instalacja">Instrukcja instalacji po polsku</a></p>
   </header>
 
   <a class="download" href="diet-app-edge.apk">Download the APK (${size} MB)</a>
@@ -73,6 +75,19 @@ section { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-to
   </dl>
 
   <section lang="en">
+    <h2>How to install (Android 16 and later)</h2>
+    <ol>
+      <li>Open this page on the phone and tap <em>Download the APK</em>. If the browser warns about the type of file, choose to download it anyway.</li>
+      <li>Open the downloaded file, from the download notification or from the Downloads of the phone's file app.</li>
+      <li>If Android says that for your security your phone isn't allowed to install unknown apps from this source, tap <em>Settings</em>, turn on <em>Allow from this source</em> and go back. The permission is for that one app (the browser or the file app) and can be turned off afterwards.</li>
+      <li>On a Samsung phone, Auto Blocker may stop the install: turn it off in Settings &rarr; Security and privacy &rarr; Auto Blocker. While it is on, it stops every later edge build as well.</li>
+      <li>Tap <em>Install</em>. If Google Play Protect offers to scan the app, you can let it: it sends the app's details to Google and shows the result.</li>
+      <li>The app is called Diet App Edge. A later edge build installs the same way, over this one: Android asks whether you want to update the app.</li>
+    </ol>
+    <p class="muted">Menus can differ between makers and models of phones.</p>
+  </section>
+
+  <section lang="en">
     <h2>What it is</h2>
     <p>Diet App Edge is an application of its own: it installs beside a later release of Diet App, and each edge build installs over the one before it. It is the release build, which talks to a server over HTTPS only. $server_en</p>
     <p>To check a download: <code>sha256sum -c diet-app-edge.apk.sha256</code>, or with the GitHub CLI <code>gh attestation verify diet-app-edge.apk --repo whiteravens20/diet-app-android</code>, which shows the workflow run that built it.</p>
@@ -81,6 +96,19 @@ section { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-to
   <section lang="pl">
     <h2>Po polsku</h2>
     <p>Diet App Edge to wersja testowa aplikacji na Androida, do rundy testów przed pierwszym wydaniem. W trakcie testów aplikacja się zmienia i tak ma być. Instaluje się obok przyszłego wydania jako osobna aplikacja, a każda kolejna wersja edge instaluje się na poprzedniej. $server_pl</p>
+  </section>
+
+  <section lang="pl" id="instalacja">
+    <h2>Instalacja (Android 16 i nowsze)</h2>
+    <ol>
+      <li>Otwórz tę stronę na telefonie i stuknij przycisk pobierania. Jeśli przeglądarka ostrzeże przed tym typem pliku, wybierz pobranie mimo to.</li>
+      <li>Otwórz pobrany plik z powiadomienia o pobraniu albo w aplikacji z plikami telefonu, w pobranych plikach (na Samsungu: Moje pliki &rarr; Pobrane).</li>
+      <li>Jeśli telefon pokaże komunikat „Ze względów bezpieczeństwa na Twoim telefonie nie można obecnie instalować nieznanych aplikacji z tego źródła”, stuknij „Ustawienia”, włącz „Zezwalaj z tego źródła” i wróć. To zezwolenie dotyczy tylko tej jednej aplikacji (przeglądarki albo aplikacji z plikami) i można je potem wyłączyć.</li>
+      <li>Na Samsungu instalację może zatrzymać Automatyczna blokada. Wyłącz ją w Ustawienia &rarr; Bezpieczeństwo i prywatność &rarr; Automatyczna blokada. Dopóki jest włączona, zatrzymuje też każdą kolejną wersję edge.</li>
+      <li>Na pytanie „Zainstalować tę aplikację?” stuknij „Zainstaluj”. Jeśli Google Play Protect zaproponuje sprawdzenie aplikacji, można się zgodzić: wysyła dane aplikacji do Google i pokazuje wynik.</li>
+      <li>Aplikacja nazywa się Diet App Edge. Kolejną wersję edge instaluje się tak samo, na tej: telefon zapyta „Zaktualizować tę aplikację?”.</li>
+    </ol>
+    <p class="muted">Nazwy menu mogą się różnić w zależności od producenta i modelu telefonu.</p>
   </section>
 </main>
 </body>
