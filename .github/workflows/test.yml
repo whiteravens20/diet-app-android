@@ -143,6 +143,14 @@ jobs:
           ./gradlew -PtestBuildType=${{ matrix.build-type }}
           assemble${{ matrix.variant }} assemble${{ matrix.variant }}AndroidTest
 
+      # The emulator, the instance and the tests share the runner's memory with the build's daemons,
+      # whose heaps the build leaves full, R8's above all: the Gradle daemon, and the Kotlin daemon
+      # with it, stop before the emulator starts, and the tests' own Gradle compiles nothing.
+      - name: Let the build's daemons go
+        run: |
+          ./gradlew --stop
+          free -m
+
       - name: Let the emulator use KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' |
@@ -172,6 +180,7 @@ jobs:
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            free -m
             ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT connected${{ matrix.variant }}AndroidTest
 
       - name: Keep what diet-app logged
