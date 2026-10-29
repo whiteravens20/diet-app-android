@@ -1,7 +1,7 @@
 # Answers of a running backend
 
 Each file is what a running diet-app answered one call of this client: `config.json` from API
-0.136.0, captured on 2026-10-28 from an install of 0.127.0 upgraded to the candidate `edge-3b70f02`;
+0.139.0, captured on 2026-10-29 from an install of 0.136.0 upgraded to the candidate `edge-5e11be9`;
 `ingredients-search-egg.json`, `ingredients-search-milk.json`, `ingredients-by-ids.json`,
 `pantry.json` (six eggs best before in five days, a litre of milk with no day, three cloves of
 garlic in twenty days and 212.4 g of oats in two hundred), `pantry-row-added.json`,
