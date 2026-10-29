@@ -63,7 +63,7 @@
     <string name="auth_password_rules">Co najmniej 12 znaków, wielka i mała litera oraz cyfra.</string>
     <string name="auth_sign_in_button">Zaloguj się</string>
     <string name="auth_second_step_title">Logowanie dwuetapowe</string>
-    <string name="auth_second_step_body">Wpisz kod z aplikacji uwierzytelniającej albo jeden z kodów odzyskiwania.</string>
+    <string name="auth_second_step_body">Wpisz sześciocyfrowy kod z aplikacji uwierzytelniającej. Jeśli nie masz telefonu, wpisz jeden z kodów zapasowych.</string>
     <string name="auth_code">Kod</string>
     <string name="auth_check_title">Krótkie sprawdzenie</string>
     <string name="auth_create_account_button">Załóż konto</string>
@@ -496,11 +496,11 @@
     <string name="macros_protein">Białko</string>
     <string name="macros_fat">Tłuszcz</string>
     <string name="macros_carbs">Węglowodany</string>
-    <string name="plans_off_diet">Poza dietą</string>
+    <string name="plans_off_diet">Spoza diety</string>
     <string name="plans_eaten">Zjedzone</string>
 
     <!-- Recipes -->
-    <string name="recipes_subtitle">Wyselekcjonowana biblioteka przepisów — każda kaloria wyliczana przez backend.</string>
+    <string name="recipes_subtitle">Starannie dobrana biblioteka przepisów — każda kaloria i każdy makroskładnik są wyliczane z bazy danych.</string>
     <string name="recipes_search_placeholder">Tytuł przepisu…</string>
     <string name="recipes_tab_library">Biblioteka</string>
     <string name="recipes_tab_mine">Moje przepisy</string>
@@ -796,8 +796,8 @@
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
     <string name="shopping_no_profile">Brak profilu</string>
     <string name="shopping_no_profile_body">Najpierw utwórz profil i wygeneruj plan posiłków — lista zakupów powstaje z planu.</string>
-    <string name="shopping_no_plans">Brak planów dla tego profilu</string>
-    <string name="shopping_no_plans_body">Najpierw wygeneruj plan posiłków — lista zakupów powstaje z niego.</string>
+    <string name="shopping_no_plans">Nie ma jeszcze planu, do którego można zrobić zakupy</string>
+    <string name="shopping_no_plans_body">Listę zakupów tworzy się z planu posiłków. Najpierw ułóż plan dla tego profilu.</string>
     <string name="shopping_no_lists_title">Ten plan nie ma jeszcze listy zakupów</string>
     <string name="shopping_no_lists">Lista sumuje to, czego potrzebują posiłki planu i pomija to, co jest już w spiżarni.</string>
     <string name="shopping_make_list">Utwórz listę</string>
