@@ -8,6 +8,10 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
+# Kotlin's official style, which the code follows, and the XML and Python beside it.
+[*.{kt,kts,xml,py}]
+indent_size = 4
+
 [Makefile]
 indent_style = tab
 
