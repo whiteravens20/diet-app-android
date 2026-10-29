@@ -44,6 +44,12 @@ android {
     // app migrates it.
     sourceSets.getByName("androidTest").assets.srcDir("schemas")
 
+    // The application speaks English and Polish: the libraries' texts in other languages stay out of
+    // the package, so that a phone in another language shows the libraries' English beside the app's.
+    androidResources {
+        localeFilters += listOf("en", "pl")
+    }
+
     // The server a build starts with: the emulator's host in a debug build, and none in a release
     // build, whose first screen asks for one. `-PapiBaseUrl=<address>` gives another, such as a
     // backend on a phone's own network: http://<host-lan-ip>:4000/api/.
@@ -58,6 +64,9 @@ android {
         }
         release {
             isMinifyEnabled = true
+            // The resources nothing reads leave the package with the code nothing calls;
+            // res/raw/keep.xml keeps what is read by its name.
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.getOrElse("")}\"")
             buildConfigField("boolean", "PLAIN_HTTP", "false")
