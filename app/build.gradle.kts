@@ -21,8 +21,10 @@ android {
         applicationId = "net.whiteravens.dietapp"
         minSdk = 29
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.0.0"
+        // A build handed out names its version and counts it: `-PappVersionName` and
+        // `-PappVersionCode`, which a later build of the same application must raise.
+        versionCode = providers.gradleProperty("appVersionCode").map(String::toInt).getOrElse(1)
+        versionName = providers.gradleProperty("appVersionName").getOrElse("0.0.0")
         // The version of diet-app's API this build was checked against (contract/API_VERSION):
         // a server that answers another one is named on the screen.
         val checkedApiVersion = providers
