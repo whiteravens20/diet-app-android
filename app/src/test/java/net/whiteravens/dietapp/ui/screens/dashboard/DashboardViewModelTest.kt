@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.NotificationDto
 import net.whiteravens.dietapp.data.remote.SessionUserDto
+import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -26,6 +27,8 @@ import net.whiteravens.dietapp.data.repository.toDomain
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.AiModes
+import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.OverviewDay
 import net.whiteravens.dietapp.domain.PlanOverview
@@ -77,6 +80,9 @@ class DashboardViewModelTest {
     /** The changes made on the phone that wait to be sent: none, unless a test makes one without a network. */
     private val queue = changeQueue()
 
+    /** What AI an account has: asked of the API only where the account uses AI, so a test that asks for it says what it is. */
+    private val ai = mockk<AiRepository>()
+
     private val offline: suspend () -> Nothing = { throw IOException("no network") }
 
     @After
@@ -92,7 +98,7 @@ class DashboardViewModelTest {
         coEvery { users.calorieTarget(held.id) } throws refusal
         coEvery { users.calorieTarget(whole.id) } returns target
 
-        val state = DashboardViewModel(users, plans, weights, notifications, queue).state.value
+        val state = DashboardViewModel(users, plans, weights, notifications, queue, ai).state.value
 
         assertNull(state.error)
         assertEquals(listOf(held, whole), state.profiles.map { it.profile })
@@ -108,7 +114,7 @@ class DashboardViewModelTest {
         val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
         val made = Profile("a", "Ala", "balanced", 4, 70.0, null)
         coEvery { users.profiles() } returns emptyList()
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
         assertEquals(emptyList<DashboardViewModel.ProfileStats>(), model.state.value.profiles)
 
         coEvery { users.profiles() } returns listOf(made)
@@ -131,7 +137,7 @@ class DashboardViewModelTest {
     fun `coming back to the front right after the last read reads nothing, while a pull reads at once and ends with the answer`() {
         val users = mockk<UserRepository>()
         coEvery { users.profiles() } returns emptyList()
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
 
         model.shownAgain(cameToTheFront = true)
         coVerify(exactly = 1) { users.profiles() }
@@ -159,7 +165,7 @@ class DashboardViewModelTest {
         coEvery { plans.overview(planned.id) } returns overview
         coEvery { plans.overview(unread.id) } throws refusal
 
-        val state = DashboardViewModel(users, plans, weights, notifications, queue).state.value
+        val state = DashboardViewModel(users, plans, weights, notifications, queue, ai).state.value
 
         assertEquals(overview, state.profiles[0].overview)
         assertNull(state.profiles[0].overviewError)
@@ -194,7 +200,7 @@ class DashboardViewModelTest {
         coEvery { weights.entries(ala.id, capture(since)) } returns listOf(logged, earlier)
         coEvery { weights.days(ala.id, capture(daysSince), capture(zone)) } returns listOf(earlierDay, loggedDay)
 
-        val state = DashboardViewModel(users, plans, weights, notifications, queue).state.value
+        val state = DashboardViewModel(users, plans, weights, notifications, queue, ai).state.value
 
         assertEquals(WeightUnit.LB, state.unit)
         assertEquals(listOf(logged, earlier), state.profiles.single().weights)
@@ -206,7 +212,7 @@ class DashboardViewModelTest {
 
         val refusal = ApiException(429, "RATE_LIMITED", "Too many requests.", retryAfterSeconds = 30)
         coEvery { weights.entries(ala.id, any()) } throws refusal
-        val unread = DashboardViewModel(users, plans, weights, notifications, queue).state.value.profiles.single()
+        val unread = DashboardViewModel(users, plans, weights, notifications, queue, ai).state.value.profiles.single()
 
         assertNull(unread.weights)
         assertNull(unread.days)
@@ -215,7 +221,7 @@ class DashboardViewModelTest {
 
         coEvery { weights.entries(ala.id, any()) } returns listOf(logged, earlier)
         coEvery { weights.days(ala.id, any(), any()) } throws refusal
-        val noDays = DashboardViewModel(users, plans, weights, notifications, queue).state.value.profiles.single()
+        val noDays = DashboardViewModel(users, plans, weights, notifications, queue, ai).state.value.profiles.single()
 
         assertNull(noDays.weights)
         assertNull(noDays.days)
@@ -232,7 +238,7 @@ class DashboardViewModelTest {
         coEvery { weights.log(ala.id, 81.65) } returns Submitted.Sent(today)
         // A thousand pounds is more than the 400 kg the API takes.
         coEvery { weights.log(ala.id, 453.59) } throws refusal("weight-refused")
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
 
         model.typeWeight(ala.id, "eighty")
         model.logWeight(ala.id)
@@ -264,7 +270,7 @@ class DashboardViewModelTest {
         val users = users().also { coEvery { it.me() } returns account("kg") }
         val refusal = ApiException(404, "PROFILE_NOT_FOUND", "Profile not found.")
         coEvery { weights.log(ala.id, 80.2) } throws refusal
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
 
         model.typeWeight(ala.id, "80.2")
         model.logWeight(ala.id)
@@ -281,7 +287,7 @@ class DashboardViewModelTest {
         coEvery { weights.delete(ala.id, logged.id) } returns Submitted.Sent(Unit)
         val gone = ApiException(404, "WEIGHT_ENTRY_NOT_FOUND", "Weight entry not found.")
         coEvery { weights.delete(ala.id, earlier.id) } throws gone
-        val model = DashboardViewModel(users(), plans, weights, notifications, queue)
+        val model = DashboardViewModel(users(), plans, weights, notifications, queue, ai)
 
         model.removeLatestWeight(ala.id)
 
@@ -304,7 +310,7 @@ class DashboardViewModelTest {
         coEvery { weights.days(ala.id, any(), any()) } returns listOf(earlierDay)
         val taken = QueuedChange.WeightLogged(ala.id, 80.2, "2026-10-17T07:00:00Z", "key")
         coEvery { weights.log(ala.id, 80.2) } coAnswers { queue.submit(taken, offline) }
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
 
         model.typeWeight(ala.id, "80.2")
         model.logWeight(ala.id)
@@ -335,7 +341,7 @@ class DashboardViewModelTest {
         coEvery { weights.days(ala.id, any(), any()) } returns listOf(earlierDay, loggedDay)
         coEvery { weights.log(ala.id, 80.2) } coAnswers { queue.submit(QueuedChange.WeightLogged(ala.id, 80.2, "2026-10-17T07:00:00Z", "key"), offline) }
         coEvery { weights.delete(ala.id, logged.id) } coAnswers { queue.submit(QueuedChange.WeightDeleted(ala.id, logged.id), offline) }
-        val model = DashboardViewModel(users(), plans, weights, notifications, queue)
+        val model = DashboardViewModel(users(), plans, weights, notifications, queue, ai)
         model.typeWeight(ala.id, "80.2")
         model.logWeight(ala.id)
 
@@ -362,7 +368,7 @@ class DashboardViewModelTest {
         val todayDay = WeightPoint(LocalDate.parse("2026-10-16"), 80.2, 80.4)
         coEvery { weights.days(ala.id, any(), any()) } returns listOf(earlierDay) andThenThrows refusal andThen listOf(earlierDay, todayDay)
         coEvery { weights.log(ala.id, 80.2) } returns Submitted.Sent(today)
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
 
         model.typeWeight(ala.id, "80.2")
         model.logWeight(ala.id)
@@ -390,7 +396,7 @@ class DashboardViewModelTest {
         val afterTheRemoval = CompletableDeferred<List<WeightPoint>>()
         val answers = ArrayDeque(listOf(CompletableDeferred(listOf(earlierDay)), afterTheLog, afterTheRemoval))
         coEvery { weights.days(ala.id, any(), any()) } coAnswers { answers.removeFirst().await() }
-        val model = DashboardViewModel(users, plans, weights, notifications, queue)
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
 
         model.typeWeight(ala.id, "80.2")
         model.logWeight(ala.id)
@@ -405,7 +411,7 @@ class DashboardViewModelTest {
     @Test
     fun `the bell counts a notification read on the phone as read, while its reading waits and once it is sent`() {
         coEvery { notifications.unread() } returns json.decodeFromString<List<NotificationDto>>(fixture("notifications-unread")).map { it.toDomain() }
-        val model = DashboardViewModel(users(), plans, weights, notifications, queue)
+        val model = DashboardViewModel(users(), plans, weights, notifications, queue, ai)
         assertEquals(3, model.state.value.shownUnread)
 
         runBlocking { queue.submit(QueuedChange.NotificationRead("read-on-the-phone"), offline) }
@@ -418,7 +424,7 @@ class DashboardViewModelTest {
     @Test
     fun `the bell counts the notifications not read yet, read again on coming back, and keeps its count while they cannot be read`() {
         coEvery { notifications.unread() } returns json.decodeFromString<List<NotificationDto>>(fixture("notifications-unread")).map { it.toDomain() }
-        val model = DashboardViewModel(users(), plans, weights, notifications, queue)
+        val model = DashboardViewModel(users(), plans, weights, notifications, queue, ai)
         assertEquals(3, model.state.value.unread)
 
         coEvery { notifications.unread() } throws IOException("unreachable")
@@ -428,5 +434,37 @@ class DashboardViewModelTest {
         coEvery { notifications.unread() } returns emptyList()
         model.shownAgain(cameToTheFront = false)
         assertEquals(0, model.state.value.unread)
+    }
+    /** What AI the API says an account that uses the instance's has: three of fifteen requests used. */
+    private val instanceAi = AiStatus(
+        mode = AiModes.INSTANCE, limit = 15, used = 3, remaining = 12, resetAt = Instant.parse("2026-11-20T10:00:00Z"),
+        instanceLimitReached = false, adminProviderConfigured = true,
+    )
+
+    @Test
+    fun `an account that uses AI is told what it has of it, read again with the rest, and nothing once AI is off`() {
+        val users = users().also { coEvery { it.me() } returns account("kg").copy(aiMode = AiModes.INSTANCE) }
+        coEvery { ai.status() } returns instanceAi
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai)
+        assertEquals(instanceAi, model.state.value.ai)
+
+        // A read that fails keeps what is shown.
+        coEvery { ai.status() } throws IOException("unreachable")
+        model.pull()
+        assertEquals(instanceAi, model.state.value.ai)
+
+        // AI turned off elsewhere: nothing is said of it, and nothing is asked.
+        coEvery { users.me() } returns account("kg").copy(aiMode = AiModes.NONE)
+        model.pull()
+        assertNull(model.state.value.ai)
+        coVerify(exactly = 2) { ai.status() }
+    }
+
+    @Test
+    fun `an account with AI off asks nothing of it`() {
+        val users = users().also { coEvery { it.me() } returns account("kg") }
+        val state = DashboardViewModel(users, plans, weights, notifications, queue, ai).state.value
+        assertNull(state.ai)
+        coVerify(exactly = 0) { ai.status() }
     }
 }

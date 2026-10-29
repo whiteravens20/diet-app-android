@@ -67,8 +67,10 @@ import kotlin.math.roundToInt
  * Calorie target, deficit and macro split for every profile, what its plan of the moment comes to,
  * and its weights — the web dashboard, whose favourite sets are made and changed there, in the
  * browser. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan]; the bell in
- * the header counts the notifications not read yet and opens them on [onOpenNotifications]. With
- * [showWeightOf], the weights of that profile are brought into view, and [onWeightShown] says so.
+ * the header counts the notifications not read yet and opens them on [onOpenNotifications]; under
+ * the header, where the account uses AI, its requests are said, and open the account's settings on
+ * [onOpenAccount]. With [showWeightOf], the weights of that profile are brought into view, and
+ * [onWeightShown] says so.
  */
 @Composable
 fun DashboardScreen(
@@ -76,6 +78,7 @@ fun DashboardScreen(
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: (profileId: String) -> Unit,
     onOpenNotifications: () -> Unit,
+    onOpenAccount: () -> Unit,
     showWeightOf: String? = null,
     onWeightShown: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
@@ -126,17 +129,20 @@ fun DashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item {
-                    Row(Modifier.padding(bottom = 4.dp), verticalAlignment = Alignment.Top) {
-                        ScreenHeader(
-                            title = stringResource(R.string.nav_dashboard),
-                            subtitle = pluralStringResource(
-                                R.plurals.dashboard_subtitle,
-                                state.profiles.size,
-                                state.profiles.size,
-                            ),
-                            modifier = Modifier.weight(1f),
-                        )
-                        NotificationsBell(state.shownUnread, onClick = onOpenNotifications)
+                    Column(Modifier.padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(verticalAlignment = Alignment.Top) {
+                            ScreenHeader(
+                                title = stringResource(R.string.nav_dashboard),
+                                subtitle = pluralStringResource(
+                                    R.plurals.dashboard_subtitle,
+                                    state.profiles.size,
+                                    state.profiles.size,
+                                ),
+                                modifier = Modifier.weight(1f),
+                            )
+                            NotificationsBell(state.shownUnread, onClick = onOpenNotifications)
+                        }
+                        state.ai?.let { AiRequests(it, onOpen = onOpenAccount) }
                     }
                 }
                 if (newer != null) item(key = "update") { UpdateCard(viewModel = update) }

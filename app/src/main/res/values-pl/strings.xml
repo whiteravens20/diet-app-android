@@ -141,6 +141,13 @@
     </plurals>
     <string name="overview_day_of">%1$s z %2$s kcal</string>
     <string name="dashboard_kcal_per_day">kcal/dzień</string>
+    <string name="dashboard_ai_left">AI: %1$s/%2$s w tym miesiącu</string>
+    <string name="dashboard_ai_own">AI: własny klucz, bez limitu</string>
+    <string name="dashboard_ai_left_description">Pozostałe zapytania AI instancji w tym miesiącu: %1$s z %2$s. Otwiera ustawienia konta.</string>
+    <string name="dashboard_ai_used_up">Miesięczny limit AI wyczerpany. Następne zapytanie odblokuje się %1$s.</string>
+    <string name="dashboard_ai_instance_used_up">Wspólna pula zapytań AI tej instancji na ten miesiąc została wykorzystana. Kolejne zapytanie odblokuje się %1$s.</string>
+    <string name="dashboard_ai_new_accounts_used_up">Nowe konta wykorzystały swoją część zapytań AI instancji. Kolejne zapytanie odblokuje się %1$s.</string>
+    <string name="dashboard_ai_no_access">AI instancji nie jest dostępne dla tego konta. Szczegóły w ustawieniach konta.</string>
 
     <!-- Macros & units -->
     <string name="macro_protein">Białko</string>

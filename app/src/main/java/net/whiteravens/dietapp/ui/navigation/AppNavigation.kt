@@ -304,6 +304,7 @@ private fun MainScaffold(
                         onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
                         onNewPlan = { profileId -> navController.navigate(NewPlanRoute(profileId)) },
                         onOpenNotifications = { navController.navigate(NotificationsRoute) },
+                        onOpenAccount = { navController.navigate(AccountRoute) },
                         showWeightOf = weightOf,
                         onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
                     )

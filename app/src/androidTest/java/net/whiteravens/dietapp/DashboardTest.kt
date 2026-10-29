@@ -140,6 +140,22 @@ class DashboardTest {
     }
 
     @Test
+    fun anAccountOnTheInstancesAiIsToldHowManyRequestsAreLeftThisMonthWhichLeadsToItsSettings() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        Instance.useAi(account, "admin")
+        val limit = NumberFormat.getNumberInstance(Locale.getDefault()).format(Instance.aiQuota(account).getInt("limit"))
+        screen.signIn(account)
+
+        // None used yet: all of the month's are left.
+        val left = text(R.string.dashboard_ai_left, limit, limit)
+        screen.waitForText(left)
+        screen.keepScreenshot("dashboard-ai-requests")
+        screen.onNodeWithText(left).performClick()
+        screen.waitForText(account.email)
+    }
+
+    @Test
     fun aWeightIsLoggedOnItsProfilesCardDrawnAndTheLastOneTakenBack() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account, name = "Ala")

@@ -158,6 +158,11 @@ object Instance {
         call("PATCH", "users/me", JSONObject().put("palette", palette), token = account.accessToken)
     }
 
+    /** Sets the way [account] uses a model (`none`, `admin` or `byok`), as its settings would. */
+    fun useAi(account: Account, mode: String) {
+        call("PATCH", "users/me", JSONObject().put("aiMode", mode), token = account.accessToken)
+    }
+
     /** Logs [kg] for a profile of [account], taken at noon of [day] (UTC). */
     fun logWeight(account: Account, profileId: String, kg: Double, day: LocalDate) {
         call(

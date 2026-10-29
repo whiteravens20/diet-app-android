@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -23,6 +24,8 @@ import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.data.sync.Waiting
+import net.whiteravens.dietapp.domain.AiModes
+import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanOverview
@@ -41,8 +44,9 @@ import javax.inject.Inject
 
 /**
  * Profiles with their engine-computed calorie targets, what their plan of the moment comes to and their
- * weights, fetched in parallel; a weight is logged and the last one taken back from its profile's card,
- * without a network as well, where the change waits to be sent.
+ * weights, fetched in parallel, and the account's AI requests where it uses AI; a weight is logged and
+ * the last one taken back from its profile's card, without a network as well, where the change waits
+ * to be sent.
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -51,6 +55,7 @@ class DashboardViewModel @Inject constructor(
     private val weights: WeightRepository,
     private val notifications: NotificationRepository,
     private val queue: ChangeQueue,
+    private val ai: AiRepository,
 ) : ViewModel() {
 
     /**
@@ -114,6 +119,8 @@ class DashboardViewModel @Inject constructor(
         val waitingWeights: List<Waiting> = emptyList(),
         /** How many notifications were read on the phone and wait for that to be sent. */
         val readsWaiting: Int = 0,
+        /** What AI the account has, where it uses AI: the instance's requests left, or a provider of its own. */
+        val ai: AiStatus? = null,
     ) {
         /** How many notifications the bell counts: those not read yet, less those read on the phone. */
         val shownUnread: Int get() = (unread - readsWaiting).coerceAtLeast(0)
@@ -334,8 +341,18 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             if (showLoading) _state.update { it.copy(loading = true, profiles = emptyList(), error = null) }
             val before = _state.value.profiles
+            val account = async { attempt { users.me() }.getOrNull() }
             // Weights are shown in the account's unit; while it cannot be read, in the one shown before.
-            val unit = async { attempt { users.me() }.getOrNull()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) } }
+            val unit = async { account.await()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) } }
+            // What AI the account has is asked only where it uses AI, as the web's chip asks it. Null
+            // where it could not be read, the account or its AI: what is shown stays.
+            val aiNow = async {
+                when (account.await()?.aiMode) {
+                    null -> null
+                    AiModes.NONE -> Result.success<AiStatus?>(null)
+                    else -> attempt { ai.status() }.getOrNull()?.let { Result.success<AiStatus?>(it) }
+                }
+            }
             val unread = async { attempt { notifications.unread().size }.getOrNull() }
             val since = Instant.now().minus(WEIGHT_DAYS)
             attempt {
@@ -365,6 +382,7 @@ class DashboardViewModel @Inject constructor(
                 .onSuccess { found ->
                     val inUnit = unit.await()
                     val notRead = unread.await()
+                    val aiRead = aiNow.await()
                     // A weight logged or taken back while this was read was answered after it: what is shown is newer.
                     _state.update {
                         if (showLoading || it.profiles === before) {
@@ -377,9 +395,10 @@ class DashboardViewModel @Inject constructor(
                                 pulled = false,
                                 readAt = System.currentTimeMillis(),
                                 offline = false,
+                                ai = if (aiRead == null) it.ai else aiRead.getOrNull(),
                             )
                         } else {
-                            it.copy(loading = false, unread = notRead ?: it.unread, pulled = false)
+                            it.copy(loading = false, unread = notRead ?: it.unread, pulled = false, ai = if (aiRead == null) it.ai else aiRead.getOrNull())
                         }
                     }
                 }

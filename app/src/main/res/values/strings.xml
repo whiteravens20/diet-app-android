@@ -137,6 +137,13 @@
     </plurals>
     <string name="overview_day_of">%1$s of %2$s kcal</string>
     <string name="dashboard_kcal_per_day">kcal/day</string>
+    <string name="dashboard_ai_left">AI: %1$s/%2$s this month</string>
+    <string name="dashboard_ai_own">AI: your own key, no quota</string>
+    <string name="dashboard_ai_left_description">The instance\'s AI requests left this month: %1$s of %2$s. Opens the account settings.</string>
+    <string name="dashboard_ai_used_up">Monthly AI requests used up. The next one frees up %1$s.</string>
+    <string name="dashboard_ai_instance_used_up">This instance\'s shared AI requests for the month are used up. The next one frees up %1$s.</string>
+    <string name="dashboard_ai_new_accounts_used_up">New accounts have used their part of the instance\'s AI requests. The next one frees up %1$s.</string>
+    <string name="dashboard_ai_no_access">The instance\'s AI is not open to this account. See the account settings.</string>
 
     <!-- Macros & units -->
     <string name="macro_protein">Protein</string>
