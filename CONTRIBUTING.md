@@ -4,9 +4,9 @@ Thank you for considering a contribution. Read this before opening a PR.
 
 ## Status
 
-The main screens are built and read from the offline-first repositories. What is still
-missing is listed under Roadmap in [docs/architecture.md](docs/architecture.md): queued
-offline changes and push notifications.
+Every screen the README lists under Features is built, with tests on the JVM and journeys
+on emulators. There is no release yet; what is still to come is under Roadmap in
+[docs/architecture.md](docs/architecture.md).
 
 ## Setup
 
@@ -37,8 +37,10 @@ Without the arguments the notifications' test is skipped.
 ## Guidelines
 
 - **Kotlin**, official code style; Jetpack Compose for UI; Material 3 for theming.
-- **Architecture** — MVVM + repository, offline-first. New data access goes through a
-  repository that reads the Room cache first and refreshes from the API.
+- **Architecture** — MVVM and repositories. New data access goes through a repository; a
+  screen that has to stay readable without a network keeps a copy in the Room cache, and a
+  change that makes sense without one goes through the queue of `data/sync/`
+  ([docs/sync-strategy.md](docs/sync-strategy.md)).
 - **The backend is the authority.** The app renders API data; it never computes
   nutrition itself.
 - **API DTOs** are checked against a copy of the contract the
