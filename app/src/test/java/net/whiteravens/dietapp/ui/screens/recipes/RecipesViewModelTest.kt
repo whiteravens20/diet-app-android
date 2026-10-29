@@ -94,6 +94,28 @@ class RecipesViewModelTest {
     }
 
     @Test
+    fun `a next page that cannot be read is said apart from the list, which stays, and asked for again it is the same page`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.search(any(), 1) } returns RecipePage(listOf(recipe("soup")), 1, 2)
+        val refused = ApiException(500, "INTERNAL_ERROR", "Something went wrong.")
+        coEvery { recipes.search(any(), 2) } throws refused
+        val model = RecipesViewModel(recipes, users, profiles)
+
+        model.loadMore()
+
+        assertEquals(refused, model.state.value.moreError)
+        assertNull(model.state.value.error)
+        assertEquals(listOf("soup"), model.state.value.items.map { it.id })
+
+        coEvery { recipes.search(any(), 2) } returns RecipePage(listOf(recipe("stew")), 2, 2)
+        model.loadMore()
+
+        assertNull(model.state.value.moreError)
+        assertEquals(listOf("soup", "stew"), model.state.value.items.map { it.id })
+        coVerify(exactly = 1) { recipes.search(any(), 1) }
+    }
+
+    @Test
     fun `pulled down while a page cannot be read, the list stays as it was`() {
         val recipes = mockk<RecipeRepository>()
         coEvery { recipes.search(any(), 1) } returns RecipePage(listOf(recipe("soup")), 1, 1)

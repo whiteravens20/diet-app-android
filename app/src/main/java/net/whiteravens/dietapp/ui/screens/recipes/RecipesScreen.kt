@@ -251,6 +251,17 @@ fun RecipesScreen(
                             }
                         }
                     }
+                    // The next page that could not be read is asked for again where it would have come.
+                    state.moreError?.let { error ->
+                        item {
+                            Column {
+                                ErrorBanner(errorMessage(error))
+                                Button(onClick = viewModel::loadMore, modifier = Modifier.padding(top = 12.dp)) {
+                                    Text(stringResource(R.string.common_retry))
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

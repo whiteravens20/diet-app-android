@@ -58,6 +58,8 @@ class RecipesViewModel @Inject constructor(
         val page: Int = 1,
         val hasMore: Boolean = false,
         val loadingMore: Boolean = false,
+        /** Why the next page could not be read: it is asked for again from the end of the list, the pages read staying. */
+        val moreError: Throwable? = null,
         /** The profiles whose marks and favourite ingredients can narrow the library. */
         val profiles: List<Profile> = emptyList(),
         /** Whether the account has a model to ask; null until that is known. */
@@ -143,7 +145,15 @@ class RecipesViewModel @Inject constructor(
                     _state.update {
                         if (it.items !== shown.items || it.tab != shown.tab || it.filter != shown.filter) return@update it.copy(pulled = false)
                         val last = pages.last()
-                        it.copy(items = pages.flatMap { page -> page.items }, page = last.page, hasMore = last.page < last.totalPages, pulled = false, readAt = System.currentTimeMillis(), offline = false)
+                        it.copy(
+                            items = pages.flatMap { page -> page.items },
+                            page = last.page,
+                            hasMore = last.page < last.totalPages,
+                            moreError = null,
+                            pulled = false,
+                            readAt = System.currentTimeMillis(),
+                            offline = false,
+                        )
                     }
                 }
                 .onFailure { e -> _state.update { it.copy(pulled = false, offline = e is IOException) } }
@@ -169,10 +179,11 @@ class RecipesViewModel @Inject constructor(
 
     fun clearFilters() = narrow(_state.value.filter.cleared())
 
+    /** Reads the page after those shown, below them; asked again after it could not be read, the same page. */
     fun loadMore() {
         val s = _state.value
         if (s.loadingMore || s.loading || !s.hasMore) return
-        _state.update { it.copy(loadingMore = true) }
+        _state.update { it.copy(loadingMore = true, moreError = null) }
         searchJob = viewModelScope.launch {
             attempt { page(s, s.page + 1) }
                 .onSuccess { pageResult ->
@@ -185,7 +196,7 @@ class RecipesViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { e -> _state.update { it.copy(loadingMore = false, error = e) } }
+                .onFailure { e -> _state.update { it.copy(loadingMore = false, moreError = e) } }
         }
     }
 
@@ -230,7 +241,7 @@ class RecipesViewModel @Inject constructor(
         again.begun()
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            _state.update { it.copy(loading = true, items = emptyList(), page = 1, hasMore = false, error = null, filterRefused = emptyMap()) }
+            _state.update { it.copy(loading = true, items = emptyList(), page = 1, hasMore = false, error = null, moreError = null, filterRefused = emptyMap()) }
             attempt { page(_state.value, 1) }
                 .onSuccess { pageResult ->
                     _state.update {
