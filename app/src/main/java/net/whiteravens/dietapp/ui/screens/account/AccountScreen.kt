@@ -68,11 +68,13 @@ fun AccountScreen(
     sessions: SessionsViewModel = hiltViewModel(),
     ai: AiViewModel = hiltViewModel(),
     phoneNotifications: PhoneNotificationsViewModel = hiltViewModel(),
+    appearance: AppearanceViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val twoStep by secondFactor.state.collectAsStateWithLifecycle()
     val signedIn by sessions.state.collectAsStateWithLifecycle()
     val aiState by ai.state.collectAsStateWithLifecycle()
+    val colours by appearance.state.collectAsStateWithLifecycle()
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
     val mailsSent by viewModel.mailsSent.collectAsStateWithLifecycle()
     val operatorContact by viewModel.operatorContact.collectAsStateWithLifecycle()
@@ -214,6 +216,8 @@ fun AccountScreen(
                             Text(stringResource(R.string.web_open))
                         }
                     }
+
+                    PaletteCard(colours, onChoose = appearance::choose)
 
                     PhoneNotificationsCard(phoneNotifications)
 

@@ -153,6 +153,11 @@ object Instance {
         call("PATCH", "users/me", JSONObject().put("weightUnit", unit), token = account.accessToken)
     }
 
+    /** Chooses [account]'s colour scheme, as the web application's settings do. */
+    fun choosePalette(account: Account, palette: String) {
+        call("PATCH", "users/me", JSONObject().put("palette", palette), token = account.accessToken)
+    }
+
     /** Logs [kg] for a profile of [account], taken at noon of [day] (UTC). */
     fun logWeight(account: Account, profileId: String, kg: Double, day: LocalDate) {
         call(

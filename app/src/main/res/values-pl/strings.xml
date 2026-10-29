@@ -860,6 +860,15 @@
     <string name="account_weight_unit_kg">Kilogramy</string>
     <string name="account_weight_unit_lb">Funty</string>
     <string name="account_weight_unit_hint">Jednostka, w której waga ciała jest pokazywana i wpisywana, na pulpicie i w profilu. „Według mojego regionu” kieruje się ustawieniami telefonu: funty w krajach, w których się ich używa, kilogramy wszędzie indziej.</string>
+    <string name="appearance_palette">Schemat kolorów</string>
+    <string name="appearance_palette_account">Jak na koncie: %1$s</string>
+    <string name="appearance_palette_default">Domyślny</string>
+    <string name="appearance_palette_ocean">Ocean</string>
+    <string name="appearance_palette_forest">Las</string>
+    <string name="appearance_palette_sunset">Zachód słońca</string>
+    <string name="appearance_palette_mono">Mono</string>
+    <string name="appearance_palette_rose">Róż</string>
+    <string name="appearance_palette_hint">Dopóki nie wybierzesz tu innego, aplikacja ma schemat ustawiony dla konta w aplikacji webowej. Wybór zrobiony tutaj zostaje na tym telefonie, a jasny lub ciemny wygląd zależy od ustawienia telefonu.</string>
     <string name="account_weight_unit_failed">Nie udało się zapisać jednostki.</string>
     <string name="account_settings_hint">Hasło, adres e-mail, nazwa konta, język maili, dane konta w pliku i usunięcie konta są w aplikacji webowej.</string>
     <string name="account_ai">Asystent AI</string>

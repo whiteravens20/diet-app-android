@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.auth.PendingRevocation
 import net.whiteravens.dietapp.data.auth.Session
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
@@ -137,15 +138,17 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `the end of a session takes the phone's notifications away and clears the cached copies, before the tokens`() {
+    fun `the end of a session takes the phone's notifications and the account's colours away and clears the cached copies, before the tokens`() {
         val cache = mockk<CacheDatabase>(relaxed = true)
         val tokens = mockk<TokenStore>(relaxed = true)
         val phoneNotifications = mockk<PhoneNotificationsSwitch>(relaxed = true)
+        val appearance = mockk<AppearanceStore>(relaxed = true)
 
-        runBlocking { SessionEnd(tokens, cache, phoneNotifications).end() }
+        runBlocking { SessionEnd(tokens, cache, phoneNotifications, appearance).end() }
 
         coVerifyOrder {
             phoneNotifications.forget()
+            appearance.forgetAccount()
             cache.clearAllTables()
             tokens.clear()
         }

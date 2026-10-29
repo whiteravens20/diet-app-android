@@ -109,6 +109,9 @@ account once you say on the page that the account it names is yours.
   one as well: each change is marked as waiting, the screen says how many wait, and each
   goes by itself once there is a network; one the server refuses is said, with why. Signing
   out while changes wait asks first whether to send them or drop them.
+- **A colour scheme** of the six the web application has: the account's, which the web
+  application sets, until another is chosen in the account's settings on the phone, where the
+  choice stays. Light or dark follows the phone.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 

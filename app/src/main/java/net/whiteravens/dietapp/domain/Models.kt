@@ -22,6 +22,8 @@ data class SessionUser(
     val weightUnit: String? = null,
     /** `none` | `admin` | `byok`: whether the account has a model to ask, and whose. */
     val aiMode: String,
+    /** The colour scheme the web set for the account, by the API's name for it ([Palette.wire]). */
+    val palette: String = Palette.DEFAULT.wire,
 )
 
 /** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */

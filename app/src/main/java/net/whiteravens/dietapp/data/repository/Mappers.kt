@@ -67,6 +67,7 @@ fun SessionUserDto.toDomain() = SessionUser(
     locale = locale,
     weightUnit = weightUnit,
     aiMode = aiMode,
+    palette = palette,
 )
 
 fun ProfileDto.toDomain() = Profile(

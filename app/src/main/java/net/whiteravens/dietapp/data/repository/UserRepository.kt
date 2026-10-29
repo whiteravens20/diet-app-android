@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.json.Json
+import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.UpdateUserSettingsRequest
@@ -23,6 +24,7 @@ import javax.inject.Singleton
 class UserRepository @Inject constructor(
     private val api: DietApiService,
     private val json: Json,
+    private val appearance: AppearanceStore,
 ) {
     private val aiModes = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -55,6 +57,10 @@ class UserRepository @Inject constructor(
     suspend fun calorieTarget(profileId: String): CalorieTarget =
         apiCall(json) { api.calories(profileId) }.let(CalorieCalculationDto::toDomain)
 
-    /** Tells whoever follows the account's AI mode what [user] says it is. */
-    private fun heard(user: SessionUser): SessionUser = user.also { aiModes.tryEmit(it.aiMode) }
+    /** Tells whoever follows the account's AI mode, and the application's colours, what [user] says they are. */
+    private suspend fun heard(user: SessionUser): SessionUser {
+        aiModes.tryEmit(user.aiMode)
+        appearance.heard(user.palette)
+        return user
+    }
 }

@@ -792,6 +792,15 @@
     <string name="account_weight_unit_kg">Kilograms</string>
     <string name="account_weight_unit_lb">Pounds</string>
     <string name="account_weight_unit_hint">The unit body weights are shown and typed in, on the dashboard and in a profile. “By where I am” goes by your phone\'s settings: pounds in the countries that weigh in them, kilograms everywhere else.</string>
+    <string name="appearance_palette">Colour scheme</string>
+    <string name="appearance_palette_account">As on the account: %1$s</string>
+    <string name="appearance_palette_default">Default</string>
+    <string name="appearance_palette_ocean">Ocean</string>
+    <string name="appearance_palette_forest">Forest</string>
+    <string name="appearance_palette_sunset">Sunset</string>
+    <string name="appearance_palette_mono">Mono</string>
+    <string name="appearance_palette_rose">Rose</string>
+    <string name="appearance_palette_hint">Until you choose another here, the app takes the scheme set for your account in the web application. A choice made here stays on this phone; light or dark follows the phone\'s setting.</string>
     <string name="account_weight_unit_failed">Could not save the unit.</string>
     <string name="account_settings_hint">The password, the address, the name, the language of the mails, the account\'s data in a file and deleting the account are in the web application.</string>
     <string name="account_ai">AI assistant</string>

@@ -16,7 +16,8 @@ produces — it never computes nutrition itself. The backend is the single sourc
   unit tests to a copy of the contract the API publishes, in `contract/`, and
   `ApiException` types the API's envelope of a refusal.
 - `data/config/` keeps the server's address, and the address of its web application, where
-  the app opens in the browser what it leaves to it.
+  the app opens in the browser what it leaves to it, and the colour scheme the app is drawn in:
+  one chosen on the phone, else the account's, which every answer about the account says.
 - `data/auth/` keeps the tokens in `TokenStore` (DataStore, sealed under a key of the
   Android Keystore), and an OkHttp interceptor and authenticator attach the access token and
   refresh it on a 401 that says it is no good.

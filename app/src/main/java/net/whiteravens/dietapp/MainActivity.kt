@@ -13,11 +13,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
 import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.domain.Palette
 import net.whiteravens.dietapp.notify.PhoneNotifier
 import net.whiteravens.dietapp.ui.common.Returns
 import net.whiteravens.dietapp.ui.navigation.DietAppRoot
@@ -33,6 +36,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var changes: ChangeQueue
 
+    @Inject
+    lateinit var appearance: AppearanceStore
+
     /** A tap on a phone's notification asked for the list of notifications, not opened yet. */
     private var openNotifications by mutableStateOf(false)
 
@@ -44,9 +50,13 @@ class MainActivity : ComponentActivity() {
         // The phone's notifications, where they are on, keep the schedule this version asks for.
         lifecycleScope.launch { phoneNotifications.keepScheduled() }
         setContent {
-            DietAppTheme {
-                Surface(Modifier.fillMaxSize()) {
-                    DietAppRoot(openNotifications = openNotifications, onNotificationsOpened = { openNotifications = false })
+            // Drawn once the colour scheme is read, so that no frame shows another scheme first.
+            val palette by appearance.palette.collectAsStateWithLifecycle<Palette?>(initialValue = null)
+            palette?.let { scheme ->
+                DietAppTheme(palette = scheme) {
+                    Surface(Modifier.fillMaxSize()) {
+                        DietAppRoot(openNotifications = openNotifications, onNotificationsOpened = { openNotifications = false })
+                    }
                 }
             }
         }

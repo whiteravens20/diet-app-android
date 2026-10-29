@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
@@ -41,7 +43,9 @@ class UserRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    private fun repository(): UserRepository = UserRepository(AppModule.api(client(), json), json)
+    private val appearance = mockk<AppearanceStore>(relaxed = true)
+
+    private fun repository(): UserRepository = UserRepository(AppModule.api(client(), json), json, appearance)
 
     private fun client(): OkHttpClient {
         val config = mockk<ServerConfigStore>()
@@ -50,6 +54,19 @@ class UserRepositoryTest {
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))
+
+    @Test
+    fun `the account's colour scheme is kept as every answer about the account says it`() {
+        server.enqueue(answer("users-me"))
+        server.enqueue(answer("users-me-in-pounds"))
+        val users = repository()
+
+        val read = runBlocking { users.me() }
+        runBlocking { users.chooseWeightUnit("lb") }
+
+        assertEquals("default", read.palette)
+        coVerify(exactly = 2) { appearance.heard("default") }
+    }
 
     @Test
     fun `the unit chosen is sent alone and read back, and the choice given back sends a null the API reads as such`() {
