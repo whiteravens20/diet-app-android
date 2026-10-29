@@ -14,10 +14,10 @@ generate a plan, swap a meal, tick off the shopping list. What it leaves to the
 platform's web application, it opens there, in the phone's browser, signed in to your
 account once you say on the page that the account it names is yours.
 
-> **Status: the main screens work; nothing is released yet.** Signing in, the dashboard,
-> meal plans, recipes, the shopping list and the profile are built and talk to the
-> backend. Meal plans and shopping lists stay readable offline, and a shopping list's rows
-> are changed offline as well: each change waits to be sent.
+> **Status: in development; nothing is released yet.** Every screen listed under Features
+> is built and talks to the backend, and the screens' tests go through each of them on
+> emulators against a diet-app instance. The first release, and the round with testers
+> before it, are still to come.
 
 > [!WARNING]
 > **Early development — not production ready.** This app and the Diet App
@@ -165,17 +165,20 @@ its code is split by what each part may know:
 - `ui/` holds the Compose screens, the theme and the shared components. Each screen has
   a Hilt ViewModel that exposes its state as a `StateFlow`.
 - `domain/` holds the app's own models, which do not depend on the wire format.
-- `data/remote/` holds the Retrofit services and the DTOs, a Kotlin mirror of the
-  platform's shared contract.
+- `data/remote/` holds the Retrofit services and the DTOs, which the unit tests hold to a
+  copy of the contract the API publishes ([contract/](contract/README.md)).
 - `data/auth/` keeps the access and refresh tokens in DataStore, sealed under a key of the
-  Android Keystore, and attaches them to requests; a request answered with 401 is retried
-  with a refreshed token.
+  Android Keystore, and attaches them to requests; a request answered with a 401 that says
+  the access token is no good is retried with a refreshed token.
 - `data/config/` keeps the server address chosen in the app.
-- `data/local/` is the Room cache of meal plans and shopping lists.
+- `data/local/` is the Room cache: copies of meal plans and shopping lists, and the changes
+  made on the phone that wait to be sent.
+- `data/sync/` is the queue of those changes: each goes to the server at once, or waits and
+  goes in its turn once there is a network.
 - `data/notify/` keeps whether the phone's notifications are on and which were shown, and
   schedules the background work of `notify/`, which reads and shows them.
-- `data/repository/` joins them: a repository serves the cache first and refreshes it
-  from the API.
+- `data/repository/` joins them: a repository asks the API, and for meal plans and
+  shopping lists keeps a copy in the cache, shown first and kept while there is no network.
 - `di/` wires it together with Hilt.
 
 `ui` and `data` depend on `domain`, and `domain` on nothing; a DTO never reaches a
@@ -193,16 +196,18 @@ See [SECURITY.md](SECURITY.md).
 
 ## How the code is written and checked
 
-This app is built using AI coding tools. The tools write most of the code and
+This app is built using AI coding tools. The tools write most of the code, tests and
 documentation; the maintainer decides what gets built and is responsible for everything
-that lands here. The app is in early development: there is no release yet and no
-independent security review. Before the first release is published, a group of human
-testers will try the release candidate at the maintainer's request.
+that is merged. The project relies on checks that anyone can inspect, and before the first
+release is published, a group of human testers will try the release candidate at the
+maintainer's request. The app is in early development: there is no release yet and no
+independent security review.
 
 **What a change goes through**
 
 - Every push and pull request has to compile into a debug APK and into the release
-  variant, which R8 shrinks, pass Android Lint without an error and pass the unit tests,
+  variant, whose code and resources R8 shrinks, pass Android Lint without an error and
+  pass the unit tests,
   which run on the JVM without a device: every call of the client against a copy of the
   contract the API publishes ([contract/](contract/README.md)), a text for every code the
   API refuses a request with, the wire classes against answers a running backend gave, the
@@ -240,10 +245,11 @@ testers will try the release candidate at the maintainer's request.
   diet-app's `dev` has moved, the screens' tests also run on an Android 14 emulator against
   an instance of that commit, its image built in the run from the commit's source
   ([diet-app-dev.yml](.github/workflows/diet-app-dev.yml)).
-- `dev` and `main` are protected: a change has to pass the build, the screens' tests and
-  the check of the pinned actions (on `main` also CodeQL and the Trivy scan), commits have
-  to be signed, and nothing is force-pushed or deleted. Until the first release the
-  maintainer can still push past the checks. The protection of `main` is checked for
+- `dev` and `main` are protected: a change comes through a pull request and has to pass
+  the build, the screens' tests on Android 14 and the check of the pinned actions (on
+  `main` also CodeQL and the Trivy scan), commits have to be signed, and nothing is
+  force-pushed or deleted. Until the first release the maintainer can still push past the
+  checks. The protection of `main` is checked for
   drift every day ([branch-protection-audit.yml](.github/workflows/branch-protection-audit.yml)).
 - Dependabot's patch updates are merged by a workflow once the required checks pass
   ([dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)).
@@ -255,6 +261,10 @@ testers will try the release candidate at the maintainer's request.
 
 - The backend is the source of truth. The app shows and caches what the API returns and
   never computes nutrition, calorie targets or meal plans itself.
+- The app decides nothing the API can decide: it sends what the user does and shows what
+  the API answers.
+- The phone's notifications come from the app asking the server, with no push service of
+  a third party.
 - The offline-first MVVM structure and the split between wire DTOs and `domain` models
   were specified by the maintainer.
 
