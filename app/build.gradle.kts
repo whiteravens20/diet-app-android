@@ -86,6 +86,24 @@ android {
             buildConfigField("boolean", "PLAIN_HTTP", "true")
         }
     }
+    // `-Pedge` makes the release build Diet App Edge, the build the testers try: an application of
+    // its own beside the release, named so on the phone and signed with the edge key, which the
+    // workflow gives the build in EDGE_KEYSTORE and EDGE_KEYSTORE_PASSWORD (.github/workflows/edge-apk.yml).
+    // It is set after the build types, so that the minified build does not take it from the release.
+    if (providers.gradleProperty("edge").isPresent) {
+        val password = providers.environmentVariable("EDGE_KEYSTORE_PASSWORD").get()
+        signingConfigs.create("edge") {
+            storeFile = file(providers.environmentVariable("EDGE_KEYSTORE").get())
+            storePassword = password
+            keyAlias = "edge"
+            keyPassword = password
+        }
+        buildTypes.getByName("release") {
+            applicationIdSuffix = ".edge"
+            signingConfig = signingConfigs.getByName("edge")
+        }
+        sourceSets.getByName("release").res.srcDir("src/edge/res")
+    }
     // The build type the screens' tests run on: `-PtestBuildType=minified` for the shrunk one.
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
 
