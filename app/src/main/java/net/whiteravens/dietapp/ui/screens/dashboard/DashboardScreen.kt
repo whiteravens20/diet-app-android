@@ -56,6 +56,8 @@ import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
+import net.whiteravens.dietapp.ui.components.UpdateCard
+import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.notifications.NotificationsBell
 import kotlin.math.abs
@@ -77,16 +79,20 @@ fun DashboardScreen(
     showWeightOf: String? = null,
     onWeightShown: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
+    update: UpdateViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val newer by update.available.collectAsStateWithLifecycle()
     // Read again on being shown again: a profile may have been made or changed in the meantime.
     WhenShownAgain(viewModel::shownAgain)
     val web = rememberWebPages()
     val list = rememberLazyListState()
+    // The items before the profiles': the header, the offline line and a newer build's card where they show.
+    val leading = 1 + (if (state.readAt != null && state.offline) 1 else 0) + (if (newer != null) 1 else 0)
     // The profile's card is composed first, if it is out of sight, and its weights then brought into view.
     LaunchedEffect(showWeightOf, state.profiles) {
         val at = state.profiles.indexOfFirst { it.profile.id == showWeightOf }
-        if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == showWeightOf }) list.scrollToItem(at + 1)
+        if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == showWeightOf }) list.scrollToItem(at + leading)
     }
 
     PullToRead(state.pulled, viewModel::pull) {
@@ -133,6 +139,7 @@ fun DashboardScreen(
                         NotificationsBell(state.shownUnread, onClick = onOpenNotifications)
                     }
                 }
+                if (newer != null) item(key = "update") { UpdateCard(viewModel = update) }
                 state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
                 state.shown.forEach { stats ->
                     item(key = stats.profile.id) {

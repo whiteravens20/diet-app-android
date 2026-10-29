@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Asked for when the user turns the phone's notifications on in the account's settings (Android 13 and later). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- A newer build downloaded by the app is handed to the system's installer, which asks the user. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Android 17 asks for it before the app reaches a server on the phone's local network. -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
 

@@ -29,6 +29,8 @@ What the code guarantees today, and what it deliberately does not protect agains
 - [x] A release build talks HTTPS only: an address typed with `http://` is refused, and the network security configuration allows no plain text. It trusts the system's certificate authorities and those the user installed on the phone, since a self-hosted server often has a certificate from its owner's own authority
 - [x] A debug build also talks plain `http`, for a backend on the developer's own network
 - [x] An address with a user name or a password in it is refused: it would be kept in plain storage and shown on the screen
+- [x] A build handed out asks GitHub for the file that names its newest version: a plain request on a client of its own, with none of the session's tokens and none of the app's headers, so it carries nothing of the account. It asks on every start and return, at most every six hours, until turned off in the account's settings; a debug build asks nowhere
+- [x] A newer build is downloaded only from the channel's own addresses, the edge page or the repository's Releases, whatever the version file names. It is checked against the size and SHA-256 the version file gives, then against the app's own package name and signing certificate, and deleted when it fails either; what passes goes to Android's installer, which always asks the user before it installs
 - [x] On Android 17 and later the app asks for the permission for nearby devices before it reaches a server on the phone's local network, which the system does not otherwise let it reach
 
 ### Data on the phone
@@ -58,4 +60,5 @@ What the code guarantees today, and what it deliberately does not protect agains
 | The server and its operator | The server holds the account and computes everything the app shows; a compromised server sees what the app sends and can show anything |
 | The lock screen | The app sets no visibility of its own for its notifications: the phone's settings decide whether their text shows on the lock screen |
 | The web application in the browser | The pages the app opens are the web application's, protected by it and by the browser |
+| Whoever controls the channel of new versions | They can hold new versions back, or name a build that is not newer; a file that is not this app signed with its key is refused by the app, and Android refuses an older version or another key |
 | A build from somebody else | There is no release yet. An edge APK can be checked against the SHA-256 and the signer on its page and with `gh attestation verify`; a debug APK from the "Build debug APK" workflow is signed with a key made for that run and cannot be checked as this project's |

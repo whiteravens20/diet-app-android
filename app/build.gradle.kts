@@ -59,10 +59,16 @@ android {
     // own network or the test instance has; a release build talks HTTPS only.
     val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
     val testInstance = apiBaseUrl.getOrElse("http://10.0.2.2:4000/api/")
+    // Where a build handed out asks for its newest version (`UPDATES_URL`, a version.json the
+    // workflow that builds the APK writes) and the addresses it may download a build from
+    // (`UPDATES_FROM`). A build for development and tests asks nowhere.
+    val releases = "https://github.com/whiteravens20/diet-app-android/releases/"
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL", "\"$testInstance\"")
             buildConfigField("boolean", "PLAIN_HTTP", "true")
+            buildConfigField("String", "UPDATES_URL", "\"\"")
+            buildConfigField("String", "UPDATES_FROM", "\"\"")
         }
         release {
             isMinifyEnabled = true
@@ -72,6 +78,8 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.getOrElse("")}\"")
             buildConfigField("boolean", "PLAIN_HTTP", "false")
+            buildConfigField("String", "UPDATES_URL", "\"${releases}latest/download/version.json\"")
+            buildConfigField("String", "UPDATES_FROM", "\"$releases\"")
         }
         // The release build as R8 shrinks it, signed with the debug key and pointed at the test
         // instance over plain http, for the screens' tests to run on: what R8 takes out of a
@@ -84,6 +92,8 @@ android {
             testProguardFile("proguard-minified-test.pro")
             buildConfigField("String", "API_BASE_URL", "\"$testInstance\"")
             buildConfigField("boolean", "PLAIN_HTTP", "true")
+            buildConfigField("String", "UPDATES_URL", "\"\"")
+            buildConfigField("String", "UPDATES_FROM", "\"\"")
         }
     }
     // `-Pedge` makes the release build Diet App Edge, the build the testers try: an application of
@@ -98,9 +108,12 @@ android {
             keyAlias = "edge"
             keyPassword = password
         }
+        val pages = "https://whiteravens20.github.io/diet-app-android/"
         buildTypes.getByName("release") {
             applicationIdSuffix = ".edge"
             signingConfig = signingConfigs.getByName("edge")
+            buildConfigField("String", "UPDATES_URL", "\"${pages}version.json\"")
+            buildConfigField("String", "UPDATES_FROM", "\"$pages\"")
         }
         sourceSets.getByName("release").res.srcDir("src/edge/res")
     }

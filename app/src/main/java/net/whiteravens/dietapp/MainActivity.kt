@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
 import net.whiteravens.dietapp.data.sync.ChangeQueue
+import net.whiteravens.dietapp.data.update.UpdateInstaller
+import net.whiteravens.dietapp.data.update.Updates
 import net.whiteravens.dietapp.domain.Palette
 import net.whiteravens.dietapp.notify.PhoneNotifier
 import net.whiteravens.dietapp.ui.common.Returns
@@ -39,6 +41,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appearance: AppearanceStore
 
+    @Inject
+    lateinit var updates: Updates
+
+    @Inject
+    lateinit var installer: UpdateInstaller
+
     /** A tap on a phone's notification asked for the list of notifications, not opened yet. */
     private var openNotifications by mutableStateOf(false)
 
@@ -46,7 +54,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Only on a start of its own: an activity made again, the phone turned, has been asked already.
-        if (savedInstanceState == null) openNotifications = intent?.action == PhoneNotifier.OPEN_NOTIFICATIONS
+        if (savedInstanceState == null) {
+            openNotifications = intent?.action == PhoneNotifier.OPEN_NOTIFICATIONS
+            intent?.takeIf { it.action == UpdateInstaller.STATUS }?.let { status -> installer.answered(status, ::startActivity) }
+        }
         // The phone's notifications, where they are on, keep the schedule this version asks for.
         lifecycleScope.launch { phoneNotifications.keepScheduled() }
         setContent {
@@ -65,6 +76,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.action == PhoneNotifier.OPEN_NOTIFICATIONS) openNotifications = true
+        // What the system's installer answered of a newer build: the question it asks the user, or how it ended.
+        if (intent.action == UpdateInstaller.STATUS) installer.answered(intent, ::startActivity)
     }
 
     // Counted before the screens resume, so that they know the application came back to the front.
@@ -74,6 +87,8 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { phoneNotifications.readNow() }
         // The changes made on the phone that wait go as soon as there is a network.
         lifecycleScope.launch { changes.sendSoon() }
+        // A newer build is asked for on every start and return, at most every six hours.
+        lifecycleScope.launch { updates.askIfDue() }
     }
 
     override fun onStop() {

@@ -52,6 +52,7 @@ import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 
 /**
@@ -69,6 +70,7 @@ fun AccountScreen(
     ai: AiViewModel = hiltViewModel(),
     phoneNotifications: PhoneNotificationsViewModel = hiltViewModel(),
     appearance: AppearanceViewModel = hiltViewModel(),
+    update: UpdateViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val twoStep by secondFactor.state.collectAsStateWithLifecycle()
@@ -218,6 +220,8 @@ fun AccountScreen(
                     }
 
                     PaletteCard(colours, onChoose = appearance::choose)
+
+                    if (update.hasChannel) UpdatesCard(update)
 
                     PhoneNotificationsCard(phoneNotifications)
 

@@ -48,6 +48,7 @@ import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
+import net.whiteravens.dietapp.ui.components.UpdateCard
 
 /**
  * Login / registration — the mobile twin of the web `AuthForm`: centered
@@ -119,6 +120,8 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
             modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
         )
         ServerVersionNotice(serverVersion, Modifier.padding(bottom = 16.dp))
+        // A newer build, signed in or not: an old one may be what keeps the sign-in from working.
+        UpdateCard(Modifier.padding(bottom = 16.dp))
 
         // Nothing to sign in to before a server is chosen: a release build starts so.
         if (server == null) return@Column

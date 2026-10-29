@@ -29,6 +29,9 @@ produces — it never computes nutrition itself. The backend is the single sourc
   lists keeps a copy in the cache that is shown first.
 - `data/notify/` keeps whether the phone's notifications are on and which were shown, and
   `notify/` holds the background work that reads them and what the phone shows.
+- `data/update/` asks the build's channel for the version file beside its APK (`Updates`),
+  and downloads, checks and hands a newer build to Android's installer (`UpdateInstaller`).
+  A build's channel is a `BuildConfig` field set per build type in `app/build.gradle.kts`.
 - `di/` holds the Hilt modules that wire the network, JSON, the tokens and the cache's
   database together.
 

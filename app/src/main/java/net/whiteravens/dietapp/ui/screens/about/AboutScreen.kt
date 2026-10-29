@@ -30,10 +30,12 @@ import net.whiteravens.dietapp.ui.common.ATTRIBUTION_URL
 import net.whiteravens.dietapp.ui.common.LICENCE_URL
 import net.whiteravens.dietapp.ui.common.SOURCE_URL
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
+import net.whiteravens.dietapp.ui.common.formatMoment
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
+import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 
 /**
@@ -42,7 +44,12 @@ import net.whiteravens.dietapp.ui.components.rememberWebPages
  * of the original source, the licence, the absence of any warranty and where the source is.
  */
 @Composable
-fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutViewModel = hiltViewModel()) {
+fun AboutScreen(
+    onBack: () -> Unit,
+    onLibraries: () -> Unit,
+    viewModel: AboutViewModel = hiltViewModel(),
+    update: UpdateViewModel = hiltViewModel(),
+) {
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     val version by viewModel.version.collectAsStateWithLifecycle()
     val pulled by viewModel.pulled.collectAsStateWithLifecycle()
@@ -95,6 +102,7 @@ fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutVie
                 Title(stringResource(R.string.about_app))
                 Fact(stringResource(R.string.about_app_version), BuildConfig.VERSION_NAME)
                 Said(stringResource(R.string.about_api_checked, BuildConfig.API_VERSION))
+                if (update.hasChannel) NewerBuild(update)
             }
 
             AppCard {
@@ -114,6 +122,28 @@ fun AboutScreen(onBack: () -> Unit, onLibraries: () -> Unit, viewModel: AboutVie
             }
         }
     }
+}
+
+/** When the application last asked for a newer build of itself, what it heard, and asking now. */
+@Composable
+private fun NewerBuild(update: UpdateViewModel) {
+    val on by update.on.collectAsStateWithLifecycle()
+    val asked by update.asked.collectAsStateWithLifecycle()
+    val latest by update.latest.collectAsStateWithLifecycle()
+    val asking by update.asking.collectAsStateWithLifecycle()
+    val last = asked
+    val newer = latest?.takeIf { it.versionCode > BuildConfig.VERSION_CODE }
+    Said(
+        when {
+            !on -> stringResource(R.string.about_update_off)
+            last == null -> stringResource(R.string.about_update_never)
+            !last.answered -> stringResource(R.string.about_update_failed, formatMoment(last.at))
+            newer != null -> stringResource(R.string.about_update_newer, newer.versionName, formatMoment(last.at))
+            else -> stringResource(R.string.about_update_latest, formatMoment(last.at))
+        },
+        Modifier.padding(top = 8.dp),
+    )
+    if (on) TextButton(onClick = update::askNow, enabled = !asking) { Text(stringResource(R.string.about_update_check)) }
 }
 
 @Composable

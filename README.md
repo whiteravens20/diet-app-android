@@ -112,6 +112,12 @@ account once you say on the page that the account it names is yours.
 - **A colour scheme** of the six the web application has: the account's, which the web
   application sets, until another is chosen in the account's settings on the phone, where the
   choice stays. Light or dark follows the phone.
+- **New versions.** A build handed out asks for the number of its newest version when it
+  starts and when you come back to it, at most every six hours, from a small file beside its
+  APK on GitHub. A newer one shows on the dashboard; once the phone lets the app install apps,
+  it is downloaded, checked against that file's SHA-256 and against the app's own package and
+  signing key, and handed to Android, which asks before it installs. Asking can be turned off
+  in the account's settings.
 - **English and Polish**, refusals of the server included: a request the server refuses is
   explained in the app's language, in the words the web application uses.
 
