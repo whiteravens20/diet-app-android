@@ -96,7 +96,12 @@ jobs:
             echo "::error::The APK is $package, not net.whiteravens.dietapp.edge."
             exit 1
           fi
-          signer=$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          # apksigner names the signer "Signer #1" up to build-tools 36, and by its scheme from 37 on ("V2 Signer:").
+          signer=$("$tools/apksigner" verify --print-certs "$apk" | sed -n -E 's/^(Signer #1|V[0-9.]+ Signer:) certificate SHA-256 digest: //p' | head -1)
+          if [ -z "$signer" ]; then
+            echo "::error::No signer could be read from the APK."
+            exit 1
+          fi
           echo "signer=$signer" >> "$GITHUB_OUTPUT"
 
       - name: Lay out the page
