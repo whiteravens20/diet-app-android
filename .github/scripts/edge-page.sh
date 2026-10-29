@@ -3,7 +3,8 @@
 # same from build to build, its SHA-256 in the form `sha256sum -c` reads, and a page that says what
 # the build is and how to check it. Used by .github/workflows/edge-apk.yml.
 #
-# Usage: .github/scripts/edge-page.sh <apk> <directory> <version name> <commit> <signer's SHA-256>
+# Usage: .github/scripts/edge-page.sh <apk> <directory> <version name> <commit> <signer's SHA-256> [preset]
+# `preset` when the build starts with the testers' server set (EDGE_SERVER in the workflow).
 set -euo pipefail
 
 apk=$1
@@ -11,6 +12,13 @@ site=$2
 version=$3
 commit=$4
 signer=$5
+if [ "${6:-}" = preset ]; then
+  server_en="It starts with the testers' server set; the <em>Server:</em> button under the sign-in form changes it."
+  server_pl='Ma od razu ustawiony serwer testów, a przycisk „Serwer:” pod formularzem logowania pozwala go zmienić.'
+else
+  server_en="On its first screen it asks for the address of your Diet App server."
+  server_pl="Przy pierwszym uruchomieniu pyta o adres serwera Diet App."
+fi
 
 mkdir -p "$site"
 cp "$apk" "$site/diet-app-edge.apk"
@@ -66,13 +74,13 @@ section { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-to
 
   <section lang="en">
     <h2>What it is</h2>
-    <p>Diet App Edge is an application of its own: it installs beside a later release of Diet App, and each edge build installs over the one before it. It is the release build, which talks to a server over HTTPS only; on its first screen it asks for the address of your Diet App server.</p>
+    <p>Diet App Edge is an application of its own: it installs beside a later release of Diet App, and each edge build installs over the one before it. It is the release build, which talks to a server over HTTPS only. $server_en</p>
     <p>To check a download: <code>sha256sum -c diet-app-edge.apk.sha256</code>, or with the GitHub CLI <code>gh attestation verify diet-app-edge.apk --repo whiteravens20/diet-app-android</code>, which shows the workflow run that built it.</p>
   </section>
 
   <section lang="pl">
     <h2>Po polsku</h2>
-    <p>Diet App Edge to wersja testowa aplikacji na Androida, do rundy testów przed pierwszym wydaniem. W trakcie testów aplikacja się zmienia i tak ma być. Instaluje się obok przyszłego wydania jako osobna aplikacja, a każda kolejna wersja edge instaluje się na poprzedniej. Przy pierwszym uruchomieniu pyta o adres serwera Diet App.</p>
+    <p>Diet App Edge to wersja testowa aplikacji na Androida, do rundy testów przed pierwszym wydaniem. W trakcie testów aplikacja się zmienia i tak ma być. Instaluje się obok przyszłego wydania jako osobna aplikacja, a każda kolejna wersja edge instaluje się na poprzedniej. $server_pl</p>
   </section>
 </main>
 </body>

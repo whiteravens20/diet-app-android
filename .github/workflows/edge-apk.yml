@@ -72,10 +72,14 @@ jobs:
         env:
           EDGE_KEYSTORE: ${{ runner.temp }}/edge.p12
           EDGE_KEYSTORE_PASSWORD: ${{ secrets.EDGE_KEYSTORE_PASSWORD }}
+          # The server an edge build starts with, a variable of the `edge` environment: the testers'
+          # instance. Without it the build asks for one on its first screen, as a release does.
+          EDGE_SERVER: ${{ vars.EDGE_SERVER }}
         run: |
           ./gradlew assembleRelease -Pedge \
             -PappVersionName="edge-${GITHUB_SHA::7}" \
-            -PappVersionCode="$(git rev-list --count HEAD)"
+            -PappVersionCode="$(git rev-list --count HEAD)" \
+            ${EDGE_SERVER:+"-PapiBaseUrl=$EDGE_SERVER"}
 
       - name: Remove the edge key
         if: always()
@@ -98,7 +102,10 @@ jobs:
       - name: Lay out the page
         env:
           SIGNER: ${{ steps.apk.outputs.signer }}
-        run: .github/scripts/edge-page.sh app/build/outputs/apk/release/app-release.apk site "edge-${GITHUB_SHA::7}" "$GITHUB_SHA" "$SIGNER"
+          EDGE_SERVER: ${{ vars.EDGE_SERVER }}
+        run: |
+          .github/scripts/edge-page.sh app/build/outputs/apk/release/app-release.apk site \
+            "edge-${GITHUB_SHA::7}" "$GITHUB_SHA" "$SIGNER" "${EDGE_SERVER:+preset}"
 
       - name: Attest where the APK comes from
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
