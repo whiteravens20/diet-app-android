@@ -102,6 +102,11 @@ class MealPlansViewModel @Inject constructor(
         if (again.due(cameToTheFront)) readAnew()
     }
 
+    /** Reads again what could not be read: the profiles where they were not, else the list and the month. */
+    fun retry() {
+        if (_state.value.profiles.isEmpty()) load() else readAnew()
+    }
+
     /** Reads the profiles, the list and the month again at once, the screen pulled down. */
     fun pull() {
         if (_state.value.loading || _state.value.pulled) return

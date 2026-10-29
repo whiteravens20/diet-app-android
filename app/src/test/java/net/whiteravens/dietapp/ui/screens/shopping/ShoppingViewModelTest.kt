@@ -95,8 +95,29 @@ class ShoppingViewModelTest {
         val model = ShoppingViewModel(users, plans, lists, changeQueue())
 
         assertEquals(emptyList<ShoppingList>(), model.state.value.lists)
-        assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
+        assertEquals("PLAN_NOT_FOUND", (model.state.value.readError as ApiException).code)
+        assertNull(model.state.value.error)
         assertFalse(model.state.value.offline)
+    }
+
+    @Test
+    fun `lists that cannot be read are said with a way to read them again, apart from a list that could not be made`() {
+        val refused = ApiException(500, "INTERNAL_ERROR", "Something went wrong.")
+        coEvery { lists.refreshForPlan("plan") } throws refused
+        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        assertEquals(refused, model.state.value.readError)
+
+        coEvery { lists.refreshForPlan("plan") } returns listOf(early, later)
+        model.retry()
+
+        assertNull(model.state.value.readError)
+        assertEquals(listOf(early, later), model.state.value.lists)
+
+        coEvery { lists.generate(any(), any(), any()) } throws refused
+        model.generate()
+
+        assertEquals(refused, model.state.value.error)
+        assertNull(model.state.value.readError)
     }
 
     @Test

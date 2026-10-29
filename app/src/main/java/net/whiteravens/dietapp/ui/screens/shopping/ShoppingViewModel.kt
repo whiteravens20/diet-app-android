@@ -75,6 +75,9 @@ class ShoppingViewModel @Inject constructor(
         val askingProposals: Boolean = false,
         /** Whether the account has a model to ask; null until that is known. */
         val aiOn: Boolean? = null,
+        /** Why the profiles, the plans or the lists the screen shows could not be read: read again on asking. */
+        val readError: Throwable? = null,
+        /** Why a list could not be made, deleted, changed or asked what it could do without. */
         val error: Throwable? = null,
     ) {
         val plan: MealPlanSummary? get() = plans.firstOrNull { it.id == selectedPlanId }
@@ -137,7 +140,7 @@ class ShoppingViewModel @Inject constructor(
                     _state.update { UiState(loading = false, profiles = profiles, aiOn = it.aiOn) }
                     profiles.firstOrNull()?.let { selectProfile(it.id) }
                 }
-                .onFailure { e -> _state.update { UiState(loading = false, error = e, aiOn = it.aiOn) } }
+                .onFailure { e -> _state.update { UiState(loading = false, readError = e, aiOn = it.aiOn) } }
         }
         viewModelScope.launch {
             val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
@@ -153,6 +156,9 @@ class ShoppingViewModel @Inject constructor(
     fun shownAgain(cameToTheFront: Boolean) {
         if (again.due(cameToTheFront)) readAnew()
     }
+
+    /** Reads again what could not be read: the profiles where they were not, else the profile's plans and the chosen plan's lists. */
+    fun retry() = readAnew()
 
     /** Reads the profile's plans and the chosen plan's lists again at once, the screen pulled down. */
     fun pull() {
@@ -172,6 +178,8 @@ class ShoppingViewModel @Inject constructor(
         again.begun()
         viewModelScope.launch {
             attempt { plans.plans(profileId) }.onSuccess { fresh ->
+                // The plans could be read: a failure said before goes, and the lists below say their own.
+                _state.update { if (it.selectedProfileId == profileId) it.copy(readError = null) else it }
                 applyPlans(profileId, fresh.plans)
                 val chosen = _state.value.selectedPlanId
                 if (_state.value.selectedProfileId == profileId && chosen != null && fresh.plans.none { it.id == chosen }) {
@@ -186,8 +194,11 @@ class ShoppingViewModel @Inject constructor(
             attempt { lists.refreshForPlan(planId) }
                 .onSuccess { fresh ->
                     _state.update {
-                        if (it.selectedPlanId == planId && it.lists === before) it.copy(lists = fresh.newestFirst(), offline = false, pulled = false, readAt = System.currentTimeMillis())
-                        else it.copy(pulled = false)
+                        if (it.selectedPlanId == planId && it.lists === before) {
+                            it.copy(lists = fresh.newestFirst(), offline = false, pulled = false, readAt = System.currentTimeMillis(), readError = null)
+                        } else {
+                            it.copy(pulled = false)
+                        }
                     }
                 }
                 .onFailure { e ->
@@ -197,7 +208,7 @@ class ShoppingViewModel @Inject constructor(
                         it.copy(
                             lists = if (gone) emptyList() else it.lists,
                             offline = e is IOException,
-                            error = e.takeIf { _ -> e !is IOException },
+                            readError = e.takeIf { _ -> e !is IOException },
                             pulled = false,
                         )
                     }
@@ -218,6 +229,7 @@ class ShoppingViewModel @Inject constructor(
                 selectedPlanId = null,
                 lists = emptyList(),
                 selectedListId = null,
+                readError = null,
                 error = null,
             )
         }
@@ -227,14 +239,14 @@ class ShoppingViewModel @Inject constructor(
             attempt { plans.plans(profileId) }
                 .onSuccess { fresh -> applyPlans(profileId, fresh.plans) }
                 .onFailure { e ->
-                    if (e !is IOException) _state.update { it.copy(error = e) }
+                    if (e !is IOException) _state.update { it.copy(readError = e) }
                     else if (cached.isEmpty()) _state.update { it.copy(offline = true) }
                 }
         }
     }
 
     fun selectPlan(planId: String) {
-        _state.update { it.copy(selectedPlanId = planId, lists = emptyList(), selectedListId = null, error = null) }
+        _state.update { it.copy(selectedPlanId = planId, lists = emptyList(), selectedListId = null, readError = null, error = null) }
         viewModelScope.launch {
             _state.update { it.copy(listLoading = true) }
             val cached = lists.cachedForPlan(planId).newestFirst()
@@ -256,7 +268,7 @@ class ShoppingViewModel @Inject constructor(
                                 lists = if (gone) emptyList() else it.lists,
                                 listLoading = false,
                                 offline = e is IOException,
-                                error = e.takeIf { _ -> e !is IOException },
+                                readError = e.takeIf { _ -> e !is IOException },
                             )
                         } else it
                     }

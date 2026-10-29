@@ -103,7 +103,16 @@ fun MealPlansScreen(
                         }
                     }
                 }
-                state.error?.let { item { ErrorBanner(errorMessage(it)) } }
+                state.error?.let { error ->
+                    item {
+                        Column {
+                            ErrorBanner(errorMessage(error))
+                            Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
+                                Text(stringResource(R.string.common_retry))
+                            }
+                        }
+                    }
+                }
                 if (state.offline) {
                     item {
                         state.syncedAt?.let { readAt -> OfflineAsOf(readAt) }
@@ -143,7 +152,8 @@ fun MealPlansScreen(
                         )
                     }
                 }
-                if (state.plans.isEmpty() && !state.refreshing && profileId != null) {
+                // Without plans only where they could be read: a failure to read them is said above.
+                if (state.plans.isEmpty() && !state.refreshing && profileId != null && state.error == null) {
                     item {
                         EmptyState(
                             icon = Icons.Default.DateRange,

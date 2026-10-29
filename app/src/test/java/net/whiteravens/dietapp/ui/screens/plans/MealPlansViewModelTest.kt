@@ -139,6 +139,30 @@ class MealPlansViewModelTest {
     }
 
     @Test
+    fun `plans that cannot be read are said with a way to read them again, and profiles that cannot be read are read again whole`() {
+        val refused = ApiException(500, "INTERNAL_ERROR", "Something went wrong.")
+        coEvery { plans.plans("ada", any()) } throws refused
+        val model = MealPlansViewModel(users, plans)
+        assertEquals(refused, model.state.value.error)
+
+        coEvery { plans.plans("ada", any()) } returns page("p1")
+        model.retry()
+
+        assertNull(model.state.value.error)
+        assertEquals(listOf("p1"), model.state.value.plans.map { it.id })
+
+        coEvery { users.profiles() } throws refused
+        val unread = MealPlansViewModel(users, plans)
+        assertEquals(refused, unread.state.value.error)
+        coEvery { users.profiles() } returns listOf(ada, bo)
+
+        unread.retry()
+
+        assertNull(unread.state.value.error)
+        assertEquals(listOf(ada, bo), unread.state.value.profiles)
+    }
+
+    @Test
     fun `a month is drawn in whole weeks from Monday, with the days of the months beside it that share them`() {
         val october = MealPlansViewModel.weeksOf(YearMonth.of(2026, 10))
         assertEquals(LocalDate.of(2026, 9, 28), october.first().first())

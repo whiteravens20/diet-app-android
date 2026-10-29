@@ -120,7 +120,7 @@ fun ShoppingScreen(
         return
     }
 
-    if (state.profiles.isEmpty() && state.error == null) {
+    if (state.profiles.isEmpty() && state.readError == null) {
         PullToRead(state.pulled, viewModel::pull) {
             Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 EmptyState(
@@ -206,11 +206,22 @@ fun ShoppingScreen(
                 }
             }
 
+            // What could not be read is read again on asking; what could not be done is done again by its own control.
+            state.readError?.let { error ->
+                item {
+                    Column {
+                        ErrorBanner(errorMessage(error))
+                        Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
+                            Text(stringResource(R.string.common_retry))
+                        }
+                    }
+                }
+            }
             state.error?.let { item { ErrorBanner(errorMessage(it)) } }
             if (state.offline) item { OfflineAsOf(state.readAt) }
 
             when {
-                state.plans.isEmpty() && state.selectedProfileId != null && state.error == null -> item {
+                state.plans.isEmpty() && state.selectedProfileId != null && state.readError == null -> item {
                     EmptyState(
                         icon = Icons.Default.ShoppingCart,
                         title = stringResource(R.string.shopping_no_plans),
@@ -222,7 +233,7 @@ fun ShoppingScreen(
                     Skeleton(Modifier.fillMaxWidth().height(120.dp))
                 }
 
-                state.lists.isEmpty() && state.selectedPlanId != null -> item {
+                state.lists.isEmpty() && state.selectedPlanId != null && state.readError == null -> item {
                     EmptyState(
                         icon = Icons.Default.ShoppingCart,
                         title = stringResource(R.string.shopping_no_lists_title),
