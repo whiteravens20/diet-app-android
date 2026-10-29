@@ -498,7 +498,7 @@
     <string name="recipes_mine_empty">The recipes you write, those a model drafts for you and the variants you keep after swapping an ingredient land here.</string>
     <string name="recipes_delete_confirm">Delete this recipe? Past planned meals stay intact — but it won\'t appear in your library or new plans.</string>
     <string name="recipes_submit">Suggest for the shared library</string>
-    <string name="recipes_submit_confirm">Suggest this recipe for the library everyone uses? The curators will see its text and ingredients, not who sent it. If they accept it, it becomes a recipe of the library.</string>
+    <string name="recipes_submit_confirm">Suggest this recipe for the library everyone uses? The curators will see its text and ingredients, not who sent it. If they accept it, it becomes a recipe of the library. A recipe you send is shared under the licence of the project, the GNU AGPL 3.0.</string>
     <string name="recipes_submit_done">Sent to the curators.</string>
     <string name="recipes_submit_failed">Could not send the recipe.</string>
     <string name="recipes_filters">Filters</string>
