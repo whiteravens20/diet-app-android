@@ -1,5 +1,6 @@
-# Version catalogue. Pin newest-stable; verify against a real Android build
-# environment when the app is built out (Phase 3).
+# The versions of the libraries and plugins the build uses. Dependabot proposes a new one
+# once it is a week old; a change is written into the verification metadata and the
+# lockfiles as CONTRIBUTING.md (Dependencies) says.
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.21"

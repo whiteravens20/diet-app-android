@@ -41,7 +41,7 @@ data class ApiErrorIssueDto(
 @Serializable
 data class ApiErrorDto(
     val statusCode: Int,
-    /** Stable machine-readable code, e.g. `AUTH_INVALID_CREDENTIALS`. Translate from this, not [message]. */
+    /** Stable machine-readable code, e.g. `INVALID_CREDENTIALS`. Translate from this, not [message]. */
     val error: String,
     val message: String,
     val issues: List<ApiErrorIssueDto>? = null,
