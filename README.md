@@ -117,9 +117,11 @@ screen comes from the backend.
 
 ## Install
 
-There is no published build yet, so the APK is built from source. You need Android
-Studio, or the Android SDK with JDK 17 or newer, and a device or emulator with Android
-10 (API 29) or newer.
+There is no release yet. The build the testers try, **Diet App Edge**, is on the project's
+[Pages](https://whiteravens20.github.io/diet-app-android/) with the steps to install it: an
+application of its own, which installs beside a later release, and each edge build over the
+one before. Otherwise the APK is built from source. You need Android Studio, or the Android
+SDK with JDK 17 or newer, and a device or emulator with Android 10 (API 29) or newer.
 
 ```bash
 git clone https://github.com/whiteravens20/diet-app-android
@@ -253,6 +255,10 @@ independent security review.
   drift every day ([branch-protection-audit.yml](.github/workflows/branch-protection-audit.yml)).
 - Dependabot's patch updates are merged by a workflow once the required checks pass
   ([dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)).
+- An edge build is made by hand from `main`, and only of a commit whose CI and Security runs
+  passed. It is signed with a key that only `main` reaches, a secret of its environment, and
+  published on the project's Pages with its SHA-256, its signer and a provenance attestation
+  ([edge-apk.yml](.github/workflows/edge-apk.yml)).
 - Commits are signed, and the [OpenSSF
   Scorecard](https://scorecard.dev/viewer/?uri=github.com/whiteravens20/diet-app-android)
   results are public.

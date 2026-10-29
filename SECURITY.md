@@ -10,7 +10,7 @@ A vulnerability of the server, its API or its web application belongs to [diet-a
 
 ## Supported versions
 
-The app has no release yet and is not production ready. Until the first release, security fixes land on the `dev` branch only.
+The app has no release yet and is not production ready. Until the first release, security fixes land on the `dev` branch only. Diet App Edge, the build the testers try, is replaced by the next edge build, which carries the fixes made by then.
 
 ## Security checklist
 
@@ -47,6 +47,7 @@ What the code guarantees today, and what it deliberately does not protect agains
 - [x] Trivy fails a run on a high or critical vulnerability in a version the release build ships; on a pull request, a dependency review refuses a library the release build would ship with such a vulnerability or under a licence that does not combine with AGPL-3.0
 - [x] CodeQL reads the code on every push and pull request, and every action a workflow uses is pinned to a commit, checked against its version's tag and looked up in GitHub's advisory database
 - [x] No keystore or signing configuration is kept in the repository
+- [x] An edge build is signed with a key kept as a secret of the `edge` environment, which only `main` can use, and is published with its SHA-256, its signer and a provenance attestation of the workflow run that built it ([edge-apk.yml](.github/workflows/edge-apk.yml))
 
 ### What this does not protect against
 
@@ -57,4 +58,4 @@ What the code guarantees today, and what it deliberately does not protect agains
 | The server and its operator | The server holds the account and computes everything the app shows; a compromised server sees what the app sends and can show anything |
 | The lock screen | The app sets no visibility of its own for its notifications: the phone's settings decide whether their text shows on the lock screen |
 | The web application in the browser | The pages the app opens are the web application's, protected by it and by the browser |
-| A build from somebody else | There is no release and no signing key yet: a debug APK from the workflow is signed with a key made for that run, so no APK can be checked as this project's until the first release |
+| A build from somebody else | There is no release yet. An edge APK can be checked against the SHA-256 and the signer on its page and with `gh attestation verify`; a debug APK from the "Build debug APK" workflow is signed with a key made for that run and cannot be checked as this project's |
