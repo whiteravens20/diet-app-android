@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Wording mirrors the web app's messages/pl.json wherever a key exists there. -->
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <string name="app_name">Diet App</string>
     <string name="api_language">pl</string>
 
@@ -1536,7 +1536,7 @@
     <string name="about_api_checked">Sprawdzona z API %1$s.</string>
     <string name="about_legal">Informacje prawne</string>
     <!-- The copyright line as NOTICE writes it. -->
-    <string name="about_notice" tools:ignore="TypographyOther">Ta aplikacja to %1$s. Jej oryginalny kod źródłowy jest pod adresem %2$s. Copyright (C) 2026 White Ravens.</string>
+    <string name="about_notice">Ta aplikacja to %1$s. Jej oryginalny kod źródłowy jest pod adresem:</string>
     <string name="about_licence">To wolne oprogramowanie: każdy może je rozpowszechniać i zmieniać na warunkach licencji GNU Affero General Public License w wersji 3, z dodatkowym warunkiem, który zachowuje tę atrybucję. Licencja jest w plikach LICENSE i NOTICE kodu źródłowego oraz na stronie gnu.org.</string>
     <string name="about_warranty">Oprogramowanie nie ma żadnej gwarancji, nawet tej, że nada się do określonego celu. Pełną treść tego zastrzeżenia podaje licencja.</string>
     <string name="about_changed">Jeśli ta aplikacja jest zmienioną wersją, licencja zobowiązuje tego, kto Ci ją dał, do udostępnienia Ci jej kodu źródłowego.</string>

@@ -3,23 +3,38 @@
 package net.whiteravens.dietapp.ui.screens.about
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.BuildConfig
@@ -27,6 +42,9 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION_URL
+import net.whiteravens.dietapp.ui.common.COPYRIGHT
+import net.whiteravens.dietapp.ui.common.HOME_NAME
+import net.whiteravens.dietapp.ui.common.HOME_URL
 import net.whiteravens.dietapp.ui.common.LICENCE_URL
 import net.whiteravens.dietapp.ui.common.SOURCE_URL
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
@@ -107,13 +125,20 @@ fun AboutScreen(
 
             AppCard {
                 Title(stringResource(R.string.about_legal))
+                val links = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectionContainer { Said(stringResource(R.string.about_notice, ATTRIBUTION, ATTRIBUTION_URL)) }
-                    Said(stringResource(R.string.about_licence))
+                    // The attribution, the address of the original source whole on a line of its own,
+                    // and the copyright line, as NOTICE has them; White Ravens leads to its home page.
+                    Said(withHomeLinks(stringResource(R.string.about_notice, ATTRIBUTION), links) { web.openOutside(HOME_URL) })
+                    Address(ATTRIBUTION_URL) { web.openOutside(ATTRIBUTION_URL) }
+                    Said(withHomeLinks(COPYRIGHT, links) { web.openOutside(HOME_URL) })
+                    Said(stringResource(R.string.about_licence), Modifier.padding(top = 8.dp))
                     Said(stringResource(R.string.about_warranty))
                     Said(stringResource(R.string.about_changed))
                     Said(stringResource(R.string.about_problems))
                 }
+                // The places the notices name, apart from them.
+                HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 TextButton(onClick = { web.openOutside(LICENCE_URL) }) { Text(stringResource(R.string.about_licence_text)) }
                 TextButton(onClick = { web.openOutside("$SOURCE_URL/issues") }) { Text(stringResource(R.string.about_issues)) }
                 TextButton(onClick = { web.openOutside("$SOURCE_URL/security/policy") }) { Text(stringResource(R.string.about_security)) }
@@ -162,5 +187,39 @@ private fun Fact(label: String, value: String) {
 
 @Composable
 private fun Said(text: String, modifier: Modifier = Modifier) {
+    Said(AnnotatedString(text), modifier)
+}
+
+@Composable
+private fun Said(text: AnnotatedString, modifier: Modifier = Modifier) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
+}
+
+/**
+ * An address in a block of its own, whole on one line: its letters as small as it takes, down to a
+ * size still read. A tap opens it.
+ */
+@Composable
+private fun Address(address: String, onOpen: () -> Unit) {
+    Surface(onClick = onOpen, shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+        Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) {
+            BasicText(
+                address,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary),
+                maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 13.sp, stepSize = 0.5.sp),
+            )
+        }
+    }
+}
+
+/** [text] with each "White Ravens" in it a link, drawn in [styles], that [onOpen] follows. */
+internal fun withHomeLinks(text: String, styles: TextLinkStyles, onOpen: () -> Unit): AnnotatedString = buildAnnotatedString {
+    append(text)
+    var at = text.indexOf(HOME_NAME)
+    while (at >= 0) {
+        addLink(LinkAnnotation.Clickable(HOME_URL, styles) { onOpen() }, at, at + HOME_NAME.length)
+        at = text.indexOf(HOME_NAME, at + HOME_NAME.length)
+    }
 }

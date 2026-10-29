@@ -5,6 +5,7 @@ package net.whiteravens.dietapp
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performFirstLinkClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
@@ -17,6 +18,8 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION_URL
+import net.whiteravens.dietapp.ui.common.COPYRIGHT
+import net.whiteravens.dietapp.ui.common.HOME_URL
 import net.whiteravens.dietapp.ui.common.LICENCE_URL
 import net.whiteravens.dietapp.ui.common.SOURCE_URL
 import org.junit.Rule
@@ -26,8 +29,9 @@ import org.junit.runner.RunWith
 /**
  * What the application says of the instance and of itself under "More": the server's version and
  * what it allows, the instance's terms in the web application, the application's version, the
- * legal notices with the attribution the licence's additional term asks for, and the libraries it
- * ships with their licences.
+ * legal notices with the attribution the licence's additional term asks for (the address of the
+ * original source on a line of its own, and White Ravens leading to its home page), and the
+ * libraries it ships with their licences.
  */
 @RunWith(AndroidJUnit4::class)
 class AboutTest {
@@ -44,10 +48,18 @@ class AboutTest {
         screen.waitForText(text(R.string.about_server_version))
         screen.waitForText(text(R.string.about_max_profiles))
         screen.onNodeWithText(BuildConfig.VERSION_NAME).performScrollTo()
-        screen.onNodeWithText(text(R.string.about_notice, ATTRIBUTION, ATTRIBUTION_URL)).performScrollTo()
+        screen.onNodeWithText(text(R.string.about_notice, ATTRIBUTION)).performScrollTo()
+        screen.onNodeWithText(ATTRIBUTION_URL).performScrollTo()
+        screen.onNodeWithText(COPYRIGHT).performScrollTo()
         screen.keepScreenshot("about-the-legal-notices")
 
         // Pages outside the instance are given to the browser as they are.
+        opensTheBrowserAt(ATTRIBUTION_URL) {
+            screen.onNodeWithText(ATTRIBUTION_URL).performScrollTo().performClick()
+        }
+        opensTheBrowserAt(HOME_URL) {
+            screen.onNodeWithText(COPYRIGHT).performScrollTo().performFirstLinkClick()
+        }
         opensTheBrowserAt(LICENCE_URL) {
             screen.onNodeWithText(text(R.string.about_licence_text)).performScrollTo().performClick()
         }
