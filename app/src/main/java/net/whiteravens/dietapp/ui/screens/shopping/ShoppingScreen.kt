@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -191,7 +192,7 @@ fun ShoppingScreen(
                             FilterChip(
                                 selected = plan.id == state.selectedPlanId,
                                 onClick = { viewModel.selectPlan(plan.id) },
-                                label = { Text(stringResource(R.string.plans_card_title, formatDate(plan.startDate), plan.durationDays)) },
+                                label = { Text(pluralStringResource(R.plurals.plans_card_title, plan.durationDays, formatDate(plan.startDate), plan.durationDays)) },
                             )
                         }
                     }

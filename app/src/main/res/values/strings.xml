@@ -212,7 +212,10 @@
         <item quantity="one">, and one more plan holds this day</item>
         <item quantity="other">, and %1$d more plans hold this day</item>
     </plurals>
-    <string name="plans_card_title">%1$s · %2$d days</string>
+    <plurals name="plans_card_title">
+        <item quantity="one">%1$s · %2$d day</item>
+        <item quantity="other">%1$s · %2$d days</item>
+    </plurals>
     <string name="plans_day_skipped">This day is skipped.</string>
     <string name="plans_today">Today</string>
     <string name="plans_go_to_today">Go to today</string>
@@ -985,11 +988,12 @@
     <string name="target_note_goal_held">Your goal to lose weight is on hold: plans follow your maintenance until you confirm on your profile that you understand the risk.</string>
     <string name="target_note_minor">You are under 18. These figures come from an equation for adults and are an approximation for you; losing weight at your age is something to do with a doctor.</string>
     <string name="target_note_underweight">Your body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
-    <string name="target_note_maintenance_under_floor">Your maintenance is under %1$d kcal, the lowest a calculated plan goes, so no loss is planned: the target is your maintenance.</string>
-    <string name="target_note_safety_floor_applied">The target was raised to %1$d kcal, the lowest a calculated plan goes. The deficit that leaves is %2$d kcal a day.</string>
-    <string name="target_note_deficit_capped">The pace you chose asks for %1$d kcal a day less. That is more than a quarter of your maintenance, so the plan takes %2$d.</string>
-    <string name="target_note_below_floor">The target you typed is under %1$d kcal, the lowest a calculated plan would go.</string>
-    <string name="target_note_below_bmr">The target you typed is under what your body uses at rest (%1$d kcal).</string>
+    <!-- "kcal" is a unit's short form, the same for any number: these need no plural. -->
+    <string name="target_note_maintenance_under_floor" tools:ignore="PluralsCandidate">Your maintenance is under %1$d kcal, the lowest a calculated plan goes, so no loss is planned: the target is your maintenance.</string>
+    <string name="target_note_safety_floor_applied" tools:ignore="PluralsCandidate">The target was raised to %1$d kcal, the lowest a calculated plan goes. The deficit that leaves is %2$d kcal a day.</string>
+    <string name="target_note_deficit_capped" tools:ignore="PluralsCandidate">The pace you chose asks for %1$d kcal a day less. That is more than a quarter of your maintenance, so the plan takes %2$d.</string>
+    <string name="target_note_below_floor" tools:ignore="PluralsCandidate">The target you typed is under %1$d kcal, the lowest a calculated plan would go.</string>
+    <string name="target_note_below_bmr" tools:ignore="PluralsCandidate">The target you typed is under what your body uses at rest (%1$d kcal).</string>
     <string name="plans_day_over">Over target</string>
     <string name="plans_day_under">Under target</string>
     <string name="plans_day_over_hint">This day holds more than a tenth over its target, and sizing its meals could not close the gap. Swap a meal, or take one out, to bring it back.</string>
@@ -1180,8 +1184,9 @@
     <string name="pickers_none_yet">None yet.</string>
     <string name="pickers_no_matches">No matches.</string>
     <string name="pickers_remove">Remove %1$s</string>
-    <string name="catalogue_none">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet.</string>
-    <string name="catalogue_none_fewer">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet, or no more than %3$d meals a day.</string>
+    <!-- Two to five meals a day: both languages say any of these numbers as written here. -->
+    <string name="catalogue_none" tools:ignore="PluralsCandidate">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet.</string>
+    <string name="catalogue_none_fewer" tools:ignore="PluralsCandidate">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet, or no more than %3$d meals a day.</string>
     <plurals name="catalogue_thin">
         <item quantity="one">On the “%2$s” diet, one of the %3$d meals a day has only %1$d recipe to choose from: plans will repeat the same dish often.</item>
         <item quantity="other">On the “%2$s” diet, one of the %3$d meals a day has only %1$d recipes to choose from: plans will repeat the same dish often.</item>
