@@ -1,48 +1,60 @@
-# Security Policy
+# Security — Diet App Android Companion
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-Report security issues **privately** via
-[GitHub Security Advisories](https://github.com/whiteravens20/diet-app-android/security/advisories/new),
-or email the maintainer (`@pavlojs` on GitHub). Do not open a public issue.
+Report vulnerabilities privately through GitHub's [private vulnerability reporting](https://github.com/whiteravens20/diet-app-android/security/advisories/new). Please do not open a public issue, discussion or pull request for a security bug.
 
-## Security model
+Include the version or commit you tested, the steps that reproduce the problem and the impact you expect. You will get a first reply within a week. A confirmed issue is fixed on the `dev` branch, and the advisory credits you unless you ask otherwise.
 
-The companion app holds an authenticated session and cached personal data.
+A vulnerability of the server, its API or its web application belongs to [diet-app](https://github.com/whiteravens20/diet-app/security/advisories/new).
 
-- **Tokens** — the access and refresh tokens are kept in `DataStore` sealed with AES-GCM
-  under a key the Android Keystore holds and never lets out, so the file holds none of
-  them. A key that is gone, after a restore or a reset of the keystore, opens nothing, and
-  the user signs in again.
-- **Transport** — a release build talks HTTPS only, and trusts the system's certificate
-  authorities and those the user installed on the phone, since a self-hosted server often
-  has a certificate from its owner's own authority. A debug build also talks plain `http`,
-  for a backend on the developer's own network. On Android 17 and later the app asks for
-  the permission for nearby devices before it sends anything to a server on the local
-  network, which the system otherwise does not let it reach.
-- **Cache** — the Room cache holds meal plans and shopping lists, not credentials.
-  It is cleared on sign-out.
-- **Notifications on the phone** — off until the user turns them on, when Android 13 and
-  later ask for the permission to show them. The background work reads the account's
-  unread notifications over the same session as the screens, and the app keeps whether they
-  are on and which it has shown, by their ids alone. Signing out turns them off, takes the
-  account's notifications off the phone and forgets what was shown.
-- **AI provider keys** — a key typed for one of the account's own AI providers is shown
-  as dots, held in memory while its form is open and kept out of the screen's saved
-  state, which the system may write to disk. It goes to the server alone, which tries it
-  against the provider when a test is asked for and seals it when it is saved; the server
-  never sends it back, and the app keeps none of it.
-- **Anti-abuse check** — where a server asks for Cloudflare Turnstile, its script runs in
-  a WebView that reaches no file and no content of the phone and has no bridge into the
-  app: the answer comes back as a navigation to an address of the app's own scheme, which
-  the app reads and never loads.
-- **Backups** — nothing the app keeps goes into a backup or onto another device: the
-  manifest allows no backup, and the data extraction rules of Android 12 and later
-  exclude every file from both the cloud backup and a device transfer.
-- **No secrets in the repo** — keystores and signing config are git-ignored.
-- **Build** — every dependency and plugin is checked against the signing keys and
-  checksums in `gradle/verification-metadata.xml`, and the versions are locked
-  ([CONTRIBUTING.md](CONTRIBUTING.md#dependencies)).
+## Supported versions
 
-The backend remains the security authority; the app never performs nutrition
-calculations itself — it renders what the API returns.
+The app has no release yet and is not production ready. Until the first release, security fixes land on the `dev` branch only.
+
+## Security checklist
+
+What the code guarantees today, and what it deliberately does not protect against. The app holds a session with the user's own Diet App server and copies of the account's data: meal plans, shopping lists, and the changes made on the phone that wait to be sent.
+
+### Session and tokens
+
+- [x] The access and refresh tokens are kept in DataStore sealed with AES-GCM under a key that the Android Keystore holds and never lets out, so the file holds none of them. A key that is gone, after a restore or a reset of the keystore, opens nothing, and the user signs in again
+- [x] Only a 401 that says the access token is no good is answered with a refresh; any other refusal is the request's own answer. Only a refusal of the refresh itself ends the session
+- [x] A session that ends takes with it everything the phone keeps of it: the tokens, every copy in the cache, the changes waiting to be sent and what the phone's notifications showed
+- [x] Signing out revokes the refresh token on the server. A sign-out that cannot reach the server keeps the token, sealed as the session's were, and revokes it when the app next starts
+- [x] A page of the web application opens signed in through a one-time code. The code goes in the address's fragment, which a browser does not send to a server, to the phone's default browser alone, and the page asks whether the account it names is yours before it signs in
+
+### Transport
+
+- [x] A release build talks HTTPS only: an address typed with `http://` is refused, and the network security configuration allows no plain text. It trusts the system's certificate authorities and those the user installed on the phone, since a self-hosted server often has a certificate from its owner's own authority
+- [x] A debug build also talks plain `http`, for a backend on the developer's own network
+- [x] An address with a user name or a password in it is refused: it would be kept in plain storage and shown on the screen
+- [x] On Android 17 and later the app asks for the permission for nearby devices before it reaches a server on the phone's local network, which the system does not otherwise let it reach
+
+### Data on the phone
+
+- [x] The Room cache holds copies of meal plans and shopping lists and the changes made on the phone that wait to be sent, and no credentials
+- [x] Nothing the app keeps goes into a backup or onto another device: the manifest allows no backup, and the data extraction rules of Android 12 and later exclude every file from both the cloud backup and a device transfer
+- [x] The phone's notifications are off until the user turns them on, when Android 13 and later ask for the permission to show them. The background work reads the account's unread notifications over the same session as the screens, and the app keeps whether they are on and the keys of those it showed
+- [x] A key typed for one of the account's own AI providers is shown as dots, held in memory while its form is open and kept out of the screen's saved state, which the system may write to disk. It goes to the server alone, which tries it against the provider when a test is asked for and seals it when it is saved; the server never sends it back, and the app keeps none of it
+- [x] The key and the recovery codes of two-step sign-in are put on the clipboard marked sensitive, so that the system's preview of what was copied does not show them
+- [x] Where a server asks for Cloudflare Turnstile, its script runs in a WebView that reaches no file and no content of the phone and has no bridge into the app: the answer comes back as a navigation to an address of the app's own scheme, which the app reads and never loads
+- [x] A release build exports one activity, the launcher's, and answers no link from other apps
+
+### Supply chain
+
+- [x] Every dependency and plugin the build downloads is checked against the signing keys and checksums in `gradle/verification-metadata.xml`, the Gradle distribution against its checksum, and only the versions in the lockfiles resolve ([CONTRIBUTING.md](CONTRIBUTING.md#dependencies))
+- [x] Trivy fails a run on a high or critical vulnerability in a version the release build ships; on a pull request, a dependency review refuses a library the release build would ship with such a vulnerability or under a licence that does not combine with AGPL-3.0
+- [x] CodeQL reads the code on every push and pull request, and every action a workflow uses is pinned to a commit, checked against its version's tag and looked up in GitHub's advisory database
+- [x] No keystore or signing configuration is kept in the repository
+
+### What this does not protect against
+
+| Threat vector | Why it is out of scope |
+| --- | --- |
+| A rooted or compromised phone | Code that runs as the app can use the Keystore's key, and the cache's database is protected by the app's private storage alone |
+| A certificate authority installed on the phone | A release build trusts the authorities the user installed, so whoever controls one, such as a device management profile, can read the traffic |
+| The server and its operator | The server holds the account and computes everything the app shows; a compromised server sees what the app sends and can show anything |
+| The lock screen | The app sets no visibility of its own for its notifications: the phone's settings decide whether their text shows on the lock screen |
+| The web application in the browser | The pages the app opens are the web application's, protected by it and by the browser |
+| A build from somebody else | There is no release and no signing key yet: a debug APK from the workflow is signed with a key made for that run, so no APK can be checked as this project's until the first release |
