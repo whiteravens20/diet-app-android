@@ -6,8 +6,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -152,16 +154,16 @@ private fun Overview(overview: PlanOverview, onOpen: () -> Unit) {
 /** A figure of the card: what it is, what it comes to, and how to read it. */
 private data class Figure(val label: String, val value: String, val hint: String)
 
-/** The figures two to a row, each in a box of its own. */
+/** The figures two to a row, each in a box of its own, the two boxes of a row as tall as each other. */
 @Composable
 private fun Figures(figures: List<Figure>) {
     figures.chunked(2).forEach { pair ->
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             pair.forEach { figure ->
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 ) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(figure.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
