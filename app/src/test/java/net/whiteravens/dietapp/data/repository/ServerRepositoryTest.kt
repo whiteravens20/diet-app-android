@@ -90,8 +90,8 @@ class ServerRepositoryTest {
 
         val rules = checkNotNull(repository.rules.value)
         assertEquals(2, rules.maxProfiles)
-        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 39, fewerMeals = 2), rules.supplyOf("balanced", 3))
-        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 35, fewerMeals = 4), rules.supplyOf("balanced", 5))
+        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 62, fewerMeals = 2), rules.supplyOf("balanced", 3))
+        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 57, fewerMeals = 4), rules.supplyOf("balanced", 5))
     }
 
     @Test
@@ -110,7 +110,7 @@ class ServerRepositoryTest {
         assertEquals(Supply(SupplyLevel.THIN, recipes = 2, fewerMeals = 2), rules.supplyOf("vegan", 3))
         assertEquals(Supply(SupplyLevel.NONE, recipes = 0, fewerMeals = 3), rules.supplyOf("vegan", 4))
         assertEquals(null, rules.supplyOf("vegan", 5))
-        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 39, fewerMeals = 2), rules.supplyOf("balanced", 3))
+        assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 62, fewerMeals = 2), rules.supplyOf("balanced", 3))
     }
 
     @Test
