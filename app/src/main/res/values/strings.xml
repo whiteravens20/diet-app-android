@@ -1573,8 +1573,8 @@
         <item quantity="other">%1$d entries copied.</item>
     </plurals>
     <plurals name="diary_sum_leaves_out">
-        <item quantity="one">Without one change waiting to be sent.</item>
-        <item quantity="other">Without %1$d changes waiting to be sent.</item>
+        <item quantity="one">Not counting one change waiting to be sent.</item>
+        <item quantity="other">Not counting %1$d changes waiting to be sent.</item>
     </plurals>
     <plurals name="plans_diary_line">
         <item quantity="one">The diary adds %2$s kcal to this day (%1$d entry).</item>
