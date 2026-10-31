@@ -205,20 +205,20 @@ private fun refusalText(error: ApiException): String {
 
 // ── Value formatting ─────────────────────────────────────────────────────────
 
-/** A number in the language of the app's texts, to at most [fractionDigits] decimals: `2,150`, `0,25`. */
+/** A number in the language of the app's texts, to at most [fractionDigits] decimals, nothing between its thousands: `2150`, `0,25`. */
 @Composable
 fun formatNumber(value: Number, fractionDigits: Int = 0): String =
-    NumberFormat.getNumberInstance(LocalConfiguration.current.locales[0]).apply { maximumFractionDigits = fractionDigits }.format(value)
+    NumberFormat.getNumberInstance(LocalConfiguration.current.locales[0]).apply { isGroupingUsed = false; maximumFractionDigits = fractionDigits }.format(value)
 
 /** A part of one as the language writes a share of a hundred: `45%`, `45 %`. */
 @Composable
 fun formatPercent(part: Double): String =
-    NumberFormat.getPercentInstance(LocalConfiguration.current.locales[0]).apply { maximumFractionDigits = 0 }.format(part)
+    NumberFormat.getPercentInstance(LocalConfiguration.current.locales[0]).apply { isGroupingUsed = false; maximumFractionDigits = 0 }.format(part)
 
 /** A whole number that always says which way it goes: `+120`, `-80`, `+0`. */
 @Composable
 fun formatSigned(value: Double): String =
-    (NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]) as DecimalFormat).apply { positivePrefix = "+" }.format(value.roundToInt())
+    (NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]) as DecimalFormat).apply { isGroupingUsed = false; positivePrefix = "+" }.format(value.roundToInt())
 
 /** Several things named one after another, as the language joins them: `rice, oats and tofu`. */
 @Composable
@@ -267,7 +267,7 @@ fun formatMoment(at: Instant): String =
 @Composable
 fun amountLabel(quantity: Double, unit: String): String {
     val locale = LocalConfiguration.current.locales[0]
-    val number = NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 2 }.format(quantity)
+    val number = NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(quantity)
     return when (unit) {
         "g" -> stringResource(R.string.amount_g, number)
         "ml" -> stringResource(R.string.amount_ml, number)

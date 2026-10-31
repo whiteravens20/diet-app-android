@@ -52,7 +52,7 @@ class DiaryTest {
     @After
     fun backOnline() = screen.airplaneMode(false)
 
-    private fun number(value: Int) = NumberFormat.getNumberInstance(Locale.getDefault()).format(value)
+    private fun number(value: Int) = NumberFormat.getNumberInstance(Locale.getDefault()).apply { isGroupingUsed = false }.format(value)
 
     /** What is clickable in the window in front: the same words may stand on the screen under it. */
     private fun inTheWindow(words: String): SemanticsMatcher = hasText(words) and hasClickAction() and hasAnyAncestor(isDialog())

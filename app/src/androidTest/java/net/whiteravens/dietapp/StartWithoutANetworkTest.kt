@@ -48,7 +48,7 @@ class StartWithoutANetworkTest {
     @After
     fun backOnline() = screen.airplaneMode(false)
 
-    private fun number(value: Int) = NumberFormat.getNumberInstance(Locale.getDefault()).format(value)
+    private fun number(value: Int) = NumberFormat.getNumberInstance(Locale.getDefault()).apply { isGroupingUsed = false }.format(value)
 
     @Test
     fun theDashboardAndTheDiaryOpenFromWhatIsKeptAndAnEntryWaits() {

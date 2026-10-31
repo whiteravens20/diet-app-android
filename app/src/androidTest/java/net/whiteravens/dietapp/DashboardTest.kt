@@ -144,7 +144,7 @@ class DashboardTest {
         val account = Instance.newAccount()
         Instance.newProfile(account, name = "Ala")
         Instance.useAi(account, "admin")
-        val limit = NumberFormat.getNumberInstance(Locale.getDefault()).format(Instance.aiQuota(account).getInt("limit"))
+        val limit = NumberFormat.getNumberInstance(Locale.getDefault()).apply { isGroupingUsed = false }.format(Instance.aiQuota(account).getInt("limit"))
         screen.signIn(account)
 
         // None used yet: all of the month's are left.
