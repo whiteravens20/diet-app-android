@@ -130,6 +130,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    lint {
+        // A warning stops the build as an error does, with nothing set aside in a baseline.
+        warningsAsErrors = true
+        // Which version of a library is the newest changes with no commit here. Dependabot proposes
+        // versions, once they have stood for a week.
+        disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
+    }
+
     testOptions {
         // The tests run on the JVM: an Android call they do not stand in for answers its default.
         unitTests.isReturnDefaultValues = true

@@ -229,7 +229,7 @@ independent security review.
 **What a change goes through**
 
 - Every push and pull request has to compile into a debug APK and into the release
-  variant, whose code and resources R8 shrinks, pass Android Lint without an error and
+  variant, whose code and resources R8 shrinks, pass Android Lint without an error or a warning and
   pass the unit tests,
   which run on the JVM without a device: every call of the client against a copy of the
   contract the API publishes ([contract/](contract/README.md)), a text for every code the

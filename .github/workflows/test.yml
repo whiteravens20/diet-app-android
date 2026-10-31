@@ -44,7 +44,8 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
-      # Android Lint fails the job on an error; its warnings are in the report.
+      # Android Lint fails the job on an error or a warning, the versions of libraries aside
+      # (lint in app/build.gradle.kts).
       - name: Lint
         run: ./gradlew lintDebug
 
