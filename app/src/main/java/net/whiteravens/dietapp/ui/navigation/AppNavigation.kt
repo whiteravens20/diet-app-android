@@ -80,6 +80,7 @@ import net.whiteravens.dietapp.ui.screens.about.LibrariesScreen
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
+import net.whiteravens.dietapp.ui.screens.diary.DiaryScreen
 import net.whiteravens.dietapp.ui.screens.favorites.FavoritesScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.notifications.NotificationsScreen
@@ -115,6 +116,8 @@ import kotlin.reflect.KClass
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object FavoritesRoute
 @Serializable object PantryRoute
+/** The diary: of a profile and a day where they are named, with the window that adds an entry open where [adding]. */
+@Serializable data class DiaryRoute(val profileId: String? = null, val date: String? = null, val adding: Boolean = false)
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
 
 /** The profile whose weights the dashboard brings into view, which a weight reminder opened leaves it. */
@@ -330,6 +333,13 @@ private fun MainScaffold(
                         onBack = { navController.popBackStack() },
                         onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
                         onTurnAiOn = { navController.navigate(AccountRoute) },
+                    )
+                }
+                composable<DiaryRoute> {
+                    DiaryScreen(
+                        onBack = { navController.popBackStack() },
+                        onProfiles = { navController.navigate(ProfilesRoute) },
+                        onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
                     )
                 }
                 composable<RecipesRoute> {

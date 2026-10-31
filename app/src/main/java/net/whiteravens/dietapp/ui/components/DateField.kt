@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -31,10 +33,20 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-/** A field that shows a day, none where [day] is null, and opens a calendar to choose another. */
+/**
+ * A field that shows a day, none where [day] is null, and opens a calendar to choose another, of the
+ * years [years], and not after [latest] where one is named.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateField(label: String, day: LocalDate?, onPick: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
+fun DateField(
+    label: String,
+    day: LocalDate?,
+    onPick: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    years: IntRange = DatePickerDefaults.YearRange,
+    latest: LocalDate? = null,
+) {
     var picking by rememberSaveable { mutableStateOf(false) }
     Box(modifier) {
         OutlinedTextField(
@@ -61,6 +73,11 @@ fun DateField(label: String, day: LocalDate?, onPick: (LocalDate) -> Unit, modif
         // The picker counts days in UTC: a day made into a moment there, and back, is the same day.
         val picker = rememberDatePickerState(
             initialSelectedDateMillis = (day ?: LocalDate.now()).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            yearRange = years,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                    latest == null || !Instant.ofEpochMilli(utcTimeMillis).atZone(ZoneOffset.UTC).toLocalDate().isAfter(latest)
+            },
         )
         DatePickerDialog(
             onDismissRequest = { picking = false },

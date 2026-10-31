@@ -473,6 +473,13 @@ class MealPlanRepository @Inject constructor(
     suspend fun rebalanceRest(planId: String, from: String? = null): Rebalanced =
         kept(apiCall(json) { api.rebalancePlan(planId, RebalanceRequest(scope = "plan", date = from)) })
 
+    /**
+     * Gives the meals from recipes not eaten yet of the day of [date] (yyyy-MM-dd) other portions, so
+     * that the day comes as close to its target as it can, what the diary holds for it counted as eaten.
+     */
+    suspend fun resizeDay(planId: String, date: String): Rebalanced =
+        kept(apiCall(json) { api.rebalancePlan(planId, RebalanceRequest(scope = "day", date = date)) })
+
     /** What changing the settings of a day of a plan to [settings] would do. Nothing is written. */
     suspend fun previewDaySettings(planId: String, dayId: String, settings: DaySettings): DaySettingsPreview =
         apiCall(json) { api.previewDaySettings(planId, dayId, settings.toDto()) }.toDomain()

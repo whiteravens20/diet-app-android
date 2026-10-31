@@ -30,6 +30,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.navigation.AboutRoute
 import net.whiteravens.dietapp.ui.navigation.AccountRoute
+import net.whiteravens.dietapp.ui.navigation.DiaryRoute
 import net.whiteravens.dietapp.ui.navigation.FavoritesRoute
 import net.whiteravens.dietapp.ui.navigation.PantryRoute
 import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
@@ -40,6 +41,7 @@ data class MoreEntry(val route: Any, val icon: ImageVector, @StringRes val label
 /** The places of the app beyond the four of the bottom bar, as the web application's menu has them. */
 val moreEntries: List<MoreEntry>
     get() = listOf(
+        MoreEntry(DiaryRoute(), AppIcons.Diary, R.string.diary_title),
         MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
         MoreEntry(FavoritesRoute, Icons.Default.Star, R.string.favorites_title),
         MoreEntry(PantryRoute, AppIcons.Inventory, R.string.pantry_title),

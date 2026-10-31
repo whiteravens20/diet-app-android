@@ -904,94 +904,6 @@ private fun MealCard(
     }
 }
 
-/**
- * What the last change rebalanced: the day's kcal before and after and how many meals were scaled,
- * whether the day is still off its target and what the week could not take back; the way back, the
- * rest of the week, and away. It goes by itself after a while, later where the phone is set to give
- * more time to act.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun RebalanceCard(
-    rebalance: Rebalance?,
-    notice: String?,
-    busy: Boolean,
-    onUndo: () -> Unit,
-    onRest: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val dismiss by rememberUpdatedState(onDismiss)
-    val timeout = LocalAccessibilityManager.current
-        ?.calculateRecommendedTimeoutMillis(REBALANCE_SHOWN_MILLIS, containsIcons = false, containsText = true, containsControls = true)
-        ?: REBALANCE_SHOWN_MILLIS
-    LaunchedEffect(rebalance, notice) {
-        delay(timeout)
-        dismiss()
-    }
-    Surface(
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shadowElevation = 6.dp,
-        modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            // Why the engine's plain replacement stands where a model was asked to reword the text.
-            notice?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
-            if (rebalance != null) RebalanceSaid(rebalance)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-                if (rebalance != null) {
-                    OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
-                    if (rebalance.scope == "day") {
-                        OutlinedButton(onClick = onRest, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_rest)) }
-                    }
-                }
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.plans_rebalance_dismiss)) }
-            }
-        }
-    }
-}
-
-/**
- * What a rebalance did: of a day, its kcal before and after, the meals scaled and whether it is still
- * off its target, with what spreading it over the rest of the plan would do; of the rest of the
- * plan, the meals scaled. Either way what it could not take back.
- */
-@Composable
-private fun RebalanceSaid(rebalance: Rebalance) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (rebalance.scope == "day") {
-            Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
-            Hint(
-                stringResource(
-                    R.string.plans_rebalance_summary,
-                    formatNumber(rebalance.caloriesBefore.roundToInt()),
-                    formatNumber(rebalance.caloriesAfter.roundToInt()),
-                    formatNumber(rebalance.changes.size),
-                ),
-            )
-            if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
-            Hint(stringResource(R.string.plans_rebalance_rest_note))
-        } else {
-            Text(stringResource(R.string.plans_rebalance_title_plan), style = MaterialTheme.typography.titleSmall)
-            Hint(stringResource(R.string.plans_rebalance_summary_plan, formatNumber(rebalance.changes.size)))
-        }
-        if (rebalance.unabsorbedKcal != 0.0) {
-            Hint(
-                stringResource(
-                    if (rebalance.unabsorbedKcal > 0) R.string.plans_rebalance_left_over else R.string.plans_rebalance_left_under,
-                    formatNumber(abs(rebalance.unabsorbedKcal).roundToInt()),
-                ),
-                MaterialTheme.colorScheme.tertiary,
-            )
-        }
-    }
-}
-
-/** How long the card of a rebalance stays, where the phone asks for no longer. */
-private const val REBALANCE_SHOWN_MILLIS = 10_000L
-
 /** The times of day a meal of one's own can be at, in the order the web application offers them. */
 private val CUSTOM_MEAL_SLOTS = listOf("breakfast", "lunch", "dinner", "snack", "second_breakfast")
 
@@ -1346,11 +1258,6 @@ private fun MealDialog(meal: Meal, dietType: String, onOpenRecipe: (() -> Unit)?
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) } },
     )
-}
-
-@Composable
-private fun Hint(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
-    Text(text, style = MaterialTheme.typography.bodySmall, color = color)
 }
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
