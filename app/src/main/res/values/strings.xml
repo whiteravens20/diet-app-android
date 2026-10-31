@@ -32,14 +32,13 @@
     <string name="server_first_title">Which Diet App server do you use?</string>
     <string name="server_first_body">Diet App runs on servers that people and organisations host themselves. Enter the address of yours: whoever runs it can tell you what it is.</string>
     <string name="server_first_button">Enter its address</string>
-    <string name="server_placeholder">https://diet.example.org</string>
+    <string name="server_placeholder">diet.example.org</string>
+    <string name="server_address_hint">Type the server\'s address alone, such as diet.example.org.</string>
     <string name="server_checking">Checking what answers at this address…</string>
     <string name="server_save_anyway">Save anyway</string>
     <string name="server_not_an_address">That is not the address of a server.</string>
-    <string name="server_plain_http">This build talks to a server over HTTPS only: its address starts with https://.</string>
+    <string name="server_plain_http">This build talks to a server over HTTPS only: type the server\'s address without http://.</string>
     <string name="server_credentials">An address with a user name or a password in it is not kept. Sign in on the sign-in screen instead.</string>
-    <string name="server_query_or_fragment">The address of a server has no part after a ? or a #.</string>
-    <string name="server_past_the_api">The address of the API ends in /api/: leave out what comes after it.</string>
     <string name="server_not_the_api">Something answers at this address, but not a Diet App server.</string>
     <string name="server_database_down">The server answers, but its database is down.</string>
     <string name="server_unknown_host">There is no server of that name.</string>

@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
+import net.whiteravens.dietapp.testing.shownAddress
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -46,7 +47,7 @@ class AccountTest {
         screen.onNodeWithText(text(R.string.account_title)).performClick()
         screen.waitForText(account.email)
         screen.onNodeWithText(account.displayName).assertIsDisplayed()
-        screen.onNodeWithText(BuildConfig.API_BASE_URL).performScrollTo().assertIsDisplayed()
+        screen.onNodeWithText(shownAddress).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("account-settings")
 
         // The password, the address, the name and the language of the mails are changed in the web

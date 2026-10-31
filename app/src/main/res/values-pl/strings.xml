@@ -30,14 +30,13 @@
     <string name="server_first_title">Z którego serwera Diet App korzystasz?</string>
     <string name="server_first_body">Diet App działa na serwerach, które ludzie i organizacje utrzymują sami. Podaj adres swojego: zna go osoba, która go prowadzi.</string>
     <string name="server_first_button">Podaj jego adres</string>
-    <string name="server_placeholder">https://diet.example.org</string>
+    <string name="server_placeholder">diet.example.org</string>
+    <string name="server_address_hint">Wpisz sam adres serwera, np. diet.example.org.</string>
     <string name="server_checking">Sprawdzanie, co odpowiada pod tym adresem…</string>
     <string name="server_save_anyway">Zapisz mimo to</string>
     <string name="server_not_an_address">To nie jest adres serwera.</string>
-    <string name="server_plain_http">Ta wersja aplikacji łączy się z serwerem tylko przez HTTPS: jego adres zaczyna się od https://.</string>
+    <string name="server_plain_http">Ta wersja aplikacji łączy się z serwerem tylko przez HTTPS: wpisz adres serwera bez http://.</string>
     <string name="server_credentials">Adres z nazwą użytkownika lub hasłem nie jest zapisywany. Zaloguj się na ekranie logowania.</string>
-    <string name="server_query_or_fragment">Adres serwera nie ma części po znaku ? ani #.</string>
-    <string name="server_past_the_api">Adres API kończy się na /api/: pomiń to, co jest dalej.</string>
     <string name="server_not_the_api">Pod tym adresem coś odpowiada, ale nie serwer Diet App.</string>
     <string name="server_database_down">Serwer odpowiada, ale jego baza danych nie działa.</string>
     <string name="server_unknown_host">Nie ma serwera o tej nazwie.</string>

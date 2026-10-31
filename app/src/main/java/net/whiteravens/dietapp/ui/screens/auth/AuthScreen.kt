@@ -39,6 +39,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.config.serverAddress
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -256,7 +257,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
         }
         TextButton(onClick = { showServerDialog = true }) {
             Text(
-                stringResource(R.string.server_label, serverUrl),
+                stringResource(R.string.server_label, serverAddress(serverUrl)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

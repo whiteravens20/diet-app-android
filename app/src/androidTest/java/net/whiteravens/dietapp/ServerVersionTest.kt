@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.shownAddress
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import okhttp3.mockwebserver.Dispatcher
@@ -41,10 +42,10 @@ class ServerVersionTest {
 
     /** Points the app at [address] with the sign-in screen's server dialog, as a person would. */
     private fun useServer(address: String) {
-        val button = text(R.string.server_label, BuildConfig.API_BASE_URL)
+        val button = text(R.string.server_label, shownAddress)
         screen.waitForText(button)
         screen.onNodeWithText(button).performClick()
-        screen.onNode(hasSetTextAction() and hasText(BuildConfig.API_BASE_URL)).performTextReplacement(address)
+        screen.onNode(hasSetTextAction() and hasText(shownAddress)).performTextReplacement(address)
         screen.onNodeWithText(text(R.string.common_save)).performClick()
     }
 
@@ -105,6 +106,6 @@ class ServerVersionTest {
 
         screen.waitForText(text(R.string.server_credentials))
         screen.onNodeWithText(text(R.string.common_cancel)).performClick()
-        screen.waitForText(text(R.string.server_label, BuildConfig.API_BASE_URL))
+        screen.waitForText(text(R.string.server_label, shownAddress))
     }
 }

@@ -35,12 +35,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.config.AddressProblem
 import net.whiteravens.dietapp.data.config.LOCAL_NETWORK_PERMISSION
+import net.whiteravens.dietapp.data.config.serverAddress
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.ui.components.ServerAddressViewModel.State
 
 /**
- * Edit the server's address. What is typed is read into the base of the server's API and asked
- * what answers there ([ServerAddressViewModel]); an address where a Diet App API answers goes to
+ * Edit the server's address: the server's name alone, shown and typed so. What is typed is read into
+ * the base of the server's API and asked what answers there ([ServerAddressViewModel]); an address where a Diet App API answers goes to
  * [onSave], one where none does is named and goes there only when asked again. Shows [warning]
  * above the field when the caller needs a consequence spelled out (e.g. "this signs you out").
  */
@@ -52,7 +53,7 @@ fun ServerUrlDialog(
     warning: String? = null,
     model: ServerAddressViewModel = hiltViewModel(),
 ) {
-    var value by rememberSaveable { mutableStateOf(current) }
+    var value by rememberSaveable { mutableStateOf(serverAddress(current)) }
     val state by model.state.collectAsState()
 
     // A dialog opened again starts from what is typed in it.
@@ -93,7 +94,7 @@ fun ServerUrlDialog(
                     singleLine = true,
                     enabled = state !is State.Checking,
                     isError = state is State.Wrong || state is State.Doubtful || state is State.LocalNetworkRefused,
-                    supportingText = note?.let { { Text(it) } },
+                    supportingText = { Text(note ?: stringResource(R.string.server_address_hint)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth(),
@@ -136,8 +137,6 @@ private fun addressNote(state: State): String? = when (state) {
             AddressProblem.NOT_AN_ADDRESS -> R.string.server_not_an_address
             AddressProblem.PLAIN_HTTP -> R.string.server_plain_http
             AddressProblem.CREDENTIALS -> R.string.server_credentials
-            AddressProblem.QUERY_OR_FRAGMENT -> R.string.server_query_or_fragment
-            AddressProblem.PAST_THE_API -> R.string.server_past_the_api
         },
     )
     is State.Doubtful -> stringResource(

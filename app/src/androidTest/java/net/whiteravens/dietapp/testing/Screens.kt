@@ -41,6 +41,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
 import kotlinx.coroutines.runBlocking
+import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.auth.KeystoreSealer
 import net.whiteravens.dietapp.data.auth.TokenStore
@@ -247,6 +248,9 @@ fun ComposeTestRule.waitForTheShell() {
             .fetchSemanticsNodes().isNotEmpty()
     }
 }
+
+/** The app's own server as the app shows it and it is typed: its name, with its port and a scheme other than `https`. */
+val shownAddress: String = BuildConfig.API_BASE_URL.removeSuffix("/api/").removePrefix("https://")
 
 /** How long an access token of the instance holds, as its sign-up answers it. */
 private const val ACCESS_TOKEN_SECONDS = 900.0

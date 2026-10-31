@@ -21,6 +21,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.putKeyboardAway
+import net.whiteravens.dietapp.testing.shownAddress
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import okhttp3.mockwebserver.Dispatcher
@@ -84,10 +85,10 @@ class AntiAbuseCheckTest {
     /** The server chosen as a person chooses it, and a sign-up sent, which the check stops. */
     private fun signUpUntilTheCheck() {
         // Its version, named on the screen, says that its config has been read.
-        val button = text(R.string.server_label, BuildConfig.API_BASE_URL)
+        val button = text(R.string.server_label, shownAddress)
         screen.waitForText(button)
         screen.onNodeWithText(button).performClick()
-        screen.onNode(hasSetTextAction() and hasText(BuildConfig.API_BASE_URL))
+        screen.onNode(hasSetTextAction() and hasText(shownAddress))
             .performTextReplacement(server.url("/api/").toString())
         screen.onNodeWithText(text(R.string.common_save)).performClick()
         screen.waitForText(text(R.string.server_other_version, VERSION, BuildConfig.API_VERSION))

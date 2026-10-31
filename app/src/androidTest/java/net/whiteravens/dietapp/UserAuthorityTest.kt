@@ -12,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.shownAddress
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -37,14 +38,14 @@ class UserAuthorityTest {
         assumeTrue("no server with a certificate from a test authority", address != null)
         val account = Instance.newAccount()
 
-        val button = text(R.string.server_label, BuildConfig.API_BASE_URL)
+        val button = text(R.string.server_label, shownAddress)
         screen.waitForText(button)
         screen.onNodeWithText(button).performClick()
-        screen.onNode(hasSetTextAction() and hasText(BuildConfig.API_BASE_URL)).performTextReplacement(address!!)
+        screen.onNode(hasSetTextAction() and hasText(shownAddress)).performTextReplacement(address!!)
         screen.onNodeWithText(text(R.string.common_save)).performClick()
 
         // Kept without a word: the app reached the server and trusted its certificate.
-        screen.waitForText(text(R.string.server_label, address))
+        screen.waitForText(text(R.string.server_label, address.removePrefix("https://").removeSuffix("/api/").removeSuffix("/")))
         screen.keepScreenshot("sign-in-server-of-a-user-authority")
         screen.signIn(account)
     }

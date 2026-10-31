@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.data.config.serverAddress
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.AccentChip
@@ -342,7 +343,7 @@ private fun ServerRow(url: String, onEdit: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(url, style = MaterialTheme.typography.bodySmall)
+            Text(serverAddress(url), style = MaterialTheme.typography.bodySmall)
         }
         TextButton(onClick = onEdit) { Text(stringResource(R.string.common_edit)) }
     }
