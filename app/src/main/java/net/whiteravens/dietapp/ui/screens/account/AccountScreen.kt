@@ -211,7 +211,7 @@ fun AccountScreen(
                             modifier = Modifier.padding(top = 12.dp),
                         )
                         OutlinedButton(
-                            onClick = { web.open("settings") },
+                            onClick = { web.open("settings", "tab" to "account") },
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier.padding(top = 8.dp),
                         ) {

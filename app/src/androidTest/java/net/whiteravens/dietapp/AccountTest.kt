@@ -53,12 +53,12 @@ class AccountTest {
         // application, whose settings the account's screen opens in the browser, signed in.
         screen.onNodeWithText(text(R.string.web_open)).performScrollTo()
         screen.keepScreenshot("account-the-web-applications-settings")
-        val first = opensSignedInTheBrowser("/settings") {
+        val first = opensSignedInTheBrowser("/settings?tab=account") {
             screen.onNodeWithText(text(R.string.web_open)).performClick()
         }
         // A code uses up the session's refresh token: the next one is asked for with the token that
         // came with the first, or the instance would not give it.
-        val second = opensSignedInTheBrowser("/settings") {
+        val second = opensSignedInTheBrowser("/settings?tab=account") {
             screen.onNodeWithText(text(R.string.web_open)).performClick()
         }
         assertNotEquals(first, second)
