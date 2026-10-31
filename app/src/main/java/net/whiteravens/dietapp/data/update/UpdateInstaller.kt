@@ -10,6 +10,7 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -201,13 +202,7 @@ class UpdateInstaller @Inject constructor(@ApplicationContext private val contex
     fun answered(status: Intent, ask: (Intent) -> Unit) {
         when (status.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                @Suppress("DEPRECATION")
-                val question = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    status.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
-                } else {
-                    status.getParcelableExtra(Intent.EXTRA_INTENT)
-                }
-                question?.let(ask)
+                IntentCompat.getParcelableExtra(status, Intent.EXTRA_INTENT, Intent::class.java)?.let(ask)
             }
             PackageInstaller.STATUS_SUCCESS -> _step.value = UpdateStep.Idle
             PackageInstaller.STATUS_FAILURE_ABORTED -> _step.value = UpdateStep.Failed(UpdateFailure.CANCELLED)
