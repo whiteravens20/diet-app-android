@@ -1591,6 +1591,8 @@
     <string name="diary_previous_day">Poprzedni dzień</string>
     <string name="diary_next_day">Następny dzień</string>
     <string name="diary_today">Dziś</string>
+    <string name="diary_today_title">Dziś</string>
+    <string name="diary_open">Dziennik</string>
     <string name="diary_add">Dodaj</string>
     <string name="diary_add_to">Dodaj wpis do posiłku: %1$s</string>
     <string name="diary_eaten_title">Zjedzone</string>

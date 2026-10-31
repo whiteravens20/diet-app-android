@@ -64,11 +64,12 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Calorie target, deficit and macro split for every profile, what its plan of the moment comes to,
- * and its weights — the web dashboard, whose favourite sets are made and changed there, in the
- * browser. A plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan]; the bell in
- * the header counts the notifications not read yet and opens them on [onOpenNotifications]; under
- * the header, where the account uses AI, its requests are said, and open the account's settings on
+ * What every profile ate today, its calorie target, deficit and macro split, what its plan of the
+ * moment comes to, and its weights — the web dashboard, whose favourite sets are made and changed
+ * there, in the browser. Today's card opens the diary, and its window to add to it, on [onOpenDiary];
+ * a plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan]; the bell in the header
+ * counts the notifications not read yet and opens them on [onOpenNotifications]; under the header,
+ * where the account uses AI, its requests are said, and open the account's settings on
  * [onOpenAccount]. With [showWeightOf], the weights of that profile are brought into view, and
  * [onWeightShown] says so.
  */
@@ -79,6 +80,7 @@ fun DashboardScreen(
     onNewPlan: (profileId: String) -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenAccount: () -> Unit,
+    onOpenDiary: (profileId: String, adding: Boolean) -> Unit,
     showWeightOf: String? = null,
     onWeightShown: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
@@ -149,8 +151,20 @@ fun DashboardScreen(
                 state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
                 state.shown.forEach { stats ->
                     item(key = stats.profile.id) {
+                        val today: @Composable () -> Unit = {
+                            TodayCard(
+                                stats,
+                                leftOut = state.leftOut(stats),
+                                offline = state.offline,
+                                onOpen = { onOpenDiary(stats.profile.id, false) },
+                                onAdd = { onOpenDiary(stats.profile.id, true) },
+                            )
+                        }
+                        // All that is known of it without a network, started so.
+                        if (stats.keptOnly) return@item KeptSummary(stats, today)
                         ProfileSummary(
                             stats,
+                            today,
                             onOpenPlan,
                             onNewPlan = { onNewPlan(stats.profile.id) },
                             weight = {
@@ -187,6 +201,7 @@ fun DashboardScreen(
 @Composable
 private fun ProfileSummary(
     stats: DashboardViewModel.ProfileStats,
+    today: @Composable () -> Unit,
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: () -> Unit,
     weight: @Composable () -> Unit,
@@ -206,6 +221,8 @@ private fun ProfileSummary(
             AccentChip(dietTypeLabel(profile.dietType))
             OutlinedButton(onClick = onNewPlan) { Text(stringResource(R.string.dashboard_generate_plan)) }
         }
+
+        today()
 
         // As tall as the taller of the two: one has a hint under its value, the other none.
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -300,6 +317,15 @@ private fun ProfileSummary(
 
         weight()
         sets()
+    }
+}
+
+/** A profile as far as it is known without a network, started so: its name, and its day. */
+@Composable
+private fun KeptSummary(stats: DashboardViewModel.ProfileStats, today: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stats.profile.name, style = MaterialTheme.typography.titleMedium)
+        today()
     }
 }
 

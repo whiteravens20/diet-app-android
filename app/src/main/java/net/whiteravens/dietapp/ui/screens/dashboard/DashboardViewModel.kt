@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.AiRepository
+import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -27,6 +28,7 @@ import net.whiteravens.dietapp.data.sync.Waiting
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.DiaryDay
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Profile
@@ -34,19 +36,23 @@ import net.whiteravens.dietapp.domain.WeightEntry
 import net.whiteravens.dietapp.domain.WeightPoint
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
+import net.whiteravens.dietapp.ui.screens.diary.isOfADiary
+import net.whiteravens.dietapp.ui.screens.diary.waitingOverDay
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
 import javax.inject.Inject
 
 /**
- * Profiles with their engine-computed calorie targets, what their plan of the moment comes to and their
- * weights, fetched in parallel, and the account's AI requests where it uses AI; a weight is logged and
- * the last one taken back from its profile's card, without a network as well, where the change waits
- * to be sent.
+ * Profiles with what they ate today against the day's target, their engine-computed calorie targets,
+ * what their plan of the moment comes to and their weights, fetched in parallel, and the account's AI
+ * requests where it uses AI; a weight is logged and the last one taken back from its profile's card,
+ * without a network as well, where the change waits to be sent. Started without a network, it shows
+ * the profiles kept on the phone with what was kept of their day, and nothing else of them.
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -56,13 +62,16 @@ class DashboardViewModel @Inject constructor(
     private val notifications: NotificationRepository,
     private val queue: ChangeQueue,
     private val ai: AiRepository,
+    private val diary: DiaryRepository,
 ) : ViewModel() {
 
     /**
      * A profile, its calorie target or why there is none to show, what its plan of the moment
      * comes to (null where it has no plan) or why that could not be read, and the weights it
      * logged in the last ninety days, the newest first, with the same by day as the API draws them
-     * for the chart, or why they could not be read.
+     * for the chart, or why they could not be read; what it ate today, read or kept on the phone, or
+     * why that could not be read. [keptOnly] where the server could not be reached at all and all of it
+     * was read before: nothing but its name and its day is known.
      */
     data class ProfileStats(
         val profile: Profile,
@@ -73,6 +82,9 @@ class DashboardViewModel @Inject constructor(
         val weights: List<WeightEntry>? = null,
         val days: List<WeightPoint>? = null,
         val weightsError: Throwable? = null,
+        val today: DiaryDay? = null,
+        val todayError: Throwable? = null,
+        val keptOnly: Boolean = false,
     )
 
     /** What is typed into a profile's weight log, what is on its way to the API, and what went wrong. */
@@ -119,6 +131,8 @@ class DashboardViewModel @Inject constructor(
         val waitingWeights: List<Waiting> = emptyList(),
         /** How many notifications were read on the phone and wait for that to be sent. */
         val readsWaiting: Int = 0,
+        /** The changes of diaries and of plans' meals that wait to be sent, in the order they were made. */
+        val waitingDiary: List<Waiting> = emptyList(),
         /** What AI the account has, where it uses AI: the instance's requests left, or a provider of its own. */
         val ai: AiStatus? = null,
     ) {
@@ -127,6 +141,12 @@ class DashboardViewModel @Inject constructor(
 
         /** The profiles as shown: their weights as read, with those logged and removed that wait to be sent over them. */
         val shown: List<ProfileStats> get() = profiles.map { it.withWaiting(waitingWeights.map(Waiting::change)) }
+
+        /** How many changes that wait to be sent the sum of [stats]'s day leaves out. */
+        fun leftOut(stats: ProfileStats): Int {
+            val day = stats.today
+            return waitingOverDay(stats.profile.id, LocalDate.now().toString(), day?.entries.orEmpty(), day?.plan?.id, day?.plan?.meals.orEmpty(), waitingDiary.map(Waiting::change))
+        }
 
         /** The weights logged that wait to be sent, by the ids they are shown under. */
         val waitingEntries: Set<String> get() = waitingWeights.mapNotNullTo(mutableSetOf()) { (it.change as? QueuedChange.WeightLogged)?.key }
@@ -147,6 +167,34 @@ class DashboardViewModel @Inject constructor(
         load()
         followWaiting()
         followReads()
+        followDiary()
+    }
+
+    /**
+     * Follows the changes of diaries and of plans' meals that wait to be sent. Once one is sent, the
+     * server has answered: the screen is no longer offline, and what it shows of today is read again;
+     * all of it, where it had only what was kept on the phone.
+     */
+    private fun followDiary() {
+        viewModelScope.launch {
+            queue.waiting.map { waiting -> waiting.filter { it.change.isOfADiary() } }
+                .distinctUntilChanged()
+                .collect { waiting ->
+                    val sent = _state.value.waitingDiary.any { before -> waiting.none { it.id == before.id } }
+                    _state.update { it.copy(waitingDiary = waiting, offline = it.offline && !sent) }
+                    if (!sent) return@collect
+                    if (_state.value.profiles.any { it.keptOnly }) read(showLoading = false)
+                    else _state.value.profiles.forEach { readTodayAgain(it.profile.id) }
+                }
+        }
+    }
+
+    /** Reads what [profileId] ate today again; what is shown stays where the answer does not come. */
+    private fun readTodayAgain(profileId: String) {
+        viewModelScope.launch {
+            val read = attempt { diary.day(profileId, LocalDate.now()) }.getOrNull() ?: return@launch
+            _state.update { state -> state.copy(profiles = state.profiles.map { if (it.profile.id == profileId) it.copy(today = read, todayError = null) else it }) }
+        }
     }
 
     /**
@@ -364,6 +412,7 @@ class DashboardViewModel @Inject constructor(
                                 val target = async { attempt { users.calorieTarget(profile.id) } }
                                 val overview = async { attempt { plans.overview(profile.id) } }
                                 val logged = async { attempt { weightsOf(profile.id, since) } }
+                                val day = async { dayOf(profile.id) }
                                 ProfileStats(
                                     profile,
                                     target.await().getOrNull(),
@@ -373,6 +422,8 @@ class DashboardViewModel @Inject constructor(
                                     weights = logged.await().getOrNull()?.first,
                                     days = logged.await().getOrNull()?.second,
                                     weightsError = logged.await().exceptionOrNull(),
+                                    today = day.await().getOrNull(),
+                                    todayError = day.await().exceptionOrNull(),
                                 )
                             }
                         }
@@ -403,12 +454,31 @@ class DashboardViewModel @Inject constructor(
                     }
                 }
                 .onFailure { e ->
+                    // Started without a network: the profiles kept on the phone, with what was kept of their day.
+                    val kept = if (e is IOException && (showLoading || _state.value.profiles.isEmpty())) attempt { keptProfiles() }.getOrNull() else null
                     _state.update {
-                        if (showLoading || it.profiles.isEmpty()) it.copy(loading = false, profiles = emptyList(), error = e, pulled = false)
-                        else it.copy(pulled = false, offline = e is IOException)
+                        when {
+                            kept != null -> it.copy(loading = false, profiles = kept.first, error = null, pulled = false, offline = true, readAt = kept.second)
+                            showLoading || it.profiles.isEmpty() -> it.copy(loading = false, profiles = emptyList(), error = e, pulled = false)
+                            else -> it.copy(pulled = false, offline = e is IOException)
+                        }
                     }
                 }
         }
+    }
+
+    /** What [profileId] ate today: read, and without a network as it was kept on the phone, where it was. */
+    private suspend fun dayOf(profileId: String): Result<DiaryDay?> {
+        val today = LocalDate.now()
+        val read = attempt<DiaryDay?> { diary.day(profileId, today) }
+        return if (read.exceptionOrNull() is IOException) attempt { diary.keptDay(profileId, today) } else read
+    }
+
+    /** The profiles kept on the phone with what was kept of their day, and when they were read; null where none was kept. */
+    private suspend fun keptProfiles(): Pair<List<ProfileStats>, Long>? {
+        val kept = users.keptProfiles() ?: return null
+        val today = LocalDate.now()
+        return kept.profiles.map { ProfileStats(it, target = null, today = attempt { diary.keptDay(it.id, today) }.getOrNull(), keptOnly = true) } to kept.readAt
     }
 
     private companion object {
