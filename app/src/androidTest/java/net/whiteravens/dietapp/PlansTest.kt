@@ -5,6 +5,7 @@ package net.whiteravens.dietapp
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -147,6 +148,8 @@ class PlansTest {
 
         assertNotEquals(before.first(), Instance.firstDayRecipes(account, planId).first())
         screen.keepScreenshot("plans-after-the-swap")
+        // The meal that was changed stands where it stood.
+        screen.onAllNodesWithText(Instance.firstMeal(account, planId).first)[0].assertIsDisplayed()
         // A swap that balanced its day says so in a card over the meals.
         putAwayRebalance()
 
@@ -245,6 +248,8 @@ class PlansTest {
         screen.waitForTheApi(20_000) { Instance.firstMealEaten(account, planId) }
         screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(eaten) and isOn()).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("plans-a-meal-eaten")
+        // The meal that was marked stands where it stood.
+        screen.onAllNodesWithContentDescription(eaten)[0].assertIsDisplayed()
         putAwayRebalance()
 
         // A meal of one's own: one serving and how many, and what that adds to the day before it is sent.

@@ -51,6 +51,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -150,6 +151,27 @@ fun PlanDetailScreen(
     val web = rememberWebPages()
     val readOnly = state.offline
     val busy = state.changing || state.taking
+
+    val list = rememberLazyListState()
+    // The meal a change was asked of. The list keeps its place by what it shows; should the meal
+    // have left the screen all the same once the change has come back, the list goes back to it.
+    var changedMeal by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(plan, busy) {
+        if (busy) return@LaunchedEffect
+        val meal = changedMeal ?: return@LaunchedEffect
+        changedMeal = null
+        val meals = plan?.days?.getOrNull(state.selectedDay)?.meals ?: return@LaunchedEffect
+        val at = meals.indexOfFirst { it.id == meal }
+        if (at < 0) return@LaunchedEffect
+        // The list as this plan draws it.
+        withFrameNanos { }
+        val layout = list.layoutInfo
+        if (layout.visibleItemsInfo.none { it.key == meal }) {
+            // After the meals stand the button that adds one and, where the plan can be changed, the pantry's box.
+            val after = if (readOnly) 1 else 2
+            list.animateScrollToItem(layout.totalItemsCount - after - meals.size + at)
+        }
+    }
 
     addingTo?.let { date ->
         // The window stays until the meal is added: a refusal is said by its fields.
@@ -279,6 +301,7 @@ fun PlanDetailScreen(
             meal = meal,
             onApplied = { result ->
                 substitutingIn = null
+                changedMeal = meal.id
                 viewModel.substituted(result)
             },
             onDismiss = { substitutingIn = null },
@@ -309,7 +332,10 @@ fun PlanDetailScreen(
         SwapOfferDialog(
             offer = offer,
             busy = state.taking || state.offering != null,
-            onTake = viewModel::takeOffer,
+            onTake = {
+                changedMeal = offer.mealId
+                viewModel.takeOffer()
+            },
             onAnother = viewModel::anotherOffer,
             onDismiss = viewModel::dismissOffer,
         )
@@ -323,6 +349,7 @@ fun PlanDetailScreen(
     Box(Modifier.fillMaxSize()) {
         PullToRead(state.pulled, viewModel::pull) {
             LazyColumn(
+                state = list,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp + underCard),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -463,7 +490,10 @@ fun PlanDetailScreen(
                         readOnly = readOnly,
                         busy = busy,
                         aiOn = state.aiOn == true,
-                        onEaten = { eaten -> viewModel.setEaten(meal.id, eaten) },
+                        onEaten = { eaten ->
+                            changedMeal = meal.id
+                            viewModel.setEaten(meal.id, eaten)
+                        },
                         onChange = { how -> viewModel.offerSwap(meal.id, how) },
                         onPickFavorite = { pickingFor = meal.id },
                         onSubstitute = { substitutingIn = meal.id },
