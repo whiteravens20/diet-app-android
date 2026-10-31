@@ -399,6 +399,24 @@ object Instance {
         )
     }
 
+    /** Writes a meal of one's own of [calories] for the day [date] of a profile's diary, as the web application's window writes it. */
+    fun writeInTheDiary(account: Account, profileId: String, name: String, calories: Int, date: LocalDate = LocalDate.now()) {
+        call(
+            "POST",
+            "diary/entries",
+            JSONObject().put("profileId", profileId).put("date", date.toString()).put("mealType", "dinner").put("kind", "meal")
+                .put("name", name).put("nutrition", JSONObject().put("calories", calories)),
+            token = account.accessToken,
+            expect = 201,
+        )
+    }
+
+    /** What is written for the day [date] of a profile's diary, in the order it was written. */
+    fun diaryEntries(account: Account, profileId: String, date: LocalDate = LocalDate.now()): List<String> {
+        val entries = call("GET", "diary/day?profileId=$profileId&date=$date", token = account.accessToken, language = "en").getJSONArray("entries")
+        return (0 until entries.length()).map { entries.getJSONObject(it).getString("name") }
+    }
+
     /** A profile's pantry, by the ingredient of each row: its quantity in the row's unit, the unit, and its day or null. */
     fun pantry(account: Account, profileId: String): Map<String, Triple<Double, String, String?>> {
         val rows = JSONArray(send("GET", "inventory?profileId=$profileId", null, account.accessToken, 200, null))
