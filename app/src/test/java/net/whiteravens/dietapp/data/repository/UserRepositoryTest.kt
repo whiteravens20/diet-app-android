@@ -16,16 +16,22 @@ import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.testing.MemoryKeptReads
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 /** The account's settings changed one at a time, against a local server answering as the backend did. */
 class UserRepositoryTest {
@@ -45,7 +51,9 @@ class UserRepositoryTest {
 
     private val appearance = mockk<AppearanceStore>(relaxed = true)
 
-    private fun repository(): UserRepository = UserRepository(AppModule.api(client(), json), json, appearance)
+    private val kept = MemoryKeptReads()
+
+    private fun repository(): UserRepository = UserRepository(AppModule.api(client(), json), json, appearance, kept)
 
     private fun client(): OkHttpClient {
         val config = mockk<ServerConfigStore>()
@@ -54,6 +62,48 @@ class UserRepositoryTest {
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))
+
+    @Test
+    fun `the profiles read are kept for a start without a network, those of the last read alone and in their order`() {
+        server.enqueue(answer("profiles"))
+        val users = repository()
+
+        val read = runBlocking { users.profiles() }
+
+        val keptNow = runBlocking { users.keptProfiles() }
+        assertEquals(read, keptNow?.profiles)
+        assertTrue(read.isNotEmpty())
+
+        server.enqueue(answer("profiles-none"))
+        runBlocking { users.profiles() }
+
+        assertNull(runBlocking { users.keptProfiles() })
+    }
+
+    @Test
+    fun `without a network the profiles are those kept, and before any was kept the failure stands`() {
+        server.enqueue(answer("profiles"))
+        val read = runBlocking { repository().profiles() }
+
+        // Each with a client of its own: a connection kept open does not meet the disconnection.
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+        assertEquals(read, runBlocking { repository().profilesOrKept() })
+
+        val never = UserRepository(AppModule.api(client(), json), json, appearance, MemoryKeptReads())
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+        assertThrows(IOException::class.java) { runBlocking { never.profilesOrKept() } }
+    }
+
+    @Test
+    fun `a refusal of the server is no want of a network, the profiles kept are not shown for it`() {
+        val users = repository()
+        server.enqueue(answer("profiles"))
+        runBlocking { users.profiles() }
+        assertNotNull(runBlocking { users.keptProfiles() })
+
+        server.enqueue(MockResponse().setResponseCode(401).setHeader("Content-Type", "application/json").setBody(fixture("without-a-token")))
+        assertThrows(ApiException::class.java) { runBlocking { users.profilesOrKept() } }
+    }
 
     @Test
     fun `the account's colour scheme is kept as every answer about the account says it`() {

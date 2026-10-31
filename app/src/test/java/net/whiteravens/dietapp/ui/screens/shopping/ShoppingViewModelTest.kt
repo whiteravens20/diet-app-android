@@ -63,6 +63,10 @@ class ShoppingViewModelTest {
         coEvery { it.profiles() } returns listOf(Profile("ada", "Ada", "balanced", 3, 70.0, null))
         every { it.aiModeChanges } returns emptyFlow()
     }
+    init {
+        coEvery { users.profilesOrKept() } coAnswers { users.profiles() }
+    }
+
     private val plans = mockk<MealPlanRepository>().also {
         coEvery { it.cachedPlans(any()) } returns null
         coEvery { it.plans(any(), any()) } returns

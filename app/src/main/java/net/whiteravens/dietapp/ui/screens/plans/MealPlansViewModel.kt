@@ -84,7 +84,8 @@ class MealPlansViewModel @Inject constructor(
         again.begun()
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            attempt { users.profiles() }
+            // Without a network, those kept on the phone: their plans open from their copies.
+            attempt { users.profilesOrKept() }
                 .onSuccess { profiles ->
                     _state.value = UiState(loading = false, profiles = profiles)
                     profiles.firstOrNull()?.let { selectProfile(it.id) }

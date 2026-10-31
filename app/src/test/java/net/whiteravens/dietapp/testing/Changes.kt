@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import net.whiteravens.dietapp.data.local.CachedDiaryDay
+import net.whiteravens.dietapp.data.local.CachedProfile
+import net.whiteravens.dietapp.data.local.KeptReadsDao
 import net.whiteravens.dietapp.data.local.PendingChangeDao
 import net.whiteravens.dietapp.data.local.PendingChangeRow
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -47,6 +50,42 @@ class MemoryChanges : PendingChangeDao {
     }
 
     override suspend fun removeAll() = rows.update { emptyList() }
+}
+
+/** What is read for a start without a network, kept in memory as the cache's tables keep it. */
+class MemoryKeptReads : KeptReadsDao() {
+    private var rows = emptyList<CachedProfile>()
+
+    /** The days kept, by their profile and date. */
+    val days = mutableMapOf<Pair<String, String>, CachedDiaryDay>()
+
+    override suspend fun profiles(): List<CachedProfile> = rows.sortedBy { it.position }
+
+    override suspend fun addProfiles(profiles: List<CachedProfile>) {
+        rows = rows + profiles
+    }
+
+    override suspend fun removeProfiles() {
+        rows = emptyList()
+    }
+
+    override suspend fun diaryDay(profileId: String, date: String): CachedDiaryDay? = days[profileId to date]
+
+    override suspend fun upsertDiaryDay(day: CachedDiaryDay) {
+        days[day.profileId to day.date] = day
+    }
+
+    override suspend fun deleteDiaryDay(profileId: String, date: String) {
+        days.remove(profileId to date)
+    }
+
+    override suspend fun deleteDiaryOf(profileId: String) {
+        days.keys.removeAll { it.first == profileId }
+    }
+
+    override suspend fun deleteDiaryReadBefore(moment: Long) {
+        days.values.removeAll { it.syncedAt < moment }
+    }
 }
 
 /** A queue of changes kept in [changes], its sending in the background a mock that does nothing. */

@@ -186,4 +186,7 @@ object AppModule {
 
     @Provides
     fun pendingChangeDao(db: CacheDatabase) = db.pendingChanges()
+
+    @Provides
+    fun keptReadsDao(db: CacheDatabase) = db.keptReads()
 }

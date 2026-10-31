@@ -135,6 +135,9 @@ data class Profile(
     val targetWeightKg: Double?,
 )
 
+/** The account's profiles as they were last read on this phone, at [readAt] (the phone's milliseconds). */
+data class KeptProfiles(val profiles: List<Profile>, val readAt: Long)
+
 /**
  * A profile's figures and choices as its form edits them, in the API's units (cm, kg): what its
  * calorie target is worked out from, and what its plans are made for. An empty one is null.

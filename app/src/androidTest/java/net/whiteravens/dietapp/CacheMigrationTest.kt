@@ -11,6 +11,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.local.CacheDatabase
+import net.whiteravens.dietapp.data.local.CachedDiaryDay
+import net.whiteravens.dietapp.data.local.CachedProfile
 import net.whiteravens.dietapp.data.local.PendingChangeRow
 import org.json.JSONObject
 import org.junit.After
@@ -72,6 +74,32 @@ class CacheMigrationTest {
                 cache.pendingChanges().add(PendingChangeRow(kind = "eaten", change = "{}", madeAt = 2))
 
                 assertEquals(listOf("eaten"), cache.pendingChanges().waiting().first().map { it.kind })
+            }
+        } finally {
+            cache.close()
+        }
+    }
+
+    @Test
+    fun aCacheFromBeforeTheDiaryKeepsItsChangesWaitingAndGainsEmptyCopiesOfDaysAndProfiles() {
+        leftBy(3) { db ->
+            db.execSQL("INSERT INTO cached_meal_plan (id, profileId, json, syncedAt) VALUES ('plan', 'profile', '{\"id\":\"plan\"}', 1)")
+            db.execSQL("INSERT INTO pending_change (kind, change, madeAt) VALUES ('eaten', '{}', 2)")
+        }
+
+        val cache = CacheDatabase.open(context, name)
+        try {
+            runBlocking {
+                assertEquals("{\"id\":\"plan\"}", cache.cacheDao().mealPlan("plan")?.json)
+                assertEquals(listOf("eaten"), cache.pendingChanges().waiting().first().map { it.kind })
+                assertEquals(emptyList<CachedProfile>(), cache.keptReads().profiles())
+
+                cache.keptReads().upsertDiaryDay(CachedDiaryDay("profile", "2026-10-31", "{}", 3))
+                cache.keptReads().replaceProfiles(listOf(CachedProfile("a", 0, "Ala", "balanced", 4, 70.0, null, 3)))
+                cache.keptReads().replaceProfiles(listOf(CachedProfile("b", 0, "Bo", "balanced", 4, 70.0, null, 4)))
+
+                assertEquals("{}", cache.keptReads().diaryDay("profile", "2026-10-31")?.json)
+                assertEquals(listOf("b"), cache.keptReads().profiles().map { it.id })
             }
         } finally {
             cache.close()

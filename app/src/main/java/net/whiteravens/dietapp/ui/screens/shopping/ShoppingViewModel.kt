@@ -135,7 +135,8 @@ class ShoppingViewModel @Inject constructor(
         again.begun()
         viewModelScope.launch {
             _state.update { UiState(loading = true, aiOn = it.aiOn) }
-            attempt { users.profiles() }
+            // Without a network, those kept on the phone: their plans' lists open from their copies.
+            attempt { users.profilesOrKept() }
                 .onSuccess { profiles ->
                     _state.update { UiState(loading = false, profiles = profiles, aiOn = it.aiOn) }
                     profiles.firstOrNull()?.let { selectProfile(it.id) }
