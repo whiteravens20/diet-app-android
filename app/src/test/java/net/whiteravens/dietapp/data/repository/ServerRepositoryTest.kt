@@ -31,7 +31,7 @@ import javax.net.ssl.SSLHandshakeException
 /**
  * The server's version as the app asks for it, with `GET /config` through the client the app
  * uses for it, against a local server. The answers are the one a running backend gave
- * (`config.json`, API 0.136.0, the version in contract/API_VERSION), and that answer with another
+ * (`config.json`, of the version in contract/API_VERSION), and that answer with another
  * version in it.
  */
 class ServerRepositoryTest {
