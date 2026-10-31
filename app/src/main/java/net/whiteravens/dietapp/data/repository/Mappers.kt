@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.data.remote.SwapPreviewDto
 import net.whiteravens.dietapp.domain.CalorieTarget
+import net.whiteravens.dietapp.domain.DayDiary
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.Macros
@@ -227,6 +228,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
             useUpBy = overrides?.useUpBy == true,
         )
     },
+    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain()) },
 )
 
 fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(

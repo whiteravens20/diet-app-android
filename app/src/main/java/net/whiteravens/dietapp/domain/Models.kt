@@ -387,7 +387,12 @@ data class PlanDay(
     val locks: Map<String, String>,
     /** What the day is set to; null from an instance whose days have no settings to change. */
     val settings: DaySettings? = null,
+    /** What the diary adds to the day, counted in [nutrition]; null where nothing is written for it. */
+    val diary: DayDiary? = null,
 )
+
+/** What the diary adds to a day of a plan: how many entries, and what they come to. */
+data class DayDiary(val entries: Int, val nutrition: Nutrition)
 
 /**
  * What a day of a running plan is set to: its kind ([dayType] `normal` | `rest` | `training`),
@@ -533,6 +538,8 @@ data class DayWays(
     val ways: List<DayWay>,
     val weighed: Boolean,
     val fallbackReason: String?,
+    /** What the diary holds for the day, counted as eaten in every figure here; null where it holds nothing. */
+    val diary: Nutrition? = null,
 )
 
 /** One other way to fill a day: its meals, what it holds, the packs the plan would then leave, a model's sentence on it, and the note that takes it. */

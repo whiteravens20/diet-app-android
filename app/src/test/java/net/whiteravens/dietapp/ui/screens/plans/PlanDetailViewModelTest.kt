@@ -2,6 +2,9 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import net.whiteravens.dietapp.domain.Rebalanced
+import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.DayDiary
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -759,5 +762,41 @@ class PlanDetailViewModelTest {
 
         assertTrue(model.state.value.shown!!.days.first().meals.none { it.name == "Soup" })
         assertEquals(listOf(QueuedChange.MealRemoved(plan.id, other.id)), runBlocking { queue.waiting.first() }.map { it.change })
+    }
+
+    @Test
+    fun `a day resized that moves something says how, one that moves nothing says what is left, until another day is chosen`() {
+        val plans = mockk<MealPlanRepository>(relaxed = true)
+        coEvery { plans.cachedPlan(any()) } returns null
+        val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
+        coEvery { plans.refreshPlan(any()) } returns plan
+        val moved = Rebalance("day", false, listOf(ScaleChange("m", 1.0, 0.9)), 0.0, 2400.0, 2000.0)
+        coEvery { plans.resizeDay(plan.id, "2026-10-31") } returns Rebalanced(plan, moved, null)
+        val users = mockk<UserRepository>(relaxed = true)
+        val favorites = mockk<FavoriteRepository>(relaxed = true)
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue())
+
+        model.resizeDay("2026-10-31")
+
+        assertEquals(moved, model.state.value.rebalance)
+        assertNull(model.state.value.resizeLeft)
+
+        coEvery { plans.resizeDay(plan.id, "2026-10-31") } returns Rebalanced(plan, moved.copy(changes = emptyList(), unabsorbedKcal = 120.0), null)
+        model.dismissRebalance()
+        model.resizeDay("2026-10-31")
+
+        assertNull(model.state.value.rebalance)
+        assertEquals("2026-10-31" to 120.0, model.state.value.resizeLeft)
+
+        model.selectDay(1)
+        assertNull(model.state.value.resizeLeft)
+    }
+
+    @Test
+    fun `a plan's day reads what the diary adds to it, and a day it adds nothing to reads none`() {
+        val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
+
+        assertEquals(DayDiary(5, Nutrition(1554.0, 84.0, 59.0, 167.0)), plan.days[0].diary)
+        assertNull(plan.days[1].diary)
     }
 }

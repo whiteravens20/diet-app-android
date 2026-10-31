@@ -1669,7 +1669,14 @@
     <string name="diary_pick_ingredient_first">Najpierw znajdź i wybierz składnik.</string>
     <string name="diary_offline">Offline — stan z %1$s; wpisy można dodawać, zmieniać i usuwać, a posiłki oznaczać, kopiowanie dnia i dopasowanie porcji wymagają połączenia</string>
     <string name="diary_not_on_the_phone">Tego dnia nie ma jeszcze na telefonie, a bez połączenia nie da się go odczytać. To, co teraz wpiszesz, poczeka na wysłanie.</string>
+    <string name="plans_open_diary">Dziennik dnia</string>
+    <string name="plans_day_over_diary_hint">Licząc wpisy dziennika jako zjedzone, ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel.</string>
+    <string name="plans_day_under_diary_hint">Licząc wpisy dziennika jako zjedzone, ten dzień ma o ponad jedną dziesiątą mniej kalorii niż jego cel.</string>
+    <string name="plans_resize_day">Dopasuj porcje dnia</string>
+    <string name="plans_resize_day_note">Liczy wpisy dziennika jako zjedzone i daje niezjedzonym posiłkom z przepisów inne porcje, żeby dzień jak najbardziej zbliżył się do celu.</string>
     <string name="plans_resize_nothing">Porcje są już tak blisko celu, jak pozwalają ich granice.</string>
+    <string name="plans_reroll_diary_counts">To, co dziennik ma na te dni, liczy się jako zjedzone: posiłki wypełnią to, co zostanie z celu każdego dnia.</string>
+    <string name="plans_ways_diary_counted">Te liczby obejmują %1$s kcal z dziennika jako zjedzone: każdy wariant wypełnia to, co zostaje z celu.</string>
     <string name="change_kind_diary_added">nowy wpis w dzienniku (%1$s)</string>
     <string name="change_kind_diary_changed">zmiana wpisu w dzienniku</string>
     <string name="change_kind_diary_removed">usunięcie wpisu z dziennika</string>
@@ -1690,5 +1697,11 @@
         <item quantity="few">Bez %1$d zmian czekających na wysłanie.</item>
         <item quantity="many">Bez %1$d zmian czekających na wysłanie.</item>
         <item quantity="other">Bez %1$d zmiany czekającej na wysłanie.</item>
+    </plurals>
+    <plurals name="plans_diary_line">
+        <item quantity="one">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpis).</item>
+        <item quantity="few">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisy).</item>
+        <item quantity="many">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisów).</item>
+        <item quantity="other">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisu).</item>
     </plurals>
 </resources>

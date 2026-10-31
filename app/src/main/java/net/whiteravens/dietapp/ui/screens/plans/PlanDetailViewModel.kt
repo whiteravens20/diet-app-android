@@ -117,6 +117,8 @@ class PlanDetailViewModel @Inject constructor(
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
         val rebalance: Rebalance? = null,
+        /** What a press to resize a day left of its gap where it moved nothing, and of which day: what it says instead of nothing. */
+        val resizeLeft: Pair<String, Double>? = null,
         /** Why the engine stood in for a model in the last change, until it is put away. */
         val notice: String? = null,
         /** The plan is gone: the screen is done. */
@@ -267,7 +269,7 @@ class PlanDetailViewModel @Inject constructor(
     private fun dayOf(plan: MealPlan): Int = plan.days.indexOfFirst { it.date == openAt }.coerceAtLeast(0)
 
     fun selectDay(index: Int) {
-        _state.update { it.copy(selectedDay = index) }
+        _state.update { it.copy(selectedDay = index, resizeLeft = null) }
     }
 
     /**
@@ -378,6 +380,29 @@ class PlanDetailViewModel @Inject constructor(
     fun undoRebalance() {
         val rebalance = _state.value.rebalance ?: return
         change(said = false) { plans.undo(planId, rebalance) }
+    }
+
+    /** Resizes the meals of the day of [date] not eaten yet, the diary counted as eaten; a press that moves nothing says so. */
+    fun resizeDay(date: String) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null, resizeLeft = null) }
+            attempt { plans.resizeDay(planId, date) }
+                .onSuccess { resized ->
+                    _state.update {
+                        it.copy(
+                            plan = resized.plan,
+                            changing = false,
+                            rebalance = resized.rebalance.shown(),
+                            resizeLeft = resized.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() }?.let { rebalance -> date to rebalance.unabsorbedKcal },
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
     }
 
     /** Spreads what the days from [from] (today where it is left out) are off their targets by over the remaining days of the plan. */

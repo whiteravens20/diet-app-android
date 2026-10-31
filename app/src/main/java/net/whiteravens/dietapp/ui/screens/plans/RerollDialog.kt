@@ -104,6 +104,16 @@ internal fun RerollDialog(
     val couldGo = preview?.couldGo ?: RerollCouldGo(past = false, eaten = false, custom = false)
     val notFromToday = preview?.fromToday
     val mayGiveWay = plan.mayGiveWay
+    // What the diary holds for a day that would be filled again is eaten, and the window says so before it is filled.
+    val diaryCounts = days.any { candidate ->
+        candidate.diary != null && !candidate.skipped && (candidate.date >= today || includePast) &&
+            when (scope) {
+                RerollScope.DAY -> candidate.date == day
+                RerollScope.RANGE -> candidate.date in from..to
+                RerollScope.FROM_TODAY -> candidate.date >= today
+                else -> true
+            }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -183,6 +193,13 @@ internal fun RerollDialog(
                     state.error?.let { error ->
                         ErrorBanner("${stringResource(R.string.plans_reroll_preview_failed)} ${errorMessage(error)}")
                         TextButton(onClick = viewModel::retry) { Text(stringResource(R.string.common_retry)) }
+                    }
+                    if (diaryCounts) {
+                        Text(
+                            stringResource(R.string.plans_reroll_diary_counts),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     if (preview != null) {
                         // An answer to an earlier choice is shown faint while the newer one is on its way.

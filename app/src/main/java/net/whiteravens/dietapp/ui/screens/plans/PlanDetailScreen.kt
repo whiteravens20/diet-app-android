@@ -134,6 +134,7 @@ fun PlanDetailScreen(
     onBack: () -> Unit,
     onOpenRecipe: (String) -> Unit,
     onTurnAiOn: () -> Unit,
+    onOpenDiary: (profileId: String, date: String) -> Unit,
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -444,6 +445,13 @@ fun PlanDetailScreen(
                         onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
                         // A long plan is a long way along its days to the one it is now: one press takes the reader there.
                         onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
+                        // The diary of a day that has come.
+                        onDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today },
+                        // A day of today or after it, which the diary put off its target, is resized with its own meals.
+                        onResize = { viewModel.resizeDay(day.date) }.takeUnless {
+                            readOnly || busy || day.diary == null || day.date < today || day.meals.none { meal -> !meal.eaten && meal.recipeId != null && !meal.custom }
+                        },
+                        resizeLeft = state.resizeLeft?.takeIf { it.first == day.date }?.second,
                     )
                 }
                 itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
@@ -718,6 +726,9 @@ private fun DaySummary(
     onSettings: (() -> Unit)?,
     onSpread: (() -> Unit)?,
     onToday: (() -> Unit)?,
+    onDiary: (() -> Unit)?,
+    onResize: (() -> Unit)?,
+    resizeLeft: Double?,
 ) {
     AppCard {
         val kind = day.settings?.dayType
@@ -729,6 +740,7 @@ private fun DaySummary(
             Text(stringResource(R.string.plans_day_skipped), style = MaterialTheme.typography.titleMedium)
             onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
             onToday?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_go_to_today)) } }
+            onDiary?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_open_diary)) } }
             return@AppCard
         }
         daySettingsLine(day)?.let { line ->
@@ -758,6 +770,15 @@ private fun DaySummary(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 2.dp),
         )
+        // What the diary adds to the day is counted in the figures above.
+        day.diary?.let { diary ->
+            Text(
+                pluralStringResource(R.plurals.plans_diary_line, diary.entries, diary.entries, formatNumber(diary.nutrition.calories.roundToInt())),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
         val standing = day.offTarget
         if (standing != null) {
             Row(
@@ -767,12 +788,39 @@ private fun DaySummary(
             ) {
                 CautionChip(stringResource(if (standing == "over") R.string.plans_day_over else R.string.plans_day_under))
             }
+            // A day the diary put off its target has not been resized with it: nothing says that resizing failed.
             Text(
-                stringResource(if (standing == "over") R.string.plans_day_over_hint else R.string.plans_day_under_hint),
+                stringResource(
+                    when {
+                        day.diary != null -> if (standing == "over") R.string.plans_day_over_diary_hint else R.string.plans_day_under_diary_hint
+                        else -> if (standing == "over") R.string.plans_day_over_hint else R.string.plans_day_under_hint
+                    },
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            // What resizing does is said beside the button that does it, before it is pressed.
+            onResize?.let { resize ->
+                OutlinedButton(onClick = resize, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_resize_day)) }
+                Text(
+                    stringResource(R.string.plans_resize_day_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // A press that changes nothing says so, or it looks as if it had not been heard.
+            resizeLeft?.let { left ->
+                Text(
+                    when {
+                        left == 0.0 -> stringResource(R.string.plans_resize_nothing)
+                        left > 0 -> stringResource(R.string.plans_rebalance_left_over, formatNumber(left.roundToInt()))
+                        else -> stringResource(R.string.plans_rebalance_left_under, formatNumber(abs(left).roundToInt()))
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp).semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
             // What spreading does is said beside the button that does it, before it is pressed.
             onSpread?.let { spread ->
                 OutlinedButton(onClick = spread, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_spread)) }
@@ -791,12 +839,13 @@ private fun DaySummary(
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        if (onOtherWays != null || onChange != null || onSettings != null || onToday != null) {
+        if (onOtherWays != null || onChange != null || onSettings != null || onToday != null || onDiary != null) {
             FlowRow(modifier = Modifier.padding(top = 4.dp)) {
                 onOtherWays?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_other_ways)) } }
                 onChange?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_change_day)) } }
                 onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
                 onToday?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_go_to_today)) } }
+                onDiary?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_open_diary)) } }
             }
         }
     }

@@ -1553,7 +1553,14 @@
     <string name="diary_pick_ingredient_first">Find and pick an ingredient first.</string>
     <string name="diary_offline">Offline — as of %1$s; entries can be written, changed and removed and meals marked, copying a day and resizing its meals need a connection</string>
     <string name="diary_not_on_the_phone">This day is not on the phone yet, and there is no connection to read it. What you write now waits to be sent.</string>
+    <string name="plans_open_diary">Diary of the day</string>
+    <string name="plans_day_over_diary_hint">With the diary\'s entries counted as eaten, this day holds more than a tenth over its target.</string>
+    <string name="plans_day_under_diary_hint">With the diary\'s entries counted as eaten, this day holds more than a tenth under its target.</string>
+    <string name="plans_resize_day">Resize the day\'s meals</string>
+    <string name="plans_resize_day_note">Counts the diary\'s entries as eaten and gives the meals from recipes that are not eaten other portions, so that the day comes as close to its target as it can.</string>
     <string name="plans_resize_nothing">The portions are as close to the target as their limits allow.</string>
+    <string name="plans_reroll_diary_counts">What the diary holds for these days counts as eaten: the meals fill what is left of each day\'s target.</string>
+    <string name="plans_ways_diary_counted">These figures count %1$s kcal from the diary as eaten: each way fills what is left of the target.</string>
     <string name="change_kind_diary_added">a new diary entry (%1$s)</string>
     <string name="change_kind_diary_changed">a change of a diary entry</string>
     <string name="change_kind_diary_removed">a diary entry\'s removal</string>
@@ -1568,5 +1575,9 @@
     <plurals name="diary_sum_leaves_out">
         <item quantity="one">Without one change waiting to be sent.</item>
         <item quantity="other">Without %1$d changes waiting to be sent.</item>
+    </plurals>
+    <plurals name="plans_diary_line">
+        <item quantity="one">The diary adds %2$s kcal to this day (%1$d entry).</item>
+        <item quantity="other">The diary adds %2$s kcal to this day (%1$d entries).</item>
     </plurals>
 </resources>

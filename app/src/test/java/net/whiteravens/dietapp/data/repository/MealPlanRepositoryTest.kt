@@ -667,4 +667,29 @@ class MealPlanRepositoryTest {
             """"meals":[{"mealId":"meal-1","mealType":"lunch","fate":"redrawn","because":"over_cook_time"}],"added":["snack"],""" +
             """"dayCalories":null,"fits":null,"listOutOfDate":false,"unchanged":false}"""
     }
+
+    @Test
+    fun `a day is resized by its date, and the plan it leaves is kept for offline use`() {
+        server.enqueue(answer("rebalance-day-resized"))
+        val cache = Cache()
+
+        val resized = runBlocking { repository(cache).resizeDay("plan-1", "2026-10-31") }
+
+        val sent = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/rebalance", sent.requestUrl!!.encodedPath)
+        val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
+        assertEquals("day", body.getValue("scope").jsonPrimitive.content)
+        assertEquals("2026-10-31", body.getValue("date").jsonPrimitive.content)
+        assertEquals(emptyList<ScaleChange>(), resized.rebalance?.changes)
+        assertEquals(resized.plan.id, cache.plans.single().id)
+    }
+
+    @Test
+    fun `other ways to fill a day say what the diary holds for it, counted as eaten`() {
+        server.enqueue(answer("day-ways-with-diary"))
+
+        val ways = runBlocking { repository(Cache()).dayWays("plan-1", "day-1") }
+
+        assertEquals(Nutrition(1554.0, 84.0, 59.0, 167.0), ways.diary)
+    }
 }

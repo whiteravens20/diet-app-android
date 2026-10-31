@@ -336,6 +336,7 @@ class MealPlanRepository @Inject constructor(
             },
             weighed = answer.aiMeta != null && answer.aiMeta.fallbackReason == null,
             fallbackReason = answer.aiMeta?.fallbackReason,
+            diary = answer.diary?.toDomain(),
         )
     }
 

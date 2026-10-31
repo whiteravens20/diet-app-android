@@ -101,6 +101,7 @@ fun DayWaysDialog(
                         else pluralStringResource(R.plurals.plans_ways_now_packs, ways.nowWasted, ways.nowWasted),
                     ),
                 )
+                ways.diary?.let { Note(stringResource(R.string.plans_ways_diary_counted, formatNumber(it.calories.roundToInt()))) }
                 if (ways.ways.isEmpty()) Text(stringResource(R.string.plans_ways_none), style = MaterialTheme.typography.bodyMedium)
                 ways.ways.forEachIndexed { index, way -> Way(index, way, target, busy = state.busy) { viewModel.take(way.offer) } }
 

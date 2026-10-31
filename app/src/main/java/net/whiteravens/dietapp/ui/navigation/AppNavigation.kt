@@ -334,6 +334,7 @@ private fun MainScaffold(
                         onBack = { navController.popBackStack() },
                         onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
                         onTurnAiOn = { navController.navigate(AccountRoute) },
+                        onOpenDiary = { profileId, date -> navController.navigate(DiaryRoute(profileId, date)) },
                     )
                 }
                 composable<DiaryRoute> {
