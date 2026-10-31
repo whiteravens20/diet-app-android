@@ -14,7 +14,7 @@ The app has no release yet and is not production ready. Until the first release,
 
 ## Security checklist
 
-What the code guarantees today, and what it deliberately does not protect against. The app holds a session with the user's own Diet App server and copies of the account's data: meal plans, shopping lists, and the changes made on the phone that wait to be sent.
+What the code guarantees today, and what it deliberately does not protect against. The app holds a session with the user's own Diet App server and copies of the account's data: meal plans, shopping lists, days of the diary, the profiles' names and weights, and the changes made on the phone that wait to be sent.
 
 ### Session and tokens
 
@@ -35,7 +35,7 @@ What the code guarantees today, and what it deliberately does not protect agains
 
 ### Data on the phone
 
-- [x] The Room cache holds copies of meal plans and shopping lists and the changes made on the phone that wait to be sent, and no credentials
+- [x] The Room cache holds copies of meal plans, shopping lists and the days of the diary read in the last fourteen days, of each profile its name, diet, number of meals and weights, and the changes made on the phone that wait to be sent, and no credentials
 - [x] Nothing the app keeps goes into a backup or onto another device: the manifest allows no backup, and the data extraction rules of Android 12 and later exclude every file from both the cloud backup and a device transfer
 - [x] The phone's notifications are off until the user turns them on, when Android 13 and later ask for the permission to show them. The background work reads the account's unread notifications over the same session as the screens, and the app keeps whether they are on and the keys of those it showed
 - [x] A key typed for one of the account's own AI providers is shown as dots, held in memory while its form is open and kept out of the screen's saved state, which the system may write to disk. It goes to the server alone, which tries it against the provider when a test is asked for and seals it when it is saved; the server never sends it back, and the app keeps none of it

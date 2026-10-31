@@ -21,6 +21,14 @@ when one returns.
 - A screen whose reading anew fails for want of a network keeps what it read and says
   when: "Offline — as of 14:32", and how many changes made on the phone wait to be sent.
   Offline, the changes listed below are made as well; everything else waits for a network.
+- Each day of a diary read is mirrored as well (`CachedDiaryDay`), for fourteen days after it was
+  read, and shown first when the day opens. A day neither read nor kept says so, and still takes
+  what is written for it.
+- So that the application opens without a network, what a screen needs of the account's profiles
+  is kept beside them (`CachedProfile`: name, diet, number of meals, weights, none of the rest) each
+  time they are read. Started without a network, the dashboard shows those profiles with what was
+  kept of their day, and nothing else of them; the plans and the shopping lists open from their
+  copies. A read that the server refuses never falls back on them.
 - A read answered "not found" (the plan, the list or the profile was deleted elsewhere, or
   is not the account's) drops the copy of it; a list read anew replaces the copies of its
   lists whole; signing out drops every copy.
@@ -46,11 +54,15 @@ when one returns.
 
 Some changes are made without a network as well, as they are in a shop or a kitchen without
 a signal: a shopping list's row, its tick and its amounts, a meal of a plan marked eaten or
-not, a meal of one's own added to a day and a meal taken off its day, a weight logged or
-removed, a pantry's row put in, changed or taken out, a recipe's mark put on or taken off,
-and a notification read. Everything else that changes something asks the server first, and
-is off while there is no network: reading every notification at once among it, as the
-server would read those that came after them too.
+not, a meal of one's own added to a day and a meal taken off its day, a diary's entry written,
+changed or taken out, a weight logged or removed, a pantry's row put in, changed or taken out,
+a recipe's mark put on or taken off, and a notification read. Everything else that changes
+something asks the server first, and is off while there is no network: reading every
+notification at once among it, as the server would read those that came after them too, and
+copying a day of the diary or resizing its meals, whose outcome is the server's to say.
+Finding a recipe or an ingredient for an entry takes a network too, so that what can always be
+written without one is a meal of one's own by its figures; one found before the network went is
+written as well.
 
 1. A change goes to the server at once when nothing waits before it. When the server cannot
    be reached, or another change waits, it is kept in the cache's database
@@ -62,8 +74,8 @@ server would read those that came after them too.
    front. Sent, the copy the server answers is kept, and the screen reads it and is no
    longer offline.
 3. A value set, such as a tick or an amount, is sent again as it is. An addition, such as a
-   weight, a pantry's row or a meal of one's own, is sent every time with the key it was
-   given when it was made
+   weight, a pantry's row, a meal of one's own or a diary's entry, is sent every time with the key
+   it was given when it was made
    (`Idempotency-Key`), and with the moment it was made, so that the server writes it once
    however often it comes. A removal of something the server no longer has (404) was made.
    A change another write overlapped on the server (`PLAN_CHANGED`, `WRITE_CONFLICT`) is
@@ -71,9 +83,12 @@ server would read those that came after them too.
    session for it keeps the changes for later.
 4. A change the server refuses otherwise is not sent again: it stays, with the server's
    words for why, in a notice over every screen until it is seen.
-5. An addition that still waits is removed by taking it out of the queue; a pantry's row is
-   changed, and a meal of one's own marked eaten or put in the place of, once the server
-   has it. One sent meanwhile stays, and is removed as any other is.
+5. An addition that still waits is removed by taking it out of the queue; a pantry's row or a
+   diary's entry is changed, and a meal of one's own marked eaten or put in the place of, once
+   the server has it. One sent meanwhile stays, and is removed as any other is. A day of the
+   diary keeps the sum the server gave it until then, and says how many changes it leaves out:
+   the application works out no figure of its own, so an entry waiting says its calories only
+   where they are known, those of a meal typed or a recipe picked, by the servings.
 6. Signing out, or going to another server, while changes wait asks first: send them and
    sign out, or drop them. A session the server ends takes them with it, as it takes every
    copy.
@@ -90,4 +105,6 @@ refresh, takes the tokens and every copy with it; signing out while changes wait
 ## What is never synced
 
 Nutrition math. The app never computes calories or macros: it shows the values the backend
-returns, so the app and the web application show the same figures.
+returns, so the app and the web application show the same figures. What a form says of what is
+being typed, one serving times the servings, is the one exception, and goes no further than the
+form and the row of what waits to be sent.

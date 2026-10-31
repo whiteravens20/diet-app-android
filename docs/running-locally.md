@@ -61,7 +61,8 @@ development; release builds do not.
 
 The baked-in value is only the default: the server address is editable **in the app**
 — the **Server:** button under the sign-in form, which shows the address, or More →
-Account settings → Server once signed in. The app asks `GET /api/health` at the address
+Account settings → Server once signed in. You type the server's address alone, with `http://`
+in a debug build where it talks plain HTTP. The app asks `GET /api/health` at the address
 before it keeps it, and names what answers there when it is not a Diet App API. The value
 persists on the device; changing it while signed in signs you out, since tokens and the
 offline cache belong to the old instance.

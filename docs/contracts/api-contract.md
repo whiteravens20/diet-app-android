@@ -35,7 +35,8 @@ run against an instance of that commit
 
 ## What the client sends
 
-- Every request goes to the address the user chose, which ends in `/api/`.
+- Every request goes to the server the user chose: they type its address alone, and the app keeps
+  `https://` before it and `/api/` under it, which is where the API of every instance is.
 - Registering, signing in, refreshing and signing out go through a client without the access
   token, and so does `GET /config`. So does `POST /auth/browser-code`, the code that signs the
   browser in when the app opens a page of the web application: it uses up the refresh token as

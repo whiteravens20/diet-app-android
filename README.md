@@ -63,6 +63,13 @@ account once you say on the page that the account it names is yours.
   what a serving holds worked out as you write, or drafted by a model; each edited into a
   new version from its view, suggested for the shared library unless a swap made it, or
   deleted.
+- **Diary.** What a profile ate on a day, planned or not, against the day's target: on the
+  dashboard as today's card, with the way to add to it, and on a screen of its own, any day
+  of it. The plan's meals of the day marked eaten where they are shown, and beside them
+  entries: a recipe in servings, an ingredient of the catalogue in an amount, or a meal of
+  your own by its figures, the macronutrients left out estimated by the server and said to
+  be. Each changed or taken out; another day copied into this one; the plan's day resized
+  around what was written, and the plan's day saying what the diary adds to it.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, items ticked off as you shop, and what is left to buy sent as a
   text. The list as a table or printed is the web application's, which the list's menu
@@ -73,7 +80,7 @@ account once you say on the page that the account it names is yours.
   loss for somebody under 18 or underweight to acknowledge; a profile's allergens,
   cuisines and lists of ingredients changed in place.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
-  the profiles, the favourites, the pantry and the account's settings: its e-mail status
+  the diary, the profiles, the favourites, the pantry and the account's settings: its e-mail status
   and the confirmation mail sent again, the unit body weights are shown in (the app itself
   follows the phone's language and theme), what AI it has (none, the instance's provider
   where the operator lets the account use it, with what is left of the month's requests
@@ -101,13 +108,17 @@ account once you say on the page that the account it names is yours.
 - **Up to date, and offline.** Every screen reads what it shows anew when it opens, when you
   pull it down, and when you come back to it: at once from another screen of the app, and at
   most every thirty seconds when you return to the app. A screen that cannot reach the
-  server keeps what it read last and says what time that was. Meal plans and shopping lists
-  you have opened stay readable without a connection. A meal is marked eaten, a meal of
-  your own added to a day or a meal taken off it, a weight logged or the last one removed, a
-  pantry's rows put in, changed or taken out, a recipe's mark set or taken off, a
-  notification read, and a shopping list's rows are ticked and their amounts told, without
-  one as well: each change is marked as waiting, the screen says how many wait, and each
-  goes by itself once there is a network; one the server refuses is said, with why. Signing
+  server keeps what it read last and says what time that was. Meal plans, shopping lists and
+  days of the diary you have opened stay readable without a connection, also when the app
+  was started without one, from the profiles the phone keeps. A meal is marked eaten, a meal
+  of your own added to a day or a meal taken off it, a diary's entry written, changed or
+  taken out, a weight logged or the last one removed, a pantry's rows put in, changed or
+  taken out, a recipe's mark set or taken off, a notification read, and a shopping list's
+  rows are ticked and their amounts told, without one as well: each change is marked as
+  waiting, the screen says how many wait, and each goes by itself once there is a network;
+  a diary's day keeps the server's sum until then, and says how many changes it leaves out;
+  one the server refuses is said, with why. Finding a recipe or an ingredient takes a
+  connection; a meal of your own by its figures does not. Signing
   out while changes wait asks first whether to send them or drop them.
 - **A colour scheme** of the six the web application has: the account's, which the web
   application sets, until another is chosen in the account's settings on the phone, where the
@@ -153,8 +164,9 @@ on its first screen. For a phone on your network, set another one at build time:
 ```
 
 or change it in the app, with the **Server** button on the sign-in screen or under
-More → Account settings. The app adds `/api/` and `https://` where you leave them out, refuses an address
-with a user name or a password in it, and asks the server at once whether a Diet App API
+More → Account settings. You type the server's address alone, such as `diet.example.org`: the app talks
+HTTPS to it, finds its API under it, leaves out whatever follows the address in something pasted from a
+browser, refuses an address with a user name or a password in it, and asks the server at once whether a Diet App API
 answers there; one where none does is named, and kept only if you save it anyway.
 Changing the server signs you out and clears the offline cache.
 

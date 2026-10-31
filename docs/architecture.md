@@ -21,8 +21,9 @@ produces — it never computes nutrition itself. The backend is the single sourc
 - `data/auth/` keeps the tokens in `TokenStore` (DataStore, sealed under a key of the
   Android Keystore), and an OkHttp interceptor and authenticator attach the access token and
   refresh it on a 401 that says it is no good.
-- `data/local/` is the Room `CacheDatabase`: copies of meal plans and shopping lists, and the
-  changes made on the phone that wait to be sent.
+- `data/local/` is the Room `CacheDatabase`: copies of meal plans, shopping lists and days of the
+  diary, what screens need of the profiles to open without a network, and the changes made on the
+  phone that wait to be sent.
 - `data/sync/` is `ChangeQueue`: a change goes to the server at once, or is kept and sent in
   its turn by `ChangesWorker` once there is a network.
 - `data/repository/` joins them: a repository asks the API, and for meal plans and shopping
@@ -96,7 +97,7 @@ Running the app against a backend is described in [running-locally.md](running-l
 
 The API binding, the DTO mirror, the auth plumbing and the offline-first repositories are
 in place, and the screens for signing in, the dashboard with the account's notifications,
-meal plans, recipes, the
+meal plans, the diary, recipes, the
 favourites, the shopping list, the pantry, the profiles with their preferences, the
 account and the About screen are built on them, with tests on the JVM and journeys on
 emulators. What the app
@@ -105,7 +106,7 @@ favourite sets made and changed, and the account's password, address, name, lang
 its mails, data in a file and deletion) it opens there, in the browser, signed in with a
 one-time code that the page uses once its reader says the account is theirs. The changes
 that make sense without a network (a shopping list's rows, meals eaten, a day's own meals
-and meals taken off it, weights, the pantry, recipes' marks and notifications read) wait for
+and meals taken off it, a diary's entries, weights, the pantry, recipes' marks and notifications read) wait for
 one in a queue, described in [sync-strategy.md](sync-strategy.md).
 
 Still to come is the first release: a signing key, a release workflow and the round with
