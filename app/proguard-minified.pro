@@ -28,6 +28,9 @@
 -keep class net.whiteravens.dietapp.notify.NotificationsWorker { *; }
 -keep class net.whiteravens.dietapp.data.local.CacheDatabase { *; }
 -keep class net.whiteravens.dietapp.data.local.CacheDatabase$Companion { *; }
+-keep class net.whiteravens.dietapp.data.local.KeptReadsDao { *; }
+-keep class net.whiteravens.dietapp.data.local.CachedProfile { *; }
+-keep class net.whiteravens.dietapp.data.local.CachedDiaryDay { *; }
 -keep class net.whiteravens.dietapp.data.local.CacheDao { *; }
 -keep class net.whiteravens.dietapp.data.local.CachedMealPlan { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
