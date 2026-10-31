@@ -1,0 +1,19 @@
+{
+  "statusCode": 400,
+  "error": "VALIDATION_FAILED",
+  "message": "Request payload failed validation.",
+  "issues": [
+    {
+      "path": "amount.quantity",
+      "message": "Too big: expected number to be <=5000",
+      "code": "too_big",
+      "maximum": 5000,
+      "inclusive": true
+    },
+    {
+      "path": "amount.quantity",
+      "message": "More than a day holds of one food in this unit.",
+      "code": "custom"
+    }
+  ]
+}

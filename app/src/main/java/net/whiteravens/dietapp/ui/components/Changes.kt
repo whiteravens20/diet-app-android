@@ -118,6 +118,9 @@ private fun changeKind(change: QueuedChange?): String = when (change) {
     is QueuedChange.Marked -> stringResource(R.string.change_kind_marked)
     is QueuedChange.Unmarked -> stringResource(R.string.change_kind_unmarked)
     is QueuedChange.NotificationRead -> stringResource(R.string.change_kind_notification_read)
+    is QueuedChange.DiaryAdded -> stringResource(R.string.change_kind_diary_added, change.name)
+    is QueuedChange.DiaryChanged -> stringResource(R.string.change_kind_diary_changed)
+    is QueuedChange.DiaryRemoved -> stringResource(R.string.change_kind_diary_removed)
     null -> stringResource(R.string.change_kind_unreadable)
 }
 

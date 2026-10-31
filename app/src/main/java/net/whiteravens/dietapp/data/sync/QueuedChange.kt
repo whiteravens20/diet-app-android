@@ -117,6 +117,49 @@ sealed interface QueuedChange {
     @SerialName("unmarked")
     data class Unmarked(val profileId: String, val recipeId: String) : DoneWhenGone
 
+    /**
+     * An entry written for the day of [date] (yyyy-MM-dd) of a profile's diary, under the meal [slot]:
+     * of the recipe [recipeId] in [servings], of the ingredient [ingredientId] in [quantity] of
+     * [unit], or else a meal of one's own, with what a serving of it holds. [name], and the
+     * [calories] of a serving where they are known, are what the screen shows until the server has it;
+     * [pieceName] is what a piece of the ingredient is called.
+     */
+    @Serializable
+    @SerialName("diary-added")
+    data class DiaryAdded(
+        val profileId: String,
+        val date: String,
+        val slot: String,
+        val name: String,
+        val recipeId: String? = null,
+        val servings: Double? = null,
+        val ingredientId: String? = null,
+        val quantity: Double? = null,
+        val unit: String? = null,
+        val pieceName: String? = null,
+        val calories: Double? = null,
+        val protein: Double? = null,
+        val fat: Double? = null,
+        val carbs: Double? = null,
+        override val key: String,
+    ) : Addition
+
+    /** An entry of a diary changed: the meal it is under, and how much of it there was, where they are given. */
+    @Serializable
+    @SerialName("diary-changed")
+    data class DiaryChanged(
+        val profileId: String,
+        val id: String,
+        val slot: String? = null,
+        val servings: Double? = null,
+        val quantity: Double? = null,
+    ) : QueuedChange
+
+    /** An entry taken out of a diary. */
+    @Serializable
+    @SerialName("diary-removed")
+    data class DiaryRemoved(val profileId: String, val id: String) : DoneWhenGone
+
     /** A notification of the account read. */
     @Serializable
     @SerialName("notification-read")

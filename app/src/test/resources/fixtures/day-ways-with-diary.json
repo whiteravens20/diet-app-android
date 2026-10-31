@@ -1,0 +1,233 @@
+{
+  "date": "2026-10-31",
+  "calorieTarget": 1650,
+  "diary": {
+    "calories": 1554,
+    "protein": 84,
+    "fat": 59,
+    "carbs": 167
+  },
+  "current": {
+    "dayNutrition": {
+      "calories": 2464,
+      "protein": 129,
+      "fat": 95,
+      "carbs": 281
+    },
+    "packs": {
+      "bought": 2450,
+      "used": 1361.25,
+      "wasted": 6
+    }
+  },
+  "variations": [
+    {
+      "meals": [
+        {
+          "mealType": "breakfast",
+          "title": "Millet breakfast bowl with edamame and spinach",
+          "recipeId": "f9b8875d-f310-41a1-a0ca-f9ff5722c19b",
+          "servings": 1.25,
+          "nutrition": {
+            "calories": 448,
+            "protein": 23,
+            "fat": 18,
+            "carbs": 54
+          },
+          "stays": true
+        },
+        {
+          "mealType": "lunch",
+          "title": "Couscous-stuffed peppers with tofu and walnuts",
+          "recipeId": "f56a23df-c373-44a0-b1e9-9bd827333beb",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 231,
+            "protein": 13,
+            "fat": 9,
+            "carbs": 28
+          },
+          "stays": false
+        },
+        {
+          "mealType": "snack",
+          "title": "Quinoa and tofu stuffed mushroom caps",
+          "recipeId": "7cf85f52-bafa-4faf-a5d4-6eeeb3427c17",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 119,
+            "protein": 9,
+            "fat": 5,
+            "carbs": 14
+          },
+          "stays": false
+        },
+        {
+          "mealType": "dinner",
+          "title": "Tofu couscous with skillet vegetables and pumpkin seeds",
+          "recipeId": "aa47b30e-9b0e-434f-be53-aac5fae280cb",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 277,
+            "protein": 16,
+            "fat": 9,
+            "carbs": 37
+          },
+          "stays": false
+        }
+      ],
+      "dayNutrition": {
+        "calories": 2629,
+        "protein": 145,
+        "fat": 100,
+        "carbs": 300
+      },
+      "packs": {
+        "bought": 2450,
+        "used": 1432.083333,
+        "wasted": 4
+      },
+      "reason": null,
+      "offer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJraW5kIjoiZGF5IiwicGxhbiI6IjU5ODlkMWQ1LTRkYjItNGQxZS04OGIwLWNhMTFlNGExNzNhOCIsImRheSI6IjE0OWNkYWE2LTg0ZGItNDA5MC04MTdmLWRhY2NiZWM0NjMzNSIsInJldmlzaW9uIjoxLCJtZWFscyI6W1sibHVuY2giLCJmNTZhMjNkZi1jMzczLTQ0YTAtYjFlOS05YmQ4MjczMzNiZWIiLDAuNV0sWyJkaW5uZXIiLCJhYTQ3YjMwZS05YjBlLTQzNGYtYmU1My1hYWM1ZmFlMjgwY2IiLDAuNV0sWyJzbmFjayIsIjdjZjg1ZjUyLWJhZmEtNGZhZi1hNWQ0LTZlZWViMzQyN2MxNyIsMC41XV0sInJldXNlIjowLjc4NTcxNDI4NTcxNDI4NTcsInBpY2tlZCI6ZmFsc2UsInJlYXNvbiI6bnVsbCwiaWF0IjoxNzkzNDQ3ODMzLCJleHAiOjE3OTM0NTUwMzMsImF1ZCI6ImRpZXQtYXBwL21vZGVsLXBpY2siLCJzdWIiOiI4NTFiYTY3OS1iMWUxLTQxYmQtOWMyZC00NzViZjY2MjZhMTgifQ.dUxrI4DBmdnDwSKDODjh-uF_ejuNHPYrRr31b54yVG4"
+    },
+    {
+      "meals": [
+        {
+          "mealType": "breakfast",
+          "title": "Millet breakfast bowl with edamame and spinach",
+          "recipeId": "f9b8875d-f310-41a1-a0ca-f9ff5722c19b",
+          "servings": 1.25,
+          "nutrition": {
+            "calories": 448,
+            "protein": 23,
+            "fat": 18,
+            "carbs": 54
+          },
+          "stays": true
+        },
+        {
+          "mealType": "lunch",
+          "title": "Quinoa with chickpeas and tomato",
+          "recipeId": "87d567c9-cae8-41a8-a564-d690028d8a25",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 161,
+            "protein": 6,
+            "fat": 5,
+            "carbs": 25
+          },
+          "stays": false
+        },
+        {
+          "mealType": "snack",
+          "title": "Turkey-stuffed mushroom caps with Gouda and spinach",
+          "recipeId": "d3e28d79-86f4-4f8e-bd1a-c9a7919693f2",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 170,
+            "protein": 11,
+            "fat": 13,
+            "carbs": 3
+          },
+          "stays": false
+        },
+        {
+          "mealType": "dinner",
+          "title": "Ginger tofu with buckwheat and vegetables",
+          "recipeId": "033a0efe-728c-4693-ae15-4d57954fae7b",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 245,
+            "protein": 17,
+            "fat": 10,
+            "carbs": 28
+          },
+          "stays": false
+        }
+      ],
+      "dayNutrition": {
+        "calories": 2578,
+        "protein": 141,
+        "fat": 105,
+        "carbs": 277
+      },
+      "packs": {
+        "bought": 2450,
+        "used": 1377.083333,
+        "wasted": 6
+      },
+      "reason": null,
+      "offer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJraW5kIjoiZGF5IiwicGxhbiI6IjU5ODlkMWQ1LTRkYjItNGQxZS04OGIwLWNhMTFlNGExNzNhOCIsImRheSI6IjE0OWNkYWE2LTg0ZGItNDA5MC04MTdmLWRhY2NiZWM0NjMzNSIsInJldmlzaW9uIjoxLCJtZWFscyI6W1sibHVuY2giLCI4N2Q1NjdjOS1jYWU4LTQxYTgtYTU2NC1kNjkwMDI4ZDhhMjUiLDAuNV0sWyJkaW5uZXIiLCIwMzNhMGVmZS03MjhjLTQ2OTMtYWUxNS00ZDU3OTU0ZmFlN2IiLDAuNV0sWyJzbmFjayIsImQzZTI4ZDc5LTg2ZjQtNGY4ZS1iZDFhLWM5YTc5MTk2OTNmMiIsMC41XV0sInJldXNlIjowLjczMzMzMzMzMzMzMzMzMzMsInBpY2tlZCI6ZmFsc2UsInJlYXNvbiI6bnVsbCwiaWF0IjoxNzkzNDQ3ODMzLCJleHAiOjE3OTM0NTUwMzMsImF1ZCI6ImRpZXQtYXBwL21vZGVsLXBpY2siLCJzdWIiOiI4NTFiYTY3OS1iMWUxLTQxYmQtOWMyZC00NzViZjY2MjZhMTgifQ.pFXZW3aJme4km64Vusrmx4H97w1mrefcIFTHfNBR9RM"
+    },
+    {
+      "meals": [
+        {
+          "mealType": "breakfast",
+          "title": "Millet breakfast bowl with edamame and spinach",
+          "recipeId": "f9b8875d-f310-41a1-a0ca-f9ff5722c19b",
+          "servings": 1.25,
+          "nutrition": {
+            "calories": 448,
+            "protein": 23,
+            "fat": 18,
+            "carbs": 54
+          },
+          "stays": true
+        },
+        {
+          "mealType": "lunch",
+          "title": "Tofu and chickpea bake with sweet potato",
+          "recipeId": "f92a6aaa-fbff-4919-af55-8824ed16e9ed",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 205,
+            "protein": 13,
+            "fat": 9,
+            "carbs": 22
+          },
+          "stays": false
+        },
+        {
+          "mealType": "snack",
+          "title": "Quinoa, edamame, and zucchini snack cakes",
+          "recipeId": "fb984b88-50ef-4e9b-bb78-a2aa9583881c",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 104,
+            "protein": 6,
+            "fat": 5,
+            "carbs": 12
+          },
+          "stays": false
+        },
+        {
+          "mealType": "dinner",
+          "title": "Turkey with sweet potato, avocado, and spinach",
+          "recipeId": "3f701c57-ea8b-49da-b357-1fd7618ca042",
+          "servings": 0.5,
+          "nutrition": {
+            "calories": 134,
+            "protein": 13,
+            "fat": 7,
+            "carbs": 8
+          },
+          "stays": false
+        }
+      ],
+      "dayNutrition": {
+        "calories": 2445,
+        "protein": 139,
+        "fat": 98,
+        "carbs": 263
+      },
+      "packs": {
+        "bought": 2450,
+        "used": 1297.916667,
+        "wasted": 6
+      },
+      "reason": null,
+      "offer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJraW5kIjoiZGF5IiwicGxhbiI6IjU5ODlkMWQ1LTRkYjItNGQxZS04OGIwLWNhMTFlNGExNzNhOCIsImRheSI6IjE0OWNkYWE2LTg0ZGItNDA5MC04MTdmLWRhY2NiZWM0NjMzNSIsInJldmlzaW9uIjoxLCJtZWFscyI6W1sibHVuY2giLCJmOTJhNmFhYS1mYmZmLTQ5MTktYWY1NS04ODI0ZWQxNmU5ZWQiLDAuNV0sWyJkaW5uZXIiLCIzZjcwMWM1Ny1lYThiLTQ5ZGEtYjM1Ny0xZmQ3NjE4Y2EwNDIiLDAuNV0sWyJzbmFjayIsImZiOTg0Yjg4LTUwZWYtNGU5Yi1iYjc4LWEyYWE5NTgzODgxYyIsMC41XV0sInJldXNlIjowLjg1MTg1MTg1MTg1MTg1MTksInBpY2tlZCI6ZmFsc2UsInJlYXNvbiI6bnVsbCwiaWF0IjoxNzkzNDQ3ODMzLCJleHAiOjE3OTM0NTUwMzMsImF1ZCI6ImRpZXQtYXBwL21vZGVsLXBpY2siLCJzdWIiOiI4NTFiYTY3OS1iMWUxLTQxYmQtOWMyZC00NzViZjY2MjZhMTgifQ.dxu1KzOeBIKq1ojut77SrahaKXQD26d-PI4ZuhBR3Pk"
+    }
+  ],
+  "aiMeta": null
+}

@@ -1,0 +1,35 @@
+{
+  "statusCode": 400,
+  "error": "VALIDATION_FAILED",
+  "message": "Request payload failed validation.",
+  "issues": [
+    {
+      "path": "name",
+      "message": "Too small: expected string to have >=1 characters",
+      "code": "too_small",
+      "minimum": 1,
+      "inclusive": true
+    },
+    {
+      "path": "servings",
+      "message": "Too big: expected number to be <=20",
+      "code": "too_big",
+      "maximum": 20,
+      "inclusive": true
+    },
+    {
+      "path": "nutrition.calories",
+      "message": "Too big: expected number to be <=5000",
+      "code": "too_big",
+      "maximum": 5000,
+      "inclusive": true
+    },
+    {
+      "path": "nutrition.protein",
+      "message": "Too small: expected number to be >=0",
+      "code": "too_small",
+      "minimum": 0,
+      "inclusive": true
+    }
+  ]
+}

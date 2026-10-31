@@ -1,0 +1,27 @@
+{
+  "id": "362d305c-dbfa-4add-9dde-20a1d2e83f62",
+  "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+  "date": "2026-10-31",
+  "mealType": "second_breakfast",
+  "kind": "ingredient",
+  "name": "Large egg",
+  "recipeId": null,
+  "ingredientId": "e9619d75-0b2c-4687-9efe-b2048726f195",
+  "servings": null,
+  "amount": {
+    "quantity": 2,
+    "unit": "piece",
+    "shown": {
+      "quantity": 2,
+      "unit": "piece"
+    }
+  },
+  "nutrition": {
+    "calories": 157,
+    "protein": 14,
+    "fat": 10,
+    "carbs": 1
+  },
+  "estimated": false,
+  "createdAt": "2026-10-31T11:57:12.723Z"
+}

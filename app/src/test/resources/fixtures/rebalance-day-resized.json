@@ -1,0 +1,2531 @@
+{
+  "plan": {
+    "id": "5989d1d5-4db2-4d1e-88b0-ca11e4a173a8",
+    "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+    "startDate": "2026-10-31",
+    "durationDays": 3,
+    "dietType": "balanced",
+    "days": [
+      {
+        "id": "149cdaa6-84db-4090-817f-daccbec46335",
+        "date": "2026-10-31",
+        "meals": [
+          {
+            "id": "164d7048-8600-4f8b-8bc3-09b6909da94a",
+            "mealType": "breakfast",
+            "recipe": {
+              "id": "f9b8875d-f310-41a1-a0ca-f9ff5722c19b",
+              "title": "Millet breakfast bowl with edamame and spinach",
+              "description": "A warm, savoury bowl of fluffy millet and tender edamame, folded with spinach and brightened with lemon.",
+              "servings": 1,
+              "mealTypes": [
+                "breakfast",
+                "second_breakfast"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "e56e832e-c3f6-4143-8966-d8d6074db72b",
+                  "name": "Millet",
+                  "quantity": 45,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 45,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "3f557268-e0a5-4e6e-8115-34d65e50f4a2",
+                  "name": "Edamame",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                  "name": "Spinach",
+                  "quantity": 60,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 2,
+                    "unit": "handful"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 8,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 8,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "6b09a566-2a84-458f-a013-251b9ef16e0c",
+                  "name": "Lemon juice",
+                  "quantity": 5,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 1,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Rinse the millet, then simmer it in water until tender, about 15 minutes.",
+                "Cook the edamame in water until tender, then drain.",
+                "Stir the spinach into the hot millet until it wilts.",
+                "Fold in the edamame, olive oil, and lemon juice, then serve warm."
+              ],
+              "prepMinutes": 5,
+              "cookMinutes": 15,
+              "difficulty": "easy",
+              "cuisine": null,
+              "allergens": [
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 358,
+                "protein": 18,
+                "fat": 14,
+                "carbs": 43
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "e56e832e-c3f6-4143-8966-d8d6074db72b",
+                "name": "Millet",
+                "quantity": 56.25,
+                "unit": "g",
+                "display": {
+                  "quantity": 55,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "3f557268-e0a5-4e6e-8115-34d65e50f4a2",
+                "name": "Edamame",
+                "quantity": 125,
+                "unit": "g",
+                "display": {
+                  "quantity": 125,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                "name": "Spinach",
+                "quantity": 75,
+                "unit": "g",
+                "display": {
+                  "quantity": 2.5,
+                  "unit": "handful"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 10,
+                "unit": "ml",
+                "display": {
+                  "quantity": 10,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "6b09a566-2a84-458f-a013-251b9ef16e0c",
+                "name": "Lemon juice",
+                "quantity": 6.25,
+                "unit": "ml",
+                "display": {
+                  "quantity": 1.5,
+                  "unit": "tsp"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1.25,
+            "quantityScale": 1,
+            "eatenAt": "2026-10-31T11:57:12.823Z",
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 448,
+              "protein": 23,
+              "fat": 18,
+              "carbs": 54
+            }
+          },
+          {
+            "id": "819dc1a4-da11-4d14-888f-593a08bbd6ff",
+            "mealType": "lunch",
+            "recipe": {
+              "id": "f18b70da-79d9-43fd-b33f-663d58741504",
+              "title": "Chickpea & tomato stew",
+              "description": "A hearty plant-based stew of chickpeas simmered with tomato and onion.",
+              "servings": 3,
+              "mealTypes": [
+                "lunch",
+                "dinner"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan",
+                "mediterranean"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                  "name": "Chickpeas",
+                  "quantity": 480,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 480,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                  "name": "Tomato",
+                  "quantity": 3,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 360,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "9f9e4847-5a4a-4e59-804a-4b65b71ef2f4",
+                  "name": "Onion",
+                  "quantity": 1,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 1,
+                    "unit": "piece"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 20,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 20,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                  "name": "Spinach",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 3.5,
+                    "unit": "handful"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Soften the onion in olive oil.",
+                "Add chopped tomato and chickpeas; simmer 20 minutes.",
+                "Stir in spinach until wilted."
+              ],
+              "prepMinutes": 10,
+              "cookMinutes": 25,
+              "difficulty": "easy",
+              "cuisine": "mediterranean",
+              "allergens": [],
+              "nutritionPerServing": {
+                "calories": 320,
+                "protein": 14,
+                "fat": 11,
+                "carbs": 45
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                "name": "Chickpeas",
+                "quantity": 80,
+                "unit": "g",
+                "display": {
+                  "quantity": 80,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                "name": "Tomato",
+                "quantity": 0.5,
+                "unit": "piece",
+                "display": {
+                  "quantity": 60,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "9f9e4847-5a4a-4e59-804a-4b65b71ef2f4",
+                "name": "Onion",
+                "quantity": 0.16666666666666666,
+                "unit": "piece",
+                "display": {
+                  "quantity": 20,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 3.333333333333333,
+                "unit": "ml",
+                "display": {
+                  "quantity": 3,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                "name": "Spinach",
+                "quantity": 16.666666666666664,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "handful"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1.75,
+            "quantityScale": 0.2857142857142857,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 160,
+              "protein": 7,
+              "fat": 6,
+              "carbs": 23
+            }
+          },
+          {
+            "id": "e187a41c-b1b5-4b4d-8ab3-6c156dd128f5",
+            "mealType": "snack",
+            "recipe": {
+              "id": "146ae561-f9a0-486e-8d61-87eec75d86b5",
+              "title": "Hummus-style chickpea snack bowl",
+              "description": "Smashed chickpeas with olive oil and tomato.",
+              "servings": 1,
+              "mealTypes": [
+                "snack",
+                "second_breakfast"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan",
+                "mediterranean"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                  "name": "Chickpeas",
+                  "quantity": 150,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 150,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 10,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                  "name": "Tomato",
+                  "quantity": 1,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 120,
+                    "unit": "g"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Lightly mash the chickpeas.",
+                "Stir in olive oil.",
+                "Top with diced tomato."
+              ],
+              "prepMinutes": 6,
+              "cookMinutes": 0,
+              "difficulty": "easy",
+              "cuisine": "middle_eastern",
+              "allergens": [],
+              "nutritionPerServing": {
+                "calories": 311,
+                "protein": 12,
+                "fat": 14,
+                "carbs": 38
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                "name": "Chickpeas",
+                "quantity": 75,
+                "unit": "g",
+                "display": {
+                  "quantity": 75,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 5,
+                "unit": "ml",
+                "display": {
+                  "quantity": 5,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                "name": "Tomato",
+                "quantity": 0.5,
+                "unit": "piece",
+                "display": {
+                  "quantity": 60,
+                  "unit": "g"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 0.5,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 156,
+              "protein": 6,
+              "fat": 7,
+              "carbs": 19
+            }
+          },
+          {
+            "id": "8469c409-8feb-4bd9-9f57-b1b1dd2e86b4",
+            "mealType": "dinner",
+            "recipe": {
+              "id": "e20ada78-de04-4e92-a071-bea21b0a43e5",
+              "title": "Quinoa with tofu, tomato, and spinach",
+              "description": "A colorful skillet dinner with fluffy quinoa, golden tofu, fresh tomato, and wilted spinach.",
+              "servings": 2,
+              "mealTypes": [
+                "dinner"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "65bcaa34-0000-412e-8453-7168cf8951d8",
+                  "name": "Quinoa",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                  "name": "Tofu",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                  "name": "Tomato",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                  "name": "Spinach",
+                  "quantity": 50,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 1.5,
+                    "unit": "handful"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 5,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 5,
+                    "unit": "ml"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Rinse the quinoa and simmer it in water until tender, about 15 minutes.",
+                "Cut the tofu into cubes and dice the tomato.",
+                "Heat the olive oil in a skillet and cook the tofu until golden on several sides.",
+                "Add the tomato and spinach, stirring until the spinach wilts.",
+                "Fluff the quinoa with a fork and serve topped with the tofu and vegetables."
+              ],
+              "prepMinutes": 5,
+              "cookMinutes": 20,
+              "difficulty": "easy",
+              "cuisine": null,
+              "allergens": [
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 291,
+                "protein": 17,
+                "fat": 10,
+                "carbs": 36
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "65bcaa34-0000-412e-8453-7168cf8951d8",
+                "name": "Quinoa",
+                "quantity": 25,
+                "unit": "g",
+                "display": {
+                  "quantity": 25,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                "name": "Tofu",
+                "quantity": 25,
+                "unit": "g",
+                "display": {
+                  "quantity": 25,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                "name": "Tomato",
+                "quantity": 25,
+                "unit": "g",
+                "display": {
+                  "quantity": 25,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                "name": "Spinach",
+                "quantity": 12.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "handful"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 1.25,
+                "unit": "ml",
+                "display": {
+                  "quantity": 1,
+                  "unit": "ml"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1.75,
+            "quantityScale": 0.2857142857142857,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 146,
+              "protein": 9,
+              "fat": 5,
+              "carbs": 18
+            }
+          }
+        ],
+        "dayNutrition": {
+          "calories": 2464,
+          "protein": 129,
+          "fat": 95,
+          "carbs": 281
+        },
+        "diary": {
+          "entries": 5,
+          "nutrition": {
+            "calories": 1554,
+            "protein": 84,
+            "fat": 59,
+            "carbs": 167
+          }
+        },
+        "calorieTarget": 1650,
+        "targetMacros": {
+          "protein": 103,
+          "fat": 55,
+          "carbs": 186
+        },
+        "calorieDelta": 814,
+        "offTarget": "over",
+        "skipped": false,
+        "belowSafetyFloor": false,
+        "overrides": null,
+        "mealCount": 4
+      },
+      {
+        "id": "c2967873-4a0f-408b-9941-e6459c32e6ee",
+        "date": "2026-11-01",
+        "meals": [
+          {
+            "id": "7292c2f8-835f-42bf-b07e-fa8a5a498e2c",
+            "mealType": "breakfast",
+            "recipe": {
+              "id": "824d0d19-a902-4e1c-81a6-72806a1ab901",
+              "title": "Rye toast with tofu and avocado",
+              "description": "Toasted rye bread topped with a tangy, creamy tofu and avocado spread.",
+              "servings": 1,
+              "mealTypes": [
+                "breakfast",
+                "second_breakfast"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "f07698f4-1f07-4d80-ba33-07d219c16db9",
+                  "name": "Rye bread",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 3,
+                    "unit": "slice"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                  "name": "Tofu",
+                  "quantity": 80,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 80,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "dd9f87a3-0d51-48f6-a5c0-41c0731a5c5f",
+                  "name": "Avocado",
+                  "quantity": 30,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 30,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "6b09a566-2a84-458f-a013-251b9ef16e0c",
+                  "name": "Lemon juice",
+                  "quantity": 8,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 1.5,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Toast the rye bread until crisp.",
+                "Mash the tofu and avocado together in a small bowl.",
+                "Stir in the lemon juice.",
+                "Spread the mixture over the toast and serve."
+              ],
+              "prepMinutes": 8,
+              "cookMinutes": 3,
+              "difficulty": "easy",
+              "cuisine": null,
+              "allergens": [
+                "gluten",
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 424,
+                "protein": 23,
+                "fat": 15,
+                "carbs": 54
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "f07698f4-1f07-4d80-ba33-07d219c16db9",
+                "name": "Rye bread",
+                "quantity": 100,
+                "unit": "g",
+                "display": {
+                  "quantity": 3,
+                  "unit": "slice"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                "name": "Tofu",
+                "quantity": 80,
+                "unit": "g",
+                "display": {
+                  "quantity": 80,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "dd9f87a3-0d51-48f6-a5c0-41c0731a5c5f",
+                "name": "Avocado",
+                "quantity": 30,
+                "unit": "g",
+                "display": {
+                  "quantity": 30,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "6b09a566-2a84-458f-a013-251b9ef16e0c",
+                "name": "Lemon juice",
+                "quantity": 8,
+                "unit": "ml",
+                "display": {
+                  "quantity": 1.5,
+                  "unit": "tsp"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 424,
+              "protein": 23,
+              "fat": 15,
+              "carbs": 54
+            }
+          },
+          {
+            "id": "1f357f27-82c2-41d5-8163-e6480792910d",
+            "mealType": "lunch",
+            "recipe": {
+              "id": "84c689a9-5dab-4312-9a33-de19e242086a",
+              "title": "Skillet turkey with quinoa and tomato",
+              "description": "Tender turkey and fluffy quinoa come together with juicy tomato in a simple skillet meal.",
+              "servings": 2,
+              "mealTypes": [
+                "lunch",
+                "dinner"
+              ],
+              "dietTags": [
+                "mediterranean"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "929ea5f4-10b6-4d7c-84c3-60f0cbe9deca",
+                  "name": "Turkey breast",
+                  "quantity": 150,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 150,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "65bcaa34-0000-412e-8453-7168cf8951d8",
+                  "name": "Quinoa",
+                  "quantity": 80,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 80,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 20,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 20,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                  "name": "Tomato",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Rinse the quinoa and simmer it in water until tender, about 15 minutes.",
+                "Cut the turkey into bite-sized pieces and chop the tomato.",
+                "Heat the olive oil in a skillet and cook the turkey until browned and cooked through.",
+                "Stir in the tomato and cook for 2 minutes, then serve over the quinoa."
+              ],
+              "prepMinutes": 10,
+              "cookMinutes": 20,
+              "difficulty": "easy",
+              "cuisine": null,
+              "allergens": [],
+              "nutritionPerServing": {
+                "calories": 322,
+                "protein": 24,
+                "fat": 13,
+                "carbs": 28
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "929ea5f4-10b6-4d7c-84c3-60f0cbe9deca",
+                "name": "Turkey breast",
+                "quantity": 131.25,
+                "unit": "g",
+                "display": {
+                  "quantity": 130,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "65bcaa34-0000-412e-8453-7168cf8951d8",
+                "name": "Quinoa",
+                "quantity": 70,
+                "unit": "g",
+                "display": {
+                  "quantity": 70,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 17.5,
+                "unit": "ml",
+                "display": {
+                  "quantity": 20,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                "name": "Tomato",
+                "quantity": 87.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 90,
+                  "unit": "g"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1.75,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 564,
+              "protein": 42,
+              "fat": 23,
+              "carbs": 49
+            }
+          },
+          {
+            "id": "64173007-292b-4f68-9a73-3434a9871753",
+            "mealType": "snack",
+            "recipe": {
+              "id": "181aba9e-71e0-47bd-8fcb-b0e41424d374",
+              "title": "Baked quinoa, chickpea, and edamame bites",
+              "description": "Small golden bites with tender quinoa, chickpeas, and edamame, brightened with lemon and parsley.",
+              "servings": 3,
+              "mealTypes": [
+                "snack",
+                "second_breakfast"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "65bcaa34-0000-412e-8453-7168cf8951d8",
+                  "name": "Quinoa",
+                  "quantity": 60,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 60,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                  "name": "Chickpeas",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "3f557268-e0a5-4e6e-8115-34d65e50f4a2",
+                  "name": "Edamame",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "9ecba9f7-f60e-49da-a4c9-363bb86ca8e9",
+                  "name": "Carrot",
+                  "quantity": 50,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 50,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 10,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e74be214-bdf2-46f6-9035-82d2b94f5a0b",
+                  "name": "Parsley",
+                  "quantity": 10,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "6b09a566-2a84-458f-a013-251b9ef16e0c",
+                  "name": "Lemon juice",
+                  "quantity": 10,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 2,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                  "name": "Paprika",
+                  "quantity": 2,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 1,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "d50b0ac8-e615-4365-9c23-aa0dc7527768",
+                  "name": "Salt",
+                  "quantity": 2,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 0.25,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Heat the oven to 200°C and line a baking tray.",
+                "Rinse the quinoa, then simmer it in water until tender, about 15 minutes; drain any excess water and let it cool slightly.",
+                "Boil the edamame until tender, then drain.",
+                "Mash the chickpeas in a bowl, leaving some texture, and stir in the quinoa, edamame, grated carrot, chopped parsley, paprika, salt, and lemon juice.",
+                "Drizzle in the olive oil and mix until combined, then shape the mixture into small bites and arrange them on the tray.",
+                "Bake for 20–25 minutes, turning the bites once, until golden and firm."
+              ],
+              "prepMinutes": 20,
+              "cookMinutes": 40,
+              "difficulty": "medium",
+              "cuisine": null,
+              "allergens": [
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 194,
+                "protein": 9,
+                "fat": 7,
+                "carbs": 25
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "65bcaa34-0000-412e-8453-7168cf8951d8",
+                "name": "Quinoa",
+                "quantity": 20,
+                "unit": "g",
+                "display": {
+                  "quantity": 20,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                "name": "Chickpeas",
+                "quantity": 33.33333333333333,
+                "unit": "g",
+                "display": {
+                  "quantity": 35,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "3f557268-e0a5-4e6e-8115-34d65e50f4a2",
+                "name": "Edamame",
+                "quantity": 33.33333333333333,
+                "unit": "g",
+                "display": {
+                  "quantity": 35,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "9ecba9f7-f60e-49da-a4c9-363bb86ca8e9",
+                "name": "Carrot",
+                "quantity": 16.666666666666664,
+                "unit": "g",
+                "display": {
+                  "quantity": 15,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 3.333333333333333,
+                "unit": "ml",
+                "display": {
+                  "quantity": 3,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e74be214-bdf2-46f6-9035-82d2b94f5a0b",
+                "name": "Parsley",
+                "quantity": 3.333333333333333,
+                "unit": "g",
+                "display": {
+                  "quantity": 3,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "6b09a566-2a84-458f-a013-251b9ef16e0c",
+                "name": "Lemon juice",
+                "quantity": 3.333333333333333,
+                "unit": "ml",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "tsp"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                "name": "Paprika",
+                "quantity": 0.6666666666666666,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.25,
+                  "unit": "tsp"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "d50b0ac8-e615-4365-9c23-aa0dc7527768",
+                "name": "Salt",
+                "quantity": 0.6666666666666666,
+                "unit": "g",
+                "display": {
+                  "quantity": 2,
+                  "unit": "pinch"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 194,
+              "protein": 9,
+              "fat": 7,
+              "carbs": 25
+            }
+          },
+          {
+            "id": "7a58a76a-dfe5-4c9a-bf17-a7ef7962a24f",
+            "mealType": "dinner",
+            "recipe": {
+              "id": "88a0a535-fd6f-4fc5-83b2-b9e3ed2246aa",
+              "title": "Tofu & vegetable stir-fry",
+              "description": "Quick stir-fried tofu with peppers, carrot and rice.",
+              "servings": 2,
+              "mealTypes": [
+                "lunch",
+                "dinner"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                  "name": "Tofu",
+                  "quantity": 300,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 300,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "98e598ad-19cb-4701-94d5-a595ebc092b4",
+                  "name": "Bell pepper",
+                  "quantity": 1,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 160,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "9ecba9f7-f60e-49da-a4c9-363bb86ca8e9",
+                  "name": "Carrot",
+                  "quantity": 2,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 140,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "3842b937-b980-4fbe-90f0-ab76f4c20a86",
+                  "name": "White rice",
+                  "quantity": 150,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 150,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 15,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 15,
+                    "unit": "ml"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Cook the rice.",
+                "Fry the cubed tofu in half the olive oil until golden, then set it aside.",
+                "Stir-fry the sliced pepper and carrot in the rest of the oil, return the tofu and combine."
+              ],
+              "prepMinutes": 12,
+              "cookMinutes": 15,
+              "difficulty": "medium",
+              "cuisine": "asian",
+              "allergens": [
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 604,
+                "protein": 33,
+                "fat": 21,
+                "carbs": 76
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                "name": "Tofu",
+                "quantity": 112.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 115,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "98e598ad-19cb-4701-94d5-a595ebc092b4",
+                "name": "Bell pepper",
+                "quantity": 0.375,
+                "unit": "piece",
+                "display": {
+                  "quantity": 60,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "9ecba9f7-f60e-49da-a4c9-363bb86ca8e9",
+                "name": "Carrot",
+                "quantity": 0.75,
+                "unit": "piece",
+                "display": {
+                  "quantity": 55,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "3842b937-b980-4fbe-90f0-ab76f4c20a86",
+                "name": "White rice",
+                "quantity": 56.25,
+                "unit": "g",
+                "display": {
+                  "quantity": 55,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 5.625,
+                "unit": "ml",
+                "display": {
+                  "quantity": 6,
+                  "unit": "ml"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 0.75,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 453,
+              "protein": 25,
+              "fat": 16,
+              "carbs": 57
+            }
+          }
+        ],
+        "dayNutrition": {
+          "calories": 1635,
+          "protein": 99,
+          "fat": 61,
+          "carbs": 185
+        },
+        "diary": null,
+        "calorieTarget": 1650,
+        "targetMacros": {
+          "protein": 103,
+          "fat": 55,
+          "carbs": 186
+        },
+        "calorieDelta": -15,
+        "offTarget": null,
+        "skipped": false,
+        "belowSafetyFloor": false,
+        "overrides": null,
+        "mealCount": 4
+      },
+      {
+        "id": "ae4298c3-bffb-4885-a721-03939987747c",
+        "date": "2026-11-02",
+        "meals": [
+          {
+            "id": "147a281d-2682-43be-b735-fc35ea93916d",
+            "mealType": "breakfast",
+            "recipe": {
+              "id": "8ff255b7-322e-47a8-9007-55a067a62359",
+              "title": "Baked millet casserole with tofu and chickpeas",
+              "description": "A savory breakfast bake layered with tender millet, tofu, chickpeas, and vegetables, finished with pumpkin seeds.",
+              "servings": 3,
+              "mealTypes": [
+                "breakfast",
+                "second_breakfast"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "e56e832e-c3f6-4143-8966-d8d6074db72b",
+                  "name": "Millet",
+                  "quantity": 180,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 180,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                  "name": "Tofu",
+                  "quantity": 250,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 250,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                  "name": "Chickpeas",
+                  "quantity": 150,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 150,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                  "name": "Spinach",
+                  "quantity": 80,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 2.5,
+                    "unit": "handful"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "44387084-049d-4b56-b64f-7f58bef87e86",
+                  "name": "Mushrooms",
+                  "quantity": 150,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 150,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "9f9e4847-5a4a-4e59-804a-4b65b71ef2f4",
+                  "name": "Onion",
+                  "quantity": 1,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 1,
+                    "unit": "piece"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                  "name": "Tomato",
+                  "quantity": 150,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 150,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 10,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                  "name": "Paprika",
+                  "quantity": 3,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 1.5,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "d50b0ac8-e615-4365-9c23-aa0dc7527768",
+                  "name": "Salt",
+                  "quantity": 3,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 0.5,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "2c47a7eb-1c82-473f-9289-9116ecd5a98f",
+                  "name": "Black pepper",
+                  "quantity": 1,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 0.5,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e74be214-bdf2-46f6-9035-82d2b94f5a0b",
+                  "name": "Parsley",
+                  "quantity": 10,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "3f9abfc2-c4f4-42f7-840f-ac347da1dba2",
+                  "name": "Pumpkin seeds",
+                  "quantity": 20,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 20,
+                    "unit": "g"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Heat the oven to 190°C.",
+                "Rinse the millet and simmer it in water until tender, then drain any excess water.",
+                "Dice the onion and tomato, and slice the mushrooms.",
+                "Heat the olive oil in a pan and cook the onion and mushrooms until softened.",
+                "Crumble the tofu into the pan and stir in the chickpeas, tomato, paprika, salt, and black pepper.",
+                "Cook the mixture for a few minutes, then fold in the spinach until it wilts.",
+                "Combine the cooked millet and vegetable mixture in a baking dish.",
+                "Scatter the pumpkin seeds and chopped parsley over the top.",
+                "Bake until heated through and lightly golden, about 20 minutes."
+              ],
+              "prepMinutes": 20,
+              "cookMinutes": 45,
+              "difficulty": "hard",
+              "cuisine": null,
+              "allergens": [
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 526,
+                "protein": 30,
+                "fat": 18,
+                "carbs": 67
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "e56e832e-c3f6-4143-8966-d8d6074db72b",
+                "name": "Millet",
+                "quantity": 45,
+                "unit": "g",
+                "display": {
+                  "quantity": 45,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                "name": "Tofu",
+                "quantity": 62.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 65,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                "name": "Chickpeas",
+                "quantity": 37.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 40,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+                "name": "Spinach",
+                "quantity": 20,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "handful"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "44387084-049d-4b56-b64f-7f58bef87e86",
+                "name": "Mushrooms",
+                "quantity": 37.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 40,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "9f9e4847-5a4a-4e59-804a-4b65b71ef2f4",
+                "name": "Onion",
+                "quantity": 0.25,
+                "unit": "piece",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "piece"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e63eba5d-25ae-4b84-97c0-121dabb677cf",
+                "name": "Tomato",
+                "quantity": 37.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 40,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 2.5,
+                "unit": "ml",
+                "display": {
+                  "quantity": 3,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                "name": "Paprika",
+                "quantity": 0.75,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.25,
+                  "unit": "tsp"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "d50b0ac8-e615-4365-9c23-aa0dc7527768",
+                "name": "Salt",
+                "quantity": 0.75,
+                "unit": "g",
+                "display": {
+                  "quantity": 2,
+                  "unit": "pinch"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "2c47a7eb-1c82-473f-9289-9116ecd5a98f",
+                "name": "Black pepper",
+                "quantity": 0.25,
+                "unit": "g",
+                "display": {
+                  "quantity": 2,
+                  "unit": "pinch"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e74be214-bdf2-46f6-9035-82d2b94f5a0b",
+                "name": "Parsley",
+                "quantity": 2.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 3,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "3f9abfc2-c4f4-42f7-840f-ac347da1dba2",
+                "name": "Pumpkin seeds",
+                "quantity": 5,
+                "unit": "g",
+                "display": {
+                  "quantity": 5,
+                  "unit": "g"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 0.75,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 395,
+              "protein": 23,
+              "fat": 14,
+              "carbs": 50
+            }
+          },
+          {
+            "id": "a1ba11f3-ff4c-430a-bbeb-7004493a7440",
+            "mealType": "lunch",
+            "recipe": {
+              "id": "7d8ea3df-8720-44a9-b4bc-396125c35c82",
+              "title": "Garlic tofu with brown rice and zucchini",
+              "description": "Golden garlic tofu, tender zucchini and nutty brown rice come together in a simple skillet meal.",
+              "servings": 2,
+              "mealTypes": [
+                "lunch",
+                "dinner"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                  "name": "Tofu",
+                  "quantity": 300,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 300,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "c8e78486-3f52-4813-8d7f-b4f405d08da2",
+                  "name": "Brown rice",
+                  "quantity": 120,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 120,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "fd2a95a7-0123-42cb-8c4d-53d79c6836bd",
+                  "name": "Zucchini",
+                  "quantity": 250,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 250,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "513adc12-c3f1-4780-aa8e-d9cf1c28a8b0",
+                  "name": "Garlic",
+                  "quantity": 2,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 2,
+                    "unit": "clove"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 10,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "ml"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Rinse the brown rice and simmer it in water until tender.",
+                "Cut the tofu into cubes, slice the zucchini and mince the garlic.",
+                "Warm the olive oil in a skillet and cook the tofu until golden on the edges.",
+                "Add the zucchini and garlic, then cook until the zucchini is tender.",
+                "Serve the tofu and zucchini over the brown rice."
+              ],
+              "prepMinutes": 8,
+              "cookMinutes": 20,
+              "difficulty": "easy",
+              "cuisine": null,
+              "allergens": [
+                "soy"
+              ],
+              "nutritionPerServing": {
+                "calories": 505,
+                "protein": 32,
+                "fat": 20,
+                "carbs": 55
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+                "name": "Tofu",
+                "quantity": 187.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 190,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "c8e78486-3f52-4813-8d7f-b4f405d08da2",
+                "name": "Brown rice",
+                "quantity": 75,
+                "unit": "g",
+                "display": {
+                  "quantity": 75,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "fd2a95a7-0123-42cb-8c4d-53d79c6836bd",
+                "name": "Zucchini",
+                "quantity": 156.25,
+                "unit": "g",
+                "display": {
+                  "quantity": 155,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "513adc12-c3f1-4780-aa8e-d9cf1c28a8b0",
+                "name": "Garlic",
+                "quantity": 1.25,
+                "unit": "piece",
+                "display": {
+                  "quantity": 1.5,
+                  "unit": "clove"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 6.25,
+                "unit": "ml",
+                "display": {
+                  "quantity": 6,
+                  "unit": "ml"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1.25,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 631,
+              "protein": 40,
+              "fat": 25,
+              "carbs": 69
+            }
+          },
+          {
+            "id": "d3550e66-5298-4f5d-960c-16977684f9c3",
+            "mealType": "snack",
+            "recipe": {
+              "id": "18352ba1-fe41-4d9e-b99d-53efc0c57116",
+              "title": "Paprika-roasted chickpeas with carrot sticks",
+              "description": "Crisp, warmly spiced chickpeas make a simple match for fresh carrot sticks.",
+              "servings": 1,
+              "mealTypes": [
+                "snack",
+                "second_breakfast"
+              ],
+              "dietTags": [
+                "vegetarian",
+                "vegan",
+                "mediterranean"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                  "name": "Chickpeas",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "9ecba9f7-f60e-49da-a4c9-363bb86ca8e9",
+                  "name": "Carrot",
+                  "quantity": 70,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 70,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 4,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 4,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                  "name": "Paprika",
+                  "quantity": 1,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 0.5,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Heat the oven to 200°C.",
+                "Drain and dry the chickpeas, then toss them with the olive oil and paprika.",
+                "Roast the chickpeas for 20 minutes, shaking the tray once.",
+                "Cut the carrot into sticks and serve with the roasted chickpeas."
+              ],
+              "prepMinutes": 8,
+              "cookMinutes": 20,
+              "difficulty": "easy",
+              "cuisine": null,
+              "allergens": [],
+              "nutritionPerServing": {
+                "calories": 203,
+                "protein": 8,
+                "fat": 7,
+                "carbs": 30
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+                "name": "Chickpeas",
+                "quantity": 75,
+                "unit": "g",
+                "display": {
+                  "quantity": 75,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "9ecba9f7-f60e-49da-a4c9-363bb86ca8e9",
+                "name": "Carrot",
+                "quantity": 52.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 55,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 3,
+                "unit": "ml",
+                "display": {
+                  "quantity": 3,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                "name": "Paprika",
+                "quantity": 0.75,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.25,
+                  "unit": "tsp"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 0.75,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 152,
+              "protein": 6,
+              "fat": 5,
+              "carbs": 23
+            }
+          },
+          {
+            "id": "e21b4c0c-c02f-49d8-8c31-60c68587d6e1",
+            "mealType": "dinner",
+            "recipe": {
+              "id": "c5e87131-1353-43bb-8aca-5debb51cc0b1",
+              "title": "Roasted turkey with buckwheat, vegetables, and pumpkin seeds",
+              "description": "Paprika-roasted turkey and vegetables are served with buckwheat and a crunchy pumpkin-seed finish.",
+              "servings": 2,
+              "mealTypes": [
+                "lunch",
+                "dinner"
+              ],
+              "dietTags": [
+                "mediterranean"
+              ],
+              "ingredients": [
+                {
+                  "ingredientId": "929ea5f4-10b6-4d7c-84c3-60f0cbe9deca",
+                  "name": "Turkey breast",
+                  "quantity": 300,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 300,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "940236ac-ed38-44e9-a99e-7a8e41df84ef",
+                  "name": "Buckwheat groats",
+                  "quantity": 70,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 70,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "fd2a95a7-0123-42cb-8c4d-53d79c6836bd",
+                  "name": "Zucchini",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "44387084-049d-4b56-b64f-7f58bef87e86",
+                  "name": "Mushrooms",
+                  "quantity": 100,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 100,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "98e598ad-19cb-4701-94d5-a595ebc092b4",
+                  "name": "Bell pepper",
+                  "quantity": 80,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 80,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "9f9e4847-5a4a-4e59-804a-4b65b71ef2f4",
+                  "name": "Onion",
+                  "quantity": 50,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 0.5,
+                    "unit": "piece"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "513adc12-c3f1-4780-aa8e-d9cf1c28a8b0",
+                  "name": "Garlic",
+                  "quantity": 1,
+                  "unit": "piece",
+                  "display": {
+                    "quantity": 1,
+                    "unit": "clove"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                  "name": "Paprika",
+                  "quantity": 3,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 1.5,
+                    "unit": "tsp"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                  "name": "Olive oil",
+                  "quantity": 20,
+                  "unit": "ml",
+                  "display": {
+                    "quantity": 20,
+                    "unit": "ml"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "3f9abfc2-c4f4-42f7-840f-ac347da1dba2",
+                  "name": "Pumpkin seeds",
+                  "quantity": 15,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 15,
+                    "unit": "g"
+                  },
+                  "note": null
+                },
+                {
+                  "ingredientId": "e74be214-bdf2-46f6-9035-82d2b94f5a0b",
+                  "name": "Parsley",
+                  "quantity": 10,
+                  "unit": "g",
+                  "display": {
+                    "quantity": 10,
+                    "unit": "g"
+                  },
+                  "note": null
+                }
+              ],
+              "steps": [
+                "Heat the oven to 200°C.",
+                "Rinse the buckwheat and simmer it in water until tender, about 15 minutes.",
+                "Cut the turkey, zucchini, and bell pepper into bite-sized pieces, and halve the mushrooms.",
+                "Slice the onion and mince the garlic.",
+                "Toss the turkey and vegetables with the olive oil and paprika, then spread them on a baking tray.",
+                "Roast for 20–25 minutes, turning once, until the turkey is cooked through and the vegetables are tender.",
+                "Toast the pumpkin seeds in a dry skillet until fragrant.",
+                "Chop the parsley and fold it through the cooked buckwheat.",
+                "Serve the roasted turkey and vegetables over the buckwheat, topped with pumpkin seeds."
+              ],
+              "prepMinutes": 20,
+              "cookMinutes": 35,
+              "difficulty": "medium",
+              "cuisine": null,
+              "allergens": [],
+              "nutritionPerServing": {
+                "calories": 466,
+                "protein": 45,
+                "fat": 18,
+                "carbs": 37
+              },
+              "origin": "seed",
+              "byModel": null,
+              "source": null
+            },
+            "ingredients": [
+              {
+                "ingredientId": "929ea5f4-10b6-4d7c-84c3-60f0cbe9deca",
+                "name": "Turkey breast",
+                "quantity": 150,
+                "unit": "g",
+                "display": {
+                  "quantity": 150,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "940236ac-ed38-44e9-a99e-7a8e41df84ef",
+                "name": "Buckwheat groats",
+                "quantity": 35,
+                "unit": "g",
+                "display": {
+                  "quantity": 35,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "fd2a95a7-0123-42cb-8c4d-53d79c6836bd",
+                "name": "Zucchini",
+                "quantity": 50,
+                "unit": "g",
+                "display": {
+                  "quantity": 50,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "44387084-049d-4b56-b64f-7f58bef87e86",
+                "name": "Mushrooms",
+                "quantity": 50,
+                "unit": "g",
+                "display": {
+                  "quantity": 50,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "98e598ad-19cb-4701-94d5-a595ebc092b4",
+                "name": "Bell pepper",
+                "quantity": 40,
+                "unit": "g",
+                "display": {
+                  "quantity": 40,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "9f9e4847-5a4a-4e59-804a-4b65b71ef2f4",
+                "name": "Onion",
+                "quantity": 25,
+                "unit": "g",
+                "display": {
+                  "quantity": 25,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "513adc12-c3f1-4780-aa8e-d9cf1c28a8b0",
+                "name": "Garlic",
+                "quantity": 0.5,
+                "unit": "piece",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "clove"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "7cdc0508-dc85-4653-b0ea-06f3ef332e61",
+                "name": "Paprika",
+                "quantity": 1.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 0.5,
+                  "unit": "tsp"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "0768cdda-fa73-4985-b4aa-c7a7315f3e39",
+                "name": "Olive oil",
+                "quantity": 10,
+                "unit": "ml",
+                "display": {
+                  "quantity": 10,
+                  "unit": "ml"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "3f9abfc2-c4f4-42f7-840f-ac347da1dba2",
+                "name": "Pumpkin seeds",
+                "quantity": 7.5,
+                "unit": "g",
+                "display": {
+                  "quantity": 8,
+                  "unit": "g"
+                },
+                "note": null
+              },
+              {
+                "ingredientId": "e74be214-bdf2-46f6-9035-82d2b94f5a0b",
+                "name": "Parsley",
+                "quantity": 5,
+                "unit": "g",
+                "display": {
+                  "quantity": 5,
+                  "unit": "g"
+                },
+                "note": null
+              }
+            ],
+            "source": "CATALOGUE",
+            "customName": null,
+            "servings": 1,
+            "quantityScale": 1,
+            "eatenAt": null,
+            "dietOverride": false,
+            "restrictionConflicts": [],
+            "dislikedIngredientIds": [],
+            "modelPick": null,
+            "cookAhead": null,
+            "nutrition": {
+              "calories": 466,
+              "protein": 45,
+              "fat": 18,
+              "carbs": 37
+            }
+          }
+        ],
+        "dayNutrition": {
+          "calories": 1644,
+          "protein": 114,
+          "fat": 62,
+          "carbs": 179
+        },
+        "diary": null,
+        "calorieTarget": 1650,
+        "targetMacros": {
+          "protein": 103,
+          "fat": 55,
+          "carbs": 186
+        },
+        "calorieDelta": -6,
+        "offTarget": null,
+        "skipped": false,
+        "belowSafetyFloor": false,
+        "overrides": null,
+        "mealCount": 4
+      }
+    ],
+    "averageDailyNutrition": {
+      "calories": 1396,
+      "protein": 86,
+      "fat": 53,
+      "carbs": 159
+    },
+    "targetMacros": {
+      "protein": 103,
+      "fat": 55,
+      "carbs": 186
+    },
+    "ingredientReuseScore": 0.7692307692307693,
+    "packs": {
+      "bought": 2450,
+      "used": 1361.25,
+      "open": [
+        {
+          "ingredientId": "f07698f4-1f07-4d80-ba33-07d219c16db9",
+          "name": "Rye bread",
+          "unit": "g",
+          "packSize": 500,
+          "packs": 1,
+          "left": 400,
+          "wasted": true
+        },
+        {
+          "ingredientId": "44387084-049d-4b56-b64f-7f58bef87e86",
+          "name": "Mushrooms",
+          "unit": "g",
+          "packSize": 250,
+          "packs": 1,
+          "left": 163,
+          "wasted": true
+        },
+        {
+          "ingredientId": "ef561e12-252d-4f39-bd26-f2ee1245a5e1",
+          "name": "Tofu",
+          "unit": "g",
+          "packSize": 300,
+          "packs": 2,
+          "left": 133,
+          "wasted": true
+        },
+        {
+          "ingredientId": "929ea5f4-10b6-4d7c-84c3-60f0cbe9deca",
+          "name": "Turkey breast",
+          "unit": "g",
+          "packSize": 500,
+          "packs": 1,
+          "left": 219,
+          "wasted": true
+        },
+        {
+          "ingredientId": "d69acad7-394d-4b73-938c-7d426b3e0f35",
+          "name": "Spinach",
+          "unit": "g",
+          "packSize": 200,
+          "packs": 1,
+          "left": 76,
+          "wasted": true
+        },
+        {
+          "ingredientId": "92476a99-abcb-49b3-97b0-cd9079f0c678",
+          "name": "Chickpeas",
+          "unit": "g",
+          "packSize": 400,
+          "packs": 1,
+          "left": 99,
+          "wasted": true
+        }
+      ]
+    },
+    "generationMode": "deterministic",
+    "options": {
+      "dietType": null,
+      "mealCount": null,
+      "calorieTargetOverride": null,
+      "mealPrepFriendly": false,
+      "respectExclusions": true,
+      "respectFavorites": true,
+      "respectInventory": true,
+      "maxRepeatsPerRecipe": null,
+      "allowRelaxations": []
+    },
+    "report": {
+      "relaxations": [],
+      "singleCandidate": [],
+      "pantry": "empty"
+    },
+    "revision": 2,
+    "createdAt": "2026-10-31T11:57:12.586Z"
+  },
+  "rebalance": {
+    "scope": "day",
+    "feasibility": "best-effort",
+    "changes": [],
+    "unabsorbedKcal": 0,
+    "macrosBefore": {
+      "calories": 2462.5,
+      "protein": 128,
+      "fat": 94,
+      "carbs": 280.25
+    },
+    "macrosAfter": {
+      "calories": 2462.5,
+      "protein": 128,
+      "fat": 94,
+      "carbs": 280.25
+    }
+  }
+}

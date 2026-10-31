@@ -86,4 +86,24 @@ class RequestJsonTest {
         assertEquals(setOf("email", "password"), written(LoginRequest("ala@example.test", "A-long-password-1")).keys)
         assertEquals(setOf("allergens"), written(ProfilePreferencesPatchDto(allergens = listOf("gluten"))).keys)
     }
+
+    @Test
+    fun `an entry of a diary sends what its kind takes, and nothing of the others`() {
+        val place = CreateDiaryEntryRequest("p", "2026-10-31", "lunch", "recipe", recipeId = "r", servings = 1.5)
+        assertEquals(setOf("profileId", "date", "mealType", "kind", "recipeId", "servings"), written(place).keys)
+
+        val ingredient = written(CreateDiaryEntryRequest("p", "2026-10-31", "lunch", "ingredient", ingredientId = "i", amount = DiaryAmountRequest(2.0, "piece")))
+        assertEquals(setOf("profileId", "date", "mealType", "kind", "ingredientId", "amount"), ingredient.keys)
+
+        val meal = written(CreateDiaryEntryRequest("p", "2026-10-31", "lunch", "meal", name = "Soup", servings = 2.0, nutrition = DiaryMealNutritionDto(300.0)))
+        assertEquals(setOf("profileId", "date", "mealType", "kind", "name", "servings", "nutrition"), meal.keys)
+        // A macronutrient left out is one the API estimates: it is not sent at all, not sent as nothing.
+        assertEquals(setOf("calories"), meal.getValue("nutrition").jsonObject.keys)
+    }
+
+    @Test
+    fun `a change of an entry sends what changes, and nothing else`() {
+        assertEquals(setOf("quantity"), written(UpdateDiaryEntryRequest(quantity = 300.0)).keys)
+        assertEquals(setOf("mealType"), written(UpdateDiaryEntryRequest(mealType = "dinner")).keys)
+    }
 }

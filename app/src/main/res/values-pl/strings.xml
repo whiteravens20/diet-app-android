@@ -1582,4 +1582,8 @@
     <string name="notifications_weight_first">Dodaj pierwszy wpis wagi, aby uruchomić wykres trendu.</string>
     <string name="notifications_preferences_review">Części składników lub przepisów, które były u Ciebie oznaczone, nie ma już w katalogu. Sprawdź unikane i ulubione składniki oraz zestawy ulubionych.</string>
     <string name="notifications_unknown">Powiadomienie, którego ta wersja aplikacji nie umie pokazać.</string>
+    <!-- The diary -->
+    <string name="change_kind_diary_added">nowy wpis w dzienniku (%1$s)</string>
+    <string name="change_kind_diary_changed">zmiana wpisu w dzienniku</string>
+    <string name="change_kind_diary_removed">usunięcie wpisu z dziennika</string>
 </resources>

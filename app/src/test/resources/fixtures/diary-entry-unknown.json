@@ -1,0 +1,5 @@
+{
+  "statusCode": 404,
+  "error": "DIARY_ENTRY_NOT_FOUND",
+  "message": "Diary entry not found."
+}

@@ -1,0 +1,194 @@
+{
+  "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+  "date": "2026-10-31",
+  "target": {
+    "calories": 1650,
+    "protein": 103,
+    "fat": 55,
+    "carbs": 186,
+    "from": "plan"
+  },
+  "plan": {
+    "id": "5989d1d5-4db2-4d1e-88b0-ca11e4a173a8",
+    "skipped": false,
+    "meals": [
+      {
+        "id": "164d7048-8600-4f8b-8bc3-09b6909da94a",
+        "mealType": "breakfast",
+        "name": "Millet breakfast bowl with edamame and spinach",
+        "recipeId": "f9b8875d-f310-41a1-a0ca-f9ff5722c19b",
+        "eaten": true,
+        "nutrition": {
+          "calories": 448,
+          "protein": 23,
+          "fat": 18,
+          "carbs": 54
+        }
+      },
+      {
+        "id": "819dc1a4-da11-4d14-888f-593a08bbd6ff",
+        "mealType": "lunch",
+        "name": "Chickpea & tomato stew",
+        "recipeId": "f18b70da-79d9-43fd-b33f-663d58741504",
+        "eaten": false,
+        "nutrition": {
+          "calories": 160,
+          "protein": 7,
+          "fat": 6,
+          "carbs": 23
+        }
+      },
+      {
+        "id": "e187a41c-b1b5-4b4d-8ab3-6c156dd128f5",
+        "mealType": "snack",
+        "name": "Hummus-style chickpea snack bowl",
+        "recipeId": "146ae561-f9a0-486e-8d61-87eec75d86b5",
+        "eaten": false,
+        "nutrition": {
+          "calories": 156,
+          "protein": 6,
+          "fat": 7,
+          "carbs": 19
+        }
+      },
+      {
+        "id": "8469c409-8feb-4bd9-9f57-b1b1dd2e86b4",
+        "mealType": "dinner",
+        "name": "Quinoa with tofu, tomato, and spinach",
+        "recipeId": "e20ada78-de04-4e92-a071-bea21b0a43e5",
+        "eaten": false,
+        "nutrition": {
+          "calories": 146,
+          "protein": 9,
+          "fat": 5,
+          "carbs": 18
+        }
+      }
+    ],
+    "calorieDelta": 805,
+    "offTarget": "over"
+  },
+  "entries": [
+    {
+      "id": "73817da3-70da-4e41-af0d-900fac86d974",
+      "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+      "date": "2026-10-31",
+      "mealType": "breakfast",
+      "kind": "recipe",
+      "name": "Apple oat chia bites with peanut butter",
+      "recipeId": "7af9742f-7241-42cf-8560-341bc9f3fcc9",
+      "ingredientId": null,
+      "servings": 1.5,
+      "amount": null,
+      "nutrition": {
+        "calories": 339,
+        "protein": 11,
+        "fat": 14,
+        "carbs": 47
+      },
+      "estimated": false,
+      "createdAt": "2026-10-31T11:57:12.691Z"
+    },
+    {
+      "id": "362d305c-dbfa-4add-9dde-20a1d2e83f62",
+      "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+      "date": "2026-10-31",
+      "mealType": "second_breakfast",
+      "kind": "ingredient",
+      "name": "Large egg",
+      "recipeId": null,
+      "ingredientId": "e9619d75-0b2c-4687-9efe-b2048726f195",
+      "servings": null,
+      "amount": {
+        "quantity": 2,
+        "unit": "piece",
+        "shown": {
+          "quantity": 2,
+          "unit": "piece"
+        }
+      },
+      "nutrition": {
+        "calories": 157,
+        "protein": 14,
+        "fat": 10,
+        "carbs": 1
+      },
+      "estimated": false,
+      "createdAt": "2026-10-31T11:57:12.723Z"
+    },
+    {
+      "id": "b3a37012-bf77-4070-b85f-9e9e254ce851",
+      "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+      "date": "2026-10-31",
+      "mealType": "snack",
+      "kind": "ingredient",
+      "name": "Almond milk, unsweetened, plain, refrigerated",
+      "recipeId": null,
+      "ingredientId": "91997402-b622-4d16-9d0c-82eab2e5d929",
+      "servings": null,
+      "amount": {
+        "quantity": 250,
+        "unit": "g",
+        "shown": {
+          "quantity": 250,
+          "unit": "g"
+        }
+      },
+      "nutrition": {
+        "calories": 48,
+        "protein": 2,
+        "fat": 4,
+        "carbs": 2
+      },
+      "estimated": false,
+      "createdAt": "2026-10-31T11:57:12.748Z"
+    },
+    {
+      "id": "4e84a170-1007-4349-8799-4db2948b7992",
+      "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+      "date": "2026-10-31",
+      "mealType": "dinner",
+      "kind": "meal",
+      "name": "Grandma's soup",
+      "recipeId": null,
+      "ingredientId": null,
+      "servings": 2,
+      "amount": null,
+      "nutrition": {
+        "calories": 600,
+        "protein": 38,
+        "fat": 20,
+        "carbs": 68
+      },
+      "estimated": true,
+      "createdAt": "2026-10-31T11:57:12.772Z"
+    },
+    {
+      "id": "0986775e-212f-467a-bbca-a9d324a460f1",
+      "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+      "date": "2026-10-31",
+      "mealType": "lunch",
+      "kind": "meal",
+      "name": "A sandwich",
+      "recipeId": null,
+      "ingredientId": null,
+      "servings": 1,
+      "amount": null,
+      "nutrition": {
+        "calories": 400,
+        "protein": 20,
+        "fat": 10,
+        "carbs": 50
+      },
+      "estimated": false,
+      "createdAt": "2026-10-31T11:57:12.795Z"
+    }
+  ],
+  "eaten": {
+    "calories": 1993,
+    "protein": 107,
+    "fat": 76,
+    "carbs": 221
+  },
+  "estimated": true
+}

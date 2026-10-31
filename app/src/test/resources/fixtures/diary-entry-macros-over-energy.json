@@ -1,0 +1,5 @@
+{
+  "statusCode": 400,
+  "error": "DIARY_MACROS_OVER_ENERGY",
+  "message": "The protein, fat and carbohydrate given hold more energy than the calories given."
+}

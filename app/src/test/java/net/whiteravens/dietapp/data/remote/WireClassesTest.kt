@@ -57,6 +57,24 @@ class WireClassesTest {
     }
 
     @Test
+    fun `reads a day of a diary, its entries, a copy, and a plan and the ways of a day that count them`() {
+        assertEquals(emptyList<DiaryEntryDto>(), read<DiaryDayDto>("diary-day-empty").entries)
+        val day = read<DiaryDayDto>("diary-day")
+        assertEquals(5, day.entries.size)
+        assertEquals("plan", day.target.from)
+        read<DiaryEntryDto>("diary-entry-recipe")
+        read<DiaryEntryDto>("diary-entry-pieces")
+        read<DiaryEntryDto>("diary-entry-meal")
+        read<DiaryEntryDto>("diary-entry-estimated")
+        read<DiaryEntryDto>("diary-entry-changed")
+        assertEquals(6, read<DiaryCopyResultDto>("diary-copy").copied)
+        assertEquals(0, read<DiaryCopyResultDto>("diary-copy-nothing").copied)
+        assertEquals(5, read<MealPlanDto>("meal-plan-with-diary").days.first().diary?.entries)
+        assertEquals(1554.0, read<DayVariationsDto>("day-ways-with-diary").diary?.calories)
+        read<RebalanceResultDto>("rebalance-day-resized")
+    }
+
+    @Test
     fun `reads what the recipe library answers`() {
         assertTrue(read<RecipeSearchPageDto>("recipes").items.isNotEmpty())
         read<RecipeSearchPageDto>("recipes-search")

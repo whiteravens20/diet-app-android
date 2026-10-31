@@ -1,0 +1,158 @@
+{
+  "copied": 6,
+  "day": {
+    "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+    "date": "2026-10-30",
+    "target": {
+      "calories": 1649,
+      "protein": 103,
+      "fat": 55,
+      "carbs": 186,
+      "from": "profile"
+    },
+    "plan": null,
+    "entries": [
+      {
+        "id": "424239b9-d0a1-44c6-ae79-d8cd06bac11a",
+        "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+        "date": "2026-10-30",
+        "mealType": "breakfast",
+        "kind": "recipe",
+        "name": "Millet breakfast bowl with edamame and spinach",
+        "recipeId": "f9b8875d-f310-41a1-a0ca-f9ff5722c19b",
+        "ingredientId": null,
+        "servings": 1.25,
+        "amount": null,
+        "nutrition": {
+          "calories": 448,
+          "protein": 23,
+          "fat": 18,
+          "carbs": 54
+        },
+        "estimated": false,
+        "createdAt": "2026-10-31T11:57:12.899Z"
+      },
+      {
+        "id": "859ba921-1ecd-4990-b300-b741e07e5be0",
+        "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+        "date": "2026-10-30",
+        "mealType": "breakfast",
+        "kind": "recipe",
+        "name": "Apple oat chia bites with peanut butter",
+        "recipeId": "7af9742f-7241-42cf-8560-341bc9f3fcc9",
+        "ingredientId": null,
+        "servings": 1.5,
+        "amount": null,
+        "nutrition": {
+          "calories": 339,
+          "protein": 11,
+          "fat": 14,
+          "carbs": 47
+        },
+        "estimated": false,
+        "createdAt": "2026-10-31T11:57:12.900Z"
+      },
+      {
+        "id": "de325af0-aff1-48a0-a4b6-0d8fecbc28e4",
+        "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+        "date": "2026-10-30",
+        "mealType": "second_breakfast",
+        "kind": "ingredient",
+        "name": "Large egg",
+        "recipeId": null,
+        "ingredientId": "e9619d75-0b2c-4687-9efe-b2048726f195",
+        "servings": null,
+        "amount": {
+          "quantity": 2,
+          "unit": "piece",
+          "shown": {
+            "quantity": 2,
+            "unit": "piece"
+          }
+        },
+        "nutrition": {
+          "calories": 157,
+          "protein": 14,
+          "fat": 10,
+          "carbs": 1
+        },
+        "estimated": false,
+        "createdAt": "2026-10-31T11:57:12.901Z"
+      },
+      {
+        "id": "e149ddf4-f64b-47de-abee-32b2e5f349f4",
+        "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+        "date": "2026-10-30",
+        "mealType": "lunch",
+        "kind": "ingredient",
+        "name": "Almond milk, unsweetened, plain, refrigerated",
+        "recipeId": null,
+        "ingredientId": "91997402-b622-4d16-9d0c-82eab2e5d929",
+        "servings": null,
+        "amount": {
+          "quantity": 300,
+          "unit": "g",
+          "shown": {
+            "quantity": 300,
+            "unit": "g"
+          }
+        },
+        "nutrition": {
+          "calories": 58,
+          "protein": 2,
+          "fat": 5,
+          "carbs": 2
+        },
+        "estimated": false,
+        "createdAt": "2026-10-31T11:57:12.902Z"
+      },
+      {
+        "id": "73ed61a0-a89a-4a13-baad-108cd8e14515",
+        "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+        "date": "2026-10-30",
+        "mealType": "dinner",
+        "kind": "meal",
+        "name": "Grandma's soup",
+        "recipeId": null,
+        "ingredientId": null,
+        "servings": 2,
+        "amount": null,
+        "nutrition": {
+          "calories": 600,
+          "protein": 38,
+          "fat": 20,
+          "carbs": 68
+        },
+        "estimated": true,
+        "createdAt": "2026-10-31T11:57:12.903Z"
+      },
+      {
+        "id": "0244d5df-26d0-43b8-8ec0-4aa469925e20",
+        "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+        "date": "2026-10-30",
+        "mealType": "lunch",
+        "kind": "meal",
+        "name": "A sandwich",
+        "recipeId": null,
+        "ingredientId": null,
+        "servings": 1,
+        "amount": null,
+        "nutrition": {
+          "calories": 400,
+          "protein": 20,
+          "fat": 10,
+          "carbs": 50
+        },
+        "estimated": false,
+        "createdAt": "2026-10-31T11:57:12.904Z"
+      }
+    ],
+    "eaten": {
+      "calories": 2002,
+      "protein": 107,
+      "fat": 76,
+      "carbs": 221
+    },
+    "estimated": true
+  }
+}

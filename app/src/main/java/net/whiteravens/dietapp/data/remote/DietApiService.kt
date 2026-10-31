@@ -195,6 +195,28 @@ interface DietApiService {
 
     // ── Pantry ──────────────────────────────────────────────────────────────
 
+    // ── Diary ───────────────────────────────────────────────────────────────
+
+    /** A day of a profile's diary: the entries written for it, the plan's meals, and what was eaten against its target. */
+    @GET("diary/day")
+    suspend fun diaryDay(@Query("profileId") profileId: String, @Query("date") date: String): DiaryDayDto
+
+    /** Writes an entry; sent again with the same [key], it is answered with the entry the first request wrote. */
+    @POST("diary/entries")
+    suspend fun addDiaryEntry(@Header("Idempotency-Key") key: String?, @Body body: CreateDiaryEntryRequest): DiaryEntryDto
+
+    /** Changes an entry: its meal, or how much of it there was, which changes its figures in proportion. */
+    @PATCH("diary/entries/{id}")
+    suspend fun changeDiaryEntry(@Path("id") id: String, @Body body: UpdateDiaryEntryRequest): DiaryEntryDto
+
+    /** Removes an entry; answered 204, or 404 `DIARY_ENTRY_NOT_FOUND`. */
+    @DELETE("diary/entries/{id}")
+    suspend fun removeDiaryEntry(@Path("id") id: String)
+
+    /** Copies what was eaten on one day into another; sent again with the same [key], it copies nothing. */
+    @POST("diary/copy")
+    suspend fun copyDiaryDay(@Header("Idempotency-Key") key: String?, @Body body: CopyDiaryDayRequest): DiaryCopyResultDto
+
     /** What a profile's pantry holds, in the order of the ingredients' English names, then of their units. */
     @GET("inventory")
     suspend fun pantry(@Query("profileId") profileId: String): List<InventoryItemDto>

@@ -1,0 +1,20 @@
+{
+  "id": "73817da3-70da-4e41-af0d-900fac86d974",
+  "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+  "date": "2026-10-31",
+  "mealType": "breakfast",
+  "kind": "recipe",
+  "name": "Apple oat chia bites with peanut butter",
+  "recipeId": "7af9742f-7241-42cf-8560-341bc9f3fcc9",
+  "ingredientId": null,
+  "servings": 1.5,
+  "amount": null,
+  "nutrition": {
+    "calories": 339,
+    "protein": 11,
+    "fat": 14,
+    "carbs": 47
+  },
+  "estimated": false,
+  "createdAt": "2026-10-31T11:57:12.691Z"
+}

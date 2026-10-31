@@ -1,0 +1,27 @@
+{
+  "id": "b3a37012-bf77-4070-b85f-9e9e254ce851",
+  "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+  "date": "2026-10-31",
+  "mealType": "lunch",
+  "kind": "ingredient",
+  "name": "Almond milk, unsweetened, plain, refrigerated",
+  "recipeId": null,
+  "ingredientId": "91997402-b622-4d16-9d0c-82eab2e5d929",
+  "servings": null,
+  "amount": {
+    "quantity": 300,
+    "unit": "g",
+    "shown": {
+      "quantity": 300,
+      "unit": "g"
+    }
+  },
+  "nutrition": {
+    "calories": 58,
+    "protein": 2,
+    "fat": 5,
+    "carbs": 2
+  },
+  "estimated": false,
+  "createdAt": "2026-10-31T11:57:12.748Z"
+}

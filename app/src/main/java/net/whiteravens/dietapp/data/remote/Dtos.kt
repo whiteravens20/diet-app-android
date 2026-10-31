@@ -669,6 +669,8 @@ data class IngredientDto(
     val category: String,
     /** `g` | `ml` | `piece`. */
     val canonicalUnit: String,
+    /** What 100 of [canonicalUnit] hold, in kcal. */
+    val caloriesPer100: Double? = null,
     /** The grams a piece of it weighs, where a piece has a weight. */
     val gramsPerPiece: Double? = null,
     /** The grams a millilitre of it weighs, where it is weighed and measured both. */
@@ -962,7 +964,13 @@ data class MealPlanDayDto(
     val overrides: MealPlanDayOverridesDto? = null,
     /** How many meals the day is set for; none from an instance whose days have no settings to change. */
     val mealCount: Int? = null,
+    /** What the diary adds to the day, counted in [dayNutrition]; null where nothing is written for it. */
+    val diary: DayDiaryDto? = null,
 )
+
+/** What the diary adds to a day of a plan: how many entries, and what they come to. */
+@Serializable
+data class DayDiaryDto(val entries: Int, val nutrition: NutritionDto)
 
 /** The settings of a day of a running plan, as POST `.../settings/preview` and PUT `.../settings` take them. */
 @Serializable
@@ -1447,6 +1455,8 @@ data class DayVariationsDto(
     val variations: List<DayVariationDto>,
     /** Who put them in order, or why the engine's order stands; null when no model was asked. */
     val aiMeta: AiGenerationMetaDto? = null,
+    /** What the diary holds for the day, counted as eaten in the figures of each way; null where it holds nothing. */
+    val diary: NutritionDto? = null,
 )
 
 /** A recipe named by its id and title. */
@@ -1627,3 +1637,124 @@ data class UpdateShoppingItemRequest(
     /** What is at home of the row, in the place of what the list took from the pantry. */
     val alreadyHaveQuantity: Double? = null,
 )
+
+// ── Diary (packages/shared/src/diary.ts) ─────────────────────────────────────
+
+/** What a serving of a meal of one's own holds: its energy, and of the macronutrients those that are known. */
+@Serializable
+data class DiaryMealNutritionDto(
+    val calories: Double,
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val carbs: Double? = null,
+)
+
+/** An amount of an ingredient as an entry is written with it. */
+@Serializable
+data class DiaryAmountRequest(val quantity: Double, val unit: String)
+
+/**
+ * POST `/diary/entries`: an entry for a day of a profile's diary, under [mealType]. Of [kind]
+ * `recipe`, with [recipeId] and [servings]; of `ingredient`, with [ingredientId] and [amount]; of
+ * `meal`, with [name], [servings] and [nutrition].
+ */
+@Serializable
+data class CreateDiaryEntryRequest(
+    val profileId: String,
+    val date: String,
+    val mealType: String,
+    val kind: String,
+    val recipeId: String? = null,
+    val servings: Double? = null,
+    val ingredientId: String? = null,
+    val amount: DiaryAmountRequest? = null,
+    val name: String? = null,
+    val nutrition: DiaryMealNutritionDto? = null,
+)
+
+/** PATCH `/diary/entries/:id`: what changes of an entry, nothing else: its meal, and how much of it there was. */
+@Serializable
+data class UpdateDiaryEntryRequest(
+    val mealType: String? = null,
+    val servings: Double? = null,
+    val quantity: Double? = null,
+)
+
+/** POST `/diary/copy`: what was eaten on [from] written into [to]. */
+@Serializable
+data class CopyDiaryDayRequest(val profileId: String, val from: String, val to: String)
+
+/** The amount of an ingredient an entry holds: as it was given, and as it is shown. */
+@Serializable
+data class DiaryAmountDto(val quantity: Double, val unit: String, val shown: DisplayAmountDto)
+
+/** An entry of a diary: its figures were worked out when it was written, and are kept. */
+@Serializable
+data class DiaryEntryDto(
+    val id: String,
+    val mealType: String,
+    /** `recipe` | `ingredient` | `meal`. */
+    val kind: String,
+    val name: String,
+    /** The recipe or the ingredient it is of, while they are there. */
+    val recipeId: String? = null,
+    val ingredientId: String? = null,
+    /** Servings of a recipe or of a meal of one's own; null for an ingredient. */
+    val servings: Double? = null,
+    val amount: DiaryAmountDto? = null,
+    val nutrition: NutritionDto,
+    /** Its macronutrients were estimated: a meal of one's own written by its energy. */
+    val estimated: Boolean,
+)
+
+/** What a day aims at: the target of the plan's day, or the profile's own ([from] `plan` | `profile`). */
+@Serializable
+data class DiaryTargetDto(
+    val calories: Double,
+    val protein: Double,
+    val fat: Double,
+    val carbs: Double,
+    val from: String,
+)
+
+/** A meal of the plan that holds the day, as the diary shows it. */
+@Serializable
+data class DiaryPlanMealDto(
+    val id: String,
+    val mealType: String,
+    val name: String,
+    /** The recipe it is of; null for a meal of one's own. */
+    val recipeId: String? = null,
+    val eaten: Boolean,
+    val nutrition: NutritionDto,
+)
+
+/** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */
+@Serializable
+data class DiaryDayPlanDto(
+    val id: String,
+    val skipped: Boolean,
+    val meals: List<DiaryPlanMealDto>,
+    val calorieDelta: Double,
+    /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
+    val offTarget: String? = null,
+)
+
+/** GET `/diary/day`: a day of a profile's diary. */
+@Serializable
+data class DiaryDayDto(
+    val profileId: String,
+    val date: String,
+    val target: DiaryTargetDto,
+    /** The plan that holds the day; null on a day no plan holds. */
+    val plan: DiaryDayPlanDto? = null,
+    val entries: List<DiaryEntryDto>,
+    /** What was eaten: the plan's meals marked as eaten, and every entry. */
+    val eaten: NutritionDto,
+    /** A figure of what was eaten is estimated. */
+    val estimated: Boolean,
+)
+
+/** What a copy of a day did: how many entries it wrote, and the day as it is now. */
+@Serializable
+data class DiaryCopyResultDto(val copied: Int, val day: DiaryDayDto)

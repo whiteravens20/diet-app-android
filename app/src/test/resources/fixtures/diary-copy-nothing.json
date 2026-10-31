@@ -1,0 +1,23 @@
+{
+  "copied": 0,
+  "day": {
+    "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+    "date": "2026-10-28",
+    "target": {
+      "calories": 1649,
+      "protein": 103,
+      "fat": 55,
+      "carbs": 186,
+      "from": "profile"
+    },
+    "plan": null,
+    "entries": [],
+    "eaten": {
+      "calories": 0,
+      "protein": 0,
+      "fat": 0,
+      "carbs": 0
+    },
+    "estimated": false
+  }
+}

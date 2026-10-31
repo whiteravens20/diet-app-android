@@ -1,0 +1,5 @@
+{
+  "statusCode": 409,
+  "error": "DIARY_DAY_TOO_OLD",
+  "message": "The diary takes a new entry at most a year back."
+}

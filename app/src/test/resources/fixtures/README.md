@@ -1,7 +1,15 @@
 # Answers of a running backend
 
-Each file is what a running diet-app answered one call of this client: `config.json` from API
-0.147.0, captured on 2026-10-29 from an install of 0.139.0 upgraded to the candidate `edge-c924d67`;
+Each file is what a running diet-app answered one call of this client: `diary-day.json` (a recipe,
+two ingredients and two meals of one's own written for a day of a plan, one meal of the plan eaten),
+`diary-day-empty.json`, `diary-entry-recipe.json`, `diary-entry-pieces.json`, `diary-entry-meal.json`,
+`diary-entry-estimated.json` (a meal written by its calories alone), `diary-entry-changed.json`,
+`diary-copy.json`, `diary-copy-nothing.json`, `diary-entry-refused.json`,
+`diary-entry-amount-refused.json`, `diary-entry-macros-over-energy.json`, `diary-day-ahead.json`,
+`diary-day-too-old.json`, `diary-entry-unknown.json`, `diary-unit-not-convertible.json`,
+`meal-plan-with-diary.json`, `day-ways-with-diary.json` and `rebalance-day-resized.json` from API
+0.150.0, captured on 2026-10-31 from a local build of diet-app's `dev` at `0dac8d9c`, whose diary the
+candidate `e26e19d` holds as it is, and `config.json` from the same build;
 `ingredients-search-egg.json`, `ingredients-search-milk.json`, `ingredients-by-ids.json`,
 `pantry.json` (six eggs best before in five days, a litre of milk with no day, three cloves of
 garlic in twenty days and 212.4 g of oats in two hundred), `pantry-row-added.json`,

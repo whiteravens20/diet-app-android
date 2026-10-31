@@ -1,0 +1,20 @@
+{
+  "id": "4e84a170-1007-4349-8799-4db2948b7992",
+  "profileId": "4914e35a-ba92-4295-bf2a-eb8054eca729",
+  "date": "2026-10-31",
+  "mealType": "dinner",
+  "kind": "meal",
+  "name": "Grandma's soup",
+  "recipeId": null,
+  "ingredientId": null,
+  "servings": 2,
+  "amount": null,
+  "nutrition": {
+    "calories": 600,
+    "protein": 38,
+    "fat": 20,
+    "carbs": 68
+  },
+  "estimated": true,
+  "createdAt": "2026-10-31T11:57:12.772Z"
+}

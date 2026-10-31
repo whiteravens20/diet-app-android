@@ -1,0 +1,5 @@
+{
+  "statusCode": 409,
+  "error": "DIARY_DAY_AHEAD",
+  "message": "The diary takes today and the year before it, not a day still to come."
+}
