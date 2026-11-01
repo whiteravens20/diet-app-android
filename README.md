@@ -219,10 +219,9 @@ See [SECURITY.md](SECURITY.md).
 
 ## How the code is written and checked
 
-This app is built using AI coding tools. The tools write most of the code, tests and
-documentation; the maintainer decides what gets built and is responsible for everything
-that is merged. The project relies on checks that anyone can inspect, and before the first
-release is published, a group of human testers will try the release candidate at the
+This app is built using AI coding tools. The maintainer decides what gets built and is
+responsible for everything that is merged. The project relies on checks that anyone can
+inspect, and before the first release is published, a group of human testers will try the release candidate at the
 maintainer's request. The app is in early development: there is no release yet and no
 independent security review.
 
