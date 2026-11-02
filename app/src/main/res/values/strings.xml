@@ -56,6 +56,7 @@
     <string name="server_unsupported">This server\'s version is not supported.</string>
 
     <!-- Auth -->
+    <string name="auth_slogan">Meal planning that actually adds up.</string>
     <string name="auth_sign_in_title">Sign in</string>
     <string name="early_stage_note">Heads up: early development</string>
     <string name="early_stage_title">Heads up — early development</string>

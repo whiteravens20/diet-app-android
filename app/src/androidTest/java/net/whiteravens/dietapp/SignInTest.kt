@@ -27,6 +27,7 @@ class SignInTest {
     @Test
     fun theFirstScreenAsksToSignInAndSaysThatTheAppIsAtAnEarlyStage() {
         screen.waitForText(text(R.string.auth_sign_in_title))
+        screen.onNodeWithText(text(R.string.auth_slogan)).assertIsDisplayed()
         screen.onNodeWithText(text(R.string.early_stage_body)).assertDoesNotExist()
         screen.keepScreenshot("sign-in-first-screen")
 

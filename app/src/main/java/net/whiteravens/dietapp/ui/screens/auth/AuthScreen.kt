@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import net.whiteravens.dietapp.R
@@ -121,7 +122,14 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
         Text(
             stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
+            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+        )
+        Text(
+            stringResource(R.string.auth_slogan),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 24.dp),
         )
         ServerVersionNotice(serverVersion, Modifier.padding(bottom = 16.dp))
         // A newer build, signed in or not: an old one may be what keeps the sign-in from working.

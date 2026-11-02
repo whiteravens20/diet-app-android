@@ -54,6 +54,7 @@
     <string name="server_unsupported">Wersja tego serwera nie jest obsługiwana.</string>
 
     <!-- Auth -->
+    <string name="auth_slogan">Planowanie posiłków, które naprawdę ma sens.</string>
     <string name="auth_sign_in_title">Zaloguj się</string>
     <string name="early_stage_note">Uwaga: wczesny etap rozwoju</string>
     <string name="early_stage_title">Uwaga — wczesny etap rozwoju</string>
