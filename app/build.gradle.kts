@@ -323,8 +323,12 @@ dependencies {
 
     implementation(libs.datastore.preferences)
 
-    // QR codes drawn on the phone, for an authenticator app on another device.
+    // QR codes drawn on the phone, for an authenticator app on another device, and barcodes read on
+    // it: the picture of the camera goes nowhere.
     implementation(libs.zxing.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
 
     // The libraries' licences, listed for the legal notices.
     implementation(libs.aboutlibraries.compose.m3)
