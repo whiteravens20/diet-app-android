@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Asked for when the window that reads a barcode opens; a phone without a camera types the code. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <!-- Asked for when the user turns the phone's notifications on in the account's settings (Android 13 and later). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- A newer build downloaded by the app is handed to the system's installer, which asks the user. -->
