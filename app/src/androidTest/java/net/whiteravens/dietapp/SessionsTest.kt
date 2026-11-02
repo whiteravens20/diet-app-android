@@ -54,7 +54,7 @@ class SessionsTest {
         // Every session, the phone's too, and the phone is back at the sign-in.
         screen.waitForEnabled(text(R.string.account_session_end_all))
         screen.onNodeWithText(text(R.string.account_session_end_all)).performScrollTo().performClick()
-        screen.waitForText(text(R.string.auth_welcome_back))
+        screen.waitForText(text(R.string.auth_sign_in_title))
         screen.waitForTheApi(20_000) { !Instance.stillSignedIn(fresh) }
     }
 }

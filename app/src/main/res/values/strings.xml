@@ -56,7 +56,10 @@
     <string name="server_unsupported">This server\'s version is not supported.</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_back">Welcome back</string>
+    <string name="auth_sign_in_title">Sign in</string>
+    <string name="early_stage_note">Heads up: early development</string>
+    <string name="early_stage_title">Heads up — early development</string>
+    <string name="early_stage_body">This is pre-release software under active development. Things may break, data may be wiped between updates, and it might just blow up in your face. Don\'t rely on it for anything important yet.</string>
     <string name="auth_create_account">Create your account</string>
     <string name="auth_name">Name</string>
     <string name="auth_email">Email</string>

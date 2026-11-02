@@ -54,7 +54,10 @@
     <string name="server_unsupported">Wersja tego serwera nie jest obsługiwana.</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_back">Witaj ponownie</string>
+    <string name="auth_sign_in_title">Zaloguj się</string>
+    <string name="early_stage_note">Uwaga: wczesny etap rozwoju</string>
+    <string name="early_stage_title">Uwaga — wczesny etap rozwoju</string>
+    <string name="early_stage_body">To oprogramowanie przedpremierowe, wciąż intensywnie rozwijane. Coś może przestać działać, dane mogą zostać skasowane między aktualizacjami, a całość może się po prostu posypać. Nie polegaj na nim w ważnych sprawach.</string>
     <string name="auth_create_account">Załóż konto</string>
     <string name="auth_name">Imię</string>
     <string name="auth_email">E-mail</string>

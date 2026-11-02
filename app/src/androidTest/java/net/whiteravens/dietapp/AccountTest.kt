@@ -67,7 +67,7 @@ class AccountTest {
         // The rows of the account's sessions say whose sign-out they are; the account's own button says nothing more.
         screen.onNode(hasText(text(R.string.account_sign_out)) and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
             .performScrollTo().performClick()
-        screen.waitForText(text(R.string.auth_welcome_back))
+        screen.waitForText(text(R.string.auth_sign_in_title))
     }
 
     @Test

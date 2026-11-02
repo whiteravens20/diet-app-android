@@ -17,6 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -128,6 +131,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
         if (server == null) return@Column
         if (serverUrl.isEmpty()) {
             ChooseServerCard(onChoose = { showServerDialog = true })
+            EarlyStageNote()
             return@Column
         }
 
@@ -163,7 +167,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
 
         AppCard(Modifier.fillMaxWidth()) {
             Text(
-                stringResource(if (registerMode) R.string.auth_create_account else R.string.auth_welcome_back),
+                stringResource(if (registerMode) R.string.auth_create_account else R.string.auth_sign_in_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 16.dp),
             )
@@ -262,6 +266,37 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        EarlyStageNote()
+    }
+}
+
+/** That the application is at an early stage, at the foot of the first screen anybody sees: a word that opens what it means, as the web's landing page says it. */
+@Composable
+private fun EarlyStageNote() {
+    var open by rememberSaveable { mutableStateOf(false) }
+    TextButton(onClick = { open = true }) {
+        Icon(
+            Icons.Default.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            stringResource(R.string.early_stage_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier.padding(start = 6.dp),
+        )
+    }
+    if (open) {
+        AlertDialog(
+            onDismissRequest = { open = false },
+            title = { Text(stringResource(R.string.early_stage_title)) },
+            text = { Text(stringResource(R.string.early_stage_body)) },
+            confirmButton = {
+                TextButton(onClick = { open = false }) { Text(stringResource(R.string.common_close)) }
+            },
+        )
     }
 }
 

@@ -57,7 +57,7 @@ class FirstStartTest {
             screen.onNode(hasSetTextAction()).performTextInput(BuildConfig.API_BASE_URL)
             screen.onNodeWithText(text(R.string.common_save)).performClick()
 
-            screen.waitForText(text(R.string.auth_welcome_back))
+            screen.waitForText(text(R.string.auth_sign_in_title))
             screen.signIn(account)
         }
     }

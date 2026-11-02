@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
@@ -262,12 +263,17 @@ fun ComposeTestRule.openAccountSettings(account: Account) {
     waitForText(account.email)
 }
 
+/** The button of the sign-in screen, whose title says the same words. */
+fun ComposeTestRule.pressToSignIn() {
+    onNode(hasText(text(R.string.auth_sign_in_button)) and hasClickAction()).performScrollTo().performClick()
+}
+
 /** Signs [account] in on the sign-in screen, as a person would, and waits for the signed-in shell. */
 fun ComposeTestRule.signIn(account: Account) {
     onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
     onNodeWithText(text(R.string.auth_password)).performTextInput(account.password)
     putKeyboardAway()
-    onNodeWithText(text(R.string.auth_sign_in_button)).performScrollTo().performClick()
+    pressToSignIn()
     waitForTheShell()
 }
 
