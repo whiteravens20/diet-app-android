@@ -325,7 +325,7 @@ class DiaryTest {
         screen.startSignedIn(account)
 
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add)) and hasClickAction()).performClick()
+        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("mleko probne")
         screen.waitForText("Mleko próbne 3,2%, Próbna Marka")
@@ -361,7 +361,7 @@ class DiaryTest {
         screen.startSignedIn(account)
 
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add)) and hasClickAction()).performClick()
+        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
         screen.waitForText(text(R.string.diary_search_recipe))
 
         // A slip of the finger is said at once, and asks nobody.
