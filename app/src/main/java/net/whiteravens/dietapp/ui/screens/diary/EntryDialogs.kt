@@ -25,6 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.MEAL_TYPES
@@ -69,8 +71,9 @@ private fun fieldProblem(
 
 /**
  * The window an entry is added to a day of the diary in, as the web's: a recipe in servings, an
- * ingredient in an amount of a unit it can be given in, or a meal of one's own by its figures, those
- * of the macronutrients left empty estimated by the API. What the entry adds to the day is said before
+ * ingredient in an amount of a unit it can be given in, a product with a barcode where the instance
+ * offers them, or a meal of one's own by its figures, those of the macronutrients left empty estimated
+ * by the API. What the entry adds to the day is said before
  * it is added where the window knows it. What cannot be looked for without a network says so, and
  * leads to what can be written without one.
  */
@@ -78,6 +81,7 @@ private fun fieldProblem(
 @Composable
 internal fun AddEntryDialog(form: EntryForm, state: DiaryViewModel.UiState, viewModel: DiaryViewModel) {
     val problems = form.problems()
+    val rules by viewModel.rules.collectAsStateWithLifecycle()
     // A window over the whole screen: the form is long, and an open keyboard leaves room for little of it.
     ScreenDialog(viewModel::closeWindow) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -89,6 +93,7 @@ internal fun AddEntryDialog(form: EntryForm, state: DiaryViewModel.UiState, view
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     KindChip(EntryKind.RECIPE, R.string.diary_kind_recipe, form, viewModel)
                     KindChip(EntryKind.INGREDIENT, R.string.diary_kind_ingredient, form, viewModel)
+                    if (rules?.productsOffered == true) KindChip(EntryKind.PRODUCT, R.string.diary_kind_product, form, viewModel)
                     KindChip(EntryKind.MEAL, R.string.diary_kind_meal, form, viewModel)
                 }
                 ChoiceField(
@@ -139,6 +144,15 @@ internal fun AddEntryDialog(form: EntryForm, state: DiaryViewModel.UiState, view
                             }
                         }
                     }
+                    EntryKind.PRODUCT -> {
+                        val product = form.product
+                        if (product == null) {
+                            ProductSearch(form, rules?.productLookups == true, viewModel)
+                        } else {
+                            PickedProduct(product, viewModel)
+                            if (product.calories != null) ProductAmount(product, form, fieldProblem(EntryField.PRODUCT_QUANTITY, problems, state), viewModel)
+                        }
+                    }
                     EntryKind.MEAL -> MealFields(form, problems, state, viewModel)
                 }
                 Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
@@ -150,6 +164,8 @@ internal fun AddEntryDialog(form: EntryForm, state: DiaryViewModel.UiState, view
                 val missing = when {
                     form.kind == EntryKind.RECIPE && form.recipe == null -> R.string.diary_pick_recipe_first
                     form.kind == EntryKind.INGREDIENT && form.ingredient == null -> R.string.diary_pick_ingredient_first
+                    form.kind == EntryKind.PRODUCT && form.product == null -> R.string.diary_pick_product_first
+                    form.kind == EntryKind.PRODUCT && form.product?.calories == null -> R.string.diary_product_no_figures_short
                     else -> null
                 }
                 Column(Modifier.weight(1f)) { missing?.let { Note(stringResource(it)) } }
@@ -280,7 +296,7 @@ private fun Search(label: String, form: EntryForm, viewModel: DiaryViewModel, fo
 
 /** Something found, to be picked. */
 @Composable
-private fun Found(name: String, about: String?, onPick: () -> Unit) {
+internal fun Found(name: String, about: String?, onPick: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()

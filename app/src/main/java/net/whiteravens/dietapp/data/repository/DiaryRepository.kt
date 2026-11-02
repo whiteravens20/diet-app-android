@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.remote.DiaryEntryDto
 import net.whiteravens.dietapp.data.remote.DiaryMealNutritionDto
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.IngredientDto
+import net.whiteravens.dietapp.data.remote.ProductDto
 import net.whiteravens.dietapp.data.remote.UpdateDiaryEntryRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -31,6 +32,7 @@ import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.Product
 import java.time.Duration
 import java.time.LocalDate
 import java.util.UUID
@@ -74,6 +76,12 @@ class DiaryRepository @Inject constructor(
 
     /** The catalogue's ingredients whose name holds [search], in the app's language, as an entry takes them. */
     suspend fun ingredients(search: String): List<DiaryIngredient> = apiCall(json) { api.ingredients(search = search) }.map { it.toDiary() }
+
+    /** The product of a barcode, in the form Open Food Facts keeps it: from the instance, which asks for what it does not hold. */
+    suspend fun product(code: String): Product = apiCall(json) { api.productByCode(code) }.toDomain()
+
+    /** The products the instance holds that have the words of [search] in their name or brand, and can go into a diary. */
+    suspend fun products(search: String): List<Product> = apiCall(json) { api.searchProducts(search) }.items.map { it.toDomain() }
 
     /** Writes [entry] for the day of [date] of [profileId]'s diary: the entry as the API keeps it, or kept to be sent in its turn. */
     suspend fun add(profileId: String, date: LocalDate, entry: NewDiaryEntry): Submitted<DiaryEntry> {
@@ -140,6 +148,7 @@ private fun NewDiaryEntry.toChange(profileId: String, date: String): QueuedChang
     return when (this) {
         is NewDiaryEntry.OfRecipe -> QueuedChange.DiaryAdded(profileId, date, slot, name.trim(), recipeId = recipeId, servings = servings, calories = calories, key = key)
         is NewDiaryEntry.OfIngredient -> QueuedChange.DiaryAdded(profileId, date, slot, name.trim(), ingredientId = ingredientId, quantity = quantity, unit = unit, pieceName = pieceName, key = key)
+        is NewDiaryEntry.OfProduct -> QueuedChange.DiaryAdded(profileId, date, slot, name.trim(), productId = productId, quantity = quantity, unit = unit, calories = calories, key = key)
         is NewDiaryEntry.OwnMeal -> QueuedChange.DiaryAdded(profileId, date, slot, name.trim(), servings = servings, calories = calories, protein = protein, fat = fat, carbs = carbs, key = key)
     }
 }
@@ -147,6 +156,7 @@ private fun NewDiaryEntry.toChange(profileId: String, date: String): QueuedChang
 private fun QueuedChange.DiaryAdded.toRequest(): CreateDiaryEntryRequest = when {
     recipeId != null -> CreateDiaryEntryRequest(profileId, date, slot, "recipe", recipeId = recipeId, servings = servings)
     ingredientId != null -> CreateDiaryEntryRequest(profileId, date, slot, "ingredient", ingredientId = ingredientId, amount = DiaryAmountRequest(checkNotNull(quantity), checkNotNull(unit)))
+    productId != null -> CreateDiaryEntryRequest(profileId, date, slot, "product", productId = productId, quantity = checkNotNull(quantity))
     else -> CreateDiaryEntryRequest(profileId, date, slot, "meal", name = name, servings = servings, nutrition = DiaryMealNutritionDto(checkNotNull(calories), protein, fat, carbs))
 }
 
@@ -180,4 +190,25 @@ private fun DiaryEntryDto.toDomain() = DiaryEntry(
     calories = nutrition.calories,
     macros = Macros(nutrition.protein, nutrition.fat, nutrition.carbs),
     estimated = estimated,
+)
+
+private fun ProductDto.toDomain() = Product(
+    id = id,
+    code = code,
+    name = name,
+    brand = brand,
+    pack = pack,
+    unit = unit,
+    packAmount = packAmount,
+    servingAmount = servingAmount,
+    calories = per100.calories,
+    protein = per100.protein,
+    fat = per100.fat,
+    carbs = per100.carbs,
+    fiber = per100.fiber,
+    sugars = per100.sugars,
+    salt = per100.salt,
+    saturatedFat = per100.saturatedFat,
+    energyWorkedOut = energyWorkedOut,
+    doubtful = doubtful,
 )

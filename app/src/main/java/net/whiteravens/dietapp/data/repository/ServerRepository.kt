@@ -107,6 +107,8 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
                 relaxations = config.plans.relaxations,
                 operatorContact = config.instance.operatorContact,
                 supportUrl = config.instance.supportUrl,
+                productsOffered = config.products.offered,
+                productLookups = config.products.lookups,
                 catalogueSupply = config.catalogue.supply.mapValues { (_, byCount) ->
                     // A level this version does not know says nothing it could show.
                     byCount.mapNotNull { (count, supply) ->

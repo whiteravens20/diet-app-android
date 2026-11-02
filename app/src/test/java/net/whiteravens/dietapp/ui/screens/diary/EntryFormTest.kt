@@ -10,6 +10,7 @@ import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.Recipe
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +31,71 @@ class EntryFormTest {
         EntryForm(kind = EntryKind.MEAL, slot = "dinner", name = name, calories = calories, servings = servings, protein = protein, fat = fat, carbs = carbs)
 
     private fun outOfBounds(refusal: FieldRefusal) = EntryProblem.OutOfBounds(refusal)
+
+    private val milk = Product(
+        id = "p",
+        code = "5900512320359",
+        name = "Mleko",
+        brand = "Mlekovita",
+        pack = "1l",
+        unit = "ml",
+        packAmount = 1000.0,
+        servingAmount = 250.0,
+        calories = 60.0,
+        protein = 3.2,
+        fat = 3.2,
+        carbs = 4.7,
+        fiber = null,
+        sugars = 4.7,
+        salt = 0.1,
+        saturatedFat = 2.1,
+        energyWorkedOut = false,
+        doubtful = false,
+    )
+
+    private fun ofProduct(product: Product? = milk, quantity: String = "250") =
+        EntryForm(kind = EntryKind.PRODUCT, slot = "snack", product = product, quantity = quantity)
+
+    @Test
+    fun `a product is written in an amount of its own unit, and says what it adds`() {
+        assertEquals(emptyMap<EntryField, EntryProblem>(), ofProduct().problems())
+        assertEquals(150, ofProduct().adds())
+        assertEquals(NewDiaryEntry.OfProduct("snack", "p", "Mleko, Mlekovita", "ml", 250.0, 150.0), ofProduct().entry())
+        assertEquals(NewDiaryEntry.OfProduct("snack", "p", "Mleko, Mlekovita", "ml", 1.5, 0.9), ofProduct(quantity = "1,5").entry())
+    }
+
+    @Test
+    fun `a product is held to the amounts the API takes`() {
+        assertEquals(EntryProblem.NotANumber, ofProduct(quantity = "").problems()[EntryField.PRODUCT_QUANTITY])
+        assertEquals(outOfBounds(FieldRefusal.TooSmall(0.0, inclusive = false)), ofProduct(quantity = "0").problems()[EntryField.PRODUCT_QUANTITY])
+        assertEquals(outOfBounds(FieldRefusal.TooBig(5000.0, inclusive = true)), ofProduct(quantity = "5001").problems()[EntryField.PRODUCT_QUANTITY])
+        assertNull(ofProduct(quantity = "5001").adds())
+        assertNull(ofProduct(quantity = "5001").entry())
+    }
+
+    @Test
+    fun `nothing is written before a product is picked, or of one without energy`() {
+        assertTrue(ofProduct(product = null).nothingPicked)
+        assertNull(ofProduct(product = null).entry())
+        assertNull(ofProduct(product = milk.copy(calories = null, protein = null)).entry())
+        assertEquals(emptyMap<EntryField, EntryProblem>(), ofProduct(product = milk.copy(calories = null), quantity = "").problems())
+    }
+
+    @Test
+    fun `an amount starts at a serving by the label, where a diary takes it`() {
+        assertEquals("250", firstAmount(milk))
+        assertEquals("", firstAmount(milk.copy(servingAmount = null)))
+        assertEquals("", firstAmount(milk.copy(servingAmount = 6000.0)))
+    }
+
+    @Test
+    fun `a product says what it lacks, and what it is called`() {
+        assertFalse(milk.lacksMacros)
+        assertTrue(milk.copy(protein = null).lacksMacros)
+        assertFalse(milk.copy(calories = null, protein = null).lacksMacros)
+        assertEquals("Mleko, Mlekovita", milk.fullName)
+        assertEquals("Mleko", milk.copy(brand = null).fullName)
+    }
 
     @Test
     fun `a meal of one's own needs a name and its calories alone`() {

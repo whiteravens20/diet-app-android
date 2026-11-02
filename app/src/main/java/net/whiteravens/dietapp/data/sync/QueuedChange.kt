@@ -134,6 +134,7 @@ sealed interface QueuedChange {
         val recipeId: String? = null,
         val servings: Double? = null,
         val ingredientId: String? = null,
+        val productId: String? = null,
         val quantity: Double? = null,
         val unit: String? = null,
         val pieceName: String? = null,

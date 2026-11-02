@@ -19,6 +19,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
@@ -34,12 +35,18 @@ import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
 import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.MOST_DIARY_ENTRIES
+import net.whiteravens.dietapp.domain.DiaryLimits
+import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeFilter
+import net.whiteravens.dietapp.domain.canSearchProducts
+import net.whiteravens.dietapp.domain.looksLikeProductCode
 import net.whiteravens.dietapp.domain.mealAt
+import net.whiteravens.dietapp.domain.productCodeOf
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.DiaryRoute
@@ -66,6 +73,7 @@ class DiaryViewModel @Inject constructor(
     private val plans: MealPlanRepository,
     private val recipes: RecipeRepository,
     private val queue: ChangeQueue,
+    private val server: ServerRepository,
 ) : ViewModel() {
 
     /** What could not be done. */
@@ -95,6 +103,8 @@ class DiaryViewModel @Inject constructor(
         val waiting: List<Waiting> = emptyList(),
         /** The window that adds an entry, while it is open. */
         val form: EntryForm? = null,
+        /** The camera is open over that window, to read a barcode. */
+        val scanning: Boolean = false,
         /** The window that changes an entry, while it is open. */
         val edit: EntryEdit? = null,
         /** What the open window holds is said to be wrong, once it was sent. */
@@ -194,6 +204,10 @@ class DiaryViewModel @Inject constructor(
         if (savedStateHandle.get<Boolean>(DiaryRoute::adding.name) == true) {
             savedStateHandle[DiaryRoute::adding.name] = false
             openWindow(mealAt(LocalTime.now()))
+            if (savedStateHandle.get<Boolean>(DiaryRoute::scanning.name) == true) {
+                savedStateHandle[DiaryRoute::scanning.name] = false
+                openScanner()
+            }
         }
         loadProfiles()
         followWaiting()
@@ -332,7 +346,70 @@ class DiaryViewModel @Inject constructor(
     /** Puts the open window away: what was typed in it goes with it, and so does an answer on its way to it. */
     fun closeWindow() {
         searching?.cancel()
-        _state.update { it.copy(form = null, edit = null, showProblems = false, refused = emptyMap(), windowError = null) }
+        _state.update { it.copy(form = null, edit = null, scanning = false, showProblems = false, refused = emptyMap(), windowError = null) }
+    }
+
+    /** What the instance says of its products; null until it was read. */
+    val rules: StateFlow<InstanceRules?> = server.rules
+
+    /** Opens the window at the meal the phone's clock says, and the camera over it. */
+    fun openScanner() {
+        if (_state.value.form == null) openWindowNow()
+        chooseKind(EntryKind.PRODUCT)
+        _state.update { it.copy(scanning = true) }
+    }
+
+    /** Puts the camera away, back to the window. */
+    fun closeScanner() = _state.update { it.copy(scanning = false) }
+
+    /** The code the camera read: asked about at once, as somebody meant to. */
+    fun scanned(code: String) {
+        _state.update { it.copy(scanning = false) }
+        chooseKind(EntryKind.PRODUCT)
+        unpick()
+        search(code)
+        checkCode()
+    }
+
+    /**
+     * Asks about the code typed. It is asked about only on somebody's word: eight digits on the way to
+     * thirteen can be a code as well, and a code the instance does not hold counts against what the
+     * account may ask.
+     */
+    fun checkCode() {
+        val form = _state.value.form ?: return
+        val code = productCodeOf(form.search)
+        searching?.cancel()
+        if (code == null) return changeForm { it.copy(codeBad = true, codeFailed = null) }
+        changeForm { it.copy(codeBad = false, codeFailed = null, checkingCode = true) }
+        searching = viewModelScope.launch {
+            attempt { diary.product(code) }
+                .onSuccess(::pickProduct)
+                .onFailure { failure -> changeForm { it.copy(checkingCode = false, codeFailed = failure) } }
+        }
+    }
+
+    fun pickProduct(product: Product) {
+        searching?.cancel()
+        changeForm {
+            it.copy(
+                product = product,
+                quantity = firstAmount(product),
+                search = "",
+                products = emptyList(),
+                searched = false,
+                searchFailed = null,
+                codeBad = false,
+                checkingCode = false,
+                codeFailed = null,
+            )
+        }
+    }
+
+    /** What a product could not give is written as a meal of one's own, under its name where it has one. */
+    fun asOwnMeal(name: String?) {
+        chooseKind(EntryKind.MEAL)
+        if (name != null) changeForm { it.copy(name = name.take(DiaryLimits.name)) }
     }
 
     private fun changeForm(change: (EntryForm) -> EntryForm) = _state.update { state ->
@@ -341,7 +418,22 @@ class DiaryViewModel @Inject constructor(
 
     fun chooseKind(kind: EntryKind) {
         searching?.cancel()
-        changeForm { it.copy(kind = kind, search = "", recipes = emptyList(), ingredients = emptyList(), searched = false, searchFailed = null) }
+        changeForm { form ->
+            form.copy(
+                kind = kind,
+                search = "",
+                recipes = emptyList(),
+                ingredients = emptyList(),
+                products = emptyList(),
+                searched = false,
+                searchFailed = null,
+                codeBad = false,
+                checkingCode = false,
+                codeFailed = null,
+                // An amount is of what it was typed for: a product it comes back to starts as it did.
+                quantity = if (kind == EntryKind.PRODUCT) form.product?.let(::firstAmount).orEmpty() else "",
+            )
+        }
         _state.update { it.copy(showProblems = false, refused = emptyMap()) }
     }
 
@@ -349,13 +441,21 @@ class DiaryViewModel @Inject constructor(
 
     /** Looks for what is typed once two letters are typed and typing pauses, as the pantry's search does. */
     fun search(text: String) {
-        changeForm { it.copy(search = text, recipes = emptyList(), ingredients = emptyList(), searched = false, searchFailed = null) }
+        changeForm { it.copy(search = text, recipes = emptyList(), ingredients = emptyList(), products = emptyList(), searched = false, searchFailed = null, codeBad = false, checkingCode = false, codeFailed = null) }
         searching?.cancel()
         val kind = _state.value.form?.kind ?: return
-        if (text.trim().length < ProfilesViewModel.SEARCH_FROM) return
+        if (kind == EntryKind.PRODUCT) {
+            if (looksLikeProductCode(text) || !canSearchProducts(text)) return
+        } else if (text.trim().length < ProfilesViewModel.SEARCH_FROM) {
+            return
+        }
         searching = viewModelScope.launch {
             delay(ProfilesViewModel.SEARCH_DELAY_MS)
-            if (kind == EntryKind.RECIPE) {
+            if (kind == EntryKind.PRODUCT) {
+                attempt { diary.products(text.trim()) }.let { found ->
+                    answered(text, found.exceptionOrNull()) { it.copy(products = found.getOrDefault(emptyList())) }
+                }
+            } else if (kind == EntryKind.RECIPE) {
                 attempt { recipes.search(RecipeFilter(search = text.trim())).items.take(OFFERED) }.let { found ->
                     answered(text, found.exceptionOrNull()) { it.copy(recipes = found.getOrDefault(emptyList())) }
                 }
@@ -383,7 +483,7 @@ class DiaryViewModel @Inject constructor(
     }
 
     /** Lets another be looked for in the place of the one picked. */
-    fun unpick() = changeForm { it.copy(recipe = null, ingredient = null, servings = "1", quantity = "") }
+    fun unpick() = changeForm { it.copy(recipe = null, ingredient = null, product = null, servings = "1", quantity = "") }
 
     /** What is typed into a field of the window: [change] says which. */
     fun typeEntry(field: EntryField, change: (EntryForm) -> EntryForm) {

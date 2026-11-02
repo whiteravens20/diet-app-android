@@ -116,8 +116,8 @@ import kotlin.reflect.KClass
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object FavoritesRoute
 @Serializable object PantryRoute
-/** The diary: of a profile and a day where they are named, with the window that adds an entry open where [adding]. */
-@Serializable data class DiaryRoute(val profileId: String? = null, val date: String? = null, val adding: Boolean = false)
+/** The diary: of a profile and a day where they are named, with the window that adds an entry open where [adding], and the camera over it where [scanning]. */
+@Serializable data class DiaryRoute(val profileId: String? = null, val date: String? = null, val adding: Boolean = false, val scanning: Boolean = false)
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
 
 /** The profile whose weights the dashboard brings into view, which a weight reminder opened leaves it. */
@@ -309,6 +309,7 @@ private fun MainScaffold(
                         onOpenNotifications = { navController.navigate(NotificationsRoute) },
                         onOpenAccount = { navController.navigate(AccountRoute) },
                         onOpenDiary = { profileId, adding -> navController.navigate(DiaryRoute(profileId, adding = adding)) },
+                        onScan = { profileId -> navController.navigate(DiaryRoute(profileId, adding = true, scanning = true)) },
                         showWeightOf = weightOf,
                         onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
                     )

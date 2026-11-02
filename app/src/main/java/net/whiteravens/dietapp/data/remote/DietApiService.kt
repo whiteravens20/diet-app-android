@@ -217,6 +217,19 @@ interface DietApiService {
     @POST("diary/copy")
     suspend fun copyDiaryDay(@Header("Idempotency-Key") key: String?, @Body body: CopyDiaryDayRequest): DiaryCopyResultDto
 
+    // ── Products ────────────────────────────────────────────────────────────
+
+    /**
+     * The product of a barcode, in the form Open Food Facts keeps it. A code the instance does not hold
+     * is asked of Open Food Facts, in the instance's name; 404 `PRODUCT_NOT_FOUND` where nobody knows it.
+     */
+    @GET("products/code/{code}")
+    suspend fun productByCode(@Path("code") code: String): ProductDto
+
+    /** What the instance holds that has every word of [search] in its name or brand and can go into a diary. */
+    @GET("products")
+    suspend fun searchProducts(@Query("search") search: String): ProductSearchResultDto
+
     /** What a profile's pantry holds, in the order of the ingredients' English names, then of their units. */
     @GET("inventory")
     suspend fun pantry(@Query("profileId") profileId: String): List<InventoryItemDto>

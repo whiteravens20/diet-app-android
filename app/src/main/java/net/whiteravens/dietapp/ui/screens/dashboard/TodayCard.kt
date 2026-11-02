@@ -4,7 +4,8 @@ package net.whiteravens.dietapp.ui.screens.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -24,6 +25,7 @@ import java.time.LocalDate
  * adds an entry ([onAdd]). Without a network, a day not kept on the phone says so; adding works all
  * the same.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun TodayCard(
     stats: DashboardViewModel.ProfileStats,
@@ -31,6 +33,8 @@ internal fun TodayCard(
     offline: Boolean,
     onOpen: () -> Unit,
     onAdd: () -> Unit,
+    /** Opens the camera; null where the instance offers no product, or there is no network to ask it. */
+    onScan: (() -> Unit)?,
 ) {
     // A day read before midnight is not today's, however long the application stays open.
     val day = stats.today?.takeIf { it.date == LocalDate.now().toString() }
@@ -50,8 +54,9 @@ internal fun TodayCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onAdd) { Text(stringResource(R.string.diary_add)) }
+                onScan?.let { scan -> OutlinedButton(onClick = scan) { Text(stringResource(R.string.diary_product_scan)) } }
                 OutlinedButton(onClick = onOpen) { Text(stringResource(R.string.diary_open)) }
             }
         }

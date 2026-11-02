@@ -23,6 +23,9 @@ data class InstanceRules(
     val mealSlots: Map<Int, List<String>> = emptyMap(),
     /** The limits of a plan that can give way when no recipe is left inside them, in the order in which they do. */
     val relaxations: List<String> = emptyList(),
+    /** Whether the instance offers products with a barcode, and whether a code it does not hold is asked of Open Food Facts. */
+    val productsOffered: Boolean = false,
+    val productLookups: Boolean = false,
 ) {
     /** How well the catalogue serves [diet] at [mealCount] meals a day; null where the API does not say. */
     fun supplyOf(diet: String, mealCount: Int): Supply? = catalogueSupply[diet]?.get(mealCount)

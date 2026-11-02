@@ -7,19 +7,21 @@ import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.Recipe
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.roundToInt
 
 /** What an entry is of. */
-enum class EntryKind { RECIPE, INGREDIENT, MEAL }
+enum class EntryKind { RECIPE, INGREDIENT, PRODUCT, MEAL }
 
 /** A field of an entry, by the path the API names it by when it refuses what it holds. */
 enum class EntryField(val path: String) {
     NAME("name"),
     SERVINGS("servings"),
     QUANTITY("amount.quantity"),
+    PRODUCT_QUANTITY("quantity"),
     CALORIES("nutrition.calories"),
     PROTEIN("nutrition.protein"),
     FAT("nutrition.fat"),
@@ -44,12 +46,20 @@ data class EntryForm(
     val search: String = "",
     val recipes: List<Recipe> = emptyList(),
     val ingredients: List<DiaryIngredient> = emptyList(),
+    val products: List<Product> = emptyList(),
     /** Whether the search has answered the words as they are typed now. */
     val searched: Boolean = false,
     /** Why the search did not answer: that says nothing of what there is. */
     val searchFailed: Throwable? = null,
     val recipe: Recipe? = null,
     val ingredient: DiaryIngredient? = null,
+    val product: Product? = null,
+    /** What is typed as a barcode cannot be one: its digits do not close, or there are too few. */
+    val codeBad: Boolean = false,
+    /** A code is being asked about. */
+    val checkingCode: Boolean = false,
+    /** Why asking about a code gave no product. */
+    val codeFailed: Throwable? = null,
     val servings: String = "1",
     val quantity: String = "",
     val unit: String = "g",
@@ -61,10 +71,10 @@ data class EntryForm(
 ) {
     /** Nothing was picked or typed yet: the window may still open on another kind. */
     val untouched: Boolean
-        get() = search.isEmpty() && recipe == null && ingredient == null && name.isEmpty() && calories.isEmpty() && protein.isEmpty() && fat.isEmpty() && carbs.isEmpty()
+        get() = search.isEmpty() && recipe == null && ingredient == null && product == null && name.isEmpty() && calories.isEmpty() && protein.isEmpty() && fat.isEmpty() && carbs.isEmpty()
 
     /** What was not picked yet, of a kind that is picked. */
-    val nothingPicked: Boolean get() = (kind == EntryKind.RECIPE && recipe == null) || (kind == EntryKind.INGREDIENT && ingredient == null)
+    val nothingPicked: Boolean get() = (kind == EntryKind.RECIPE && recipe == null) || (kind == EntryKind.INGREDIENT && ingredient == null) || (kind == EntryKind.PRODUCT && product == null)
 
     /** What the fields of the kind hold that the API would refuse, by field. */
     fun problems(): Map<EntryField, EntryProblem> = buildMap {
@@ -74,6 +84,12 @@ data class EntryForm(
                 when (val typed = quantity.number()) {
                     null -> put(EntryField.QUANTITY, EntryProblem.NotANumber)
                     else -> quantityProblem(typed, unit)?.let { put(EntryField.QUANTITY, it) }
+                }
+            }
+            EntryKind.PRODUCT -> if (product?.calories != null) {
+                when (val typed = quantity.number()) {
+                    null -> put(EntryField.PRODUCT_QUANTITY, EntryProblem.NotANumber)
+                    else -> quantityProblem(typed, product.unit)?.let { put(EntryField.PRODUCT_QUANTITY, it) }
                 }
             }
             EntryKind.MEAL -> {
@@ -97,12 +113,20 @@ data class EntryForm(
 
     /** The kcal the entry adds to the day, rounded as the API rounds it, where the window knows it: an ingredient's figures go through the API's units. */
     fun adds(): Int? {
+        if (kind == EntryKind.PRODUCT) return productCalories()?.roundToInt()
         val times = servings.number()?.takeIf { it >= DiaryLimits.leastServings && it <= DiaryLimits.mostServings } ?: return null
         return when (kind) {
             EntryKind.RECIPE -> recipe?.let { (it.nutritionPerServing.calories * times).roundToInt() }
             EntryKind.MEAL -> calories.number()?.takeIf { it >= 0 && it <= DiaryLimits.calories }?.let { (it * times).roundToInt() }
-            EntryKind.INGREDIENT -> null
+            EntryKind.INGREDIENT, EntryKind.PRODUCT -> null
         }
+    }
+
+    /** What the amount typed of the product comes to, where it can be written. */
+    private fun productCalories(): Double? {
+        val per100 = product?.calories ?: return null
+        val typed = quantity.number()?.takeIf { quantityProblem(it, product.unit) == null } ?: return null
+        return per100 * typed / 100
     }
 
     /** The entry to write; null while something is not picked, or a field holds what the API would refuse. */
@@ -111,6 +135,9 @@ data class EntryForm(
         return when (kind) {
             EntryKind.RECIPE -> recipe?.let { NewDiaryEntry.OfRecipe(slot, it.id, it.title, it.nutritionPerServing.calories, servings.number()!!) }
             EntryKind.INGREDIENT -> ingredient?.let { NewDiaryEntry.OfIngredient(slot, it.id, it.name, it.pieceName, quantity.number()!!, unit) }
+            EntryKind.PRODUCT -> product?.let { picked ->
+                productCalories()?.let { NewDiaryEntry.OfProduct(slot, picked.id, picked.fullName, picked.unit, quantity.number()!!, it) }
+            }
             EntryKind.MEAL -> NewDiaryEntry.OwnMeal(slot, name.trim(), servings.number()!!, calories.number()!!, protein.number(), fat.number(), carbs.number())
         }
     }
@@ -156,6 +183,13 @@ data class EntryEdit(
         else -> servingsProblem(servings)
     }
 }
+
+/** The amount a picked product starts with: a serving by its label, where it gives one a diary takes. */
+internal fun firstAmount(product: Product): String =
+    product.servingAmount?.takeIf { quantityProblem(it, product.unit) == null }?.let(::plainNumber).orEmpty()
+
+/** A number as a field takes it again: no more digits than it needs. */
+internal fun plainNumber(value: Double): String = shownNumber(value)
 
 /** What is wrong with the servings typed, if anything. */
 private fun servingsProblem(typed: String): Map<EntryField, EntryProblem> {

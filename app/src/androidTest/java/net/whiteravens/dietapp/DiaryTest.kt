@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import android.Manifest
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
@@ -19,6 +20,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.keepScreenshot
@@ -304,5 +306,108 @@ class DiaryTest {
         writeMeal("A sure thing", "100")
         submit()
         screen.waitForTheApi(30_000) { Instance.diaryEntries(account, profileId) == listOf("A sure thing") }
+    }
+
+    /** The kind of product chosen in the open window, and what is typed into its field. */
+    private fun typeForAProduct(words: String) {
+        screen.onNode(inTheWindow(text(R.string.diary_kind_product))).performClick()
+        typeAgainForAProduct(words)
+    }
+
+    private fun typeAgainForAProduct(words: String) {
+        screen.onNode(hasText(text(R.string.diary_product_field)) and hasSetTextAction()).performScrollTo().performTextReplacement(words)
+    }
+
+    @Test
+    fun aProductIsFoundByItsNameWrittenInAnAmountAndChanged() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+
+        openTheDiary()
+        screen.onNode(hasText(text(R.string.diary_add)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.diary_search_recipe))
+        typeForAProduct("mleko probne")
+        screen.waitForText("Mleko próbne 3,2%, Próbna Marka")
+        screen.keepScreenshot("diary-a-product-found")
+        screen.onNode(inTheWindow("Mleko próbne 3,2%, Próbna Marka")).performScrollTo().performClick()
+
+        // What its label says, with what it does not say said to be so, and where it comes from.
+        screen.waitForText(text(R.string.diary_label_energy))
+        screen.waitForText(text(R.string.diary_label_unknown))
+        screen.waitForText(text(R.string.diary_adds_line, "150"))
+        screen.putKeyboardAway()
+        screen.keepScreenshot("diary-a-product-picked")
+        screen.onNodeWithText(text(R.string.diary_product_source_name)).performScrollTo()
+        screen.keepScreenshot("diary-a-product-and-its-source")
+        submit()
+
+        screen.scrollToText("Mleko próbne 3,2%, Próbna Marka")
+        screen.waitForText(text(R.string.diary_entry_source))
+        screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf("Mleko próbne 3,2%, Próbna Marka") }
+        screen.keepScreenshot("diary-a-product-written")
+
+        // Changed in its own unit.
+        screen.onNodeWithContentDescription(text(R.string.diary_edit_label, "Mleko próbne 3,2%, Próbna Marka")).performClick()
+        screen.onNode(hasText("${text(R.string.diary_quantity)} (ml)") and hasSetTextAction()).performTextReplacement("500")
+        screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
+        screen.waitForText(text(R.string.diary_meal_kcal, "300"), substring = true)
+    }
+
+    @Test
+    fun aCodeIsAskedAboutOnAWordAndWhatIsWrongWithItIsSaid() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+
+        openTheDiary()
+        screen.onNode(hasText(text(R.string.diary_add)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.diary_search_recipe))
+
+        // A slip of the finger is said at once, and asks nobody.
+        typeForAProduct("5900512320358")
+        screen.onNode(inTheWindow(text(R.string.diary_product_check))).performClick()
+        screen.waitForText(text(R.string.diary_product_code_bad))
+        screen.keepScreenshot("diary-a-code-mistyped")
+
+        // Open Food Facts cannot be reached from the instance of these tests: that is said, with the way on.
+        typeAgainForAProduct("5901112223330")
+        screen.onNode(inTheWindow(text(R.string.diary_product_check))).performClick()
+        screen.waitForText(text(R.string.diary_product_as_own))
+        screen.keepScreenshot("diary-a-code-that-cannot-be-asked-about")
+
+        // A product of the instance's own table, whose figures do not add up: it can be written, with a word.
+        typeAgainForAProduct("5901234123457")
+        screen.onNode(inTheWindow(text(R.string.diary_product_check))).performClick()
+        screen.waitForText("Baton próbny")
+        screen.waitForText(text(R.string.diary_product_doubtful))
+        screen.putKeyboardAway()
+        screen.keepScreenshot("diary-a-product-that-does-not-add-up")
+
+        // One without figures cannot, and becomes a meal of its name.
+        screen.onNode(inTheWindow(text(R.string.diary_change_pick))).performScrollTo().performClick()
+        typeAgainForAProduct("4001724819806")
+        screen.onNode(inTheWindow(text(R.string.diary_product_check))).performClick()
+        screen.waitForText(text(R.string.diary_product_no_figures))
+        screen.onNode(inTheWindow(text(R.string.diary_product_as_own))).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.diary_meal_name)) and hasSetTextAction()).performScrollTo()
+        screen.waitForText("Bez etykiety próbny")
+    }
+
+    @Test
+    fun theCameraIsOfferedAndCanBePutAside() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(BuildConfig.APPLICATION_ID, Manifest.permission.CAMERA)
+        screen.startSignedIn(account)
+
+        screen.waitForText(text(R.string.diary_today_title))
+        screen.onNode(hasText(text(R.string.diary_product_scan)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.scanner_title))
+        screen.keepScreenshot("diary-the-camera")
+
+        // Typing the code is always there, and leads back to the window, on a product.
+        screen.onNodeWithText(text(R.string.scanner_type_instead)).performClick()
+        screen.waitForText(text(R.string.diary_product_field))
     }
 }

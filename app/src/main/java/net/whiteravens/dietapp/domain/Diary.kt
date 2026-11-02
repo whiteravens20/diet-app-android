@@ -117,6 +117,9 @@ sealed interface NewDiaryEntry {
     /** An ingredient in [quantity] of [unit]; [name] and [pieceName], what a piece of it is called, are shown until the server has it. */
     data class OfIngredient(override val slot: String, val ingredientId: String, val name: String, val pieceName: String, val quantity: Double, val unit: String) : NewDiaryEntry
 
+    /** A product in [quantity] of [unit]; [name] and the [calories] the amount comes to are shown until the server has it. */
+    data class OfProduct(override val slot: String, val productId: String, val name: String, val unit: String, val quantity: Double, val calories: Double) : NewDiaryEntry
+
     /** A meal of one's own: what a serving holds, the macronutrients left out estimated by the API, and how many servings it is. */
     data class OwnMeal(
         override val slot: String,
@@ -141,3 +144,36 @@ data class DiaryIngredient(
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */
 data class DiaryCopied(val copied: Int, val day: DiaryDay)
+
+/**
+ * A product with a barcode, as an entry takes it. Its figures are those of its label, in 100 of its
+ * [unit]: null where it says nothing that can be right. Without energy it cannot go into a diary.
+ */
+data class Product(
+    val id: String,
+    val code: String,
+    val name: String,
+    val brand: String?,
+    val pack: String?,
+    val unit: String,
+    val packAmount: Double?,
+    val servingAmount: Double?,
+    val calories: Double?,
+    val protein: Double?,
+    val fat: Double?,
+    val carbs: Double?,
+    val fiber: Double?,
+    val sugars: Double?,
+    val salt: Double?,
+    val saturatedFat: Double?,
+    /** The label gives no energy: the figure is worked out from its macronutrients. */
+    val energyWorkedOut: Boolean,
+    /** The label's figures do not add up, or one of them cannot be right. */
+    val doubtful: Boolean,
+) {
+    /** What the product is called in a list and in an entry: with its brand, where it has one. */
+    val fullName: String get() = brand?.let { "$name, $it" } ?: name
+
+    /** A macronutrient is missing from a label that gives the energy: the API estimates it. */
+    val lacksMacros: Boolean get() = calories != null && (protein == null || fat == null || carbs == null)
+}

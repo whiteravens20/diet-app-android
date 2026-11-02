@@ -66,7 +66,8 @@ import kotlin.math.roundToInt
 /**
  * What every profile ate today, its calorie target, deficit and macro split, what its plan of the
  * moment comes to, and its weights — the web dashboard, whose favourite sets are made and changed
- * there, in the browser. Today's card opens the diary, and its window to add to it, on [onOpenDiary];
+ * there, in the browser. Today's card opens the diary, and its window to add to it, on [onOpenDiary],
+ * and the camera over that window on [onScan];
  * a plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan]; the bell in the header
  * counts the notifications not read yet and opens them on [onOpenNotifications]; under the header,
  * where the account uses AI, its requests are said, and open the account's settings on
@@ -81,12 +82,14 @@ fun DashboardScreen(
     onOpenNotifications: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenDiary: (profileId: String, adding: Boolean) -> Unit,
+    onScan: (profileId: String) -> Unit,
     showWeightOf: String? = null,
     onWeightShown: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     update: UpdateViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val rules by viewModel.rules.collectAsStateWithLifecycle()
     val newer by update.available.collectAsStateWithLifecycle()
     // Read again on being shown again: a profile may have been made or changed in the meantime.
     WhenShownAgain(viewModel::shownAgain)
@@ -158,6 +161,7 @@ fun DashboardScreen(
                                 offline = state.offline,
                                 onOpen = { onOpenDiary(stats.profile.id, false) },
                                 onAdd = { onOpenDiary(stats.profile.id, true) },
+                                onScan = { onScan(stats.profile.id) }.takeIf { rules?.productsOffered == true && !state.offline },
                             )
                         }
                         // All that is known of it without a network, started so.

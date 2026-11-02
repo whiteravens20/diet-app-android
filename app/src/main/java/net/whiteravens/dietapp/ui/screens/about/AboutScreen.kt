@@ -56,6 +56,8 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 
+private const val OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org"
+
 /**
  * What the instance publishes of itself, which version of the application this is, and the legal
  * notices its licence and the additional term of NOTICE require: the attribution with the address
@@ -136,9 +138,11 @@ fun AboutScreen(
                     Said(stringResource(R.string.about_warranty))
                     Said(stringResource(R.string.about_changed))
                     Said(stringResource(R.string.about_problems))
+                    Said(stringResource(R.string.about_products_source), Modifier.padding(top = 8.dp))
                 }
                 // The places the notices name, apart from them.
                 HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS_URL) }) { Text(stringResource(R.string.about_products_link)) }
                 TextButton(onClick = { web.openOutside(LICENCE_URL) }) { Text(stringResource(R.string.about_licence_text)) }
                 TextButton(onClick = { web.openOutside("$SOURCE_URL/issues") }) { Text(stringResource(R.string.about_issues)) }
                 TextButton(onClick = { web.openOutside("$SOURCE_URL/security/policy") }) { Text(stringResource(R.string.about_security)) }

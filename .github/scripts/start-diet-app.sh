@@ -49,6 +49,7 @@ sed -e "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=$(openssl rand -hex 32)|" \
     -e "s|^AI_ADMIN_NEW_ACCOUNT_DAYS=.*|AI_ADMIN_NEW_ACCOUNT_DAYS=0|" \
     -e "s|^AI_DEFAULT_PROVIDER=.*|AI_DEFAULT_PROVIDER=ollama|" \
     -e "s|^AI_DEFAULT_MODEL=.*|AI_DEFAULT_MODEL=llama3.1:8b|" \
+    -e "s|^OPEN_FOOD_FACTS_URL=.*|OPEN_FOOD_FACTS_URL=http://127.0.0.1:9|" \
     .env.example > .env
 
 cat > api-port.yml <<'YAML'
@@ -85,6 +86,11 @@ if ! curl -fsS "$api/health" > /dev/null; then
   echo "::error::The API did not come up."
   exit 1
 fi
+
+# The products the journeys look for, in the table an import fills: no journey leaves the instance,
+# whose Open Food Facts is an address where nothing answers.
+curl -fsSL "$raw/apps/web/e2e/products.sql" |
+  compose exec -T postgres psql -U "$(sed -n 's/^POSTGRES_USER=//p' .env)" -d "$(sed -n 's/^POSTGRES_DB=//p' .env)" -v ON_ERROR_STOP=1 > /dev/null
 
 # Two accounts with notifications, their weights in kilograms: the bell's journey reads the first
 # and marks its notifications read, and the phone's journey shows those of the second.

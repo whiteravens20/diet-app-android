@@ -78,6 +78,7 @@ private fun QueuedChange.DiaryAdded.entry() = DiaryEntry(
     kind = when {
         recipeId != null -> "recipe"
         ingredientId != null -> "ingredient"
+        productId != null -> "product"
         else -> "meal"
     },
     name = name,

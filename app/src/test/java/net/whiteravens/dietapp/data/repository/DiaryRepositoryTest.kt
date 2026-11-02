@@ -200,6 +200,70 @@ class DiaryRepositoryTest {
     }
 
     @Test
+    fun `a product is written in an amount, by its id, and waits like any entry`() {
+        server.enqueue(noNetwork())
+        val queue = changeQueue()
+        val entry = NewDiaryEntry.OfProduct("snack", "33333333-3333-4333-8333-333333333333", "Mleko, Mlekovita", "ml", 250.0, 150.0)
+
+        val kept = runBlocking { repository(queue).add(profileId, day, entry) }
+
+        assertTrue(kept is Submitted.Kept)
+        server.takeRequest()
+        val waiting = runBlocking { queue.waiting.first() }.single().change as QueuedChange.DiaryAdded
+        assertEquals("33333333-3333-4333-8333-333333333333", waiting.productId)
+        assertEquals(250.0, waiting.quantity)
+        assertEquals("ml", waiting.unit)
+        assertEquals(150.0, waiting.calories)
+
+        server.enqueue(answer(201, "diary-entry-estimated"))
+        runBlocking { repository(queue).send(waiting) }
+        val sent = server.takeRequest().bodyJson()
+        assertEquals("product", sent["kind"]?.jsonPrimitive?.content)
+        assertEquals("33333333-3333-4333-8333-333333333333", sent["productId"]?.jsonPrimitive?.content)
+        assertEquals(250.0, sent["quantity"]?.jsonPrimitive?.double)
+        assertFalse("amount" in sent)
+        assertFalse("nutrition" in sent)
+    }
+
+    @Test
+    fun `a code is asked for at its own address, and its product read as the instance says it`() {
+        server.enqueue(answer(200, "product"))
+
+        val product = runBlocking { repository().product("5900512320359") }
+
+        assertEquals("/api/products/code/5900512320359", server.takeRequest().path)
+        assertEquals("Mleko WYPASIONE 3,2%", product.name)
+        assertEquals("Mlekovita", product.brand)
+        assertEquals("ml", product.unit)
+        assertEquals(250.0, product.servingAmount)
+        assertEquals(1000.0, product.packAmount)
+        assertEquals(60.0, product.calories)
+        assertNull(product.fiber)
+        assertFalse(product.doubtful)
+    }
+
+    @Test
+    fun `a search of products is by its words`() {
+        server.enqueue(MockResponse().setResponseCode(200).setHeader("Content-Type", "application/json").setBody("{\"items\":[${fixture("product")}]}"))
+
+        val found = runBlocking { repository().products("mleko laciate") }
+
+        val asked = server.takeRequest().requestUrl!!
+        assertEquals("/api/products", asked.encodedPath)
+        assertEquals("mleko laciate", asked.queryParameter("search"))
+        assertEquals(listOf("Mleko WYPASIONE 3,2%"), found.map { it.name })
+    }
+
+    @Test
+    fun `a code nobody knows is the API's refusal`() {
+        server.enqueue(MockResponse().setResponseCode(404).setHeader("Content-Type", "application/json").setBody("{\"statusCode\":404,\"error\":\"PRODUCT_NOT_FOUND\",\"message\":\"No.\"}"))
+
+        val refusal = assertThrows(ApiException::class.java) { runBlocking { repository().product("5900512320359") } }
+
+        assertEquals("PRODUCT_NOT_FOUND", refusal.code)
+    }
+
+    @Test
     fun `a meal of one's own is written by its figures, and a macronutrient left out is not sent at all, for the API to estimate`() {
         server.enqueue(answer(201, "diary-entry-estimated"))
 

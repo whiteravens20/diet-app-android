@@ -60,7 +60,16 @@ data class PublicConfigDto(
     val email: EmailConfigDto = EmailConfigDto(),
     val catalogue: CatalogueConfigDto = CatalogueConfigDto(),
     val plans: PlansConfigDto = PlansConfigDto(),
+    val products: ProductsConfigDto = ProductsConfigDto(),
 )
+
+/**
+ * What the instance offers of products with a barcode: whether it has any way to know one, and
+ * whether a code it does not hold is asked of Open Food Facts. An instance that says nothing of them
+ * offers none.
+ */
+@Serializable
+data class ProductsConfigDto(val offered: Boolean = false, val lookups: Boolean = false)
 
 /**
  * What the instance says of plans: the most a recipe repeats in a plan that names no number, where
@@ -1656,7 +1665,7 @@ data class DiaryAmountRequest(val quantity: Double, val unit: String)
 /**
  * POST `/diary/entries`: an entry for a day of a profile's diary, under [mealType]. Of [kind]
  * `recipe`, with [recipeId] and [servings]; of `ingredient`, with [ingredientId] and [amount]; of
- * `meal`, with [name], [servings] and [nutrition].
+ * `product`, with [productId] and [quantity]; of `meal`, with [name], [servings] and [nutrition].
  */
 @Serializable
 data class CreateDiaryEntryRequest(
@@ -1668,6 +1677,8 @@ data class CreateDiaryEntryRequest(
     val servings: Double? = null,
     val ingredientId: String? = null,
     val amount: DiaryAmountRequest? = null,
+    val productId: String? = null,
+    val quantity: Double? = null,
     val name: String? = null,
     val nutrition: DiaryMealNutritionDto? = null,
 )
@@ -1684,7 +1695,44 @@ data class UpdateDiaryEntryRequest(
 @Serializable
 data class CopyDiaryDayRequest(val profileId: String, val from: String, val to: String)
 
-/** The amount of an ingredient an entry holds: as it was given, and as it is shown. */
+/** What a product's label says in 100 of its unit: kcal and grams, null where it says nothing that can be right. */
+@Serializable
+data class ProductPer100Dto(
+    val calories: Double? = null,
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val carbs: Double? = null,
+    val fiber: Double? = null,
+    val sugars: Double? = null,
+    val salt: Double? = null,
+    val saturatedFat: Double? = null,
+)
+
+/**
+ * A product with a barcode the instance knows: its pack in the words of its label, what a pack holds
+ * and a serving is in its [unit] (`g` | `ml`) where the label says, and whether its figures do not add
+ * up ([doubtful]) or its energy is worked out from its macronutrients ([energyWorkedOut]).
+ */
+@Serializable
+data class ProductDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    val brand: String? = null,
+    val pack: String? = null,
+    val unit: String,
+    val packAmount: Double? = null,
+    val servingAmount: Double? = null,
+    val per100: ProductPer100Dto,
+    val energyWorkedOut: Boolean,
+    val doubtful: Boolean,
+)
+
+/** What a search of the products the instance holds found, those people scan most first. */
+@Serializable
+data class ProductSearchResultDto(val items: List<ProductDto>)
+
+/** The amount of an ingredient or a product an entry holds: as it was given, and as it is shown. */
 @Serializable
 data class DiaryAmountDto(val quantity: Double, val unit: String, val shown: DisplayAmountDto)
 
@@ -1693,13 +1741,13 @@ data class DiaryAmountDto(val quantity: Double, val unit: String, val shown: Dis
 data class DiaryEntryDto(
     val id: String,
     val mealType: String,
-    /** `recipe` | `ingredient` | `meal`. */
+    /** `recipe` | `ingredient` | `product` | `meal`. */
     val kind: String,
     val name: String,
     /** The recipe or the ingredient it is of, while they are there. */
     val recipeId: String? = null,
     val ingredientId: String? = null,
-    /** Servings of a recipe or of a meal of one's own; null for an ingredient. */
+    /** Servings of a recipe or of a meal of one's own; null for an ingredient or a product. */
     val servings: Double? = null,
     val amount: DiaryAmountDto? = null,
     val nutrition: NutritionDto,

@@ -5,9 +5,11 @@ package net.whiteravens.dietapp.ui.screens.diary
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -17,6 +19,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
@@ -29,9 +32,11 @@ import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.FieldRefusal
+import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
@@ -103,6 +108,32 @@ class DiaryViewModelTest {
         plans,
         recipes,
         queue,
+        server,
+    )
+
+    private val server = mockk<ServerRepository>().also {
+        every { it.rules } returns MutableStateFlow(InstanceRules(maxProfiles = 2, catalogueSupply = emptyMap(), productsOffered = true, productLookups = true))
+    }
+
+    private val milk = Product(
+        id = "p",
+        code = "5900512320359",
+        name = "Mleko",
+        brand = "Mlekovita",
+        pack = "1l",
+        unit = "ml",
+        packAmount = 1000.0,
+        servingAmount = 250.0,
+        calories = 60.0,
+        protein = 3.2,
+        fat = 3.2,
+        carbs = 4.7,
+        fiber = null,
+        sugars = 4.7,
+        salt = 0.1,
+        saturatedFat = 2.1,
+        energyWorkedOut = false,
+        doubtful = false,
     )
 
     private fun DiaryViewModel.typeOwnMeal(name: String = "Soup", calories: String = "300") {
@@ -173,7 +204,7 @@ class DiaryViewModelTest {
         val handle = SavedStateHandle(mapOf("profileId" to "a", "adding" to true))
         val before = mealAt(LocalTime.now())
 
-        val model = DiaryViewModel(handle, diary, users, plans, recipes, queue)
+        val model = DiaryViewModel(handle, diary, users, plans, recipes, queue, server)
 
         assertTrue(model.state.value.form?.slot == before || model.state.value.form?.slot == mealAt(LocalTime.now()))
         assertEquals(false, handle.get<Boolean>("adding"))
@@ -356,7 +387,7 @@ class DiaryViewModelTest {
             diaryQueue.submit(change) { throw offline }
         }
         coEvery { diary.day("a", today) } returns day(eaten = 100.0)
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
         model.openWindow("dinner")
         model.typeOwnMeal()
 
@@ -379,7 +410,7 @@ class DiaryViewModelTest {
     fun `once what waits is sent, the screen is no longer offline, and the day is read as the server has it`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
         assertTrue(model.state.value.offline)
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("kept", slot = "dinner", name = "Soup")), eaten = 300.0)
@@ -602,7 +633,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.change("a", "e", null, 2.0, null) } coAnswers { diaryQueue.submit(QueuedChange.DiaryChanged("a", "e", null, 2.0, null)) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
 
         model.openEdit(entry("e"))
         model.typeEdit { it.copy(servings = "2") }
@@ -618,7 +649,7 @@ class DiaryViewModelTest {
     @Test
     fun `an entry that waits to be written is changed once the server has it`() {
         val diaryQueue = changeQueue()
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.openEdit(model.state.value.entries.single())
@@ -630,7 +661,7 @@ class DiaryViewModelTest {
     fun `an entry that waits to be written is taken out of the queue, unsent, and nothing is read for it`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.remove(model.state.value.entries.single())
@@ -645,7 +676,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.remove("a", "e") } coAnswers { diaryQueue.submit(QueuedChange.DiaryRemoved("a", "e")) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
 
         model.remove(entry("e"))
 
@@ -694,7 +725,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(plan = plan(meal("m")), eaten = 0.0)
         coEvery { plans.setEaten("p", "m", true) } coAnswers { diaryQueue.submit(QueuedChange.Eaten("p", "m", true)) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
 
         model.setEaten(meal("m"))
 
@@ -803,11 +834,140 @@ class DiaryViewModelTest {
     @Test
     fun `a profile's changes that wait are shown over its own diary alone`() {
         val diaryQueue = changeQueue()
-        val model = DiaryViewModel(SavedStateHandle(mapOf("profileId" to "b")), diary, users, plans, recipes, diaryQueue)
+        val model = DiaryViewModel(SavedStateHandle(mapOf("profileId" to "b")), diary, users, plans, recipes, diaryQueue, server)
 
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Ala's", calories = 1.0, key = "k")) { throw offline } }
 
         assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
         assertEquals(0, model.state.value.leftOut)
+    }
+
+    @Test
+    fun `a code is asked about on somebody's word, never while it is typed`() {
+        coEvery { diary.product("5900512320359") } returns milk
+        val model = model()
+        model.openWindow("snack")
+        model.chooseKind(EntryKind.PRODUCT)
+
+        model.search("59005123")
+        main.scheduler.advanceTimeBy(5_000)
+        coVerify(exactly = 0) { diary.product(any()) }
+        coVerify(exactly = 0) { diary.products(any()) }
+
+        model.search("5900512320359")
+        model.checkCode()
+        assertEquals(milk, model.state.value.form?.product)
+        assertEquals("250", model.state.value.form?.quantity)
+        assertEquals("", model.state.value.form?.search)
+    }
+
+    @Test
+    fun `a mistyped code is said to be one, and nobody is asked`() {
+        val model = model()
+        model.openWindow("snack")
+        model.chooseKind(EntryKind.PRODUCT)
+        model.search("5900512320358")
+        model.checkCode()
+
+        assertTrue(model.state.value.form!!.codeBad)
+        coVerify(exactly = 0) { diary.product(any()) }
+
+        // Going on typing takes the words back.
+        model.search("590051232035")
+        assertFalse(model.state.value.form!!.codeBad)
+    }
+
+    @Test
+    fun `a code the camera read is asked about at once`() {
+        coEvery { diary.product("5900512320359") } returns milk
+        val model = model()
+        model.openScanner()
+        assertTrue(model.state.value.scanning)
+        assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
+
+        model.scanned("5900512320359")
+
+        assertFalse(model.state.value.scanning)
+        assertEquals(milk, model.state.value.form?.product)
+    }
+
+    @Test
+    fun `a refusal of a code stays in the window, with the way on`() {
+        val unknown = ApiException(404, "PRODUCT_NOT_FOUND", "No.")
+        coEvery { diary.product(any()) } throws unknown
+        val model = model()
+        model.openWindow("snack")
+        model.chooseKind(EntryKind.PRODUCT)
+        model.search("5900512320359")
+        model.checkCode()
+
+        assertEquals(unknown, model.state.value.form?.codeFailed)
+        assertNull(model.state.value.form?.product)
+
+        model.asOwnMeal(null)
+        assertEquals(EntryKind.MEAL, model.state.value.form?.kind)
+        assertNull(model.state.value.form?.codeFailed)
+    }
+
+    @Test
+    fun `words are looked for among what the instance holds, once a search can find them`() {
+        coEvery { diary.products("mleko") } returns listOf(milk)
+        val model = model()
+        model.openWindow("snack")
+        model.chooseKind(EntryKind.PRODUCT)
+
+        model.search("ml")
+        main.scheduler.advanceTimeBy(5_000)
+        coVerify(exactly = 0) { diary.products(any()) }
+
+        model.search("mleko")
+        main.scheduler.advanceTimeBy(5_000)
+        assertEquals(listOf(milk), model.state.value.form?.products)
+        model.pickProduct(milk)
+        assertEquals(milk, model.state.value.form?.product)
+        assertEquals("250", model.state.value.form?.quantity)
+    }
+
+    @Test
+    fun `a product without figures leads to a meal of its name`() {
+        val model = model()
+        model.openWindow("snack")
+        model.chooseKind(EntryKind.PRODUCT)
+        model.pickProduct(milk.copy(calories = null, servingAmount = null))
+        assertEquals("", model.state.value.form?.quantity)
+
+        model.asOwnMeal("Mleko")
+        assertEquals(EntryKind.MEAL, model.state.value.form?.kind)
+        assertEquals("Mleko", model.state.value.form?.name)
+    }
+
+    @Test
+    fun `no amount goes along to another kind, and a product comes back as it started`() {
+        val model = model()
+        model.openWindow("snack")
+        model.chooseKind(EntryKind.PRODUCT)
+        model.pickProduct(milk)
+        model.chooseKind(EntryKind.INGREDIENT)
+        assertEquals("", model.state.value.form?.quantity)
+        model.chooseKind(EntryKind.PRODUCT)
+        assertEquals("250", model.state.value.form?.quantity)
+    }
+
+    @Test
+    fun `the way from the dashboard opens the camera over the window`() {
+        val model = DiaryViewModel(
+            SavedStateHandle(mapOf("adding" to true, "scanning" to true)),
+            diary,
+            users,
+            plans,
+            recipes,
+            queue,
+            server,
+        )
+        assertTrue(model.state.value.scanning)
+        assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
+        model.closeScanner()
+        assertFalse(model.state.value.scanning)
+        assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
     }
 }

@@ -101,6 +101,8 @@ fun DiaryScreen(
 
     state.form?.let { form -> AddEntryDialog(form, state, viewModel) }
     state.edit?.let { edit -> EditEntryDialog(edit, state, viewModel) }
+    // After the window it goes over: the window that opens last is the one on top.
+    if (state.scanning) ScannerDialog(viewModel::scanned, viewModel::closeScanner)
 
     // The card of a rebalance stands over the end of the list: the list ends that much higher, so
     // that nothing of it stays under the card.
@@ -469,6 +471,7 @@ private fun EntryRow(entry: DiaryEntry, waiting: Boolean, added: Boolean, enable
         }
         // The figures on a line of their own, the width of the row, so that a narrow screen does not break them.
         Note(entryLine(entry))
+        if (entry.kind == "product") Note(stringResource(R.string.diary_entry_source))
         if (waiting || entry.estimated) {
             FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (entry.estimated) LabelChip("≈ ${stringResource(R.string.diary_estimated)}")

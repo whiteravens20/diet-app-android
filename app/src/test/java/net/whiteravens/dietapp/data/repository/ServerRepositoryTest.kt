@@ -95,6 +95,23 @@ class ServerRepositoryTest {
     }
 
     @Test
+    fun `what the instance offers of products is kept, and one that says nothing of them offers none`() {
+        server.enqueue(answer(fixture("config")))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+
+        assertEquals(true, repository.rules.value?.productsOffered)
+        assertEquals(true, repository.rules.value?.productLookups)
+
+        server.enqueue(answer("{\"instance\":{\"version\":\"0.1.0\"},\"turnstile\":{\"enabled\":false}}"))
+        runBlocking { repository.refresh() }
+
+        assertEquals(false, repository.rules.value?.productsOffered)
+        assertEquals(false, repository.rules.value?.productLookups)
+    }
+
+    @Test
     fun `the catalogue's supply is kept as the API says it, and a level this version does not know is left out`() {
         val captured = json.parseToJsonElement(fixture("config")).jsonObject
         val vegan = json.parseToJsonElement(

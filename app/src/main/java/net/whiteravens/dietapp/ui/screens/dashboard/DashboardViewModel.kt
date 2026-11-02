@@ -19,12 +19,14 @@ import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.data.sync.Waiting
+import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.CalorieTarget
@@ -63,7 +65,11 @@ class DashboardViewModel @Inject constructor(
     private val queue: ChangeQueue,
     private val ai: AiRepository,
     private val diary: DiaryRepository,
+    server: ServerRepository,
 ) : ViewModel() {
+    /** What the instance says of itself; null until it was read. Whether it offers products says whether the camera is offered. */
+    val rules: StateFlow<InstanceRules?> = server.rules
+
 
     /**
      * A profile, its calorie target or why there is none to show, what its plan of the moment
