@@ -167,7 +167,9 @@ internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
             if (product.doubtful && energy != null) {
                 Text(stringResource(R.string.diary_product_doubtful), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
-            if (product.lacksMacros) Note(stringResource(R.string.diary_product_lacking))
+            if (product.lacksMacros) {
+                Note(stringResource(if (product.source == ProductSource.OWN) R.string.diary_product_lacking_own else R.string.diary_product_lacking))
+            }
             if (product.energyWorkedOut) Note(stringResource(R.string.diary_product_energy_worked_out))
             ProductSourceNote(product.source)
         }

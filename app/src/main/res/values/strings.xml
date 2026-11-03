@@ -1593,6 +1593,7 @@
     <string name="diary_product_not_found">Neither this instance nor Open Food Facts knows this code.</string>
     <string name="diary_product_not_found_here">This instance does not know this code.</string>
     <string name="diary_product_nothing_here">This instance knows no such product. Try its barcode.</string>
+    <string name="diary_product_lacking_own">≈ Not every macronutrient was written: what is missing is estimated from the proportions of the day\'s target and marked as an estimate.</string>
     <string name="diary_product_as_own">Write it as a meal of your own</string>
     <string name="diary_product_no_figures">Open Food Facts has no figures for this product. Copy them from the pack as a meal of your own.</string>
     <string name="diary_product_doubtful">These figures do not add up: the energy does not fit the macronutrients, or a number cannot be right. Check the label.</string>
@@ -1612,6 +1613,8 @@
     <string name="diary_label_salt">Salt</string>
     <string name="diary_label_unknown">not given</string>
     <string name="diary_label_grams">%1$s g</string>
+    <string name="diary_entry_source_own">Data: your own product</string>
+    <string name="diary_entry_source_instance">Data: added by a user of this instance</string>
     <string name="diary_entry_source">Data: Open Food Facts</string>
     <string name="scanner_title">Scan a barcode</string>
     <string name="scanner_hint">Hold the code in the picture. The picture stays on this phone.</string>

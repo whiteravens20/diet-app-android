@@ -352,6 +352,9 @@ class DiaryTest {
         screen.putKeyboardAway()
         submit()
         screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf("Chleb babci") }
+        // Its figures are said to be one's own, not those of Open Food Facts.
+        screen.scrollToText("Chleb babci")
+        screen.waitForText(text(R.string.diary_entry_source_own))
 
         // Found again by its name, marked as one's own.
         screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()

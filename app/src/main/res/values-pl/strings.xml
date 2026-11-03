@@ -1717,6 +1717,7 @@
     <string name="diary_product_not_found">Tego kodu nie zna ani ta instancja, ani Open Food Facts.</string>
     <string name="diary_product_not_found_here">Ta instancja nie zna tego kodu.</string>
     <string name="diary_product_nothing_here">Ta instancja nie zna takiego produktu. Spróbuj po kodzie kreskowym.</string>
+    <string name="diary_product_lacking_own">≈ Nie wpisano wszystkich makroskładników: brakujące zostaną oszacowane z proporcji celu dnia i oznaczone jako szacunek.</string>
     <string name="diary_product_as_own">Wpisz jako własny posiłek</string>
     <string name="diary_product_no_figures">Open Food Facts nie zna wartości tego produktu. Przepisz je z opakowania jako własny posiłek.</string>
     <string name="diary_product_doubtful">Wartości się nie zgadzają: energia nie pasuje do makroskładników albo któraś liczba jest niemożliwa. Sprawdź z etykietą.</string>
@@ -1736,6 +1737,8 @@
     <string name="diary_label_salt">Sól</string>
     <string name="diary_label_unknown">brak</string>
     <string name="diary_label_grams">%1$s g</string>
+    <string name="diary_entry_source_own">Dane: własny produkt</string>
+    <string name="diary_entry_source_instance">Dane: dodane przez użytkownika tej instancji</string>
     <string name="diary_entry_source">Dane: Open Food Facts</string>
     <string name="scanner_title">Skanuj kod kreskowy</string>
     <string name="scanner_hint">Trzymaj kod w kadrze. Obraz zostaje na tym telefonie.</string>

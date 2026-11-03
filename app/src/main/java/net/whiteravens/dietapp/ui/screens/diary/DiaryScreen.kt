@@ -59,6 +59,7 @@ import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.FIRST_DIARY_DAY
 import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
 import net.whiteravens.dietapp.domain.MOST_DIARY_ENTRIES
+import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -486,7 +487,17 @@ private fun EntryRow(entry: DiaryEntry, waiting: Boolean, added: Boolean, enable
         }
         // The figures on a line of their own, the width of the row, so that a narrow screen does not break them.
         Note(entryLine(entry))
-        if (entry.kind == "product") Note(stringResource(R.string.diary_entry_source))
+        if (entry.kind == "product") {
+            Note(
+                stringResource(
+                    when (entry.productSource) {
+                        ProductSource.OWN -> R.string.diary_entry_source_own
+                        ProductSource.INSTANCE -> R.string.diary_entry_source_instance
+                        else -> R.string.diary_entry_source
+                    },
+                ),
+            )
+        }
         if (waiting || entry.estimated) {
             FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (entry.estimated) LabelChip("≈ ${stringResource(R.string.diary_estimated)}")

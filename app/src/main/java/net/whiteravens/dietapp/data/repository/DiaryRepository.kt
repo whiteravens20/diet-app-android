@@ -191,16 +191,19 @@ private fun DiaryEntryDto.toDomain() = DiaryEntry(
     calories = nutrition.calories,
     macros = Macros(nutrition.protein, nutrition.fat, nutrition.carbs),
     estimated = estimated,
+    productSource = productSource?.let(::productSourceOf),
 )
+
+private fun productSourceOf(source: String) = when (source) {
+    "own" -> ProductSource.OWN
+    "instance" -> ProductSource.INSTANCE
+    else -> ProductSource.OPEN_FOOD_FACTS
+}
 
 internal fun ProductDto.toDomain() = Product(
     id = id,
     code = code,
-    source = when (source) {
-        "own" -> ProductSource.OWN
-        "instance" -> ProductSource.INSTANCE
-        else -> ProductSource.OPEN_FOOD_FACTS
-    },
+    source = productSourceOf(source),
     name = name,
     brand = brand,
     pack = pack,

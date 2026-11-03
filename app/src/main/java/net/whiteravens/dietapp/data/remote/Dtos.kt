@@ -1854,6 +1854,8 @@ data class DiaryEntryDto(
     /** The recipe or the ingredient it is of, while they are there. */
     val recipeId: String? = null,
     val ingredientId: String? = null,
+    /** Where the figures of a product came from when it was written: `open_food_facts`, `instance` or `own`. */
+    val productSource: String? = null,
     /** Servings of a recipe or of a meal of one's own; null for an ingredient or a product. */
     val servings: Double? = null,
     val amount: DiaryAmountDto? = null,

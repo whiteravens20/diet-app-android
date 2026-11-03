@@ -105,6 +105,8 @@ data class DiaryEntry(
     val macros: Macros?,
     /** Its macronutrients were estimated: a meal of one's own written by its energy. */
     val estimated: Boolean,
+    /** Where the figures of a product came from when it was written. */
+    val productSource: ProductSource? = null,
 )
 
 /** What is written for a day of the diary, under the meal [slot]. */
