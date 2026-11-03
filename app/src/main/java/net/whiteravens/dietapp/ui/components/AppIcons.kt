@@ -113,6 +113,11 @@ object AppIcons {
         )
     }
 
+    /** `get_app` — an arrow down onto a line; a new version to get. */
+    val Download: ImageVector by lazy {
+        icon("Download", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z")
+    }
+
     /** `auto_awesome` — three sparks; AI, as the web's sparkles mark it. */
     val Sparkles: ImageVector by lazy {
         icon(
