@@ -78,6 +78,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
@@ -120,6 +121,7 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.aiOffText
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.components.rememberWebPages
+import net.whiteravens.dietapp.ui.screens.diary.entryLine
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import java.time.LocalDate
@@ -494,30 +496,49 @@ fun PlanDetailScreen(
                         resizeLeft = state.resizeLeft?.takeIf { it.first == day.date }?.second,
                     )
                 }
-                itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
-                    MealCard(
-                        meal = meal,
-                        date = day.date,
-                        today = today,
-                        // A meal of a day that is over, or that is skipped, keeps its dish.
-                        changeable = !day.skipped && day.date >= today,
-                        parted = partedFrom(plan, plan.days.getOrNull(state.selectedDay - 1), meal, today),
-                        swapping = meal.id == state.offering,
-                        waiting = meal.id in state.waitingMeals,
-                        added = meal.id in state.waitingAdditions,
-                        readOnly = readOnly,
-                        busy = busy,
-                        aiOn = state.aiOn == true,
-                        onEaten = { eaten ->
-                            changedMeal = meal.id
-                            viewModel.setEaten(meal.id, eaten)
-                        },
-                        onChange = { how -> viewModel.offerSwap(meal.id, how) },
-                        onPickFavorite = { pickingFor = meal.id },
-                        onSubstitute = { substitutingIn = meal.id },
-                        onRemove = { removing = meal.id },
-                        onOpen = { openMealId = meal.id },
-                    )
+                val written = day.diary?.items.orEmpty()
+                // The diary of a day that has come opens from what it holds.
+                val openDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today }
+                // What the diary holds for a meal the day has none of stands where that meal would in the day.
+                val apart = entriesApart(day.meals, written)
+                day.meals.forEachIndexed { index, meal ->
+                    apart[index].orEmpty().forEach { entry ->
+                        item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
+                    }
+                    item(key = meal.id) {
+                        MealCard(
+                            meal = meal,
+                            date = day.date,
+                            today = today,
+                            // A meal of a day that is over, or that is skipped, keeps its dish.
+                            changeable = !day.skipped && day.date >= today,
+                            parted = partedFrom(plan, plan.days.getOrNull(state.selectedDay - 1), meal, today),
+                            swapping = meal.id == state.offering,
+                            waiting = meal.id in state.waitingMeals,
+                            added = meal.id in state.waitingAdditions,
+                            readOnly = readOnly,
+                            busy = busy,
+                            aiOn = state.aiOn == true,
+                            onEaten = { eaten ->
+                                changedMeal = meal.id
+                                viewModel.setEaten(meal.id, eaten)
+                            },
+                            onChange = { how -> viewModel.offerSwap(meal.id, how) },
+                            onPickFavorite = { pickingFor = meal.id },
+                            onSubstitute = { substitutingIn = meal.id },
+                            onRemove = { removing = meal.id },
+                            onOpen = { openMealId = meal.id },
+                        )
+                    }
+                    // What the diary holds for this meal of the day follows its last meal of that kind.
+                    if (day.meals.lastOrNull { it.slot == meal.slot } === meal) {
+                        written.filter { it.slot == meal.slot }.forEach { entry ->
+                            item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
+                        }
+                    }
+                }
+                apart[-1].orEmpty().forEach { entry ->
+                    item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
                 }
                 item(key = "add-${day.id}") {
                     TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
@@ -1021,6 +1042,36 @@ private fun MealCard(
                 MealChanges(meal, parted, date, busy, aiOn, canSwap = !readOnly && changeable && !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
             }
         }
+    }
+}
+
+/**
+ * An entry of the day's diary in a plan, under the meal it was written for: what it is, how much, what
+ * it comes to and that it is the diary's, which changes and removes it. A press opens the diary of
+ * that day, [onOpen], where the day has come.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DiaryEntryCard(entry: DiaryEntry, onOpen: (() -> Unit)?) {
+    AppCard(onClick = onOpen, modifier = Modifier.padding(start = 24.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LabelChip(mealTypeLabel(entry.slot))
+            PlainChip(stringResource(R.string.plans_from_diary_chip))
+            if (entry.estimated) LabelChip(stringResource(R.string.plans_estimated_chip))
+        }
+        Text(
+            entry.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Text(
+            entryLine(entry),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
 

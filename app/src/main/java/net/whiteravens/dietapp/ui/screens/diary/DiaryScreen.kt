@@ -509,7 +509,7 @@ private fun EntryRow(entry: DiaryEntry, waiting: Boolean, added: Boolean, enable
 
 /** How much of an entry there was and what it comes to: what is known of it. */
 @Composable
-private fun entryLine(entry: DiaryEntry): String {
+internal fun entryLine(entry: DiaryEntry): String {
     val amount = entry.amount?.let { amountLabel(it.shown, it.shownUnit) } ?: servingsLabel(entry.servings ?: 1.0)
     val kcal = entry.calories?.let { stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt())) }
     val macros = entry.macros?.let {

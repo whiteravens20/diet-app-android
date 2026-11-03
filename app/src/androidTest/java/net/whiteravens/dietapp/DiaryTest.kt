@@ -209,8 +209,14 @@ class DiaryTest {
         screen.scrollToText(line)
         screen.keepScreenshot("diary-as-a-plans-day-says-it")
 
+        // The entry itself stands in the plan's day, under the dinner, marked as the diary's.
+        screen.scrollToText("A large dinner")
+        screen.waitForText(text(R.string.plans_from_diary_chip))
+        screen.keepScreenshot("diary-an-entry-in-the-plans-day")
+
         // From the plan's day to its diary.
-        screen.onNodeWithText(text(R.string.plans_open_diary)).performScrollTo().performClick()
+        screen.scrollToText(text(R.string.plans_open_diary))
+        screen.onNodeWithText(text(R.string.plans_open_diary)).performClick()
         screen.waitForText(text(R.string.diary_subhead))
         screen.scrollToText(text(R.string.diary_plan_over))
         screen.keepScreenshot("diary-the-plans-day-over-its-target")

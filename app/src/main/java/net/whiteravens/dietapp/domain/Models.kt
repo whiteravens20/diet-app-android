@@ -425,8 +425,8 @@ data class PlanDay(
     val diary: DayDiary? = null,
 )
 
-/** What the diary adds to a day of a plan: how many entries, and what they come to. */
-data class DayDiary(val entries: Int, val nutrition: Nutrition)
+/** What the diary adds to a day of a plan: how many entries, what they come to, and the entries, the first written first. */
+data class DayDiary(val entries: Int, val nutrition: Nutrition, val items: List<DiaryEntry> = emptyList())
 
 /**
  * What a day of a running plan is set to: its kind ([dayType] `normal` | `rest` | `training`),

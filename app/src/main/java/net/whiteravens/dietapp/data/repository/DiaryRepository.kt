@@ -181,7 +181,7 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
     syncedAt = syncedAt,
 )
 
-private fun DiaryEntryDto.toDomain() = DiaryEntry(
+internal fun DiaryEntryDto.toDomain() = DiaryEntry(
     id = id,
     slot = mealType,
     kind = kind,

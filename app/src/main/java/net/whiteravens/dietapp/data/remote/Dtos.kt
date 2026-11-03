@@ -999,9 +999,12 @@ data class MealPlanDayDto(
     val diary: DayDiaryDto? = null,
 )
 
-/** What the diary adds to a day of a plan: how many entries, and what they come to. */
+/**
+ * What the diary adds to a day of a plan: how many entries, what they come to, and the entries
+ * themselves, the first written first; none from an instance that does not list them.
+ */
 @Serializable
-data class DayDiaryDto(val entries: Int, val nutrition: NutritionDto)
+data class DayDiaryDto(val entries: Int, val nutrition: NutritionDto, val items: List<DiaryEntryDto> = emptyList())
 
 /** The settings of a day of a running plan, as POST `.../settings/preview` and PUT `.../settings` take them. */
 @Serializable

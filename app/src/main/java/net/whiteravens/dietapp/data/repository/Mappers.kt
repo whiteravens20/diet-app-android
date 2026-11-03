@@ -251,7 +251,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
             useUpBy = overrides?.useUpBy == true,
         )
     },
-    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain()) },
+    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }) },
 )
 
 fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
