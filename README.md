@@ -31,7 +31,8 @@ account once you say on the page that the account it names is yours.
   ask for a forgotten password by mail where the instance sends mail. The server address
   can be changed in the app, so one build works with any instance; it is checked before it
   is kept, and a server whose version the app was not checked against is named on the
-  screen.
+  screen. The first screen says what the app is for, and a note on it opens what an early
+  stage means.
 - **Dashboard.** A profile's daily calorie target, with maintenance, the daily deficit,
   meals per day and the target macro split, each macronutrient by its share of the energy
   and its grams; its weight log, today's weight logged in the
@@ -41,7 +42,8 @@ account once you say on the page that the account it names is yours.
   in its header counts the notifications not read yet, each with the profile it is for: a
   reminder to log a weight, which leads to that profile's weights, and a request to review
   a profile's preferences after a catalogue update took away something it had marked,
-  which leads to the profiles; each can be put away, or all read at once.
+  which leads to the profiles, and what became of a product you sent, which leads to your
+  products; each can be put away, or all read at once.
 - **Notifications on the phone**, off until you turn them on in the account's settings
   (Android 13 and later ask for the permission then): the app asks the server for new
   notifications about every fifteen minutes and whenever you come back to it, and shows
@@ -54,8 +56,14 @@ account once you say on the page that the account it names is yours.
   another recipe, and a favourite set put on days of the plan. A day under way can be set
   apart (a training or rest day, skipped, another number of meals, a target of its own),
   with what that does said before it is saved, and a meal taken off its day or replaced by
-  one of your own. The plan as a table or printed is the web application's, which the
-  plan's menu opens in the browser.
+  one of your own, by its calories alone if you like, the rest estimated and said to be. A
+  meal opens over the whole screen, with what it holds, its amounts and the steps of its
+  recipe, which the plan brings along for when there is no connection. A dish cooked for two
+  days or two meals says which, and what you change of it goes to the other meal too, said
+  before the choice, unless you keep it to this day. What a swap did is said, with what the
+  day comes to, and it can be taken back. A day that has passed keeps its dishes, a meal is
+  marked eaten from its day on, and a day or a plan far from its macros says so. The plan as a
+  table or printed is the web application's, which the plan's menu opens in the browser.
 - **Recipes.** Search in the recipe library; a recipe with its nutrition per serving,
   ingredients and steps, put among a profile's favourites from its view, and the
   ingredients of its lines marked as a profile's favourites or as ones it avoids. Your own
@@ -66,10 +74,19 @@ account once you say on the page that the account it names is yours.
 - **Diary.** What a profile ate on a day, planned or not, against the day's target: on the
   dashboard as today's card, with the way to add to it, and on a screen of its own, any day
   of it. The plan's meals of the day marked eaten where they are shown, and beside them
-  entries: a recipe in servings, an ingredient of the catalogue in an amount, or a meal of
-  your own by its figures, the macronutrients left out estimated by the server and said to
-  be. Each changed or taken out; another day copied into this one; the plan's day resized
-  around what was written, and the plan's day saying what the diary adds to it.
+  entries: a recipe in servings, an ingredient of the catalogue in an amount, a product by
+  its barcode, read with the camera or typed, or by words of its name, or a meal of your own
+  by its figures, the macronutrients left out estimated by the server and said to be. An
+  entry of a product says where its figures came from. Each changed or taken out; another day
+  copied into this one; the plan's day resized around what was written, and the plan's day
+  saying what the diary adds to it.
+- **My products**, where the instance offers products. What its base does not know, written
+  from the label for yourself alone, on a screen of its own or from the diary's window; only
+  the energy is needed, and what is left out is estimated and said to be. With its code and
+  its figures it can be sent to the base, where the instance's reviewers read it without
+  seeing whose it is, and what became of it comes as a notification. The file of what people
+  added to the base is saved from there. All of it takes a connection: without one the window
+  says so and leads to a meal of your own.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, items ticked off as you shop, and what is left to buy sent as a
   text. The list as a table or printed is the web application's, which the list's menu
@@ -80,7 +97,7 @@ account once you say on the page that the account it names is yours.
   loss for somebody under 18 or underweight to acknowledge; a profile's allergens,
   cuisines and lists of ingredients changed in place.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
-  the diary, the profiles, the favourites, the pantry and the account's settings: its e-mail status
+  the diary, the profiles, the favourites, the pantry, your products and the account's settings: its e-mail status
   and the confirmation mail sent again, the unit body weights are shown in (the app itself
   follows the phone's language and theme), what AI it has (none, the instance's provider
   where the operator lets the account use it, with what is left of the month's requests
@@ -117,8 +134,8 @@ account once you say on the page that the account it names is yours.
   rows are ticked and their amounts told, without one as well: each change is marked as
   waiting, the screen says how many wait, and each goes by itself once there is a network;
   a diary's day keeps the server's sum until then, and says how many changes it leaves out;
-  one the server refuses is said, with why. Finding a recipe or an ingredient takes a
-  connection; a meal of your own by its figures does not. Signing
+  one the server refuses is said, with why. Finding a recipe, an ingredient or a product takes
+  a connection; a meal of your own by its figures does not. Signing
   out while changes wait asks first whether to send them or drop them.
 - **A colour scheme** of the six the web application has: the account's, which the web
   application sets, until another is chosen in the account's settings on the phone, where the

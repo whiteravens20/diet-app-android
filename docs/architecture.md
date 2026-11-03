@@ -59,6 +59,7 @@ and the changes made without a network.
 - **Room** — the offline cache: each copy of a plan or a list is the app's own wire class
   as JSON under its id, and each change waiting to be sent is JSON as well.
 - **DataStore** — auth tokens, sealed under a key of the Android Keystore.
+- **CameraX + ZXing** — a product's barcode read on the phone, so the picture goes nowhere.
 
 ## Module boundaries
 
@@ -97,7 +98,7 @@ Running the app against a backend is described in [running-locally.md](running-l
 
 The API binding, the DTO mirror, the auth plumbing and the offline-first repositories are
 in place, and the screens for signing in, the dashboard with the account's notifications,
-meal plans, the diary, recipes, the
+meal plans, the diary with its scanner, the products of one's own, recipes, the
 favourites, the shopping list, the pantry, the profiles with their preferences, the
 account and the About screen are built on them, with tests on the JVM and journeys on
 emulators. What the app

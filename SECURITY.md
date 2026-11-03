@@ -41,6 +41,7 @@ What the code guarantees today, and what it deliberately does not protect agains
 - [x] A key typed for one of the account's own AI providers is shown as dots, held in memory while its form is open and kept out of the screen's saved state, which the system may write to disk. It goes to the server alone, which tries it against the provider when a test is asked for and seals it when it is saved; the server never sends it back, and the app keeps none of it
 - [x] The key and the recovery codes of two-step sign-in are put on the clipboard marked sensitive, so that the system's preview of what was copied does not show them
 - [x] Where a server asks for Cloudflare Turnstile, its script runs in a WebView that reaches no file and no content of the phone and has no bridge into the app: the answer comes back as a navigation to an address of the app's own scheme, which the app reads and never loads
+- [x] The camera is asked for only when the window that reads a barcode opens, and a phone without one types the code. Its picture is read on the phone and goes nowhere: only the code goes, to the user's own server
 - [x] A release build exports one activity, the launcher's, and answers no link from other apps
 
 ### Supply chain

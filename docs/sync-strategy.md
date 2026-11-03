@@ -60,9 +60,10 @@ a recipe's mark put on or taken off, and a notification read. Everything else th
 something asks the server first, and is off while there is no network: reading every
 notification at once among it, as the server would read those that came after them too, and
 copying a day of the diary or resizing its meals, whose outcome is the server's to say.
-Finding a recipe or an ingredient for an entry takes a network too, so that what can always be
-written without one is a meal of one's own by its figures; one found before the network went is
-written as well.
+Finding a recipe, an ingredient or a product for an entry takes a network too, so that what can
+always be written without one is a meal of one's own by its figures; one found before the network
+went is written as well. Writing a product of one's own takes a network: its code is asked about as
+it is written, so the window says so and leads to a meal of one's own.
 
 1. A change goes to the server at once when nothing waits before it. When the server cannot
    be reached, or another change waits, it is kept in the cache's database
