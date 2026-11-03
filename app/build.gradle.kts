@@ -356,5 +356,7 @@ dependencies {
         // Compose's test library brings Espresso 3.5.0, which finds InputManager.getInstance by
         // reflection; Android 17 no longer has it. 3.7.0 asks the system for the service instead.
         androidTestImplementation(libs.androidx.test.espresso.core)
+        // CameraX brings Guava 33.3.1, which the app then ships; 33.7.2 is the release that fixes it.
+        implementation(libs.guava)
     }
 }
