@@ -266,6 +266,8 @@ interface DietApiService {
         @Query("profileId") profileId: String,
         @Query("page") page: Int,
         @Query("pageSize") pageSize: Int,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null,
     ): MealPlanPageDto
 
     /** What a profile's plan of the moment comes to: the one under way, else the next, else the last. */

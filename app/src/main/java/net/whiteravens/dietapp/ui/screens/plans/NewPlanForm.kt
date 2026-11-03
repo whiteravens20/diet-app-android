@@ -102,6 +102,14 @@ data class NewPlanForm(
 
     fun day(date: LocalDate): DayDraft = days[date] ?: DayDraft()
 
+    /** Cooking ahead is asked for where no dish can come back the next day: one repeat, or no two days running. */
+    val cookAheadCannotPair: Boolean
+        get() {
+            if (!mealPrepFriendly || dates.isEmpty()) return false
+            val open = dates.filterNot { day(it).skipped }
+            return maxRepeats.trim().toIntOrNull() == 1 || open.zipWithNext().none { (first, next) -> first.plusDays(1) == next }
+        }
+
     /** The fields that hold what is no whole number: the duration is needed, the others may be empty. */
     fun problems(): Set<PlanField> = buildSet {
         if (durationDays.trim().toIntOrNull() == null) add(PlanField.DURATION)

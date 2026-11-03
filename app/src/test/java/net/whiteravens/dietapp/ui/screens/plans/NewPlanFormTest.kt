@@ -28,6 +28,19 @@ class NewPlanFormTest {
         .mapKeys { (count, _) -> count.toInt() }
 
     @Test
+    fun `cooking ahead says it changes nothing where no dish can come back the next day`() {
+        val cooking = form.copy(mealPrepFriendly = true, durationDays = "3")
+
+        assertFalse(cooking.cookAheadCannotPair)
+        assertFalse(form.copy(durationDays = "1").cookAheadCannotPair)
+        assertTrue(cooking.copy(durationDays = "1").cookAheadCannotPair)
+        assertTrue(cooking.copy(maxRepeats = "1").cookAheadCannotPair)
+        // Every other day skipped: no two days run one after the other.
+        assertTrue(cooking.copy(days = mapOf(monday.plusDays(1) to DayDraft(kind = "skip"))).cookAheadCannotPair)
+        assertFalse(cooking.copy(days = mapOf(monday.plusDays(2) to DayDraft(kind = "skip"))).cookAheadCannotPair)
+    }
+
+    @Test
     fun `an untouched form asks for a week from its day, the rest left to the profile`() {
         val ask = form.ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
 

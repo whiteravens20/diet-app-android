@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -68,6 +70,8 @@ class NewPlanViewModel @Inject constructor(
         val inTheWay: InTheWay? = null,
         /** The plan made: the form is done. */
         val made: String? = null,
+        /** Another plan of the profile holds some of the days chosen. */
+        val overlaps: Boolean = false,
     ) {
         /** The diet and the number of meals the plan is made for: the form's, or the profile's. */
         val planDiet: String get() = form.dietType ?: profile?.figures?.dietType ?: "balanced"
@@ -85,8 +89,11 @@ class NewPlanViewModel @Inject constructor(
     /** What the instance's catalogue holds and the most a recipe repeats where it sets one; null until it has said. */
     val rules: StateFlow<InstanceRules?> = server.rules
 
+    private var askingOverlap: Job? = null
+
     init {
         load()
+        askOverlap(pause = false)
         if (server.rules.value == null) viewModelScope.launch { server.refresh() }
     }
 
@@ -114,9 +121,26 @@ class NewPlanViewModel @Inject constructor(
     }
 
     fun edit(change: (NewPlanForm) -> NewPlanForm) {
+        val before = _state.value.form.dates
         _state.update {
             val now = change(it.form)
             it.copy(form = now, error = null, refusals = it.refusals.after(it.form, now))
+        }
+        if (_state.value.form.dates != before) askOverlap(pause = true)
+    }
+
+    /** Whether another plan holds days of the form, asked once the choice has paused; what fails to come says nothing. */
+    private fun askOverlap(pause: Boolean) {
+        askingOverlap?.cancel()
+        val dates = _state.value.form.dates
+        if (dates.isEmpty()) {
+            _state.update { it.copy(overlaps = false) }
+            return
+        }
+        askingOverlap = viewModelScope.launch {
+            if (pause) delay(ASK_PAUSE_MILLIS)
+            val overlaps = attempt { plans.holdsDays(profileId, dates.first().toString(), dates.last().toString()) }.getOrDefault(false)
+            _state.update { it.copy(overlaps = overlaps) }
         }
     }
 
@@ -172,6 +196,9 @@ class NewPlanViewModel @Inject constructor(
     }
 
     companion object {
+        /** How long a choice of days has to pause before the API is asked about them. */
+        const val ASK_PAUSE_MILLIS = 400L
+
         /** The route's argument naming the profile the plan is made for. */
         const val PROFILE_ID = "profileId"
 

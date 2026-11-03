@@ -111,6 +111,8 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             hint = stringResource(R.string.plans_meal_prep_hint),
                             checked = form.mealPrepFriendly,
                         ) { ticked -> viewModel.edit { it.copy(mealPrepFriendly = ticked) } }
+                        if (form.cookAheadCannotPair) Hint(stringResource(R.string.plans_prep_cannot_pair), MaterialTheme.colorScheme.tertiary)
+                        if (state.overlaps) Hint(stringResource(R.string.plans_overlap_note), MaterialTheme.colorScheme.tertiary)
 
                         val custom = profile.figures.customMacroSplit
                         ChoiceField(

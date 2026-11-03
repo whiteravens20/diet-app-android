@@ -1645,6 +1645,8 @@
     <string name="plans_average_macros">The plan\'s average macronutrients are far from its target.</string>
     <string name="plans_resize_day_note_plain">Gives the meals from recipes not eaten yet other portions, to bring the day as near its target as they can.</string>
     <string name="plans_day_is_over">This day is over: its dishes stay. You can mark what was eaten, add a meal of your own or remove a meal.</string>
+    <string name="plans_prep_cannot_pair">With these settings no dish can come back the next day, so cooking ahead changes nothing here.</string>
+    <string name="plans_overlap_note">Another plan holds some of these days. Both stay, and the diary reads the meals of the newer one.</string>
     <string name="favorite_sets_apply_cooking_note">A dish cooked for two days changes on its second day too.</string>
     <string name="favorite_sets_apply_own_meal_note">A set also replaces meals of your own at those times of day.</string>
     <string name="favorite_sets_apply_no_days">Every day of this plan is over.</string>

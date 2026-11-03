@@ -1766,6 +1766,8 @@
     <string name="plans_average_macros">Średnie makroskładniki tego planu są daleko od celu.</string>
     <string name="plans_resize_day_note_plain">Daje niezjedzonym posiłkom z przepisów inne porcje, żeby dzień jak najbardziej zbliżył się do celu.</string>
     <string name="plans_day_is_over">Ten dzień minął: jego dania zostają. Możesz oznaczyć, co zjedzone, dodać własny posiłek albo usunąć posiłek.</string>
+    <string name="plans_prep_cannot_pair">Przy tych ustawieniach żadne danie nie wróci następnego dnia, więc gotowanie na zapas niczego tu nie zmieni.</string>
+    <string name="plans_overlap_note">W wybrane dni jest już inny plan. Oba zostaną, a dziennik będzie czytał posiłki z nowszego.</string>
     <string name="favorite_sets_apply_cooking_note">Dania ugotowane na dwa dni zmienią się też drugiego dnia.</string>
     <string name="favorite_sets_apply_own_meal_note">Zestaw zastąpi też własne posiłki tych pór dnia.</string>
     <string name="favorite_sets_apply_no_days">Wszystkie dni tego planu minęły.</string>
