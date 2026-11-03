@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.data.remote
 
+import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -229,6 +230,33 @@ interface DietApiService {
     /** What the instance holds that has every word of [search] in its name or brand and can go into a diary. */
     @GET("products")
     suspend fun searchProducts(@Query("search") search: String): ProductSearchResultDto
+
+    /** The account's products of its own. */
+    @GET("products/own")
+    suspend fun ownProducts(): OwnProductsDto
+
+    /** Writes a product of one's own; 409 `PRODUCT_CODE_KNOWN` where the base knows its code. */
+    @POST("products/own")
+    suspend fun writeOwnProduct(@Body body: OwnProductBodyDto): OwnProductDto
+
+    /** Changes a product of one's own; one waiting for review leaves the queue. */
+    @PATCH("products/own/{id}")
+    suspend fun changeOwnProduct(@Path("id") id: String, @Body body: OwnProductBodyDto): OwnProductDto
+
+    @DELETE("products/own/{id}")
+    suspend fun removeOwnProduct(@Path("id") id: String)
+
+    /** Sends a product to the instance's reviewers. */
+    @POST("products/own/{id}/send")
+    suspend fun sendOwnProduct(@Path("id") id: String): OwnProductDto
+
+    /** Takes a product back from the queue. */
+    @POST("products/own/{id}/withdraw")
+    suspend fun withdrawOwnProduct(@Path("id") id: String): OwnProductDto
+
+    /** What the people of the instance added to its base, as a file: it is kept as it comes. */
+    @GET("products/additions")
+    suspend fun productAdditions(): JsonObject
 
     /** What a profile's pantry holds, in the order of the ingredients' English names, then of their units. */
     @GET("inventory")

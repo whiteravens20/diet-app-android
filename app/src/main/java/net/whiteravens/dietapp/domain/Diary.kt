@@ -151,7 +151,8 @@ data class DiaryCopied(val copied: Int, val day: DiaryDay)
  */
 data class Product(
     val id: String,
-    val code: String,
+    /** Null only for a product of the reader's own written without one. */
+    val code: String?,
     val name: String,
     val brand: String?,
     val pack: String?,
@@ -170,6 +171,7 @@ data class Product(
     val energyWorkedOut: Boolean,
     /** The label's figures do not add up, or one of them cannot be right. */
     val doubtful: Boolean,
+    val source: ProductSource = ProductSource.OPEN_FOOD_FACTS,
 ) {
     /** What the product is called in a list and in an entry: with its brand, where it has one. */
     val fullName: String get() = brand?.let { "$name, $it" } ?: name

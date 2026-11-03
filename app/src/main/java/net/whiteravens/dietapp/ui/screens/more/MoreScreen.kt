@@ -18,11 +18,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
@@ -33,6 +36,7 @@ import net.whiteravens.dietapp.ui.navigation.AccountRoute
 import net.whiteravens.dietapp.ui.navigation.DiaryRoute
 import net.whiteravens.dietapp.ui.navigation.FavoritesRoute
 import net.whiteravens.dietapp.ui.navigation.PantryRoute
+import net.whiteravens.dietapp.ui.navigation.ProductsRoute
 import net.whiteravens.dietapp.ui.navigation.ProfilesRoute
 
 /** A place of the app the bottom bar has no room for, as the "More" tab lists it. */
@@ -45,6 +49,7 @@ val moreEntries: List<MoreEntry>
         MoreEntry(ProfilesRoute, Icons.Default.Person, R.string.profiles_title),
         MoreEntry(FavoritesRoute, Icons.Default.Star, R.string.favorites_title),
         MoreEntry(PantryRoute, AppIcons.Inventory, R.string.pantry_title),
+        MoreEntry(ProductsRoute, AppIcons.Barcode, R.string.products_title),
         MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
     )
 
@@ -54,15 +59,16 @@ val moreEntries: List<MoreEntry>
  * itself.
  */
 @Composable
-fun MoreScreen(onOpen: (Any) -> Unit) {
+fun MoreScreen(onOpen: (Any) -> Unit, viewModel: MoreViewModel = hiltViewModel()) {
     val web = rememberWebPages()
+    val rules by viewModel.rules.collectAsStateWithLifecycle()
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         ScreenHeader(title = stringResource(R.string.nav_more))
         AppCard {
-            moreEntries.forEach { entry ->
+            moreEntries.filter { it.route != ProductsRoute || rules?.productsOffered == true }.forEach { entry ->
                 Entry(entry.icon, stringResource(entry.label)) { onOpen(entry.route) }
             }
             Entry(AppIcons.Target, stringResource(R.string.calculator_title), stringResource(R.string.web_opens_in_the_browser)) {

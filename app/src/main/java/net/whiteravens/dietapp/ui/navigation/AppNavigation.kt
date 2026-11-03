@@ -84,6 +84,7 @@ import net.whiteravens.dietapp.ui.screens.diary.DiaryScreen
 import net.whiteravens.dietapp.ui.screens.favorites.FavoritesScreen
 import net.whiteravens.dietapp.ui.screens.more.MoreScreen
 import net.whiteravens.dietapp.ui.screens.notifications.NotificationsScreen
+import net.whiteravens.dietapp.ui.screens.products.ProductsScreen
 import net.whiteravens.dietapp.ui.screens.pantry.PantryScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
 import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
@@ -116,6 +117,7 @@ import kotlin.reflect.KClass
 @Serializable data class ProfileFormRoute(val profileId: String? = null)
 @Serializable object FavoritesRoute
 @Serializable object PantryRoute
+@Serializable object ProductsRoute
 /** The diary: of a profile and a day where they are named, with the window that adds an entry open where [adding], and the camera over it where [scanning]. */
 @Serializable data class DiaryRoute(val profileId: String? = null, val date: String? = null, val adding: Boolean = false, val scanning: Boolean = false)
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
@@ -425,6 +427,7 @@ private fun MainScaffold(
                         onProfiles = { navController.navigate(ProfilesRoute) },
                     )
                 }
+                composable<ProductsRoute> { ProductsScreen(onBack = { navController.popBackStack() }) }
                 composable<PantryRoute> {
                     PantryScreen(onBack = { navController.popBackStack() }, onProfiles = { navController.navigate(ProfilesRoute) })
                 }

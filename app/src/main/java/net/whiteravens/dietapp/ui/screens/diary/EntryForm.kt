@@ -212,7 +212,7 @@ private fun quantityProblem(typed: Double, unit: String): EntryProblem? {
 }
 
 /** A number as a person types it, with a point or a comma. */
-private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
+internal fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
 
 /** A number as a field holds it: in the language's own way, without grouping, to the hundredth; nothing for none. */
 private fun shownNumber(value: Double?): String =

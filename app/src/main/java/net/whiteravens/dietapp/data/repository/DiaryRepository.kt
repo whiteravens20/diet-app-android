@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.Product
+import net.whiteravens.dietapp.domain.ProductSource
 import java.time.Duration
 import java.time.LocalDate
 import java.util.UUID
@@ -192,9 +193,14 @@ private fun DiaryEntryDto.toDomain() = DiaryEntry(
     estimated = estimated,
 )
 
-private fun ProductDto.toDomain() = Product(
+internal fun ProductDto.toDomain() = Product(
     id = id,
     code = code,
+    source = when (source) {
+        "own" -> ProductSource.OWN
+        "instance" -> ProductSource.INSTANCE
+        else -> ProductSource.OPEN_FOOD_FACTS
+    },
     name = name,
     brand = brand,
     pack = pack,

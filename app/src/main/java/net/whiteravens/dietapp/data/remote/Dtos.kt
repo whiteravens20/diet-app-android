@@ -1774,7 +1774,10 @@ data class ProductPer100Dto(
 @Serializable
 data class ProductDto(
     val id: String,
-    val code: String,
+    /** Null only for a product of the reader's own written without one. */
+    val code: String? = null,
+    /** `open_food_facts`, `instance` (a person's, accepted) or `own` (the reader's). */
+    val source: String = "open_food_facts",
     val name: String,
     val brand: String? = null,
     val pack: String? = null,
@@ -1784,6 +1787,52 @@ data class ProductDto(
     val per100: ProductPer100Dto,
     val energyWorkedOut: Boolean,
     val doubtful: Boolean,
+)
+
+/** A product of the account's own: `own`, `sent` to the reviewers or `rejected`, with the reason. */
+@Serializable
+data class OwnProductDto(
+    val id: String,
+    val code: String? = null,
+    val name: String,
+    val brand: String? = null,
+    val pack: String? = null,
+    val unit: String,
+    val packAmount: Double? = null,
+    val servingAmount: Double? = null,
+    val per100: ProductPer100Dto,
+    val energyWorkedOut: Boolean,
+    val doubtful: Boolean,
+    val state: String,
+    val reason: String? = null,
+)
+
+@Serializable
+data class OwnProductsDto(val items: List<OwnProductDto>)
+
+/** A product of one's own as it is written: what is left out is not known, and a changed product says that as well. */
+@Serializable
+data class OwnProductPer100Dto(
+    val calories: Double,
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val saturatedFat: Double? = null,
+    val carbs: Double? = null,
+    val sugars: Double? = null,
+    val fiber: Double? = null,
+    val salt: Double? = null,
+)
+
+@Serializable
+data class OwnProductBodyDto(
+    val code: String? = null,
+    val name: String,
+    val brand: String? = null,
+    val pack: String? = null,
+    val unit: String,
+    val packAmount: Double? = null,
+    val servingAmount: Double? = null,
+    val per100: OwnProductPer100Dto,
 )
 
 /** What a search of the products the instance holds found, those people scan most first. */
