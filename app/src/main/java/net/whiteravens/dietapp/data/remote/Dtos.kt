@@ -1744,12 +1744,16 @@ data class CreateDiaryEntryRequest(
     val nutrition: DiaryMealNutritionDto? = null,
 )
 
-/** PATCH `/diary/entries/:id`: what changes of an entry, nothing else: its meal, and how much of it there was. */
+/**
+ * PATCH `/diary/entries/:id`: what changes of an entry, nothing else: its meal, how much of it there
+ * was, and for an entry of a product a product of the reader's own it is of from now on.
+ */
 @Serializable
 data class UpdateDiaryEntryRequest(
     val mealType: String? = null,
     val servings: Double? = null,
     val quantity: Double? = null,
+    val productId: String? = null,
 )
 
 /** POST `/diary/copy`: what was eaten on [from] written into [to]. */
@@ -1790,6 +1794,8 @@ data class ProductDto(
     val per100: ProductPer100Dto,
     val energyWorkedOut: Boolean,
     val doubtful: Boolean,
+    /** A product of the reader's own for a code the base holds: their figures in place of the base's, never sent. */
+    val correction: Boolean = false,
 )
 
 /** A product of the account's own: `own`, `sent` to the reviewers or `rejected`, with the reason. */
@@ -1806,6 +1812,7 @@ data class OwnProductDto(
     val per100: ProductPer100Dto,
     val energyWorkedOut: Boolean,
     val doubtful: Boolean,
+    val correction: Boolean = false,
     val state: String,
     val reason: String? = null,
 )
@@ -1859,6 +1866,8 @@ data class DiaryEntryDto(
     val ingredientId: String? = null,
     /** Where the figures of a product came from when it was written: `open_food_facts`, `instance` or `own`. */
     val productSource: String? = null,
+    /** The code of the product it is of, where it has one: what a correction of it is written for. */
+    val productCode: String? = null,
     /** Servings of a recipe or of a meal of one's own; null for an ingredient or a product. */
     val servings: Double? = null,
     val amount: DiaryAmountDto? = null,

@@ -43,21 +43,23 @@ import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.OPEN_FOOD_FACTS
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.offProductPage
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.diary.Note
 import net.whiteravens.dietapp.ui.screens.diary.plainNumber
 import java.io.IOException
 import kotlin.math.roundToInt
 
-private const val OPEN_FOOD_FACTS = "https://world.openfoodfacts.org"
 private const val ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /**
- * The account's products with a barcode the base does not know: their state, a new one written, one
- * changed, sent to the instance's reviewers, taken back or removed, and the file of what people of
- * the instance added. As the web's page has them; the base itself is searched in the diary's window.
+ * The account's products with a barcode, new to the base or its corrections of the base's: their state,
+ * a new one written, one changed, sent to the instance's reviewers, taken back or removed, and the file of
+ * what people of the instance added. As the web's page has them; the base itself is searched in the
+ * diary's window.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -154,16 +156,18 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
 @Composable
 private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy: Boolean, refused: Throwable?, viewModel: ProductsViewModel) {
     val product = own.product
+    val web = rememberWebPages()
     AppCard {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(product.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 LabelChip(
                     stringResource(
-                        when (own.state) {
-                            OwnProductState.OWN -> R.string.products_state_own
-                            OwnProductState.SENT -> R.string.products_state_sent
-                            OwnProductState.REJECTED -> R.string.products_state_rejected
+                        when {
+                            product.correction -> R.string.products_state_correction
+                            own.state == OwnProductState.SENT -> R.string.products_state_sent
+                            own.state == OwnProductState.REJECTED -> R.string.products_state_rejected
+                            else -> R.string.products_state_own
                         },
                     ),
                 )
@@ -178,11 +182,16 @@ private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy
                 Text(stringResource(R.string.products_reason, reason), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             if (product.doubtful) Text(stringResource(R.string.products_doubtful), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            // A correction stays its author's: the base has the product it corrects.
+            product.code?.takeIf { product.correction }?.let { code ->
+                Note(stringResource(R.string.products_correction_note))
+                TextButton(onClick = { web.openOutside(offProductPage(code)) }) { Text(stringResource(R.string.products_correct_at_off)) }
+            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = { viewModel.openOn(own) }, enabled = !busy) { Text(stringResource(R.string.products_edit)) }
                 if (own.state == OwnProductState.SENT) {
                     TextButton(onClick = { viewModel.withdraw(product.id) }, enabled = !busy) { Text(stringResource(R.string.products_withdraw)) }
-                } else {
+                } else if (!product.correction) {
                     TextButton(
                         onClick = { viewModel.ask(product.id, ProductsViewModel.Ask.SEND) },
                         enabled = !busy && own.sendable,
@@ -193,7 +202,7 @@ private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy
                 }
             }
             refused?.let { ErrorBanner(if (it is IOException) stringResource(R.string.products_offline) else errorMessage(it)) }
-            if (!own.sendable && own.state != OwnProductState.SENT) Note(stringResource(R.string.products_send_needs))
+            if (!own.sendable && own.state != OwnProductState.SENT && !product.correction) Note(stringResource(R.string.products_send_needs))
             asking?.let { asked ->
                 Note(stringResource(if (asked == ProductsViewModel.Ask.SEND) R.string.products_send_note else R.string.products_remove_note))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -50,13 +50,12 @@ import net.whiteravens.dietapp.ui.common.SOURCE_URL
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.formatMoment
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.OPEN_FOOD_FACTS
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.rememberWebPages
-
-private const val OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org"
 
 /**
  * What the instance publishes of itself, which version of the application this is, and the legal
@@ -142,7 +141,7 @@ fun AboutScreen(
                 }
                 // The places the notices name, apart from them.
                 HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS_URL) }) { Text(stringResource(R.string.about_products_link)) }
+                TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.about_products_link)) }
                 TextButton(onClick = { web.openOutside(LICENCE_URL) }) { Text(stringResource(R.string.about_licence_text)) }
                 TextButton(onClick = { web.openOutside("$SOURCE_URL/issues") }) { Text(stringResource(R.string.about_issues)) }
                 TextButton(onClick = { web.openOutside("$SOURCE_URL/security/policy") }) { Text(stringResource(R.string.about_security)) }

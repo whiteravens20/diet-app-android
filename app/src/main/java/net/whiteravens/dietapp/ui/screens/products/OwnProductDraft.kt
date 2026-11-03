@@ -3,8 +3,8 @@
 package net.whiteravens.dietapp.ui.screens.products
 
 import net.whiteravens.dietapp.domain.NewOwnProduct
-import net.whiteravens.dietapp.domain.OwnProduct
 import net.whiteravens.dietapp.domain.OwnProductLimits
+import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.productCodeOf
 import net.whiteravens.dietapp.ui.screens.diary.number
 import net.whiteravens.dietapp.ui.screens.diary.plainNumber
@@ -97,8 +97,8 @@ data class OwnProductDraft(
     companion object {
         private fun typed(value: Double?): String = value?.let(::plainNumber).orEmpty()
 
-        /** The form of [own], as it stands; or of a new product of [code]. */
-        fun of(own: OwnProduct?, code: String): OwnProductDraft = own?.product?.let { product ->
+        /** The form of [product], one of the reader's own or one of the base to correct, as it stands; or of a new product of [code]. */
+        fun of(source: Product?, code: String): OwnProductDraft = source?.let { product ->
             OwnProductDraft(
                 code = product.code.orEmpty(),
                 name = product.name,

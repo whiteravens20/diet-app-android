@@ -106,9 +106,9 @@ fun DiaryScreen(
         OwnProductDialog(
             product = null,
             code = code,
+            from = state.form?.correcting,
             onSaved = { saved -> viewModel.takeWrittenProduct(saved.product) },
             onDismiss = viewModel::closeOwnProduct,
-            onUseBase = viewModel::takeWrittenProduct,
             onOwnMeal = {
                 viewModel.closeOwnProduct()
                 viewModel.asOwnMeal(null)
@@ -116,6 +116,16 @@ fun DiaryScreen(
         )
     }
     state.edit?.let { edit -> EditEntryDialog(edit, state, viewModel) }
+    // A correction of the product of the entry being changed, which the entry then goes on to.
+    state.edit?.found?.takeIf { it.source != ProductSource.OWN }?.let { base ->
+        OwnProductDialog(
+            product = null,
+            code = base.code.orEmpty(),
+            from = base,
+            onSaved = { saved -> viewModel.moveEditToOwn(saved.product) },
+            onDismiss = viewModel::stopCorrecting,
+        )
+    }
     // After the window it goes over: the window that opens last is the one on top.
     if (state.scanning) ScannerDialog(viewModel::scanned, viewModel::closeScanner)
 

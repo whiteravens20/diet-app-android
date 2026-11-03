@@ -717,6 +717,65 @@ class DiaryViewModelTest {
     }
 
     @Test
+    fun `a correction of a product of the base takes its place over the window, keeping the amount typed`() {
+        val model = model()
+        model.openWindowNow()
+        model.chooseKind(EntryKind.PRODUCT)
+        model.pickProduct(milk)
+        model.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = "300") }
+
+        model.correctProduct(milk)
+        assertEquals("5900512320359", model.state.value.form?.writingProduct)
+        assertEquals(milk, model.state.value.form?.correcting)
+
+        val corrected = milk.copy(id = "c", calories = 64.0, source = ProductSource.OWN, correction = true)
+        model.takeWrittenProduct(corrected)
+
+        val form = model.state.value.form!!
+        assertNull(form.writingProduct)
+        assertNull(form.correcting)
+        assertEquals(corrected, form.product)
+        assertEquals("300", form.quantity)
+    }
+
+    @Test
+    fun `an entry of a product of the base goes on to the reader's correction, or to the version of their own they wrote before`() {
+        val entry = DiaryEntry("e", "snack", "product", "Mleko, Mlekovita", null, DiaryAmount(250.0, "ml", 250.0, "ml"), 150.0, null, false, ProductSource.OPEN_FOOD_FACTS, "5900512320359")
+        val mine = milk.copy(id = "m", name = "Moje mleko", source = ProductSource.OWN, correction = true)
+        coEvery { diary.product("5900512320359") } returns milk andThen mine
+        coEvery { diary.toOwnProduct("e", any(), any(), any()) } returns entry.copy(productSource = ProductSource.OWN)
+        val model = model()
+        model.openEdit(entry)
+        assertTrue(model.state.value.edit!!.correctable)
+
+        // The base's product: its correction is written over the window, and the entry goes on to it.
+        model.lookUpForCorrection()
+        assertEquals(milk, model.state.value.edit?.found)
+        model.moveEditToOwn(milk.copy(id = "c", source = ProductSource.OWN, correction = true))
+        coVerify { diary.toOwnProduct("e", "c", null, null) }
+        assertNull(model.state.value.edit)
+
+        // A version of the reader's own is there already: the entry goes on to it.
+        model.openEdit(entry)
+        model.lookUpForCorrection()
+        assertEquals(mine, model.state.value.edit?.found)
+        model.moveEditToOwn(mine)
+        coVerify { diary.toOwnProduct("e", "m", null, null) }
+    }
+
+    @Test
+    fun `an entry of a product of one's own, or of a product without a code, offers no correction`() {
+        val model = model()
+        val own = DiaryEntry("e", "snack", "product", "Moje", null, DiaryAmount(100.0, "g", 100.0, "g"), 245.0, null, false, ProductSource.OWN, "5900512320359")
+        val noCode = own.copy(productSource = ProductSource.OPEN_FOOD_FACTS, productCode = null)
+
+        model.openEdit(own)
+        assertFalse(model.state.value.edit!!.correctable)
+        model.openEdit(noCode)
+        assertFalse(model.state.value.edit!!.correctable)
+    }
+
+    @Test
     fun `what was written is picked, with a serving of its label to start from`() {
         val model = model()
         model.openWindowNow()

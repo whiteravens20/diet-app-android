@@ -36,21 +36,22 @@ import net.whiteravens.dietapp.domain.productCodeOf
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.unitName
+import net.whiteravens.dietapp.ui.components.OPEN_FOOD_FACTS
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import java.io.IOException
 import kotlin.math.roundToInt
 
-private const val OPEN_FOOD_FACTS = "https://world.openfoodfacts.org"
 private const val ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /** Where the figures of a product come from, under the licence they come with. */
 @Composable
-internal fun ProductSourceNote(source: ProductSource) {
-    if (source == ProductSource.OWN) return Note(stringResource(R.string.diary_product_source_own))
+internal fun ProductSourceNote(product: Product) {
+    if (product.correction) return Note(stringResource(R.string.diary_product_source_correction))
+    if (product.source == ProductSource.OWN) return Note(stringResource(R.string.diary_product_source_own))
     val web = rememberWebPages()
     FlowRow(verticalArrangement = Arrangement.spacedBy(0.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Note(stringResource(if (source == ProductSource.INSTANCE) R.string.diary_product_source_instance else R.string.diary_product_source))
+        Note(stringResource(if (product.source == ProductSource.INSTANCE) R.string.diary_product_source_instance else R.string.diary_product_source))
         TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.diary_product_source_name)) }
         TextButton(onClick = { web.openOutside(ODBL) }) { Text(stringResource(R.string.diary_product_source_licence)) }
     }
@@ -171,7 +172,14 @@ internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
                 Note(stringResource(if (product.source == ProductSource.OWN) R.string.diary_product_lacking_own else R.string.diary_product_lacking))
             }
             if (product.energyWorkedOut) Note(stringResource(R.string.diary_product_energy_worked_out))
-            ProductSourceNote(product.source)
+            ProductSourceNote(product)
+            // What the base says of a product whose label says otherwise is corrected for the reader alone.
+            if (product.correctable) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Note(stringResource(R.string.diary_product_correct_hint))
+                    OutlinedButton(onClick = { viewModel.correctProduct(product) }) { Text(stringResource(R.string.diary_product_correct)) }
+                }
+            }
         }
     }
 }

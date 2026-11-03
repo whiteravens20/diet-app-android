@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.MEAL_TYPES
+import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -348,6 +350,21 @@ internal fun EditEntryDialog(edit: EntryEdit, state: DiaryViewModel.UiState, vie
                         problem = fieldProblem(EntryField.SERVINGS, problems, state),
                         keyboardType = KeyboardType.Decimal,
                     )
+                }
+                if (edit.correctable) {
+                    val own = edit.found?.takeIf { it.source == ProductSource.OWN }
+                    if (own != null) {
+                        // A version of the reader's own is there already: the entry can go on to it, not to a second one.
+                        Text(stringResource(R.string.diary_entry_own_version, own.fullName), style = MaterialTheme.typography.bodyMedium)
+                        OutlinedButton(onClick = { viewModel.moveEditToOwn(own) }, enabled = !state.sending) {
+                            Text(stringResource(R.string.diary_entry_use_own_version))
+                        }
+                    } else {
+                        Note(stringResource(R.string.diary_entry_correct_hint))
+                        OutlinedButton(onClick = viewModel::lookUpForCorrection, enabled = !edit.looking && !state.sending) {
+                            Text(stringResource(R.string.diary_entry_correct))
+                        }
+                    }
                 }
                 state.windowError?.let { ErrorBanner(errorMessage(it), Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
             }

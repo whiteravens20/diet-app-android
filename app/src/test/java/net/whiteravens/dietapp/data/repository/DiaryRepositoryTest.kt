@@ -334,6 +334,21 @@ class DiaryRepositoryTest {
     }
 
     @Test
+    fun `an entry of a product goes on to a product of one's own at once, by that product's id, with the meal asked for`() {
+        server.enqueue(answer(200, "diary-entry-changed"))
+
+        val entry = runBlocking { repository().toOwnProduct("e", "p", "lunch", null) }
+
+        val sent = server.takeRequest()
+        assertEquals("PATCH", sent.method)
+        assertEquals("/api/diary/entries/e", sent.requestUrl!!.encodedPath)
+        val body = sent.bodyJson()
+        assertEquals(setOf("mealType", "productId"), body.keys)
+        assertEquals("p", body.getValue("productId").jsonPrimitive.content)
+        assertEquals("lunch", entry.slot)
+    }
+
+    @Test
     fun `an entry taken out that the server no longer has was taken out, and a change of one is refused and said`() {
         val changes = MemoryChanges()
         val queue = changeQueue(changes)

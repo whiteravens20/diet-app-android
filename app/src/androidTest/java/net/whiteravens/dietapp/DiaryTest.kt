@@ -5,6 +5,7 @@ package net.whiteravens.dietapp
 import android.Manifest
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -403,6 +404,44 @@ class DiaryTest {
         screen.onNode(hasText("${text(R.string.diary_quantity)} (ml)") and hasSetTextAction()).performTextReplacement("500")
         screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
         screen.waitForText(text(R.string.diary_meal_kcal, "300"), substring = true)
+    }
+
+    @Test
+    fun anEntryOfAProductOfTheBaseGoesOnToTheReadersCorrectionWhichSearchesFindInItsPlace() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        val milk = "Mleko próbne 3,2%, Próbna Marka"
+
+        openTheDiary()
+        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.diary_search_recipe))
+        typeForAProduct("mleko probne")
+        screen.onNode(inTheWindow(milk)).performScrollTo().performClick()
+        screen.waitForText(text(R.string.diary_product_correct_hint))
+        screen.putKeyboardAway()
+        submit()
+        screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf(milk) }
+
+        // The entry's window offers the correction; the form starts from what the base says.
+        screen.onNodeWithContentDescription(text(R.string.diary_edit_label, milk)).performScrollTo().performClick()
+        screen.onNode(inTheWindow(text(R.string.diary_entry_correct))).performScrollTo().performClick()
+        // The entry's button is worded as the form's title: the form is open once its intro shows.
+        screen.waitForText(text(R.string.products_correct_intro))
+        screen.keepScreenshot("diary-a-product-corrected")
+        screen.onNode(hasText(text(R.string.products_calories)) and hasSetTextAction()).performScrollTo().performTextReplacement("70")
+        screen.putKeyboardAway()
+        // The form lies over the entry's window, which has a Save of its own: the form's is the one with its intro.
+        val theForm = isDialog() and hasAnyDescendant(hasText(text(R.string.products_correct_intro)))
+        screen.onNode(hasText(text(R.string.common_save)) and hasClickAction() and hasAnyAncestor(theForm)).performClick()
+
+        // The entry is of the correction now, and a search finds the correction in the base's place.
+        screen.scrollToText(milk)
+        screen.waitForText(text(R.string.diary_entry_source_own))
+        screen.keepScreenshot("diary-an-entry-of-a-correction")
+        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
+        typeForAProduct("mleko probne")
+        screen.waitForText(text(R.string.diary_product_own_mark), substring = true)
     }
 
     @Test

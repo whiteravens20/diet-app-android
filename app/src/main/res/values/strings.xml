@@ -1722,7 +1722,7 @@
 
     <string name="products_limits">You can hold %1$s products, add or change %2$s a day and send %3$s a day.</string>
     <string name="products_title">My products</string>
-    <string name="products_subhead">Products with a barcode that the base does not know, written from their labels.</string>
+    <string name="products_subhead">Products with a barcode, written from their labels: new to the base, or your corrections.</string>
     <string name="products_add">Add a product</string>
     <string name="products_add_title">Add a product</string>
     <string name="products_edit_title">Change a product</string>
@@ -1735,6 +1735,11 @@
     <string name="products_state_own">Only yours</string>
     <string name="products_state_sent">Waiting for review</string>
     <string name="products_state_rejected">Not accepted</string>
+    <string name="products_state_correction">Correction</string>
+    <string name="products_correction_note">A correction of the base\'s data: your scans of this code show this version, and everybody else sees the base\'s data. Remove it to go back to the base\'s data.</string>
+    <string name="products_correct_title">Correct the product</string>
+    <string name="products_correct_intro">Copy the figures from the pack. A saved correction is yours alone: your scans of this code show it instead of the base\'s data, and everybody else still sees the base\'s data. For everybody to have it, correct the product at Open Food Facts: photos of the label can be added there, and this instance picks up the change by itself in time.</string>
+    <string name="products_correct_at_off">Correct it at Open Food Facts</string>
     <string name="products_macros">protein %1$s g, fat %2$s g, carbohydrates %3$s g</string>
     <string name="products_reason">Reason: %1$s</string>
     <string name="products_doubtful">These figures do not add up. Check them against the label.</string>
@@ -1774,11 +1779,16 @@
     <string name="products_err_sugars">Sugars are a part of the carbohydrates: they cannot be more.</string>
     <string name="products_err_saturated">Saturated fat is a part of the fat: it cannot be more.</string>
     <string name="products_change_leaves_queue">Saving takes it out of the queue: it has to be sent again.</string>
-    <string name="products_use_base">Use this product</string>
-    <string name="products_without_code">Add mine without a code</string>
     <string name="diary_product_add_own">Add it as your own product</string>
     <string name="diary_product_own_mark">your own</string>
     <string name="diary_product_source_own">Your own product: its figures are what you wrote.</string>
+    <string name="diary_product_source_correction">Your correction of the base\'s data: the figures are as they were written, and everybody else sees the base\'s data. Change or remove it in My products.</string>
+    <string name="diary_product_correct">Correct the data</string>
+    <string name="diary_product_correct_hint">The figures don\'t match the pack?</string>
+    <string name="diary_entry_correct">Correct the product</string>
+    <string name="diary_entry_correct_hint">The entry takes the correction\'s figures for the same amount. Other entries of this product keep theirs.</string>
+    <string name="diary_entry_own_version">You already have a version of this product of your own: %1$s.</string>
+    <string name="diary_entry_use_own_version">Use it in this entry</string>
     <string name="diary_product_source_instance">Added by a person using this instance and accepted by its reviewers. Data:</string>
     <string name="notifications_product_accepted">“%1$s” is now in the base of this instance: everyone here can find it.</string>
     <string name="notifications_product_rejected">“%1$s” was not accepted: %2$s</string>

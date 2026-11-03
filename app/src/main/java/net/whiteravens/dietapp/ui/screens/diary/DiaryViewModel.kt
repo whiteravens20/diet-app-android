@@ -413,12 +413,16 @@ class DiaryViewModel @Inject constructor(
     /** Writes a product of one's own, over the window: the search stays as it was behind it. */
     fun writeOwnProduct(code: String) = changeForm { it.copy(writingProduct = code) }
 
-    fun closeOwnProduct() = changeForm { it.copy(writingProduct = null) }
+    /** Writes the reader's correction of [product], a product of the base whose label says otherwise, over the window. */
+    fun correctProduct(product: Product) = changeForm { it.copy(writingProduct = product.code.orEmpty(), correcting = product) }
 
-    /** What was written, or what the base turned out to hold of its code, is what the entry is made of. */
+    fun closeOwnProduct() = changeForm { it.copy(writingProduct = null, correcting = null) }
+
+    /** What was written is what the entry is made of; a correction takes the place of what it corrects, with the amount typed for it. */
     fun takeWrittenProduct(product: Product) {
+        val corrected = _state.value.form?.correcting != null
         closeOwnProduct()
-        pickProduct(product)
+        if (corrected) changeForm { it.copy(product = product) } else pickProduct(product)
     }
 
     fun asOwnMeal(name: String?) {
@@ -564,6 +568,39 @@ class DiaryViewModel @Inject constructor(
                     if (submitted is Submitted.Sent) read(showLoading = false)
                 }
                 .onFailure(::windowRefused)
+        }
+    }
+
+    /** Reads the product of the entry being changed, to correct it: a version of the reader's own there already is offered instead. */
+    fun lookUpForCorrection() {
+        val code = _state.value.edit?.entry?.productCode ?: return
+        _state.update { it.copy(edit = it.edit?.copy(looking = true), windowError = null) }
+        viewModelScope.launch {
+            attempt { diary.product(code) }
+                .onSuccess { found -> _state.update { it.copy(edit = it.edit?.copy(looking = false, found = found)) } }
+                .onFailure { failure -> _state.update { it.copy(edit = it.edit?.copy(looking = false), windowError = failure) } }
+        }
+    }
+
+    /** The correction written for the entry being changed was given up: the window goes back to the entry. */
+    fun stopCorrecting() = _state.update { it.copy(edit = it.edit?.copy(found = null)) }
+
+    /** The entry being changed goes on to [product], a product of the reader's own: its figures are that label's. */
+    fun moveEditToOwn(product: Product) {
+        val current = _state.value
+        val edit = current.edit ?: return
+        if (current.sending) return
+        _state.update { it.copy(sending = true, windowError = null, failed = null, copied = null, resizeLeft = null) }
+        viewModelScope.launch {
+            attempt { diary.toOwnProduct(edit.entry.id, product.id, edit.newSlot, edit.newQuantity) }
+                .onSuccess {
+                    _state.update { it.copy(sending = false, edit = null, showProblems = false) }
+                    read(showLoading = false)
+                }
+                .onFailure { failure ->
+                    _state.update { it.copy(edit = it.edit?.copy(found = null)) }
+                    windowRefused(failure)
+                }
         }
     }
 

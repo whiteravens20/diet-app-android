@@ -206,7 +206,10 @@ interface DietApiService {
     @POST("diary/entries")
     suspend fun addDiaryEntry(@Header("Idempotency-Key") key: String?, @Body body: CreateDiaryEntryRequest): DiaryEntryDto
 
-    /** Changes an entry: its meal, or how much of it there was, which changes its figures in proportion. */
+    /**
+     * Changes an entry: its meal, or how much of it there was, which changes its figures in proportion;
+     * or the product of the reader's own an entry of a product is of, whose label then gives its figures.
+     */
     @PATCH("diary/entries/{id}")
     suspend fun changeDiaryEntry(@Path("id") id: String, @Body body: UpdateDiaryEntryRequest): DiaryEntryDto
 
@@ -235,7 +238,7 @@ interface DietApiService {
     @GET("products/own")
     suspend fun ownProducts(): OwnProductsDto
 
-    /** Writes a product of one's own; 409 `PRODUCT_CODE_KNOWN` where the base knows its code. */
+    /** Writes a product of one's own; one of a code the base holds is the account's correction of it. */
     @POST("products/own")
     suspend fun writeOwnProduct(@Body body: OwnProductBodyDto): OwnProductDto
 

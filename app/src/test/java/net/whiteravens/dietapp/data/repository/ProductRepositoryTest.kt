@@ -6,7 +6,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.config.ServerConfigStore
-import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.NewOwnProduct
@@ -19,7 +18,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -115,30 +113,19 @@ class ProductRepositoryTest {
     }
 
     @Test
-    fun `refuses in the API's words a code the base knows`() {
-        server.enqueue(answer(409, """{"statusCode":409,"error":"PRODUCT_CODE_KNOWN","message":"Known."}"""))
-
-        try {
-            runBlocking { repository().write(written) }
-            fail("A refusal goes on as a refusal.")
-        } catch (refused: ApiException) {
-            assertEquals("PRODUCT_CODE_KNOWN", refused.code)
-        }
-    }
-
-    @Test
-    fun `reads the product of the base with where it comes from`() {
+    fun `reads a product written for a code the base holds as the account's correction of it`() {
         server.enqueue(
             answer(
-                200,
-                """{"id":"b","code":"5900512320359","source":"instance","name":"Mleko","unit":"ml","per100":$per100,"energyWorkedOut":false,"doubtful":false}""",
+                201,
+                """{"id":"m","code":"5900512320359","source":"own","name":"Moje mleko","unit":"ml","per100":$per100,"energyWorkedOut":false,"doubtful":false,"correction":true,"state":"own"}""",
             ),
         )
 
-        val product = runBlocking { repository().inTheBase("5900512320359") }
+        val saved = runBlocking { repository().write(written) }
 
-        assertEquals(ProductSource.INSTANCE, product.source)
-        assertEquals("/api/products/code/5900512320359", server.takeRequest().path)
+        assertTrue(saved.product.correction)
+        assertEquals(ProductSource.OWN, saved.product.source)
+        assertEquals("POST /api/products/own", server.takeRequest().let { "${it.method} ${it.path}" })
     }
 
     @Test

@@ -103,6 +103,16 @@ class DiaryRepository @Inject constructor(
     suspend fun send(change: QueuedChange.DiaryChanged): DiaryEntry =
         apiCall(json) { api.changeDiaryEntry(change.id, UpdateDiaryEntryRequest(change.slot, change.servings, change.quantity)) }.toDomain()
 
+    /**
+     * Moves the entry [id] of a product to [productId], a product of the reader's own, as when they
+     * correct what the base says: its figures are that label's, for the same amount or [quantity]. It
+     * needs a network, as writing that product did.
+     */
+    suspend fun toOwnProduct(id: String, productId: String, slot: String?, quantity: Double?): DiaryEntry =
+        apiCall(json) {
+            api.changeDiaryEntry(id, UpdateDiaryEntryRequest(mealType = slot, quantity = quantity, productId = productId))
+        }.toDomain()
+
     /** Takes the entry [id] out of [profileId]'s diary, or keeps that to be sent in its turn. */
     suspend fun remove(profileId: String, id: String): Submitted<Unit> {
         val queued = QueuedChange.DiaryRemoved(profileId, id)
@@ -192,6 +202,7 @@ internal fun DiaryEntryDto.toDomain() = DiaryEntry(
     macros = Macros(nutrition.protein, nutrition.fat, nutrition.carbs),
     estimated = estimated,
     productSource = productSource?.let(::productSourceOf),
+    productCode = productCode,
 )
 
 private fun productSourceOf(source: String) = when (source) {
@@ -220,4 +231,5 @@ internal fun ProductDto.toDomain() = Product(
     saturatedFat = per100.saturatedFat,
     energyWorkedOut = energyWorkedOut,
     doubtful = doubtful,
+    correction = correction,
 )

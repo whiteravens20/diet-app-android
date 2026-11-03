@@ -31,7 +31,6 @@ class OwnProductViewModelTest {
     private val products = mockk<ProductRepository>()
     private val base = Product("b", "5900512320359", "Mleko", null, null, "ml", null, null, 60.0, null, null, null, null, null, null, null, false, false)
     private val mine = OwnProduct(base.copy(id = "m", source = ProductSource.OWN, name = "Moje"), OwnProductState.OWN, null)
-    private val known = ApiException(409, "PRODUCT_CODE_KNOWN", "Known.")
 
     @Before
     fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -83,41 +82,28 @@ class OwnProductViewModelTest {
     }
 
     @Test
-    fun `shows what the base holds of a code it knows, and leads to writing this one without a code`() {
-        coEvery { products.write(any()) } throws known andThen mine
-        coEvery { products.inTheBase("5900512320359") } returns base
-        val model = model()
+    fun `starts a correction from what the base says of the product, its code included, and writes it as a product of one's own`() {
+        coEvery { products.write(any()) } returns mine
+        val model = OwnProductViewModel(products)
+        model.open(null, "", from = base.copy(protein = 3.0, packAmount = 1000.0))
 
+        assertEquals("5900512320359", model.state.value.draft.code)
+        assertEquals("Mleko", model.state.value.draft.name)
+        assertEquals("60", model.state.value.draft.calories)
+        assertEquals("3", model.state.value.draft.protein)
+        assertEquals("1000", model.state.value.draft.packAmount)
+        assertEquals("", model.state.value.draft.fat)
+
+        model.type { it.copy(calories = "64") }
         model.save()
 
-        assertTrue(model.state.value.codeKnown)
-        assertEquals(base, model.state.value.base)
-
-        model.withoutCode()
-
-        assertEquals("", model.state.value.draft.code)
-        assertNull(model.state.value.refused)
-        assertNull(model.state.value.base)
-
-        model.save()
         assertEquals(mine, model.state.value.saved)
-        coVerify { products.write(match { it.code == null }) }
+        coVerify { products.write(match { it.code == "5900512320359" && it.calories == 64.0 }) }
+        coVerify(exactly = 0) { products.change(any(), any()) }
     }
 
     @Test
-    fun `says that the base knows a code although what it holds could not be read`() {
-        coEvery { products.write(any()) } throws known
-        coEvery { products.inTheBase(any()) } throws IOException("no")
-        val model = model()
-
-        model.save()
-
-        assertTrue(model.state.value.codeKnown)
-        assertNull(model.state.value.base)
-    }
-
-    @Test
-    fun `asks nothing of the base for any other refusal, and keeps what was typed`() {
+    fun `says a refusal and keeps what was typed`() {
         val limit = ApiException(409, "OWN_PRODUCT_LIMIT", "Too many.")
         coEvery { products.write(any()) } throws limit
         val model = model()
@@ -125,9 +111,8 @@ class OwnProductViewModelTest {
         model.save()
 
         assertEquals(limit, model.state.value.refused)
-        assertFalse(model.state.value.codeKnown)
         assertEquals("Moje", model.state.value.draft.name)
-        coVerify(exactly = 0) { products.inTheBase(any()) }
+        assertNull(model.state.value.saved)
     }
 
     @Test

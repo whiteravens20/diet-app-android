@@ -107,6 +107,8 @@ data class DiaryEntry(
     val estimated: Boolean,
     /** Where the figures of a product came from when it was written. */
     val productSource: ProductSource? = null,
+    /** The code of the product it is of, where it has one. */
+    val productCode: String? = null,
 )
 
 /** What is written for a day of the diary, under the meal [slot]. */
@@ -174,7 +176,12 @@ data class Product(
     /** The label's figures do not add up, or one of them cannot be right. */
     val doubtful: Boolean,
     val source: ProductSource = ProductSource.OPEN_FOOD_FACTS,
+    /** The reader's own figures for a code the base holds, for the reader alone. */
+    val correction: Boolean = false,
 ) {
+    /** A product of the base, whose label the reader can correct for themselves. */
+    val correctable: Boolean get() = source != ProductSource.OWN && code != null
+
     /** What the product is called in a list and in an entry: with its brand, where it has one. */
     val fullName: String get() = brand?.let { "$name, $it" } ?: name
 

@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -90,7 +91,7 @@ class ProductsTest {
     }
 
     @Test
-    fun aCodeTheBaseKnowsShowsWhatItHoldsAndLeadsToOneWithoutACode() {
+    fun aCodeTheBaseKnowsIsWrittenAsTheAccountsOwnCorrectionWhichStaysItsOwn() {
         val account = Instance.newAccount()
         Instance.newProfile(account, name = "Ala")
         screen.startSignedIn(account)
@@ -103,12 +104,11 @@ class ProductsTest {
         type(R.string.products_calories, "60")
         save()
 
-        screen.waitForText("Mleko próbne 3,2%")
-        screen.keepScreenshot("products-a-code-the-base-knows")
-        screen.onNode(inTheWindow(text(R.string.products_without_code))).performScrollTo().performClick()
-        save()
-
         screen.waitForText("Moje mleko")
-        screen.waitForText(text(R.string.products_send_needs))
+        screen.waitForText(text(R.string.products_state_correction))
+        screen.waitForText(text(R.string.products_correction_note))
+        screen.keepScreenshot("products-a-correction")
+        // A correction stays its author's: nothing offers to send it to the base.
+        screen.onAllNodes(hasText(text(R.string.products_send)) and hasClickAction()).assertCountEquals(0)
     }
 }

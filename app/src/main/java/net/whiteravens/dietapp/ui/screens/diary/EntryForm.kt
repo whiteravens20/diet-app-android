@@ -8,6 +8,7 @@ import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Product
+import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.domain.Recipe
 import java.text.NumberFormat
 import java.util.Locale
@@ -62,6 +63,8 @@ data class EntryForm(
     val codeFailed: Throwable? = null,
     /** A product of one's own is being written over the window, of the code it is written for. */
     val writingProduct: String? = null,
+    /** The product of the base the one being written corrects. */
+    val correcting: Product? = null,
     val servings: String = "1",
     val quantity: String = "",
     val unit: String = "g",
@@ -155,7 +158,15 @@ data class EntryEdit(
     val slot: String = entry.slot,
     val servings: String = shownNumber(entry.servings),
     val quantity: String = shownNumber(entry.amount?.quantity),
+    /** The product of the entry's code is being read, to correct it. */
+    val looking: Boolean = false,
+    /** What the code answers for the reader: a product of the base to correct, or a version of their own. */
+    val found: Product? = null,
 ) {
+    /** An entry of a product of the base, whose label the reader can correct for themselves. */
+    val correctable: Boolean
+        get() = entry.kind == "product" && entry.productSource != ProductSource.OWN && entry.productCode != null
+
     private val servingsAtFirst = shownNumber(entry.servings)
     private val quantityAtFirst = shownNumber(entry.amount?.quantity)
 

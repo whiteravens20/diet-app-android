@@ -2,8 +2,6 @@
 
 package net.whiteravens.dietapp.ui.screens.products
 
-import net.whiteravens.dietapp.domain.OwnProduct
-import net.whiteravens.dietapp.domain.OwnProductState
 import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.ProductSource
 import org.junit.Assert.assertEquals
@@ -83,7 +81,7 @@ class OwnProductDraftTest {
             60.0, 3.2, null, 4.7, null, null, null, null, false, false, ProductSource.OWN,
         )
 
-        val draft = OwnProductDraft.of(OwnProduct(product, OwnProductState.OWN, null), "ignored")
+        val draft = OwnProductDraft.of(product, "ignored")
 
         assertEquals("5900512320359", draft.code)
         assertEquals("ml", draft.unit)

@@ -5,8 +5,6 @@ package net.whiteravens.dietapp.ui.screens.products
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,38 +38,39 @@ import net.whiteravens.dietapp.domain.OwnProductLimits
 import net.whiteravens.dietapp.domain.OwnProductState
 import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.ui.common.errorMessage
-import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenDialog
+import net.whiteravens.dietapp.ui.components.offProductPage
+import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.diary.Note
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import java.io.IOException
-import kotlin.math.roundToInt
 
 private val UNITS = listOf("g", "ml")
 
 /**
  * The window a product of one's own is written in, on the list of products and over the diary's
- * window. What cannot be right is said of its field before anything is sent. A code the base knows
- * leads to what the base holds, which [onUseBase] takes where the place can take one, and to writing
- * this one without a code. It needs a network: without one the window says so, and [onOwnMeal] leads
- * to a meal of one's own, which goes through the queue.
+ * window. What cannot be right is said of its field before anything is sent. Opened [from] a product
+ * of the base, it writes the reader's correction of it, and says where a correction reaches
+ * everybody. It needs a network: without one the window says so, and [onOwnMeal] leads to a meal of
+ * one's own, which goes through the queue.
  */
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OwnProductDialog(
     product: OwnProduct?,
     code: String,
     onSaved: (OwnProduct) -> Unit,
     onDismiss: () -> Unit,
-    onUseBase: ((Product) -> Unit)? = null,
+    from: Product? = null,
     onOwnMeal: (() -> Unit)? = null,
-    viewModel: OwnProductViewModel = hiltViewModel(key = "own-product-${product?.product?.id ?: code}"),
+    viewModel: OwnProductViewModel = hiltViewModel(key = "own-product-${product?.product?.id ?: from?.id ?: code}"),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(product?.product?.id, code) { viewModel.open(product, code) }
+    val web = rememberWebPages()
+    LaunchedEffect(product?.product?.id, from?.id, code) { viewModel.open(product, code, from) }
     LaunchedEffect(state.saved) { viewModel.state.value.saved?.let(onSaved) }
     val draft = state.draft
     val problems = if (state.showProblems) draft.problems() else emptyMap()
@@ -109,10 +108,22 @@ fun OwnProductDialog(
     ScreenDialog(onDismiss) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                stringResource(if (product == null) R.string.products_add_title else R.string.products_edit_title),
+                stringResource(
+                    when {
+                        product != null -> R.string.products_edit_title
+                        from != null -> R.string.products_correct_title
+                        else -> R.string.products_add_title
+                    },
+                ),
                 style = MaterialTheme.typography.titleLarge,
             )
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                from?.code?.let { corrected ->
+                    Note(stringResource(R.string.products_correct_intro))
+                    TextButton(onClick = { web.openOutside(offProductPage(corrected)) }) {
+                        Text(stringResource(R.string.products_correct_at_off))
+                    }
+                }
                 FormField(
                     value = draft.code,
                     onValueChange = { typed -> viewModel.type { it.copy(code = typed.take(CODE_LONGEST)) } },
@@ -195,28 +206,6 @@ fun OwnProductDialog(
                         ErrorBanner(if (refused is IOException) stringResource(R.string.products_offline) else errorMessage(refused))
                         if (refused is IOException && onOwnMeal != null) {
                             OutlinedButton(onClick = onOwnMeal) { Text(stringResource(R.string.diary_product_as_own)) }
-                        }
-                    }
-                    state.base?.let { base ->
-                        Column(Modifier.fillMaxWidth()) {
-                            Text(base.name, style = MaterialTheme.typography.bodyLarge)
-                            Note(
-                                listOfNotNull(
-                                    base.brand,
-                                    base.pack,
-                                    base.calories?.let { calories ->
-                                        stringResource(R.string.diary_per_100, formatNumber(calories.roundToInt()), unitName(base.unit))
-                                    },
-                                ).joinToString(" · "),
-                            )
-                        }
-                    }
-                    if (state.codeKnown) {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            state.base?.takeIf { onUseBase != null }?.let { base ->
-                                OutlinedButton(onClick = { onUseBase?.invoke(base) }) { Text(stringResource(R.string.products_use_base)) }
-                            }
-                            TextButton(onClick = viewModel::withoutCode) { Text(stringResource(R.string.products_without_code)) }
                         }
                     }
                 }

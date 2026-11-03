@@ -1845,7 +1845,7 @@
 
     <string name="products_limits">Możesz mieć %1$s produktów, dodać lub zmienić %2$s dziennie i wysłać %3$s dziennie.</string>
     <string name="products_title">Moje produkty</string>
-    <string name="products_subhead">Produkty z kodem kreskowym, których baza nie zna, spisane z etykiet.</string>
+    <string name="products_subhead">Produkty z kodem kreskowym spisane z etykiet: nowe dla bazy albo Twoje poprawki.</string>
     <string name="products_add">Dodaj produkt</string>
     <string name="products_add_title">Dodaj produkt</string>
     <string name="products_edit_title">Zmień produkt</string>
@@ -1858,6 +1858,11 @@
     <string name="products_state_own">Tylko Twój</string>
     <string name="products_state_sent">Czeka na sprawdzenie</string>
     <string name="products_state_rejected">Nieprzyjęty</string>
+    <string name="products_state_correction">Poprawka</string>
+    <string name="products_correction_note">Poprawka danych z bazy: Twoje skany tego kodu pokazują tę wersję, a inni widzą dane z bazy. Usuń ją, żeby wrócić do danych z bazy.</string>
+    <string name="products_correct_title">Popraw dane produktu</string>
+    <string name="products_correct_intro">Przepisz wartości z opakowania. Zapisana poprawka jest tylko Twoja: Twoje skany tego kodu pokażą ją zamiast danych z bazy, a inni dalej będą widzieć dane z bazy. Żeby poprawka trafiła do wszystkich, popraw produkt w Open Food Facts: tam można dodać zdjęcia etykiety, a ta instancja z czasem sama pobierze zmianę.</string>
+    <string name="products_correct_at_off">Popraw w Open Food Facts</string>
     <string name="products_macros">białko %1$s g, tłuszcz %2$s g, węglowodany %3$s g</string>
     <string name="products_reason">Powód: %1$s</string>
     <string name="products_doubtful">Te wartości się nie zgadzają. Sprawdź je na etykiecie.</string>
@@ -1897,11 +1902,16 @@
     <string name="products_err_sugars">Cukry są częścią węglowodanów: nie może ich być więcej.</string>
     <string name="products_err_saturated">Tłuszcze nasycone są częścią tłuszczu: nie może ich być więcej.</string>
     <string name="products_change_leaves_queue">Zapisanie wycofa go z kolejki: trzeba będzie wysłać go jeszcze raz.</string>
-    <string name="products_use_base">Użyj tego produktu</string>
-    <string name="products_without_code">Dodaj mój bez kodu</string>
     <string name="diary_product_add_own">Dodaj jako własny produkt</string>
     <string name="diary_product_own_mark">własny</string>
     <string name="diary_product_source_own">Własny produkt: dane są takie, jak je wpisano.</string>
+    <string name="diary_product_source_correction">Twoja poprawka danych z bazy: dane są takie, jak je wpisano, a inni widzą dane z bazy. Zmienisz ją lub usuniesz w Moich produktach.</string>
+    <string name="diary_product_correct">Popraw dane</string>
+    <string name="diary_product_correct_hint">Wartości nie zgadzają się z opakowaniem?</string>
+    <string name="diary_entry_correct">Popraw dane produktu</string>
+    <string name="diary_entry_correct_hint">Wpis dostanie wartości z poprawki dla tej samej ilości. Inne wpisy tego produktu zachowają swoje.</string>
+    <string name="diary_entry_own_version">Masz już własną wersję tego produktu: %1$s.</string>
+    <string name="diary_entry_use_own_version">Użyj jej w tym wpisie</string>
     <string name="diary_product_source_instance">Dodany przez użytkownika tej instancji i przyjęty po sprawdzeniu. Dane:</string>
     <string name="notifications_product_accepted">„%1$s” jest już w bazie tej instancji: każdy tutaj może go znaleźć.</string>
     <string name="notifications_product_rejected">Nie przyjęto „%1$s”: %2$s</string>
