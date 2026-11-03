@@ -184,6 +184,9 @@ jobs:
             free -m
             ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT connected${{ matrix.variant }}AndroidTest
 
+      - name: Check that every journey ran
+        run: .github/scripts/journeys-ran.sh
+
       - name: Keep what diet-app logged
         if: always()
         working-directory: ${{ runner.temp }}/diet-app

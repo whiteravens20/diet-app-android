@@ -102,6 +102,9 @@ jobs:
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
             ./gradlew $NOTIFIED_ACCOUNT connectedDebugAndroidTest
 
+      - name: Check that every journey ran
+        run: .github/scripts/journeys-ran.sh
+
       - name: Keep what diet-app logged
         if: always()
         working-directory: ${{ runner.temp }}/diet-app
