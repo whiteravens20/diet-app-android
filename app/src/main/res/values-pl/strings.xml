@@ -268,10 +268,6 @@
     <string name="plans_only_recipe_chip">Jedyny przepis</string>
     <string name="plans_only_recipe_hint">Dla tego posiłku w tej diecie profil zostawia do wyboru jeden przepis.</string>
     <string name="plans_auto_balanced_chip">przeliczono ×%1$s</string>
-    <string name="plans_cook_once_chip">Ugotuj raz</string>
-    <string name="plans_cooked_chip">Ugotowane wcześniej</string>
-    <string name="plans_cook_once_hint">Wraca zaraz potem: ugotuj od razu na oba posiłki.</string>
-    <string name="plans_cooked_hint">Już ugotowane, razem z tym samym daniem wcześniej.</string>
     <string name="plans_packs_line">Produkty nietrwałe po otwarciu: jadłospis zużywa %1$s%% tego, co kupuje.</string>
     <plurals name="plans_packs_line_wasted">
         <item quantity="one">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
@@ -1746,4 +1742,63 @@
     <string name="scanner_light_off">Wyłącz latarkę</string>
     <string name="about_products_source">Wartości produktów z kodem kreskowym pochodzą z Open Food Facts, bazy dostępnej na licencji Open Database License, a jej zawartość na licencji Database Contents License. Wpisują je jej użytkownicy i mogą być błędne.</string>
     <string name="scanner_no_camera">Na tym telefonie nie ma aparatu do użycia. Wpisz kod.</string>
+    <string name="plans_cook_days">Ugotuj na 2 dni</string>
+    <string name="plans_cook_meals">Ugotuj na 2 posiłki</string>
+    <string name="plans_cook_hint">Gotujesz raz, na %1$s i %2$s.</string>
+    <string name="plans_from_hint">Nie gotujesz: to reszta dania %1$s.</string>
+    <string name="plans_not_cooked">Jeśli %1$s nie było gotowania, ugotuj dziś: ilości są dla tego posiłku.</string>
+    <string name="plans_cooks_separately">%1$s to danie ugotujesz osobno.</string>
+    <string name="plans_cooks_for_one">%1$s gotujesz na jeden posiłek.</string>
+    <string name="plans_cooking_also">Zmieni się też: %1$s.</string>
+    <string name="plans_cooking_only">Tylko ten dzień</string>
+    <string name="plans_cooking_only_chosen">Tylko wybrane dni</string>
+    <string name="plans_cooking_stays">Bez zmian zostaje: %1$s. Ugotowana na to porcja zostanie niewykorzystana.</string>
+    <string-array name="plans_cooking_day_for">
+        <item>poniedziałek</item>
+        <item>wtorek</item>
+        <item>środę</item>
+        <item>czwartek</item>
+        <item>piątek</item>
+        <item>sobotę</item>
+        <item>niedzielę</item>
+    </string-array>
+    <string-array name="plans_cooking_day_from">
+        <item>z poniedziałku</item>
+        <item>z wtorku</item>
+        <item>ze środy</item>
+        <item>z czwartku</item>
+        <item>z piątku</item>
+        <item>z soboty</item>
+        <item>z niedzieli</item>
+    </string-array>
+    <string-array name="plans_cooking_day_on">
+        <item>w poniedziałek</item>
+        <item>we wtorek</item>
+        <item>w środę</item>
+        <item>w czwartek</item>
+        <item>w piątek</item>
+        <item>w sobotę</item>
+        <item>w niedzielę</item>
+    </string-array>
+    <string-array name="plans_cooking_meal_for">
+        <item>śniadanie</item>
+        <item>drugie śniadanie</item>
+        <item>obiad</item>
+        <item>przekąskę</item>
+        <item>kolację</item>
+    </string-array>
+    <string-array name="plans_cooking_meal_from">
+        <item>ze śniadania</item>
+        <item>z drugiego śniadania</item>
+        <item>z obiadu</item>
+        <item>z przekąski</item>
+        <item>z kolacji</item>
+    </string-array>
+    <string-array name="plans_cooking_meal_on">
+        <item>na śniadanie</item>
+        <item>na drugie śniadanie</item>
+        <item>na obiad</item>
+        <item>na przekąskę</item>
+        <item>na kolację</item>
+    </string-array>
 </resources>

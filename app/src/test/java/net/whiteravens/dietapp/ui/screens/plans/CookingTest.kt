@@ -1,0 +1,74 @@
+// Copyright (C) 2026 White Ravens. AGPL-3.0-only with an additional term; see LICENSE and NOTICE.
+
+package net.whiteravens.dietapp.ui.screens.plans
+
+import net.whiteravens.dietapp.domain.CookedPlace
+import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.MealCooking
+import net.whiteravens.dietapp.domain.MealLine
+import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.PlanDay
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+/** What a meal takes to cook: its own lines, or the whole of a cooking on the meal it is cooked at. */
+class CookingTest {
+    private val own = listOf(MealLine("oats", "Oats", 60.0, "g"))
+    private val whole = listOf(MealLine("oats", "Oats", 130.0, "g"))
+
+    private fun meal(id: String, servings: Double, cookAhead: String?, cooking: MealCooking?) = Meal(
+        id = id,
+        slot = "breakfast",
+        name = "Porridge",
+        recipeId = "recipe",
+        servings = servings,
+        eaten = false,
+        offDiet = false,
+        nutrition = Nutrition(300.0, 10.0, 8.0, 50.0),
+        lines = own,
+        allergens = emptyList(),
+        conflicts = emptyList(),
+        disliked = emptyList(),
+        custom = false,
+        quantityScale = 1.0,
+        cookAhead = cookAhead,
+        byModel = null,
+        outsideLimits = emptyList(),
+        onlyRecipe = false,
+        cooking = cooking,
+    )
+
+    private fun plan(vararg meals: Meal): MealPlan {
+        val day = mockk<PlanDay>()
+        every { day.meals } returns meals.toList()
+        val plan = mockk<MealPlan>()
+        every { plan.days } returns listOf(day)
+        return plan
+    }
+
+    @Test
+    fun `the meal it is cooked at takes what all the meals of its cooking take`() {
+        val cook = meal("first", 1.0, "cook", MealCooking(listOf(CookedPlace("second", "2026-11-04", "breakfast", false)), whole))
+        val second = meal("second", 1.35, "cooked", MealCooking(listOf(CookedPlace("first", "2026-11-03", "breakfast", false)), whole))
+
+        assertEquals(MealToCook(whole, 2.4, true), mealToCook(plan(cook, second), cook))
+    }
+
+    @Test
+    fun `the meal eaten from it takes what it holds`() {
+        val cook = meal("first", 1.0, "cook", MealCooking(listOf(CookedPlace("second", "2026-11-04", "breakfast", false)), whole))
+        val second = meal("second", 1.25, "cooked", MealCooking(listOf(CookedPlace("first", "2026-11-03", "breakfast", false)), whole))
+
+        assertEquals(MealToCook(own, 1.3, false), mealToCook(plan(cook, second), second))
+    }
+
+    @Test
+    fun `a meal cooked for itself takes what it holds`() {
+        val alone = meal("alone", 1.0, null, null)
+
+        assertEquals(MealToCook(own, 1.0, false), mealToCook(plan(alone), alone))
+    }
+}

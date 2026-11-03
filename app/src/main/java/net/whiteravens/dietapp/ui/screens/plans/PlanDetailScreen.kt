@@ -201,7 +201,14 @@ fun PlanDetailScreen(
         AlertDialog(
             onDismissRequest = { removing = null },
             title = { Text(stringResource(R.string.plans_remove_title, mealName(meal))) },
-            text = { Text(stringResource(if (meal.eaten) R.string.plans_remove_note_eaten else R.string.plans_remove_note)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stringResource(if (meal.eaten) R.string.plans_remove_note_eaten else R.string.plans_remove_note))
+                    plan.days.firstOrNull { day -> day.meals.any { it.id == meal.id } }?.let { day ->
+                        apartNote(meal, day.date, LocalDate.now().toString())?.let { Text(it) }
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -955,7 +962,7 @@ private fun MealCard(
                     if (meal.quantityScale != 1.0) {
                         PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
                     }
-                    meal.cookAhead?.let { PlainChip(stringResource(if (it == "cook") R.string.plans_cook_once_chip else R.string.plans_cooked_chip)) }
+                    cookChip(meal, date)?.let { PlainChip(it) }
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                     if (waiting) WaitingMark()
                 }
@@ -972,6 +979,7 @@ private fun MealCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
                 )
+                notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -1055,6 +1063,7 @@ private fun CustomMealDialog(
                     optionLabel = { mealTypeLabel(it) },
                     onSelect = { slot -> form = form.copy(slot = slot) },
                 )
+                val today = LocalDate.now().toString()
                 ChoiceField(
                     label = stringResource(R.string.plans_custom_place),
                     options = listOf<String?>(null) + meals.map { it.id },
@@ -1099,6 +1108,7 @@ private fun CustomMealDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                meals.firstOrNull { it.id == replaces }?.let { meal -> apartNote(meal, date, today)?.let { Hint(it) } }
                 sent?.error?.let { ErrorBanner(errorMessage(it)) }
             }
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

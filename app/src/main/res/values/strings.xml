@@ -250,10 +250,6 @@
     <string name="plans_only_recipe_chip">Only recipe</string>
     <string name="plans_only_recipe_hint">For this meal on this diet the profile leaves one recipe to choose from.</string>
     <string name="plans_auto_balanced_chip">auto-balanced ×%1$s</string>
-    <string name="plans_cook_once_chip">Cook once</string>
-    <string name="plans_cooked_chip">Cooked ahead</string>
-    <string name="plans_cook_once_hint">Planned again right after: cook it once, for both meals.</string>
-    <string name="plans_cooked_hint">Cooked already, with the same dish before it.</string>
     <string name="plans_packs_line">Packs that do not keep once opened: the menu uses %1$s%% of what it buys.</string>
     <plurals name="plans_packs_line_wasted">
         <item quantity="one">Packs that do not keep once opened: the menu uses %2$s%% of what it buys, and leaves more than a fifth of %1$d pack.</item>
@@ -1625,4 +1621,63 @@
     <string name="diary_product_source_licence" translatable="false">ODbL</string>
     <string name="about_products_link" translatable="false">Open Food Facts</string>
     <string name="scanner_no_camera">This phone has no camera to use. Type the code.</string>
+    <string name="plans_cook_days">Cook for 2 days</string>
+    <string name="plans_cook_meals">Cook for 2 meals</string>
+    <string name="plans_cook_hint">You cook once, for %1$s and %2$s.</string>
+    <string name="plans_from_hint">No cooking: this is the rest of the dish %1$s.</string>
+    <string name="plans_not_cooked">If there was no cooking %1$s, cook today: the amounts are for this meal.</string>
+    <string name="plans_cooks_separately">%1$s you cook this dish separately.</string>
+    <string name="plans_cooks_for_one">%1$s you cook for one meal.</string>
+    <string name="plans_cooking_also">This also changes: %1$s.</string>
+    <string name="plans_cooking_only">This day only</string>
+    <string name="plans_cooking_only_chosen">The chosen days only</string>
+    <string name="plans_cooking_stays">Stays as it is: %1$s. The portion cooked for it goes unused.</string>
+    <string-array name="plans_cooking_day_for">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+    <string-array name="plans_cooking_day_from">
+        <item>from Monday</item>
+        <item>from Tuesday</item>
+        <item>from Wednesday</item>
+        <item>from Thursday</item>
+        <item>from Friday</item>
+        <item>from Saturday</item>
+        <item>from Sunday</item>
+    </string-array>
+    <string-array name="plans_cooking_day_on">
+        <item>on Monday</item>
+        <item>on Tuesday</item>
+        <item>on Wednesday</item>
+        <item>on Thursday</item>
+        <item>on Friday</item>
+        <item>on Saturday</item>
+        <item>on Sunday</item>
+    </string-array>
+    <string-array name="plans_cooking_meal_for">
+        <item>breakfast</item>
+        <item>second breakfast</item>
+        <item>lunch</item>
+        <item>the snack</item>
+        <item>dinner</item>
+    </string-array>
+    <string-array name="plans_cooking_meal_from">
+        <item>from breakfast</item>
+        <item>from second breakfast</item>
+        <item>from lunch</item>
+        <item>from the snack</item>
+        <item>from dinner</item>
+    </string-array>
+    <string-array name="plans_cooking_meal_on">
+        <item>for breakfast</item>
+        <item>for second breakfast</item>
+        <item>for lunch</item>
+        <item>for the snack</item>
+        <item>for dinner</item>
+    </string-array>
 </resources>
