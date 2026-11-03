@@ -84,9 +84,11 @@ account once you say on the page that the account it names is yours.
   from the label for yourself alone, on a screen of its own or from the diary's window; only
   the energy is needed, and what is left out is estimated and said to be. With its code and
   its figures it can be sent to the base, where the instance's reviewers read it without
-  seeing whose it is, and what became of it comes as a notification. The file of what people
-  added to the base is saved from there. All of it takes a connection: without one the window
-  says so and leads to a meal of your own.
+  seeing whose it is, and what became of it comes as a notification. One the base has wrong is
+  corrected the same way, under its code, for yourself alone: your scans show the correction,
+  and a link leads to Open Food Facts, where it can be corrected for everybody. The file of
+  what people added to the base is saved from there. All of it takes a connection: without one
+  the window says so and leads to a meal of your own.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, items ticked off as you shop, and what is left to buy sent as a
   text. The list as a table or printed is the web application's, which the list's menu
