@@ -858,7 +858,9 @@
     <string name="account_resend_verification">Wyślij ponownie e-mail weryfikacyjny</string>
     <string name="account_resend_sending">Wysyłanie…</string>
     <string name="account_resend_sent">Wysłano e-mail weryfikacyjny.</string>
-    <string name="confirm_email_notice">Potwierdź adres e-mail %1$s: kliknij link z wiadomości otrzymanej na podany adres. Link jest ważny godzinę.</string>
+    <string name="confirm_email_notice_ai">Potwierdzenie adresu %1$s jest nieobowiązkowe, ale na tej instancji odblokowuje AI instancji. Kliknij link z wiadomości wysłanej na ten adres: jest ważny godzinę.</string>
+    <string name="confirm_email_notice_plain">Potwierdzenie adresu %1$s jest nieobowiązkowe: wszystkie funkcje działają bez niego. Potwierdzony adres daje pewność, że link do zmiany hasła do Ciebie dotrze. Link z wiadomości jest ważny godzinę.</string>
+    <string name="confirm_email_later">Nie teraz</string>
     <string name="confirm_email_resend">Wyślij nowy link</string>
     <string name="confirm_email_sending">Wysyłanie…</string>
     <string name="confirm_email_sent">Nowy link jest w drodze.</string>

@@ -104,7 +104,11 @@ data class SupplyDto(val level: String, val recipes: Int, val fewerMeals: Int? =
 
 /** Whether the instance sends mail at all: a confirmation mail or a password reset needs it. */
 @Serializable
-data class EmailConfigDto(val enabled: Boolean = false)
+data class EmailConfigDto(
+    val enabled: Boolean = false,
+    /** Confirming an address lets its account use the instance's AI: all a confirmation unlocks, where it unlocks anything. */
+    val confirmationUnlocksAi: Boolean = false,
+)
 
 /** Cloudflare Turnstile: on or off, and the site key a page shows the check with. */
 @Serializable

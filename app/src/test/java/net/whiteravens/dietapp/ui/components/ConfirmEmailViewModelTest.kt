@@ -14,6 +14,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import net.whiteravens.dietapp.data.config.ConfirmEmailStore
+import net.whiteravens.dietapp.data.config.PutAside
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -28,12 +30,20 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConfirmEmailViewModelTest {
     private val users = mockk<UserRepository>()
     private val rules = MutableStateFlow<InstanceRules?>(InstanceRules(maxProfiles = 2, catalogueSupply = emptyMap(), mailsSent = true))
     private val instance = mockk<ServerRepository> { every { rules } returns this@ConfirmEmailViewModelTest.rules }
+    private val aside = MutableStateFlow<PutAside?>(null)
+    private val asides = mockk<ConfirmEmailStore> {
+        every { aside } returns this@ConfirmEmailViewModelTest.aside
+        coEvery { putAside(any(), any()) } answers {
+            this@ConfirmEmailViewModelTest.aside.value = PutAside(firstArg(), secondArg<Instant>().plus(ConfirmEmailStore.PUT_ASIDE_FOR))
+        }
+    }
 
     private fun account(confirmed: Boolean) = SessionUser("u", "ala@example.test", "Ala", confirmed, "pl", aiMode = "none")
 
@@ -46,7 +56,7 @@ class ConfirmEmailViewModelTest {
     @Test
     fun `names the address that waits to be confirmed, and nothing once it is`() = runTest {
         coEvery { users.me() } returnsMany listOf(account(confirmed = false), account(confirmed = true))
-        val model = ConfirmEmailViewModel(users, instance)
+        val model = ConfirmEmailViewModel(users, instance, asides)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect {} }
 
         model.load()
@@ -61,7 +71,7 @@ class ConfirmEmailViewModelTest {
     fun `says nothing where the instance sends no mail, which confirms every address when its account is made`() = runTest {
         coEvery { users.me() } returns account(confirmed = false)
         rules.value = rules.value!!.copy(mailsSent = false)
-        val model = ConfirmEmailViewModel(users, instance)
+        val model = ConfirmEmailViewModel(users, instance, asides)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect {} }
 
         model.load()
@@ -72,7 +82,7 @@ class ConfirmEmailViewModelTest {
     @Test
     fun `keeps the notice as it was when the account cannot be read`() = runTest {
         coEvery { users.me() } returns account(confirmed = false) andThenThrows IOException("offline")
-        val model = ConfirmEmailViewModel(users, instance)
+        val model = ConfirmEmailViewModel(users, instance, asides)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect {} }
 
         model.load()
@@ -86,7 +96,7 @@ class ConfirmEmailViewModelTest {
         coEvery { users.me() } returns account(confirmed = false)
         val refused = ApiException(429, "VERIFICATION_SENT_RECENTLY", "A verification mail was sent a moment ago.")
         coEvery { users.resendVerification() } returns Unit andThenThrows refused
-        val model = ConfirmEmailViewModel(users, instance)
+        val model = ConfirmEmailViewModel(users, instance, asides)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect {} }
         model.load()
 
@@ -97,5 +107,39 @@ class ConfirmEmailViewModelTest {
         model.resend()
         assertSame(refused, model.state.value.error)
         coVerify(exactly = 2) { users.resendVerification() }
+    }
+
+    @Test
+    fun `says whether confirming unlocks the instance's AI, as the instance says`() = runTest {
+        coEvery { users.me() } returns account(confirmed = false)
+        val model = ConfirmEmailViewModel(users, instance, asides)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect {} }
+
+        model.load()
+        assertFalse(model.state.value.unlocksAi)
+
+        rules.value = rules.value!!.copy(confirmationUnlocksAi = true)
+        assertTrue(model.state.value.unlocksAi)
+    }
+
+    @Test
+    fun `goes for a month at "Not now", for that account alone, and comes back once the month is over`() = runTest {
+        coEvery { users.me() } returnsMany listOf(account(confirmed = false), account(confirmed = false).copy(id = "other"))
+        val model = ConfirmEmailViewModel(users, instance, asides)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect {} }
+        model.load()
+
+        model.later()
+        assertNull(model.state.value.waiting)
+
+        // Another account signed in on the phone sees the notice.
+        model.load()
+        assertEquals("ala@example.test", model.state.value.waiting)
+
+        // The first account again, a month later.
+        aside.value = PutAside("u", Instant.now().minusSeconds(1))
+        coEvery { users.me() } returns account(confirmed = false)
+        model.load()
+        assertEquals("ala@example.test", model.state.value.waiting)
     }
 }

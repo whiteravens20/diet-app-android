@@ -261,7 +261,12 @@ private fun MainScaffold(
         topBar = {
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
                 ServerVersionNotice(serverVersion, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-                ConfirmEmailNotice(confirmation, onResend = confirmEmail::resend, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                ConfirmEmailNotice(
+                    confirmation,
+                    onResend = confirmEmail::resend,
+                    onLater = confirmEmail::later,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
                 RefusedChangesNotice(refused, onSeen = changes::dismiss, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
         },

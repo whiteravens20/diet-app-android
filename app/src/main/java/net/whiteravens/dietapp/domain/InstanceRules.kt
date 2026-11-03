@@ -13,6 +13,8 @@ data class InstanceRules(
     val catalogueSupply: Map<String, Map<Int, Supply>>,
     /** Whether the instance sends mail: a confirmation or a link to set a new password needs it. */
     val mailsSent: Boolean = false,
+    /** Confirming an address lets its account use the instance's AI: all a confirmation unlocks, where it unlocks anything. */
+    val confirmationUnlocksAi: Boolean = false,
     /** The most a recipe repeats in a plan that names no number, where the instance sets one. */
     val maxRepeatsPerRecipe: Int? = null,
     /** How to reach whoever runs the instance, where they published it: to ask for the use of its AI. */

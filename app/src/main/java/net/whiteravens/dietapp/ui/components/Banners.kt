@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.components
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,29 +124,31 @@ fun ServerVersionNotice(version: ServerVersion, modifier: Modifier = Modifier) {
 }
 
 /**
- * Says over every screen that the account's address waits to be confirmed, where it does, with a
- * button that sends the link again: a link lasts an hour. Shows nothing where no address waits.
+ * Says over every screen that the account's address is not confirmed, where it is not: that
+ * confirming is not needed, what it gives on this instance, with a button that sends the link again
+ * (a link lasts an hour) and "Not now", which puts the notice aside. It is drawn in the calm colours of
+ * a card, not those of a warning. Shows nothing where no address waits.
  */
 @Composable
-fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Unit, modifier: Modifier = Modifier) {
+fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Unit, onLater: () -> Unit, modifier: Modifier = Modifier) {
     val address = state.waiting ?: return
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.tertiaryContainer,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(
                     Icons.Default.Email,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
-                    stringResource(R.string.confirm_email_notice, address),
+                    stringResource(if (state.unlocksAi) R.string.confirm_email_notice_ai else R.string.confirm_email_notice_plain, address),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -152,7 +156,7 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
                 state.sent -> Text(
                     stringResource(R.string.confirm_email_sent),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 state.error != null -> Text(
                     errorMessage(state.error),
@@ -160,8 +164,11 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            OutlinedButton(onClick = onResend, enabled = !state.sending, shape = MaterialTheme.shapes.medium) {
-                Text(stringResource(if (state.sending) R.string.confirm_email_sending else R.string.confirm_email_resend))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onResend, enabled = !state.sending, shape = MaterialTheme.shapes.medium) {
+                    Text(stringResource(if (state.sending) R.string.confirm_email_sending else R.string.confirm_email_resend))
+                }
+                TextButton(onClick = onLater) { Text(stringResource(R.string.confirm_email_later)) }
             }
         }
     }
