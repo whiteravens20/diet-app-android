@@ -1638,6 +1638,8 @@
     <string name="plans_word_day">The day: %1$s of %2$s kcal · protein %3$s of %4$s g</string>
     <string name="plans_swap_done_title">Meal swapped</string>
     <string name="plans_undo_swap">Undo the swap</string>
+    <string name="plans_macros_off_chip">Macros off target</string>
+    <string name="plans_macros_off_hint">This day\'s share of macronutrients is far from its target. Swapping a meal shows what the new recipe would make of it.</string>
     <string name="plans_resize_day_note_plain">Gives the meals from recipes not eaten yet other portions, to bring the day as near its target as they can.</string>
     <string name="plans_day_is_over">This day is over: its dishes stay. You can mark what was eaten, add a meal of your own or remove a meal.</string>
     <string name="favorite_sets_apply_cooking_note">A dish cooked for two days changes on its second day too.</string>

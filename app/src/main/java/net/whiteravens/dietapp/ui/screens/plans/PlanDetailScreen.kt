@@ -808,7 +808,7 @@ private fun DaySummary(
                 formatSigned(day.calorieDelta),
             ),
             style = MaterialTheme.typography.titleMedium,
-            color = if (abs(day.calorieDelta) <= 50) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+            color = if (day.offTarget == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
         )
         Text(
             stringResource(
@@ -824,6 +824,11 @@ private fun DaySummary(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 2.dp),
         )
+        if (day.macrosOff) {
+            Row(Modifier.padding(top = 4.dp)) { CautionChip(stringResource(R.string.plans_macros_off_chip)) }
+            Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
+        }
+        if (over) Fact(stringResource(R.string.plans_day_is_over), Modifier.padding(top = 4.dp))
         // What the diary adds to the day is counted in the figures above.
         day.diary?.let { diary ->
             Text(
