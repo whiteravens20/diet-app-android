@@ -31,6 +31,8 @@ class ProductsViewModel @Inject constructor(
         val failed: Throwable? = null,
         /** Why something asked of a product or of the file was refused. */
         val refused: Throwable? = null,
+        /** The product it was asked of; none for the file. */
+        val refusedOn: String? = null,
         val busy: Boolean = false,
         val asking: Pair<String, Ask>? = null,
         /** The window is open: on a product, or on a new one. */
@@ -70,26 +72,26 @@ class ProductsViewModel @Inject constructor(
 
     fun notNow() = _state.update { it.copy(asking = null) }
 
-    fun send(id: String) = act { products.send(id) }
+    fun send(id: String) = act(id) { products.send(id) }
 
-    fun withdraw(id: String) = act { products.withdraw(id) }
+    fun withdraw(id: String) = act(id) { products.withdraw(id) }
 
-    fun remove(id: String) = act { products.remove(id) }
+    fun remove(id: String) = act(id) { products.remove(id) }
 
     /** Does what was asked, and reads the list again whatever came of it: a refusal says the list had moved. */
-    private fun act(block: suspend () -> Unit) {
+    private fun act(id: String, block: suspend () -> Unit) {
         if (_state.value.busy) return
-        _state.update { it.copy(busy = true, refused = null) }
+        _state.update { it.copy(busy = true, refused = null, refusedOn = null) }
         viewModelScope.launch {
             val failure = attempt { block() }.exceptionOrNull()
-            _state.update { it.copy(busy = false, asking = null, refused = failure) }
+            _state.update { it.copy(busy = false, asking = null, refused = failure, refusedOn = id.takeIf { failure != null }) }
             read()
         }
     }
 
     /** Reads the file of what people added and gives it to [write], which puts it where somebody chose. */
     fun saveAdditions(write: suspend (String) -> Unit) {
-        _state.update { it.copy(refused = null, fileSaved = false) }
+        _state.update { it.copy(refused = null, refusedOn = null, fileSaved = false) }
         viewModelScope.launch {
             attempt { write(products.additions()) }
                 .onSuccess { _state.update { it.copy(fileSaved = true) } }

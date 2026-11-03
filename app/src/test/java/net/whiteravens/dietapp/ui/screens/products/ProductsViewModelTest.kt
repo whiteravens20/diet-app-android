@@ -109,6 +109,7 @@ class ProductsViewModelTest {
         model.send("p")
 
         assertEquals(limit, model.state.value.refused)
+        assertEquals("p", model.state.value.refusedOn)
         assertFalse(model.state.value.busy)
         coVerify(exactly = 2) { products.mine() }
     }
@@ -165,6 +166,7 @@ class ProductsViewModelTest {
 
         assertFalse(written)
         assertEquals(limit, model.state.value.refused)
+        assertNull(model.state.value.refusedOn)
         assertFalse(model.state.value.fileSaved)
     }
 }

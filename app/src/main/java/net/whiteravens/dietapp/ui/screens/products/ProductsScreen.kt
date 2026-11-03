@@ -107,7 +107,7 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
             }
             if (state.fileSaved) Note(stringResource(R.string.products_file_saved))
         }
-        state.refused?.let { refused ->
+        state.refused?.takeIf { state.refusedOn == null }?.let { refused ->
             item { ErrorBanner(if (refused is IOException) stringResource(R.string.products_offline) else errorMessage(refused)) }
         }
         when {
@@ -129,7 +129,13 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
                 )
             }
             else -> items(state.items, key = { it.product.id }) { own ->
-                OwnProductCard(own, state.asking?.takeIf { it.first == own.product.id }?.second, state.busy, viewModel)
+                OwnProductCard(
+                    own,
+                    state.asking?.takeIf { it.first == own.product.id }?.second,
+                    state.busy,
+                    state.refused?.takeIf { state.refusedOn == own.product.id },
+                    viewModel,
+                )
             }
         }
     }
@@ -146,7 +152,7 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy: Boolean, viewModel: ProductsViewModel) {
+private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy: Boolean, refused: Throwable?, viewModel: ProductsViewModel) {
     val product = own.product
     AppCard {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -186,6 +192,7 @@ private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy
                     Text(stringResource(R.string.products_remove))
                 }
             }
+            refused?.let { ErrorBanner(if (it is IOException) stringResource(R.string.products_offline) else errorMessage(it)) }
             if (!own.sendable && own.state != OwnProductState.SENT) Note(stringResource(R.string.products_send_needs))
             asking?.let { asked ->
                 Note(stringResource(if (asked == ProductsViewModel.Ask.SEND) R.string.products_send_note else R.string.products_remove_note))
