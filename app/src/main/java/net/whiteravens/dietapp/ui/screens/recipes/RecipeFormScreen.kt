@@ -106,7 +106,13 @@ fun RecipeFormScreen(
     ) {
         ScreenHeader(
             title = stringResource(if (editing) R.string.own_recipe_edit_title else R.string.own_recipe_new_title),
-            subtitle = stringResource(if (editing) R.string.own_recipe_edit_intro else R.string.own_recipe_new_intro),
+            subtitle = stringResource(
+                when {
+                    !editing -> R.string.own_recipe_new_intro
+                    state.fromSwap -> R.string.own_recipe_edit_intro_swap
+                    else -> R.string.own_recipe_edit_intro
+                },
+            ),
             onBack = onBack,
         )
         when {

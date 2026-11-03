@@ -550,7 +550,12 @@ class MealPlanRepository @Inject constructor(
     suspend fun substitute(substitution: Substitution): Rebalanced {
         val result = apiCall(json) { model.substitute(substitution.toRequest()) }
         mirror(result.plan)
-        return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), result.aiMeta?.fallbackReason)
+        return Rebalanced(
+            result.plan.toDomain(),
+            result.rebalance?.toDomain(),
+            result.aiMeta?.fallbackReason,
+            worded = result.aiMeta != null && result.aiMeta.fallbackReason == null,
+        )
     }
 
     /** An ingredient a model picked for the line of [fromIngredientId], with the note of its pick, or why the engine picked. */

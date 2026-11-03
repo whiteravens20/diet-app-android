@@ -522,9 +522,10 @@ data class ScaleChange(val mealId: String, val before: Double, val after: Double
 
 /**
  * A plan as a change left it, what the change rebalanced, if it did, and why the engine stood in for
- * a model where one was asked to do part of the change ([fallbackReason]).
+ * a model where one was asked to do part of the change ([fallbackReason]). [worded]: a model worded
+ * the text of the recipe a substitution made.
  */
-data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?, val fallbackReason: String?)
+data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?, val fallbackReason: String?, val worded: Boolean = false)
 
 /**
  * A substitution of one ingredient of a meal for another: in [mealId] of [planId], the line of

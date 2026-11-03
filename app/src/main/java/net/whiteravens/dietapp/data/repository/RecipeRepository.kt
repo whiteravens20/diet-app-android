@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.OwnRecipeLineDto
 import net.whiteravens.dietapp.data.remote.OwnRecipePreviewRequest
 import net.whiteravens.dietapp.data.remote.OwnRecipeRequest
 import net.whiteravens.dietapp.data.remote.RecipeProblemsDto
+import net.whiteravens.dietapp.data.remote.RecipeTextRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.LineIngredient
 import net.whiteravens.dietapp.domain.OwnRecipe
@@ -114,6 +115,10 @@ class RecipeRepository @Inject constructor(
     /** Writes [recipe] as a new version of the account's recipe [id]; answers the new version, under an id of its own. */
     suspend fun edit(id: String, recipe: OwnRecipe): Recipe = apiCall(json) { api.editRecipe(id, recipe.toDto()) }.toDomain()
 
+    /** Writes new words into [id], a recipe a swap of an ingredient made: the plans that hold it read them at once. */
+    suspend fun reword(id: String, title: String, description: String, steps: List<String>): Recipe =
+        apiCall(json) { api.rewordRecipe(id, RecipeTextRequest(title, description, steps)) }.toDomain()
+
     /**
      * The account's recipe [id] as its form starts on it: its lines in the amounts it keeps, each
      * with its ingredient and the units the catalogue gives it in. An ingredient the catalogue no
@@ -138,7 +143,7 @@ class RecipeRepository @Inject constructor(
         val ingredients = recipe.ingredients.map { line ->
             found[line.ingredientId]?.toLine() ?: LineIngredient(line.ingredientId, line.name, listOf(line.unit), PIECE)
         }
-        return RecipeToEdit(kept, ingredients)
+        return RecipeToEdit(kept, ingredients, fromSwap = recipe.origin == "swap")
     }
 
     /** The rules a refused recipe would break, read from a refusal with `RECIPE_INVALID`; null for any other. */

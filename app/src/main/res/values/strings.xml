@@ -583,6 +583,7 @@
     <string name="own_recipe_new_intro">The recipe is yours alone until you suggest it for the library. What a serving holds, its allergens and its diets are worked out from the ingredients.</string>
     <string name="own_recipe_edit_title">Edit the recipe</string>
     <string name="own_recipe_edit_intro">Saving makes a new version of the recipe. Plans that hold it keep the old one; your favourites and favourite sets move to the new one.</string>
+    <string name="own_recipe_edit_intro_swap">A change of the title, the description or the steps alone corrects this recipe in the plans that hold it as well. A change of the ingredients, the amounts or any other field makes a new version: the plans keep the old one, and favourites and favourite sets move to the new one.</string>
     <string name="own_recipe_field_title">Name</string>
     <string name="own_recipe_field_description">Description</string>
     <string name="own_recipe_field_meals">Meals it suits</string>
@@ -1646,6 +1647,10 @@
     <string name="plans_word_day">The day: %1$s of %2$s kcal · protein %3$s of %4$s g</string>
     <string name="plans_swap_done_title">Meal swapped</string>
     <string name="plans_undo_swap">Undo the swap</string>
+    <string name="plans_reword_button">Correct the recipe\'s text</string>
+    <string name="plans_reword_title">Correct the recipe\'s text</string>
+    <string name="plans_reword_note">Without AI the new ingredient\'s name went into the text as the catalogue has it, so sentences may not read well.</string>
+    <string name="plans_reword_intro">Correct the title, the description and the steps. The change goes into this recipe, so the plan shows it at once. Ingredients and nutrition stay as they are.</string>
     <string name="plans_macros_off_chip">Macros off target</string>
     <string name="plans_macros_off_hint">This day\'s share of macronutrients is far from its target. Swapping a meal shows what the new recipe would make of it.</string>
     <string name="plans_average_over">On average a day of this plan holds more than a tenth over its target.</string>

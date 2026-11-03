@@ -637,6 +637,7 @@
     <string name="own_recipe_new_intro">Przepis jest tylko Twój, dopóki nie zgłosisz go do biblioteki. Wartości porcji, alergeny i diety liczymy ze składników.</string>
     <string name="own_recipe_edit_title">Edytuj przepis</string>
     <string name="own_recipe_edit_intro">Zapis tworzy nową wersję przepisu. Plany, w których już jest, zostają przy starej, a ulubione i zestawy ulubionych przechodzą na nową.</string>
+    <string name="own_recipe_edit_intro_swap">Zmiana samego tytułu, opisu lub kroków poprawia ten przepis także w planach, w których już jest. Zmiana składników, ilości lub innych pól tworzy nową wersję: plany zostają przy starej, a ulubione i zestawy ulubionych przechodzą na nową.</string>
     <string name="own_recipe_field_title">Nazwa</string>
     <string name="own_recipe_field_description">Opis</string>
     <string name="own_recipe_field_meals">Na jakie posiłki</string>
@@ -1767,6 +1768,10 @@
     <string name="plans_word_day">Dzień: %1$s z %2$s kcal · białko %3$s z %4$s g</string>
     <string name="plans_swap_done_title">Posiłek zamieniony</string>
     <string name="plans_undo_swap">Cofnij zamianę</string>
+    <string name="plans_reword_button">Popraw tekst przepisu</string>
+    <string name="plans_reword_title">Popraw tekst przepisu</string>
+    <string name="plans_reword_note">Bez AI nazwa nowego składnika trafiła do tekstu w takiej formie, jaką ma katalog, więc zdania mogą się nie kleić.</string>
+    <string name="plans_reword_intro">Popraw tytuł, opis i kroki. Zmiana trafi do tego przepisu, więc plan od razu ją pokaże. Składniki i wartości odżywcze zostają bez zmian.</string>
     <string name="plans_macros_off_chip">Makro poza celem</string>
     <string name="plans_macros_off_hint">Proporcje makroskładników tego dnia są daleko od celu. Zamiana posiłku pokaże, jak zmieni je nowy przepis.</string>
     <string name="plans_average_over">Średnio dzień tego planu ma o ponad jedną dziesiątą więcej kalorii niż cel.</string>

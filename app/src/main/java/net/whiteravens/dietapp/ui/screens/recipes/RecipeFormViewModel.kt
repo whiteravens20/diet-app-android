@@ -42,6 +42,8 @@ class RecipeFormViewModel @Inject constructor(
     data class UiState(
         /** The recipe edited, by its id; null for a new one. */
         val editing: String? = null,
+        /** The recipe edited was made by swapping an ingredient: a change of its words alone is written in it. */
+        val fromSwap: Boolean = false,
         /** The recipe edited is being read. */
         val loading: Boolean = false,
         val loadError: Throwable? = null,
@@ -98,7 +100,7 @@ class RecipeFormViewModel @Inject constructor(
         _state.update { it.copy(loading = true, loadError = null) }
         viewModelScope.launch {
             attempt { recipes.toEdit(id) }
-                .onSuccess { kept -> _state.update { it.copy(loading = false, form = RecipeForm.of(kept)) } }
+                .onSuccess { kept -> _state.update { it.copy(loading = false, form = RecipeForm.of(kept), fromSwap = kept.fromSwap) } }
                 .onFailure { e -> _state.update { it.copy(loading = false, loadError = e) } }
         }
     }

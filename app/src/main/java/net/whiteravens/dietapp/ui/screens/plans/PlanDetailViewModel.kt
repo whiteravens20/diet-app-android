@@ -93,8 +93,11 @@ class PlanDetailViewModel @Inject constructor(
      */
     data class CustomMealSent(val added: Boolean = false, val refused: Map<String, FieldRefusal> = emptyMap(), val error: Throwable? = null)
 
-    /** A swap that can be taken back: the meal it was of, and the revision it left the plan at. */
-    data class LastSwap(val mealId: String, val revision: Int)
+    /**
+     * A swap that can be taken back: the meal it was of, and the revision it left the plan at; and the
+     * recipe a substitution made where no model worded its text, whose words can be corrected.
+     */
+    data class LastSwap(val mealId: String, val revision: Int, val reword: String? = null)
 
     data class UiState(
         val loading: Boolean = true,
@@ -122,6 +125,8 @@ class PlanDetailViewModel @Inject constructor(
         val rebalance: Rebalance? = null,
         /** The swap the last change was, which can be taken back: said until it is put away, even where no portion moved. */
         val lastSwap: LastSwap? = null,
+        /** The recipe a substitution made whose words are being corrected in their window. */
+        val rewording: String? = null,
         /** What a press to resize a day left of its gap where it moved nothing, and of which day: what it says instead of nothing. */
         val resizeLeft: Pair<String, Double>? = null,
         /** Why the engine stood in for a model in the last change, until it is put away. */
@@ -460,13 +465,29 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(rebalance = null, lastSwap = null, notice = null) }
     }
 
+    /** Opens the window the words of [recipeId], a recipe a substitution made, are corrected in. */
+    fun reword(recipeId: String) = _state.update { it.copy(rewording = recipeId, rebalance = null, lastSwap = null, notice = null) }
+
+    fun stopRewording() = _state.update { it.copy(rewording = null) }
+
+    /** The words were written: the plan, which holds the recipe, is read again. */
+    fun reworded() {
+        stopRewording()
+        reload()
+    }
+
     /** An ingredient substituted in [mealId] in its window: the plan it left, what it rebalanced, and why a model did not reword the text where it was asked to. */
     fun substituted(result: Rebalanced, mealId: String) {
         _state.update {
             it.copy(
                 plan = result.plan,
                 rebalance = result.rebalance.shown(),
-                lastSwap = LastSwap(mealId, result.plan.revision),
+                lastSwap = LastSwap(
+                    mealId,
+                    result.plan.revision,
+                    reword = result.plan.days.flatMap { day -> day.meals }.firstOrNull { meal -> meal.id == mealId }
+                        ?.recipeId?.takeUnless { result.worded },
+                ),
                 notice = result.fallbackReason,
             )
         }

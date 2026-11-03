@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -452,6 +453,16 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.substitute_apply)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.planRevision(account, planId) > before }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }
+
+        // Made without a model, the recipe's words can be corrected: they go into it, and the plan reads them.
+        screen.onNode(hasText(text(R.string.plans_reword_button)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.plans_reword_intro))
+        screen.onNode(hasText(text(R.string.own_recipe_field_title)) and hasSetTextAction()).performTextReplacement("Moja poprawiona miska")
+        screen.putKeyboardAway()
+        screen.keepScreenshot("plans-the-words-of-a-swap-corrected")
+        screen.onNode(hasText(text(R.string.common_save)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForTheApi(20_000) { Instance.mealTitle(account, planId, mealId) == "Moja poprawiona miska" }
+        screen.scrollToText("Moja poprawiona miska")
         putAwayRebalance()
 
         // Opened again on the meal, the window starts anew and stays open: it does not hand back the substitution it made.

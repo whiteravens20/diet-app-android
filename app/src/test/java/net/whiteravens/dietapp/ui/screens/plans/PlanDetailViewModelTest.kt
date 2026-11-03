@@ -864,6 +864,28 @@ class PlanDetailViewModelTest {
     }
 
     @Test
+    fun `a substitution no model worded offers to correct the words of the recipe it made, and one a model worded does not`() {
+        val plans = mockk<MealPlanRepository>(relaxed = true)
+        coEvery { plans.cachedPlan(any()) } returns null
+        val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
+        coEvery { plans.refreshPlan(any()) } returns plan
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue())
+        val meal = plan.days.flatMap { it.meals }.first { it.recipeId != null }
+
+        model.substituted(Rebalanced(plan, null, null), meal.id)
+        assertEquals(meal.recipeId, model.state.value.lastSwap?.reword)
+
+        model.reword(meal.recipeId!!)
+        assertEquals(meal.recipeId, model.state.value.rewording)
+        assertNull(model.state.value.lastSwap)
+
+        model.reworded()
+        assertNull(model.state.value.rewording)
+        model.substituted(Rebalanced(plan, null, null, worded = true), meal.id)
+        assertNull(model.state.value.lastSwap?.reword)
+    }
+
+    @Test
     fun `a plan's day reads what the diary adds to it, and a day it adds nothing to reads none`() {
         val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
 

@@ -54,6 +54,8 @@ internal fun RebalanceCard(
     modifier: Modifier = Modifier,
     swapRevision: Int? = null,
     onUndoSwap: () -> Unit = {},
+    reword: String? = null,
+    onReword: (String) -> Unit = {},
 ) {
     val dismiss by rememberUpdatedState(onDismiss)
     val timeout = LocalAccessibilityManager.current
@@ -77,11 +79,16 @@ internal fun RebalanceCard(
             // Why the engine's plain replacement stands where a model was asked to reword the text.
             notice?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
             if (rebalance != null || swap) ChangeSaid(rebalance, swap, day, spreadable)
+            // A recipe a substitution made without a model holds the catalogue's name as it is.
+            if (reword != null) Hint(stringResource(R.string.plans_reword_note))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
                 if (swap) {
                     OutlinedButton(onClick = onUndoSwap, enabled = !busy) { Text(stringResource(R.string.plans_undo_swap)) }
                 } else if (rebalance != null) {
                     OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
+                }
+                if (reword != null) {
+                    OutlinedButton(onClick = { onReword(reword) }, enabled = !busy) { Text(stringResource(R.string.plans_reword_button)) }
                 }
                 if (spreadable) {
                     OutlinedButton(onClick = onRest, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_rest)) }

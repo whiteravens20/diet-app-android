@@ -438,6 +438,14 @@ interface DietApiService {
     @PUT("recipes/{id}")
     suspend fun editRecipe(@Path("id") id: String, @Body body: OwnRecipeRequest): RecipeDto
 
+    /**
+     * Writes new words into a recipe of one's own made by swapping an ingredient, in the language of the
+     * request: it stays the recipe the plans hold, so they read them at once. Any other recipe is refused
+     * (409 `RECIPE_WORDS_ONLY_OF_A_SWAP`).
+     */
+    @PUT("recipes/{id}/text")
+    suspend fun rewordRecipe(@Path("id") id: String, @Body body: RecipeTextRequest): RecipeDto
+
     /** Puts a recipe of one's own before the curators, for the library everyone shares. */
     @POST("recipes/{id}/submit")
     suspend fun submitRecipe(@Path("id") id: String)

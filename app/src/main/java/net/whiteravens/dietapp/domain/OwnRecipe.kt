@@ -34,7 +34,7 @@ data class OwnRecipe(
 )
 
 /** A recipe of one's own as its form starts on it: the recipe as it is kept, and the ingredient of each of its lines, in their order. */
-data class RecipeToEdit(val recipe: OwnRecipe, val ingredients: List<LineIngredient>)
+data class RecipeToEdit(val recipe: OwnRecipe, val ingredients: List<LineIngredient>, val fromSwap: Boolean = false)
 
 /** What a serving of a recipe being written would hold, its allergens and the diets it fits. */
 data class RecipePreview(val perServing: Nutrition, val allergens: List<String>, val dietTags: List<String>)

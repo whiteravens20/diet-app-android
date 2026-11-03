@@ -322,6 +322,11 @@ fun PlanDetailScreen(
         )
     }
 
+    // The words of a recipe a substitution made, while their window is open.
+    state.rewording?.let { recipeId ->
+        RecipeTextDialog(recipeId = recipeId, onDone = viewModel::reworded, onDismiss = viewModel::stopRewording)
+    }
+
     // The meal a favourite is being picked for, while the picker is open.
     var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == pickingFor }?.let { meal ->
@@ -567,6 +572,8 @@ fun PlanDetailScreen(
                 busy = busy,
                 onUndo = viewModel::undoRebalance,
                 onUndoSwap = viewModel::undoSwap,
+                reword = state.lastSwap?.reword,
+                onReword = viewModel::reword,
                 onRest = { viewModel.spread() },
                 onDismiss = viewModel::dismissRebalance,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },

@@ -1756,6 +1756,10 @@ data class UpdateDiaryEntryRequest(
     val productId: String? = null,
 )
 
+/** PUT `/recipes/:id/text`: new words for a recipe of one's own made by swapping an ingredient, in the reader's language. */
+@Serializable
+data class RecipeTextRequest(val title: String, val description: String, val steps: List<String>)
+
 /** POST `/diary/copy`: what was eaten on [from] written into [to]. */
 @Serializable
 data class CopyDiaryDayRequest(val profileId: String, val from: String, val to: String)
