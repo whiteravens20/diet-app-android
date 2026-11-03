@@ -191,6 +191,7 @@ fun DiaryScreen(
         state.rebalance?.let { rebalance ->
             RebalanceCard(
                 rebalance = rebalance,
+                day = state.rebalancedDay,
                 notice = null,
                 busy = state.changing,
                 onUndo = viewModel::undoRebalance,

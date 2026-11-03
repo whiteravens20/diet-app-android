@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatNumber
@@ -35,30 +36,36 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * What the last change rebalanced: the day's kcal before and after and how many meals were scaled,
- * whether the day is still off its target and what the week could not take back; the way back, the
- * rest of the week, and away. It goes by itself after a while, later where the phone is set to give
- * more time to act.
+ * What the last change came to: what the [day] holds now, what was sized again and whether the day
+ * is still off its target, and what the week could not take back; the way back, a swap's whole
+ * ([swapRevision]) or the portions alone, the rest of the week where the day is off its target, and
+ * away. It goes by itself after a while, later where the phone is set to give more time to act.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun RebalanceCard(
     rebalance: Rebalance?,
+    day: PlanDay?,
     notice: String?,
     busy: Boolean,
     onUndo: () -> Unit,
     onRest: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    swapRevision: Int? = null,
+    onUndoSwap: () -> Unit = {},
 ) {
     val dismiss by rememberUpdatedState(onDismiss)
     val timeout = LocalAccessibilityManager.current
         ?.calculateRecommendedTimeoutMillis(REBALANCE_SHOWN_MILLIS, containsIcons = false, containsText = true, containsControls = true)
         ?: REBALANCE_SHOWN_MILLIS
-    LaunchedEffect(rebalance, notice) {
+    LaunchedEffect(rebalance, swapRevision, notice) {
         delay(timeout)
         dismiss()
     }
+    val swap = swapRevision != null
+    val ofTheDay = rebalance == null || rebalance.scope == "day"
+    val spreadable = ofTheDay && day?.offTarget != null
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -69,13 +76,15 @@ internal fun RebalanceCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             // Why the engine's plain replacement stands where a model was asked to reword the text.
             notice?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
-            if (rebalance != null) RebalanceSaid(rebalance)
+            if (rebalance != null || swap) ChangeSaid(rebalance, swap, day, spreadable)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-                if (rebalance != null) {
+                if (swap) {
+                    OutlinedButton(onClick = onUndoSwap, enabled = !busy) { Text(stringResource(R.string.plans_undo_swap)) }
+                } else if (rebalance != null) {
                     OutlinedButton(onClick = onUndo, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_undo)) }
-                    if (rebalance.scope == "day") {
-                        OutlinedButton(onClick = onRest, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_rest)) }
-                    }
+                }
+                if (spreadable) {
+                    OutlinedButton(onClick = onRest, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_rest)) }
                 }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.plans_rebalance_dismiss)) }
             }
@@ -84,30 +93,43 @@ internal fun RebalanceCard(
 }
 
 /**
- * What a rebalance did: of a day, its kcal before and after, the meals scaled and whether it is still
- * off its target, with what spreading it over the rest of the plan would do; of the rest of the
- * plan, the meals scaled. Either way what it could not take back.
+ * What a change did: of a day, what it holds now, what was sized again and whether it is still off
+ * its target, with what spreading it over the rest of the plan would do; of the rest of the plan,
+ * the meals scaled. Either way what it could not take back.
  */
 @Composable
-private fun RebalanceSaid(rebalance: Rebalance) {
+private fun ChangeSaid(rebalance: Rebalance?, swap: Boolean, day: PlanDay?, spreadable: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (rebalance.scope == "day") {
-            Text(stringResource(R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
-            Hint(
-                stringResource(
-                    R.string.plans_rebalance_summary,
-                    formatNumber(rebalance.caloriesBefore.roundToInt()),
-                    formatNumber(rebalance.caloriesAfter.roundToInt()),
-                    formatNumber(rebalance.changes.size),
-                ),
-            )
-            if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
-            Hint(stringResource(R.string.plans_rebalance_rest_note))
+        if (rebalance == null || rebalance.scope == "day") {
+            Text(stringResource(if (swap && rebalance == null) R.string.plans_swap_done_title else R.string.plans_rebalance_title), style = MaterialTheme.typography.titleSmall)
+            day?.let {
+                Hint(
+                    stringResource(
+                        R.string.plans_word_day,
+                        formatNumber(it.nutrition.calories.roundToInt()),
+                        formatNumber(it.calorieTarget.roundToInt()),
+                        formatNumber(it.nutrition.protein.roundToInt()),
+                        formatNumber(it.targetMacros.protein.roundToInt()),
+                    ),
+                )
+            }
+            if (rebalance != null) {
+                Hint(
+                    stringResource(
+                        R.string.plans_rebalance_summary,
+                        formatNumber(rebalance.caloriesBefore.roundToInt()),
+                        formatNumber(rebalance.caloriesAfter.roundToInt()),
+                        formatNumber(rebalance.changes.size),
+                    ),
+                )
+                if (rebalance.bestEffort) Hint(stringResource(R.string.plans_rebalance_best_effort), MaterialTheme.colorScheme.tertiary)
+            }
+            if (spreadable) Hint(stringResource(R.string.plans_rebalance_rest_note))
         } else {
             Text(stringResource(R.string.plans_rebalance_title_plan), style = MaterialTheme.typography.titleSmall)
             Hint(stringResource(R.string.plans_rebalance_summary_plan, formatNumber(rebalance.changes.size)))
         }
-        if (rebalance.unabsorbedKcal != 0.0) {
+        if (rebalance != null && rebalance.unabsorbedKcal != 0.0) {
             Hint(
                 stringResource(
                     if (rebalance.unabsorbedKcal > 0) R.string.plans_rebalance_left_over else R.string.plans_rebalance_left_under,
@@ -120,7 +142,7 @@ private fun RebalanceSaid(rebalance: Rebalance) {
 }
 
 /** How long the card of a rebalance stays, where the phone asks for no longer. */
-private const val REBALANCE_SHOWN_MILLIS = 10_000L
+private const val REBALANCE_SHOWN_MILLIS = 15_000L
 
 @Composable
 internal fun Hint(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {

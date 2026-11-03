@@ -313,7 +313,7 @@ fun PlanDetailScreen(
             onApplied = { result ->
                 substitutingIn = null
                 changedMeal = meal.id
-                viewModel.substituted(result)
+                viewModel.substituted(result, meal.id)
             },
             onDismiss = { substitutingIn = null },
             onTurnAiOn = onTurnAiOn,
@@ -355,7 +355,7 @@ fun PlanDetailScreen(
     // The card of a rebalance stands over the end of the list: the list ends that much higher, so
     // that nothing of it stays under the card.
     var cardHeight by remember { mutableIntStateOf(0) }
-    val shownCard = state.rebalance != null || state.notice != null
+    val shownCard = state.rebalance != null || state.lastSwap != null || state.notice != null
     val underCard = if (shownCard) with(LocalDensity.current) { cardHeight.toDp() + 16.dp } else 0.dp
     Box(Modifier.fillMaxSize()) {
         PullToRead(state.pulled, viewModel::pull) {
@@ -529,11 +529,16 @@ fun PlanDetailScreen(
             }
         }
         if (shownCard) {
+            // The day it speaks of: of the swap, or of the first meal sized.
+            val about = state.lastSwap?.mealId ?: state.rebalance?.changes?.firstOrNull()?.mealId
             RebalanceCard(
                 rebalance = state.rebalance,
+                swapRevision = state.lastSwap?.revision,
+                day = state.plan?.days?.firstOrNull { day -> day.meals.any { it.id == about } },
                 notice = state.notice,
                 busy = busy,
                 onUndo = viewModel::undoRebalance,
+                onUndoSwap = viewModel::undoSwap,
                 onRest = { viewModel.spread() },
                 onDismiss = viewModel::dismissRebalance,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },

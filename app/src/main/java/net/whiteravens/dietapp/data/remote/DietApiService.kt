@@ -298,6 +298,10 @@ interface DietApiService {
     @GET("meal-plans/{id}/meals/{mealId}/substitutes")
     suspend fun substitutes(@Path("id") id: String, @Path("mealId") mealId: String): List<SubstituteSuggestionDto>
 
+    /** Takes back the last swap of a plan, on the plan as that swap left it. */
+    @POST("meal-plans/swap-meal/undo")
+    suspend fun undoSwap(@Body body: UndoSwapRequest): RebalanceResultDto
+
     /** What a substitution would do to its meal; nothing is written. */
     @POST("meal-plans/swap-ingredient/preview")
     suspend fun previewSubstitution(@Body body: SwapIngredientRequest): SwapPreviewDto

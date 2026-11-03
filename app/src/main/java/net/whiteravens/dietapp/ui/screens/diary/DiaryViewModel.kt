@@ -40,6 +40,7 @@ import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeFilter
@@ -122,6 +123,8 @@ class DiaryViewModel @Inject constructor(
         /** What the last change rebalanced, and of which plan, until it is put away. */
         val rebalance: Rebalance? = null,
         val rebalancedPlan: String? = null,
+        /** The day it rebalanced, as it stands now. */
+        val rebalancedDay: PlanDay? = null,
         /** What a press to resize the day left of its gap where it moved nothing: what it says instead of nothing. */
         val resizeLeft: Double? = null,
         /** The day to copy from. */
@@ -659,6 +662,7 @@ class DiaryViewModel @Inject constructor(
             it.copy(
                 changing = false,
                 rebalance = moved,
+                rebalancedDay = moved?.changes?.firstOrNull()?.let { change -> answer.plan.days.firstOrNull { day -> day.meals.any { it.id == change.mealId } } },
                 rebalancedPlan = planId.takeIf { moved != null },
                 resizeLeft = rebalance?.takeIf { resizing && it.changes.isEmpty() }?.unabsorbedKcal,
             )

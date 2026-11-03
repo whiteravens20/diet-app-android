@@ -291,7 +291,7 @@
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Dodaj własny posiłek</string>
     <string name="plans_delete_confirm">Usunąć ten plan? Tej operacji nie można cofnąć.</string>
-    <string name="plans_rebalance_title">Zaktualizowano makro dnia</string>
+    <string name="plans_rebalance_title">Przeliczono porcje dnia</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
     <string name="plans_rebalance_best_effort">Dzień nadal jest poza celem: dopasowanie porcji nie wystarczyło.</string>
     <string name="plans_rebalance_left_over">Reszta planu nadal ma %1$s kcal nadwyżki: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
@@ -1756,6 +1756,9 @@
     <string name="plans_cooking_same">To samo co %1$s</string>
     <string name="plans_offer_day_after">Dzień po zamianie: %1$s z %2$s kcal.</string>
     <string name="plans_offer_outside">Ten przepis jest poza limitem: %1$s. Posiłek będzie to oznaczał.</string>
+    <string name="plans_word_day">Dzień: %1$s z %2$s kcal · białko %3$s z %4$s g</string>
+    <string name="plans_swap_done_title">Posiłek zamieniony</string>
+    <string name="plans_undo_swap">Cofnij zamianę</string>
     <string name="favorite_sets_apply_cooking_note">Dania ugotowane na dwa dni zmienią się też drugiego dnia.</string>
     <string name="favorite_sets_apply_own_meal_note">Zestaw zastąpi też własne posiłki tych pór dnia.</string>
     <string name="favorite_sets_apply_no_days">Wszystkie dni tego planu minęły.</string>

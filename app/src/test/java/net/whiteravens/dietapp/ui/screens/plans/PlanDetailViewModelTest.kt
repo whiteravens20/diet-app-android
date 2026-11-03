@@ -53,6 +53,7 @@ import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
 import net.whiteravens.dietapp.data.remote.RecipeRefDto
 import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
+import net.whiteravens.dietapp.data.remote.UndoSwapRequest
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.UseUpSuggestionDto
@@ -381,6 +382,76 @@ class PlanDetailViewModelTest {
         model.undoRebalance()
 
         assertEquals(RebalanceRequest(scope = "day", restore = listOf(RestoreScaleDto(meal.id, 1.0))), asked[1])
+        assertNull(model.state.value.rebalance)
+    }
+
+    @Test
+    fun `a swap is said even where no portion moved, and is taken back on the plan it left`() {
+        val api = mockk<DietApiService>()
+        val undone = slot<UndoSwapRequest>()
+        val taken = slot<ApplyMealSwapRequest>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(any()) } returns preview
+        coEvery { api.swapMeal(capture(taken)) } returns swapped
+        coEvery { api.undoSwap(capture(undone)) } returns swapped
+        val model = model(api)
+
+        model.offerSwap(meal.id)
+        model.takeOffer(together = true)
+
+        assertTrue(taken.captured.together)
+        assertNull(model.state.value.rebalance)
+        assertEquals(PlanDetailViewModel.LastSwap(meal.id, swapped.plan.revision), model.state.value.lastSwap)
+
+        model.undoSwap()
+
+        assertEquals(UndoSwapRequest(plan.id, swapped.plan.revision), undone.captured)
+        assertNull(model.state.value.lastSwap)
+    }
+
+    @Test
+    fun `a swap that can no longer be taken back says why, and the card goes`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(any()) } returns preview
+        coEvery { api.swapMeal(any()) } returns swapped
+        coEvery { api.undoSwap(any()) } throws refused(409, "PLAN_CHANGED")
+        val model = model(api)
+
+        model.offerSwap(meal.id)
+        model.takeOffer()
+        model.undoSwap()
+
+        assertEquals("PLAN_CHANGED", (model.state.value.error as ApiException).code)
+        assertNull(model.state.value.lastSwap)
+    }
+
+    @Test
+    fun `any other change puts away what a swap had to say`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.offerSwap(any()) } returns preview
+        coEvery { api.swapMeal(any()) } returns swapped
+        coEvery { api.rebalancePlan(plan.id, any()) } returns swapped
+        val model = model(api)
+
+        model.offerSwap(meal.id)
+        model.takeOffer()
+        model.spread()
+
+        assertNull(model.state.value.lastSwap)
+    }
+
+    @Test
+    fun `a spread that moves nothing says so on the day it was pressed on`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.rebalancePlan(plan.id, any()) } returns swapped.copy(rebalance = scaled.copy(scope = "plan", changes = emptyList(), unabsorbedKcal = 120.0))
+        val model = model(api)
+
+        model.spread("2026-01-05", on = "2026-01-06")
+
+        assertEquals("2026-01-06" to 120.0, model.state.value.resizeLeft)
         assertNull(model.state.value.rebalance)
     }
 

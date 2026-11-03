@@ -33,9 +33,11 @@ import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
@@ -142,8 +144,17 @@ class DiaryViewModelTest {
         typeEntry(EntryField.CALORIES) { it.copy(calories = calories) }
     }
 
+    /** A plan of one day, which holds the meals [changes] speak of. */
+    private fun planHolding(changes: List<ScaleChange>) = mockk<MealPlan> {
+        every { days } returns listOf(
+            mockk<PlanDay> {
+                every { meals } returns changes.map { change -> mockk<Meal> { every { id } returns change.mealId } }
+            },
+        )
+    }
+
     private fun rebalanced(vararg changes: ScaleChange, left: Double = 0.0, scope: String = "day"): Rebalanced =
-        Rebalanced(mockk<MealPlan>(), Rebalance(scope, false, changes.toList(), left, 2500.0, 2000.0), null)
+        Rebalanced(planHolding(changes.toList()), Rebalance(scope, false, changes.toList(), left, 2500.0, 2000.0), null)
 
     // ── What opens ──────────────────────────────────────────────────────────
 
@@ -700,6 +711,8 @@ class DiaryViewModelTest {
 
         assertEquals(answer.rebalance, model.state.value.rebalance)
         assertEquals("p", model.state.value.rebalancedPlan)
+        // The word on the balance is said of the day as it stands now.
+        assertEquals(listOf("n"), model.state.value.rebalancedDay?.meals?.map { it.id })
 
         model.undoRebalance()
 

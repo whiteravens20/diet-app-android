@@ -151,8 +151,13 @@ class PlansTest {
         screen.keepScreenshot("plans-after-the-swap")
         // The meal that was changed stands where it stood.
         screen.onAllNodesWithText(Instance.firstMeal(account, planId).first)[0].assertIsDisplayed()
-        // A swap that balanced its day says so in a card over the meals.
-        putAwayRebalance()
+        // A swap says what its day holds in a card over the meals, and can be taken back from there.
+        val swappedAt = Instance.planRevision(account, planId)
+        screen.waitForText(text(R.string.plans_undo_swap))
+        screen.onNodeWithText(text(R.string.plans_undo_swap)).performClick()
+        screen.waitForTheApi(20_000) { Instance.planRevision(account, planId) > swappedAt }
+        assertEquals(before, Instance.firstDayRecipes(account, planId))
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_undo_swap)).fetchSemanticsNodes().isEmpty() }
 
         // The meal as planned opens on a tap, over the whole screen: its lines and its steps, and its recipe a tap further.
         val (title, lines) = Instance.firstMeal(account, planId)

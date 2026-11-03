@@ -93,6 +93,9 @@ class PlanDetailViewModel @Inject constructor(
      */
     data class CustomMealSent(val added: Boolean = false, val refused: Map<String, FieldRefusal> = emptyMap(), val error: Throwable? = null)
 
+    /** A swap that can be taken back: the meal it was of, and the revision it left the plan at. */
+    data class LastSwap(val mealId: String, val revision: Int)
+
     data class UiState(
         val loading: Boolean = true,
         val plan: MealPlan? = null,
@@ -117,6 +120,8 @@ class PlanDetailViewModel @Inject constructor(
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
         val rebalance: Rebalance? = null,
+        /** The swap the last change was, which can be taken back: said until it is put away, even where no portion moved. */
+        val lastSwap: LastSwap? = null,
         /** What a press to resize a day left of its gap where it moved nothing, and of which day: what it says instead of nothing. */
         val resizeLeft: Pair<String, Double>? = null,
         /** Why the engine stood in for a model in the last change, until it is put away. */
@@ -308,8 +313,18 @@ class PlanDetailViewModel @Inject constructor(
         if (_state.value.taking) return
         viewModelScope.launch {
             _state.update { it.copy(taking = true, error = null) }
-            attempt { plans.takeSwap(offer) }
-                .onSuccess { taken -> _state.update { it.copy(plan = taken.plan, offer = null, taking = false, rebalance = taken.rebalance.shown()) } }
+            attempt { plans.takeSwap(offer, together) }
+                .onSuccess { taken ->
+                    _state.update {
+                        it.copy(
+                            plan = taken.plan,
+                            offer = null,
+                            taking = false,
+                            rebalance = taken.rebalance.shown(),
+                            lastSwap = LastSwap(offer.mealId, taken.plan.revision),
+                        )
+                    }
+                }
                 .onFailure { e ->
                     // The offer was for the plan as it was: it does not outlive a refusal.
                     _state.update { it.copy(offer = null, taking = false, error = e) }
@@ -340,6 +355,7 @@ class PlanDetailViewModel @Inject constructor(
                                 plan = submitted.answer.plan,
                                 changing = false,
                                 rebalance = submitted.answer.rebalance.shown(),
+                                lastSwap = null,
                                 customMeal = CustomMealSent(added = true),
                             )
                             // Kept to be sent: shown on its day as one of the changes waiting, and the window is done.
@@ -383,6 +399,12 @@ class PlanDetailViewModel @Inject constructor(
         change(said = false) { plans.undo(planId, rebalance) }
     }
 
+    /** Takes the last swap back, dish and portions, on the plan as it left it. */
+    fun undoSwap() {
+        val swap = _state.value.lastSwap ?: return
+        change(said = false) { plans.undoSwap(planId, swap.revision) }
+    }
+
     /** Resizes the meals of the day of [date] not eaten yet, the diary counted as eaten; a press that moves nothing says so. */
     fun resizeDay(date: String) {
         if (_state.value.changing) return
@@ -395,6 +417,7 @@ class PlanDetailViewModel @Inject constructor(
                             plan = resized.plan,
                             changing = false,
                             rebalance = resized.rebalance.shown(),
+                            lastSwap = null,
                             resizeLeft = resized.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() }?.let { rebalance -> date to rebalance.unabsorbedKcal },
                         )
                     }
@@ -410,12 +433,19 @@ class PlanDetailViewModel @Inject constructor(
     fun spread(from: String? = null) = change { plans.rebalanceRest(planId, from) }
 
     fun dismissRebalance() {
-        _state.update { it.copy(rebalance = null, notice = null) }
+        _state.update { it.copy(rebalance = null, lastSwap = null, notice = null) }
     }
 
-    /** An ingredient substituted in its window: the plan it left, what it rebalanced, and why a model did not reword the text where it was asked to. */
-    fun substituted(result: Rebalanced) {
-        _state.update { it.copy(plan = result.plan, rebalance = result.rebalance.shown(), notice = result.fallbackReason) }
+    /** An ingredient substituted in [mealId] in its window: the plan it left, what it rebalanced, and why a model did not reword the text where it was asked to. */
+    fun substituted(result: Rebalanced, mealId: String) {
+        _state.update {
+            it.copy(
+                plan = result.plan,
+                rebalance = result.rebalance.shown(),
+                lastSwap = LastSwap(mealId, result.plan.revision),
+                notice = result.fallbackReason,
+            )
+        }
     }
 
     /** Looks for swaps that would use up what the plan opens, put in order by a model where [weigh] and the account has one. */
@@ -434,7 +464,7 @@ class PlanDetailViewModel @Inject constructor(
     fun takeUseUp(swap: UseUpSwap) {
         val found = _state.value.useUp ?: return
         _state.update { it.copy(useUpFound = null) }
-        change { plans.takeUseUp(planId, found.revision, swap) }
+        change(swapped = swap.mealId) { plans.takeUseUp(planId, found.revision, swap) }
     }
 
     /** Opens the window that puts a favourite set on days of the plan, and reads the profile's sets for it. */
@@ -532,18 +562,26 @@ class PlanDetailViewModel @Inject constructor(
 
     /**
      * A change of the plan, one at a time: the plan it leaves is shown, and what it rebalanced is
-     * said where [said]. The way back says nothing of itself.
+     * said where [said]; [swapped] is the meal of a swap, which can be taken back. The way back says
+     * nothing of itself.
      */
-    private fun change(said: Boolean = true, block: suspend () -> Rebalanced) {
+    private fun change(said: Boolean = true, swapped: String? = null, block: suspend () -> Rebalanced) {
         if (_state.value.changing) return
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null) }
             attempt { block() }
                 .onSuccess { changed ->
-                    _state.update { it.copy(plan = changed.plan, changing = false, rebalance = if (said) changed.rebalance.shown() else null) }
+                    _state.update {
+                        it.copy(
+                            plan = changed.plan,
+                            changing = false,
+                            rebalance = if (said) changed.rebalance.shown() else null,
+                            lastSwap = swapped?.let { meal -> LastSwap(meal, changed.plan.revision) },
+                        )
+                    }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(changing = false, error = e) }
+                    _state.update { it.copy(changing = false, error = e, lastSwap = null) }
                     if (e.isPlanChanged()) reload()
                 }
         }
@@ -562,7 +600,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { submitted ->
                     _state.update {
                         when (submitted) {
-                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown())
+                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown(), lastSwap = null)
                             is Submitted.Kept -> it.copy(changing = false, offline = it.offline || submitted.offline)
                         }
                     }

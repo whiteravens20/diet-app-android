@@ -289,6 +289,15 @@ class MealPlanRepository @Inject constructor(
         },
     )
 
+    /** Takes back the last swap of a plan, dish and portions, on the plan as that swap left it at [revision]; the plan is kept for offline use. */
+    suspend fun undoSwap(planId: String, revision: Int): Rebalanced = kept(
+        apiCall(json) { api.undoSwap(UndoSwapRequest(planId, revision)) },
+    )
+
+    /** Whether another plan of the profile holds any of the days from [from] to [to]. */
+    suspend fun holdsDays(profileId: String, from: String, to: String): Boolean =
+        apiCall(json) { api.mealPlans(profileId, page = 1, pageSize = 1, from = from, to = to) }.total > 0
+
     /**
      * Makes a plan, a part of it or one of its days again, as [reroll] asks; the plan is kept for
      * offline use. Refused with `PLAN_NEEDS_RELAXATION` where a limit stands in the way,

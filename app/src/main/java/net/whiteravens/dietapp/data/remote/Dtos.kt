@@ -1310,6 +1310,10 @@ data class ApplyMealSwapRequest(
     val pick: String? = null,
 )
 
+/** POST `/meal-plans/swap-meal/undo`: the last swap of a plan taken back, on the plan as that swap left it. */
+@Serializable
+data class UndoSwapRequest(val planId: String, val revision: Int)
+
 /** POST `/meal-plans/ai-swap-meal/preview`: a model asked which of the recipes the engine puts first to take. */
 @Serializable
 data class AiSwapOfferRequest(
