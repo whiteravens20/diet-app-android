@@ -476,8 +476,10 @@ fun PlanDetailScreen(
                 item(key = "summary-${day.id}") {
                     DaySummary(
                         day,
-                        onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy },
-                        onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy },
+                        over = day.date < today,
+                        // A day that is over keeps its dishes.
+                        onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy || day.date < today },
+                        onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy || day.date < today },
                         // A day before today is history, and an instance without day settings has none to change.
                         onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
                         onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
@@ -495,6 +497,11 @@ fun PlanDetailScreen(
                 itemsIndexed(day.meals, key = { _, meal -> meal.id }) { _, meal ->
                     MealCard(
                         meal = meal,
+                        date = day.date,
+                        today = today,
+                        // A meal of a day that is over, or that is skipped, keeps its dish.
+                        changeable = !day.skipped && day.date >= today,
+                        parted = partedFrom(plan, plan.days.getOrNull(state.selectedDay - 1), meal, today),
                         swapping = meal.id == state.offering,
                         waiting = meal.id in state.waitingMeals,
                         added = meal.id in state.waitingAdditions,
@@ -767,6 +774,7 @@ private fun UseUpPanel(
 @Composable
 private fun DaySummary(
     day: PlanDay,
+    over: Boolean,
     onOtherWays: (() -> Unit)?,
     onChange: (() -> Unit)?,
     onSettings: (() -> Unit)?,
@@ -936,6 +944,10 @@ private fun mealName(meal: Meal): String = meal.name.ifEmpty { stringResource(R.
 @Composable
 private fun MealCard(
     meal: Meal,
+    date: String,
+    today: String,
+    changeable: Boolean,
+    parted: Meal?,
     swapping: Boolean,
     waiting: Boolean,
     added: Boolean,
@@ -955,7 +967,8 @@ private fun MealCard(
             Checkbox(
                 checked = meal.eaten,
                 onCheckedChange = onEaten,
-                enabled = !busy && !added,
+                // A meal is marked as eaten from its day on.
+                enabled = !busy && !added && (meal.eaten || date <= today),
                 modifier = Modifier.semantics { contentDescription = markEaten },
             )
             Column(Modifier.weight(1f)) {
@@ -994,7 +1007,7 @@ private fun MealCard(
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
                 // Without a network a meal is only taken off its day.
-                MealChanges(meal, busy, aiOn, canSwap = !readOnly && !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
+                MealChanges(meal, parted, date, busy, aiOn, canSwap = !readOnly && changeable && !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
             }
         }
     }
