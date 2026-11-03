@@ -417,6 +417,7 @@ class DiaryTest {
         screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("mleko probne")
+        screen.waitForText(milk)
         screen.onNode(inTheWindow(milk)).performScrollTo().performClick()
         screen.waitForText(text(R.string.diary_product_correct_hint))
         screen.putKeyboardAway()
