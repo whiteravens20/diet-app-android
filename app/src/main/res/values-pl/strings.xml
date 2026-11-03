@@ -1205,7 +1205,7 @@
     <string name="profile_name_hint">Nazwa profilu: Twoje imię albo imię osoby, dla której planujesz.</string>
     <string name="profile_age">Wiek</string>
     <string name="profile_sex">Płeć</string>
-    <string name="profile_sex_hint">Wymaga jej wzór na energię zużywaną przez organizm. Bez niej przyjmujemy wartość pośrednią.</string>
+    <string name="profile_sex_hint">Wzór na energię zużywaną przez organizm ma osobne wartości dla kobiet i mężczyzn. Przy pozostałych opcjach przyjmujemy wartość pośrednią.</string>
     <string name="profile_prefer_not_to_say">Wolę nie podawać</string>
     <string name="profile_height_cm">Wzrost (cm)</string>
     <string name="profile_weight">Waga (%1$s)</string>
@@ -1338,6 +1338,7 @@
     <string name="activity_very_active">Bardzo aktywny</string>
     <string name="sex_male">Mężczyzna</string>
     <string name="sex_female">Kobieta</string>
+    <string name="sex_non_binary">Osoba niebinarna</string>
     <string name="allergen_gluten">Gluten</string>
     <string name="allergen_dairy">Nabiał</string>
     <string name="allergen_eggs">Jaja</string>

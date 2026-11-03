@@ -206,7 +206,7 @@ internal fun BodyFields(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks
     )
     ChoiceField(
         label = stringResource(R.string.profile_sex),
-        options = listOf(null, "male", "female"),
+        options = listOf(null, "male", "female", "non_binary"),
         selected = form.sex,
         optionLabel = { sexLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(sex = chosen) } },

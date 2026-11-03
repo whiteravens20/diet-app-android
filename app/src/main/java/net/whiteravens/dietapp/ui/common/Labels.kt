@@ -117,6 +117,7 @@ fun activityLevelLabel(code: String): String = when (code) {
 fun sexLabel(code: String?): String = when (code) {
     "male" -> stringResource(R.string.sex_male)
     "female" -> stringResource(R.string.sex_female)
+    "non_binary" -> stringResource(R.string.sex_non_binary)
     null -> stringResource(R.string.profile_prefer_not_to_say)
     else -> humanise(code)
 }

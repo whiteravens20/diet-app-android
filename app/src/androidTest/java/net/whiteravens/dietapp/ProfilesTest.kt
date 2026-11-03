@@ -5,6 +5,7 @@ package net.whiteravens.dietapp
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -106,11 +107,21 @@ class ProfilesTest {
         press(text(R.string.common_edit))
         screen.waitForText(text(R.string.profiles_editing, "Ala"))
         screen.onNodeWithText(text(R.string.profile_age)).performScrollTo().performTextReplacement("31")
+        // A choice of neither of the two is kept as it was made.
+        press(text(R.string.profile_sex))
+        screen.onNode(hasText(text(R.string.sex_non_binary)) and hasAnyAncestor(isPopup())).performClick()
+        // What the chosen level of activity means stands under its field, and follows the choice.
+        press(text(R.string.profile_activity_level))
+        screen.onNode(hasText(text(R.string.activity_very_active)) and hasAnyAncestor(isPopup())).performClick()
+        screen.waitForText(text(R.string.profile_activity_hint_very_active))
+        screen.keepScreenshot("profiles-what-a-level-means")
         press(text(R.string.profile_save_changes))
         screen.waitForText(text(R.string.profiles_add))
 
         val edited = Instance.profile(account, profileId)
         assertEquals(31, edited.getInt("age"))
+        assertEquals("non_binary", edited.getString("sex"))
+        assertEquals("very_active", edited.getString("activityLevel"))
         // A weight shown in another unit and left as it was is kept to the hundredth it was.
         assertEquals(80.0, edited.getDouble("weightKg"), 0.0)
 

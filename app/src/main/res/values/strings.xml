@@ -1104,7 +1104,7 @@
     <string name="profile_name_hint">What the profile is called: your name, or that of somebody you plan for.</string>
     <string name="profile_age">Age</string>
     <string name="profile_sex">Sex</string>
-    <string name="profile_sex_hint">The equation for the energy a body uses asks for it. Without it the figure lies between the two.</string>
+    <string name="profile_sex_hint">The equation for the energy a body uses has one value for women and one for men. With the other choices the figure lies between the two.</string>
     <string name="profile_prefer_not_to_say">Prefer not to say</string>
     <string name="profile_height_cm">Height (cm)</string>
     <string name="profile_weight">Weight (%1$s)</string>
@@ -1236,6 +1236,7 @@
     <string name="activity_very_active">Very active</string>
     <string name="sex_male">Male</string>
     <string name="sex_female">Female</string>
+    <string name="sex_non_binary">Non-binary</string>
     <string name="allergen_gluten">Gluten</string>
     <string name="allergen_dairy">Dairy</string>
     <string name="allergen_eggs">Eggs</string>
