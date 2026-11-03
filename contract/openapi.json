@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Diet App API",
-    "version": "0.196.0",
+    "version": "0.201.0",
     "description": "What the API of Diet App is asked and what it answers. Written by `npm run contract` from the controllers and from the schemas of `@diet-app/shared`; the integration tests hold every answer to the schema its route names here.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -3558,7 +3558,7 @@
           "diary"
         ],
         "summary": "Change an entry: the meal it is under, or how much of it there was, which changes its figures in proportion.",
-        "description": "Change an entry: the meal it is under, or how much of it there was, which changes its figures in proportion.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "description": "Change an entry: the meal it is under, or how much of it there was, which changes its figures in proportion. An entry of a product can be moved to a product of the reader's own, whose label then gives its figures.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -6442,8 +6442,8 @@
         "tags": [
           "products"
         ],
-        "summary": "Write a product: 500 held, 50 written or changed in 24 hours, and a code the base knows is refused.",
-        "description": "Write a product: 500 held, 50 written or changed in 24 hours, and a code the base knows is refused.\n\nAsked by an account.\n\nLimited to 30 in a minute, for each sender.",
+        "summary": "Write a product: 500 held, 50 written or changed in 24 hours.",
+        "description": "Write a product: 500 held, 50 written or changed in 24 hours. One of a code the base knows is the account's correction of it, for the account alone.\n\nAsked by an account.\n\nLimited to 30 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -6578,7 +6578,7 @@
           "products"
         ],
         "summary": "Send a product with a code and all its figures to the instance's reviewers: 10 in 24 hours.",
-        "description": "Send a product with a code and all its figures to the instance's reviewers: 10 in 24 hours.\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
+        "description": "Send a product with a code and all its figures to the instance's reviewers: 10 in 24 hours. A correction stays its author's (409 `OWN_PRODUCT_CORRECTION`).\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -7295,7 +7295,7 @@
           "recipes"
         ],
         "summary": "Edit a recipe of the account's own, whoever wrote it.",
-        "description": "Edit a recipe of the account's own, whoever wrote it. A new version is written by hand, in the language of the request, and its id answered: the plans that hold the old version keep it, and the favourites and favourite sets that named it name the new one. A recipe made by swapping an ingredient stays one, and is still not to be submitted.\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
+        "description": "Edit a recipe of the account's own, whoever wrote it. A new version is written by hand, in the language of the request, and its id answered: the plans that hold the old version keep it, and the favourites and favourite sets that named it name the new one. A recipe made by swapping an ingredient stays one, and is still not to be submitted; where only its words change, they are written in it, as `PUT /recipes/:id/text` does.\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -7411,6 +7411,70 @@
         "responses": {
           "204": {
             "description": "Done; the answer has no body."
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 10,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/recipes/{id}/text": {
+      "put": {
+        "operationId": "Recipes_reword",
+        "tags": [
+          "recipes"
+        ],
+        "summary": "New words for a recipe of the account's own made by swapping an ingredient, in the language of the request: its title, description and steps, written in that recipe.",
+        "description": "New words for a recipe of the account's own made by swapping an ingredient, in the language of the request: its title, description and steps, written in that recipe. It stays the recipe the plans hold, so they read the new words at once; its nutrition does not change. Any other recipe is edited as a new version (409 `RECIPE_WORDS_ONLY_OF_A_SWAP`).\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipeTextRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            }
           },
           "default": {
             "$ref": "#/components/responses/Refused"
@@ -12814,6 +12878,12 @@
               }
             ]
           },
+          "productCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productSource": {
             "anyOf": [
               {
@@ -12888,6 +12958,7 @@
           "recipeId",
           "ingredientId",
           "productId",
+          "productCode",
           "productSource",
           "servings",
           "amount",
@@ -15225,11 +15296,19 @@
                   },
                   "nutrition": {
                     "$ref": "#/components/schemas/Nutrition"
+                  },
+                  "items": {
+                    "maxItems": 40,
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DiaryEntry"
+                    }
                   }
                 },
                 "required": [
                   "entries",
-                  "nutrition"
+                  "nutrition",
+                  "items"
                 ],
                 "additionalProperties": false
               },
@@ -15967,6 +16046,9 @@
           "doubtful": {
             "type": "boolean"
           },
+          "correction": {
+            "type": "boolean"
+          },
           "changedAt": {
             "anyOf": [
               {
@@ -16016,6 +16098,7 @@
           "per100",
           "energyWorkedOut",
           "doubtful",
+          "correction",
           "changedAt",
           "state",
           "reason",
@@ -17408,6 +17491,9 @@
           "doubtful": {
             "type": "boolean"
           },
+          "correction": {
+            "type": "boolean"
+          },
           "changedAt": {
             "anyOf": [
               {
@@ -17433,6 +17519,7 @@
           "per100",
           "energyWorkedOut",
           "doubtful",
+          "correction",
           "changedAt"
         ],
         "additionalProperties": false
@@ -18787,10 +18874,14 @@
             "properties": {
               "enabled": {
                 "type": "boolean"
+              },
+              "confirmationUnlocksAi": {
+                "type": "boolean"
               }
             },
             "required": [
-              "enabled"
+              "enabled",
+              "confirmationUnlocksAi"
             ],
             "additionalProperties": false
           },
@@ -20243,6 +20334,33 @@
           "license"
         ],
         "additionalProperties": false
+      },
+      "RecipeTextRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "steps": {
+            "minItems": 1,
+            "maxItems": 25,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 300
+            }
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "steps"
+        ]
       },
       "RecoveryCodes": {
         "type": "object",
@@ -21978,6 +22096,10 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 5000
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
