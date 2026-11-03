@@ -343,9 +343,9 @@ fun PlanDetailScreen(
         SwapOfferDialog(
             offer = offer,
             busy = state.taking || state.offering != null,
-            onTake = {
+            onTake = { together ->
                 changedMeal = offer.mealId
-                viewModel.takeOffer()
+                viewModel.takeOffer(together)
             },
             onAnother = viewModel::anotherOffer,
             onDismiss = viewModel::dismissOffer,
@@ -995,6 +995,20 @@ private fun MealCard(
     }
 }
 
+/** From how far off a whole recipe a meal's portion is worth a mark of its own. */
+private const val AUTO_BALANCED_FROM = 0.05
+
+/** How near its target a day stays as it is, as a share of the target: the API does not fit it then. */
+private const val DAY_ON_TARGET = 0.02
+
+/** The meal of the day before that this one was parted from, in a plan made for cooking ahead: a press brings the two together again. */
+private fun partedFrom(plan: MealPlan, dayBefore: PlanDay?, meal: Meal, today: String): Meal? {
+    if (!plan.cooksAhead || meal.cookAhead != null || dayBefore == null || dayBefore.date < today || dayBefore.skipped) return null
+    return dayBefore.meals.firstOrNull {
+        it.slot == meal.slot && it.recipeId != null && it.recipeId != meal.recipeId && it.cookAhead == null && !it.eaten && !it.custom
+    }
+}
+
 /** The times of day a meal of one's own can be at, in the order the web application offers them. */
 private val CUSTOM_MEAL_SLOTS = listOf("breakfast", "lunch", "dinner", "snack", "second_breakfast")
 
@@ -1138,6 +1152,8 @@ private fun CustomMealDialog(
 @Composable
 private fun MealChanges(
     meal: Meal,
+    parted: Meal?,
+    date: String,
     busy: Boolean,
     aiOn: Boolean,
     canSwap: Boolean,
@@ -1161,6 +1177,12 @@ private fun MealChanges(
                 action()
             }
             if (canSwap) {
+                parted?.let { before ->
+                    val dayBefore = LocalDate.parse(date).minusDays(1).toString()
+                    Change(stringResource(R.string.plans_cooking_same, weekdayShort(dayBefore)), null) {
+                        pick { onChange(SwapAsk("favorite", favoriteRecipeId = before.recipeId)) }
+                    }
+                }
                 Change(stringResource(R.string.plans_swap), null) { pick { onChange(SwapAsk("random")) } }
                 Change("${stringResource(R.string.plans_swap_to_fav)} ★", stringResource(R.string.plans_tooltip_swap_to_fav)) { pick(onPickFavorite) }
                 Change(
@@ -1254,15 +1276,16 @@ private fun offerLine(offer: SwapOffer): AnnotatedString {
 private fun SwapOfferDialog(
     offer: SwapOffer,
     busy: Boolean,
-    onTake: () -> Unit,
+    onTake: (together: Boolean) -> Unit,
     onAnother: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var only by rememberSaveable(offer.mealId) { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.plans_offer_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 // A model's own pick says so, with its reason, before it is taken; where a model was asked
                 // and the engine picked, the offer says why.
                 if (offer.pick != null) AiMark(modelPartText(ModelPart.Picked(offer.reason)), spelledOut = true)
@@ -1276,11 +1299,33 @@ private fun SwapOfferDialog(
                         formatNumber(offer.after.carbs.roundToInt()),
                     ),
                 )
-                Hint(stringResource(R.string.plans_offer_day, formatNumber(offer.dayAfter.calories.roundToInt()), formatNumber(offer.calorieTarget.roundToInt())))
+                // The other meals are fitted to the day only where it comes out away from its target.
+                Hint(
+                    stringResource(
+                        if (abs(offer.dayAfter.calories - offer.calorieTarget) > offer.calorieTarget * DAY_ON_TARGET) R.string.plans_offer_day else R.string.plans_offer_day_after,
+                        formatNumber(offer.dayAfter.calories.roundToInt()),
+                        formatNumber(offer.calorieTarget.roundToInt()),
+                    ),
+                )
+                offer.targetMacros?.let { target ->
+                    Hint(
+                        stringResource(
+                            R.string.plans_day_macros_of,
+                            formatNumber(offer.dayAfter.protein.roundToInt()),
+                            formatNumber(target.protein.roundToInt()),
+                            formatNumber(offer.dayAfter.fat.roundToInt()),
+                            formatNumber(target.fat.roundToInt()),
+                            formatNumber(offer.dayAfter.carbs.roundToInt()),
+                            formatNumber(target.carbs.roundToInt()),
+                        ),
+                    )
+                }
+                CookingNote(offer.cooking, only, onOnly = { only = it })
+                if (offer.outsideLimits.isNotEmpty()) Hint(stringResource(R.string.plans_offer_outside, limitNames(offer.outsideLimits)), MaterialTheme.colorScheme.tertiary)
             }
         },
         confirmButton = {
-            Button(onClick = onTake, enabled = !busy) { Text(stringResource(R.string.plans_offer_take)) }
+            Button(onClick = { onTake(!only && offer.cooking?.changes?.isNotEmpty() == true) }, enabled = !busy) { Text(stringResource(R.string.plans_offer_take)) }
         },
         dismissButton = {
             Row {

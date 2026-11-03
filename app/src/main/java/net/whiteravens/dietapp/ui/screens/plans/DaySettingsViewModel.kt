@@ -48,6 +48,8 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         val preview: DaySettingsPreview? = null,
         /** The preview is for the settings on the screen; false while a newer one is on its way. */
         val current: Boolean = false,
+        /** What is drawn is kept to this day, whatever else of its cookings there is. */
+        val only: Boolean = false,
         /** Why the preview could not be had, where it was not for the fields the API refused. */
         val previewError: Throwable? = null,
         /** The fields the API refused, by the path it names them by (`calorieTarget`, `cookTimeBudgetMinutes`). */
@@ -109,6 +111,11 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
     fun setCookTime(typed: String) = edit { it.copy(cookTime = typed) }
     fun setUseUpBy(on: Boolean) = edit { it.copy(useUpBy = on) }
 
+    /** Keeps what is drawn for the day to this day: the other meals of its cookings stay as they are. */
+    fun setOnly(on: Boolean) {
+        _state.update { it.copy(only = on) }
+    }
+
     /** Saves the settings on the plan as the preview had it. */
     fun save() = send(allowRelaxations = null)
 
@@ -149,7 +156,16 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         if (current.saving || !current.current || preview.unchanged) return
         viewModelScope.launch {
             _state.update { it.copy(saving = true, error = null, stale = false) }
-            attempt { plans.applyDaySettings(current.planId, current.dayId, settings, preview.revision, allowRelaxations) }
+            attempt {
+                plans.applyDaySettings(
+                    current.planId,
+                    current.dayId,
+                    settings,
+                    preview.revision,
+                    allowRelaxations,
+                    together = !current.only && preview.cooking?.changes?.isNotEmpty() == true,
+                )
+            }
                 .onSuccess { plan -> _state.update { it.copy(saving = false, saved = plan) } }
                 .onFailure { e ->
                     val needed = plans.relaxationNeeded(e)

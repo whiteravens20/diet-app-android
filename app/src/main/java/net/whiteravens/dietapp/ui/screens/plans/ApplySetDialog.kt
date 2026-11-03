@@ -31,6 +31,7 @@ import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
+import java.time.LocalDate
 
 /**
  * The window that puts one of the profile's favourite sets on days of [plan], as the web's is: a set
@@ -41,10 +42,13 @@ import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 internal fun ApplySetDialog(
     plan: MealPlan,
     window: PlanDetailViewModel.SetWindow,
-    onApply: (setId: String, dates: List<String>) -> Unit,
+    onApply: (setId: String, dates: List<String>, together: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val days = plan.days.map { it.date }
+    // A day that is over keeps what was on it: a set is not offered for it.
+    val today = LocalDate.now().toString()
+    val days = plan.days.map { it.date }.filter { it >= today }
+    var only by rememberSaveable(plan.id) { mutableStateOf(false) }
     var picked by rememberSaveable(plan.id) { mutableStateOf<String?>(null) }
     var chosen by rememberSaveable(plan.id) { mutableStateOf(days) }
     // The text of the choice the window waits for, said where Apply was pressed without it.
@@ -90,6 +94,22 @@ internal fun ApplySetDialog(
                         },
                     )
                 }
+                if (days.isEmpty()) Text(stringResource(R.string.favorite_sets_apply_no_days), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.favorite_sets_apply_own_meal_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (plan.cooksAhead) {
+                    if (!only) {
+                        Text(
+                            stringResource(R.string.favorite_sets_apply_cooking_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    CheckRow(label = stringResource(R.string.plans_cooking_only_chosen), checked = only, onChange = { only = it })
+                }
                 missing?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 window.error?.let { ErrorBanner("${stringResource(R.string.favorite_sets_err_apply)} ${errorMessage(it)}") }
             }
@@ -101,10 +121,10 @@ internal fun ApplySetDialog(
                     when {
                         set == null -> missing = R.string.favorite_sets_apply_pick_set
                         chosen.isEmpty() -> missing = R.string.favorite_sets_apply_pick_days
-                        else -> onApply(set, days.filter { it in chosen })
+                        else -> onApply(set, days.filter { it in chosen }, plan.cooksAhead && !only)
                     }
                 },
-                enabled = !window.applying && !sets.isNullOrEmpty(),
+                enabled = !window.applying && !sets.isNullOrEmpty() && days.isNotEmpty(),
             ) { Text(stringResource(R.string.favorite_sets_apply_confirm)) }
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !window.applying) { Text(stringResource(R.string.common_cancel)) } },

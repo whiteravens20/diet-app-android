@@ -1632,6 +1632,12 @@
     <string name="plans_cooking_only">This day only</string>
     <string name="plans_cooking_only_chosen">The chosen days only</string>
     <string name="plans_cooking_stays">Stays as it is: %1$s. The portion cooked for it goes unused.</string>
+    <string name="plans_cooking_same">The same as %1$s</string>
+    <string name="plans_offer_day_after">The day after the swap: %1$s of %2$s kcal.</string>
+    <string name="plans_offer_outside">This recipe is outside a limit: %1$s. The meal will say so.</string>
+    <string name="favorite_sets_apply_cooking_note">A dish cooked for two days changes on its second day too.</string>
+    <string name="favorite_sets_apply_own_meal_note">A set also replaces meals of your own at those times of day.</string>
+    <string name="favorite_sets_apply_no_days">Every day of this plan is over.</string>
     <string name="plans_portion_meal">The original gives amounts for %1$s, your meal is %2$s. Below are the amounts for your meal.</string>
     <string name="plans_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s. Below are the amounts for all of it.</string>
     <string name="recipe_portion_meal">The original gives amounts for %1$s, your meal is %2$s.</string>

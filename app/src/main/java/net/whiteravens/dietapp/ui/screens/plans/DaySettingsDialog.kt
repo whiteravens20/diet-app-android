@@ -131,6 +131,7 @@ fun DaySettingsDialog(
                         preview == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
                         else -> Column(Modifier.alpha(if (state.current) 1f else 0.6f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Outcome(preview, skipped)
+                            if (!preview.unchanged) CookingNote(preview.cooking, state.only, onOnly = viewModel::setOnly)
                         }
                     }
                 }

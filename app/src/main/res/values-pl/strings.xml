@@ -1753,6 +1753,12 @@
     <string name="plans_cooking_only">Tylko ten dzień</string>
     <string name="plans_cooking_only_chosen">Tylko wybrane dni</string>
     <string name="plans_cooking_stays">Bez zmian zostaje: %1$s. Ugotowana na to porcja zostanie niewykorzystana.</string>
+    <string name="plans_cooking_same">To samo co %1$s</string>
+    <string name="plans_offer_day_after">Dzień po zamianie: %1$s z %2$s kcal.</string>
+    <string name="plans_offer_outside">Ten przepis jest poza limitem: %1$s. Posiłek będzie to oznaczał.</string>
+    <string name="favorite_sets_apply_cooking_note">Dania ugotowane na dwa dni zmienią się też drugiego dnia.</string>
+    <string name="favorite_sets_apply_own_meal_note">Zestaw zastąpi też własne posiłki tych pór dnia.</string>
+    <string name="favorite_sets_apply_no_days">Wszystkie dni tego planu minęły.</string>
     <string name="plans_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s. Poniżej ilości dla Twojego posiłku.</string>
     <string name="plans_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s. Poniżej ilości na całe gotowanie.</string>
     <string name="recipe_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s.</string>

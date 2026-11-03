@@ -638,7 +638,7 @@ class MealPlanRepositoryTest {
         val taken = server.takeRequest()
         assertEquals("/api/meal-plans/swap-meal", taken.path)
         assertEquals(
-            """{"planId":"plan-1","plannedMealId":"meal-1","recipeId":"recipe-2","revision":7,"strategy":"random","pick":"note-1"}""",
+            """{"planId":"plan-1","plannedMealId":"meal-1","recipeId":"recipe-2","revision":7,"strategy":"random","together":true,"pick":"note-1"}""",
             taken.body.readUtf8(),
         )
     }

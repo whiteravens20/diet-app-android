@@ -84,6 +84,7 @@ internal fun RerollDialog(
     var replaceEaten by rememberSaveable { mutableStateOf(false) }
     var replaceCustom by rememberSaveable { mutableStateOf(false) }
     var holdLimits by rememberSaveable { mutableStateOf(start.holdLimits) }
+    var only by rememberSaveable { mutableStateOf(false) }
 
     // What the API is asked what a re-roll would do: the days chosen, and what of them may go as well.
     val asked = Reroll(
@@ -205,6 +206,12 @@ internal fun RerollDialog(
                         // An answer to an earlier choice is shown faint while the newer one is on its way.
                         Column(Modifier.alpha(if (state.current) 1f else 0.6f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Outcome(preview)
+                            CookingNote(
+                                preview.cooking,
+                                only,
+                                onOnly = { only = it },
+                                onlyLabel = if (scope == RerollScope.DAY) R.string.plans_cooking_only else R.string.plans_cooking_only_chosen,
+                            )
                         }
                     } else if (state.error == null) {
                         LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -221,6 +228,7 @@ internal fun RerollDialog(
                             replaceEaten = couldGo.eaten && replaceEaten,
                             replaceCustom = couldGo.custom && replaceCustom,
                             allowRelaxations = emptyList<String>().takeIf { holdLimits && mayGiveWay.isNotEmpty() },
+                            together = !only && preview?.cooking?.changes?.isNotEmpty() == true,
                         ),
                     )
                 },

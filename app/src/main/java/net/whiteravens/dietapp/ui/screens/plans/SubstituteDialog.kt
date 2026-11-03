@@ -146,7 +146,7 @@ fun SubstituteDialog(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(R.string.substitute_step_delta), style = MaterialTheme.typography.titleSmall)
                         if (state.previewing) Note(stringResource(R.string.substitute_computing))
-                        state.preview?.let { preview -> PreviewOf(preview, state.acceptChange, viewModel::setAcceptChange) }
+                        state.preview?.let { preview -> PreviewOf(preview, state.acceptChange, viewModel::setAcceptChange, state.only, viewModel::setOnly) }
                         CheckRow(
                             label = stringResource(R.string.substitute_rewrite_with_ai),
                             hint = if (state.aiOn == false) aiOffText() else stringResource(R.string.substitute_rewrite_with_ai_hint),
@@ -166,7 +166,7 @@ fun SubstituteDialog(
 
 /** What a substitution does to the meal: how the amount was decided, the figures before and after, and what stands in its way. */
 @Composable
-private fun PreviewOf(preview: SubstitutionPreview, acceptChange: Boolean, onAcceptChange: (Boolean) -> Unit) {
+private fun PreviewOf(preview: SubstitutionPreview, acceptChange: Boolean, onAcceptChange: (Boolean) -> Unit, only: Boolean, onOnly: (Boolean) -> Unit) {
     val fromAmount = amountLabel(preview.from.quantity, preview.from.unit)
     val toAmount = amountLabel(preview.to.quantity, preview.to.unit)
     val sizing = when (preview.sizing) {
@@ -193,6 +193,10 @@ private fun PreviewOf(preview: SubstitutionPreview, acceptChange: Boolean, onAcc
             CheckRow(label = stringResource(R.string.substitute_accept_change), checked = acceptChange, onChange = onAcceptChange)
         }
     }
+    if (preview.outsideLimits.isNotEmpty()) {
+        Note(stringResource(R.string.plans_offer_outside, limitNames(preview.outsideLimits)), MaterialTheme.colorScheme.tertiary)
+    }
+    CookingNote(preview.cooking, only, onOnly)
 }
 
 /** A figure before and after, and by how much it moves, rounded as it is shown: more in the colour of a warning, less in the main one. */

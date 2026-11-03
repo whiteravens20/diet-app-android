@@ -59,6 +59,8 @@ class SubstituteViewModel @Inject constructor(
         val acceptChange: Boolean = false,
         /** A model rewords the recipe's text around the substitute. */
         val rewriteWithAi: Boolean = false,
+        /** The substitution is kept to this meal, whatever else of its cooking there is. */
+        val only: Boolean = false,
         val applying: Boolean = false,
         val error: Throwable? = null,
         /** The plan the substitution left: the window is done. */
@@ -152,6 +154,11 @@ class SubstituteViewModel @Inject constructor(
         _state.update { it.copy(acceptChange = on) }
     }
 
+    /** Keeps the substitution to this meal: the other meals of its cooking stay as they are. */
+    fun setOnly(on: Boolean) {
+        _state.update { it.copy(only = on) }
+    }
+
     fun setRewriteWithAi(on: Boolean) {
         _state.update { it.copy(rewriteWithAi = on) }
     }
@@ -171,6 +178,7 @@ class SubstituteViewModel @Inject constructor(
             rewriteWithAi = current.aiOn == true && current.rewriteWithAi,
             acceptChange = current.acceptChange,
             pick = pick,
+            together = !current.only && current.preview?.cooking?.changes?.isNotEmpty() == true,
         )
         viewModelScope.launch {
             _state.update { it.copy(applying = true, error = null) }

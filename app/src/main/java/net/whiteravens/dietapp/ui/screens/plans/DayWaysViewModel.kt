@@ -76,12 +76,12 @@ class DayWaysViewModel @Inject constructor(
         }
     }
 
-    fun take(offer: String) {
+    fun take(offer: String, together: Boolean = false) {
         val current = _state.value
         if (current.busy) return
         viewModelScope.launch {
             _state.update { it.copy(taking = true, error = null) }
-            attempt { plans.takeDayWay(current.planId, current.dayId, offer) }
+            attempt { plans.takeDayWay(current.planId, current.dayId, offer, together) }
                 .onSuccess { plan -> _state.update { it.copy(taking = false, taken = plan) } }
                 // The offer was for the plan as it was: where it changed, the plan is read anew.
                 .onFailure { e -> _state.update { it.copy(taking = false, error = e, stale = true) } }

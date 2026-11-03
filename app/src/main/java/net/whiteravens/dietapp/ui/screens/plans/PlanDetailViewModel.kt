@@ -302,7 +302,8 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(offer = null) }
     }
 
-    fun takeOffer() {
+    /** Takes the recipe on offer, on this meal alone or with the others of its cooking. */
+    fun takeOffer(together: Boolean = false) {
         val offer = _state.value.offer ?: return
         if (_state.value.taking) return
         viewModelScope.launch {
@@ -452,14 +453,14 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { if (it.setWindow?.applying == true) it else it.copy(setWindow = null) }
     }
 
-    /** Puts the set [setId] on the days [dates] (yyyy-MM-dd) of the plan: the plan it leaves is shown, and the window closes. */
-    fun applySet(setId: String, dates: List<String>) {
+    /** Puts the set [setId] on the days [dates] (yyyy-MM-dd) of the plan, and on the other meals of each cooking where [together]: the plan it leaves is shown, and the window closes. */
+    fun applySet(setId: String, dates: List<String>, together: Boolean = false) {
         val window = _state.value.setWindow ?: return
         if (window.applying || _state.value.changing) return
         _state.update { it.copy(setWindow = window.copy(applying = true, error = null)) }
         viewModelScope.launch {
-            attempt { plans.applySet(setId, planId, dates) }
-                .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null) } }
+            attempt { plans.applySet(setId, planId, dates, together) }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null, rebalance = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(setWindow = it.setWindow?.copy(applying = false, error = e)) }
                     if (e.isPlanChanged()) reload()

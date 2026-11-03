@@ -219,6 +219,18 @@ object Instance {
             (0 until lines.length()).map { lines.getJSONObject(it).getString("name") }
     }
 
+    /** The title of the meal of a plan's first day that is cooked for a later one as well. */
+    fun mealToCook(account: Account, planId: String): String {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
+        return (0 until meals.length()).map(meals::getJSONObject).first { it.optString("cookAhead") == "cook" }.getJSONObject("recipe").getString("title")
+    }
+
+    /** The recipes of a day of a plan, by its place among the days. */
+    fun dayRecipes(account: Account, planId: String, day: Int): List<String?> {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(day).getJSONArray("meals")
+        return (0 until meals.length()).map { meals.getJSONObject(it).optJSONObject("recipe")?.getString("id") }
+    }
+
     /** Whether the first meal of a plan's first day is marked eaten. */
     fun firstMealEaten(account: Account, planId: String): Boolean =
         !call("GET", "meal-plans/$planId", token = account.accessToken)
@@ -290,11 +302,11 @@ object Instance {
         call("POST", "meal-plans/$planId/use-up", JSONObject(), token = account.accessToken).getJSONArray("suggestions").length()
 
     /** A plan of [days] days for [profileId] from [start], made as the app makes one. */
-    fun newPlan(account: Account, profileId: String, days: Int = 2, start: LocalDate = LocalDate.now()): String =
+    fun newPlan(account: Account, profileId: String, days: Int = 2, start: LocalDate = LocalDate.now(), cookAhead: Boolean = false): String =
         call(
             "POST",
             "meal-plans/generate",
-            JSONObject().put("profileId", profileId).put("startDate", start.toString()).put("durationDays", days),
+            JSONObject().put("profileId", profileId).put("startDate", start.toString()).put("durationDays", days).put("mealPrepFriendly", cookAhead),
             token = account.accessToken,
             expect = 201,
         ).getString("id")

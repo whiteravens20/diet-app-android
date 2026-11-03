@@ -592,7 +592,7 @@ class PlanDetailViewModelTest {
         assertEquals(listOf(WeighRequest(false), WeighRequest(true)), asked)
         assertTrue(found.weighed)
         assertEquals("Uses the feta.", found.swaps.single().reason)
-        assertEquals(ApplyMealSwapRequest(plan.id, meal.id, "recipe-feta", plan.revision, "random", pick = "note"), taken.captured)
+        assertEquals(ApplyMealSwapRequest(plan.id, meal.id, "recipe-feta", plan.revision, "random", together = true, pick = "note"), taken.captured)
         assertNull(model.state.value.useUp)
         assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
         assertEquals(listOf(ScaleChange(meal.id, 1.0, 0.8)), model.state.value.rebalance?.changes)

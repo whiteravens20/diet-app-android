@@ -20,6 +20,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -70,6 +73,7 @@ fun DayWaysDialog(
     // opening on the same day took is not handed back before the state on the screen catches up.
     LaunchedEffect(state.taken) { viewModel.state.value.taken?.let(onTaken) }
     LaunchedEffect(state.stale) { if (viewModel.state.value.stale) onStale() }
+    var only by rememberSaveable(day.id) { mutableStateOf(false) }
 
     ScreenDialog(onDismiss) {
         Column(
@@ -102,8 +106,9 @@ fun DayWaysDialog(
                     ),
                 )
                 ways.diary?.let { Note(stringResource(R.string.plans_ways_diary_counted, formatNumber(it.calories.roundToInt()))) }
+                CookingNote(ways.cooking, only, onOnly = { only = it })
                 if (ways.ways.isEmpty()) Text(stringResource(R.string.plans_ways_none), style = MaterialTheme.typography.bodyMedium)
-                ways.ways.forEachIndexed { index, way -> Way(index, way, target, busy = state.busy) { viewModel.take(way.offer) } }
+                ways.ways.forEachIndexed { index, way -> Way(index, way, target, busy = state.busy) { viewModel.take(way.offer, together = !only && ways.cooking?.changes?.isNotEmpty() == true) } }
 
                 // How asking a model went, said where the ways are and read out.
                 Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {

@@ -25,6 +25,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
@@ -163,6 +164,46 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.plans_open_recipe)).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }
         screen.waitForText(title)
+    }
+
+    @Test
+    fun aDishCookedForTwoDaysChangesOnBothAndItsMealsSayWhereItComesFrom() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 2, cookAhead = true)
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The first day's meal says what is cooked; asked to swap, it says what else that changes.
+        screen.scrollToText(text(R.string.plans_cook_days))
+        screen.keepScreenshot("plans-a-dish-to-cook-for-two-days")
+        val title = Instance.mealToCook(account, planId)
+        val before = Instance.dayRecipes(account, planId, 0)
+        val change = text(R.string.plans_action_for, text(R.string.plans_change_meal), title)
+        screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(change).fetchSemanticsNodes().isNotEmpty() }
+        screen.onAllNodesWithContentDescription(change)[0].performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.plans_swap)).performClick()
+        screen.waitForEnabled(text(R.string.plans_offer_take))
+        screen.onNode(hasText(text(R.string.plans_cooking_only)) and hasAnyAncestor(isDialog())).assertIsDisplayed()
+        screen.keepScreenshot("plans-an-offer-that-changes-both-days")
+        screen.onNodeWithText(text(R.string.plans_offer_take)).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_offer_title)).fetchSemanticsNodes().isEmpty() }
+
+        // The dish stands on both days, and the second says it is the rest of the first.
+        screen.waitForTheApi(20_000) { Instance.dayRecipes(account, planId, 0) != before }
+        val dish = (Instance.dayRecipes(account, planId, 0) - before.toSet()).single()
+        assertTrue(dish in Instance.dayRecipes(account, planId, 1))
+        putAwayRebalance()
+        screen.onNodeWithText(formatDayDate(LocalDate.now().plusDays(1).toString())).performScrollTo().performClick()
+        val fromToday = InstrumentationRegistry.getInstrumentation().targetContext.resources
+            .getStringArray(R.array.plans_cooking_day_from)[LocalDate.now().dayOfWeek.value - 1]
+            .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        screen.scrollToText(fromToday)
+        screen.keepScreenshot("plans-a-dish-from-the-day-before")
     }
 
     @Test
