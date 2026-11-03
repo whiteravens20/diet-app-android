@@ -758,8 +758,8 @@ class PlanDetailViewModelTest {
         coEvery { api.mealPlan(plan.id) } returns plan
         val date = plan.days.first().date
         // As the API's own answer had it: a name too long, and every number past its bounds.
-        val tooMuch = CustomMeal("A".repeat(121), "snack", Nutrition(6000.0, 600.0, 600.0, 1200.0), 30.0)
-        val soup = CustomMeal("Soup", "snack", Nutrition(300.0, 12.0, 8.0, 40.0), 2.0)
+        val tooMuch = CustomMeal("A".repeat(121), "snack", 6000.0, 600.0, 600.0, 1200.0, 30.0)
+        val soup = CustomMeal("Soup", "snack", 300.0, 12.0, 8.0, 40.0, 2.0)
         coEvery { api.addCustomMeal(plan.id, date, any(), match { it.name == tooMuch.name }) } throws
             HttpException(Response.error<Any>(400, fixture("custom-meal-refused").toResponseBody("application/json".toMediaType())))
         coEvery { api.addCustomMeal(plan.id, date, any(), match { it.name == "Soup" }) } returns swapped
@@ -811,7 +811,7 @@ class PlanDetailViewModelTest {
         val day = plan.days.first()
         val other = day.meals.last { it.id != meal.id }
 
-        model.addCustomMeal(day.date, CustomMeal("Soup", "snack", Nutrition(300.0, 12.0, 8.0, 40.0), 2.0))
+        model.addCustomMeal(day.date, CustomMeal("Soup", "snack", 300.0, 12.0, 8.0, 40.0, 2.0))
         assertEquals(PlanDetailViewModel.CustomMealSent(added = true), model.state.value.customMeal)
         model.customMealClosed()
         model.removeMeal(other.id)

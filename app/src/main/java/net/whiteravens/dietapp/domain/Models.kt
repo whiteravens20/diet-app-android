@@ -557,8 +557,19 @@ data class SubstitutionPreview(
 /** A substitute a model was asked for: the ingredient, and the note and sentence of the model's pick, or why the engine picked. */
 data class SuggestedSubstitute(val ingredient: IngredientChoice, val pick: String?, val reason: String?, val fallbackReason: String?)
 
-/** A meal of the user's own: its name, its time of day, what one serving holds, and how many servings it is. */
-data class CustomMeal(val name: String, val slot: String, val perServing: Nutrition, val servings: Double)
+/**
+ * A meal of the user's own: its name, its time of day, what one serving holds, and how many servings
+ * it is. A macronutrient left out is estimated, and the meal says so.
+ */
+data class CustomMeal(
+    val name: String,
+    val slot: String,
+    val calories: Double,
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val carbs: Double? = null,
+    val servings: Double,
+)
 
 /**
  * Other ways to fill a day: the day as it is (what it holds and how many packs the plan leaves more

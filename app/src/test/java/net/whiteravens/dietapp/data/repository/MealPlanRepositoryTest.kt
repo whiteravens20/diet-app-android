@@ -288,10 +288,31 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a meal of one's own by its calories alone says nothing of the rest, for the API to estimate`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", calories = 300.0, servings = 1.0)) }
+
+        val body = server.takeRequest().body.readUtf8()
+        assertTrue(body, body.contains("\"nutrition\":{\"calories\":300.0}"))
+    }
+
+    @Test
+    fun `a swap is taken back on the plan it left`() {
+        server.enqueue(answer("meal-plan-swap-apply"))
+
+        runBlocking { repository(Cache()).undoSwap("plan-1", 7) }
+
+        val asked = server.takeRequest()
+        assertEquals("/api/meal-plans/swap-meal/undo", asked.path)
+        assertTrue(asked.body.readUtf8().contains("\"revision\":7"))
+    }
+
+    @Test
     fun `a meal of one's own is sent with what one serving holds and how many servings it is, named without the spaces around it, under a key of its own`() {
         server.enqueue(answer("meal-plan-swap-apply"))
 
-        runBlocking { repository(Cache()).addCustomMeal("plan-1", "2026-10-13", CustomMeal(" Soup ", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.5)) }
+        runBlocking { repository(Cache()).addCustomMeal("plan-1", "2026-10-13", CustomMeal(" Soup ", "lunch", 300.0, 12.0, 8.0, 40.0, 1.5)) }
 
         val own = server.takeRequest()
         assertEquals("/api/meal-plans/plan-1/days/2026-10-13/custom-meal", own.path)
@@ -318,7 +339,7 @@ class MealPlanRepositoryTest {
         val queue = changeQueue()
         val plans = repository(Cache(), queue)
 
-        val kept = runBlocking { plans.addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.0)) }
+        val kept = runBlocking { plans.addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", 300.0, 12.0, 8.0, 40.0, 1.0)) }
         runBlocking { plans.removeMeal("plan-1", "meal-2") }
 
         assertEquals(Submitted.Kept(offline = true), kept)
@@ -348,7 +369,7 @@ class MealPlanRepositoryTest {
         val plans = repository(Cache())
 
         runBlocking {
-            plans.addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", Nutrition(300.0, 12.0, 8.0, 40.0), 1.0), replaces = "meal-1")
+            plans.addCustomMeal("plan-1", "2026-10-13", CustomMeal("Soup", "lunch", 300.0, 12.0, 8.0, 40.0, 1.0), replaces = "meal-1")
             plans.removeMeal("plan-1", "meal-2")
         }
 

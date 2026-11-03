@@ -23,7 +23,6 @@ import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.ModelApiService
-import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RegenerateRequest
@@ -33,6 +32,8 @@ import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
 import net.whiteravens.dietapp.data.remote.SwapIngredientRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.TakeDayVariationRequest
+import net.whiteravens.dietapp.data.remote.EnteredNutritionDto
+import net.whiteravens.dietapp.data.remote.UndoSwapRequest
 import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -439,10 +440,10 @@ class MealPlanRepository @Inject constructor(
             date = date,
             name = meal.name.trim(),
             slot = meal.slot,
-            calories = meal.perServing.calories,
-            protein = meal.perServing.protein,
-            fat = meal.perServing.fat,
-            carbs = meal.perServing.carbs,
+            calories = meal.calories,
+            protein = meal.protein,
+            fat = meal.fat,
+            carbs = meal.carbs,
             servings = meal.servings,
             replaces = replaces,
             key = UUID.randomUUID().toString(),
@@ -460,7 +461,7 @@ class MealPlanRepository @Inject constructor(
                 AddCustomMealRequest(
                     name = change.name,
                     mealType = change.slot,
-                    nutrition = NutritionDto(change.calories, change.protein, change.fat, change.carbs),
+                    nutrition = EnteredNutritionDto(change.calories, change.protein, change.fat, change.carbs),
                     servings = change.servings,
                     replaces = change.replaces,
                 ),

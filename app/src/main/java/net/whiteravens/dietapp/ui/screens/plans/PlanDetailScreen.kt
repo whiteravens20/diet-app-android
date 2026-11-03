@@ -985,6 +985,7 @@ private fun MealCard(
                     LabelChip(mealTypeLabel(meal.slot))
                     meal.byModel?.let { AiMark(modelPartText(it)) }
                     if (meal.custom) LabelChip(stringResource(R.string.plans_custom_chip))
+                    if (meal.estimated) LabelChip(stringResource(R.string.plans_estimated_chip))
                     if (meal.offDiet) CautionChip(stringResource(R.string.plans_off_diet))
                     meal.conflicts.forEach { conflict -> WarningChip(conflictLabel(conflict)) }
                     if (meal.disliked.isNotEmpty()) LabelChip(stringResource(R.string.plans_disliked))
@@ -1121,6 +1122,7 @@ private fun CustomMealDialog(
                     onSelect = { id -> replaces = id },
                 )
                 Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
+                Hint(stringResource(R.string.plans_custom_macros_optional))
                 Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
                 Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) })
                 Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) })
@@ -1134,7 +1136,9 @@ private fun CustomMealDialog(
                 )
                 val adds = form.adds()
                 Text(
-                    if (adds != null) {
+                    if (adds != null && !form.whole) {
+                        stringResource(R.string.plans_custom_total_estimated, formatNumber(adds.calories))
+                    } else if (adds != null) {
                         stringResource(
                             R.string.plans_custom_total,
                             formatNumber(adds.calories),

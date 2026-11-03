@@ -317,6 +317,21 @@ class PlansTest {
         screen.scrollToText("Grandma's soup")
         putAwayRebalance()
 
+        // A meal of one's own by its calories alone: the rest is estimated, and the meal says so.
+        screen.scrollToText(text(R.string.plans_add_custom_meal))
+        screen.onNodeWithText(text(R.string.plans_add_custom_meal)).performClick()
+        screen.waitForText(text(R.string.plans_custom_modal_title))
+        screen.onNodeWithText(text(R.string.plans_custom_name)).performTextInput("A sandwich out")
+        screen.onNodeWithText(text(R.string.plans_custom_calories)).performScrollTo().performTextInput("450")
+        screen.waitForText(text(R.string.plans_custom_total_estimated, "450"))
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.plans_custom_submit)).performClick()
+        screen.waitForTheApi(20_000) { Instance.ownMeals(account, planId).contains("A sandwich out") }
+        screen.scrollToText("A sandwich out")
+        screen.waitForText(text(R.string.plans_estimated_chip))
+        screen.keepScreenshot("plans-a-meal-by-its-calories")
+        putAwayRebalance()
+
         // An ingredient of a meal is substituted in a window of its own: its lines first, then what may replace the one chosen.
         val (other, line) = Instance.uneatenMeal(account, planId)
         val changeOther = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), other))

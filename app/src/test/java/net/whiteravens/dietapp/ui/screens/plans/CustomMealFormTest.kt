@@ -6,7 +6,9 @@ import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.testing.refusal
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** A meal of one's own as its form is filled in: numbers where numbers are asked for, and what the API takes of them is the API's to say. */
@@ -16,26 +18,37 @@ class CustomMealFormTest {
     @Test
     fun `a filled form is the meal of one serving and its servings, named without the spaces around it`() {
         assertEquals(emptySet<CustomMealField>(), filled.problems())
-        assertEquals(CustomMeal("Mum's lasagne", "dinner", Nutrition(450.0, 22.5, 18.0, 48.0), 1.5), filled.meal())
+        assertEquals(CustomMeal("Mum's lasagne", "dinner", 450.0, 22.5, 18.0, 48.0, 1.5), filled.meal())
     }
 
     @Test
     fun `what the meal adds to the day is one serving times the servings, rounded, and it does not wait for a name`() {
         assertEquals(Nutrition(675.0, 34.0, 27.0, 72.0), filled.copy(name = "").adds())
         assertNull(filled.copy(servings = "").adds())
-        assertNull(filled.copy(fat = "").adds())
+        assertNull(filled.copy(calories = "").adds())
     }
 
     @Test
-    fun `each number is needed and has to be one, and what the API takes of them or of the name is left to the API`() {
+    fun `the calories and the servings are enough, and what is left out goes unsaid for the API to estimate`() {
+        val byItsCalories = filled.copy(protein = "", fat = " ", carbs = "")
+
+        assertEquals(emptySet<CustomMealField>(), byItsCalories.problems())
+        assertFalse(byItsCalories.whole)
+        assertEquals(CustomMeal("Mum's lasagne", "dinner", 450.0, null, null, null, 1.5), byItsCalories.meal())
+        assertEquals(Nutrition(675.0, 0.0, 0.0, 0.0), byItsCalories.adds())
+        assertTrue(filled.whole)
+    }
+
+    @Test
+    fun `what is typed has to be a number, and what the API takes of them or of the name is left to the API`() {
         val unread = CustomMealForm(name = "Soup", calories = "x", protein = "", fat = "NaN", carbs = "40", servings = "two")
 
-        assertEquals(setOf(CustomMealField.CALORIES, CustomMealField.PROTEIN, CustomMealField.FAT, CustomMealField.SERVINGS), unread.problems())
+        assertEquals(setOf(CustomMealField.CALORIES, CustomMealField.FAT, CustomMealField.SERVINGS), unread.problems())
         assertNull(unread.meal())
         // Sent as typed, for the API to refuse with its reasons: a name of spaces, numbers past its bounds.
         val outOfBounds = CustomMealForm(name = "   ", calories = "6000", protein = "600", fat = "600", carbs = "1200", servings = "30")
         assertEquals(emptySet<CustomMealField>(), outOfBounds.problems())
-        assertEquals(CustomMeal("", "lunch", Nutrition(6000.0, 600.0, 600.0, 1200.0), 30.0), outOfBounds.meal())
+        assertEquals(CustomMeal("", "lunch", 6000.0, 600.0, 600.0, 1200.0, 30.0), outOfBounds.meal())
     }
 
     @Test

@@ -1652,6 +1652,10 @@
     <string name="plans_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s. Below are the amounts for all of it.</string>
     <string name="recipe_portion_meal">The original gives amounts for %1$s, your meal is %2$s.</string>
     <string name="recipe_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s.</string>
+    <string name="plans_estimated_chip">≈ estimate</string>
+    <string name="plans_custom_estimated_note">Custom meal: what was not entered of its macronutrients is estimated from the day\'s target.</string>
+    <string name="plans_custom_macros_optional">The calories are enough. What you leave out is estimated from the day\'s target and marked ≈.</string>
+    <string name="plans_custom_total_estimated">The meal adds to the day: %1$s kcal. The macronutrients left out will be estimated from the day\'s target.</string>
     <string-array name="plans_cooking_day_for">
         <item>Monday</item>
         <item>Tuesday</item>

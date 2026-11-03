@@ -717,7 +717,7 @@ private fun QueuedChange.OwnMealAdded.ownMeal() = Meal(
     servings = servings,
     eaten = false,
     offDiet = false,
-    nutrition = Nutrition(calories * servings, protein * servings, fat * servings, carbs * servings),
+    nutrition = Nutrition(calories * servings, (protein ?: 0.0) * servings, (fat ?: 0.0) * servings, (carbs ?: 0.0) * servings),
     lines = emptyList(),
     allergens = emptyList(),
     conflicts = emptyList(),
@@ -728,4 +728,5 @@ private fun QueuedChange.OwnMealAdded.ownMeal() = Meal(
     byModel = null,
     outsideLimits = emptyList(),
     onlyRecipe = false,
+    estimated = protein == null || fat == null || carbs == null,
 )

@@ -1569,11 +1569,15 @@ data class SetMealEatenRequest(val eaten: Boolean)
 data class AddCustomMealRequest(
     val name: String,
     val mealType: String,
-    val nutrition: NutritionDto,
+    val nutrition: EnteredNutritionDto,
     val servings: Double,
     /** A meal of the same day this one is eaten in the place of: it leaves the day. */
     val replaces: String? = null,
 )
+
+/** What one serving of a meal of one's own holds: a macronutrient left out is estimated, and the meal says so. */
+@Serializable
+data class EnteredNutritionDto(val calories: Double, val protein: Double? = null, val fat: Double? = null, val carbs: Double? = null)
 
 /** A meal's scale put back as it was. */
 @Serializable

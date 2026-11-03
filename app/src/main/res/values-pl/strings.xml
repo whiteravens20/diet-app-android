@@ -1773,6 +1773,10 @@
     <string name="plans_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s. Poniżej ilości na całe gotowanie.</string>
     <string name="recipe_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s.</string>
     <string name="recipe_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s.</string>
+    <string name="plans_estimated_chip">≈ szacunek</string>
+    <string name="plans_custom_estimated_note">Własny posiłek: makroskładników, których nie wpisano, jest szacunek z celu dnia.</string>
+    <string name="plans_custom_macros_optional">Wystarczą kalorie. Czego nie wpiszesz, to oszacujemy z celu dnia i oznaczymy ≈.</string>
+    <string name="plans_custom_total_estimated">Posiłek doda do dnia: %1$s kcal. Brakujące makroskładniki zostaną oszacowane z celu dnia.</string>
     <string-array name="plans_cooking_day_for">
         <item>poniedziałek</item>
         <item>wtorek</item>

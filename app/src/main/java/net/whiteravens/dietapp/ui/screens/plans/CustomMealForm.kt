@@ -30,23 +30,27 @@ data class CustomMealForm(
     val carbs: String = "",
     val servings: String = "1",
 ) {
-    /** The fields that hold no number where one is asked for; each number is needed. */
+    /** The fields that hold no number where one is asked for: the calories and the servings are needed, a macronutrient may be left out. */
     fun problems(): Set<CustomMealField> = buildSet {
         if (calories.number() == null) add(CustomMealField.CALORIES)
-        if (protein.number() == null) add(CustomMealField.PROTEIN)
-        if (fat.number() == null) add(CustomMealField.FAT)
-        if (carbs.number() == null) add(CustomMealField.CARBS)
+        if (protein.isNotBlank() && protein.number() == null) add(CustomMealField.PROTEIN)
+        if (fat.isNotBlank() && fat.number() == null) add(CustomMealField.FAT)
+        if (carbs.isNotBlank() && carbs.number() == null) add(CustomMealField.CARBS)
         if (servings.number() == null) add(CustomMealField.SERVINGS)
     }
 
+    /** Every macronutrient is given: nothing of the meal is estimated. */
+    val whole: Boolean get() = protein.isNotBlank() && fat.isNotBlank() && carbs.isNotBlank()
+
     /**
      * What the meal adds to its day, one serving times the servings rounded as the API rounds it,
-     * once both are filled in; it does not wait for a name.
+     * once both are filled in; it does not wait for a name. A macronutrient left out counts for
+     * nothing here: it is estimated once the meal is added.
      */
     fun adds(): Nutrition? {
         if (problems().isNotEmpty()) return null
         val times = servings.number()!!
-        fun of(field: String) = (field.number()!! * times).roundToInt().toDouble()
+        fun of(field: String) = ((field.number() ?: 0.0) * times).roundToInt().toDouble()
         return Nutrition(calories = of(calories), protein = of(protein), fat = of(fat), carbs = of(carbs))
     }
 
@@ -57,7 +61,10 @@ data class CustomMealForm(
         CustomMeal(
             name = name.trim(),
             slot = slot,
-            perServing = Nutrition(calories.number()!!, protein.number()!!, fat.number()!!, carbs.number()!!),
+            calories = calories.number()!!,
+            protein = protein.number(),
+            fat = fat.number(),
+            carbs = carbs.number(),
             servings = servings.number()!!,
         )
     }
