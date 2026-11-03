@@ -232,8 +232,17 @@ internal fun BodyFields(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks
         selected = form.activityLevel,
         optionLabel = { activityLevelLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(activityLevel = chosen) } },
-        hint = activityHint(form.activityLevel),
     )
+    activityHint(form.activityLevel)?.let { meaning ->
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+        ) {
+            Text(meaning, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
+        }
+    }
 }
 
 /** What an activity level means, under the field that chooses it. */
