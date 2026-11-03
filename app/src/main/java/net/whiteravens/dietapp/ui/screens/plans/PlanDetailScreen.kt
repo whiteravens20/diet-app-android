@@ -934,10 +934,10 @@ private fun daySettingsLine(day: PlanDay): String? {
 /** A meal's macros as a sentence: `Protein 25 g · Fat 10 g · Carbs 40 g · 420 kcal`. */
 @Composable
 private fun macrosLine(nutrition: Nutrition): String =
-    "${stringResource(R.string.macros_protein)} ${formatNumber(nutrition.protein.roundToInt())} g · " +
-        "${stringResource(R.string.macros_fat)} ${formatNumber(nutrition.fat.roundToInt())} g · " +
-        "${stringResource(R.string.macros_carbs)} ${formatNumber(nutrition.carbs.roundToInt())} g · " +
-        "${formatNumber(nutrition.calories.roundToInt())} kcal"
+    "${stringResource(R.string.macros_protein)} ${formatNumber(nutrition.protein.roundToInt())}\u00A0g · " +
+        "${stringResource(R.string.macros_fat)} ${formatNumber(nutrition.fat.roundToInt())}\u00A0g · " +
+        "${stringResource(R.string.macros_carbs)} ${formatNumber(nutrition.carbs.roundToInt())}\u00A0g · " +
+        "${formatNumber(nutrition.calories.roundToInt())}\u00A0kcal"
 
 /** A meal's name: its recipe's, the name its user gave it, or what a meal of one's own is called. */
 @Composable
