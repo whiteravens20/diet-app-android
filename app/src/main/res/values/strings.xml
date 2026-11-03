@@ -1640,6 +1640,9 @@
     <string name="plans_undo_swap">Undo the swap</string>
     <string name="plans_macros_off_chip">Macros off target</string>
     <string name="plans_macros_off_hint">This day\'s share of macronutrients is far from its target. Swapping a meal shows what the new recipe would make of it.</string>
+    <string name="plans_average_over">On average a day of this plan holds more than a tenth over its target.</string>
+    <string name="plans_average_under">On average a day of this plan holds more than a tenth under its target.</string>
+    <string name="plans_average_macros">The plan\'s average macronutrients are far from its target.</string>
     <string name="plans_resize_day_note_plain">Gives the meals from recipes not eaten yet other portions, to bring the day as near its target as they can.</string>
     <string name="plans_day_is_over">This day is over: its dishes stay. You can mark what was eaten, add a meal of your own or remove a meal.</string>
     <string name="favorite_sets_apply_cooking_note">A dish cooked for two days changes on its second day too.</string>

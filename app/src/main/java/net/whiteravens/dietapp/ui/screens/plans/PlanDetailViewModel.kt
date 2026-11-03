@@ -429,8 +429,32 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    /** Spreads what the days from [from] (today where it is left out) are off their targets by over the remaining days of the plan. */
-    fun spread(from: String? = null) = change { plans.rebalanceRest(planId, from) }
+    /**
+     * Spreads what the days from [from] (today where it is left out) are off their targets by over
+     * the remaining days of the plan; a press that moves nothing says so, on the day it was made on.
+     */
+    fun spread(from: String? = null, on: String? = null) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null, resizeLeft = null) }
+            attempt { plans.rebalanceRest(planId, from) }
+                .onSuccess { spread ->
+                    _state.update {
+                        it.copy(
+                            plan = spread.plan,
+                            changing = false,
+                            rebalance = spread.rebalance.shown(),
+                            lastSwap = null,
+                            resizeLeft = spread.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() && on != null }?.let { rebalance -> on!! to rebalance.unabsorbedKcal },
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
 
     fun dismissRebalance() {
         _state.update { it.copy(rebalance = null, lastSwap = null, notice = null) }

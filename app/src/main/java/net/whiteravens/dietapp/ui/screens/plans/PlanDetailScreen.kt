@@ -482,7 +482,7 @@ fun PlanDetailScreen(
                         onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy || day.date < today },
                         // A day before today is history, and an instance without day settings has none to change.
                         onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
-                        onSpread = { viewModel.spread(if (day.date < today) day.date else today) }.takeUnless { readOnly || busy || !spreadable },
+                        onSpread = { viewModel.spread(if (day.date < today) day.date else today, on = day.date) }.takeUnless { readOnly || busy || !spreadable },
                         // A long plan is a long way along its days to the one it is now: one press takes the reader there.
                         onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
                         // The diary of a day that has come.
@@ -624,6 +624,10 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp:
                     formatNumber(target.carbs.roundToInt()),
                 ),
             )
+            plan.averageOff?.let { off ->
+                Fact(stringResource(if (off == "over") R.string.plans_average_over else R.string.plans_average_under), color = MaterialTheme.colorScheme.tertiary)
+            }
+            if (plan.averageMacrosOff) Fact(stringResource(R.string.plans_average_macros), color = MaterialTheme.colorScheme.tertiary)
             if (plan.packs.bought > 0) PacksLine(plan.packs, useUp.takeIf { plan.packs.open.any { it.wasted } })
             if (plan.mayGiveWay.isNotEmpty()) {
                 Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))

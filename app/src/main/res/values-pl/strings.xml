@@ -1761,6 +1761,9 @@
     <string name="plans_undo_swap">Cofnij zamianę</string>
     <string name="plans_macros_off_chip">Makro poza celem</string>
     <string name="plans_macros_off_hint">Proporcje makroskładników tego dnia są daleko od celu. Zamiana posiłku pokaże, jak zmieni je nowy przepis.</string>
+    <string name="plans_average_over">Średnio dzień tego planu ma o ponad jedną dziesiątą więcej kalorii niż cel.</string>
+    <string name="plans_average_under">Średnio dzień tego planu ma o ponad jedną dziesiątą mniej kalorii niż cel.</string>
+    <string name="plans_average_macros">Średnie makroskładniki tego planu są daleko od celu.</string>
     <string name="plans_resize_day_note_plain">Daje niezjedzonym posiłkom z przepisów inne porcje, żeby dzień jak najbardziej zbliżył się do celu.</string>
     <string name="plans_day_is_over">Ten dzień minął: jego dania zostają. Możesz oznaczyć, co zjedzone, dodać własny posiłek albo usunąć posiłek.</string>
     <string name="favorite_sets_apply_cooking_note">Dania ugotowane na dwa dni zmienią się też drugiego dnia.</string>
