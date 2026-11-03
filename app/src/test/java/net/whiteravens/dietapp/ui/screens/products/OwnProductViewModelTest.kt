@@ -53,6 +53,7 @@ class OwnProductViewModelTest {
         model.save()
 
         assertTrue(model.state.value.showProblems)
+        assertEquals(1, model.state.value.refusals)
         assertNull(model.state.value.saved)
         coVerify(exactly = 0) { products.write(any()) }
     }

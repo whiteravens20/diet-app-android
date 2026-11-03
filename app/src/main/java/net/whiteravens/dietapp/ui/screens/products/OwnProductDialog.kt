@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.products
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -20,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -55,7 +59,7 @@ private val UNITS = listOf("g", "ml")
  * this one without a code. It needs a network: without one the window says so, and [onOwnMeal] leads
  * to a meal of one's own, which goes through the queue.
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun OwnProductDialog(
     product: OwnProduct?,
@@ -71,6 +75,10 @@ fun OwnProductDialog(
     LaunchedEffect(state.saved) { viewModel.state.value.saved?.let(onSaved) }
     val draft = state.draft
     val problems = if (state.showProblems) draft.problems() else emptyMap()
+    val places = remember { OwnField.entries.associateWith { BringIntoViewRequester() } }
+    LaunchedEffect(state.refusals) {
+        if (state.refusals > 0) viewModel.state.value.draft.problems().keys.minOrNull()?.let { places.getValue(it).bringIntoView() }
+    }
 
     @Composable
     fun problemOf(field: OwnField): String? = problems[field]?.let { problem ->
@@ -95,7 +103,7 @@ fun OwnProductDialog(
         label = stringResource(label),
         problem = problemOf(field),
         keyboardType = KeyboardType.Decimal,
-        modifier = modifier,
+        modifier = modifier.bringIntoViewRequester(places.getValue(field)),
     )
 
     ScreenDialog(onDismiss) {
@@ -111,6 +119,7 @@ fun OwnProductDialog(
                     label = stringResource(R.string.products_code),
                     hint = stringResource(R.string.products_code_hint),
                     problem = problemOf(OwnField.CODE),
+                    modifier = Modifier.bringIntoViewRequester(places.getValue(OwnField.CODE)),
                 )
                 FormField(
                     value = draft.name,
@@ -118,6 +127,7 @@ fun OwnProductDialog(
                     label = stringResource(R.string.products_name),
                     problem = problemOf(OwnField.NAME),
                     keyboardType = KeyboardType.Text,
+                    modifier = Modifier.bringIntoViewRequester(places.getValue(OwnField.NAME)),
                 )
                 FormField(
                     value = draft.brand,
@@ -146,7 +156,7 @@ fun OwnProductDialog(
                         label = stringResource(R.string.products_pack_amount, unit),
                         problem = problemOf(OwnField.PACK_AMOUNT),
                         keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).bringIntoViewRequester(places.getValue(OwnField.PACK_AMOUNT)),
                     )
                     FormField(
                         value = draft.servingAmount,
@@ -154,7 +164,7 @@ fun OwnProductDialog(
                         label = stringResource(R.string.products_serving_amount, unit),
                         problem = problemOf(OwnField.SERVING_AMOUNT),
                         keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).bringIntoViewRequester(places.getValue(OwnField.SERVING_AMOUNT)),
                     )
                 }
                 Text(

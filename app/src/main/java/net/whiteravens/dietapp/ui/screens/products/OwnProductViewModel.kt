@@ -32,6 +32,8 @@ class OwnProductViewModel @Inject constructor(
         val draft: OwnProductDraft = OwnProductDraft(),
         /** The form was sent once: what is wrong with a field is said from now on. */
         val showProblems: Boolean = false,
+        /** How often it was sent with something wrong: each time the first such field comes into view. */
+        val refusals: Int = 0,
         val saving: Boolean = false,
         /** Why the API did not take it. */
         val refused: Throwable? = null,
@@ -62,7 +64,8 @@ class OwnProductViewModel @Inject constructor(
     fun save() {
         val current = _state.value
         val product = current.draft.toNew()
-        if (product == null || current.saving) return _state.update { it.copy(showProblems = true) }
+        if (current.saving) return
+        if (product == null) return _state.update { it.copy(showProblems = true, refusals = it.refusals + 1) }
         _state.update { it.copy(showProblems = true, saving = true, refused = null, base = null) }
         viewModelScope.launch {
             attempt { current.id?.let { id -> products.change(id, product) } ?: products.write(product) }
