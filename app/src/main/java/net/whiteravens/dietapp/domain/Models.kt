@@ -320,6 +320,18 @@ sealed interface NotificationAbout {
     /** Ingredients or recipes the profile had marked left the catalogue: its preferences are to be looked at again. */
     data object PreferencesReview : NotificationAbout
 
+    /** A product of the account's own the instance accepted into its base. */
+    data class ProductAccepted(val name: String) : NotificationAbout
+
+    /** A product of the account's own its reviewers turned down, with what they said. */
+    data class ProductRejected(val name: String, val reason: String) : NotificationAbout
+
+    /** An accepted product the administrator withdrew from the base, with what they said: it is the account's again. */
+    data class ProductWithdrawn(val name: String, val reason: String) : NotificationAbout
+
+    /** A product of the account's own gave way to what [fromOpenFoodFacts] or the instance's base knows of its code. */
+    data class ProductReplaced(val name: String, val fromOpenFoodFacts: Boolean) : NotificationAbout
+
     /** A kind this version of the app does not know, named as the API names it. */
     data class Other(val type: String) : NotificationAbout
 }

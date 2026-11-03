@@ -57,6 +57,7 @@ fun NotificationsScreen(
     onBack: () -> Unit,
     onWeight: (profileId: String) -> Unit,
     onPreferences: () -> Unit,
+    onProducts: () -> Unit,
     viewModel: NotificationsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -108,6 +109,11 @@ fun NotificationsScreen(
                     val go: (() -> Unit)? = when (notification.about) {
                         is NotificationAbout.WeightReminder -> { { onWeight(notification.profileId) } }
                         NotificationAbout.PreferencesReview -> onPreferences
+                        is NotificationAbout.ProductAccepted,
+                        is NotificationAbout.ProductRejected,
+                        is NotificationAbout.ProductWithdrawn,
+                        is NotificationAbout.ProductReplaced,
+                        -> onProducts
                         is NotificationAbout.Other -> null
                     }
                     NotificationCard(

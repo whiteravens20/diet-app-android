@@ -396,6 +396,7 @@ private fun MainScaffold(
                             navController.popBackStack<DashboardRoute>(inclusive = false)
                         },
                         onPreferences = { navController.navigate(ProfilesRoute) { popUpTo<NotificationsRoute> { inclusive = true } } },
+                        onProducts = { navController.navigate(ProductsRoute) { popUpTo<NotificationsRoute> { inclusive = true } } },
                     )
                 }
                 composable<ProfilesRoute> {

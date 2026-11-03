@@ -1771,4 +1771,9 @@
     <string name="diary_product_own_mark">your own</string>
     <string name="diary_product_source_own">Your own product: its figures are what you wrote.</string>
     <string name="diary_product_source_instance">Added by a person using this instance and accepted by its reviewers. Data:</string>
+    <string name="notifications_product_accepted">“%1$s” is now in the base of this instance: everyone here can find it.</string>
+    <string name="notifications_product_rejected">“%1$s” was not accepted: %2$s</string>
+    <string name="notifications_product_withdrawn">“%1$s” was withdrawn from the base and is back among your products: %2$s</string>
+    <string name="notifications_product_replaced_open_food_facts">Open Food Facts now knows “%1$s” by its code, so your copy gave way to it. Diary entries keep their figures.</string>
+    <string name="notifications_product_replaced_instance">The base of this instance now has “%1$s” under its code, so your copy gave way to it. Diary entries keep their figures.</string>
 </resources>

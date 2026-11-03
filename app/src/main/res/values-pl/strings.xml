@@ -1894,4 +1894,9 @@
     <string name="diary_product_own_mark">własny</string>
     <string name="diary_product_source_own">Własny produkt: dane są takie, jak je wpisano.</string>
     <string name="diary_product_source_instance">Dodany przez użytkownika tej instancji i przyjęty po sprawdzeniu. Dane:</string>
+    <string name="notifications_product_accepted">„%1$s” jest już w bazie tej instancji: każdy tutaj może go znaleźć.</string>
+    <string name="notifications_product_rejected">Nie przyjęto „%1$s”: %2$s</string>
+    <string name="notifications_product_withdrawn">„%1$s” wycofano z bazy i wrócił do Twoich produktów: %2$s</string>
+    <string name="notifications_product_replaced_open_food_facts">Open Food Facts zna już „%1$s” po kodzie, więc Twoja kopia ustąpiła. Wpisy w dzienniku zachowują swoje wartości.</string>
+    <string name="notifications_product_replaced_instance">Baza tej instancji ma już „%1$s” pod tym kodem, więc Twoja kopia ustąpiła. Wpisy w dzienniku zachowują swoje wartości.</string>
 </resources>

@@ -84,6 +84,37 @@ class NotificationRepositoryTest {
     }
 
     @Test
+    fun `a notification of a product says what became of it, by its name and in the words it was given`() {
+        val notice = { type: String, payload: String ->
+            """{"id":"n","profileId":"$ala","type":"$type","payload":$payload,"readAt":null,"createdAt":"2026-11-02T10:00:00.000Z"}"""
+        }
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "application/json").setBody(
+                listOf(
+                    notice("product_accepted", """{"name":"Chleb","reason":null,"replacedBy":null}"""),
+                    notice("product_rejected", """{"name":"Chleb","reason":"Wrong figures.","replacedBy":null}"""),
+                    notice("product_withdrawn", """{"name":"Chleb","reason":"Not on the label.","replacedBy":null}"""),
+                    notice("product_replaced", """{"name":"Chleb","reason":null,"replacedBy":"open_food_facts"}"""),
+                    notice("product_replaced", """{"name":"Chleb","reason":null,"replacedBy":"instance"}"""),
+                ).joinToString(",", "[", "]"),
+            ),
+        )
+
+        val read = runBlocking { repository().unread() }
+
+        assertEquals(
+            listOf(
+                NotificationAbout.ProductAccepted("Chleb"),
+                NotificationAbout.ProductRejected("Chleb", "Wrong figures."),
+                NotificationAbout.ProductWithdrawn("Chleb", "Not on the label."),
+                NotificationAbout.ProductReplaced("Chleb", fromOpenFoodFacts = true),
+                NotificationAbout.ProductReplaced("Chleb", fromOpenFoodFacts = false),
+            ),
+            read.map { it.about },
+        )
+    }
+
+    @Test
     fun `none not read yet is an empty list`() {
         server.enqueue(answer(200, "notifications-none"))
 

@@ -404,5 +404,12 @@ fun notificationText(resources: Resources, about: NotificationAbout): String = w
         ?.let { days -> resources.getQuantityString(R.plurals.notifications_weight_reminder, days, days) }
         ?: resources.getString(R.string.notifications_weight_first)
     NotificationAbout.PreferencesReview -> resources.getString(R.string.notifications_preferences_review)
+    is NotificationAbout.ProductAccepted -> resources.getString(R.string.notifications_product_accepted, about.name)
+    is NotificationAbout.ProductRejected -> resources.getString(R.string.notifications_product_rejected, about.name, about.reason)
+    is NotificationAbout.ProductWithdrawn -> resources.getString(R.string.notifications_product_withdrawn, about.name, about.reason)
+    is NotificationAbout.ProductReplaced -> resources.getString(
+        if (about.fromOpenFoodFacts) R.string.notifications_product_replaced_open_food_facts else R.string.notifications_product_replaced_instance,
+        about.name,
+    )
     is NotificationAbout.Other -> resources.getString(R.string.notifications_unknown)
 }

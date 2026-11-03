@@ -4,6 +4,8 @@ package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import net.whiteravens.dietapp.data.remote.DietApiService
@@ -54,7 +56,14 @@ internal fun NotificationDto.toDomain() = AccountNotification(
             ((payload as? JsonObject)?.get("daysSinceLastEntry") as? JsonPrimitive)?.intOrNull?.takeIf { it > 0 },
         )
         "preferences_review" -> NotificationAbout.PreferencesReview
+        "product_accepted" -> NotificationAbout.ProductAccepted(payload.text("name"))
+        "product_rejected" -> NotificationAbout.ProductRejected(payload.text("name"), payload.text("reason"))
+        "product_withdrawn" -> NotificationAbout.ProductWithdrawn(payload.text("name"), payload.text("reason"))
+        "product_replaced" -> NotificationAbout.ProductReplaced(payload.text("name"), payload.text("replacedBy") == "open_food_facts")
         else -> NotificationAbout.Other(type)
     },
     createdAt = Instant.parse(createdAt),
 )
+
+/** A word of a notification's payload; nothing where it is not there. */
+private fun JsonElement?.text(key: String): String = ((this as? JsonObject)?.get(key) as? JsonPrimitive)?.contentOrNull.orEmpty()
