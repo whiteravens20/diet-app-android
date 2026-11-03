@@ -115,6 +115,8 @@ data class Reroll(
     val replaceCustom: Boolean = false,
     val dropIneligibleLocks: Boolean = false,
     val allowRelaxations: List<String>? = null,
+    /** The other meals of each cooking change with the days filled again. */
+    val together: Boolean = false,
 )
 
 /**
@@ -129,6 +131,7 @@ data class RerollPreview(
     val kept: RerollKept,
     val couldGo: RerollCouldGo,
     val fromToday: String?,
+    val cooking: net.whiteravens.dietapp.domain.CookingChange? = null,
 )
 
 /**

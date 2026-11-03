@@ -932,9 +932,29 @@ data class PlannedMealDto(
      * `cooked` on the meal eaten from it; null otherwise.
      */
     val cookAhead: String? = null,
+    /** The other meals of its cooking and what all of them together take; null where it is cooked for itself. */
+    val cooking: MealCookingDto? = null,
+    /** A macronutrient of a meal of one's own was left out and estimated. */
+    val estimated: Boolean = false,
     /** Effective: per-serving macros * servings * quantityScale. */
     val nutrition: NutritionDto,
 )
+
+/** Another meal of a meal's cooking. */
+@Serializable
+data class CookedPlaceDto(val mealId: String, val date: String, val mealType: String, val eaten: Boolean)
+
+/** The other meals a dish is cooked with, the first the one it is cooked at where this is eaten from it, and what all of them take. */
+@Serializable
+data class MealCookingDto(val with: List<CookedPlaceDto>, val ingredients: List<PlannedIngredientDto>)
+
+/** A meal named by its day and time of day. */
+@Serializable
+data class MealPlaceDto(val date: String, val mealType: String)
+
+/** What a change of a dish does to the other meals of its cooking: those that take the new dish, and those that stay as they are. */
+@Serializable
+data class CookingChangeDto(val changes: List<MealPlaceDto>, val stays: List<MealPlaceDto>)
 
 @Serializable
 data class LockedSlotDto(val mealType: String, val recipeId: String)
@@ -966,6 +986,8 @@ data class MealPlanDayDto(
     val calorieDelta: Double,
     /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
     val offTarget: String? = null,
+    /** What the day holds is far from the share of macronutrients it aims at. */
+    val macrosOff: Boolean = false,
     /** The user skips the day: no shortfall, left out of the plan's averages; what was eaten of it stays. */
     val skipped: Boolean,
     /** A target somebody typed has put the day under the lowest a calculated plan goes. */
@@ -997,6 +1019,8 @@ data class DaySettingsDto(
     val revision: Int? = null,
     /** The limits that may give way where the day's recipes cannot be drawn inside them. */
     val allowRelaxations: List<String>? = null,
+    /** The other meals of a cooking take the dish that is drawn for theirs. */
+    val together: Boolean = false,
 )
 
 /** What a change of a day's settings does to one of its meals, and why. */
@@ -1033,6 +1057,7 @@ data class DaySettingsPreviewDto(
     val fits: Boolean? = null,
     val listOutOfDate: Boolean,
     val unchanged: Boolean,
+    val cooking: CookingChangeDto? = null,
 )
 
 @Serializable
@@ -1045,6 +1070,8 @@ data class MealPlanDto(
     val days: List<MealPlanDayDto>,
     val averageDailyNutrition: NutritionDto,
     val targetMacros: MacrosDto,
+    /** Where those averages stand against what the days of the plan aim at. */
+    val averageOff: AverageOffDto? = null,
     /** 0-1 optimiser reuse score. */
     val ingredientReuseScore: Double,
     /** What the menu, as it is now, buys and uses of packs that do not keep. */
@@ -1059,6 +1086,10 @@ data class MealPlanDto(
     val revision: Int,
     val createdAt: String,
 )
+
+/** Where a plan's averages stand: [calories] `over` | `under` outside a tenth of the target, [macros] far from the share aimed at. */
+@Serializable
+data class AverageOffDto(val calories: String? = null, val macros: Boolean = false)
 
 /** A pack the menu opens and does not finish. */
 @Serializable
@@ -1221,7 +1252,7 @@ data class FavoriteSetDto(val id: String, val profileId: String, val label: Stri
 
 /** POST `/favorite-sets/{id}/apply`: the plan, and the days of it (yyyy-MM-dd) the set's recipes go on. */
 @Serializable
-data class ApplyFavoriteSetRequest(val planId: String, val dayDates: List<String>)
+data class ApplyFavoriteSetRequest(val planId: String, val dayDates: List<String>, val together: Boolean = false)
 
 /** POST `/meal-plans/swap-meal/preview`: ask for a recipe to put in the place of a meal. Nothing is written. */
 @Serializable
@@ -1251,6 +1282,11 @@ data class MealSwapPreviewDto(
     val dayAfter: NutritionDto,
     /** What the day aims at, in kilocalories. */
     val calorieTarget: Double,
+    /** What the day aims at of protein, fat and carbohydrate. */
+    val targetMacros: MacrosDto? = null,
+    val cooking: CookingChangeDto? = null,
+    /** The limits of the plan the recipe would be outside of on this meal. */
+    val outsideLimits: List<String> = emptyList(),
     /** The revision of the plan the offer was made from: sent back to take it. */
     val revision: Int,
 )
@@ -1268,6 +1304,8 @@ data class ApplyMealSwapRequest(
     /** The strategy the offer was asked with; `random` for one a model picked. */
     val strategy: String,
     val allowOffDiet: Boolean = false,
+    /** The other meals of its cooking take the same recipe. */
+    val together: Boolean = false,
     /** The note that came with an offer a model picked: the meal then says that a model chose its recipe. */
     val pick: String? = null,
 )
@@ -1307,6 +1345,9 @@ data class AiMealSwapPreviewDto(
     val revision: Int,
     val aiMeta: AiGenerationMetaDto,
     val pick: String? = null,
+    val targetMacros: MacrosDto? = null,
+    val cooking: CookingChangeDto? = null,
+    val outsideLimits: List<String> = emptyList(),
 )
 
 @Serializable
@@ -1344,6 +1385,8 @@ data class SwapIngredientRequest(
     val rewriteWithAi: Boolean = false,
     /** Made although it moves what a serving holds by more than a tenth. */
     val acceptChange: Boolean = false,
+    /** The other meals of its cooking take the same recipe. */
+    val together: Boolean = false,
     /** The note that came with a substitute a model suggested. */
     val pick: String? = null,
 )
@@ -1365,6 +1408,9 @@ data class SwapPreviewDto(
     val violations: List<String>,
     /** `calories` | `protein` | `fat` | `carbs`: what of a serving moves by more than a tenth. */
     val moved: List<String>,
+    /** The limits of the plan the recipe would be outside of on this meal. */
+    val outsideLimits: List<String> = emptyList(),
+    val cooking: CookingChangeDto? = null,
     val valid: Boolean,
 )
 
@@ -1394,6 +1440,8 @@ data class RegenerateRequest(
     val replaceCustom: Boolean = false,
     val dropIneligibleLocks: Boolean = false,
     val allowRelaxations: List<String>? = null,
+    /** The other meals of each cooking change with the days filled again. */
+    val together: Boolean = false,
 )
 
 /**
@@ -1410,6 +1458,7 @@ data class RerollPreviewDto(
     val couldGo: RerollCouldGoDto,
     /** Why the days from today on are no choice of their own: `not_begun` | `over`; null where they are one. */
     val fromToday: String?,
+    val cooking: CookingChangeDto? = null,
 )
 
 /** What a re-roll keeps as it is: days not asked for, before today or skipped, and meals eaten, of one's own or locked on the days filled again. */
@@ -1466,6 +1515,7 @@ data class DayVariationsDto(
     val aiMeta: AiGenerationMetaDto? = null,
     /** What the diary holds for the day, counted as eaten in the figures of each way; null where it holds nothing. */
     val diary: NutritionDto? = null,
+    val cooking: CookingChangeDto? = null,
 )
 
 /** A recipe named by its id and title. */
@@ -1504,7 +1554,7 @@ data class UseUpSuggestionsDto(val revision: Int, val suggestions: List<UseUpSug
 
 /** POST `/meal-plans/:id/days/:dayId/variations/take`. */
 @Serializable
-data class TakeDayVariationRequest(val offer: String)
+data class TakeDayVariationRequest(val offer: String, val together: Boolean = false)
 
 /** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
 @Serializable

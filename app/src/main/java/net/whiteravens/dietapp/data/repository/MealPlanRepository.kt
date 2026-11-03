@@ -271,7 +271,7 @@ class MealPlanRepository @Inject constructor(
      * Takes [offer]: the meal gets its recipe, and the plan, balanced around it, is kept for offline
      * use. A plan changed since the offer is refused with `PLAN_CHANGED`.
      */
-    suspend fun takeSwap(offer: SwapOffer): Rebalanced = kept(
+    suspend fun takeSwap(offer: SwapOffer, together: Boolean = false): Rebalanced = kept(
         apiCall(json) {
             api.swapMeal(
                 ApplyMealSwapRequest(
@@ -282,6 +282,7 @@ class MealPlanRepository @Inject constructor(
                     // What a model picked is held to what the engine's own pick is.
                     strategy = if (offer.ask.strategy == AI_STRATEGY) RANDOM_STRATEGY else offer.ask.strategy,
                     allowOffDiet = offer.ask.allowOffDiet,
+                    together = together,
                     pick = offer.pick,
                 ),
             )
@@ -315,6 +316,7 @@ class MealPlanRepository @Inject constructor(
             kept = answer.kept.let { RerollKept(it.outside, it.past, it.skipped, it.eaten, it.custom, it.locked) },
             couldGo = answer.couldGo.let { RerollCouldGo(it.past, it.eaten, it.custom) },
             fromToday = answer.fromToday,
+            cooking = answer.cooking?.toDomain(),
         )
     }
 
@@ -337,12 +339,13 @@ class MealPlanRepository @Inject constructor(
             weighed = answer.aiMeta != null && answer.aiMeta.fallbackReason == null,
             fallbackReason = answer.aiMeta?.fallbackReason,
             diary = answer.diary?.toDomain(),
+            cooking = answer.cooking?.toDomain(),
         )
     }
 
     /** Takes one of the ways a day was offered; the plan is kept for offline use. A plan changed since the offer is refused with `PLAN_CHANGED`. */
-    suspend fun takeDayWay(planId: String, dayId: String, offer: String): MealPlan {
-        val plan = apiCall(json) { api.takeDayVariation(planId, dayId, TakeDayVariationRequest(offer)) }
+    suspend fun takeDayWay(planId: String, dayId: String, offer: String, together: Boolean = false): MealPlan {
+        val plan = apiCall(json) { api.takeDayVariation(planId, dayId, TakeDayVariationRequest(offer, together)) }
         mirror(plan)
         return plan.toDomain()
     }
@@ -354,8 +357,8 @@ class MealPlanRepository @Inject constructor(
      * with `FAVORITE_SET_NOT_ELIGIBLE` or `FAVORITE_SET_ALLERGEN_CONFLICT` where the profile now rules
      * out one of its recipes.
      */
-    suspend fun applySet(setId: String, planId: String, dates: List<String>): MealPlan {
-        val plan = apiCall(json) { api.applyFavoriteSet(setId, ApplyFavoriteSetRequest(planId, dates)) }
+    suspend fun applySet(setId: String, planId: String, dates: List<String>, together: Boolean = false): MealPlan {
+        val plan = apiCall(json) { api.applyFavoriteSet(setId, ApplyFavoriteSetRequest(planId, dates, together)) }
         mirror(plan)
         return plan.toDomain()
     }
@@ -395,6 +398,8 @@ class MealPlanRepository @Inject constructor(
                     recipeId = swap.toId,
                     revision = revision,
                     strategy = RANDOM_STRATEGY,
+                    // A dish cooked for two meals changes on both, as any swap offered with no word against it.
+                    together = true,
                     pick = swap.pick,
                 ),
             )
@@ -491,8 +496,15 @@ class MealPlanRepository @Inject constructor(
      * `DAY_IN_THE_PAST`, and a day that cannot be filled inside the plan's limits with
      * `PLAN_NEEDS_RELAXATION`, which [allowRelaxations] answers.
      */
-    suspend fun applyDaySettings(planId: String, dayId: String, settings: DaySettings, revision: Int, allowRelaxations: List<String>? = null): MealPlan {
-        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations)) }
+    suspend fun applyDaySettings(
+        planId: String,
+        dayId: String,
+        settings: DaySettings,
+        revision: Int,
+        allowRelaxations: List<String>? = null,
+        together: Boolean = false,
+    ): MealPlan {
+        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations, together)) }
         mirror(plan)
         return plan.toDomain()
     }
@@ -549,6 +561,7 @@ class MealPlanRepository @Inject constructor(
         toIngredientId = toIngredientId,
         rewriteWithAi = rewriteWithAi,
         acceptChange = acceptChange,
+        together = together,
         pick = pick,
     )
 
@@ -596,4 +609,5 @@ private fun Reroll.toRequest() = RegenerateRequest(
     replaceCustom = replaceCustom,
     dropIneligibleLocks = dropIneligibleLocks,
     allowRelaxations = allowRelaxations,
+    together = together,
 )

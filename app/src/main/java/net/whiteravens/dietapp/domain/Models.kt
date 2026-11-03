@@ -356,7 +356,27 @@ data class Meal(
     val outsideLimits: List<String>,
     /** For this meal on the plan's diet the profile left one recipe to choose from. */
     val onlyRecipe: Boolean,
+    /** The other meals of its cooking and what all of them together take; null where it is cooked for itself. */
+    val cooking: MealCooking? = null,
+    /** A macronutrient of a meal of one's own was left out and estimated. */
+    val estimated: Boolean = false,
+    /** The steps of its recipe, as written: what it takes to cook the meal is on the phone with the plan. */
+    val steps: List<String> = emptyList(),
+    /** The servings its recipe gives its amounts for. */
+    val recipeServings: Int? = null,
 )
+
+/** Another meal of a meal's cooking: of which day and time of day, and whether it was eaten. */
+data class CookedPlace(val mealId: String, val date: String, val slot: String, val eaten: Boolean)
+
+/** The other meals a dish is cooked with, the first the one it is cooked at where this is eaten from it, and what all of them take. */
+data class MealCooking(val with: List<CookedPlace>, val lines: List<MealLine>)
+
+/** A meal named by its day and time of day. */
+data class MealPlace(val date: String, val slot: String)
+
+/** What a change of a dish does to the other meals of its cooking: those that take the new dish, and those that stay as they are. */
+data class CookingChange(val changes: List<MealPlace>, val stays: List<MealPlace>)
 
 /** A line of a meal: an ingredient and its amount as the server rounds it and names its unit. */
 data class MealLine(
@@ -381,6 +401,8 @@ data class PlanDay(
     val offTarget: String?,
     /** A target somebody typed puts the day under the lowest a calculated plan goes. */
     val belowSafetyFloor: Boolean,
+    /** What the day holds is far from the share of macronutrients it aims at. */
+    val macrosOff: Boolean = false,
     /** What the day aims at in grams under the diet's split. */
     val targetMacros: Macros,
     /** The recipe each meal of the day was locked to when the plan was made, by meal. */
@@ -429,6 +451,7 @@ data class DaySettingsPreview(
     val fits: Boolean?,
     val listOutOfDate: Boolean,
     val unchanged: Boolean,
+    val cooking: CookingChange? = null,
 )
 
 data class MealPlan(
@@ -455,6 +478,12 @@ data class MealPlan(
     val pantry: String?,
     /** How many times the plan has been changed; a change made from an older one is refused. */
     val revision: Int,
+    /** Where the plan's average day stands against its calories: `over` | `under` outside a tenth; null inside it. */
+    val averageOff: String? = null,
+    /** Its average macronutrients are far from the share aimed at. */
+    val averageMacrosOff: Boolean = false,
+    /** It was made for cooking ahead. */
+    val cooksAhead: Boolean = false,
 ) {
     /** The meals that hold something the profile has ruled out since the plan was made. */
     val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }
@@ -499,6 +528,8 @@ data class Substitution(
     val rewriteWithAi: Boolean = false,
     val acceptChange: Boolean = false,
     val pick: String? = null,
+    /** The other meals of its cooking take the same recipe. */
+    val together: Boolean = false,
 )
 
 /**
@@ -518,6 +549,9 @@ data class SubstitutionPreview(
     val violations: List<String>,
     val moved: List<String>,
     val valid: Boolean,
+    /** The limits of the plan the recipe would be outside of on this meal. */
+    val outsideLimits: List<String> = emptyList(),
+    val cooking: CookingChange? = null,
 )
 
 /** A substitute a model was asked for: the ingredient, and the note and sentence of the model's pick, or why the engine picked. */
@@ -540,6 +574,7 @@ data class DayWays(
     val fallbackReason: String?,
     /** What the diary holds for the day, counted as eaten in every figure here; null where it holds nothing. */
     val diary: Nutrition? = null,
+    val cooking: CookingChange? = null,
 )
 
 /** One other way to fill a day: its meals, what it holds, the packs the plan would then leave, a model's sentence on it, and the note that takes it. */
@@ -624,6 +659,11 @@ data class SwapOffer(
     val pick: String?,
     val reason: String?,
     val fallbackReason: String?,
+    /** What the day aims at of protein, fat and carbohydrate. */
+    val targetMacros: Macros? = null,
+    val cooking: CookingChange? = null,
+    /** The limits of the plan the recipe would be outside of on this meal. */
+    val outsideLimits: List<String> = emptyList(),
 )
 
 /** One plan in a profile's list: what the list shows, without the days. */

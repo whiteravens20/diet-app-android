@@ -8,6 +8,7 @@ import net.whiteravens.dietapp.data.remote.DaySettingsDto
 import net.whiteravens.dietapp.data.remote.DaySettingsPreviewDto
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
+import net.whiteravens.dietapp.data.remote.CookingChangeDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
@@ -26,6 +27,10 @@ import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.data.remote.SwapPreviewDto
+import net.whiteravens.dietapp.domain.CookedPlace
+import net.whiteravens.dietapp.domain.CookingChange
+import net.whiteravens.dietapp.domain.MealCooking
+import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DayDiary
 import net.whiteravens.dietapp.domain.DaySettings
@@ -186,8 +191,23 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         byModel = modelPart(),
         outsideLimits = report?.relaxations?.firstOrNull { said(it.date, it.slot) }?.gaveWay.orEmpty(),
         onlyRecipe = report?.singleCandidate?.any { said(it.date, it.slot) } == true,
+        cooking = cooking?.let { cooked ->
+            MealCooking(
+                with = cooked.with.map { CookedPlace(it.mealId, it.date, it.mealType, it.eaten) },
+                lines = cooked.ingredients.map(PlannedIngredientDto::toLine),
+            )
+        },
+        estimated = estimated,
+        steps = recipe?.steps.orEmpty(),
+        recipeServings = recipe?.servings,
     )
 }
+
+/** What a change of a dish does to the other meals of its cooking. */
+fun CookingChangeDto.toDomain() = CookingChange(
+    changes = changes.map { MealPlace(it.date, it.mealType) },
+    stays = stays.map { MealPlace(it.date, it.mealType) },
+)
 
 fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
 
@@ -204,6 +224,8 @@ fun SwapPreviewDto.toDomain() = SubstitutionPreview(
     violations = violations,
     moved = moved,
     valid = valid,
+    outsideLimits = outsideLimits,
+    cooking = cooking?.toDomain(),
 )
 
 fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
@@ -216,6 +238,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     skipped = skipped,
     offTarget = offTarget,
     belowSafetyFloor = belowSafetyFloor,
+    macrosOff = macrosOff,
     targetMacros = targetMacros.toDomain(),
     locks = overrides?.lockedSlots.orEmpty().associate { it.mealType to it.recipeId },
     settings = mealCount?.let { count ->
@@ -243,10 +266,11 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
     fits = fits,
     listOutOfDate = listOutOfDate,
     unchanged = unchanged,
+    cooking = cooking?.toDomain(),
 )
 
 /** The settings as a request carries them; the revision and the limits that may give way go with a change only. */
-fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = null) = DaySettingsDto(
+fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = null, together: Boolean = false) = DaySettingsDto(
     dayType = dayType,
     skip = skip,
     mealCount = mealCount,
@@ -255,6 +279,7 @@ fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = n
     useUpBy = useUpBy,
     revision = revision,
     allowRelaxations = allowRelaxations,
+    together = together,
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
@@ -277,6 +302,9 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     mayGiveWay = options.allowRelaxations,
     pantry = report?.pantry,
     revision = revision,
+    averageOff = averageOff?.calories,
+    averageMacrosOff = averageOff?.macros == true,
+    cooksAhead = options.mealPrepFriendly,
 )
 
 fun RebalanceSummaryDto.toDomain() = Rebalance(
@@ -322,6 +350,9 @@ fun MealSwapPreviewDto.toDomain(planId: String, mealId: String, ask: SwapAsk, se
     pick = null,
     reason = null,
     fallbackReason = null,
+    targetMacros = targetMacros?.toDomain(),
+    cooking = cooking?.toDomain(),
+    outsideLimits = outsideLimits,
 )
 
 /** An offer a model was asked for: the note and the sentence of the model's pick, or why the engine picked instead. */
@@ -342,6 +373,9 @@ fun AiMealSwapPreviewDto.toDomain(planId: String, mealId: String, ask: SwapAsk, 
     pick = pick,
     reason = aiMeta.reason.takeIf { pick != null },
     fallbackReason = aiMeta.fallbackReason,
+    targetMacros = targetMacros?.toDomain(),
+    cooking = cooking?.toDomain(),
+    outsideLimits = outsideLimits,
 )
 
 fun ShoppingListItemDto.toDomain() = ShoppingItem(
