@@ -785,11 +785,11 @@
 
     <!-- Profile -->
     <string name="account_title">Account settings</string>
-    <string name="account_verified">Verified</string>
-    <string name="account_unverified">Email not verified</string>
-    <string name="account_resend_verification">Resend verification email</string>
+    <string name="account_verified">Confirmed</string>
+    <string name="account_unverified">Email not confirmed</string>
+    <string name="account_resend_verification">Send a new link</string>
     <string name="account_resend_sending">Sending…</string>
-    <string name="account_resend_sent">Verification email sent.</string>
+    <string name="account_resend_sent">A new link is on its way.</string>
     <string name="confirm_email_notice_ai">Confirming %1$s is optional, but on this instance it unlocks the instance\'s AI. Open the link in the message sent to this address: it works for an hour.</string>
     <string name="confirm_email_notice_plain">Confirming %1$s is optional: every feature works without it. A confirmed address makes sure a link to change your password reaches you. The link in the message works for an hour.</string>
     <string name="confirm_email_later">Not now</string>
