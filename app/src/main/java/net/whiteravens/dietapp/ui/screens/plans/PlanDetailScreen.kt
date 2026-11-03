@@ -487,9 +487,9 @@ fun PlanDetailScreen(
                         onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
                         // The diary of a day that has come.
                         onDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today },
-                        // A day of today or after it, which the diary put off its target, is resized with its own meals.
+                        // A day of today or after it is resized with its own meals.
                         onResize = { viewModel.resizeDay(day.date) }.takeUnless {
-                            readOnly || busy || day.diary == null || day.date < today || day.meals.none { meal -> !meal.eaten && meal.recipeId != null && !meal.custom }
+                            readOnly || busy || day.date < today || day.meals.none { meal -> !meal.eaten && meal.recipeId != null && !meal.custom }
                         },
                         resizeLeft = state.resizeLeft?.takeIf { it.first == day.date }?.second,
                     )
@@ -858,7 +858,7 @@ private fun DaySummary(
             onResize?.let { resize ->
                 OutlinedButton(onClick = resize, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_resize_day)) }
                 Text(
-                    stringResource(R.string.plans_resize_day_note),
+                    stringResource(if (day.diary != null) R.string.plans_resize_day_note else R.string.plans_resize_day_note_plain),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -981,7 +981,8 @@ private fun MealCard(
                     if (meal.disliked.isNotEmpty()) LabelChip(stringResource(R.string.plans_disliked))
                     if (meal.outsideLimits.isNotEmpty()) CautionChip(stringResource(R.string.plans_outside_limit_chip))
                     if (meal.onlyRecipe) LabelChip(stringResource(R.string.plans_only_recipe_chip))
-                    if (meal.quantityScale != 1.0) {
+                    // A small difference is the sizing of an ordinary day, and says nothing to the reader.
+                    if (abs(meal.quantityScale - 1.0) >= AUTO_BALANCED_FROM) {
                         PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
                     }
                     cookChip(meal, date)?.let { PlainChip(it) }

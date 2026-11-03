@@ -1114,8 +1114,8 @@
     <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
     <string name="plans_day_over">Ponad cel</string>
     <string name="plans_day_under">Poniżej celu</string>
-    <string name="plans_day_over_hint">Ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel, a dopasowanie porcji nie wystarczyło, by to wyrównać. Zamień posiłek albo usuń jeden, żeby wrócić do celu.</string>
-    <string name="plans_day_under_hint">Ten dzień ma o ponad jedną dziesiątą mniej kalorii niż jego cel, a dopasowanie porcji nie wystarczyło, by to wyrównać. Zamień posiłek albo dodaj jeden, żeby wrócić do celu.</string>
+    <string name="plans_day_over_hint">Ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel. Dopasuj porcje, zamień posiłek albo usuń jeden.</string>
+    <string name="plans_day_under_hint">Ten dzień ma o ponad jedną dziesiątą mniej kalorii niż jego cel. Dopasuj porcje, zamień posiłek albo dodaj jeden.</string>
     <string name="plans_day_below_floor">Cel tego dnia jest niższy niż najniższy, jaki wylicza plan.</string>
     <string name="plans_conflict_allergen">Alergen</string>
     <string name="plans_conflict_allergen_hint">Ten przepis zawiera alergen, którego profil teraz unika. Zamień posiłek.</string>
@@ -1759,6 +1759,7 @@
     <string name="plans_word_day">Dzień: %1$s z %2$s kcal · białko %3$s z %4$s g</string>
     <string name="plans_swap_done_title">Posiłek zamieniony</string>
     <string name="plans_undo_swap">Cofnij zamianę</string>
+    <string name="plans_resize_day_note_plain">Daje niezjedzonym posiłkom z przepisów inne porcje, żeby dzień jak najbardziej zbliżył się do celu.</string>
     <string name="plans_day_is_over">Ten dzień minął: jego dania zostają. Możesz oznaczyć, co zjedzone, dodać własny posiłek albo usunąć posiłek.</string>
     <string name="favorite_sets_apply_cooking_note">Dania ugotowane na dwa dni zmienią się też drugiego dnia.</string>
     <string name="favorite_sets_apply_own_meal_note">Zestaw zastąpi też własne posiłki tych pór dnia.</string>

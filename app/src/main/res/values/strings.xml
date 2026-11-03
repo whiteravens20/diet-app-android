@@ -1031,8 +1031,8 @@
     <string name="target_note_below_bmr" tools:ignore="PluralsCandidate">The target you typed is under what your body uses at rest (%1$d kcal).</string>
     <string name="plans_day_over">Over target</string>
     <string name="plans_day_under">Under target</string>
-    <string name="plans_day_over_hint">This day holds more than a tenth over its target, and sizing its meals could not close the gap. Swap a meal, or take one out, to bring it back.</string>
-    <string name="plans_day_under_hint">This day holds more than a tenth under its target, and sizing its meals could not close the gap. Swap a meal, or add one, to bring it back.</string>
+    <string name="plans_day_over_hint">This day holds more than a tenth over its target. Size its portions, swap a meal, or take one out.</string>
+    <string name="plans_day_under_hint">This day holds more than a tenth under its target. Size its portions, swap a meal, or add one.</string>
     <string name="plans_day_below_floor">The target of this day is under the lowest a calculated plan goes.</string>
     <string name="plans_conflict_allergen">Allergen</string>
     <string name="plans_conflict_allergen_hint">This recipe holds an allergen the profile now avoids. Swap the meal.</string>
@@ -1638,6 +1638,7 @@
     <string name="plans_word_day">The day: %1$s of %2$s kcal · protein %3$s of %4$s g</string>
     <string name="plans_swap_done_title">Meal swapped</string>
     <string name="plans_undo_swap">Undo the swap</string>
+    <string name="plans_resize_day_note_plain">Gives the meals from recipes not eaten yet other portions, to bring the day as near its target as they can.</string>
     <string name="plans_day_is_over">This day is over: its dishes stay. You can mark what was eaten, add a meal of your own or remove a meal.</string>
     <string name="favorite_sets_apply_cooking_note">A dish cooked for two days changes on its second day too.</string>
     <string name="favorite_sets_apply_own_meal_note">A set also replaces meals of your own at those times of day.</string>
