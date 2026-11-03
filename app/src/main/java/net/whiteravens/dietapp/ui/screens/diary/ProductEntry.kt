@@ -29,8 +29,10 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.DiaryLimits
 import net.whiteravens.dietapp.domain.Product
+import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.domain.canSearchProducts
 import net.whiteravens.dietapp.domain.looksLikeProductCode
+import net.whiteravens.dietapp.domain.productCodeOf
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.unitName
@@ -44,10 +46,11 @@ private const val ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /** Where the figures of a product come from, under the licence they come with. */
 @Composable
-internal fun ProductSource() {
+internal fun ProductSourceNote(source: ProductSource) {
+    if (source == ProductSource.OWN) return Note(stringResource(R.string.diary_product_source_own))
     val web = rememberWebPages()
     FlowRow(verticalArrangement = Arrangement.spacedBy(0.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Note(stringResource(R.string.diary_product_source))
+        Note(stringResource(if (source == ProductSource.INSTANCE) R.string.diary_product_source_instance else R.string.diary_product_source))
         TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.diary_product_source_name)) }
         TextButton(onClick = { web.openOutside(ODBL) }) { Text(stringResource(R.string.diary_product_source_licence)) }
     }
@@ -83,6 +86,11 @@ internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryVi
                 else -> errorMessage(failure)
             }
             Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            if (failure is ApiException && failure.code == "PRODUCT_NOT_FOUND") {
+                OutlinedButton(onClick = { viewModel.writeOwnProduct(productCodeOf(form.search).orEmpty()) }) {
+                    Text(stringResource(R.string.diary_product_add_own))
+                }
+            }
             TextButton(onClick = { viewModel.asOwnMeal(null) }) { Text(stringResource(R.string.diary_product_as_own)) }
         }
         val searching = !looksLikeProductCode(form.search) && canSearchProducts(form.search)
@@ -93,7 +101,10 @@ internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryVi
                 TextButton(onClick = { viewModel.asOwnMeal(null) }) { Text(stringResource(R.string.diary_product_as_own)) }
             }
             form.searchFailed != null -> Text(stringResource(R.string.diary_search_failed), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            form.products.isEmpty() -> Note(stringResource(R.string.diary_product_nothing_here))
+            form.products.isEmpty() -> {
+                Note(stringResource(R.string.diary_product_nothing_here))
+                AddOwnProduct(viewModel)
+            }
             else -> Surface(
                 shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -103,13 +114,23 @@ internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryVi
                     form.products.forEach { found ->
                         Found(
                             found.fullName,
-                            found.calories?.let { stringResource(R.string.diary_per_100, formatNumber(it.roundToInt()), unitName(found.unit)) },
+                            listOfNotNull(
+                                found.calories?.let { stringResource(R.string.diary_per_100, formatNumber(it.roundToInt()), unitName(found.unit)) },
+                                stringResource(R.string.diary_product_own_mark).takeIf { found.source == ProductSource.OWN },
+                            ).joinToString(" · ").ifEmpty { null },
                         ) { viewModel.pickProduct(found) }
                     }
                 }
             }
         }
+        if (searching && form.searched && form.searchFailed == null && form.products.isNotEmpty()) AddOwnProduct(viewModel)
     }
+}
+
+/** The way to a product of one's own from what a search found, or did not. */
+@Composable
+private fun AddOwnProduct(viewModel: DiaryViewModel) {
+    TextButton(onClick = { viewModel.writeOwnProduct("") }) { Text(stringResource(R.string.diary_product_add_own)) }
 }
 
 /** What was picked: what its label says in 100 of its unit, with what is unknown said to be so. */
@@ -148,7 +169,7 @@ internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
             }
             if (product.lacksMacros) Note(stringResource(R.string.diary_product_lacking))
             if (product.energyWorkedOut) Note(stringResource(R.string.diary_product_energy_worked_out))
-            ProductSource()
+            ProductSourceNote(product.source)
         }
     }
 }

@@ -1890,4 +1890,8 @@
     <string name="products_change_leaves_queue">Zapisanie wycofa go z kolejki: trzeba będzie wysłać go jeszcze raz.</string>
     <string name="products_use_base">Użyj tego produktu</string>
     <string name="products_without_code">Dodaj mój bez kodu</string>
+    <string name="diary_product_add_own">Dodaj jako własny produkt</string>
+    <string name="diary_product_own_mark">własny</string>
+    <string name="diary_product_source_own">Własny produkt: dane są takie, jak je wpisano.</string>
+    <string name="diary_product_source_instance">Dodany przez użytkownika tej instancji i przyjęty po sprawdzeniu. Dane:</string>
 </resources>

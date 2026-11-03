@@ -77,6 +77,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
+import net.whiteravens.dietapp.ui.screens.products.OwnProductDialog
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -100,6 +101,19 @@ fun DiaryScreen(
     WhenShownAgain(viewModel::shownAgain)
 
     state.form?.let { form -> AddEntryDialog(form, state, viewModel) }
+    state.form?.writingProduct?.let { code ->
+        OwnProductDialog(
+            product = null,
+            code = code,
+            onSaved = { saved -> viewModel.takeWrittenProduct(saved.product) },
+            onDismiss = viewModel::closeOwnProduct,
+            onUseBase = viewModel::takeWrittenProduct,
+            onOwnMeal = {
+                viewModel.closeOwnProduct()
+                viewModel.asOwnMeal(null)
+            },
+        )
+    }
     state.edit?.let { edit -> EditEntryDialog(edit, state, viewModel) }
     // After the window it goes over: the window that opens last is the one on top.
     if (state.scanning) ScannerDialog(viewModel::scanned, viewModel::closeScanner)

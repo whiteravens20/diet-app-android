@@ -1767,4 +1767,8 @@
     <string name="products_change_leaves_queue">Saving takes it out of the queue: it has to be sent again.</string>
     <string name="products_use_base">Use this product</string>
     <string name="products_without_code">Add mine without a code</string>
+    <string name="diary_product_add_own">Add it as your own product</string>
+    <string name="diary_product_own_mark">your own</string>
+    <string name="diary_product_source_own">Your own product: its figures are what you wrote.</string>
+    <string name="diary_product_source_instance">Added by a person using this instance and accepted by its reviewers. Data:</string>
 </resources>

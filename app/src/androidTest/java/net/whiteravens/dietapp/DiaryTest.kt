@@ -319,6 +319,48 @@ class DiaryTest {
     }
 
     @Test
+    fun aProductOfOnesOwnIsWrittenWhereNothingIsFoundAndGoesIntoTheDay() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+
+        openTheDiary()
+        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.diary_search_recipe))
+        typeForAProduct("chleb babci")
+        screen.waitForText(text(R.string.diary_product_nothing_here))
+        screen.onNode(inTheWindow(text(R.string.diary_product_add_own))).performScrollTo().performClick()
+
+        // What cannot be right is said of its field before anything is sent.
+        screen.waitForText(text(R.string.products_add_title))
+        screen.putKeyboardAway()
+        screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
+        screen.waitForText(text(R.string.products_err_name))
+        screen.waitForText(text(R.string.products_err_calories))
+        screen.keepScreenshot("products-the-form-says-what-is-wrong")
+
+        screen.onNode(hasText(text(R.string.products_name)) and hasSetTextAction()).performScrollTo().performTextReplacement("Chleb babci")
+        screen.onNode(hasText(text(R.string.products_calories)) and hasSetTextAction()).performScrollTo().performTextReplacement("245")
+        screen.putKeyboardAway()
+        screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
+
+        // Picked at once, as what the entry is made of, and said to be one's own.
+        screen.waitForText(text(R.string.diary_product_source_own))
+        screen.keepScreenshot("diary-a-product-of-ones-own-picked")
+        screen.onNode(hasText("${text(R.string.diary_quantity)} (g)") and hasSetTextAction()).performScrollTo().performTextReplacement("100")
+        screen.waitForText(text(R.string.diary_adds_line, "245"))
+        screen.putKeyboardAway()
+        submit()
+        screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf("Chleb babci") }
+
+        // Found again by its name, marked as one's own.
+        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
+        screen.waitForText(text(R.string.diary_search_recipe))
+        typeForAProduct("chleb babci")
+        screen.waitForText("${text(R.string.diary_per_100, "245", "g")} · ${text(R.string.diary_product_own_mark)}")
+    }
+
+    @Test
     fun aProductIsFoundByItsNameWrittenInAnAmountAndChanged() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account, name = "Ala")

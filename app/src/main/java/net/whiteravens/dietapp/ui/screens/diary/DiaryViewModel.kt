@@ -410,6 +410,17 @@ class DiaryViewModel @Inject constructor(
     }
 
     /** What a product could not give is written as a meal of one's own, under its name where it has one. */
+    /** Writes a product of one's own, over the window: the search stays as it was behind it. */
+    fun writeOwnProduct(code: String) = changeForm { it.copy(writingProduct = code) }
+
+    fun closeOwnProduct() = changeForm { it.copy(writingProduct = null) }
+
+    /** What was written, or what the base turned out to hold of its code, is what the entry is made of. */
+    fun takeWrittenProduct(product: Product) {
+        closeOwnProduct()
+        pickProduct(product)
+    }
+
     fun asOwnMeal(name: String?) {
         chooseKind(EntryKind.MEAL)
         if (name != null) changeForm { it.copy(name = name.take(DiaryLimits.name)) }

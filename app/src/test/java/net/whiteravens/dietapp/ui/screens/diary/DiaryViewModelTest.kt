@@ -39,6 +39,7 @@ import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.Product
+import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
@@ -694,6 +695,41 @@ class DiaryViewModelTest {
         assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
         assertEquals(1, model.state.value.leftOut)
         assertTrue(model.state.value.offline)
+    }
+
+    // ── A product of one's own ───────────────────────────────────────────
+
+    @Test
+    fun `a product of one's own is written over the window, of the code looked for, and the search stays behind it`() {
+        val model = model()
+        model.openWindowNow()
+        model.chooseKind(EntryKind.PRODUCT)
+        model.search("5900512320359")
+
+        model.writeOwnProduct("5900512320359")
+
+        assertEquals("5900512320359", model.state.value.form?.writingProduct)
+
+        model.closeOwnProduct()
+
+        assertNull(model.state.value.form?.writingProduct)
+        assertEquals("5900512320359", model.state.value.form?.search)
+    }
+
+    @Test
+    fun `what was written is picked, with a serving of its label to start from`() {
+        val model = model()
+        model.openWindowNow()
+        model.chooseKind(EntryKind.PRODUCT)
+        model.writeOwnProduct("")
+        val written = Product("p", null, "Chleb", null, null, "g", null, 50.0, 245.0, null, null, null, null, null, null, null, false, false, ProductSource.OWN)
+
+        model.takeWrittenProduct(written)
+
+        val form = model.state.value.form!!
+        assertNull(form.writingProduct)
+        assertEquals(written, form.product)
+        assertEquals("50", form.quantity)
     }
 
     // ── The plan's meals ────────────────────────────────────────────────────

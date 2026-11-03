@@ -60,6 +60,8 @@ data class EntryForm(
     val checkingCode: Boolean = false,
     /** Why asking about a code gave no product. */
     val codeFailed: Throwable? = null,
+    /** A product of one's own is being written over the window, of the code it is written for. */
+    val writingProduct: String? = null,
     val servings: String = "1",
     val quantity: String = "",
     val unit: String = "g",
