@@ -21,7 +21,7 @@
     <string name="common_save">Zapisz</string>
     <string name="common_edit">Edytuj</string>
     <string name="common_close">Zamknij</string>
-    <string name="plans_open_recipe">Przepis</string>
+    <string name="plans_open_recipe">Oryginalny przepis</string>
 
     <!-- Server setting -->
     <string name="server_title">Serwer</string>
@@ -1753,6 +1753,10 @@
     <string name="plans_cooking_only">Tylko ten dzień</string>
     <string name="plans_cooking_only_chosen">Tylko wybrane dni</string>
     <string name="plans_cooking_stays">Bez zmian zostaje: %1$s. Ugotowana na to porcja zostanie niewykorzystana.</string>
+    <string name="plans_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s. Poniżej ilości dla Twojego posiłku.</string>
+    <string name="plans_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s. Poniżej ilości na całe gotowanie.</string>
+    <string name="recipe_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s.</string>
+    <string name="recipe_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s.</string>
     <string-array name="plans_cooking_day_for">
         <item>poniedziałek</item>
         <item>wtorek</item>
@@ -1801,4 +1805,10 @@
         <item>na przekąskę</item>
         <item>na kolację</item>
     </string-array>
+    <plurals name="plans_portion_recipe">
+        <item quantity="one">%1$s porcję</item>
+        <item quantity="few">%1$s porcje</item>
+        <item quantity="many">%1$s porcji</item>
+        <item quantity="other">%1$s porcji</item>
+    </plurals>
 </resources>

@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.ui.screens.plans.servingsWord
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeIngredient
@@ -78,6 +79,9 @@ import kotlin.math.roundToInt
 /** Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps; one of the account's own to [onEdit]. */
 @Composable
 fun RecipeDetailScreen(
+    /** Opened from a meal of a plan: how many servings the meal takes, and whether that is the whole of a cooking. */
+    portion: Double? = null,
+    whole: Boolean = false,
     onBack: () -> Unit,
     onEdit: (String) -> Unit,
     viewModel: RecipeDetailViewModel = hiltViewModel(),
@@ -129,6 +133,21 @@ fun RecipeDetailScreen(
             if (recipe == null) {
                 if (state.loading) skeletonItems()
                 return@LazyColumn
+            }
+
+            // The amounts below are those of the recipe as written: what the meal takes is another number.
+            if (portion != null) {
+                item {
+                    Text(
+                        stringResource(
+                            if (whole) R.string.recipe_portion_whole else R.string.recipe_portion_meal,
+                            pluralStringResource(R.plurals.plans_portion_recipe, recipe.servings, recipe.servings),
+                            servingsWord(portion),
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             item {

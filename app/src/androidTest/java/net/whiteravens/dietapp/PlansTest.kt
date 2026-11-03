@@ -153,11 +153,12 @@ class PlansTest {
         // A swap that balanced its day says so in a card over the meals.
         putAwayRebalance()
 
-        // The meal as planned opens on a tap: its own lines, and its recipe a tap further.
+        // The meal as planned opens on a tap, over the whole screen: its lines and its steps, and its recipe a tap further.
         val (title, lines) = Instance.firstMeal(account, planId)
         screen.scrollToText(title)
         screen.onAllNodesWithText(title)[0].performScrollTo().performClick()
         screen.waitForText(lines.first())
+        screen.onNode(hasText(text(R.string.recipes_steps)) and hasAnyAncestor(isDialog())).performScrollTo()
         screen.keepScreenshot("plans-a-meal-as-planned")
         screen.onNodeWithText(text(R.string.plans_open_recipe)).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }

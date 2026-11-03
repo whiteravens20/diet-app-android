@@ -23,7 +23,7 @@
     <string name="common_save">Save</string>
     <string name="common_edit">Edit</string>
     <string name="common_close">Close</string>
-    <string name="plans_open_recipe">Recipe</string>
+    <string name="plans_open_recipe">Original recipe</string>
 
     <!-- Server setting -->
     <string name="server_title">Server</string>
@@ -1632,6 +1632,10 @@
     <string name="plans_cooking_only">This day only</string>
     <string name="plans_cooking_only_chosen">The chosen days only</string>
     <string name="plans_cooking_stays">Stays as it is: %1$s. The portion cooked for it goes unused.</string>
+    <string name="plans_portion_meal">The original gives amounts for %1$s, your meal is %2$s. Below are the amounts for your meal.</string>
+    <string name="plans_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s. Below are the amounts for all of it.</string>
+    <string name="recipe_portion_meal">The original gives amounts for %1$s, your meal is %2$s.</string>
+    <string name="recipe_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s.</string>
     <string-array name="plans_cooking_day_for">
         <item>Monday</item>
         <item>Tuesday</item>
@@ -1680,4 +1684,8 @@
         <item>for the snack</item>
         <item>for dinner</item>
     </string-array>
+    <plurals name="plans_portion_recipe">
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
+    </plurals>
 </resources>

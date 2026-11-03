@@ -104,7 +104,7 @@ import kotlin.reflect.KClass
 @Serializable object PlansRoute
 @Serializable data class PlanDetailRoute(val planId: String, val day: String? = null)
 @Serializable object RecipesRoute
-@Serializable data class RecipeDetailRoute(val recipeId: String)
+@Serializable data class RecipeDetailRoute(val recipeId: String, val portion: String? = null, val whole: Boolean = false)
 @Serializable data class RecipeFormRoute(val recipeId: String? = null)
 @Serializable object ShoppingRoute
 @Serializable object MoreRoute
@@ -333,7 +333,7 @@ private fun MainScaffold(
                 composable<PlanDetailRoute> {
                     PlanDetailScreen(
                         onBack = { navController.popBackStack() },
-                        onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
+                        onOpenRecipe = { recipe, portion, whole -> navController.navigate(RecipeDetailRoute(recipe, portion.toString(), whole)) },
                         onTurnAiOn = { navController.navigate(AccountRoute) },
                         onOpenDiary = { profileId, date -> navController.navigate(DiaryRoute(profileId, date)) },
                     )
@@ -352,8 +352,11 @@ private fun MainScaffold(
                         onWrite = { navController.navigate(RecipeFormRoute()) },
                     )
                 }
-                composable<RecipeDetailRoute> {
+                composable<RecipeDetailRoute> { entry ->
+                    val route = entry.toRoute<RecipeDetailRoute>()
                     RecipeDetailScreen(
+                        portion = route.portion?.toDoubleOrNull(),
+                        whole = route.whole,
                         onBack = { navController.popBackStack() },
                         onEdit = { navController.navigate(RecipeFormRoute(it)) },
                     )

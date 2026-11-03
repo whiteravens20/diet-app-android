@@ -133,7 +133,7 @@ import kotlin.math.roundToInt
 @Composable
 fun PlanDetailScreen(
     onBack: () -> Unit,
-    onOpenRecipe: (String) -> Unit,
+    onOpenRecipe: (recipeId: String, portion: Double, whole: Boolean) -> Unit,
     onTurnAiOn: () -> Unit,
     onOpenDiary: (profileId: String, date: String) -> Unit,
     viewModel: PlanDetailViewModel = hiltViewModel(),
@@ -252,11 +252,15 @@ fun PlanDetailScreen(
         )
     }
 
-    plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == openMealId }?.let { meal ->
+    plan?.days?.firstOrNull { day -> day.meals.any { it.id == openMealId } }?.let { day ->
+        val meal = day.meals.first { it.id == openMealId }
+        val toCook = mealToCook(plan, meal)
         MealDialog(
             meal = meal,
+            date = day.date,
+            toCook = toCook,
             dietType = plan.dietType,
-            onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id) } },
+            onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id, toCook.servings, toCook.whole) } },
             onDismiss = { openMealId = null },
         )
     }
@@ -1234,12 +1238,7 @@ private fun FavoritePicker(meal: Meal, planDiet: String, liked: List<MarkedRecip
 /** What an offer is, as the web says it: the recipe in bold, its servings, and its kcal in place of the meal's. */
 @Composable
 private fun offerLine(offer: SwapOffer): AnnotatedString {
-    val servings = if (offer.servings % 1.0 == 0.0) {
-        pluralStringResource(R.plurals.plans_offer_servings, offer.servings.toInt(), formatNumber(offer.servings))
-    } else {
-        // A count with a fraction takes the form the languages give fractions.
-        stringResource(R.string.plans_offer_servings_fraction, formatNumber(offer.servings, fractionDigits = 2))
-    }
+    val servings = servingsWord(offer.servings)
     val line = stringResource(
         R.string.plans_offer_line,
         MARK,
@@ -1296,34 +1295,72 @@ private fun SwapOfferDialog(
 }
 
 /**
- * A meal as planned: its own lines, in the amounts the plan gives it, what stands against it, and
- * what each of its chips stands for, in words.
+ * A meal as planned, over the whole screen, so that what it takes and how to cook it are read in one
+ * place: its name and what is marked of it, what it holds in a row, its own lines in the amounts the
+ * plan gives it (of the whole cooking on the meal it is cooked at), the steps of its recipe from what
+ * the plan holds, what stands against it in words, and the buttons at the foot. The recipe as written
+ * opens from there, with one sentence on how far its amounts are from these.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MealDialog(meal: Meal, dietType: String, onOpenRecipe: (() -> Unit)?, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(mealName(meal)) },
-        text = {
-            Column(
-                Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                meal.byModel?.let { AiMark(modelPartText(it), spelledOut = true) }
-                Text(
-                    macrosLine(meal.nutrition),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (meal.custom) Hint(stringResource(R.string.plans_custom_macros_note))
-                meal.lines.forEach { line ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(line.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                        Text(
-                            amountLabel(line.quantity, line.unit),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(start = 12.dp),
-                        )
+private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: String, onOpenRecipe: (() -> Unit)?, onDismiss: () -> Unit) {
+    val today = LocalDate.now().toString()
+    ScreenDialog(onDismiss) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(mealName(meal), style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "${mealTypeLabel(meal.slot)} · ${formatDayDate(date)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    meal.byModel?.let { AiMark(modelPartText(it), spelledOut = true) }
+                    if (meal.custom) LabelChip(stringResource(R.string.plans_custom_chip))
+                    if (meal.estimated) LabelChip(stringResource(R.string.plans_estimated_chip))
+                    cookChip(meal, date)?.let { PlainChip(it) }
+                    if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Figure(formatNumber(meal.nutrition.calories.roundToInt()), "kcal")
+                    Figure("${formatNumber(meal.nutrition.protein.roundToInt())} g", stringResource(R.string.macros_protein))
+                    Figure("${formatNumber(meal.nutrition.fat.roundToInt())} g", stringResource(R.string.macros_fat))
+                    Figure("${formatNumber(meal.nutrition.carbs.roundToInt())} g", stringResource(R.string.macros_carbs))
+                }
+                cookHint(meal, date)?.let { Hint(it) }
+                notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
+                if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))
+                if (toCook.lines.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(R.string.recipes_ingredients), style = MaterialTheme.typography.titleMedium)
+                        meal.recipeServings?.let { servings -> Hint(portionNote(servings, toCook.servings, toCook.whole)) }
+                        toCook.lines.forEach { line ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(line.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                                Text(
+                                    amountLabel(line.quantity, line.unit),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(start = 12.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+                if (meal.steps.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.recipes_steps), style = MaterialTheme.typography.titleMedium)
+                        meal.steps.forEachIndexed { index, step ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "${index + 1}.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(step, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
                 meal.conflicts.forEach { conflict ->
@@ -1337,17 +1374,41 @@ private fun MealDialog(meal: Meal, dietType: String, onOpenRecipe: (() -> Unit)?
                 if (meal.disliked.isNotEmpty()) Hint(stringResource(R.string.plans_disliked_hint, formatList(meal.disliked)))
                 if (meal.outsideLimits.isNotEmpty()) Hint(stringResource(R.string.plans_outside_limit_hint, limitNames(meal.outsideLimits)))
                 if (meal.onlyRecipe) Hint(stringResource(R.string.plans_only_recipe_hint))
-                meal.cookAhead?.let { Hint(stringResource(if (it == "cook") R.string.plans_cook_once_hint else R.string.plans_cooked_hint)) }
             }
-        },
-        confirmButton = {
-            if (onOpenRecipe != null) {
-                Button(onClick = onOpenRecipe) { Text(stringResource(R.string.plans_open_recipe)) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+                if (onOpenRecipe != null) Button(onClick = onOpenRecipe) { Text(stringResource(R.string.plans_open_recipe)) }
             }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) } },
-    )
+        }
+    }
 }
+
+/** A figure of a meal over what it is a figure of. */
+@Composable
+private fun Figure(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleMedium)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** How many servings a meal is, in the forms the languages give whole numbers and fractions. */
+@Composable
+internal fun servingsWord(servings: Double): String =
+    if (servings % 1.0 == 0.0) {
+        pluralStringResource(R.plurals.plans_offer_servings, servings.toInt(), formatNumber(servings))
+    } else {
+        // A count with a fraction takes the form the languages give fractions.
+        stringResource(R.string.plans_offer_servings_fraction, formatNumber(servings, fractionDigits = 1))
+    }
+
+/** How far the amounts of a meal are from those of its recipe as written. */
+@Composable
+private fun portionNote(recipeServings: Int, servings: Double, whole: Boolean): String = stringResource(
+    if (whole) R.string.plans_portion_whole else R.string.plans_portion_meal,
+    pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
+    servingsWord(servings),
+)
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
 @Composable
