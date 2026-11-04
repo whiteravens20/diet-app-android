@@ -12,6 +12,10 @@ plugins {
     alias(libs.plugins.aboutlibraries.android)
 }
 
+// The languages the app ships, its strings complete in each. A translation joins the list once it
+// is complete; one still being written may sit in the repository, and is left out of the package.
+val languages = listOf("en", "pl")
+
 android {
     namespace = "net.whiteravens.dietapp"
     // androidx.core 1.19 / compose-bom 2026.05 require compileSdk >= 37.
@@ -46,10 +50,11 @@ android {
     // app migrates it.
     sourceSets.getByName("androidTest").assets.srcDir("schemas")
 
-    // The application speaks English and Polish: the libraries' texts in other languages stay out of
-    // the package, so that a phone in another language shows the libraries' English beside the app's.
+    // The application speaks the languages it ships, and the libraries' texts in other languages stay
+    // out of the package, so that a phone in another language shows the libraries' English beside
+    // the app's.
     androidResources {
-        localeFilters += listOf("en", "pl")
+        localeFilters += languages
     }
 
     // The server a build starts with: the emulator's host in a debug build, and none in a release
@@ -136,6 +141,9 @@ android {
         // Which version of a library is the newest changes with no commit here. Dependabot proposes
         // versions, once they have stood for a week.
         disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
+        // Lint holds the strings of every folder complete, a translation still being written too;
+        // TranslationsTest holds the languages the app ships complete instead.
+        disable += "MissingTranslation"
     }
 
     testOptions {
@@ -156,6 +164,10 @@ tasks.withType<Test>().configureEach {
     timeout.set(Duration.ofMinutes(10))
     inputs.dir(contract)
     systemProperty("contract.dir", contract.asFile.absolutePath)
+    inputs.property("languages", languages)
+    systemProperty("app.languages", languages.joinToString(","))
+    // TranslationsTest reads the strings from the sources: a change of them runs the tests again.
+    inputs.dir(layout.projectDirectory.dir("src/main/res")).withPropertyName("res").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 // Compiled for Java 17 by whichever JDK runs Gradle (17 or newer): no toolchain, so
