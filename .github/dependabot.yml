@@ -50,3 +50,12 @@ updates:
     groups:
       non-breaking:
         update-types: [minor, patch]
+    # AboutLibraries is signed from 15.3.0 by a new key
+    # (185A5F90D0BAC2877501C4C11CF6B9318BA852B2) that the key of the releases
+    # before it has not signed. The library and its plugin stay at 15.2.0 until
+    # the key is confirmed by its author.
+    ignore:
+      - dependency-name: "com.mikepenz:aboutlibraries*"
+        versions: [">= 15.3.0"]
+      - dependency-name: "com.mikepenz.aboutlibraries.plugin*"
+        versions: [">= 15.3.0"]
