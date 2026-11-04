@@ -46,6 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Make room on the runner's disk for the emulator
+        run: .github/scripts/make-room-for-the-emulator.sh
+
       - name: Check out diet-app's dev
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
