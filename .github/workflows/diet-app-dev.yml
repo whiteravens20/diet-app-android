@@ -88,9 +88,13 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Emulator 37.2.12 (build 16428233): 37.2.13, on the runners since 2026-10-29, crashes in its
+      # OpenGL ES emulation while it cleans up after an app process that ended, and the test
+      # orchestrator ends the app's process before every journey.
       - name: Run the screens' tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
+          emulator-build: 16428233
           api-level: 34
           # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
           # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
