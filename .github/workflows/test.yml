@@ -161,8 +161,11 @@ jobs:
 
       # Emulator 37.2.12 (build 16428233): 37.2.13, on the runners since 2026-10-29, crashes in its
       # OpenGL ES emulation while it cleans up after an app process that ended, and the test
-      # orchestrator ends the app's process before every journey.
-      - name: Run the screens' tests
+      # orchestrator ends the app's process before every journey. 37.2.12 does not crash, but it
+      # never frees what that emulation held for the ended processes: one emulator running every
+      # journey filled the runner's memory, so the journeys run in three parts, each on an emulator
+      # started afresh.
+      - name: Run the screens' tests, part 1 of 3
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           emulator-build: 16428233
@@ -186,7 +189,73 @@ jobs:
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
             free -m
-            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT connected${{ matrix.variant }}AndroidTest
+            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connected${{ matrix.variant }}AndroidTest
+
+      - name: Keep the results of part 1
+        if: ${{ !cancelled() }}
+        run: .github/scripts/keep-part-results.sh 1
+
+      - name: Run the screens' tests, part 2 of 3
+        if: ${{ !cancelled() }}
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          emulator-build: 16428233
+          api-level: ${{ matrix.api-level }}
+          # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
+          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
+          # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
+          profile: pixel_6
+          cores: ${{ matrix.cores }}
+          ram-size: ${{ matrix.ram-size }}
+          disk-size: ${{ matrix.disk-size }}
+          emulator-boot-timeout: ${{ matrix.boot-timeout }}
+          arch: x86_64
+          target: google_apis
+          # Turned off by settle-emulator.sh, once the settings service answers.
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
+          script: |
+            .github/scripts/keep-emulator-log.sh
+            .github/scripts/settle-emulator.sh
+            .github/scripts/install-test-authority.sh
+            .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            free -m
+            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connected${{ matrix.variant }}AndroidTest
+
+      - name: Keep the results of part 2
+        if: ${{ !cancelled() }}
+        run: .github/scripts/keep-part-results.sh 2
+
+      - name: Run the screens' tests, part 3 of 3
+        if: ${{ !cancelled() }}
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          emulator-build: 16428233
+          api-level: ${{ matrix.api-level }}
+          # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
+          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
+          # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
+          profile: pixel_6
+          cores: ${{ matrix.cores }}
+          ram-size: ${{ matrix.ram-size }}
+          disk-size: ${{ matrix.disk-size }}
+          emulator-boot-timeout: ${{ matrix.boot-timeout }}
+          arch: x86_64
+          target: google_apis
+          # Turned off by settle-emulator.sh, once the settings service answers.
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
+          script: |
+            .github/scripts/keep-emulator-log.sh
+            .github/scripts/settle-emulator.sh
+            .github/scripts/install-test-authority.sh
+            .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            free -m
+            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connected${{ matrix.variant }}AndroidTest
+
+      - name: Keep the results of part 3
+        if: ${{ !cancelled() }}
+        run: .github/scripts/keep-part-results.sh 3
 
       - name: Check that every journey ran
         run: .github/scripts/journeys-ran.sh
@@ -209,6 +278,7 @@ jobs:
           path: |
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
+            app/build/screens-parts/
             app/build/outputs/connected_android_test_additional_output/
             app/build/emulator-logcat.txt
             app/build/diet-app.log
