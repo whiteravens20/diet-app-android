@@ -61,6 +61,8 @@ data class DiaryDay(
     val estimated: Boolean,
     /** Epoch millis of the copy this came from; null when fresh off the network. */
     val syncedAt: Long? = null,
+    /** Fibre, sugars, salt and saturated fat of what was eaten; none from an instance that does not give them. */
+    val eatenLabel: LabelTotals? = null,
 )
 
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */

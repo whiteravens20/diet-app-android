@@ -440,6 +440,19 @@ data class CalorieCalculationDto(
     val warnings: List<String>,
 )
 
+/** A figure of fibre, sugars, salt or saturated fat, in grams: [atLeast] where a part of what it sums gives none. */
+@Serializable
+data class LabelFigureDto(val grams: Double, val atLeast: Boolean)
+
+/** Fibre, sugars, salt and saturated fat of a serving, a meal or a day; null where nothing of it gives the figure. */
+@Serializable
+data class LabelTotalsDto(
+    val fiber: LabelFigureDto? = null,
+    val sugars: LabelFigureDto? = null,
+    val salt: LabelFigureDto? = null,
+    val saturatedFat: LabelFigureDto? = null,
+)
+
 // ── Profiles (packages/shared/src/profile.ts) ───────────────────────────────
 
 @Serializable
@@ -783,6 +796,8 @@ data class RecipeDto(
     val allergens: List<String>,
     /** Per-serving nutrition, engine-computed. */
     val nutritionPerServing: NutritionDto,
+    /** Fibre, sugars, salt and saturated fat of a serving; none from an instance that does not give them. */
+    val labelPerServing: LabelTotalsDto? = null,
     /** `seed` | `ai` | `swap` | `curated` | `manual`. */
     val origin: String,
     /**
@@ -841,7 +856,12 @@ data class OwnRecipePreviewRequest(val servings: Int, val ingredients: List<OwnR
 
 /** What a serving of a recipe being written would hold, its allergens and the diets it fits, as the engine works them out. */
 @Serializable
-data class OwnRecipePreviewDto(val nutritionPerServing: NutritionDto, val allergens: List<String>, val dietTags: List<String>)
+data class OwnRecipePreviewDto(
+    val nutritionPerServing: NutritionDto,
+    val allergens: List<String>,
+    val dietTags: List<String>,
+    val labelPerServing: LabelTotalsDto? = null,
+)
 
 /**
  * POST `/recipes` and PUT `/recipes/:id`: a recipe of the account's own written by hand, or a new
@@ -945,6 +965,8 @@ data class PlannedMealDto(
     val estimated: Boolean = false,
     /** Effective: per-serving macros * servings * quantityScale. */
     val nutrition: NutritionDto,
+    /** Fibre, sugars, salt and saturated fat of the meal as it is eaten; none for a meal of one's own. */
+    val label: LabelTotalsDto? = null,
 )
 
 /** Another meal of a meal's cooking. */
@@ -1004,6 +1026,8 @@ data class MealPlanDayDto(
     val mealCount: Int? = null,
     /** What the diary adds to the day, counted in [dayNutrition]; null where nothing is written for it. */
     val diary: DayDiaryDto? = null,
+    /** Fibre, sugars, salt and saturated fat of the day, its meals and its diary entries together. */
+    val dayLabel: LabelTotalsDto? = null,
 )
 
 /**
@@ -1935,6 +1959,8 @@ data class DiaryDayDto(
     val eaten: NutritionDto,
     /** A figure of what was eaten is estimated. */
     val estimated: Boolean,
+    /** Fibre, sugars, salt and saturated fat of what was eaten. */
+    val eatenLabel: LabelTotalsDto? = null,
 )
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */

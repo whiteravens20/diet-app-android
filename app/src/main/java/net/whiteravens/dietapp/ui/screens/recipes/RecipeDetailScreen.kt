@@ -62,6 +62,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.LabelGrid
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -339,6 +340,7 @@ private fun RecipeBody(
                         recipe.nutritionPerServing.carbs,
                     ),
                 )
+                recipe.labelPerServing?.let { LabelGrid(it) }
             }
             Text(
                 pluralStringResource(R.plurals.recipe_serving_meta, recipe.servings, recipe.servings, formatNumber(recipe.prepMinutes), formatNumber(recipe.cookMinutes)),

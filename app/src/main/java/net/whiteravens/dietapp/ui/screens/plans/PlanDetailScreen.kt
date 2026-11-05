@@ -108,6 +108,9 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AiMark
+import net.whiteravens.dietapp.ui.components.LabelGrid
+import net.whiteravens.dietapp.ui.components.LabelLegend
+import net.whiteravens.dietapp.ui.components.LabelLine
 import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
@@ -856,6 +859,10 @@ private fun DaySummary(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 2.dp),
         )
+        day.label?.let { label ->
+            LabelLine(label, Modifier.padding(top = 2.dp))
+            LabelLegend(label, Modifier.padding(top = 2.dp))
+        }
         if (day.macrosOff) {
             Row(Modifier.padding(top = 4.dp)) { CautionChip(stringResource(R.string.plans_macros_off_chip)) }
             Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
@@ -1464,6 +1471,7 @@ private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: S
                     Figure("${formatNumber(meal.nutrition.fat.roundToInt())} g", stringResource(R.string.macros_fat))
                     Figure("${formatNumber(meal.nutrition.carbs.roundToInt())} g", stringResource(R.string.macros_carbs))
                 }
+                meal.label?.let { LabelGrid(it) }
                 cookHint(meal, date)?.let { Hint(it) }
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))

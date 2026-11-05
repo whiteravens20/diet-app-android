@@ -376,6 +376,8 @@ data class Meal(
     val steps: List<String> = emptyList(),
     /** The servings its recipe gives its amounts for. */
     val recipeServings: Int? = null,
+    /** Fibre, sugars, salt and saturated fat of the meal as it is eaten; none for a meal of one's own. */
+    val label: LabelTotals? = null,
 )
 
 /** Another meal of a meal's cooking: of which day and time of day, and whether it was eaten. */
@@ -425,6 +427,8 @@ data class PlanDay(
     val settings: DaySettings? = null,
     /** What the diary adds to the day, counted in [nutrition]; null where nothing is written for it. */
     val diary: DayDiary? = null,
+    /** Fibre, sugars, salt and saturated fat of the day; none from an instance that does not give them. */
+    val label: LabelTotals? = null,
 )
 
 /** What the diary adds to a day of a plan: how many entries, what they come to, and the entries, the first written first. */
@@ -790,6 +794,8 @@ data class Recipe(
     val fromSwap: Boolean,
     /** One of the account's own the curators have already: it is not offered to them again. */
     val submitted: Boolean,
+    /** Fibre, sugars, salt and saturated fat of a serving; none from an instance that does not give them. */
+    val labelPerServing: LabelTotals? = null,
 ) {
     val totalMinutes: Int get() = prepMinutes + cookMinutes
 }

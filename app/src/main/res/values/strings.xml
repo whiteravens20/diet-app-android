@@ -154,6 +154,14 @@
     <string name="macro_carbs">Carbs</string>
     <string name="unit_kcal">kcal</string>
 
+    <!-- Fibre, sugars, salt and saturated fat, as labels give them -->
+    <string name="label_fiber">Fibre</string>
+    <string name="label_sugars">Sugars</string>
+    <string name="label_salt">Salt</string>
+    <string name="label_saturated_fat">Saturated fat</string>
+    <string name="label_legend_at_least">≥ at least: an ingredient or a meal of it gives no figure for it.</string>
+    <string name="label_legend_unknown">— not known: none of it gives a figure.</string>
+
     <!-- Offline -->
     <string name="offline_cached">Offline — as of %1$s</string>
     <!-- Changes made on the phone that wait for a network, and those the server refused. -->

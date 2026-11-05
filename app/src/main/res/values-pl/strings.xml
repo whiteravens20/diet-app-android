@@ -158,6 +158,14 @@
     <string name="macro_carbs">Węglowodany</string>
     <string name="unit_kcal">kcal</string>
 
+    <!-- Fibre, sugars, salt and saturated fat, as labels give them -->
+    <string name="label_fiber">Błonnik</string>
+    <string name="label_sugars">Cukry</string>
+    <string name="label_salt">Sól</string>
+    <string name="label_saturated_fat">Tłuszcze nasycone</string>
+    <string name="label_legend_at_least">≥ co najmniej: część składników lub posiłków nie podaje tej wartości.</string>
+    <string name="label_legend_unknown">— brak danych: żaden składnik ani posiłek jej nie podaje.</string>
+
     <!-- Offline -->
     <string name="offline_cached">Offline — stan z %1$s</string>
     <!-- Changes made on the phone that wait for a network, and those the server refused. -->

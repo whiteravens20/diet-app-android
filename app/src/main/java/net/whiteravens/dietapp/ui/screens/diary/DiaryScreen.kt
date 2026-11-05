@@ -68,6 +68,8 @@ import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.LabelLegend
+import net.whiteravens.dietapp.ui.components.LabelLine
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -334,6 +336,10 @@ internal fun EatenAgainstTarget(day: DiaryDay, leftOut: Int) {
                 formatNumber(day.target.carbs.roundToInt()),
             ),
         )
+        day.eatenLabel?.let { label ->
+            LabelLine(label)
+            LabelLegend(label)
+        }
         if (leftOut > 0) Note(pluralStringResource(R.plurals.diary_sum_leaves_out, leftOut, leftOut))
     }
 }

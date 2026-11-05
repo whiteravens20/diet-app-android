@@ -7,6 +7,8 @@ import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.DaySettingsDto
 import net.whiteravens.dietapp.data.remote.DaySettingsPreviewDto
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
+import net.whiteravens.dietapp.data.remote.LabelFigureDto
+import net.whiteravens.dietapp.data.remote.LabelTotalsDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.CookingChangeDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
@@ -33,6 +35,8 @@ import net.whiteravens.dietapp.domain.MealCooking
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DayDiary
+import net.whiteravens.dietapp.domain.LabelFigure
+import net.whiteravens.dietapp.domain.LabelTotals
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.Macros
@@ -122,6 +126,15 @@ fun RecipeIngredientDto.toDomain() = RecipeIngredient(
     grams = display.grams,
 )
 
+fun LabelFigureDto.toDomain() = LabelFigure(grams = grams, atLeast = atLeast)
+
+fun LabelTotalsDto.toDomain() = LabelTotals(
+    fiber = fiber?.toDomain(),
+    sugars = sugars?.toDomain(),
+    salt = salt?.toDomain(),
+    saturatedFat = saturatedFat?.toDomain(),
+)
+
 /** Where the recipes of the library everyone shares come from: nobody's to edit. */
 private val LIBRARY_ORIGINS = setOf("seed", "curated")
 
@@ -149,6 +162,7 @@ fun RecipeDto.toDomain() = Recipe(
     own = origin !in LIBRARY_ORIGINS,
     fromSwap = origin == "swap",
     submitted = submitted,
+    labelPerServing = labelPerServing?.toDomain(),
 )
 
 fun RecipeSearchPageDto.toDomain() = RecipePage(
@@ -182,6 +196,7 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         eaten = eatenAt != null,
         offDiet = dietOverride,
         nutrition = nutrition.toDomain(),
+        label = label?.toDomain(),
         lines = ingredients.map(PlannedIngredientDto::toLine),
         allergens = recipe?.allergens.orEmpty(),
         conflicts = restrictionConflicts,
@@ -254,6 +269,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
         )
     },
     diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }) },
+    label = dayLabel?.toDomain(),
 )
 
 fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
