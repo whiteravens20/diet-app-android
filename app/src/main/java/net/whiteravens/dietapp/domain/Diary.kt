@@ -63,6 +63,8 @@ data class DiaryDay(
     val syncedAt: Long? = null,
     /** Fibre, sugars, salt and saturated fat of what was eaten; none from an instance that does not give them. */
     val eatenLabel: LabelTotals? = null,
+    /** The limits of the profile the day crosses. */
+    val labelNotes: List<LabelLimitNote> = emptyList(),
 )
 
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */

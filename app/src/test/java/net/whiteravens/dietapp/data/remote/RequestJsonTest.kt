@@ -30,6 +30,7 @@ class RequestJsonTest {
         maxMealsPerWeekSameKind = 7,
         kindLimits = listOf(KindLimitDto(kind = "fish", perDay = 1, perWeek = null)),
         inventoryBiasResetEvery = 5,
+        labelLimits = LabelLimitsDto(saltAtMost = 5.0, fiberAtLeast = null, saturatedFatAtMost = null, sugarsAtMost = null),
     )
 
     @Test
@@ -53,6 +54,10 @@ class RequestJsonTest {
         val exception = sent.getValue("kindLimits").jsonArray.single().jsonObject
         assertEquals(setOf("kind", "perDay", "perWeek"), exception.keys)
         assertEquals(JsonNull, exception["perWeek"])
+        // The API takes all four limits from labels: one the profile does not set is a null, never left out.
+        val labelLimits = sent.getValue("labelLimits").jsonObject
+        assertEquals(setOf("saltAtMost", "fiberAtLeast", "saturatedFatAtMost", "sugarsAtMost"), labelLimits.keys)
+        assertEquals(JsonNull, labelLimits["sugarsAtMost"])
     }
 
     @Test

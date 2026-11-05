@@ -35,6 +35,8 @@ import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.SessionUser
+import net.whiteravens.dietapp.domain.LabelLimits
+import net.whiteravens.dietapp.domain.LabelLimit
 import net.whiteravens.dietapp.testing.fixture
 import net.whiteravens.dietapp.testing.refusal
 import org.junit.After
@@ -163,13 +165,13 @@ class ProfileFormViewModelTest {
 
         assertTrue(model.state.value.showProblems)
         assertEquals(setOf(ProfileField.AGE), model.state.value.marks.notNumbers)
-        coVerify(exactly = 0) { profiles.create(any(), any(), any()) }
+        coVerify(exactly = 0) { profiles.create(any(), any(), any(), any()) }
     }
 
     @Test
     fun `a form the API refuses is marked field by field, kinds of protein by their row, and a mark goes once its field changes`() = runTest(main) {
         coEvery { profiles.preview(any()) } returns answer
-        coEvery { profiles.create(any(), any(), any()) } throws refusal("profile-refused")
+        coEvery { profiles.create(any(), any(), any(), any()) } throws refusal("profile-refused")
         val model = model()
         runCurrent()
 
@@ -226,10 +228,30 @@ class ProfileFormViewModelTest {
     }
 
     @Test
+    fun `a new profile is sent with the limits from labels turned on, and not while one turned on holds no number`() = runTest(main) {
+        coEvery { profiles.preview(any()) } returns preview("profile-calories-preview-minor-keeping")
+        coEvery { profiles.create(any(), any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
+        val model = model()
+        runCurrent()
+
+        model.type()
+        model.edit { it.copy(labels = it.labels + (LabelLimit.SUGARS_AT_MOST to LabelLimitTyped(on = true, grams = ""))) }
+        model.save()
+        runCurrent()
+        coVerify(exactly = 0) { profiles.create(any(), any(), any(), any()) }
+        assertTrue(ProfileField.LABEL_SUGARS in model.state.value.marks)
+
+        model.edit { it.copy(labels = it.labels + (LabelLimit.SUGARS_AT_MOST to LabelLimitTyped(on = true, grams = "45,5"))) }
+        model.save()
+        runCurrent()
+        coVerify { profiles.create(any(), any(), any(), LabelLimits(sugarsAtMost = 45.5)) }
+    }
+
+    @Test
     fun `the risk of a loss is the API's to say, and a new profile says it acknowledged only when the form showed it`() = runTest(main) {
         coEvery { profiles.preview(match { it.weeklyLossTarget != null }) } returns preview("profile-calories-preview-minor-losing")
         coEvery { profiles.preview(match { it.weeklyLossTarget == null }) } returns preview("profile-calories-preview-minor-keeping")
-        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
+        coEvery { profiles.create(any(), any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
         val model = model()
         runCurrent()
 
@@ -243,7 +265,7 @@ class ProfileFormViewModelTest {
         model.save()
         runCurrent()
 
-        coVerify { profiles.create(any(), ProfileChoices.FIRST_LIMITS, false) }
+        coVerify { profiles.create(any(), ProfileChoices.FIRST_LIMITS, false, LabelLimits()) }
         assertEquals("p", model.state.value.saved?.id)
 
         // With no loss asked for the API sees no risk in it, although it warns of the age, and nothing is said of it.
@@ -256,7 +278,7 @@ class ProfileFormViewModelTest {
         assertEquals(emptyList<String>(), keep.state.value.risks)
         keep.save()
         runCurrent()
-        coVerify { profiles.create(match { it.weeklyLossTarget == null }, any(), null) }
+        coVerify { profiles.create(match { it.weeklyLossTarget == null }, any(), null, LabelLimits()) }
         assertNull(keep.state.value.error)
     }
 
@@ -310,8 +332,8 @@ class ProfileFormViewModelTest {
         coEvery { profiles.preview(any()) } returns answer
         val made = Profile("p", "Ala", "balanced", 3, 70.0, null)
         // As the API's answer had it: a name of 81 letters.
-        coEvery { profiles.create(match { it.name.length > 80 }, any(), any()) } throws refusal("profile-name-too-long")
-        coEvery { profiles.create(match { it.name == "Ala" }, any(), any()) } returns made
+        coEvery { profiles.create(match { it.name.length > 80 }, any(), any(), any()) } throws refusal("profile-name-too-long")
+        coEvery { profiles.create(match { it.name == "Ala" }, any(), any(), any()) } returns made
         val model = model()
         runCurrent()
 
@@ -343,7 +365,7 @@ class ProfileFormViewModelTest {
         runCurrent()
 
         // The allergens chosen, and every other preference the API's own.
-        coVerify { profiles.create(match { it.allergens == listOf("peanuts") && it.weightReminderCadence == "weekly" }, null, null) }
+        coVerify { profiles.create(match { it.allergens == listOf("peanuts") && it.weightReminderCadence == "weekly" }, null, null, null) }
         assertEquals("p", model.state.value.saved?.id)
 
         model.startOver()

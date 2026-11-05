@@ -165,6 +165,8 @@
     <string name="label_saturated_fat">Tłuszcze nasycone</string>
     <string name="label_legend_at_least">≥ co najmniej: część składników lub posiłków nie podaje tej wartości.</string>
     <string name="label_legend_unknown">— brak danych: żaden składnik ani posiłek jej nie podaje.</string>
+    <string name="label_note_at_most">%1$s: %2$s, więcej niż %3$s z ustawień profilu</string>
+    <string name="label_note_at_least">%1$s: %2$s, mniej niż %3$s z ustawień profilu</string>
 
     <!-- Offline -->
     <string name="offline_cached">Offline — stan z %1$s</string>
@@ -1274,6 +1276,14 @@
     <string name="profile_kind_limit_kind">Rodzaj białka</string>
     <string name="profile_kind_limit_per_day">W jednym dniu</string>
     <string name="profile_kind_limit_per_week">W siedmiu dniach</string>
+    <string name="profile_label_limits">Limity z etykiet</string>
+    <string name="profile_label_limits_hint">Dzień planu lub dziennika, który przekroczy limit, dostaje notatkę. Planer ich nie bierze pod uwagę.</string>
+    <string name="profile_label_limit_salt_at_most">Sól najwyżej</string>
+    <string name="profile_label_limit_fiber_at_least">Błonnik co najmniej</string>
+    <string name="profile_label_limit_saturated_fat_at_most">Tłuszcze nasycone najwyżej</string>
+    <string name="profile_label_limit_sugars_at_most">Cukry najwyżej</string>
+    <string name="profile_label_limit_unit">g dziennie</string>
+    <string name="profile_label_limit_starts">Po włączeniu limit startuje od 5 g soli (WHO), 25 g błonnika (EFSA), 20 g tłuszczów nasyconych i 90 g cukrów (wartości referencyjne z etykiet w UE).</string>
     <string name="profile_same_as_above">jak wyżej</string>
     <string name="profile_add_kind_limit">Dodaj wyjątek</string>
     <string name="profile_remove_kind_limit_short">Usuń</string>

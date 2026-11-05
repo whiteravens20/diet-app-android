@@ -63,6 +63,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.LabelLimit
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.notes
 import net.whiteravens.dietapp.ui.common.Bound
@@ -553,6 +554,62 @@ internal fun ReminderField(form: ProfileForm, onEdit: FormEdit) {
 }
 
 /** How often a plan of the profile may repeat itself. */
+/** The name of a limit from labels: `Salt at most`. */
+@Composable
+private fun labelLimitName(limit: LabelLimit): String = stringResource(
+    when (limit) {
+        LabelLimit.SALT_AT_MOST -> R.string.profile_label_limit_salt_at_most
+        LabelLimit.FIBER_AT_LEAST -> R.string.profile_label_limit_fiber_at_least
+        LabelLimit.SATURATED_FAT_AT_MOST -> R.string.profile_label_limit_saturated_fat_at_most
+        LabelLimit.SUGARS_AT_MOST -> R.string.profile_label_limit_sugars_at_most
+    },
+)
+
+/**
+ * The limits from labels a day of a plan or of the diary is noted against: each turned on with its
+ * box, and then its grams a day, which start where the line under them says.
+ */
+@Composable
+internal fun LabelLimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
+    Text(
+        stringResource(R.string.profile_label_limits_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    LabelLimit.entries.forEach { limit ->
+        val typed = form.labels.getValue(limit)
+        val name = labelLimitName(limit)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = typed.on,
+                    role = Role.Checkbox,
+                    onValueChange = { on -> onEdit { it.copy(labels = it.labels + (limit to it.labels.getValue(limit).copy(on = on))) } },
+                ),
+        ) {
+            Checkbox(checked = typed.on, onCheckedChange = null)
+            Text(name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
+        }
+        if (typed.on) {
+            FormField(
+                value = typed.grams,
+                onValueChange = { grams -> onEdit { it.copy(labels = it.labels + (limit to it.labels.getValue(limit).copy(grams = grams))) } },
+                label = name,
+                hint = stringResource(R.string.profile_label_limit_unit),
+                problem = marks.of(limit.field, whole = false),
+                keyboardType = KeyboardType.Decimal,
+            )
+        }
+    }
+    Text(
+        stringResource(R.string.profile_label_limit_starts),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
 @Composable
 internal fun LimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
     val limits = form.limits

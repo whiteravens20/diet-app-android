@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.LabelFigure
+import net.whiteravens.dietapp.domain.LabelLimitNote
 import net.whiteravens.dietapp.domain.LabelNutrient
 import net.whiteravens.dietapp.domain.LabelTotals
 import net.whiteravens.dietapp.ui.common.formatNumber
@@ -89,4 +90,24 @@ fun LabelLegend(totals: LabelTotals, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier,
     )
+}
+
+/** The limits of the profile a day crosses, a line each, in the colour the app writes its notes in. */
+@Composable
+fun LabelNotes(notes: List<LabelLimitNote>, modifier: Modifier = Modifier) {
+    if (notes.isEmpty()) return
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        notes.forEach { note ->
+            Text(
+                stringResource(
+                    if (note.atMost) R.string.label_note_at_most else R.string.label_note_at_least,
+                    labelNutrientName(note.nutrient),
+                    labelFigureText(note.figure),
+                    labelGrams(note.limit),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+    }
 }

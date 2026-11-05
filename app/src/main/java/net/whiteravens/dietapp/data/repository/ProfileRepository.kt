@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.IngredientChoice
 import net.whiteravens.dietapp.domain.KindLimit
+import net.whiteravens.dietapp.domain.LabelLimits
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.PreferencesChange
@@ -46,7 +47,7 @@ class ProfileRepository @Inject constructor(
      * Makes a profile, with [limits] on how often its plans repeat themselves, or the API's own
      * where they are null; [acknowledgeRisk] is said only by a form that showed the risk of its goal.
      */
-    suspend fun create(figures: ProfileFigures, limits: PlanLimits?, acknowledgeRisk: Boolean?): Profile =
+    suspend fun create(figures: ProfileFigures, limits: PlanLimits?, acknowledgeRisk: Boolean?, labelLimits: LabelLimits? = null): Profile =
         apiCall(json) {
             api.createProfile(
                 NewProfileDto(
@@ -72,6 +73,7 @@ class ProfileRepository @Inject constructor(
                         maxMealsPerWeekSameKind = limits?.maxMealsPerWeekSameKind,
                         kindLimits = limits?.kindLimits?.map { it.toDto() },
                         inventoryBiasResetEvery = limits?.inventoryBiasResetEvery,
+                        labelLimits = labelLimits?.toDto(),
                     ),
                 ),
             )
@@ -109,6 +111,7 @@ class ProfileRepository @Inject constructor(
                         maxMealsPerWeekSameKind = preferences.maxMealsPerWeekSameKind,
                         kindLimits = preferences.kindLimits.map { it.toDto() },
                         inventoryBiasResetEvery = preferences.inventoryBiasResetEvery,
+                        labelLimits = preferences.labelLimits.toDto(),
                     ),
                 ),
             )
@@ -193,6 +196,7 @@ fun ProfileDto.toDetails() = ProfileDetails(
         maxMealsPerWeekSameKind = preferences.maxMealsPerWeekSameKind,
         kindLimits = preferences.kindLimits.map { KindLimit(it.kind, it.perDay, it.perWeek) },
         inventoryBiasResetEvery = preferences.inventoryBiasResetEvery,
+        labelLimits = preferences.labelLimits.toDomain(),
     ),
     riskAcknowledged = riskAcknowledgedAt != null,
 )

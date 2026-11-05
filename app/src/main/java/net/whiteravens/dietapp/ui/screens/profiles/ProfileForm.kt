@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.ui.screens.profiles
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.KindLimit
+import net.whiteravens.dietapp.domain.LabelLimit
+import net.whiteravens.dietapp.domain.LabelLimits
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.ProfileDetails
@@ -99,11 +101,35 @@ enum class ProfileField(val path: String) {
     KIND_PER_DAY("preferences.maxMealsPerDaySameKind"),
     KIND_PER_WEEK("preferences.maxMealsPerWeekSameKind"),
     PANTRY_COOL_DOWN("preferences.inventoryBiasResetEvery"),
+    LABEL_SALT("preferences.labelLimits.saltAtMost"),
+    LABEL_FIBER("preferences.labelLimits.fiberAtLeast"),
+    LABEL_SATURATED_FAT("preferences.labelLimits.saturatedFatAtMost"),
+    LABEL_SUGARS("preferences.labelLimits.sugarsAtMost"),
     ;
 
     companion object {
         /** The fields a calorie target is worked out from, which the calorie preview is asked with. */
         val QUESTION = setOf(AGE, HEIGHT, WEIGHT, OWN_TARGET, SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS)
+    }
+}
+
+/** The field a limit from labels is typed into. */
+val LabelLimit.field: ProfileField
+    get() = when (this) {
+        LabelLimit.SALT_AT_MOST -> ProfileField.LABEL_SALT
+        LabelLimit.FIBER_AT_LEAST -> ProfileField.LABEL_FIBER
+        LabelLimit.SATURATED_FAT_AT_MOST -> ProfileField.LABEL_SATURATED_FAT
+        LabelLimit.SUGARS_AT_MOST -> ProfileField.LABEL_SUGARS
+    }
+
+/** A limit from labels as its field holds it: turned on or not, and the grams a day typed. */
+data class LabelLimitTyped(val on: Boolean, val grams: String) {
+    companion object {
+        /** The limit a profile sets, or one turned off that holds where it would start. */
+        fun of(limit: LabelLimit, grams: Double?) = LabelLimitTyped(on = grams != null, grams = (grams ?: limit.start).plain())
+
+        /** Every limit turned off, as a new profile has them. */
+        val NONE: Map<LabelLimit, LabelLimitTyped> = LabelLimit.entries.associateWith { of(it, null) }
     }
 }
 
@@ -212,6 +238,8 @@ data class ProfileForm(
     val allergens: Set<String> = emptySet(),
     val weightReminderCadence: String = "weekly",
     val limits: LimitsTyped = LimitsTyped.of(ProfileChoices.FIRST_LIMITS),
+    /** The limits from labels, each turned on or off. */
+    val labels: Map<LabelLimit, LabelLimitTyped> = LabelLimitTyped.NONE,
     val acknowledgeRisk: Boolean = false,
     val keptWeightKg: Double? = null,
     val keptTargetWeightKg: Double? = null,
@@ -226,6 +254,7 @@ data class ProfileForm(
         if (!limits.kindPerDay.emptyOrWhole()) add(ProfileField.KIND_PER_DAY)
         if (!limits.kindPerWeek.emptyOrWhole()) add(ProfileField.KIND_PER_WEEK)
         if (limits.pantryCoolDown.trim().toIntOrNull() == null) add(ProfileField.PANTRY_COOL_DOWN)
+        LabelLimit.entries.forEach { limit -> labels.getValue(limit).let { if (it.on && it.grams.number() == null) add(limit.field) } }
     }
 
     /** The kinds of protein whose row holds what is no whole number, with the parts that do. */
@@ -300,6 +329,12 @@ data class ProfileForm(
         )
     }
 
+    /** The limits from labels the form holds, or null while one turned on holds no number. */
+    fun labelLimits(): LabelLimits? = LabelLimit.entries.fold(LabelLimits()) { held, limit ->
+        val typed = labels.getValue(limit)
+        if (!typed.on) held else held.with(limit, typed.grams.number() ?: return null)
+    }
+
     /** What the field holds as typed: the split as a whole, or a part of it, or another field. */
     fun valueOf(field: ProfileField): Any = when (field) {
         ProfileField.NAME -> name
@@ -317,6 +352,8 @@ data class ProfileForm(
         ProfileField.KIND_PER_DAY -> limits.kindPerDay
         ProfileField.KIND_PER_WEEK -> limits.kindPerWeek
         ProfileField.PANTRY_COOL_DOWN -> limits.pantryCoolDown
+        ProfileField.LABEL_SALT, ProfileField.LABEL_FIBER, ProfileField.LABEL_SATURATED_FAT, ProfileField.LABEL_SUGARS ->
+            labels.getValue(LabelLimit.entries.first { it.field == field })
     }
 
     companion object {
@@ -339,6 +376,7 @@ data class ProfileForm(
                 allergens = figures.allergens.toSet(),
                 weightReminderCadence = figures.weightReminderCadence,
                 limits = LimitsTyped.of(kept.preferences.limits),
+                labels = LabelLimit.entries.associateWith { LabelLimitTyped.of(it, kept.preferences.labelLimits[it]) },
                 acknowledgeRisk = kept.riskAcknowledged,
                 keptWeightKg = figures.weightKg,
                 keptTargetWeightKg = figures.targetWeightKg,

@@ -453,6 +453,30 @@ data class LabelTotalsDto(
     val saturatedFat: LabelFigureDto? = null,
 )
 
+/**
+ * What a profile allows or aims at of them, in grams a day; null where it sets nothing. None has a
+ * default: the API takes all four, a null one included, and a request writes no value equal to its
+ * default.
+ */
+@Serializable
+data class LabelLimitsDto(
+    val saltAtMost: Double?,
+    val fiberAtLeast: Double?,
+    val saturatedFatAtMost: Double?,
+    val sugarsAtMost: Double?,
+) {
+    companion object {
+        val NONE = LabelLimitsDto(saltAtMost = null, fiberAtLeast = null, saturatedFatAtMost = null, sugarsAtMost = null)
+    }
+}
+
+/**
+ * A limit of the profile that a day crosses: [nutrient] `fiber` | `sugars` | `salt` |
+ * `saturatedFat`, [kind] `atMost` | `atLeast`, and what the day comes to.
+ */
+@Serializable
+data class LabelLimitNoteDto(val nutrient: String, val kind: String, val limit: Double, val figure: LabelFigureDto)
+
 // ── Profiles (packages/shared/src/profile.ts) ───────────────────────────────
 
 @Serializable
@@ -477,6 +501,8 @@ data class ProfilePreferencesDto(
     /** The kinds of protein held to numbers of their own. */
     val kindLimits: List<KindLimitDto> = emptyList(),
     val inventoryBiasResetEvery: Int = 5,
+    /** The limits of fibre, sugars, salt and saturated fat a day of a plan or of the diary is noted against. */
+    val labelLimits: LabelLimitsDto = LabelLimitsDto.NONE,
 )
 
 /**
@@ -560,6 +586,7 @@ data class NewProfilePreferencesDto(
     val maxMealsPerDaySameKind: Int? = null,
     val maxMealsPerWeekSameKind: Int? = null,
     val kindLimits: List<KindLimitDto>? = null,
+    val labelLimits: LabelLimitsDto? = null,
     val inventoryBiasResetEvery: Int? = null,
 )
 
@@ -597,6 +624,7 @@ data class ProfilePreferencesUpdateDto(
     val maxMealsPerWeekSameKind: Int?,
     val kindLimits: List<KindLimitDto>,
     val inventoryBiasResetEvery: Int,
+    val labelLimits: LabelLimitsDto,
 )
 
 /** Some of a profile's preferences (`PATCH /profiles/:id/preferences`): the ones set, and no other. */
@@ -1028,6 +1056,8 @@ data class MealPlanDayDto(
     val diary: DayDiaryDto? = null,
     /** Fibre, sugars, salt and saturated fat of the day, its meals and its diary entries together. */
     val dayLabel: LabelTotalsDto? = null,
+    /** The limits of the profile the day crosses. */
+    val labelNotes: List<LabelLimitNoteDto> = emptyList(),
 )
 
 /**
@@ -1961,6 +1991,8 @@ data class DiaryDayDto(
     val estimated: Boolean,
     /** Fibre, sugars, salt and saturated fat of what was eaten. */
     val eatenLabel: LabelTotalsDto? = null,
+    /** The limits of the profile the day crosses. */
+    val labelNotes: List<LabelLimitNoteDto> = emptyList(),
 )
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */

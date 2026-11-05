@@ -111,6 +111,7 @@ import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.LabelGrid
 import net.whiteravens.dietapp.ui.components.LabelLegend
 import net.whiteravens.dietapp.ui.components.LabelLine
+import net.whiteravens.dietapp.ui.components.LabelNotes
 import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
@@ -863,6 +864,7 @@ private fun DaySummary(
             LabelLine(label, Modifier.padding(top = 2.dp))
             LabelLegend(label, Modifier.padding(top = 2.dp))
         }
+        LabelNotes(day.labelNotes, Modifier.padding(top = 4.dp))
         if (day.macrosOff) {
             Row(Modifier.padding(top = 4.dp)) { CautionChip(stringResource(R.string.plans_macros_off_chip)) }
             Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))

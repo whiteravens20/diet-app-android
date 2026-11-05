@@ -228,7 +228,8 @@ class ProfileFormViewModel @Inject constructor(
         if (current.saving) return
         val figures = current.form.figures(current.unit)
         val limits = current.form.planLimits()
-        if (figures == null || limits == null) {
+        val labels = current.form.labelLimits()
+        if (figures == null || limits == null || labels == null) {
             _state.update { it.copy(showProblems = true) }
             return
         }
@@ -236,8 +237,8 @@ class ProfileFormViewModel @Inject constructor(
         val acknowledged = current.form.acknowledgeRisk.takeIf { current.risks.isNotEmpty() }
         send(current.form) {
             val before = kept
-            if (before == null) profiles.create(figures, limits, acknowledged)
-            else profiles.update(before.id, figures, before.preferences.with(limits), acknowledged)
+            if (before == null) profiles.create(figures, limits, acknowledged, labels)
+            else profiles.update(before.id, figures, before.preferences.with(limits).copy(labelLimits = labels), acknowledged)
         }
     }
 

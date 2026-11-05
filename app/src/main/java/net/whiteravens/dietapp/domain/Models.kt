@@ -178,6 +178,8 @@ data class ProfilePreferences(
     /** The kinds of protein held to numbers of their own. */
     val kindLimits: List<KindLimit>,
     val inventoryBiasResetEvery: Int,
+    /** The limits of fibre, sugars, salt and saturated fat a day of a plan or of the diary is noted against. */
+    val labelLimits: LabelLimits = LabelLimits(),
 ) {
     val limits: PlanLimits
         get() = PlanLimits(
@@ -429,6 +431,8 @@ data class PlanDay(
     val diary: DayDiary? = null,
     /** Fibre, sugars, salt and saturated fat of the day; none from an instance that does not give them. */
     val label: LabelTotals? = null,
+    /** The limits of the profile the day crosses. */
+    val labelNotes: List<LabelLimitNote> = emptyList(),
 )
 
 /** What the diary adds to a day of a plan: how many entries, what they come to, and the entries, the first written first. */

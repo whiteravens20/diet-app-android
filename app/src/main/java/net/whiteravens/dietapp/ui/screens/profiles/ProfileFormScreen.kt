@@ -91,6 +91,8 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                         DietFields(form, marks, rules, viewModel::edit)
                         FormSection(stringResource(R.string.profile_section_variety))
                         LimitFields(form, marks, viewModel::edit)
+                        FormSection(stringResource(R.string.profile_label_limits))
+                        LabelLimitFields(form, marks, viewModel::edit)
                     }
                 }
                 CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused)

@@ -2,9 +2,13 @@
 
 package net.whiteravens.dietapp.data.repository
 
+import net.whiteravens.dietapp.data.remote.LabelLimitNoteDto
 import net.whiteravens.dietapp.data.remote.LabelTotalsDto
+import net.whiteravens.dietapp.data.remote.ProfilePreferencesDto
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.LabelFigure
+import net.whiteravens.dietapp.domain.LabelLimitNote
+import net.whiteravens.dietapp.domain.LabelLimits
 import net.whiteravens.dietapp.domain.LabelNutrient
 import net.whiteravens.dietapp.domain.LabelTotals
 import org.junit.Assert.assertEquals
@@ -13,7 +17,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Fibre, sugars, salt and saturated fat, read as the API writes them (packages/shared nutrition.ts).
+ * Fibre, sugars, salt and saturated fat, and the limits a profile sets of them, read as the API
+ * writes them (packages/shared nutrition.ts, profile.ts).
  */
 class LabelMappingTest {
     private val json = AppModule.json()
@@ -36,5 +41,32 @@ class LabelMappingTest {
 
         assertFalse(totals.anyAtLeast)
         assertFalse(totals.anyUnknown)
+    }
+
+    @Test
+    fun `the notes of a day name their nutrient and which way the limit goes, and one of a nutrient this version does not know is left out`() {
+        val notes = listOf(
+            LabelLimitNoteDto("sugars", "atMost", 30.0, json.decodeFromString("""{"grams":60.2,"atLeast":true}""")),
+            LabelLimitNoteDto("fiber", "atLeast", 25.0, json.decodeFromString("""{"grams":13.9,"atLeast":false}""")),
+            LabelLimitNoteDto("iron", "atLeast", 10.0, json.decodeFromString("""{"grams":2,"atLeast":false}""")),
+        ).toNotes()
+
+        assertEquals(
+            listOf(
+                LabelLimitNote(LabelNutrient.SUGARS, atMost = true, limit = 30.0, figure = LabelFigure(60.2, true)),
+                LabelLimitNote(LabelNutrient.FIBER, atMost = false, limit = 25.0, figure = LabelFigure(13.9, false)),
+            ),
+            notes,
+        )
+    }
+
+    @Test
+    fun `a profile's limits are read as it set them, and a profile of an instance without them has none`() {
+        val set = json.decodeFromString<ProfilePreferencesDto>(
+            """{"labelLimits":{"saltAtMost":5,"fiberAtLeast":null,"saturatedFatAtMost":null,"sugarsAtMost":30}}""",
+        )
+        assertEquals(LabelLimits(saltAtMost = 5.0, sugarsAtMost = 30.0), set.labelLimits.toDomain())
+        assertEquals(LabelLimits(), json.decodeFromString<ProfilePreferencesDto>("{}").labelLimits.toDomain())
+        assertEquals(set.labelLimits, LabelLimits(saltAtMost = 5.0, sugarsAtMost = 30.0).toDto())
     }
 }

@@ -8,6 +8,8 @@ import net.whiteravens.dietapp.data.remote.DaySettingsDto
 import net.whiteravens.dietapp.data.remote.DaySettingsPreviewDto
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.LabelFigureDto
+import net.whiteravens.dietapp.data.remote.LabelLimitNoteDto
+import net.whiteravens.dietapp.data.remote.LabelLimitsDto
 import net.whiteravens.dietapp.data.remote.LabelTotalsDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.CookingChangeDto
@@ -36,6 +38,9 @@ import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DayDiary
 import net.whiteravens.dietapp.domain.LabelFigure
+import net.whiteravens.dietapp.domain.LabelLimitNote
+import net.whiteravens.dietapp.domain.LabelLimits
+import net.whiteravens.dietapp.domain.LabelNutrient
 import net.whiteravens.dietapp.domain.LabelTotals
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
@@ -134,6 +139,15 @@ fun LabelTotalsDto.toDomain() = LabelTotals(
     salt = salt?.toDomain(),
     saturatedFat = saturatedFat?.toDomain(),
 )
+
+fun LabelLimitsDto.toDomain() = LabelLimits(saltAtMost, fiberAtLeast, saturatedFatAtMost, sugarsAtMost)
+
+fun LabelLimits.toDto() = LabelLimitsDto(saltAtMost, fiberAtLeast, saturatedFatAtMost, sugarsAtMost)
+
+/** The notes of limits a day crosses; one of a nutrient this version does not know is left out. */
+fun List<LabelLimitNoteDto>.toNotes(): List<LabelLimitNote> = mapNotNull { note ->
+    LabelNutrient.of(note.nutrient)?.let { LabelLimitNote(it, note.kind == "atMost", note.limit, note.figure.toDomain()) }
+}
 
 /** Where the recipes of the library everyone shares come from: nobody's to edit. */
 private val LIBRARY_ORIGINS = setOf("seed", "curated")
@@ -270,6 +284,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     },
     diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }) },
     label = dayLabel?.toDomain(),
+    labelNotes = labelNotes.toNotes(),
 )
 
 fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(

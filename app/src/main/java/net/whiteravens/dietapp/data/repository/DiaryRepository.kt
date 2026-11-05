@@ -190,6 +190,7 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
     estimated = estimated,
     syncedAt = syncedAt,
     eatenLabel = eatenLabel?.toDomain(),
+    labelNotes = labelNotes.toNotes(),
 )
 
 internal fun DiaryEntryDto.toDomain() = DiaryEntry(

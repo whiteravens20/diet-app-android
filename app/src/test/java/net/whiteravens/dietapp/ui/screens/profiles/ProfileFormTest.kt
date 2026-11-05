@@ -9,6 +9,8 @@ import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.ProfileFigures
 import net.whiteravens.dietapp.domain.ProfilePreferences
+import net.whiteravens.dietapp.domain.LabelLimit
+import net.whiteravens.dietapp.domain.LabelLimits
 import net.whiteravens.dietapp.testing.refusal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,6 +30,7 @@ class ProfileFormTest {
         dietType: String = "balanced",
         split: MacroSplit? = null,
         limits: PlanLimits = ProfileChoices.FIRST_LIMITS,
+        labelLimits: LabelLimits = LabelLimits(),
         riskAcknowledged: Boolean = false,
     ) = ProfileDetails(
         id = "p",
@@ -41,10 +44,39 @@ class ProfileFormTest {
             preferredCuisines = emptyList(), maxConsecutiveDaysSameMeal = limits.maxConsecutiveDaysSameMeal,
             maxTimesPerWeekSameMeal = limits.maxTimesPerWeekSameMeal, maxMealsPerDaySameKind = limits.maxMealsPerDaySameKind,
             maxMealsPerWeekSameKind = limits.maxMealsPerWeekSameKind, kindLimits = limits.kindLimits,
-            inventoryBiasResetEvery = limits.inventoryBiasResetEvery,
+            inventoryBiasResetEvery = limits.inventoryBiasResetEvery, labelLimits = labelLimits,
         ),
         riskAcknowledged = riskAcknowledged,
     )
+
+    @Test
+    fun `the limits from labels start turned off at the values they start from, and a kept profile's are those it set`() {
+        assertTrue(ProfileForm().labels.values.none { it.on })
+        assertEquals(LabelLimits(), filled.labelLimits())
+        assertEquals("5", filled.labels.getValue(LabelLimit.SALT_AT_MOST).grams)
+        assertEquals("90", filled.labels.getValue(LabelLimit.SUGARS_AT_MOST).grams)
+
+        val form = ProfileForm.of(kept(labelLimits = LabelLimits(saltAtMost = 4.5, fiberAtLeast = 30.0)), WeightUnit.KG)
+        assertEquals(LabelLimitTyped(on = true, grams = "4.5"), form.labels.getValue(LabelLimit.SALT_AT_MOST))
+        assertEquals(LabelLimitTyped(on = true, grams = "30"), form.labels.getValue(LabelLimit.FIBER_AT_LEAST))
+        assertEquals(LabelLimitTyped(on = false, grams = "20"), form.labels.getValue(LabelLimit.SATURATED_FAT_AT_MOST))
+        assertEquals(LabelLimits(saltAtMost = 4.5, fiberAtLeast = 30.0), form.labelLimits())
+    }
+
+    @Test
+    fun `a limit from labels turned on takes grams with a decimal comma, holds no number as a problem, and one turned off is sent as none`() {
+        fun with(limit: LabelLimit, typed: LabelLimitTyped) = filled.copy(labels = filled.labels + (limit to typed))
+
+        assertEquals(LabelLimits(saltAtMost = 6.5), with(LabelLimit.SALT_AT_MOST, LabelLimitTyped(on = true, grams = "6,5")).labelLimits())
+        val empty = with(LabelLimit.SUGARS_AT_MOST, LabelLimitTyped(on = true, grams = " "))
+        assertEquals(setOf(ProfileField.LABEL_SUGARS), empty.problems(WeightUnit.KG))
+        assertNull(empty.labelLimits())
+        assertEquals(LabelLimits(), with(LabelLimit.SUGARS_AT_MOST, LabelLimitTyped(on = false, grams = "much")).labelLimits())
+        assertEquals(emptySet<ProfileField>(), with(LabelLimit.SUGARS_AT_MOST, LabelLimitTyped(on = false, grams = "much")).problems(WeightUnit.KG))
+        // What the API takes of a number is the API's to say, by the field's path.
+        assertEquals(LabelLimits(fiberAtLeast = 500.0), with(LabelLimit.FIBER_AT_LEAST, LabelLimitTyped(on = true, grams = "500")).labelLimits())
+        assertEquals(ProfileField.LABEL_FIBER, ProfileField.entries.first { it.path == "preferences.labelLimits.fiberAtLeast" })
+    }
 
     @Test
     fun `an empty form holds no numbers where a profile needs them and asks nothing, while its name is the API's to refuse`() {
