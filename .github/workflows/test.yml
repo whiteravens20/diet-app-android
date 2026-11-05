@@ -191,6 +191,7 @@ jobs:
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-play-services.sh
             free -m
             ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connected${{ matrix.variant }}AndroidTest
 
@@ -222,6 +223,7 @@ jobs:
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-play-services.sh
             free -m
             ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connected${{ matrix.variant }}AndroidTest
 
@@ -253,6 +255,7 @@ jobs:
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-play-services.sh
             free -m
             ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connected${{ matrix.variant }}AndroidTest
 

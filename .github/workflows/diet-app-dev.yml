@@ -118,6 +118,7 @@ jobs:
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-play-services.sh
             free -m
             ./gradlew $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connectedDebugAndroidTest
 
@@ -147,6 +148,7 @@ jobs:
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-play-services.sh
             free -m
             ./gradlew $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connectedDebugAndroidTest
 
@@ -176,6 +178,7 @@ jobs:
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-play-services.sh
             free -m
             ./gradlew $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connectedDebugAndroidTest
 
