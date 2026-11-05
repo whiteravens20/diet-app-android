@@ -70,12 +70,22 @@ fun LabelGrid(totals: LabelTotals, modifier: Modifier = Modifier) {
 fun LabelLine(totals: LabelTotals, modifier: Modifier = Modifier) {
     val parts = LabelNutrient.entries.map { "${labelNutrientName(it)} ${labelFigureText(totals[it])}" }
     Text(
-        parts.joinToString(" · "),
+        inOneLine(parts),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier,
     )
 }
+
+/**
+ * Pairs of a name and its figure in one line, `Fibre 12 g · Sugars ≥ 26,2 g`, which a narrow screen
+ * breaks only after a dot: a pair keeps its name, figure and unit together, and the dot stays with
+ * the pair before it, so no line starts with a lone unit, figure or dot.
+ */
+fun inOneLine(pairs: List<String>): String =
+    pairs.joinToString("$NO_BREAK_SPACE· ") { it.replace(' ', NO_BREAK_SPACE) }
+
+private const val NO_BREAK_SPACE = '\u00A0'
 
 /** What `≥` and `—` stand for, said once under the figures that use them; nothing where none does. */
 @Composable
