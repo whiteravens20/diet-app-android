@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -155,7 +154,7 @@ internal fun PlanCalendar(
         // What the marks in a day mean is said in words: a mark alone says it to nobody who does not already know.
         Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Legend(stringResource(R.string.plans_calendar_legend_day))
-            Legend(stringResource(R.string.plans_calendar_legend_off), Icons.Default.Warning, MaterialTheme.colorScheme.tertiary)
+            OffTargetLegend(stringResource(R.string.plans_calendar_legend_off))
             Legend(stringResource(R.string.plans_calendar_legend_eaten), Icons.Default.Check)
             Legend(stringResource(R.string.plans_calendar_legend_skipped))
             Legend(stringResource(R.string.plans_calendar_legend_more))
@@ -164,9 +163,9 @@ internal fun PlanCalendar(
 }
 
 /**
- * One day: its number, ringed when it is today; for a day of a plan, what it holds in kcal (marked
- * where it is more than a tenth off its target, a dash where the plan skips it), the meals eaten and
- * how many more plans hold it. A day of the month before or after is told apart by a dashed frame
+ * One day: its number, ringed when it is today; for a day of a plan, what it holds in kcal (a dash
+ * where the plan skips it), the meals eaten and how many more plans hold it. A day more than a tenth
+ * off its target is set apart by its frame and ground, which take no room from what it says. A day of the month before or after is told apart by a dashed frame
  * and a quieter colour that can still be read.
  */
 @Composable
@@ -179,7 +178,12 @@ private fun DayCell(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
-    val frame = if (day != null) colors.primary.copy(alpha = 0.4f) else colors.outlineVariant
+    val off = day != null && !day.skipped && day.offTarget != null
+    val frame = when {
+        off -> colors.tertiary.copy(alpha = 0.6f)
+        day != null -> colors.primary.copy(alpha = 0.4f)
+        else -> colors.outlineVariant
+    }
     val spoken = spokenDay(date, day)
     val small = MaterialTheme.typography.labelSmall
     val quiet = colors.onSurfaceVariant
@@ -187,7 +191,13 @@ private fun DayCell(
         modifier
             .heightIn(min = 60.dp)
             .clip(CELL)
-            .background(if (day != null) colors.primary.copy(alpha = 0.06f) else Color.Transparent)
+            .background(
+                when {
+                    off -> colors.tertiary.copy(alpha = 0.1f)
+                    day != null -> colors.primary.copy(alpha = 0.06f)
+                    else -> Color.Transparent
+                },
+            )
             .then(if (inMonth) Modifier.border(1.dp, frame, CELL) else Modifier.dashedFrame(frame))
             .clickable(role = Role.Button, onClick = onClick)
             .clearAndSetSemantics { contentDescription = spoken }
@@ -216,12 +226,8 @@ private fun DayCell(
         when {
             day == null -> Unit
             day.skipped -> Fitted("—", quiet)
-            else -> Row(verticalAlignment = Alignment.CenterVertically) {
-                val off = day.offTarget != null
-                if (off) Icon(Icons.Default.Warning, contentDescription = null, tint = colors.tertiary, modifier = Modifier.size(9.dp))
-                // Without grouping: a cell has the room for the figures and no more.
-                Fitted(day.calories.roundToInt().toString(), if (off) colors.tertiary else colors.onSurface, if (off) FontWeight.SemiBold else null)
-            }
+            // Without grouping: a cell has the room for the figures and no more.
+            else -> Fitted(day.calories.roundToInt().toString(), if (off) colors.tertiary else colors.onSurface, if (off) FontWeight.SemiBold else null)
         }
         if (day != null && day.mealsEaten > 0) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -269,9 +275,27 @@ private fun spokenDay(date: LocalDate, day: PlanCalendarDay?): String {
 }
 
 @Composable
-private fun Legend(text: String, icon: ImageVector? = null, tint: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+private fun Legend(text: String, icon: ImageVector? = null) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.padding(end = 4.dp).size(12.dp))
+        if (icon != null) Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 4.dp).size(12.dp))
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** What sets a day off its target apart, its frame and ground in small, beside what it means. */
+@Composable
+private fun OffTargetLegend(text: String) {
+    val tint = MaterialTheme.colorScheme.tertiary
+    val shape = RoundedCornerShape(3.dp)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .padding(end = 4.dp)
+                .size(12.dp)
+                .clip(shape)
+                .background(tint.copy(alpha = 0.1f))
+                .border(1.dp, tint.copy(alpha = 0.6f), shape),
+        )
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
