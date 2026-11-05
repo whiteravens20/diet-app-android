@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -435,6 +436,7 @@ private fun IngredientPicker(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
                                     .toggleable(
                                         value = ingredient.id in search.ticked,
                                         enabled = enabled,
@@ -444,7 +446,7 @@ private fun IngredientPicker(
                                     .padding(horizontal = 4.dp),
                             ) {
                                 Checkbox(checked = ingredient.id in search.ticked, onCheckedChange = null, enabled = enabled)
-                                Text(ingredient.name, style = MaterialTheme.typography.bodyMedium)
+                                Text(ingredient.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
                             }
                         }
                     }

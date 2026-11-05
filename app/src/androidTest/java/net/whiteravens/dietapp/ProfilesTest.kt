@@ -2,10 +2,13 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isPopup
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -13,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
@@ -34,8 +38,9 @@ import java.util.Locale
 /**
  * Profiles as an account holder makes and keeps them: the first one in three steps from the empty
  * dashboard, with the target the typed figures come to; one edited, its preferences changed in
- * place and deleted; and the calculator, which begins with a profile's figures. What the screens
- * say is checked against what the API keeps.
+ * place and deleted; several ingredients of one search ticked and added at once; and the
+ * calculator, which begins with a profile's figures. What the screens say is checked against what
+ * the API keeps.
  */
 @RunWith(AndroidJUnit4::class)
 class ProfilesTest {
@@ -139,6 +144,42 @@ class ProfilesTest {
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForText(text(R.string.profile_wizard_title))
         assertEquals(0, Instance.profiles(account).size)
+    }
+
+    @Test
+    fun severalIngredientsOfOneSearchAreTickedAndAddedAtOnce() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.profiles_title)).performClick()
+        screen.waitForText("Ala")
+        screen.onNode(hasSetTextAction() and hasText(text(R.string.profile_favourites)))
+            .performScrollTo()
+            .performTextInput(if (text(R.string.api_language) == "pl") "ser" else "cheese")
+        screen.waitUntil(20_000) { screen.onAllNodes(isToggleable()).fetchSemanticsNodes().size >= 2 }
+        screen.putKeyboardAway()
+
+        // Every result is a row a finger can take, as tall as a button.
+        val results = screen.onAllNodes(isToggleable())
+        results.fetchSemanticsNodes().indices.forEach { results[it].assertHeightIsAtLeast(48.dp) }
+        results[0].performScrollTo().performClick()
+        results[1].performScrollTo().performClick()
+        press(text(R.string.pickers_add_ticked, 2))
+        screen.waitForTheApi {
+            Instance.profile(account, profileId).optJSONObject("preferences")?.optJSONArray("favoriteIngredientIds")?.length() == 2
+        }
+
+        // So is each limit from labels to turn on, in the profile's form.
+        press(text(R.string.common_edit))
+        screen.waitForText(text(R.string.profiles_editing, "Ala"))
+        listOf(
+            R.string.profile_label_limit_salt_at_most,
+            R.string.profile_label_limit_fiber_at_least,
+            R.string.profile_label_limit_saturated_fat_at_most,
+            R.string.profile_label_limit_sugars_at_most,
+        ).forEach { screen.onNode(hasText(text(it)) and isToggleable()).performScrollTo().assertHeightIsAtLeast(48.dp) }
     }
 
     @Test
