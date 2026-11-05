@@ -5,7 +5,7 @@
 package net.whiteravens.dietapp.ui.screens.profiles
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
@@ -38,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -368,7 +370,8 @@ private fun CuisineChoice(selected: List<String>, onChange: (List<String>) -> Un
 
 /**
  * A list of ingredients a profile keeps: the ones saved, each to remove, and a search of the
- * catalogue that suggests others once two letters are typed.
+ * catalogue that suggests others once two letters are typed, each with a box to tick and the
+ * ticked ones added at once.
  */
 @Composable
 private fun IngredientPicker(
@@ -419,7 +422,7 @@ private fun IngredientPicker(
             modifier = Modifier.fillMaxWidth(),
         )
         if (search.text.trim().length >= ProfilesViewModel.SEARCH_FROM) {
-            val available = search.found.filter { it.id !in ids }.take(20)
+            val available = search.shown(ids)
             if (available.isNotEmpty()) {
                 Surface(
                     shape = MaterialTheme.shapes.medium,
@@ -428,16 +431,27 @@ private fun IngredientPicker(
                 ) {
                     Column {
                         available.forEach { ingredient ->
-                            Text(
-                                ingredient.name,
-                                style = MaterialTheme.typography.bodyMedium,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable(enabled = enabled) { viewModel.add(profile, list, ingredient) }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                            )
+                                    .toggleable(
+                                        value = ingredient.id in search.ticked,
+                                        enabled = enabled,
+                                        role = Role.Checkbox,
+                                        onValueChange = { viewModel.tick(profile.id, list, ingredient.id) },
+                                    )
+                                    .padding(horizontal = 4.dp),
+                            ) {
+                                Checkbox(checked = ingredient.id in search.ticked, onCheckedChange = null, enabled = enabled)
+                                Text(ingredient.name, style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
+                }
+                val chosen = search.chosen(ids).size
+                OutlinedButton(onClick = { viewModel.addTicked(profile, list) }, enabled = enabled && chosen > 0) {
+                    Text(stringResource(R.string.pickers_add_ticked, chosen))
                 }
             } else if (search.searched) {
                 Text(

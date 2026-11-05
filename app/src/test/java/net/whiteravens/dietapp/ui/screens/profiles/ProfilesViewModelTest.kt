@@ -117,9 +117,11 @@ class ProfilesViewModelTest {
     }
 
     @Test
-    fun `the catalogue is searched once two letters are typed and typing pauses, and an ingredient found is added by name`() = runTest(main) {
+    fun `the catalogue is searched once two letters are typed and typing pauses, and the ingredients ticked are added at once by name`() = runTest(main) {
         val bean = IngredientChoice("bean", "Bean", "legumes")
-        coEvery { profiles.ingredients("be") } returns listOf(bean)
+        val beet = IngredientChoice("beet", "Beet", "vegetables")
+        val beef = IngredientChoice("beef", "Beef", "meat")
+        coEvery { profiles.ingredients("be") } returns listOf(bean, beet, beef)
         coEvery { profiles.updatePreferences(kept.id, any()) } returns kept
         val model = loaded()
         runCurrent()
@@ -131,14 +133,49 @@ class ProfilesViewModelTest {
         model.search(kept.id, IngredientList.AVOIDED, "be")
         advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
         runCurrent()
-        assertEquals(listOf(bean), model.state.value.searches[kept.id to IngredientList.AVOIDED]?.found)
+        assertEquals(listOf(bean, beet, beef), model.state.value.searches[kept.id to IngredientList.AVOIDED]?.found)
 
-        model.add(kept, IngredientList.AVOIDED, bean)
+        model.tick(kept.id, IngredientList.AVOIDED, "bean")
+        model.tick(kept.id, IngredientList.AVOIDED, "beef")
+        model.tick(kept.id, IngredientList.AVOIDED, "beet")
+        model.tick(kept.id, IngredientList.AVOIDED, "beef")
+        model.addTicked(kept, IngredientList.AVOIDED)
         runCurrent()
 
-        coVerify { profiles.updatePreferences(kept.id, PreferencesChange(excludedIngredientIds = listOf("bean"))) }
+        coVerify(exactly = 1) { profiles.updatePreferences(kept.id, any()) }
+        coVerify { profiles.updatePreferences(kept.id, PreferencesChange(excludedIngredientIds = listOf("bean", "beet"))) }
         assertEquals("Bean", model.state.value.names["bean"])
-        assertEquals("", model.state.value.searches[kept.id to IngredientList.AVOIDED]?.text)
+        assertEquals("Beet", model.state.value.names["beet"])
+        assertEquals(ProfilesViewModel.Search(), model.state.value.searches[kept.id to IngredientList.AVOIDED])
+    }
+
+    @Test
+    fun `a tick outlives a new search, but only what the search shows is added`() = runTest(main) {
+        val bean = IngredientChoice("bean", "Bean", "legumes")
+        val pear = IngredientChoice("pear", "Pear", "fruits")
+        coEvery { profiles.ingredients("be") } returns listOf(bean)
+        coEvery { profiles.ingredients("pe") } returns listOf(pear)
+        coEvery { profiles.updatePreferences(kept.id, any()) } returns kept
+        val model = loaded()
+        runCurrent()
+
+        model.search(kept.id, IngredientList.DISLIKED, "be")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+        model.tick(kept.id, IngredientList.DISLIKED, "bean")
+        model.search(kept.id, IngredientList.DISLIKED, "pe")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+
+        assertEquals(setOf("bean"), model.state.value.searches[kept.id to IngredientList.DISLIKED]?.ticked)
+        model.addTicked(kept, IngredientList.DISLIKED)
+        runCurrent()
+        coVerify(exactly = 0) { profiles.updatePreferences(any(), any()) }
+
+        model.tick(kept.id, IngredientList.DISLIKED, "pear")
+        model.addTicked(kept, IngredientList.DISLIKED)
+        runCurrent()
+        coVerify { profiles.updatePreferences(kept.id, PreferencesChange(dislikedIngredientIds = listOf("pear"))) }
     }
 
     @Test

@@ -1244,6 +1244,7 @@
     <string name="pickers_ingredient_search">Search ingredients…</string>
     <string name="pickers_none_yet">None yet.</string>
     <string name="pickers_no_matches">No matches.</string>
+    <string name="pickers_add_ticked">Add the ticked (%1$d)</string>
     <string name="pickers_remove">Remove %1$s</string>
     <!-- Two to five meals a day: both languages say any of these numbers as written here. -->
     <string name="catalogue_none" tools:ignore="PluralsCandidate">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet.</string>

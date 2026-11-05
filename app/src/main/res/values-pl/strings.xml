@@ -1345,6 +1345,7 @@
     <string name="pickers_ingredient_search">Szukaj składników…</string>
     <string name="pickers_none_yet">Jeszcze nic.</string>
     <string name="pickers_no_matches">Brak wyników.</string>
+    <string name="pickers_add_ticked">Dodaj zaznaczone (%1$d)</string>
     <string name="pickers_remove">Usuń %1$s</string>
     <string name="catalogue_none">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę.</string>
     <string name="catalogue_none_fewer">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę albo najwyżej %3$d posiłki dziennie.</string>

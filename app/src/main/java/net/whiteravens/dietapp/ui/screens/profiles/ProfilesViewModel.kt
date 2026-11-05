@@ -42,8 +42,23 @@ class ProfilesViewModel @Inject constructor(
     /** A list of ingredients a profile keeps among its preferences. */
     enum class IngredientList { FAVOURITE, DISLIKED, AVOIDED }
 
-    /** What a picker of ingredients has typed, and what the catalogue found for it. */
-    data class Search(val text: String = "", val found: List<IngredientChoice> = emptyList(), val searched: Boolean = false)
+    /**
+     * What a picker of ingredients has typed, what the catalogue found for it, and the results
+     * ticked to be added together. A tick outlives a new search, but only what the search shows
+     * is added.
+     */
+    data class Search(
+        val text: String = "",
+        val found: List<IngredientChoice> = emptyList(),
+        val searched: Boolean = false,
+        val ticked: Set<String> = emptySet(),
+    ) {
+        /** What the search shows of the catalogue: none the list holds already, [SHOWN_RESULTS] at most. */
+        fun shown(saved: List<String>): List<IngredientChoice> = found.filter { it.id !in saved }.take(SHOWN_RESULTS)
+
+        /** The ticked ones the search shows: what "Add the ticked" adds. */
+        fun chosen(saved: List<String>): List<IngredientChoice> = shown(saved).filter { it.id in ticked }
+    }
 
     data class UiState(
         val loading: Boolean = true,
@@ -178,12 +193,28 @@ class ProfilesViewModel @Inject constructor(
         change(profile, PreferencesChange(preferredCuisines = ProfileChoices.CUISINES.filter { it in cuisines }))
 
     /** Adds [ingredient] to one of [profile]'s lists, and empties that list's search. */
-    fun add(profile: ProfileDetails, list: IngredientList, ingredient: IngredientChoice) {
+    /** A result of a picker's search ticked, or unticked. */
+    fun tick(profileId: String, list: IngredientList, id: String) {
+        val key = profileId to list
+        _state.update { state ->
+            val now = state.searches[key] ?: Search()
+            state.copy(searches = state.searches + (key to now.copy(ticked = if (id in now.ticked) now.ticked - id else now.ticked + id)))
+        }
+    }
+
+    /** The ticked results the search shows, added to the list at once; the search starts afresh. */
+    fun addTicked(profile: ProfileDetails, list: IngredientList) {
         val ids = _state.value.preferencesOf(profile).ids(list)
-        if (_state.value.sending != null || ingredient.id in ids) return
-        _state.update { it.copy(names = it.names + (ingredient.id to ingredient.name)) }
-        search(profile.id, list, "")
-        change(profile, list.change(ids + ingredient.id))
+        val chosen = _state.value.searches[profile.id to list]?.chosen(ids).orEmpty()
+        if (_state.value.sending != null || chosen.isEmpty()) return
+        _state.update { state ->
+            state.copy(
+                names = state.names + chosen.associate { it.id to it.name },
+                searches = state.searches + ((profile.id to list) to Search()),
+            )
+        }
+        searching.remove(profile.id to list)?.cancel()
+        change(profile, list.change(ids + chosen.map { it.id }))
     }
 
     fun remove(profile: ProfileDetails, list: IngredientList, id: String) {
@@ -210,7 +241,7 @@ class ProfilesViewModel @Inject constructor(
     /** What the catalogue has for [text], typed into one of a profile's pickers: asked once two letters are typed and typing pauses. */
     fun search(profileId: String, list: IngredientList, text: String) {
         val key = profileId to list
-        _state.update { it.copy(searches = it.searches + (key to Search(text = text))) }
+        _state.update { it.copy(searches = it.searches + (key to Search(text = text, ticked = it.searches[key]?.ticked.orEmpty()))) }
         searching.remove(key)?.cancel()
         if (text.trim().length < SEARCH_FROM) return
         searching[key] = viewModelScope.launch {
@@ -237,6 +268,9 @@ class ProfilesViewModel @Inject constructor(
     companion object {
         /** How many letters a search of the catalogue starts at. */
         const val SEARCH_FROM = 2
+
+        /** The most results of a search a picker shows. */
+        const val SHOWN_RESULTS = 20
 
         /** How long typing pauses before the catalogue is searched. */
         const val SEARCH_DELAY_MS = 300L
