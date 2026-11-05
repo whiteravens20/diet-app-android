@@ -394,7 +394,12 @@ internal fun List<PantryRow>.withWaiting(profileId: String?, waiting: List<Queue
             )
             is QueuedChange.PantryChanged -> rows.map { row ->
                 if (row.id != change.id) row
-                else row.copy(shown = change.quantity ?: row.shown, bestBefore = if (change.newDay) change.bestBefore?.let(LocalDate::parse) else row.bestBefore)
+                else row.copy(
+                    shown = change.quantity ?: row.shown,
+                    // What a new amount weighs is the server's to say once the change reaches it.
+                    shownGrams = if (change.quantity == null) row.shownGrams else null,
+                    bestBefore = if (change.newDay) change.bestBefore?.let(LocalDate::parse) else row.bestBefore,
+                )
             }
             is QueuedChange.PantryRemoved -> rows.filterNot { it.id == change.id }
             else -> rows

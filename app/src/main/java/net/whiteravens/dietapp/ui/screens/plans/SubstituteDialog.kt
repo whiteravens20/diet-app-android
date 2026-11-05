@@ -91,7 +91,7 @@ fun SubstituteDialog(
             meal.lines.forEach { line ->
                 Choice(
                     label = line.name,
-                    aside = amountLabel(line.quantity, line.unit),
+                    aside = amountLabel(line.quantity, line.unit, line.grams),
                     selected = line.ingredientId == state.fromId,
                     onClick = { viewModel.pickLine(line.ingredientId) },
                 )
@@ -167,8 +167,8 @@ fun SubstituteDialog(
 /** What a substitution does to the meal: how the amount was decided, the figures before and after, and what stands in its way. */
 @Composable
 private fun PreviewOf(preview: SubstitutionPreview, acceptChange: Boolean, onAcceptChange: (Boolean) -> Unit, only: Boolean, onOnly: (Boolean) -> Unit) {
-    val fromAmount = amountLabel(preview.from.quantity, preview.from.unit)
-    val toAmount = amountLabel(preview.to.quantity, preview.to.unit)
+    val fromAmount = amountLabel(preview.from.quantity, preview.from.unit, preview.from.grams)
+    val toAmount = amountLabel(preview.to.quantity, preview.to.unit, preview.to.grams)
     val sizing = when (preview.sizing) {
         "capped" -> R.string.substitute_sizing_capped
         "mass" -> R.string.substitute_sizing_mass

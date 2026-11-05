@@ -1137,6 +1137,7 @@
     <string name="shopping_stale_hint">To, co już masz, zostanie policzone na poczet nowej listy.</string>
     <string name="amount_g">%1$s g</string>
     <string name="amount_ml">%1$s ml</string>
+    <string name="amount_with_grams">%1$s (%2$s)</string>
     <string name="unit_name_piece">szt.</string>
     <string name="unit_name_slice">kromki</string>
     <string name="unit_name_clove">ząbki</string>

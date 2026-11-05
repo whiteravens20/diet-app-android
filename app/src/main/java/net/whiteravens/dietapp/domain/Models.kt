@@ -397,6 +397,8 @@ data class MealLine(
     val quantity: Double,
     /** `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
     val unit: String,
+    /** What the amount weighs, where it is shown in pieces of some kind. */
+    val grams: Double? = null,
 )
 
 data class PlanDay(
@@ -756,6 +758,8 @@ data class RecipeIngredient(
     /** `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
     val unit: String,
     val note: String?,
+    /** What the amount weighs, where it is shown in pieces of some kind. */
+    val grams: Double? = null,
 )
 
 data class Recipe(
@@ -920,12 +924,17 @@ data class ShoppingItem(
     /** What is left to buy in the packs the ingredient is sold in; null where it is not sold in packs, or nothing is left to buy. */
     val packs: RowPacks?,
     val checked: Boolean,
+    /** What a piece weighs, for a row counted in pieces of some kind; null for one weighed. */
+    val gramsPerPiece: Double? = null,
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome
 
     /** What is still to be obtained for the row: its need less everything the user has for it. */
     val stillToBuy: Double get() = (totalQuantity - have).coerceAtLeast(0.0)
+
+    /** What [quantity] of the row weighs, where it is counted in pieces of some kind; null for nothing or a row weighed. */
+    fun gramsOf(quantity: Double): Double? = gramsPerPiece?.takeIf { quantity > 0.0 }?.let { quantity * it }
 
     /**
      * Whether [packs] are what is still to be bought of the row: they are counted from the need less

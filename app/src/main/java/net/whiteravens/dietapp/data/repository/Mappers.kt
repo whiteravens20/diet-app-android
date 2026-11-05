@@ -119,6 +119,7 @@ fun RecipeIngredientDto.toDomain() = RecipeIngredient(
     quantity = display.quantity,
     unit = display.unit,
     note = note,
+    grams = display.grams,
 )
 
 /** Where the recipes of the library everyone shares come from: nobody's to edit. */
@@ -212,7 +213,8 @@ fun CookingChangeDto.toDomain() = CookingChange(
 fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
 
 /** A planned amount as a meal shows it: rounded, in the unit its kind of food is counted in. */
-fun PlannedIngredientDto.toLine() = MealLine(ingredientId = ingredientId, name = name, quantity = display.quantity, unit = display.unit)
+fun PlannedIngredientDto.toLine() =
+    MealLine(ingredientId = ingredientId, name = name, quantity = display.quantity, unit = display.unit, grams = display.grams)
 
 fun SwapPreviewDto.toDomain() = SubstitutionPreview(
     before = before.toDomain(),
@@ -391,6 +393,7 @@ fun ShoppingListItemDto.toDomain() = ShoppingItem(
     estimatedCalories = estimatedCalories,
     packs = packs?.let { RowPacks(it.count, it.size, it.sizeUnit, it.quantity) },
     checked = checked,
+    gramsPerPiece = gramsPerPiece,
 )
 
 fun ShoppingListGroupDto.toDomain() = ShoppingGroup(

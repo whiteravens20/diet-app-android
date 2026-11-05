@@ -316,4 +316,20 @@ class PantryViewModelTest {
         assertFalse(model.state.value.offline)
         coVerify(exactly = 2) { pantry.rows("ada") }
     }
+
+    @Test
+    fun `a row whose amount waits to be sent shows the new amount without the weight the server gave the old one`() {
+        val garlic = PantryRow("g", "garlic", "Garlic", "spices", 3.0, "clove", null, shownGrams = 15.0)
+        val egg = PantryRow("e", "egg", "Egg", "dairy", 6.0, "piece", null, shownGrams = 330.0)
+        val waiting = listOf(
+            QueuedChange.PantryChanged("p", "g", quantity = 2.0),
+            QueuedChange.PantryChanged("p", "e", newDay = true, bestBefore = "2026-11-20"),
+        )
+
+        val shown = listOf(garlic, egg).withWaiting("p", waiting)
+
+        assertEquals(garlic.copy(shown = 2.0, shownGrams = null), shown[0])
+        // A new day alone leaves the amount, and what it weighs, as the server said.
+        assertEquals(egg.copy(bestBefore = LocalDate.parse("2026-11-20")), shown[1])
+    }
 }

@@ -739,9 +739,12 @@ data class PatchInventoryItemRequest(val quantity: Double? = null, val bestBefor
 
 // ── Recipes (packages/shared/src/recipe.ts) ─────────────────────────────────
 
-/** An amount as it is shown: rounded, in `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
+/**
+ * An amount as it is shown: rounded, in `g` | `ml` | `piece` | `slice` | `clove` | `handful`, and
+ * what it weighs where it is shown in pieces of some kind.
+ */
 @Serializable
-data class DisplayAmountDto(val quantity: Double, val unit: String)
+data class DisplayAmountDto(val quantity: Double, val unit: String, val grams: Double? = null)
 
 @Serializable
 data class RecipeIngredientDto(
@@ -1623,6 +1626,8 @@ data class ShoppingListItemDto(
     val pantryBestBefore: String? = null,
     /** Estimated calories contributed by this line (informational). */
     val estimatedCalories: Double,
+    /** What a piece weighs, for a row counted in pieces of some kind; null for one weighed. */
+    val gramsPerPiece: Double? = null,
     /** How the row is bought in packs; null for an ingredient not sold in packs, or nothing left to buy. */
     val packs: ShoppingPacksDto? = null,
     val checked: Boolean = false,

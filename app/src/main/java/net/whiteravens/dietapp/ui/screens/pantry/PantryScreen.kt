@@ -310,7 +310,7 @@ private fun RowItem(row: PantryRow, waiting: Boolean, added: Boolean, enabled: B
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(row.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Text(
-                amountLabel(row.shown, row.shownUnit),
+                amountLabel(row.shown, row.shownUnit, row.shownGrams),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = 8.dp),
             )

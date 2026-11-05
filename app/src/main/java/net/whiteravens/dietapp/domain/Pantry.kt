@@ -16,6 +16,8 @@ data class PantryRow(
     val shown: Double,
     val shownUnit: String,
     val bestBefore: LocalDate?,
+    /** What [shown] weighs, where it is in pieces of some kind. */
+    val shownGrams: Double? = null,
 )
 
 /**

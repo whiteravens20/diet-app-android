@@ -42,6 +42,12 @@ import java.time.LocalDate
  */
 @RunWith(AndroidJUnit4::class)
 class PantryTest {
+    /**
+     * An amount in pieces as a row the server answered shows it, with what it weighs: a clove of
+     * garlic is 5 g and an egg 55 g in the catalogue. A row that waits to be sent says no weight.
+     */
+    private fun weighing(amount: String, grams: Int) = text(R.string.amount_with_grams, amount, text(R.string.amount_g, grams.toString()))
+
     @get:Rule
     val screen = createAndroidComposeRule<MainActivity>()
 
@@ -68,7 +74,7 @@ class PantryTest {
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.pantry_title)).performClick()
         // The garlic, counted in cloves, is best eaten tomorrow.
-        screen.scrollToText(plural(R.plurals.amount_clove, 3, "3"))
+        screen.scrollToText(weighing(plural(R.plurals.amount_clove, 3, "3"), 15))
         screen.scrollToText(text(R.string.pantry_expiring_soon))
         screen.keepScreenshot("pantry-a-row-going-soon")
 
@@ -91,7 +97,7 @@ class PantryTest {
         screen.waitForEnabled(text(R.string.pantry_add))
         screen.onNodeWithText(text(R.string.pantry_add)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.pantry(account, profileId)[eggId]?.let { it.first == 6.0 && it.second == "piece" } == true }
-        screen.scrollToText(plural(R.plurals.amount_piece, 6, "6"))
+        screen.scrollToText(weighing(plural(R.plurals.amount_piece, 6, "6"), 330))
         screen.keepScreenshot("pantry-two-rows")
 
         // The egg's amount changed in the fields that open under it.
@@ -126,7 +132,7 @@ class PantryTest {
         screen.startSignedIn(account)
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.pantry_title)).performClick()
-        screen.scrollToText(plural(R.plurals.amount_clove, 3, "3"))
+        screen.scrollToText(weighing(plural(R.plurals.amount_clove, 3, "3"), 15))
 
         // The egg found while there is a network, and put in once there is none: it is shown among the
         // rows, and says that it waits to be sent.
@@ -162,7 +168,7 @@ class PantryTest {
             Instance.pantry(account, profileId).let { it[eggId]?.first == 6.0 && it[garlicId]?.first == 2.0 }
         }
         screen.waitUntil(30_000) { screen.onAllNodes(waiting).fetchSemanticsNodes().isEmpty() }
-        screen.scrollToText(plural(R.plurals.amount_piece, 6, "6"))
+        screen.scrollToText(weighing(plural(R.plurals.amount_piece, 6, "6"), 330))
         screen.waitUntil(30_000) { screen.onAllNodesWithText(text(R.string.change_waiting)).fetchSemanticsNodes().isEmpty() }
         screen.keepScreenshot("pantry-changes-sent")
     }

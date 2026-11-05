@@ -264,9 +264,19 @@ fun formatMoment(at: Instant): String =
         .withLocale(LocalConfiguration.current.locales[0])
         .format(at.atZone(ZoneId.systemDefault()))
 
-/** An amount as the server rounds it and names its unit: `120 g`, `2 slices`, `0.5 pieces`. */
+/**
+ * An amount as the server rounds it and names its unit: `120 g`, `2 slices`, `0.5 pieces`; with
+ * what it weighs beside it where it is in pieces of some kind and [grams] says: `2 pieces (110 g)`.
+ */
 @Composable
-fun amountLabel(quantity: Double, unit: String): String {
+fun amountLabel(quantity: Double, unit: String, grams: Double? = null): String {
+    val shown = countedLabel(quantity, unit)
+    return if (grams == null || grams <= 0.0 || unit == "g" || unit == "ml") shown
+    else stringResource(R.string.amount_with_grams, shown, stringResource(R.string.amount_g, formatNumber(grams, 0)))
+}
+
+@Composable
+private fun countedLabel(quantity: Double, unit: String): String {
     val locale = LocalConfiguration.current.locales[0]
     val number = NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(quantity)
     return when (unit) {

@@ -25,7 +25,7 @@ fun listWords(list: ShoppingList): ListWords {
         title = stringResource(R.string.shopping_copy_title, formatDates(list.fromDate, list.toDate)),
         nothing = stringResource(R.string.shopping_copy_nothing),
         aisles = list.groups.associate { it.category to categoryLabel(it.category) },
-        toBuy = items.associate { it.id to amountLabel(it.stillToBuy, it.displayUnit) },
+        toBuy = items.associate { it.id to amountLabel(it.stillToBuy, it.displayUnit, it.gramsOf(it.stillToBuy)) },
         packs = items.filter { it.packsStand }.associate { item -> item.id to packsText(item.packs!!) },
     )
 }

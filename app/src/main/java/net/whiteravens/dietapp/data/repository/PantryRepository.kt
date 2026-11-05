@@ -97,6 +97,7 @@ private fun InventoryItemDto.toDomain() = PantryRow(
     shown = display.quantity,
     shownUnit = display.unit,
     bestBefore = bestBefore?.let(LocalDate::parse),
+    shownGrams = display.grams,
 )
 
 private fun IngredientDto.toStockable() = StockableIngredient(id, name, category, pantryUnits, pantryUnits.first(), displayUnit ?: "piece")

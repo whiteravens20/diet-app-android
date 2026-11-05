@@ -373,7 +373,7 @@ private fun RecipeBody(
                         }
                     }
                     Text(
-                        amountLabel(ingredient.quantity, ingredient.unit),
+                        amountLabel(ingredient.quantity, ingredient.unit, ingredient.grams),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

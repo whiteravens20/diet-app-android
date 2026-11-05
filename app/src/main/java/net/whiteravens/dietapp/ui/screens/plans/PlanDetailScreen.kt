@@ -1475,7 +1475,7 @@ private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: S
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(line.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                                 Text(
-                                    amountLabel(line.quantity, line.unit),
+                                    amountLabel(line.quantity, line.unit, line.grams),
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(start = 12.dp),
                                 )

@@ -511,7 +511,7 @@ private fun ShoppingItemRow(
                     if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
                 }
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {
-                    Text(amountLabel(remaining, item.displayUnit), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(amountLabel(remaining, item.displayUnit, item.gramsOf(remaining)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (homeNow > 0 || boughtNow > 0) {
                         Text(
                             stringResource(R.string.shopping_of_total, amountLabel(item.totalQuantity, item.displayUnit)),
