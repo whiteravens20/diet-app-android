@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Wording mirrors the web app's messages/pl.json wherever a key exists there. -->
 <resources>
-    <string name="app_name">Diet App</string>
     <string name="api_language">pl</string>
 
     <!-- Navigation -->
