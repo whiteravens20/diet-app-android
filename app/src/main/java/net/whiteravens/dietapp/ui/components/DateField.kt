@@ -46,6 +46,7 @@ fun DateField(
     modifier: Modifier = Modifier,
     years: IntRange = DatePickerDefaults.YearRange,
     latest: LocalDate? = null,
+    optional: Boolean = false,
 ) {
     var picking by rememberSaveable { mutableStateOf(false) }
     Box(modifier) {
@@ -64,7 +65,7 @@ fun DateField(
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().then(if (optional) Modifier.optionalMark() else Modifier),
         )
         Box(Modifier.matchParentSize().clickable(role = Role.Button, onClickLabel = label) { picking = true })
     }

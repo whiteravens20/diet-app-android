@@ -81,6 +81,7 @@ import net.whiteravens.dietapp.ui.common.sexLabel
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.components.DOT
+import net.whiteravens.dietapp.ui.components.optionalMark
 
 /*
  * The fields a profile is made of, as every form that asks for them shows them: the form of a
@@ -121,6 +122,7 @@ internal fun FormField(
     placeholder: String? = null,
     keyboardType: KeyboardType = KeyboardType.Number,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    optional: Boolean = false,
 ) {
     OutlinedTextField(
         value = value,
@@ -132,7 +134,8 @@ internal fun FormField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(capitalization = capitalization, keyboardType = keyboardType, imeAction = ImeAction.Next),
         shape = MaterialTheme.shapes.medium,
-        modifier = modifier.fillMaxWidth(),
+        // A field that may stay empty says so in its outline.
+        modifier = modifier.fillMaxWidth().then(if (optional) Modifier.optionalMark() else Modifier),
     )
 }
 
@@ -333,6 +336,7 @@ internal fun TargetWeightField(form: ProfileForm, unit: WeightUnit, marks: Profi
         value = form.targetWeight,
         onValueChange = { typed -> onEdit { it.copy(targetWeight = typed) } },
         label = stringResource(R.string.profile_target_weight, unit.code),
+        optional = true,
         hint = stringResource(R.string.profile_target_weight_hint),
         problem = marks.of(ProfileField.TARGET_WEIGHT, unit.refusalBound, whole = false),
         keyboardType = KeyboardType.Decimal,
@@ -346,6 +350,7 @@ internal fun OwnTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: Form
         value = form.ownTarget,
         onValueChange = { typed -> onEdit { it.copy(ownTarget = typed) } },
         label = stringResource(R.string.profile_own_target),
+        optional = true,
         hint = stringResource(R.string.profile_own_target_hint),
         placeholder = stringResource(R.string.profile_auto),
         problem = marks.of(ProfileField.OWN_TARGET),
@@ -635,6 +640,7 @@ internal fun LimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdi
         value = limits.kindPerDay,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(kindPerDay = typed)) } },
         label = stringResource(R.string.profile_max_meals_per_day_same_kind),
+        optional = true,
         placeholder = stringResource(R.string.profile_no_limit),
         problem = marks.of(ProfileField.KIND_PER_DAY),
     )
@@ -642,6 +648,7 @@ internal fun LimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdi
         value = limits.kindPerWeek,
         onValueChange = { typed -> onEdit { it.copy(limits = it.limits.copy(kindPerWeek = typed)) } },
         label = stringResource(R.string.profile_max_meals_per_week_same_kind),
+        optional = true,
         placeholder = stringResource(R.string.profile_no_limit),
         problem = marks.of(ProfileField.KIND_PER_WEEK),
     )
@@ -699,6 +706,7 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, marks: ProfileMarks, onEdi
                     value = row.perDay,
                     onValueChange = { typed -> change(index) { it.copy(perDay = typed) } },
                     label = stringResource(R.string.profile_kind_limit_per_day),
+                    optional = true,
                     placeholder = stringResource(R.string.profile_same_as_above),
                     problem = numberProblem(KindPart.DAY in marks.kindNotNumbers[row.kind].orEmpty(), marks.refusals.kinds[row.kind]?.get(KindPart.DAY)),
                 )
@@ -706,6 +714,7 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, marks: ProfileMarks, onEdi
                     value = row.perWeek,
                     onValueChange = { typed -> change(index) { it.copy(perWeek = typed) } },
                     label = stringResource(R.string.profile_kind_limit_per_week),
+                    optional = true,
                     placeholder = stringResource(R.string.profile_same_as_above),
                     problem = numberProblem(KindPart.WEEK in marks.kindNotNumbers[row.kind].orEmpty(), marks.refusals.kinds[row.kind]?.get(KindPart.WEEK)),
                 )

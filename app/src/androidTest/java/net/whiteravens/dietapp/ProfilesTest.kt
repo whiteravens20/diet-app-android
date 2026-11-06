@@ -4,8 +4,10 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isPopup
@@ -74,6 +76,8 @@ class ProfilesTest {
         // About 70 kg in the unit of where the phone is: a body the paces are not held for.
         val weight = if (unit == WeightUnit.LB) "154" else "70"
         type(text(R.string.profile_weight, unit.code), weight)
+        screen.onNode(hasText(text(R.string.profile_weight, unit.code)) and hasSetTextAction())
+            .assert(!hasStateDescription(text(R.string.common_optional)))
         // What the body comes to is shown as it is typed, said to be no medical advice: maintenance and
         // the figure at rest, as the step chooses no pace. The target follows on the step that does.
         screen.waitForText(text(R.string.calorie_preview_maintenance))
@@ -87,6 +91,11 @@ class ProfilesTest {
 
         screen.waitForText(text(R.string.profile_wizard_goal_lead))
         screen.waitForText(text(R.string.calorie_preview_daily_target))
+        // The weight to work towards and a typed target may stay empty and say so in their outline; a
+        // field the body needs does not.
+        val optional = hasStateDescription(text(R.string.common_optional))
+        screen.onNode(hasText(text(R.string.profile_target_weight, unit.code)) and hasSetTextAction()).assert(optional)
+        screen.onNode(hasText(text(R.string.profile_own_target)) and hasSetTextAction()).assert(optional)
         screen.onAllNodesWithText(text(R.string.calorie_preview_target_next)).assertCountEquals(0)
         screen.onNodeWithText(text(R.string.calorie_preview_daily_target)).performScrollTo()
         screen.keepScreenshot("profiles-first-goal")

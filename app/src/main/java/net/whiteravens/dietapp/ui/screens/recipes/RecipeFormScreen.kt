@@ -293,6 +293,7 @@ private fun LineFields(line: FormLine, marks: RecipeMarks, onEdit: RecipeEdit) {
             value = line.note,
             onValueChange = { typed -> change { it.copy(note = typed) } },
             label = stringResource(R.string.own_recipe_field_note),
+            optional = true,
             problem = refused[LinePart.NOTE]?.let { refusalOf(it, Bound.Characters) },
             keyboardType = KeyboardType.Text,
             capitalization = KeyboardCapitalization.Sentences,

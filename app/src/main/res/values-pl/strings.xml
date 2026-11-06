@@ -13,6 +13,7 @@
     <!-- Common -->
     <string name="common_retry">Spróbuj ponownie</string>
     <string name="pull_to_read">Odśwież</string>
+    <string name="common_optional">opcjonalnie</string>
     <string name="common_cancel">Anuluj</string>
     <string name="common_back">Wstecz</string>
     <string name="common_save">Zapisz</string>
@@ -1225,7 +1226,7 @@
     <string name="profile_height_cm">Wzrost (cm)</string>
     <string name="profile_weight">Waga (%1$s)</string>
     <string name="profile_target_weight">Waga docelowa (%1$s)</string>
-    <string name="profile_target_weight_hint">Opcjonalnie. Wykres wagi rysuje ją jako linię.</string>
+    <string name="profile_target_weight_hint">Wykres wagi rysuje ją jako linię.</string>
     <string name="profile_activity_level">Poziom aktywności</string>
     <string name="profile_activity_hint_sedentary">Głównie siedzenie, mało ruchu albo wcale.</string>
     <string name="profile_activity_hint_light">Lekki wysiłek albo dłuższe spacery od jednego do trzech dni w tygodniu.</string>
@@ -1241,7 +1242,7 @@
     <string name="profile_pace_slowed">spowolnione</string>
     <string name="profile_pace_held">wstrzymane</string>
     <string name="profile_pace_slowed_note">Tempo oznaczone jako „spowolnione” odebrałoby więcej niż jedną czwartą Twojego zapotrzebowania albo zeszło poniżej najniższego celu, jaki wylicza plan, więc plan odejmuje mniej.</string>
-    <string name="profile_own_target">Cel kcal wpisany ręcznie (opcjonalnie)</string>
+    <string name="profile_own_target">Cel kcal wpisany ręcznie</string>
     <string name="profile_own_target_hint">Zostaw puste, a zdecyduje tempo.</string>
     <string name="profile_auto">auto</string>
     <string name="profile_meals_per_day">Posiłków dziennie</string>
@@ -1689,9 +1690,9 @@
     <string name="diary_meal_name">Nazwa</string>
     <string name="diary_one_portion">Jedna porcja zawiera</string>
     <string name="diary_calories">Kalorie (kcal)</string>
-    <string name="diary_protein">Białko (g) · opcjonalnie</string>
-    <string name="diary_fat">Tłuszcz (g) · opcjonalnie</string>
-    <string name="diary_carbs">Węglowodany (g) · opcjonalnie</string>
+    <string name="diary_protein">Białko (g)</string>
+    <string name="diary_fat">Tłuszcz (g)</string>
+    <string name="diary_carbs">Węglowodany (g)</string>
     <string name="diary_macros_optional">Zostaw białko, tłuszcz lub węglowodany puste, gdy ich nie znasz: zostaną oszacowane z proporcji celu dnia i oznaczone jako szacunek.</string>
     <string name="diary_adds_line">Doda do dnia %1$s kcal.</string>
     <string name="diary_submit">Dodaj do dziennika</string>

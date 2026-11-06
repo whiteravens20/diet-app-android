@@ -16,6 +16,7 @@
     <!-- Common -->
     <string name="common_retry">Try again</string>
     <string name="pull_to_read">Refresh</string>
+    <string name="common_optional">optional</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_back">Back</string>
     <string name="common_save">Save</string>
@@ -1125,7 +1126,7 @@
     <string name="profile_height_cm">Height (cm)</string>
     <string name="profile_weight">Weight (%1$s)</string>
     <string name="profile_target_weight">Weight to work towards (%1$s)</string>
-    <string name="profile_target_weight_hint">Optional. The chart of your weights draws it as a line.</string>
+    <string name="profile_target_weight_hint">The chart of your weights draws it as a line.</string>
     <string name="profile_activity_level">Activity level</string>
     <string name="profile_activity_hint_sedentary">Mostly sitting, little or no exercise.</string>
     <string name="profile_activity_hint_light">Light exercise or long walks on one to three days a week.</string>
@@ -1141,7 +1142,7 @@
     <string name="profile_pace_slowed">slowed</string>
     <string name="profile_pace_held">on hold</string>
     <string name="profile_pace_slowed_note">A pace marked “slowed” would take more than a quarter of your maintenance, or go under the lowest a calculated plan goes, so the plan takes less.</string>
-    <string name="profile_own_target">Manual kcal override (optional)</string>
+    <string name="profile_own_target">Manual kcal override</string>
     <string name="profile_own_target_hint">Leave it empty and the pace decides.</string>
     <string name="profile_auto">auto</string>
     <string name="profile_meals_per_day">Meals per day</string>
@@ -1572,9 +1573,9 @@
     <string name="diary_meal_name">Name</string>
     <string name="diary_one_portion">One serving holds</string>
     <string name="diary_calories">Calories (kcal)</string>
-    <string name="diary_protein">Protein (g) · optional</string>
-    <string name="diary_fat">Fat (g) · optional</string>
-    <string name="diary_carbs">Carbs (g) · optional</string>
+    <string name="diary_protein">Protein (g)</string>
+    <string name="diary_fat">Fat (g)</string>
+    <string name="diary_carbs">Carbs (g)</string>
     <string name="diary_macros_optional">Leave protein, fat or carbohydrate empty when you do not know it: it is estimated from the proportions of the day\'s target and marked as an estimate.</string>
     <string name="diary_adds_line">Adds %1$s kcal to the day.</string>
     <string name="diary_submit">Add to the diary</string>

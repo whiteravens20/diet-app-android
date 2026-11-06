@@ -412,7 +412,7 @@ private fun AmountField(
 private fun DayField(day: LocalDate?, enabled: Boolean, onDay: (LocalDate?) -> Unit) {
     val label = stringResource(R.string.pantry_best_before)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        DateField(label, day, onPick = { if (enabled) onDay(it) }, Modifier.weight(1f))
+        DateField(label, day, onPick = { if (enabled) onDay(it) }, Modifier.weight(1f), optional = true)
         if (day != null) {
             TextButton(onClick = { onDay(null) }, enabled = enabled) { Text(stringResource(R.string.common_clear)) }
         }

@@ -146,6 +146,7 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             value = form.calorieTarget,
                             onValueChange = { typed -> viewModel.edit { it.copy(calorieTarget = typed) } },
                             label = stringResource(R.string.plans_calorie_target),
+                            optional = true,
                             placeholder = state.profileTarget?.toString(),
                             problem = numberProblem(PlanField.CALORIE_TARGET in problems, refusals.plan[PlanField.CALORIE_TARGET]),
                         )
@@ -267,6 +268,7 @@ private fun AdvancedOptions(
                     value = form.maxRepeats,
                     onValueChange = { typed -> onEdit { it.copy(maxRepeats = typed) } },
                     label = stringResource(R.string.plans_advanced_variety_floor),
+                    optional = true,
                     placeholder = defaultMaxRepeats?.toString(),
                     hint = defaultMaxRepeats?.let { stringResource(R.string.plans_advanced_variety_floor_hint_most, it.toString()) }
                         ?: stringResource(R.string.plans_advanced_variety_floor_hint_none),

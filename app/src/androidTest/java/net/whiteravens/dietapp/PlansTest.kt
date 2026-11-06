@@ -6,10 +6,12 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -430,6 +432,10 @@ class PlansTest {
         screen.scrollToText(text(R.string.plans_day_settings))
         screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
         screen.waitForText(text(R.string.plans_settings_unchanged))
+        // The day's own target and its cooking time may stay empty, and say so in their outline.
+        val optional = hasStateDescription(text(R.string.common_optional))
+        screen.onNode(hasText(text(R.string.plans_settings_own_target)) and hasSetTextAction() and hasAnyAncestor(isDialog())).assert(optional)
+        screen.onNode(hasText(text(R.string.plans_settings_cook_time)) and hasSetTextAction() and hasAnyAncestor(isDialog())).assert(optional)
         screen.onNode(hasText(text(R.string.plans_settings_kind)) and hasAnyAncestor(isDialog())).performClick()
         screen.onNode(hasText(text(R.string.plans_day_kind_training)) and hasAnyAncestor(isPopup())).performClick()
         val saveDay = hasText(text(R.string.plans_settings_save_day)) and hasAnyAncestor(isDialog())

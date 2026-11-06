@@ -102,6 +102,7 @@ fun OwnProductDialog(
         label = stringResource(label),
         problem = problemOf(field),
         keyboardType = KeyboardType.Decimal,
+        optional = field != OwnField.CALORIES,
         modifier = modifier.bringIntoViewRequester(places.getValue(field)),
     )
 
@@ -128,6 +129,7 @@ fun OwnProductDialog(
                     value = draft.code,
                     onValueChange = { typed -> viewModel.type { it.copy(code = typed.take(CODE_LONGEST)) } },
                     label = stringResource(R.string.products_code),
+                    optional = true,
                     hint = stringResource(R.string.products_code_hint),
                     problem = problemOf(OwnField.CODE),
                     modifier = Modifier.bringIntoViewRequester(places.getValue(OwnField.CODE)),
@@ -144,12 +146,14 @@ fun OwnProductDialog(
                     value = draft.brand,
                     onValueChange = { typed -> viewModel.type { it.copy(brand = typed.take(OwnProductLimits.BRAND)) } },
                     label = stringResource(R.string.products_brand),
+                    optional = true,
                     keyboardType = KeyboardType.Text,
                 )
                 FormField(
                     value = draft.pack,
                     onValueChange = { typed -> viewModel.type { it.copy(pack = typed.take(OwnProductLimits.PACK)) } },
                     label = stringResource(R.string.products_pack),
+                    optional = true,
                     keyboardType = KeyboardType.Text,
                 )
                 ChoiceField(
@@ -165,6 +169,7 @@ fun OwnProductDialog(
                         value = draft.packAmount,
                         onValueChange = { typed -> viewModel.type { it.copy(packAmount = typed) } },
                         label = stringResource(R.string.products_pack_amount, unit),
+                        optional = true,
                         problem = problemOf(OwnField.PACK_AMOUNT),
                         keyboardType = KeyboardType.Decimal,
                         modifier = Modifier.weight(1f).bringIntoViewRequester(places.getValue(OwnField.PACK_AMOUNT)),
@@ -173,6 +178,7 @@ fun OwnProductDialog(
                         value = draft.servingAmount,
                         onValueChange = { typed -> viewModel.type { it.copy(servingAmount = typed) } },
                         label = stringResource(R.string.products_serving_amount, unit),
+                        optional = true,
                         problem = problemOf(OwnField.SERVING_AMOUNT),
                         keyboardType = KeyboardType.Decimal,
                         modifier = Modifier.weight(1f).bringIntoViewRequester(places.getValue(OwnField.SERVING_AMOUNT)),
