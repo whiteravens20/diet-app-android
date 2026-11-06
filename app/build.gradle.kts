@@ -252,6 +252,44 @@ val writeErrorTexts = tasks.register<WriteErrorTexts>("writeErrorTexts") {
 }
 
 /**
+ * Writes the language each set of the app's texts asks the API to answer in (`api_language`, which
+ * ClientHeaders sends as Accept-Language): `en` in `values` and its own code in the folder of every
+ * other language the app ships. It follows the texts a phone gets rather than the phone's language,
+ * and it is a value of the build, not a text to translate, so it is not in strings.xml.
+ */
+abstract class WriteApiLanguage : DefaultTask() {
+    /** The languages the app ships: English goes into `values`, each of the others into its own folder. */
+    @get:Input
+    abstract val shipped: ListProperty<String>
+
+    @get:OutputDirectory
+    abstract val resources: DirectoryProperty
+
+    @TaskAction
+    fun write() {
+        // Gradle keeps what an earlier run wrote: a language taken off the list leaves no folder behind.
+        resources.get().asFile.deleteRecursively()
+        for (language in shipped.get()) {
+            val file = resources.get().dir(if (language == "en") "values" else "values-$language").file("api_language.xml").asFile
+            file.parentFile.mkdirs()
+            file.writeText(
+                buildString {
+                    appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+                    appendLine("<!-- Written by the build from the languages the app ships. -->")
+                    appendLine("<resources>")
+                    appendLine("    <string name=\"api_language\">$language</string>")
+                    appendLine("</resources>")
+                },
+            )
+        }
+    }
+}
+
+val writeApiLanguage = tasks.register<WriteApiLanguage>("writeApiLanguage") {
+    shipped.set(languages)
+}
+
+/**
  * Where Room writes the schema of each version of the cache's database, kept in the repository: a
  * migration between two versions is generated, and checked, from their two schemas.
  */
@@ -268,6 +306,7 @@ ksp { arg(RoomSchemas(file("schemas"))) }
 androidComponents {
     onVariants { variant ->
         variant.sources.res?.addGeneratedSourceDirectory(writeErrorTexts, WriteErrorTexts::resources)
+        variant.sources.res?.addGeneratedSourceDirectory(writeApiLanguage, WriteApiLanguage::resources)
         variant.sources.kotlin?.addGeneratedSourceDirectory(writeErrorTexts, WriteErrorTexts::kotlin)
     }
 }
