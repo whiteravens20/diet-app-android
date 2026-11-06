@@ -60,9 +60,9 @@ import kotlin.math.floor
 /**
  * The weights a profile logged, as the web's card keeps them: today's weight typed in the account's
  * unit and logged, the last one taken back once it is confirmed, and ninety days of them as a chart
- * with the mean of each seven days and a line at the weight the profile works towards, or at the one
- * it registered with while it names none. The API keeps kilograms, and says the days and their means.
- * The last weight [waiting] to be sent says so; the chart has it once it is sent.
+ * with the mean of each seven days and a line at the weight the profile works towards, where it
+ * names one. The API keeps kilograms, and says the days and their means. The last weight [waiting]
+ * to be sent says so; the chart has it once it is sent.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -161,15 +161,7 @@ internal fun WeightCard(
                         textAlign = TextAlign.Center,
                     )
                 }
-                else -> {
-                    val target = profile.targetWeightKg
-                    WeightChart(
-                        points = days,
-                        lineKg = target ?: profile.weightKg,
-                        lineLabel = stringResource(if (target != null) R.string.weight_target_label else R.string.weight_reference_label),
-                        unit = unit,
-                    )
-                }
+                else -> WeightChart(points = days, targetKg = profile.targetWeightKg, unit = unit)
             }
         }
     }
@@ -181,15 +173,16 @@ private fun Failure(said: String) = Text(said, style = MaterialTheme.typography.
 /**
  * The weights in the account's unit, a day to a step: what was logged as a thin line with dots, the
  * mean of the seven days that end with each day as a thicker one, and a dashed line across at
- * [lineKg]. The same days are said in words to whoever does not see the chart.
+ * [targetKg], the weight the profile works towards, where it names one. The same days are said in
+ * words to whoever does not see the chart.
  */
 @Composable
-private fun WeightChart(points: List<WeightPoint>, lineKg: Double, lineLabel: String, unit: WeightUnit) {
+private fun WeightChart(points: List<WeightPoint>, targetKg: Double?, unit: WeightUnit) {
     val logged = MaterialTheme.colorScheme.onSurfaceVariant
     val mean = MaterialTheme.colorScheme.primary
     val line = ChartAmber
     val edge = MaterialTheme.colorScheme.outlineVariant
-    val values = points.flatMap { listOf(unit.shown(it.kg), unit.shown(it.mean)) } + unit.shown(lineKg)
+    val values = points.flatMap { listOf(unit.shown(it.kg), unit.shown(it.mean)) } + listOfNotNull(targetKg?.let { unit.shown(it) })
     // Room above and below the weights, whole units at both ends, so that a steady weight is not drawn along an edge.
     val room = maxOf((values.max() - values.min()) * 0.1, 0.5)
     val bottom = floor(values.min() - room)
@@ -219,7 +212,9 @@ private fun WeightChart(points: List<WeightPoint>, lineKg: Double, lineLabel: St
             }
             drawLine(edge, Offset(0f, 0f), Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
             drawLine(edge, Offset(0f, size.height), Offset(size.width, size.height), strokeWidth = 1.dp.toPx())
-            drawLine(line, Offset(0f, y(lineKg)), Offset(size.width, y(lineKg)), strokeWidth = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
+            if (targetKg != null) {
+                drawLine(line, Offset(0f, y(targetKg)), Offset(size.width, y(targetKg)), strokeWidth = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
+            }
             fun through(of: (WeightPoint) -> Double) = Path().apply {
                 points.forEachIndexed { index, point -> if (index == 0) moveTo(x(index), y(of(point))) else lineTo(x(index), y(of(point))) }
             }
@@ -235,7 +230,7 @@ private fun WeightChart(points: List<WeightPoint>, lineKg: Double, lineLabel: St
     FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Key(logged, stringResource(R.string.weight_series_entry), thickness = 1, dashed = false)
         Key(mean, stringResource(R.string.weight_series_mean), thickness = 3, dashed = false)
-        Key(line, lineLabel, thickness = 2, dashed = true)
+        if (targetKg != null) Key(line, stringResource(R.string.weight_target_label), thickness = 2, dashed = true)
     }
 }
 
