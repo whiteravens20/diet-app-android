@@ -99,7 +99,7 @@
     <string name="overview_title_active">The plan under way</string>
     <string name="overview_title_upcoming">The plan that begins next</string>
     <string name="overview_title_past">The plan that ended last</string>
-    <string name="overview_span">%1$s · %2$s</string>
+    <string name="overview_span">%1$s · %2$s</string>
     <string name="overview_open">Open the plan</string>
     <string name="overview_none">No plan yet</string>
     <string name="overview_none_body">Make a plan for this profile, and this is where it says how the plan stands against its target.</string>
@@ -230,18 +230,18 @@
         <item quantity="other">, and %1$d more plans hold this day</item>
     </plurals>
     <plurals name="plans_card_title">
-        <item quantity="one">%1$s · %2$d day</item>
-        <item quantity="other">%1$s · %2$d days</item>
+        <item quantity="one">%1$s · %2$d day</item>
+        <item quantity="other">%1$s · %2$d days</item>
     </plurals>
     <string name="plans_day_skipped">This day is skipped.</string>
     <string name="plans_today">Today</string>
     <string name="plans_go_to_today">Go to today</string>
     <plurals name="plans_plan_summary">
-        <item quantity="one">%1$d-day plan · %2$s</item>
-        <item quantity="other">%1$d-day plan · %2$s</item>
+        <item quantity="one">%1$d-day plan · %2$s</item>
+        <item quantity="other">%1$d-day plan · %2$s</item>
     </plurals>
-    <string name="plans_plan_meta">From %1$s · %2$s kcal/day avg · %3$s%% ingredient reuse</string>
-    <string name="plans_plan_macros">A day of this plan holds on average: protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g.</string>
+    <string name="plans_plan_meta">From %1$s · %2$s kcal/day avg · %3$s%% ingredient reuse</string>
+    <string name="plans_plan_macros">A day of this plan holds on average: protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g.</string>
     <string name="plans_may_give_way">This plan may go outside: %1$s.</string>
     <string name="plans_pantry_counted">The pantry counted in the choice of recipes.</string>
     <string name="plans_pantry_left_out">The pantry was left out of this plan for variety: the plans before it leaned on it.</string>
@@ -251,7 +251,7 @@
         <item quantity="other">%1$d meals of this plan hold something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
     </plurals>
     <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
-    <string name="plans_day_macros_of">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
+    <string name="plans_day_macros_of">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
     <string name="plans_custom_chip">Custom</string>
     <string name="plans_custom_meal">Custom meal</string>
     <string name="plans_custom_macros_note">Custom meal — macros entered by you.</string>
@@ -273,7 +273,7 @@
     <string name="plans_use_up_ask">What would use them up?</string>
     <string name="plans_use_up_asking">Looking…</string>
     <string name="plans_use_up_takes">takes %1$s more of %2$s, and %3$s of its pack would be left</string>
-    <string name="plans_use_up_energy">The meal: %1$s → %2$s kcal · protein %3$s → %4$s g</string>
+    <string name="plans_use_up_energy">The meal: %1$s → %2$s kcal · protein %3$s → %4$s g</string>
     <string name="plans_use_up_none">Nothing that may take the place of a meal would leave less of these packs.</string>
     <string name="plans_use_up_swap">%1$s in place of %2$s</string>
     <string name="plans_options">Plan options</string>
@@ -283,7 +283,7 @@
     <string name="plans_add_custom_meal">+ Add custom meal</string>
     <string name="plans_delete_confirm">Delete this plan? This cannot be undone.</string>
     <string name="plans_rebalance_title">The portions of the day were sized again</string>
-    <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
+    <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
     <string name="plans_rebalance_best_effort">The day is still off its target: sizing its meals could not close the gap.</string>
     <string name="plans_rebalance_left_over">The rest of the plan is still %1$s kcal over: the other days have no more room inside their own targets.</string>
     <string name="plans_rebalance_left_under">The rest of the plan is still %1$s kcal short: the other days have no more room inside their own targets.</string>
@@ -299,7 +299,7 @@
     <string name="plans_custom_servings">Servings</string>
     <string name="plans_custom_per_serving">One serving holds</string>
     <string name="plans_custom_servings_hint">The meal counts as this many of those servings.</string>
-    <string name="plans_custom_total">The meal adds to the day: %1$s kcal · protein %2$s g · fat %3$s g · carbs %4$s g.</string>
+    <string name="plans_custom_total">The meal adds to the day: %1$s kcal · protein %2$s g · fat %3$s g · carbs %4$s g.</string>
     <string name="plans_custom_total_pending">What the meal adds to the day shows here once one serving and the number of servings are filled in.</string>
     <string name="plans_custom_submit">Add meal</string>
     <string name="plans_change_meal">Change</string>
@@ -315,7 +315,7 @@
     <string name="plans_no_favorites_for_slot">No favorited recipes for %1$s yet — open a recipe to favorite it.</string>
     <string name="plans_off_diet_tag">off-diet</string>
     <string name="plans_offer_title">A recipe in the place of this meal</string>
-    <string name="plans_offer_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g</string>
+    <string name="plans_offer_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g</string>
     <string name="plans_offer_day">The day would hold %1$s of %2$s kcal before its other meals are balanced around this one.</string>
     <string name="plans_offer_take">Swap it in</string>
     <string name="plans_offer_another">Another</string>
@@ -430,7 +430,7 @@
     <string name="plans_ways_take">Take this day</string>
     <string name="plans_ways_stays">stays</string>
     <string name="plans_ways_meal_energy">%1$s kcal</string>
-    <string name="plans_ways_day_line">%1$s of %2$s kcal · protein %3$s g · fat %4$s g · carbs %5$s g</string>
+    <string name="plans_ways_day_line">%1$s of %2$s kcal · protein %3$s g · fat %4$s g · carbs %5$s g</string>
     <string name="plans_ways_none">The catalogue leaves no other way to fill this day inside the limits of the plan.</string>
     <string name="weigh_ask">Ask a model to weigh them</string>
     <string name="weigh_asking">Asking…</string>
@@ -506,7 +506,7 @@
     <string name="recipes_none_favorites">No recipes match the filters and your favourite ingredients.</string>
     <string name="recipes_none_filtered">No recipes match the current filters.</string>
     <string name="recipes_none_at_all">No recipes.</string>
-    <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
+    <string name="recipes_card_meta">%1$s kcal · %2$s · %3$s min</string>
     <string name="recipes_mine_empty_title">No recipes of your own yet</string>
     <string name="recipes_mine_empty">The recipes you write, those a model drafts for you and the variants you keep after swapping an ingredient land here.</string>
     <string name="recipes_delete_confirm">Delete this recipe? Past planned meals stay intact — but it won\'t appear in your library or new plans.</string>
@@ -576,8 +576,8 @@
     <string name="recipe_source">From %1$s</string>
     <string name="recipe_source_licence">Licence: %1$s</string>
     <plurals name="recipe_serving_meta">
-        <item quantity="one">Makes %1$d serving · %2$s min prep · %3$s min cook</item>
-        <item quantity="other">Makes %1$d servings · %2$s min prep · %3$s min cook</item>
+        <item quantity="one">Makes %1$d serving · %2$s min prep · %3$s min cook</item>
+        <item quantity="other">Makes %1$d servings · %2$s min prep · %3$s min cook</item>
     </plurals>
     <string name="recipe_allergens">Allergens:</string>
     <string name="recipe_save_to_favorites">Save to favorites for:</string>
@@ -617,7 +617,7 @@
     <string name="own_recipe_add_step">Add a step</string>
     <string name="own_recipe_steps_none">Write at least one step.</string>
     <string name="own_recipe_preview_waiting">Add ingredients with their amounts to see what a serving holds.</string>
-    <string name="own_recipe_preview_figures">%1$s kcal · protein %2$s g · fat %3$s g · carbohydrate %4$s g</string>
+    <string name="own_recipe_preview_figures">%1$s kcal · protein %2$s g · fat %3$s g · carbohydrate %4$s g</string>
     <string name="own_recipe_preview_no_allergens">None of the ingredients is an allergen.</string>
     <string name="own_recipe_preview_diets">Fits these diets: %1$s</string>
     <string name="own_recipe_failed">Could not save the recipe.</string>
@@ -665,7 +665,7 @@
         <item quantity="one">%d recipe</item>
         <item quantity="other">%d recipes</item>
     </plurals>
-    <string name="favorites_facts">%1$s kcal a serving · %2$s</string>
+    <string name="favorites_facts">%1$s kcal a serving · %2$s</string>
     <string name="favorites_marked_as">How %1$s is marked</string>
     <string name="favorites_remove">Remove</string>
     <string name="favorites_remove_of">Remove the mark of %1$s</string>
@@ -729,14 +729,14 @@
     <string name="weight_logging">Logging…</string>
     <string name="weight_log_failed">Could not log weight.</string>
     <string name="weight_reference_hint">Registered weight: %1$s</string>
-    <string name="weight_target_hint">Registered weight: %1$s · working towards %2$s</string>
+    <string name="weight_target_hint">Registered weight: %1$s · working towards %2$s</string>
     <string name="weight_target_label">target</string>
     <string name="weight_series_entry">Logged</string>
     <string name="weight_series_mean">7-day average</string>
     <string name="weight_empty">Log a weight to see your 90-day trend.</string>
     <string name="weight_remove_latest">Remove last entry</string>
-    <string name="weight_remove_latest_label">%1$s · %2$s</string>
-    <string name="weight_remove_latest_confirm">Remove the last logged weight (%1$s · %2$s)?</string>
+    <string name="weight_remove_latest_label">%1$s · %2$s</string>
+    <string name="weight_remove_latest_confirm">Remove the last logged weight (%1$s · %2$s)?</string>
     <string name="weight_remove_failed">Could not remove the weight entry.</string>
     <string name="weight_read_failed">Could not read the weights.</string>
     <string name="weight_chart_point">%1$s: logged %2$s, 7-day average %3$s</string>
@@ -759,7 +759,7 @@
     <string name="shopping_share_text">Share as text</string>
     <string name="shopping_copy_title">Shopping list, %1$s</string>
     <string name="shopping_copy_nothing">Everything on this list is ticked off.</string>
-    <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
+    <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
     <string name="shopping_delete_confirm">Delete this shopping list?</string>
     <string name="shopping_aisle_energy">about %1$s kcal</string>
     <string name="shopping_find_entry">Find an entry</string>
@@ -947,7 +947,7 @@
     <string name="account_sessions_failed">The sessions could not be loaded.</string>
     <string name="account_session_unknown">An app or browser that did not say what it is</string>
     <string name="account_session_current">This phone</string>
-    <string name="account_session_times">Signed in %1$s · last active %2$s</string>
+    <string name="account_session_times">Signed in %1$s · last active %2$s</string>
     <string name="account_session_ends">Ends by %1$s, sooner if left unused.</string>
     <string name="account_session_end">Sign out</string>
     <string name="account_session_end_named">Sign out %1$s</string>
@@ -1112,7 +1112,7 @@
         <item quantity="one">%1$d y</item>
         <item quantity="other">%1$d y</item>
     </plurals>
-    <string name="profiles_summary">%1$s · %2$s cm · %3$s · %4$s</string>
+    <string name="profiles_summary">%1$s · %2$s cm · %3$s · %4$s</string>
     <string name="profiles_delete_confirm">Delete “%1$s”? Its meal plans and shopping lists are removed too.</string>
     <string name="common_delete">Delete</string>
     <string name="common_next">Next</string>
@@ -1236,7 +1236,7 @@
     <string name="calorie_preview_held">The goal to lose weight is on hold until its risk is acknowledged in the form, so the target is your maintenance.</string>
     <string name="calorie_preview_under">%1$s kcal a day under your maintenance.</string>
     <string name="calorie_preview_over">%1$s kcal a day over your maintenance.</string>
-    <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g a day.</string>
+    <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g a day.</string>
     <string name="calorie_preview_said">Daily target: %1$s kcal.</string>
     <string name="calorie_preview_not_advice">An approximation for a healthy adult, not medical advice. More in the %1$s.</string>
     <string name="calorie_preview_terms">terms</string>
@@ -1387,7 +1387,7 @@
     <string name="plans_remove_confirm">Remove</string>
     <string name="plans_custom_place">Place in the day</string>
     <string name="plans_custom_beside">Beside the day\'s meals</string>
-    <string name="plans_custom_instead">Instead of: %1$s · %2$s</string>
+    <string name="plans_custom_instead">Instead of: %1$s · %2$s</string>
     <string name="plans_custom_beside_note">The meal joins the day, and the portions of its meals not yet eaten get smaller so that the day keeps to its target. Meals eaten but not marked get smaller too, so mark first what was eaten. The other days stay as they are.</string>
     <string name="plans_custom_instead_note">The chosen meal leaves the day and this one takes its place. The portions of the other meals not yet eaten adjust to the day\'s target. The other days stay as they are.</string>
     <string name="plans_rebalance_rest">Spread over the rest of the plan</string>
@@ -1522,7 +1522,7 @@
     <string name="diary_add_to">Add an entry to %1$s</string>
     <string name="diary_eaten_title">Eaten</string>
     <string name="diary_eaten_line">%1$s of %2$s kcal</string>
-    <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
+    <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
     <string name="diary_target_from_plan">The target is that of the plan\'s day.</string>
     <string name="diary_target_from_profile">No plan holds this day: the target is the profile\'s own.</string>
     <string name="diary_target_from_skipped">The plan skips this day: the target is the profile\'s own.</string>
@@ -1542,7 +1542,7 @@
     <string name="diary_from_plan">From the plan</string>
     <string name="diary_eaten_of">Eaten: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>
-    <string name="diary_entry_macros">P %1$s g · F %2$s g · C %3$s g</string>
+    <string name="diary_entry_macros">P %1$s g · F %2$s g · C %3$s g</string>
     <string name="diary_servings_part">%1$s servings</string>
     <string name="diary_estimated">estimate</string>
     <string name="diary_edit_label">Change %1$s</string>
@@ -1572,9 +1572,9 @@
     <string name="diary_meal_name">Name</string>
     <string name="diary_one_portion">One serving holds</string>
     <string name="diary_calories">Calories (kcal)</string>
-    <string name="diary_protein">Protein (g) · optional</string>
-    <string name="diary_fat">Fat (g) · optional</string>
-    <string name="diary_carbs">Carbs (g) · optional</string>
+    <string name="diary_protein">Protein (g) · optional</string>
+    <string name="diary_fat">Fat (g) · optional</string>
+    <string name="diary_carbs">Carbs (g) · optional</string>
     <string name="diary_macros_optional">Leave protein, fat or carbohydrate empty when you do not know it: it is estimated from the proportions of the day\'s target and marked as an estimate.</string>
     <string name="diary_adds_line">Adds %1$s kcal to the day.</string>
     <string name="diary_submit">Add to the diary</string>
@@ -1683,7 +1683,7 @@
     <string name="plans_cooking_same">The same as %1$s</string>
     <string name="plans_offer_day_after">The day after the swap: %1$s of %2$s kcal.</string>
     <string name="plans_offer_outside">This recipe is outside a limit: %1$s. The meal will say so.</string>
-    <string name="plans_word_day">The day: %1$s of %2$s kcal · protein %3$s of %4$s g</string>
+    <string name="plans_word_day">The day: %1$s of %2$s kcal · protein %3$s of %4$s g</string>
     <string name="plans_swap_done_title">Meal swapped</string>
     <string name="plans_undo_swap">Undo the swap</string>
     <string name="plans_reword_button">Correct the recipe\'s text</string>

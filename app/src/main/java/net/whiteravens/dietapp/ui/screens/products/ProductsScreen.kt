@@ -50,6 +50,7 @@ import net.whiteravens.dietapp.ui.components.offProductPage
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.diary.Note
 import net.whiteravens.dietapp.ui.screens.diary.plainNumber
+import net.whiteravens.dietapp.ui.components.DOT
 import java.io.IOException
 import kotlin.math.roundToInt
 
@@ -172,10 +173,10 @@ private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy
                     ),
                 )
             }
-            listOfNotNull(product.brand, product.pack, product.code).joinToString(" · ").takeIf { it.isNotEmpty() }?.let { Note(it) }
+            listOfNotNull(product.brand, product.pack, product.code).joinToString(DOT).takeIf { it.isNotEmpty() }?.let { Note(it) }
             val grams = { value: Double? -> value?.let(::plainNumber) ?: "—" }
             Note(
-                stringResource(R.string.diary_per_100, formatNumber((product.calories ?: 0.0).roundToInt()), unitName(product.unit)) + " · " +
+                stringResource(R.string.diary_per_100, formatNumber((product.calories ?: 0.0).roundToInt()), unitName(product.unit)) + DOT +
                     stringResource(R.string.products_macros, grams(product.protein), grams(product.fat), grams(product.carbs)),
             )
             own.reason?.let { reason ->

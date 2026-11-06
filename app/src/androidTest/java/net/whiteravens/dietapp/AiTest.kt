@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performFirstLinkClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import net.whiteravens.dietapp.testing.HELD_DOT
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
@@ -84,7 +85,7 @@ class AiTest {
         assertEquals("ollama", saved.getString("provider"))
         assertEquals("llama3.1:8b", saved.getString("model"))
         assertEquals(INSTANCE_OLLAMA, saved.getString("baseUrl"))
-        show("Ollama · llama3.1:8b")
+        show("Ollama${HELD_DOT}llama3.1:8b")
         show(text(R.string.account_ai_no_key))
 
         // A provider's key is shown as dots while it is typed, kept out of the saved state, and never
@@ -102,7 +103,7 @@ class AiTest {
         screen.keepScreenshot("ai-provider-key-typed")
         screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiProviders(account).size == 2 }
-        show("OpenAI · gpt-4o-mini")
+        show("OpenAI${HELD_DOT}gpt-4o-mini")
         show(text(R.string.account_ai_key_set))
         assertTrue(screen.onAllNodesWithText(key, substring = true).fetchSemanticsNodes().isEmpty())
         screen.keepScreenshot("ai-providers")
@@ -111,7 +112,7 @@ class AiTest {
         screen.onNodeWithContentDescription(text(R.string.account_ai_remove_named, "OpenAI")).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.account_ai_remove)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi { Instance.aiProviders(account).map { it.getString("provider") } == listOf("ollama") }
-        screen.waitUntil(20_000) { screen.onAllNodesWithText("OpenAI · gpt-4o-mini").fetchSemanticsNodes().isEmpty() }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText("OpenAI${HELD_DOT}gpt-4o-mini").fetchSemanticsNodes().isEmpty() }
     }
 
     @Test

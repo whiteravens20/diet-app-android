@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.ui.common.fallbackText
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AiOffNote
+import net.whiteravens.dietapp.ui.components.DOT
 
 /**
  * What a shopping list could do without, asked for on the list: rows that one ingredient could
@@ -90,7 +91,7 @@ internal fun ListProposalsPanel(
                             val packs = pluralStringResource(R.plurals.shopping_proposal_packs, proposal.packsSaved, proposal.packsSaved)
                             Text(emphasized(stringResource(R.string.shopping_proposal_merge, MARK, proposal.from, meals, packs), proposal.to), style = MaterialTheme.typography.bodyMedium)
                             proposal.reason?.let { AiMark(stringResource(R.string.ai_mark_weighed, it), spelledOut = true) }
-                            proposal.meals.forEach { meal -> Note("${formatDayDate(meal.date)} · ${meal.title}") }
+                            proposal.meals.forEach { meal -> Note("${formatDayDate(meal.date)}$DOT${meal.title}") }
                             proposal.meals.firstOrNull()?.let { first ->
                                 TextButton(onClick = { onOpenPlanAt(first.date) }) { Text(stringResource(R.string.shopping_proposal_merge_how)) }
                             }

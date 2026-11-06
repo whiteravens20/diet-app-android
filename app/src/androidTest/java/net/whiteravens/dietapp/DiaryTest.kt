@@ -32,6 +32,8 @@ import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
+import net.whiteravens.dietapp.testing.HELD_DOT
+import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.After
@@ -185,7 +187,7 @@ class DiaryTest {
         screen.onNode(hasText("150") and hasSetTextAction()).performTextReplacement("200")
         screen.putKeyboardAway()
         screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
-        screen.waitForText(text(R.string.amount_g, "200"), substring = true)
+        screen.waitForText(heldTogether(text(R.string.amount_g, "200")), substring = true)
         screen.keepScreenshot("diary-a-day-with-entries")
 
         // Taken out, without a question: it is written again as easily.
@@ -275,7 +277,7 @@ class DiaryTest {
         // It is there, marked, with what is known of it; the sum is the server's, and says what it leaves out.
         screen.scrollToText("A sandwich")
         screen.waitForText(text(R.string.change_waiting))
-        screen.waitForText(text(R.string.diary_meal_kcal, "400"), substring = true)
+        screen.waitForText(heldTogether(text(R.string.diary_meal_kcal, "400")), substring = true)
         screen.scrollToText(text(R.string.diary_eaten_line, "0", target))
         screen.waitForText(plural(R.plurals.diary_sum_leaves_out, 1, 1))
         screen.keepScreenshot("diary-an-entry-waiting")
@@ -367,7 +369,7 @@ class DiaryTest {
         screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("chleb babci")
-        screen.waitForText("${text(R.string.diary_per_100, "245", "g")} · ${text(R.string.diary_product_own_mark)}")
+        screen.waitForText("${heldTogether(text(R.string.diary_per_100, "245", "g"))}$HELD_DOT${text(R.string.diary_product_own_mark)}")
     }
 
     @Test
@@ -403,7 +405,7 @@ class DiaryTest {
         screen.onNodeWithContentDescription(text(R.string.diary_edit_label, "Mleko próbne 3,2%, Próbna Marka")).performClick()
         screen.onNode(hasText("${text(R.string.diary_quantity)} (ml)") and hasSetTextAction()).performTextReplacement("500")
         screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
-        screen.waitForText(text(R.string.diary_meal_kcal, "300"), substring = true)
+        screen.waitForText(heldTogether(text(R.string.diary_meal_kcal, "300")), substring = true)
     }
 
     @Test

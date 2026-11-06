@@ -75,6 +75,7 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.favorites.sentimentLabel
+import net.whiteravens.dietapp.ui.components.DOT
 import kotlin.math.roundToInt
 
 /** Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps; one of the account's own to [onEdit]. */
@@ -255,7 +256,7 @@ private fun Marks(
                 selected = sentiment != null,
                 onClick = { onToggle(mark.profileId) },
                 enabled = marking == null,
-                label = { Text(if (sentiment == null || sentiment == "favorite") mark.name else "${mark.name} · ${sentimentLabel(sentiment)}") },
+                label = { Text(if (sentiment == null || sentiment == "favorite") mark.name else "${mark.name}$DOT${sentimentLabel(sentiment)}") },
                 leadingIcon = if (sentiment != null) {
                     { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
                 } else {
@@ -432,7 +433,7 @@ private fun SourceLine(source: RecipeSource) {
         buildAnnotatedString {
             if (from != null) {
                 linked(fromLine, siteOf(from), from, links)
-                append(" · ")
+                append(DOT)
             }
             linked(licenceLine, licence?.let(::siteOf) ?: source.license, licence, links)
         },

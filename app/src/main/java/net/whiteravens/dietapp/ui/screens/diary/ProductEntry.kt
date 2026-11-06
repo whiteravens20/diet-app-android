@@ -39,6 +39,8 @@ import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.OPEN_FOOD_FACTS
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
+import net.whiteravens.dietapp.ui.components.DOT
+import net.whiteravens.dietapp.ui.components.held
 import java.io.IOException
 import kotlin.math.roundToInt
 
@@ -116,9 +118,9 @@ internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryVi
                         Found(
                             found.fullName,
                             listOfNotNull(
-                                found.calories?.let { stringResource(R.string.diary_per_100, formatNumber(it.roundToInt()), unitName(found.unit)) },
+                                found.calories?.let { held(stringResource(R.string.diary_per_100, formatNumber(it.roundToInt()), unitName(found.unit))) },
                                 stringResource(R.string.diary_product_own_mark).takeIf { found.source == ProductSource.OWN },
-                            ).joinToString(" · ").ifEmpty { null },
+                            ).joinToString(DOT).ifEmpty { null },
                         ) { viewModel.pickProduct(found) }
                     }
                 }
@@ -146,7 +148,7 @@ internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
             Row {
                 Column(Modifier.weight(1f)) {
                     Text(product.name, style = MaterialTheme.typography.bodyLarge)
-                    listOfNotNull(product.brand, product.pack).joinToString(" · ").takeIf { it.isNotEmpty() }?.let { Note(it) }
+                    listOfNotNull(product.brand, product.pack).joinToString(DOT).takeIf { it.isNotEmpty() }?.let { Note(it) }
                 }
                 TextButton(onClick = viewModel::unpick) { Text(stringResource(R.string.diary_change_pick)) }
             }

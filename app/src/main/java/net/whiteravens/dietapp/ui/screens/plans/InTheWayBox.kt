@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.screens.profiles.WarningBox
 
 /**
@@ -32,7 +33,7 @@ internal fun InTheWayBox(needed: RelaxationNeeded, busy: Boolean, onLetGiveWay: 
         )
         needed.meals.take(MEALS_NAMED).forEach { meal ->
             Text(
-                "• ${formatDayDate(meal.date.toString())} · ${mealTypeLabel(meal.slot)}: ${limitNames(meal.gaveWay)}",
+                "• ${formatDayDate(meal.date.toString())}$DOT${mealTypeLabel(meal.slot)}: ${limitNames(meal.gaveWay)}",
                 style = MaterialTheme.typography.bodySmall,
             )
         }

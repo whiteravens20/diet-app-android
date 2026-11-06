@@ -39,6 +39,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 
@@ -149,7 +150,7 @@ private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onRemove: 
     Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "$name · ${provider.model}",
+                "$name$DOT${provider.model}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f),

@@ -82,6 +82,8 @@ import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.rememberWebPages
+import net.whiteravens.dietapp.ui.components.DOT
+import net.whiteravens.dietapp.ui.components.held
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Locale
@@ -498,9 +500,9 @@ private fun ShoppingItemRow(
                     if (homeNow > 0 || boughtNow > 0) {
                         Text(
                             listOfNotNull(
-                                "${stringResource(R.string.shopping_at_home)} ${amountLabel(homeNow, item.displayUnit)}".takeIf { homeNow > 0 },
-                                "${stringResource(R.string.shopping_bought)} ${amountLabel(boughtNow, item.displayUnit)}".takeIf { boughtNow > 0 },
-                            ).joinToString(" · "),
+                                held("${stringResource(R.string.shopping_at_home)} ${amountLabel(homeNow, item.displayUnit)}").takeIf { homeNow > 0 },
+                                held("${stringResource(R.string.shopping_bought)} ${amountLabel(boughtNow, item.displayUnit)}").takeIf { boughtNow > 0 },
+                            ).joinToString(DOT),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

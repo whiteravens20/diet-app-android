@@ -55,6 +55,16 @@ import java.util.concurrent.TimeUnit
 fun text(@StringRes id: Int, vararg args: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
+/**
+ * A short figure as the app shows it in a line of figures, `400 kcal`: its words held together by
+ * no-break spaces (`held` of the app's line helpers), written here so that no journey calls the
+ * app's own code, which the release build renames.
+ */
+fun heldTogether(figure: String): String = figure.replace(' ', '\u00A0')
+
+/** The dot between the parts of such a line, kept with the part before it. */
+const val HELD_DOT = "\u00A0· "
+
 /** A text of the app's that is counted, in the form the language gives [count], with [args] put in. */
 fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(id, count, *args)

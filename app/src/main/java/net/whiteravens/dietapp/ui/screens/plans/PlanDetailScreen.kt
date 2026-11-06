@@ -125,11 +125,13 @@ import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.aiOffText
+import net.whiteravens.dietapp.ui.components.inOneLine
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.diary.entryLine
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
+import net.whiteravens.dietapp.ui.components.DOT
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -796,13 +798,13 @@ private fun UseUpPanel(
                 Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         buildAnnotatedString {
-                            append("${formatDayDate(swap.date)} · ${mealTypeLabel(swap.slot)}: ")
+                            append("${formatDayDate(swap.date)}$DOT${mealTypeLabel(swap.slot)}: ")
                             append(emphasized(stringResource(R.string.plans_use_up_swap, MARK, swap.fromTitle), swap.toTitle))
                         },
                         style = MaterialTheme.typography.bodySmall,
                     )
                     swap.reason?.let { AiMark(stringResource(R.string.ai_mark_weighed, it), spelledOut = true) }
-                    Fact(takes.joinToString(" · "))
+                    Fact(takes.joinToString(DOT))
                     ListNote(swap.date in listedDates)
                     Fact(
                         stringResource(
@@ -990,13 +992,17 @@ private fun daySettingsLine(day: PlanDay): String? {
     return said.takeIf { it.isNotEmpty() }?.joinToString(" ")
 }
 
-/** A meal's macros as a sentence: `Protein 25 g · Fat 10 g · Carbs 40 g · 420 kcal`. */
+/** A meal's macros as a sentence, `Protein 25 g · Fat 10 g · Carbs 40 g · 420 kcal`, broken only after a dot. */
 @Composable
 private fun macrosLine(nutrition: Nutrition): String =
-    "${stringResource(R.string.macros_protein)} ${formatNumber(nutrition.protein.roundToInt())}\u00A0g · " +
-        "${stringResource(R.string.macros_fat)} ${formatNumber(nutrition.fat.roundToInt())}\u00A0g · " +
-        "${stringResource(R.string.macros_carbs)} ${formatNumber(nutrition.carbs.roundToInt())}\u00A0g · " +
-        "${formatNumber(nutrition.calories.roundToInt())}\u00A0kcal"
+    inOneLine(
+        listOf(
+            "${stringResource(R.string.macros_protein)} ${formatNumber(nutrition.protein.roundToInt())} g",
+            "${stringResource(R.string.macros_fat)} ${formatNumber(nutrition.fat.roundToInt())} g",
+            "${stringResource(R.string.macros_carbs)} ${formatNumber(nutrition.carbs.roundToInt())} g",
+            "${formatNumber(nutrition.calories.roundToInt())} kcal",
+        ),
+    )
 
 /** A meal's name: its recipe's, the name its user gave it, or what a meal of one's own is called. */
 @Composable
@@ -1370,7 +1376,7 @@ private fun FavoritePicker(meal: Meal, planDiet: String, liked: List<MarkedRecip
                             .padding(vertical = 8.dp),
                     ) {
                         Text(favorite.title, style = MaterialTheme.typography.bodyMedium)
-                        if (meal.slot !in favorite.mealTypes) LabelChip(times.joinToString(" · "))
+                        if (meal.slot !in favorite.mealTypes) LabelChip(times.joinToString(DOT))
                         if (!fitsDiet(favorite.dietTags, planDiet)) CautionChip(stringResource(R.string.plans_off_diet_tag))
                     }
                 }
@@ -1488,7 +1494,7 @@ private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: S
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(mealName(meal), style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "${mealTypeLabel(meal.slot)} · ${formatDayDate(date)}",
+                        "${mealTypeLabel(meal.slot)}$DOT${formatDayDate(date)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

@@ -96,7 +96,7 @@ fun MacroLegend(labels: List<String>, grams: List<Double>, modifier: Modifier = 
                 Column(Modifier.padding(start = 6.dp)) {
                     Text("${grams[i].roundToInt()} g", style = MaterialTheme.typography.labelLarge)
                     Text(
-                        percents?.let { "$label · ${it[i]}%" } ?: label,
+                        percents?.let { "$label$DOT${it[i]}%" } ?: label,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

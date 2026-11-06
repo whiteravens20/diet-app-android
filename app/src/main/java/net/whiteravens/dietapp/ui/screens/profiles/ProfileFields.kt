@@ -80,6 +80,7 @@ import net.whiteravens.dietapp.ui.common.reminderCadenceLabel
 import net.whiteravens.dietapp.ui.common.sexLabel
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.rememberWebPages
+import net.whiteravens.dietapp.ui.components.DOT
 
 /*
  * The fields a profile is made of, as every form that asks for them shows them: the form of a
@@ -288,8 +289,8 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
                         Text(paceLabel(pace, unit), style = MaterialTheme.typography.bodyMedium)
                         if (at != null) {
                             val mark = when {
-                                pace != null && at.goalHeld -> " · " + stringResource(R.string.profile_pace_held)
-                                pace != null && at.slowed() -> " · " + stringResource(R.string.profile_pace_slowed)
+                                pace != null && at.goalHeld -> DOT + stringResource(R.string.profile_pace_held)
+                                pace != null && at.slowed() -> DOT + stringResource(R.string.profile_pace_slowed)
                                 else -> ""
                             }
                             Text(

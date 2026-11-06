@@ -82,6 +82,8 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
 import net.whiteravens.dietapp.ui.screens.products.OwnProductDialog
+import net.whiteravens.dietapp.ui.components.DOT
+import net.whiteravens.dietapp.ui.components.held
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -477,7 +479,7 @@ private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean,
         Column(Modifier.weight(1f)) {
             Text(meal.name, style = MaterialTheme.typography.bodyMedium)
             val kcal = meal.calories?.let { stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt())) }
-            Note(listOfNotNull(stringResource(R.string.diary_from_plan), kcal).joinToString(" · "))
+            Note(listOfNotNull(stringResource(R.string.diary_from_plan), kcal?.let(::held)).joinToString(DOT))
             if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
         }
         Checkbox(checked = meal.eaten, onCheckedChange = { onEaten() }, enabled = enabled, modifier = Modifier.semantics { contentDescription = eaten })
@@ -533,7 +535,7 @@ internal fun entryLine(entry: DiaryEntry): String {
     val macros = entry.macros?.let {
         stringResource(R.string.diary_entry_macros, formatNumber(it.protein.roundToInt()), formatNumber(it.fat.roundToInt()), formatNumber(it.carbs.roundToInt()))
     }
-    return listOfNotNull(amount, kcal, macros).joinToString(" · ")
+    return listOfNotNull(held(amount), kcal?.let(::held), macros).joinToString(DOT)
 }
 
 /** Servings as a person reads them: whole ones counted in the language's own forms, a part of one to the hundredth. */

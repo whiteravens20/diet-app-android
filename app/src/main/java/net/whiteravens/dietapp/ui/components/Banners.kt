@@ -183,5 +183,5 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
 fun OfflineAsOf(readAt: Long?, modifier: Modifier = Modifier, @StringRes says: Int = R.string.offline_cached) {
     val asOf = stringResource(says, readAt?.let(::formatSyncedAt) ?: "—")
     val waiting = LocalWaitingChanges.current
-    OfflineBanner(if (waiting > 0) "$asOf · ${pluralStringResource(R.plurals.changes_waiting, waiting, waiting)}" else asOf, modifier)
+    OfflineBanner(if (waiting > 0) "$asOf$DOT${pluralStringResource(R.plurals.changes_waiting, waiting, waiting)}" else asOf, modifier)
 }

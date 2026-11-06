@@ -46,6 +46,7 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AiMark
 import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.ScreenDialog
@@ -142,7 +143,7 @@ private fun Way(index: Int, way: DayWay, target: String, busy: Boolean, onTake: 
             way.reason?.let { AiMark(stringResource(R.string.ai_mark_weighed, it), spelledOut = true) }
             way.meals.forEach { meal ->
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("${mealTypeLabel(meal.slot)} · ${meal.title}", style = MaterialTheme.typography.bodyMedium)
+                    Text("${mealTypeLabel(meal.slot)}$DOT${meal.title}", style = MaterialTheme.typography.bodyMedium)
                     Text(
                         stringResource(R.string.plans_ways_meal_energy, formatNumber(meal.calories.roundToInt())),
                         style = MaterialTheme.typography.bodySmall,

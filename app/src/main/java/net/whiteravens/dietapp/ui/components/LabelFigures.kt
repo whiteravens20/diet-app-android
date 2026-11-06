@@ -82,8 +82,13 @@ fun LabelLine(totals: LabelTotals, modifier: Modifier = Modifier) {
  * breaks only after a dot: a pair keeps its name, figure and unit together, and the dot stays with
  * the pair before it, so no line starts with a lone unit, figure or dot.
  */
-fun inOneLine(pairs: List<String>): String =
-    pairs.joinToString("$NO_BREAK_SPACE· ") { it.replace(' ', NO_BREAK_SPACE) }
+fun inOneLine(pairs: List<String>): String = pairs.joinToString(DOT) { held(it) }
+
+/** The dot between the parts of a line, with a no-break space before it: a narrow screen breaks only after it. */
+const val DOT = "\u00A0· "
+
+/** A short figure of such a line, `150 g` or `520 kcal`, that a narrow screen keeps on one line. */
+fun held(figure: String): String = figure.replace(' ', NO_BREAK_SPACE)
 
 private const val NO_BREAK_SPACE = '\u00A0'
 
