@@ -287,6 +287,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }) },
     label = dayLabel?.toDomain(),
     labelNotes = labelNotes.toNotes(),
+    listed = listed,
 )
 
 fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
@@ -314,6 +315,7 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
             unevenAlone = it.unevenAlone,
             evenedTarget = it.evenedTarget,
             otherDays = it.otherDays,
+            listOutOfDate = it.listOutOfDate,
         )
     },
 )
@@ -340,7 +342,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     dietType = dietType,
     days = days.map { it.toDomain(report) },
     averageDailyNutrition = averageDailyNutrition.toDomain(),
-    weeks = weeks.map { PlanWeek(it.from, it.to, it.target, it.average, it.uneven) },
+    weeks = weeks.map { PlanWeek(it.from, it.to, it.target, it.average, it.uneven, it.listOutOfDate) },
     syncedAt = syncedAt,
     targetMacros = targetMacros.toDomain(),
     ingredientReuse = ingredientReuseScore,

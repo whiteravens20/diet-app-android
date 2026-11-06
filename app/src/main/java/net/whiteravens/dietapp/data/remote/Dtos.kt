@@ -1058,6 +1058,8 @@ data class MealPlanDayDto(
     val dayLabel: LabelTotalsDto? = null,
     /** The limits of the profile the day crosses. */
     val labelNotes: List<LabelLimitNoteDto> = emptyList(),
+    /** A shopping list of the plan covers the day; false from an API that does not say it. */
+    val listed: Boolean = false,
 )
 
 /**
@@ -1110,6 +1112,8 @@ data class DaySettingsWeekDto(
     val unevenAlone: Boolean,
     val evenedTarget: Double,
     val otherDays: Int,
+    /** A shopping list of the plan covers one of the other days evening the week out changes. */
+    val listOutOfDate: Boolean = false,
 )
 
 /** A week of a plan: its first and last day, the plan's target, what its days aim at on average, and whether that is off the target while days to come could bring it back. */
@@ -1120,6 +1124,8 @@ data class PlanWeekDto(
     val target: Double,
     val average: Double? = null,
     val uneven: Boolean = false,
+    /** A shopping list of the plan covers a day of the week that evening it out can change. */
+    val listOutOfDate: Boolean = false,
 )
 
 /** What a change of a day's settings does to one of its meals, and why. */

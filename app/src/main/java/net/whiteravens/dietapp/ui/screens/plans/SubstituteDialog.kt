@@ -62,6 +62,8 @@ import kotlin.math.roundToInt
 fun SubstituteDialog(
     planId: String,
     meal: Meal,
+    /** A shopping list covers the meal's day. */
+    listed: Boolean = false,
     onApplied: (Rebalanced) -> Unit,
     onDismiss: () -> Unit,
     onTurnAiOn: () -> Unit,
@@ -154,6 +156,7 @@ fun SubstituteDialog(
                             onChange = viewModel::setRewriteWithAi,
                             enabled = state.aiOn == true,
                         )
+                        ListNote(listed)
                         Button(onClick = viewModel::apply, enabled = state.canApply, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(if (state.applying) R.string.substitute_applying else R.string.substitute_apply))
                         }

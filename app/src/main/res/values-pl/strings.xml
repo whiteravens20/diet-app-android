@@ -1523,6 +1523,7 @@
     <string name="plans_settings_day_calories">Dzień będzie miał około %1$s kcal.</string>
     <string name="plans_settings_day_calories_off">Dzień będzie miał około %1$s kcal: ponad jedną dziesiątą od celu, bo porcje nie wystarczą. Różnicę możesz potem rozłożyć na resztę planu.</string>
     <string name="plans_settings_list_out_of_date">Lista zakupów obejmująca ten dzień będzie do odświeżenia.</string>
+    <string name="plans_list_out_of_date_days">Lista zakupów obejmująca te dni będzie do odświeżenia.</string>
     <string name="plans_settings_other_days">Inne dni planu się nie zmieniają.</string>
     <string name="plans_settings_save">Zapisz</string>
     <string name="plans_settings_save_day">Zapisz ten dzień</string>

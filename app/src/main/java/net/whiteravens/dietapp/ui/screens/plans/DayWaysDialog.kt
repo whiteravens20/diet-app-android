@@ -106,6 +106,7 @@ fun DayWaysDialog(
                     ),
                 )
                 ways.diary?.let { Note(stringResource(R.string.plans_ways_diary_counted, formatNumber(it.calories.roundToInt()))) }
+                ListNote(day.listed)
                 CookingNote(ways.cooking, only, onOnly = { only = it })
                 if (ways.ways.isEmpty()) Text(stringResource(R.string.plans_ways_none), style = MaterialTheme.typography.bodyMedium)
                 ways.ways.forEachIndexed { index, way -> Way(index, way, target, busy = state.busy) { viewModel.take(way.offer, together = !only && ways.cooking?.changes?.isNotEmpty() == true) } }

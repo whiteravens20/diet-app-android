@@ -196,6 +196,7 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: Plan
         if (weekOff != null && average != null) {
             Note(stringResource(R.string.plans_settings_even_week_note, formatNumber(average.roundToInt()), formatNumber(weekOff.target.roundToInt())))
         }
+        ListNote(weekOff?.listOutOfDate == true, several = true)
         return
     }
     if (skipped) {
@@ -259,6 +260,7 @@ private fun WeekOutcome(week: DaySettingsWeek, unit: WeightUnit) {
                 formatNumber(week.averageEvened.roundToInt()),
             ),
         )
+        ListNote(week.listOutOfDate, several = true)
     }
 }
 

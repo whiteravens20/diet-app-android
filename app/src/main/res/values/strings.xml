@@ -1416,6 +1416,7 @@
     <string name="plans_settings_day_calories">The day will hold about %1$s kcal.</string>
     <string name="plans_settings_day_calories_off">The day will hold about %1$s kcal: more than a tenth off its target, since the portions are not enough. The difference can then be spread over the rest of the plan.</string>
     <string name="plans_settings_list_out_of_date">The shopping list that covers this day will need to be made again.</string>
+    <string name="plans_list_out_of_date_days">The shopping list that covers these days will need to be made again.</string>
     <string name="plans_settings_other_days">The plan\'s other days stay as they are.</string>
     <string name="plans_settings_save">Save</string>
     <string name="plans_settings_save_day">Save this day</string>

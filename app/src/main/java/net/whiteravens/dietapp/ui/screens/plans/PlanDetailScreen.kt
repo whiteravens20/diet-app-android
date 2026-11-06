@@ -191,6 +191,7 @@ fun PlanDetailScreen(
         }
         CustomMealDialog(
             date = date,
+            listed = plan?.days?.firstOrNull { it.date == date }?.listed == true,
             // A meal of one's own that waits to be added is not one the server can put another in the place of.
             meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty().filterNot { it.id in state.waitingAdditions },
             sent = state.customMeal,
@@ -214,6 +215,7 @@ fun PlanDetailScreen(
                     Text(stringResource(if (meal.eaten) R.string.plans_remove_note_eaten else R.string.plans_remove_note))
                     plan.days.firstOrNull { day -> day.meals.any { it.id == meal.id } }?.let { day ->
                         apartNote(meal, day.date, LocalDate.now().toString())?.let { Text(it) }
+                        ListNote(day.listed)
                     }
                 }
             },
@@ -319,6 +321,7 @@ fun PlanDetailScreen(
         SubstituteDialog(
             planId = plan.id,
             meal = meal,
+            listed = plan.days.firstOrNull { day -> day.meals.any { it.id == meal.id } }?.listed == true,
             onApplied = { result ->
                 substitutingIn = null
                 changedMeal = meal.id
@@ -356,6 +359,8 @@ fun PlanDetailScreen(
     state.offer?.let { offer ->
         SwapOfferDialog(
             offer = offer,
+            listedDates = plan?.days.orEmpty().filter { it.listed }.map { it.date }.toSet(),
+            offerDate = plan?.days?.firstOrNull { day -> day.meals.any { it.id == offer.mealId } }?.date,
             busy = state.taking || state.offering != null,
             onTake = { together ->
                 changedMeal = offer.mealId
@@ -434,6 +439,7 @@ fun PlanDetailScreen(
                             {
                                 UseUpPanel(
                                     found = state.useUp,
+                                    listedDates = plan.days.filter { it.listed }.map { it.date }.toSet(),
                                     finding = state.findingUseUp,
                                     aiOn = state.aiOn,
                                     busy = busy,
@@ -503,6 +509,7 @@ fun PlanDetailScreen(
                         // A day before today is history, and an instance without day settings has none to change.
                         onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
                         onSpread = { viewModel.spread(if (day.date < today) day.date else today, on = day.date) }.takeUnless { readOnly || busy || !spreadable },
+                        spreadListed = plan.days.any { it.listed && !it.skipped && it.date >= (if (day.date < today) day.date else today) },
                         // A long plan is a long way along its days to the one it is now: one press takes the reader there.
                         onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
                         // The diary of a day that has come.
@@ -743,6 +750,8 @@ private fun PacksLine(packs: PlanPacks, useUp: (@Composable () -> Unit)?) {
 @Composable
 private fun UseUpPanel(
     found: UseUpFound?,
+    /** The days of the plan a shopping list covers. */
+    listedDates: Set<String>,
     finding: Boolean,
     aiOn: Boolean?,
     busy: Boolean,
@@ -794,6 +803,7 @@ private fun UseUpPanel(
                     )
                     swap.reason?.let { AiMark(stringResource(R.string.ai_mark_weighed, it), spelledOut = true) }
                     Fact(takes.joinToString(" · "))
+                    ListNote(swap.date in listedDates)
                     Fact(
                         stringResource(
                             R.string.plans_use_up_energy,
@@ -824,6 +834,8 @@ private fun DaySummary(
     onChange: (() -> Unit)?,
     onSettings: (() -> Unit)?,
     onSpread: (() -> Unit)?,
+    /** A shopping list covers a day that spreading changes. */
+    spreadListed: Boolean = false,
     onToday: (() -> Unit)?,
     onDiary: (() -> Unit)?,
     onResize: (() -> Unit)?,
@@ -938,6 +950,7 @@ private fun DaySummary(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                ListNote(spreadListed, several = true)
             }
         }
         if (day.belowSafetyFloor) {
@@ -1132,6 +1145,8 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
 @Composable
 private fun CustomMealDialog(
     date: String,
+    /** A shopping list covers the day. */
+    listed: Boolean,
     meals: List<Meal>,
     sent: PlanDetailViewModel.CustomMealSent?,
     sending: Boolean,
@@ -1235,6 +1250,7 @@ private fun CustomMealDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 meals.firstOrNull { it.id == replaces }?.let { meal -> apartNote(meal, date, today)?.let { Hint(it) } }
+                ListNote(listed)
                 sent?.error?.let { ErrorBanner(errorMessage(it)) }
             }
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1383,6 +1399,9 @@ private fun offerLine(offer: SwapOffer): AnnotatedString {
 @Composable
 private fun SwapOfferDialog(
     offer: SwapOffer,
+    /** The days of the plan a shopping list covers, and the day of the meal offered another recipe. */
+    listedDates: Set<String>,
+    offerDate: String?,
     busy: Boolean,
     onTake: (together: Boolean) -> Unit,
     onAnother: () -> Unit,
@@ -1430,6 +1449,11 @@ private fun SwapOfferDialog(
                 }
                 CookingNote(offer.cooking, only, onOnly = { only = it })
                 if (offer.outsideLimits.isNotEmpty()) Hint(stringResource(R.string.plans_offer_outside, limitNames(offer.outsideLimits)), MaterialTheme.colorScheme.tertiary)
+                val together = if (only) emptyList() else offer.cooking?.changes.orEmpty().map { it.date }
+                ListNote(
+                    listed = (listOfNotNull(offerDate) + together).any { it in listedDates },
+                    several = together.isNotEmpty(),
+                )
             }
         },
         confirmButton = {
@@ -1630,5 +1654,12 @@ private fun WeekLine(week: PlanWeek, enabled: Boolean, onEven: () -> Unit) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onTertiaryContainer,
         )
+        if (week.listOutOfDate) {
+            Text(
+                stringResource(R.string.plans_list_out_of_date_days),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+        }
     }
 }

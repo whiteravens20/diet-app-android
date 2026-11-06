@@ -206,6 +206,20 @@ internal fun RerollDialog(
                         // An answer to an earlier choice is shown faint while the newer one is on its way.
                         Column(Modifier.alpha(if (state.current) 1f else 0.6f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Outcome(preview)
+                            if (preview.days > 0) {
+                                ListNote(
+                                    listed = days.any { one ->
+                                        one.listed && !one.skipped && (includePast || one.date >= today) &&
+                                            when (scope) {
+                                                RerollScope.DAY -> one.date == day
+                                                RerollScope.RANGE -> one.date in from..to
+                                                RerollScope.FROM_TODAY -> one.date >= today
+                                                RerollScope.WHOLE -> true
+                                            }
+                                    },
+                                    several = scope != RerollScope.DAY,
+                                )
+                            }
                             CookingNote(
                                 preview.cooking,
                                 only,

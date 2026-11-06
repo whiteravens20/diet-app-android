@@ -100,6 +100,10 @@ internal fun ApplySetDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                ListNote(
+                    listed = chosen.any { date -> plan.days.firstOrNull { it.date == date }?.listed == true },
+                    several = chosen.size > 1,
+                )
                 if (plan.cooksAhead) {
                     if (!only) {
                         Text(

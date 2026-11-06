@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
+import net.whiteravens.dietapp.data.remote.PlanWeekDto
 import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.Rebalance
@@ -482,6 +483,20 @@ class PlanDetailViewModelTest {
 
         coVerify(exactly = 2) { api.mealPlan(plan.id) }
         assertNotNull(model.state.value.error)
+    }
+
+    @Test
+    fun `the days a shopping list covers and the weeks of a plan are read as the API says them, and as none from one that says nothing`() {
+        val marked = plan.copy(
+            days = plan.days.mapIndexed { index, day -> day.copy(listed = index == 0) },
+            weeks = listOf(PlanWeekDto(plan.startDate, plan.days.last().date, 2135.0, 2179.0, uneven = true, listOutOfDate = true)),
+        ).toDomain()
+
+        assertEquals(plan.days.indices.map { it == 0 }, marked.days.map { it.listed })
+        assertEquals(listOf(PlanWeek(plan.startDate, plan.days.last().date, 2135.0, 2179.0, uneven = true, listOutOfDate = true)), marked.weeks)
+        val plain = plan.toDomain()
+        assertTrue(plain.days.none { it.listed })
+        assertEquals(emptyList<PlanWeek>(), plain.weeks)
     }
 
     @Test

@@ -427,6 +427,8 @@ data class PlanDay(
     val locks: Map<String, String>,
     /** What the day is set to; null from an instance whose days have no settings to change. */
     val settings: DaySettings? = null,
+    /** A shopping list of the plan covers the day: a change of its meals puts the list out of date. */
+    val listed: Boolean = false,
     /** What the diary adds to the day, counted in [nutrition]; null where nothing is written for it. */
     val diary: DayDiary? = null,
     /** Fibre, sugars, salt and saturated fat of the day; none from an instance that does not give them. */
@@ -496,6 +498,8 @@ data class DaySettingsWeek(
     val unevenAlone: Boolean,
     val evenedTarget: Double,
     val otherDays: Int,
+    /** A shopping list of the plan covers one of the other days evening the week out changes. */
+    val listOutOfDate: Boolean = false,
 )
 
 /**
@@ -503,7 +507,15 @@ data class DaySettingsWeek(
  * and they aim at the plan's [target] on average; a change of one day alone can leave the [average] off
  * it, and then [uneven] says so while days from today on can still bring it back.
  */
-data class PlanWeek(val from: String, val to: String, val target: Double, val average: Double?, val uneven: Boolean)
+data class PlanWeek(
+    val from: String,
+    val to: String,
+    val target: Double,
+    val average: Double?,
+    val uneven: Boolean,
+    /** A shopping list of the plan covers a day of the week that evening it out can change. */
+    val listOutOfDate: Boolean = false,
+)
 
 data class MealPlan(
     val id: String,
