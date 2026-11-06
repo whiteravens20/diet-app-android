@@ -64,7 +64,6 @@
     <string name="auth_sign_in_button">Zaloguj się</string>
     <string name="auth_second_step_title">Logowanie dwuetapowe</string>
     <string name="auth_second_step_body">Wpisz sześciocyfrowy kod z aplikacji uwierzytelniającej. Jeśli nie masz telefonu, wpisz jeden z kodów zapasowych.</string>
-    <string name="auth_code">Kod</string>
     <string name="auth_check_title">Krótkie sprawdzenie</string>
     <string name="auth_create_account_button">Załóż konto</string>
     <string name="auth_no_account">Nie masz konta? Załóż je</string>
@@ -1007,7 +1006,9 @@
     <string name="account_second_factor_switch_off_body">Do zalogowania znów wystarczy samo hasło.</string>
     <string name="account_second_factor_new_codes">Nowe kody zapasowe</string>
     <string name="account_second_factor_new_codes_body">Obecne kody zapasowe przestaną działać.</string>
-    <string name="account_second_factor_code_or_recovery">Kod z aplikacji albo kod zapasowy</string>
+    <string name="account_second_factor_recovery_code">Kod zapasowy</string>
+    <string name="account_second_factor_use_recovery">Użyj kodu zapasowego</string>
+    <string name="account_second_factor_use_app_code">Użyj kodu z aplikacji</string>
     <plurals name="account_second_factor_codes_left">
         <item quantity="one">Pozostałe kody zapasowe: %d.</item>
         <item quantity="few">Pozostałe kody zapasowe: %d.</item>

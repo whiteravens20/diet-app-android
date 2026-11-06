@@ -67,7 +67,6 @@
     <string name="auth_sign_in_button">Sign in</string>
     <string name="auth_second_step_title">Two-step sign-in</string>
     <string name="auth_second_step_body">Enter the six-digit code from your authenticator app. If you do not have your phone, enter one of your recovery codes.</string>
-    <string name="auth_code">Code</string>
     <string name="auth_check_title">A quick check</string>
     <string name="auth_create_account_button">Create account</string>
     <string name="auth_no_account">No account yet? Create one</string>
@@ -936,7 +935,9 @@
     <string name="account_second_factor_switch_off_body">Signing in will take only your password again.</string>
     <string name="account_second_factor_new_codes">New recovery codes</string>
     <string name="account_second_factor_new_codes_body">The recovery codes you have now stop working.</string>
-    <string name="account_second_factor_code_or_recovery">Code from the app, or a recovery code</string>
+    <string name="account_second_factor_recovery_code">Recovery code</string>
+    <string name="account_second_factor_use_recovery">Use a recovery code</string>
+    <string name="account_second_factor_use_app_code">Use the code from the app</string>
     <plurals name="account_second_factor_codes_left">
         <item quantity="one">Recovery codes left: %d.</item>
         <item quantity="other">Recovery codes left: %d.</item>

@@ -51,6 +51,7 @@ import net.whiteravens.dietapp.ui.components.AntiAbuseCheckDialog
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.SecondStepCodeField
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.components.UpdateCard
@@ -408,16 +409,7 @@ private fun SecondStepCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 16.dp),
         )
-        OutlinedTextField(
-            value = code,
-            onValueChange = onCodeChange,
-            label = { Text(stringResource(R.string.auth_code)) },
-            isError = "code" in (error as? ApiException)?.refusedFields.orEmpty(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SecondStepCodeField(code, onCodeChange, isError = "code" in (error as? ApiException)?.refusedFields.orEmpty())
         error?.let { ErrorBanner(errorMessage(it), Modifier.padding(top = 12.dp)) }
         Button(
             onClick = { onSubmit(code) },

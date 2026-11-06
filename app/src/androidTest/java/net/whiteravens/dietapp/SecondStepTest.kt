@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
@@ -39,12 +38,15 @@ class SecondStepTest {
 
         screen.waitForText(text(R.string.auth_second_step_title))
         screen.keepScreenshot("sign-in-second-step")
-        screen.onNodeWithText(text(R.string.auth_code)).performTextInput("000000")
+        // The code from the app is typed on a number pad.
+        screen.onNodeWithText(text(R.string.account_second_factor_code)).performTextInput("000000")
         screen.putKeyboardAway()
         screen.pressToSignIn()
         screen.waitForText(text(R.string.error_code_invalid_second_factor_code))
 
-        screen.onNodeWithText(text(R.string.auth_code)).performTextReplacement(recoveryCodes.first())
+        // A recovery code, of letters and digits, has a field of its own a press away.
+        screen.onNodeWithText(text(R.string.account_second_factor_use_recovery)).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.account_second_factor_recovery_code)).performTextInput(recoveryCodes.first())
         assertFalse("the recovery code is in the saved state", screen.savedStateHolds(recoveryCodes.first()))
         screen.putKeyboardAway()
         screen.pressToSignIn()

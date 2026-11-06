@@ -80,7 +80,10 @@ class SecondFactorTest {
         // New recovery codes, for the password and one of the codes there were.
         screen.onNodeWithText(text(R.string.account_second_factor_new_codes)).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
-        screen.onNodeWithText(text(R.string.account_second_factor_code_or_recovery)).performScrollTo().performTextInput(recovery.first())
+        // A recovery code has a field of its own, a press away from the code of the app.
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.account_second_factor_use_recovery)).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.account_second_factor_recovery_code)).performScrollTo().performTextInput(recovery.first())
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_new_codes)).performScrollTo().performClick()
         screen.waitForText(text(R.string.account_second_factor_recovery_title))
@@ -93,7 +96,10 @@ class SecondFactorTest {
         screen.waitForEnabled(text(R.string.account_second_factor_switch_off))
         screen.onNodeWithText(text(R.string.account_second_factor_switch_off)).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.account_password_current)).performScrollTo().performTextInput(account.password)
-        screen.onNodeWithText(text(R.string.account_second_factor_code_or_recovery)).performScrollTo().performTextInput(renewed.first())
+        // A recovery code has a field of its own, a press away from the code of the app.
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.account_second_factor_use_recovery)).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.account_second_factor_recovery_code)).performScrollTo().performTextInput(renewed.first())
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.account_second_factor_switch_off)).performScrollTo().performClick()
         screen.waitForText(text(R.string.account_second_factor_off))

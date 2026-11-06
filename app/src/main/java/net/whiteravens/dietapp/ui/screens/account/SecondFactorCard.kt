@@ -46,6 +46,8 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.QrCode
+import net.whiteravens.dietapp.ui.components.SECOND_STEP_CODE_MAX
+import net.whiteravens.dietapp.ui.components.SecondStepCodeField
 import net.whiteravens.dietapp.ui.screens.account.SecondFactorViewModel.Purpose
 import net.whiteravens.dietapp.ui.screens.account.SecondFactorViewModel.Step
 import java.time.ZoneId
@@ -293,7 +295,7 @@ private fun ProofStep(purpose: Purpose, state: SecondFactorViewModel.UiState, ac
         style = MaterialTheme.typography.bodyMedium,
     )
     PasswordField(state.password, actions.typePassword, stringResource(R.string.account_password_current))
-    CodeField(state.code, actions.typeCode, stringResource(R.string.account_second_factor_code_or_recovery), keyboardType = KeyboardType.Password)
+    SecondStepCodeField(state.code, actions.typeCode)
     Problem(state.error)
     Buttons(
         submit = stringResource(if (purpose == Purpose.SWITCH_OFF) R.string.account_second_factor_switch_off else R.string.account_second_factor_new_codes),
@@ -304,12 +306,12 @@ private fun ProofStep(purpose: Purpose, state: SecondFactorViewModel.UiState, ac
     )
 }
 
-/** A code typed: one the authenticator app shows, or a recovery code; at most [CODE_MAX] characters, as the API takes. */
+/** A code typed: one the authenticator app shows; at most [SECOND_STEP_CODE_MAX] characters, as the API takes. */
 @Composable
 private fun CodeField(value: String, onValueChange: (String) -> Unit, label: String, hint: String? = null, keyboardType: KeyboardType) {
     OutlinedTextField(
         value = value,
-        onValueChange = { if (it.length <= CODE_MAX) onValueChange(it) },
+        onValueChange = { if (it.length <= SECOND_STEP_CODE_MAX) onValueChange(it) },
         label = { Text(label) },
         supportingText = hint?.let { { Text(it) } },
         singleLine = true,
@@ -320,7 +322,6 @@ private fun CodeField(value: String, onValueChange: (String) -> Unit, label: Str
 }
 
 /** The most characters of a code, or of a recovery code, the API takes. */
-private const val CODE_MAX = 40
 
 @Composable
 private fun Buttons(submit: String, enabled: Boolean, onSubmit: () -> Unit, busy: Boolean, onCancel: () -> Unit) {
