@@ -51,7 +51,7 @@ Without the arguments the notifications' test is skipped.
   diet-app and copied here with the contract, not written in `strings.xml`. A language joins
   `languages` in `app/build.gradle.kts` once diet-app ships it too: until then the build stops
   on a code with no sentence in it.
-- **AI-assisted code** — most of this project is written with AI coding tools, as the
+- **AI-assisted code** — this project is built using AI coding tools, as the
   [README](README.md#how-the-code-is-written-and-checked) describes, and contributions may
   be too. Do not submit AI output that you cannot explain and defend in review: read it,
   test it and take responsibility for it.
