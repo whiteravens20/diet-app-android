@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.DayDiary
@@ -453,6 +455,33 @@ class PlanDetailViewModelTest {
 
         assertEquals("2026-01-06" to 120.0, model.state.value.resizeLeft)
         assertNull(model.state.value.rebalance)
+    }
+
+    @Test
+    fun `a week off its target is evened out on the plan at the revision it was read at, and the plan answered is shown`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val evened = plan.copy(revision = plan.revision + 1)
+        coEvery { api.evenWeek(plan.id, EvenWeekRequestDto(plan.startDate, plan.revision)) } returns evened
+        val model = model(api)
+
+        model.evenWeek(PlanWeek(plan.startDate, plan.days.last().date, target = 2135.0, average = 2179.0, uneven = true))
+
+        coVerify(exactly = 1) { api.evenWeek(plan.id, EvenWeekRequestDto(plan.startDate, plan.revision)) }
+        assertEquals(plan.revision + 1, model.state.value.plan?.revision)
+    }
+
+    @Test
+    fun `an evening refused because the plan changed meanwhile loads the plan again and says why`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.evenWeek(plan.id, any()) } throws refused(409, "PLAN_CHANGED")
+        val model = model(api)
+
+        model.evenWeek(PlanWeek(plan.startDate, plan.days.last().date, target = 2135.0, average = 2179.0, uneven = true))
+
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
+        assertNotNull(model.state.value.error)
     }
 
     @Test
