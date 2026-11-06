@@ -395,7 +395,7 @@ internal fun RiskBox(reasons: List<String>, acknowledged: Boolean, onAcknowledge
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().toggleable(value = acknowledged, role = Role.Checkbox, onValueChange = onAcknowledge),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(value = acknowledged, role = Role.Checkbox, onValueChange = onAcknowledge),
         ) {
             Checkbox(checked = acknowledged, onCheckedChange = null)
             Text(

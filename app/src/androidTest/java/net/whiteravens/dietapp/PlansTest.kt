@@ -27,6 +27,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
@@ -79,6 +82,8 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.plans_meal_prep)).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.plans_meals_a_day)).performScrollTo().performClick()
         screen.onNode(hasText("4") and hasClickAction()).performClick()
+        // A box to tick is a finger high, whatever its label's length.
+        screen.onNode(hasText(text(R.string.plans_honour_avoid)) and isToggleable()).performScrollTo().assertHeightIsAtLeast(48.dp)
         screen.keepScreenshot("plans-a-new-plan")
         screen.onNode(hasText(text(R.string.plans_generate_button)) and hasClickAction()).performScrollTo().performClick()
 
