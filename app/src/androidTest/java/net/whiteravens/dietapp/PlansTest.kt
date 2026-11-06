@@ -413,6 +413,55 @@ class PlansTest {
     }
 
     @Test
+    fun aDayMadeATrainingDayAloneLeavesItsWeekOffTheTargetTillTheWeekIsEvenedOut() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 7)
+        // A list of the first three days: what changes them says first that the list goes out of date.
+        Instance.newShoppingList(account, planId, LocalDate.now(), LocalDate.now().plusDays(2))
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // Today made a training day: what that does to the week, and the two ways of saving it.
+        screen.scrollToText(text(R.string.plans_day_settings))
+        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.waitForText(text(R.string.plans_settings_unchanged))
+        screen.onNode(hasText(text(R.string.plans_settings_kind)) and hasAnyAncestor(isDialog())).performClick()
+        screen.onNode(hasText(text(R.string.plans_day_kind_training)) and hasAnyAncestor(isPopup())).performClick()
+        val saveDay = hasText(text(R.string.plans_settings_save_day)) and hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(saveDay).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(hasText(text(R.string.plans_list_out_of_date_days)) and hasAnyAncestor(isDialog())).performScrollTo()
+        screen.keepScreenshot("plans-a-day-and-its-week")
+        screen.onNode(saveDay).performClick()
+        screen.waitForTheApi(60_000) { Instance.firstWeek(account, planId).getBoolean("uneven") }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }
+
+        // The plan says the week stands off its target, and evens it out.
+        val evenWeek = hasText(text(R.string.plans_even_week)) and hasClickAction()
+        screen.scrollTo(evenWeek)
+        screen.waitForText(text(R.string.plans_list_out_of_date_days))
+        screen.keepScreenshot("plans-a-week-off-its-target")
+        screen.onNode(evenWeek).performClick()
+        screen.waitForTheApi(60_000) { !Instance.firstWeek(account, planId).getBoolean("uneven") }
+        screen.waitUntil(20_000) { screen.onAllNodes(evenWeek).fetchSemanticsNodes().isEmpty() }
+
+        // A meal of a day the list covers is to be taken off it: the window says the list goes out of date.
+        val (title, _) = Instance.firstMeal(account, planId)
+        val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), title))
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNodeWithText(text(R.string.plans_remove)).performClick()
+        screen.waitForText(text(R.string.plans_settings_list_out_of_date))
+        screen.keepScreenshot("plans-a-meal-taken-off-a-listed-day")
+        screen.onNode(hasText(text(R.string.common_cancel)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_list_out_of_date)).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
     fun anIngredientIsSubstitutedAndItsWindowOpenedAgainOnTheMealStartsAnew() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)

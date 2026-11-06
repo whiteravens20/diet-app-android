@@ -311,6 +311,20 @@ object Instance {
             expect = 201,
         ).getString("id")
 
+    /** The first week of a plan as the plan reads: its target, its average and whether it stands off the target. */
+    fun firstWeek(account: Account, planId: String): JSONObject =
+        call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("weeks").getJSONObject(0)
+
+    /** A shopping list of the days of [planId] from [from] to [to], made as the app makes one. */
+    fun newShoppingList(account: Account, planId: String, from: LocalDate, to: LocalDate): String =
+        call(
+            "POST",
+            "shopping-lists/generate",
+            JSONObject().put("planId", planId).put("fromDate", from.toString()).put("toDate", to.toString()),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+
     /** The daily calorie target the API computes for [profileId], in whole kilocalories. */
     fun dailyTarget(account: Account, profileId: String): Int =
         call("GET", "profiles/$profileId/calories", token = account.accessToken).getDouble("dailyTarget").roundToInt()
