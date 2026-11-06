@@ -1229,6 +1229,7 @@
     <string name="calorie_preview_daily_target">Daily target</string>
     <string name="calorie_preview_maintenance">Maintenance</string>
     <string name="calorie_preview_at_rest">At rest</string>
+    <string name="calorie_preview_target_next">You will see the daily target on the next step, once you choose a pace.</string>
     <string name="calorie_preview_kcal">%1$s kcal</string>
     <string name="calorie_preview_at_maintenance">The target is your maintenance: no loss is planned.</string>
     <string name="calorie_preview_held">The goal to lose weight is on hold until its risk is acknowledged in the form, so the target is your maintenance.</string>

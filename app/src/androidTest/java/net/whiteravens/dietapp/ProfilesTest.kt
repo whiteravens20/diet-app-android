@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -69,14 +71,25 @@ class ProfilesTest {
         type(text(R.string.profile_name), "Ala")
         type(text(R.string.profile_age), "30")
         type(text(R.string.profile_height_cm), "168")
-        type(text(R.string.profile_weight, unit.code), "70")
-        // What the figures come to is shown as they are typed, said to be no medical advice.
-        screen.waitForText(text(R.string.calorie_preview_daily_target))
+        // About 70 kg in the unit of where the phone is: a body the paces are not held for.
+        val weight = if (unit == WeightUnit.LB) "154" else "70"
+        type(text(R.string.profile_weight, unit.code), weight)
+        // What the body comes to is shown as it is typed, said to be no medical advice: maintenance and
+        // the figure at rest, as the step chooses no pace. The target follows on the step that does.
+        screen.waitForText(text(R.string.calorie_preview_maintenance))
+        screen.waitForText(text(R.string.calorie_preview_target_next))
+        screen.onAllNodesWithText(text(R.string.calorie_preview_daily_target)).assertCountEquals(0)
         screen.waitForText(text(R.string.calorie_preview_not_advice, text(R.string.calorie_preview_terms)))
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.calorie_preview_target_next)).performScrollTo()
         screen.keepScreenshot("profiles-first-body")
         press(text(R.string.common_next))
 
         screen.waitForText(text(R.string.profile_wizard_goal_lead))
+        screen.waitForText(text(R.string.calorie_preview_daily_target))
+        screen.onAllNodesWithText(text(R.string.calorie_preview_target_next)).assertCountEquals(0)
+        screen.onNodeWithText(text(R.string.calorie_preview_daily_target)).performScrollTo()
+        screen.keepScreenshot("profiles-first-goal")
         press(text(R.string.common_next))
 
         screen.waitForText(text(R.string.profile_wizard_food_lead))
@@ -88,7 +101,7 @@ class ProfilesTest {
         screen.keepScreenshot("profiles-first-made")
         val made = Instance.profiles(account).single()
         assertEquals("Ala", made.getString("name"))
-        assertEquals(unit.toKilograms(70.0), made.getDouble("weightKg"), 0.0)
+        assertEquals(unit.toKilograms(weight.toDouble()), made.getDouble("weightKg"), 0.0)
         assertEquals("0.5", made.getString("weeklyLossTarget"))
         assertEquals("peanuts", made.getJSONObject("preferences").getJSONArray("allergens").getString(0))
 

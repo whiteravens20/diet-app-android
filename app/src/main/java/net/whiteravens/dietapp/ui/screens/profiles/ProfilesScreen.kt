@@ -295,7 +295,8 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
             }
         }
     }
-    CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused)
+    // The first step chooses no pace: it shows what the body comes to, the target follows with the pace.
+    CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused, withoutTarget = state.step == 0)
 }
 
 @Composable

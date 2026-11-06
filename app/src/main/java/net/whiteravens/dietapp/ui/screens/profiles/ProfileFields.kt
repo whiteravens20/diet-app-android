@@ -735,10 +735,20 @@ private fun KindLimitRows(rows: List<KindLimitTyped>, marks: ProfileMarks, onEdi
  * maintenance less the pace, and that the figures are no medical advice, with the instance's terms
  * that say more. The warnings for somebody under 18 or underweight are the form's own to give, with
  * the box that answers them. What is shown dims while it belongs to figures typed a moment ago;
- * figures the API [refused] wait for the marked fields to be corrected.
+ * figures the API [refused] wait for the marked fields to be corrected. [withoutTarget] shows only
+ * what the body and its activity come to, maintenance and the figure at rest, on a step that asks
+ * for no pace yet.
  */
 @Composable
-internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiting: Boolean, failed: Boolean, refused: Boolean, modifier: Modifier = Modifier) {
+internal fun CaloriePreviewCard(
+    preview: CaloriePreview?,
+    behind: Boolean,
+    waiting: Boolean,
+    failed: Boolean,
+    refused: Boolean,
+    modifier: Modifier = Modifier,
+    withoutTarget: Boolean = false,
+) {
     val web = rememberWebPages()
     Surface(
         shape = MaterialTheme.shapes.large,
@@ -750,6 +760,32 @@ internal fun CaloriePreviewCard(preview: CaloriePreview?, behind: Boolean, waiti
             Text(stringResource(R.string.calorie_preview_title), style = MaterialTheme.typography.titleSmall)
             val c = preview?.calculation
             when {
+                c != null && withoutTarget -> Column(Modifier.alpha(if (behind) 0.6f else 1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        Column {
+                            Text(
+                                stringResource(R.string.calorie_preview_maintenance),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(kcal(c.maintenance), style = MaterialTheme.typography.headlineSmall)
+                        }
+                        Column {
+                            Text(
+                                stringResource(R.string.calorie_preview_at_rest),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(kcal(c.bmr), style = MaterialTheme.typography.headlineSmall)
+                        }
+                    }
+                    Text(
+                        stringResource(R.string.calorie_preview_target_next),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    NotAdvice(onTerms = { web.open("terms") })
+                }
                 c != null -> Column(Modifier.alpha(if (behind) 0.6f else 1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column {
                         Text(
