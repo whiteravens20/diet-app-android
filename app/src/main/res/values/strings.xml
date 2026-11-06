@@ -1323,7 +1323,7 @@
     <string name="plans_advanced_toggle">Show advanced options</string>
     <string name="plans_advanced_hint">Shape each day individually. Untouched days follow the plan defaults.</string>
     <string name="plans_advanced_legend_title">What these do</string>
-    <string name="plans_advanced_legend_day_kind">Day: Training has about 15% more calories than a usual day of its week, Rest about 15% less, and the week\'s average stays on the plan\'s target. Skip leaves the day empty (and off the shopping list).</string>
+    <string name="plans_advanced_legend_day_kind">Day: Training has about 15% more calories than a usual day of its week, Rest about 15% less, and the week\'s average daily target stays equal to the plan\'s target. Skip leaves the day empty (and off the shopping list).</string>
     <string name="plans_advanced_legend_meals">Meals: how many meals that day, overriding the plan default.</string>
     <string name="plans_advanced_legend_calories">Calories: an exact target for that day. It takes the kind\'s place and moves no calories of other days.</string>
     <string name="plans_advanced_legend_cook_time">Max cook time: only pick recipes whose prep + cook time fits the limit.</string>
@@ -1396,7 +1396,7 @@
     <string name="plans_rebalance_summary_plan">Meals rescaled on the plan\'s remaining days: %1$s.</string>
     <string name="plans_settings_title">Day settings</string>
     <string name="plans_settings_kind">Kind of day</string>
-    <string name="plans_settings_kind_hint">A usual day is a typical one, at work for example. A training day has about 15% more calories than a usual day of its week, and a rest day, at home with little movement, about 15% less. The week\'s average stays on the plan\'s target. A skipped day counts neither as a shortfall nor in the plan\'s averages.</string>
+    <string name="plans_settings_kind_hint">A usual day is a typical one, at work for example. A training day has about 15% more calories than a usual day of its week, and a rest day, at home with little movement, about 15% less. The week\'s average daily target stays equal to the plan\'s target. A skipped day counts neither as a shortfall nor in the plan\'s averages.</string>
     <string name="plans_settings_meal_count">Meals</string>
     <string name="plans_settings_own_target">Own calorie target (kcal)</string>
     <string name="plans_settings_own_target_hint">Empty: the kind of day sets the target. A typed one takes the kind\'s place and moves no calories of other days.</string>
@@ -1422,18 +1422,18 @@
     <string name="plans_settings_save_day">Save this day</string>
     <string name="plans_settings_save_and_even">Save and even out the week</string>
     <string name="plans_settings_even_week">Even out the week</string>
-    <string name="plans_settings_even_week_note">This week\'s average is %1$s kcal, at a plan target of %2$s kcal. “Even out the week” changes the targets of this week\'s days from today: the same dishes in other portions.</string>
-    <string name="plans_settings_week_average">The week\'s average: %1$s kcal, at a plan target of %2$s kcal.</string>
-    <string name="plans_settings_week_average_change">The week\'s average: %1$s → %2$s kcal, at a plan target of %3$s kcal.</string>
-    <string name="plans_settings_week_pace_loss">At this average weight falls by about %1$s a week.</string>
-    <string name="plans_settings_week_pace_gain">At this average weight rises by about %1$s a week.</string>
-    <string name="plans_settings_week_pace_keep">At this average weight stays about the same.</string>
-    <string name="plans_week_uneven">This week\'s average: %1$s kcal, the plan\'s target: %2$s kcal.</string>
+    <string name="plans_settings_even_week_note">This week\'s average daily target is %1$s kcal, at a plan target of %2$s kcal. “Even out the week” changes the targets of this week\'s days from today: the same dishes in other portions.</string>
+    <string name="plans_settings_week_average">The week\'s average daily target: %1$s kcal, at a plan target of %2$s kcal.</string>
+    <string name="plans_settings_week_average_change">The week\'s average daily target: %1$s → %2$s kcal, at a plan target of %3$s kcal.</string>
+    <string name="plans_settings_week_pace_loss">At this average target, weight falls by about %1$s a week.</string>
+    <string name="plans_settings_week_pace_gain">At this average target, weight rises by about %1$s a week.</string>
+    <string name="plans_settings_week_pace_keep">At this average target, weight stays about the same.</string>
+    <string name="plans_week_uneven">This week\'s average daily target: %1$s kcal, the plan\'s target: %2$s kcal.</string>
     <string name="plans_even_week">Even out the week</string>
     <string name="plans_even_week_note">This week\'s days from today get new targets: the same dishes in other portions.</string>
     <plurals name="plans_settings_week_even_note">
-        <item quantity="one">“Save and even out the week” gives this day %1$s kcal and changes the target of %2$d other day of this week from today: the same dishes in other portions. The week\'s average comes to %3$s kcal.</item>
-        <item quantity="other">“Save and even out the week” gives this day %1$s kcal and changes the targets of %2$d other days of this week from today: the same dishes in other portions. The week\'s average comes to %3$s kcal.</item>
+        <item quantity="one">“Save and even out the week” gives this day %1$s kcal and changes the target of %2$d other day of this week from today: the same dishes in other portions. The week\'s average daily target comes to %3$s kcal.</item>
+        <item quantity="other">“Save and even out the week” gives this day %1$s kcal and changes the targets of %2$d other days of this week from today: the same dishes in other portions. The week\'s average daily target comes to %3$s kcal.</item>
     </plurals>
     <string name="plans_settings_line_training">A training day: its target is about 15% more than a usual day of its week.</string>
     <string name="plans_settings_line_rest">A rest day: its target is about 15% less than a usual day of its week.</string>
