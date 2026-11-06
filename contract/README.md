@@ -7,7 +7,7 @@ client with it: the route exists, the body is one the API takes, and the class a
 read into can read what the API answers.
 
 `errors.json` is diet-app's list of every code a refusal can carry (`docs/api/errors.json`),
-with its sentence in English and in Polish, from the same commit. The build writes the app's texts
+with its sentence in each language diet-app ships, from the same commit. The build writes the app's texts
 for refusals from it, and a unit test checks that every code of the list has one.
 
 `diet-app.env` names that version's commit and its image, by digest: the screens' tests run

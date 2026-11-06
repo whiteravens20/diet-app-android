@@ -47,8 +47,10 @@ Without the arguments the notifications' test is skipped.
   [`diet-app`](https://github.com/whiteravens20/diet-app) API publishes; moving to another
   version of it is described in [docs/contracts/api-contract.md](docs/contracts/api-contract.md).
 - **Texts of refusals** are written by the build from `contract/errors.json`, the API's own list
-  of codes with their sentences in English and Polish. A code's text is changed in diet-app
-  and copied here with the contract, not written in `strings.xml`.
+  of codes with their sentences in each language diet-app ships. A code's text is changed in
+  diet-app and copied here with the contract, not written in `strings.xml`. A language joins
+  `languages` in `app/build.gradle.kts` once diet-app ships it too: until then the build stops
+  on a code with no sentence in it.
 - **AI-assisted code** — most of this project is written with AI coding tools, as the
   [README](README.md#how-the-code-is-written-and-checked) describes, and contributions may
   be too. Do not submit AI output that you cannot explain and defend in review: read it,
