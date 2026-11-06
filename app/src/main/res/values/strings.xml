@@ -1131,6 +1131,7 @@
     <string name="profile_activity_hint_moderate">Exercise on three to five days a week.</string>
     <string name="profile_activity_hint_active">Hard exercise on six or seven days a week.</string>
     <string name="profile_activity_hint_very_active">Physical work, or training twice a day.</string>
+    <string name="profile_activity_week">Choose by an average week, training included. Training and rest days of a plan only move calories between the days of a week.</string>
     <string name="profile_diet_type">Diet type</string>
     <string name="profile_pace">Pace</string>
     <string name="profile_pace_none">Keep my weight</string>
@@ -1321,9 +1322,9 @@
     <string name="plans_advanced_toggle">Show advanced options</string>
     <string name="plans_advanced_hint">Shape each day individually. Untouched days follow the plan defaults.</string>
     <string name="plans_advanced_legend_title">What these do</string>
-    <string name="plans_advanced_legend_day_kind">Day: Rest targets ~15% fewer calories, Training ~15% more, Skip leaves the day empty (and off the shopping list).</string>
+    <string name="plans_advanced_legend_day_kind">Day: Training has about 15% more calories than a usual day of its week, Rest about 15% less, and the week\'s average stays on the plan\'s target. Skip leaves the day empty (and off the shopping list).</string>
     <string name="plans_advanced_legend_meals">Meals: how many meals that day, overriding the plan default.</string>
-    <string name="plans_advanced_legend_calories">Calories: an exact target for that day — overrides the rest/training adjustment.</string>
+    <string name="plans_advanced_legend_calories">Calories: an exact target for that day. It takes the kind\'s place and moves no calories of other days.</string>
     <string name="plans_advanced_legend_cook_time">Max cook time: only pick recipes whose prep + cook time fits the limit.</string>
     <string name="plans_advanced_legend_use_up_by">Use up expiring food: prefer recipes using ingredients that expire by that date.</string>
     <string name="plans_advanced_legend_set">Favourite set: fill the meals of the day from one of your sets; the rest of the day is built around them, and a meal locked by hand goes before the set’s.</string>
@@ -1394,10 +1395,10 @@
     <string name="plans_rebalance_summary_plan">Meals rescaled on the plan\'s remaining days: %1$s.</string>
     <string name="plans_settings_title">Day settings</string>
     <string name="plans_settings_kind">Kind of day</string>
-    <string name="plans_settings_kind_hint">A training day aims at about 15% more calories, a rest day at about 15% less. A skipped day counts neither as a shortfall nor in the plan\'s averages.</string>
+    <string name="plans_settings_kind_hint">A usual day is a typical one, at work for example. A training day has about 15% more calories than a usual day of its week, and a rest day, at home with little movement, about 15% less. The week\'s average stays on the plan\'s target. A skipped day counts neither as a shortfall nor in the plan\'s averages.</string>
     <string name="plans_settings_meal_count">Meals</string>
     <string name="plans_settings_own_target">Own calorie target (kcal)</string>
-    <string name="plans_settings_own_target_hint">Empty: the target follows from the kind of day. A typed one takes the place of the change for a training or rest day.</string>
+    <string name="plans_settings_own_target_hint">Empty: the kind of day sets the target. A typed one takes the kind\'s place and moves no calories of other days.</string>
     <string name="plans_settings_cook_time">Most cooking time (min)</string>
     <string name="plans_settings_cook_time_hint">Empty: no limit. Dishes that take longer than a new limit are drawn anew.</string>
     <string name="plans_settings_use_up">Use up what is about to expire</string>
@@ -1432,8 +1433,8 @@
         <item quantity="one">“Save and even out the week” gives this day %1$s kcal and changes the target of %2$d other day of this week from today: the same dishes in other portions. The week\'s average comes to %3$s kcal.</item>
         <item quantity="other">“Save and even out the week” gives this day %1$s kcal and changes the targets of %2$d other days of this week from today: the same dishes in other portions. The week\'s average comes to %3$s kcal.</item>
     </plurals>
-    <string name="plans_settings_line_training">A training day: its target is about 15% more than the plan\'s base.</string>
-    <string name="plans_settings_line_rest">A rest day: its target is about 15% less than the plan\'s base.</string>
+    <string name="plans_settings_line_training">A training day: its target is about 15% more than a usual day of its week.</string>
+    <string name="plans_settings_line_rest">A rest day: its target is about 15% less than a usual day of its week.</string>
     <string name="plans_settings_line_own_target">The day\'s own target: %1$s kcal.</string>
     <string name="plans_settings_line_cook_time">Recipes of %1$d min at most.</string>
     <string name="plans_settings_line_use_up">Recipes that use up what is about to expire come first.</string>

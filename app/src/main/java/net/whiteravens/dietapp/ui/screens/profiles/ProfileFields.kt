@@ -234,6 +234,7 @@ internal fun BodyFields(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks
         selected = form.activityLevel,
         optionLabel = { activityLevelLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(activityLevel = chosen) } },
+        hint = stringResource(R.string.profile_activity_week),
     )
     activityHint(form.activityLevel)?.let { meaning ->
         Surface(
