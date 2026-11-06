@@ -166,6 +166,9 @@ class DashboardViewModel @Inject constructor(
     /** How many times each profile's weights by day were read again after a change, by the profile's id. */
     private val daysRead = mutableMapOf<String, Int>()
 
+    /** How many times each profile and its targets were read again after a change of its weights, by the profile's id. */
+    private val targetRead = mutableMapOf<String, Int>()
+
     /** The weights logged that were taken back while they waited: they leave the queue unsent. */
     private val withdrawn = mutableSetOf<Long>()
 
@@ -219,7 +222,8 @@ class DashboardViewModel @Inject constructor(
 
     /**
      * Follows the weights logged and removed that wait to be sent. Once one is sent, the server has
-     * answered: the screen is no longer offline, and its profile's weights are read again.
+     * answered: the screen is no longer offline, and its profile's weights are read again, and the
+     * profile with its targets.
      */
     private fun followWaiting() {
         viewModelScope.launch {
@@ -229,7 +233,10 @@ class DashboardViewModel @Inject constructor(
                     val sent = _state.value.waitingWeights.filter { before -> waiting.none { it.id == before.id } && before.id !in withdrawn }
                     withdrawn.retainAll { id -> waiting.any { it.id == id } }
                     _state.update { it.copy(waitingWeights = waiting, offline = it.offline && sent.isEmpty()) }
-                    sent.mapNotNull { profileOf(it.change) }.distinct().forEach(::readWeightsAgain)
+                    sent.mapNotNull { profileOf(it.change) }.distinct().forEach { profileId ->
+                        readWeightsAgain(profileId)
+                        readTargetAgain(profileId)
+                    }
                 }
         }
     }
@@ -258,7 +265,8 @@ class DashboardViewModel @Inject constructor(
     /**
      * Logs what is typed for [profileId], read in the account's unit and sent in kilograms. What is no
      * number is said and not sent, and a weight the API refuses is said with the bound it gives; one
-     * logged empties the field, is the newest, and the days of the chart are read again.
+     * logged empties the field, is the newest, and the days of the chart are read again, and the
+     * profile with its targets.
      */
     fun logWeight(profileId: String) {
         val log = _state.value.weightLogs[profileId] ?: WeightLog()
@@ -284,7 +292,10 @@ class DashboardViewModel @Inject constructor(
                             offline = state.offline || (submitted as? Submitted.Kept)?.offline == true,
                         )
                     }
-                    if (logged != null) readDaysAgain(profileId)
+                    if (logged != null) {
+                        readDaysAgain(profileId)
+                        readTargetAgain(profileId)
+                    }
                 }
                 .onFailure { e ->
                     val refused = (e as? ApiException)?.fieldRefusals?.get("kg")
@@ -294,8 +305,8 @@ class DashboardViewModel @Inject constructor(
     }
 
     /**
-     * Takes back the newest weight of [profileId], and reads the days of the chart again; asked again,
-     * the one before it. One that waits to be sent is taken out of the queue instead, unless it was
+     * Takes back the newest weight of [profileId], and reads the days of the chart again, and the
+     * profile with its targets; asked again, the one before it. One that waits to be sent is taken out of the queue instead, unless it was
      * sent meanwhile: then the weights are read again, with it among them.
      */
     fun removeLatestWeight(profileId: String) {
@@ -329,7 +340,10 @@ class DashboardViewModel @Inject constructor(
                             offline = state.offline || (submitted as? Submitted.Kept)?.offline == true,
                         )
                     }
-                    if (sent) readDaysAgain(profileId)
+                    if (sent) {
+                        readDaysAgain(profileId)
+                        readTargetAgain(profileId)
+                    }
                 }
                 .onFailure { e -> changeLog(profileId) { it.copy(removing = false, problem = WeightProblem.RemoveFailed(e)) } }
         }
@@ -351,6 +365,37 @@ class DashboardViewModel @Inject constructor(
                     profiles = state.profiles.map { stats ->
                         if (stats.profile.id != profileId) stats
                         else read.fold({ stats.copy(days = it, weightsError = null) }, { stats.copy(weightsError = it) })
+                    },
+                )
+            }
+        }
+    }
+
+    /**
+     * Reads [profileId] again after a change of its weights was sent: the newest weight logged is the
+     * profile's, and its calorie target and today's, where no plan holds the day, are worked out from
+     * it. What is shown stays where an answer does not come; a reading a later one overtook is dropped.
+     */
+    private fun readTargetAgain(profileId: String) {
+        val reading = (targetRead[profileId] ?: 0) + 1
+        targetRead[profileId] = reading
+        viewModelScope.launch {
+            val profile = async { attempt { users.profiles().firstOrNull { it.id == profileId } }.getOrNull() }
+            val target = async { attempt { users.calorieTarget(profileId) }.getOrNull() }
+            val today = async { attempt { diary.day(profileId, LocalDate.now()) }.getOrNull() }
+            val (readProfile, readTarget, readToday) = Triple(profile.await(), target.await(), today.await())
+            if (targetRead[profileId] != reading) return@launch
+            _state.update { state ->
+                state.copy(
+                    profiles = state.profiles.map { stats ->
+                        if (stats.profile.id != profileId) stats
+                        else stats.copy(
+                            profile = readProfile ?: stats.profile,
+                            target = readTarget ?: stats.target,
+                            targetError = if (readTarget != null) null else stats.targetError,
+                            today = readToday ?: stats.today,
+                            todayError = if (readToday != null) null else stats.todayError,
+                        )
                     },
                 )
             }

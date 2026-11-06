@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.AiStatus
+import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DiaryDay
 import net.whiteravens.dietapp.domain.KeptProfiles
 import net.whiteravens.dietapp.domain.Nutrition
@@ -289,6 +290,73 @@ class DashboardViewModelTest {
         assertEquals(listOf(today, earlier), model.state.value.profiles.single().weights)
         assertEquals(listOf(earlierDay, todayDay), model.state.value.profiles.single().days)
         coVerify(exactly = 2) { weights.days(ala.id, any(), any()) }
+    }
+
+    /** What the API answers once [ala] weighs [kg]: the profile, its calorie target 140 kcal lower and today's target with it. */
+    private fun lighter(users: UserRepository, kg: Double): Triple<Profile, CalorieTarget, Nutrition> {
+        val before = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
+        val profile = ala.copy(weightKg = kg)
+        val target = before.copy(maintenance = before.maintenance - 140, dailyTarget = before.dailyTarget - 140)
+        val today = Nutrition(1860.0, 95.0, 55.0, 230.0)
+        coEvery { users.profiles() } returns listOf(profile)
+        coEvery { users.calorieTarget(ala.id) } returns target
+        coEvery { diary.day(ala.id, any()) } coAnswers { day(ala.id, secondArg<LocalDate>()).copy(target = today) }
+        return Triple(profile, target, today)
+    }
+
+    @Test
+    fun `a weight logged has the profile, its calorie target and today's target read again, as the newest weight is the profile's`() {
+        val users = users().also { coEvery { it.me() } returns account("kg") }
+        coEvery { weights.log(ala.id, 80.2) } returns Submitted.Sent(logged.copy(kg = 80.2))
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai, diary, server)
+        val (profile, target, today) = lighter(users, 80.2)
+
+        model.typeWeight(ala.id, "80.2")
+        model.logWeight(ala.id)
+
+        val card = model.state.value.profiles.single()
+        assertEquals(profile, card.profile)
+        assertEquals(target, card.target)
+        assertEquals(today, card.today?.target)
+    }
+
+    @Test
+    fun `the newest weight taken back has the profile and its targets read again, as the one before it becomes the profile's`() {
+        coEvery { weights.entries(ala.id, any()) } returns listOf(logged, earlier)
+        coEvery { weights.delete(ala.id, logged.id) } returns Submitted.Sent(Unit)
+        val users = users()
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai, diary, server)
+        val (profile, target, today) = lighter(users, earlier.kg)
+
+        model.removeLatestWeight(ala.id)
+
+        val card = model.state.value.profiles.single()
+        assertEquals(profile, card.profile)
+        assertEquals(target, card.target)
+        assertEquals(today, card.today?.target)
+    }
+
+    @Test
+    fun `a weight that waited has the profile and its targets read again once it is sent, and not before`() {
+        val users = users().also { coEvery { it.me() } returns account("kg") }
+        val taken = QueuedChange.WeightLogged(ala.id, 80.2, "2026-10-17T07:00:00Z", "key")
+        coEvery { weights.log(ala.id, 80.2) } coAnswers { queue.submit(taken, offline) }
+        val model = DashboardViewModel(users, plans, weights, notifications, queue, ai, diary, server)
+        val shown = model.state.value.profiles.single()
+        val (profile, target, today) = lighter(users, 80.2)
+
+        model.typeWeight(ala.id, "80.2")
+        model.logWeight(ala.id)
+
+        assertEquals(shown.target, model.state.value.profiles.single().target)
+        coVerify(exactly = 1) { users.calorieTarget(ala.id) }
+
+        runBlocking { queue.drain { } }
+
+        val card = model.state.value.profiles.single()
+        assertEquals(profile, card.profile)
+        assertEquals(target, card.target)
+        assertEquals(today, card.today?.target)
     }
 
     @Test
