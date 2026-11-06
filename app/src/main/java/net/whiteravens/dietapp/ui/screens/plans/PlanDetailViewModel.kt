@@ -31,6 +31,7 @@ import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.inGiveWayOrder
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
@@ -454,6 +455,21 @@ class PlanDetailViewModel @Inject constructor(
                         )
                     }
                 }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
+
+    /** Evens out [week] of the plan: its days from today on get the targets that bring its average back to the plan's target. */
+    fun evenWeek(week: PlanWeek) {
+        val plan = _state.value.plan ?: return
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.evenWeek(planId, week.from, plan.revision) }
+                .onSuccess { evened -> _state.update { it.copy(plan = evened, changing = false, rebalance = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
                     if (e.isPlanChanged()) reload()

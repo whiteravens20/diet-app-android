@@ -1085,6 +1085,41 @@ data class DaySettingsDto(
     val allowRelaxations: List<String>? = null,
     /** The other meals of a cooking take the dish that is drawn for theirs. */
     val together: Boolean = false,
+    /** The week of the day is evened out with the change: its days from today on get the targets that bring its average back. */
+    val evenWeek: Boolean = false,
+)
+
+/** POST `/meal-plans/:id/weeks/even`: the week of a plan that [date] is in, evened out on the plan at [revision]. */
+@Serializable
+data class EvenWeekRequestDto(val date: String, val revision: Int)
+
+/** Three figures of a week: now, with a change of one day alone, and with the week evened out as well. */
+@Serializable
+data class WeekFiguresDto(val now: Double, val alone: Double, val evened: Double)
+
+/**
+ * The week of the day a change of settings is for: what its days aim at on average against the plan's
+ * [target], the pace each average comes to in kilograms a week, whether the change alone leaves it off
+ * the target, the target the day gets in an evened week and how many other days evening it out changes.
+ */
+@Serializable
+data class DaySettingsWeekDto(
+    val target: Double,
+    val average: WeekFiguresDto,
+    val pace: WeekFiguresDto,
+    val unevenAlone: Boolean,
+    val evenedTarget: Double,
+    val otherDays: Int,
+)
+
+/** A week of a plan: its first and last day, the plan's target, what its days aim at on average, and whether that is off the target while days to come could bring it back. */
+@Serializable
+data class PlanWeekDto(
+    val from: String,
+    val to: String,
+    val target: Double,
+    val average: Double? = null,
+    val uneven: Boolean = false,
 )
 
 /** What a change of a day's settings does to one of its meals, and why. */
@@ -1122,6 +1157,8 @@ data class DaySettingsPreviewDto(
     val listOutOfDate: Boolean,
     val unchanged: Boolean,
     val cooking: CookingChangeDto? = null,
+    /** The week of the day; null where no day of it shares it, and from an API that does not say it. */
+    val week: DaySettingsWeekDto? = null,
 )
 
 @Serializable
@@ -1132,6 +1169,8 @@ data class MealPlanDto(
     val durationDays: Int,
     val dietType: String,
     val days: List<MealPlanDayDto>,
+    /** Its weeks, the first first; none from an API that does not say them. */
+    val weeks: List<PlanWeekDto> = emptyList(),
     val averageDailyNutrition: NutritionDto,
     val targetMacros: MacrosDto,
     /** Where those averages stand against what the days of the plan aim at. */

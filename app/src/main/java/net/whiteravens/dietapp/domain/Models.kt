@@ -474,7 +474,36 @@ data class DaySettingsPreview(
     val listOutOfDate: Boolean,
     val unchanged: Boolean,
     val cooking: CookingChange? = null,
+    /** The week of the day; null where no day of it shares it. */
+    val week: DaySettingsWeek? = null,
 )
+
+/**
+ * The week of the day a change of settings is for: what its days aim at on average now, with the change
+ * of this day alone and with the week evened out as well, against the plan's [target]; the pace each
+ * comes to in kilograms a week (less than nought for a gain); whether the change alone leaves the week
+ * off its target ([unevenAlone]); the target the day gets in an evened week, and how many other days
+ * evening it out changes.
+ */
+data class DaySettingsWeek(
+    val target: Double,
+    val averageNow: Double,
+    val averageAlone: Double,
+    val averageEvened: Double,
+    val paceNow: Double,
+    val paceAlone: Double,
+    val paceEvened: Double,
+    val unevenAlone: Boolean,
+    val evenedTarget: Double,
+    val otherDays: Int,
+)
+
+/**
+ * A week of a plan: seven of its days from its first. The kinds of day move calories between its days,
+ * and they aim at the plan's [target] on average; a change of one day alone can leave the [average] off
+ * it, and then [uneven] says so while days from today on can still bring it back.
+ */
+data class PlanWeek(val from: String, val to: String, val target: Double, val average: Double?, val uneven: Boolean)
 
 data class MealPlan(
     val id: String,
@@ -484,6 +513,8 @@ data class MealPlan(
     val dietType: String,
     val days: List<PlanDay>,
     val averageDailyNutrition: Nutrition,
+    /** Its weeks, the first first. */
+    val weeks: List<PlanWeek> = emptyList(),
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
     /** What a day of the plan aims at on average, in grams. */

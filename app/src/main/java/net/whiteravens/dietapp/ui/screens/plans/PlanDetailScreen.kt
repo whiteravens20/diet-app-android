@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,6 +87,7 @@ import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
@@ -233,6 +235,7 @@ fun PlanDetailScreen(
         DaySettingsDialog(
             planId = plan.id,
             day = day,
+            week = plan.weeks.weekOf(day.date),
             onSaved = { saved ->
                 settingsFor = null
                 viewModel.dayTaken(saved)
@@ -482,6 +485,12 @@ fun PlanDetailScreen(
 
                 val day = plan.days.getOrNull(state.selectedDay) ?: return@LazyColumn
                 val today = LocalDate.now().toString()
+                // The week of the day, where a change of one of its days left it off the plan's target.
+                plan.weeks.weekOf(day.date)?.takeIf { it.uneven && it.average != null }?.let { week ->
+                    item(key = "week-${week.from}") {
+                        WeekLine(week, enabled = !readOnly && !busy, onEven = { viewModel.evenWeek(week) })
+                    }
+                }
                 // Another day from today on can take a part of what this one is off its target by.
                 val spreadable = plan.days.any { it.id != day.id && it.date >= today && !it.skipped }
                 item(key = "summary-${day.id}") {
@@ -1593,3 +1602,33 @@ private fun conflictHint(conflict: String): String = stringResource(
         else -> R.string.plans_conflict_allergen_hint
     },
 )
+
+/** The week of a plan that [date] is in. */
+private fun List<PlanWeek>.weekOf(date: String): PlanWeek? = firstOrNull { it.from <= date && date <= it.to }
+
+/**
+ * A week of the plan whose days aim off the plan's target on average, as a change of one day left it:
+ * what the average is, and a button that evens the week out, which says beforehand what it does.
+ */
+@Composable
+private fun WeekLine(week: PlanWeek, enabled: Boolean, onEven: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.shapes.medium)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            stringResource(R.string.plans_week_uneven, formatNumber(week.average!!.roundToInt()), formatNumber(week.target.roundToInt())),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
+        OutlinedButton(onClick = onEven, enabled = enabled) { Text(stringResource(R.string.plans_even_week)) }
+        Text(
+            stringResource(R.string.plans_even_week_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
+    }
+}

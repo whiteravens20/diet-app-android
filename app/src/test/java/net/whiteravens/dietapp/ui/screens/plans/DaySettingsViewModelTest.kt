@@ -15,16 +15,24 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
+import net.whiteravens.dietapp.data.remote.SessionUserDto
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.repository.toDomain
+import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
+import net.whiteravens.dietapp.domain.DaySettingsWeek
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.RelaxationNeeded
+import net.whiteravens.dietapp.testing.fixture
 import net.whiteravens.dietapp.testing.refusal
+import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -33,6 +41,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 /** The settings of a day of a running plan, as the web's window changes them: what a change does is the API's answer, and nothing changes until it is saved. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -89,7 +98,91 @@ class DaySettingsViewModelTest {
         every { it.relaxationNeeded(any()) } returns null
     }
 
-    private fun opened(settings: DaySettings = asItIs) = DaySettingsViewModel(plans).also { it.open("plan", day(settings)) }
+    /** The account cannot be read, unless a test says otherwise: the unit is that of where the phone is. */
+    private val users = mockk<UserRepository>().also { coEvery { it.me() } throws IOException("no network") }
+
+    private fun opened(settings: DaySettings = asItIs, week: PlanWeek? = null) =
+        DaySettingsViewModel(plans, users).also { it.open("plan", day(settings), week) }
+
+    /** The week of the day, as a training day changed alone leaves it: off the plan's target, which evening it out brings back. */
+    private val uneven = DaySettingsWeek(
+        target = 2000.0,
+        averageNow = 2000.0,
+        averageAlone = 2043.0,
+        averageEvened = 2001.0,
+        paceNow = 0.5,
+        paceAlone = 0.46,
+        paceEvened = 0.5,
+        unevenAlone = true,
+        evenedTarget = 2240.0,
+        otherDays = 4,
+    )
+
+    @Test
+    fun `a change that leaves the week off its target is saved with the week evened out, or alone, as the reader chooses`() = runTest(main) {
+        coEvery { plans.previewDaySettings("plan", "day", training) } returns more.copy(week = uneven)
+        val alone = mockk<MealPlan>()
+        val evened = mockk<MealPlan>()
+        coEvery { plans.applyDaySettings("plan", "day", training, 7, null, false, false) } returns alone
+        coEvery { plans.applyDaySettings("plan", "day", training, 7, null, false, true) } returns evened
+        val first = opened()
+        runCurrent()
+        assertFalse(first.state.value.twoWays)
+
+        first.setKind("training")
+        advanceTimeBy(DaySettingsViewModel.PAUSE_MILLIS * 2)
+        runCurrent()
+        assertTrue(first.state.value.twoWays)
+        first.save(evenWeek = true)
+        runCurrent()
+
+        coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, true) }
+        assertSame(evened, first.state.value.saved)
+
+        val second = opened()
+        runCurrent()
+        second.setKind("training")
+        advanceTimeBy(DaySettingsViewModel.PAUSE_MILLIS * 2)
+        runCurrent()
+        second.save()
+        runCurrent()
+
+        coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, false) }
+        assertSame(alone, second.state.value.saved)
+    }
+
+    @Test
+    fun `a week that stands off its target is evened out as it is while nothing of the day changes, and a week that is even is not`() = runTest(main) {
+        val evened = mockk<MealPlan>()
+        coEvery { plans.evenWeek("plan", "2026-01-06", 7) } returns evened
+        val off = PlanWeek("2026-01-05", "2026-01-11", target = 2000.0, average = 2043.0, uneven = true)
+        val even = opened(week = off.copy(average = 2004.0, uneven = false))
+        runCurrent()
+        assertFalse(even.state.value.evenAlone)
+        even.evenWeek()
+        runCurrent()
+        coVerify(exactly = 0) { plans.evenWeek(any(), any(), any()) }
+
+        val model = opened(week = off)
+        runCurrent()
+        assertTrue(model.state.value.evenAlone)
+        model.evenWeek()
+        runCurrent()
+
+        coVerify(exactly = 1) { plans.evenWeek("plan", "2026-01-06", 7) }
+        assertSame(evened, model.state.value.saved)
+    }
+
+    @Test
+    fun `the pace of the week is said in the account's unit once the account is read`() = runTest(main) {
+        val account = AppModule.json().decodeFromString<SessionUserDto>(fixture("users-me")).toDomain()
+        coEvery { users.me() } returns account.copy(weightUnit = "lb")
+
+        val model = opened()
+        runCurrent()
+
+        assertEquals(WeightUnit.LB, model.state.value.unit)
+    }
 
     @Test
     fun `the window asks at once what the day's settings as they stand do, and shows the answer as theirs`() = runTest(main) {

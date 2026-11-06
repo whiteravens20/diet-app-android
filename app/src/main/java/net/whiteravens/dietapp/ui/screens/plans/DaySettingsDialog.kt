@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,9 +34,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DaySettingsPreview
+import net.whiteravens.dietapp.domain.DaySettingsWeek
 import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
@@ -47,26 +50,31 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
+import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
  * The window in which the settings of a day of a running plan are changed, as the web's: the day's
  * kind, its number of meals, a target of its own, a limit on cooking time and whether it uses up
  * what the pantry has to use up. What a change would do is said before anything is saved, as the
- * API works it out. The plan with the settings saved goes to [onSaved]; a refusal that may come of
- * a plan changed under the window goes to [onStale].
+ * API works it out, with what it does to the average of the day's [week]: a change that leaves the
+ * week off the plan's target is saved alone or with the week evened out, and a week that stands off
+ * it can be evened out as it is. The plan with the settings saved goes to [onSaved]; a refusal that
+ * may come of a plan changed under the window goes to [onStale].
  */
 @Composable
 fun DaySettingsDialog(
     planId: String,
     day: PlanDay,
+    week: PlanWeek?,
     onSaved: (MealPlan) -> Unit,
     onStale: () -> Unit,
     onDismiss: () -> Unit,
     viewModel: DaySettingsViewModel = hiltViewModel(key = "settings-${day.id}"),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(day.id) { viewModel.open(planId, day) }
+    LaunchedEffect(day.id) { viewModel.open(planId, day, week) }
     // The window's model outlives it: what the model holds now is read, so that a save of an
     // earlier opening on the same day is not handed back before the state on the screen catches up.
     LaunchedEffect(state.saved) { viewModel.state.value.saved?.let(onSaved) }
@@ -130,7 +138,7 @@ fun DaySettingsDialog(
                         preview == null && state.previewError != null -> ErrorBanner(errorMessage(state.previewError!!))
                         preview == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
                         else -> Column(Modifier.alpha(if (state.current) 1f else 0.6f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Outcome(preview, skipped)
+                            Outcome(preview, skipped, state.week?.takeIf { it.uneven }, state.unit)
                             if (!preview.unchanged) CookingNote(preview.cooking, state.only, onOnly = viewModel::setOnly)
                         }
                     }
@@ -138,21 +146,56 @@ fun DaySettingsDialog(
                 state.inTheWay?.let { needed -> InTheWayBox(needed, busy = state.saving, onLetGiveWay = viewModel::letGiveWay, onCancel = onDismiss) }
                 state.error?.let { ErrorBanner(errorMessage(it)) }
             }
-            Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-                Button(onClick = viewModel::save, enabled = !state.saving && state.current && state.preview?.unchanged == false) {
-                    Text(stringResource(R.string.plans_settings_save))
+            val cancel: @Composable (Modifier) -> Unit = { modifier ->
+                TextButton(onClick = onDismiss, modifier = modifier) { Text(stringResource(R.string.common_cancel)) }
+            }
+            val save: @Composable (Modifier) -> Unit = { modifier ->
+                Button(
+                    onClick = { viewModel.save() },
+                    modifier = modifier,
+                    enabled = !state.saving && state.current && state.preview?.unchanged == false,
+                ) {
+                    Text(stringResource(if (state.twoWays) R.string.plans_settings_save_day else R.string.plans_settings_save))
+                }
+            }
+            if (state.evenAlone || state.twoWays) {
+                // Three buttons do not fit a phone's width in a row: they stand one under another, saving on top.
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    save(Modifier.fillMaxWidth())
+                    if (state.evenAlone) {
+                        OutlinedButton(onClick = viewModel::evenWeek, modifier = Modifier.fillMaxWidth(), enabled = !state.saving) {
+                            Text(stringResource(R.string.plans_settings_even_week))
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { viewModel.save(evenWeek = true) },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.saving,
+                        ) {
+                            Text(stringResource(R.string.plans_settings_save_and_even))
+                        }
+                    }
+                    cancel(Modifier.fillMaxWidth())
+                }
+            } else {
+                Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    cancel(Modifier)
+                    save(Modifier)
                 }
             }
         }
     }
 }
 
-/** What a change of a day's settings would do, line by line. */
+/** What a change of a day's settings would do, line by line; [weekOff], the day's week where it stands off the plan's target. */
 @Composable
-private fun Outcome(preview: DaySettingsPreview, skipped: Boolean) {
+private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: PlanWeek?, unit: WeightUnit) {
     if (preview.unchanged) {
         Note(stringResource(R.string.plans_settings_unchanged))
+        val average = weekOff?.average
+        if (weekOff != null && average != null) {
+            Note(stringResource(R.string.plans_settings_even_week_note, formatNumber(average.roundToInt()), formatNumber(weekOff.target.roundToInt())))
+        }
         return
     }
     if (skipped) {
@@ -186,7 +229,37 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean) {
         else Note(stringResource(R.string.plans_settings_day_calories_off, shown), MaterialTheme.colorScheme.tertiary)
     }
     if (preview.listOutOfDate) Note(stringResource(R.string.plans_settings_list_out_of_date))
-    Note(stringResource(R.string.plans_settings_other_days))
+    preview.week?.let { WeekOutcome(it, unit) }
+    if (preview.week?.unevenAlone != true) Note(stringResource(R.string.plans_settings_other_days))
+}
+
+/** What the change does to the week of the day: its average against the plan's target and the pace that comes to, and what evening the week out would do. */
+@Composable
+private fun WeekOutcome(week: DaySettingsWeek, unit: WeightUnit) {
+    val now = formatNumber(week.averageNow.roundToInt())
+    val alone = formatNumber(week.averageAlone.roundToInt())
+    val target = formatNumber(week.target.roundToInt())
+    val average = if (now == alone) stringResource(R.string.plans_settings_week_average, now, target)
+    else stringResource(R.string.plans_settings_week_average_change, now, alone, target)
+    val pace = week.paceAlone
+    val weight = "${formatNumber(abs(unit.shown(pace)), 2)} ${unit.code}"
+    val paced = when {
+        abs(pace) < 0.05 -> stringResource(R.string.plans_settings_week_pace_keep)
+        pace > 0 -> stringResource(R.string.plans_settings_week_pace_loss, weight)
+        else -> stringResource(R.string.plans_settings_week_pace_gain, weight)
+    }
+    Note("$average $paced", MaterialTheme.colorScheme.onSurface)
+    if (week.unevenAlone) {
+        Note(
+            pluralStringResource(
+                R.plurals.plans_settings_week_even_note,
+                week.otherDays,
+                formatNumber(week.evenedTarget.roundToInt()),
+                week.otherDays,
+                formatNumber(week.averageEvened.roundToInt()),
+            ),
+        )
+    }
 }
 
 /** What becomes of a meal, in words: its fate, and why where there is more to it than the day's new target. */

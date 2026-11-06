@@ -1523,6 +1523,24 @@
     <string name="plans_settings_list_out_of_date">Lista zakupów obejmująca ten dzień będzie do odświeżenia.</string>
     <string name="plans_settings_other_days">Inne dni planu się nie zmieniają.</string>
     <string name="plans_settings_save">Zapisz</string>
+    <string name="plans_settings_save_day">Zapisz ten dzień</string>
+    <string name="plans_settings_save_and_even">Zapisz i wyrównaj tydzień</string>
+    <string name="plans_settings_even_week">Wyrównaj tydzień</string>
+    <string name="plans_settings_even_week_note">Średnia tego tygodnia to %1$s kcal przy celu planu %2$s kcal. „Wyrównaj tydzień” zmieni cele dni tego tygodnia od dziś: te same dania w innych porcjach.</string>
+    <string name="plans_settings_week_average">Średnia tygodnia: %1$s kcal przy celu planu %2$s kcal.</string>
+    <string name="plans_settings_week_average_change">Średnia tygodnia: %1$s → %2$s kcal przy celu planu %3$s kcal.</string>
+    <string name="plans_settings_week_pace_loss">Przy takiej średniej waga spada o około %1$s na tydzień.</string>
+    <string name="plans_settings_week_pace_gain">Przy takiej średniej waga rośnie o około %1$s na tydzień.</string>
+    <string name="plans_settings_week_pace_keep">Przy takiej średniej waga zostaje mniej więcej bez zmian.</string>
+    <string name="plans_week_uneven">Średnia tego tygodnia: %1$s kcal, cel planu: %2$s kcal.</string>
+    <string name="plans_even_week">Wyrównaj tydzień</string>
+    <string name="plans_even_week_note">Dni tego tygodnia od dziś dostaną nowe cele: te same dania w innych porcjach.</string>
+    <plurals name="plans_settings_week_even_note">
+        <item quantity="one">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cel %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średnia tygodnia wyniesie %3$s kcal.</item>
+        <item quantity="few">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średnia tygodnia wyniesie %3$s kcal.</item>
+        <item quantity="many">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średnia tygodnia wyniesie %3$s kcal.</item>
+        <item quantity="other">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średnia tygodnia wyniesie %3$s kcal.</item>
+    </plurals>
     <string name="plans_settings_line_training">Dzień treningowy: cel około 15% wyższy niż baza planu.</string>
     <string name="plans_settings_line_rest">Dzień odpoczynku: cel około 15% niższy niż baza planu.</string>
     <string name="plans_settings_line_own_target">Własny cel dnia: %1$s kcal.</string>

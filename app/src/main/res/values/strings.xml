@@ -1416,6 +1416,22 @@
     <string name="plans_settings_list_out_of_date">The shopping list that covers this day will need to be made again.</string>
     <string name="plans_settings_other_days">The plan\'s other days stay as they are.</string>
     <string name="plans_settings_save">Save</string>
+    <string name="plans_settings_save_day">Save this day</string>
+    <string name="plans_settings_save_and_even">Save and even out the week</string>
+    <string name="plans_settings_even_week">Even out the week</string>
+    <string name="plans_settings_even_week_note">This week\'s average is %1$s kcal, at a plan target of %2$s kcal. “Even out the week” changes the targets of this week\'s days from today: the same dishes in other portions.</string>
+    <string name="plans_settings_week_average">The week\'s average: %1$s kcal, at a plan target of %2$s kcal.</string>
+    <string name="plans_settings_week_average_change">The week\'s average: %1$s → %2$s kcal, at a plan target of %3$s kcal.</string>
+    <string name="plans_settings_week_pace_loss">At this average weight falls by about %1$s a week.</string>
+    <string name="plans_settings_week_pace_gain">At this average weight rises by about %1$s a week.</string>
+    <string name="plans_settings_week_pace_keep">At this average weight stays about the same.</string>
+    <string name="plans_week_uneven">This week\'s average: %1$s kcal, the plan\'s target: %2$s kcal.</string>
+    <string name="plans_even_week">Even out the week</string>
+    <string name="plans_even_week_note">This week\'s days from today get new targets: the same dishes in other portions.</string>
+    <plurals name="plans_settings_week_even_note">
+        <item quantity="one">“Save and even out the week” gives this day %1$s kcal and changes the target of %2$d other day of this week from today: the same dishes in other portions. The week\'s average comes to %3$s kcal.</item>
+        <item quantity="other">“Save and even out the week” gives this day %1$s kcal and changes the targets of %2$d other days of this week from today: the same dishes in other portions. The week\'s average comes to %3$s kcal.</item>
+    </plurals>
     <string name="plans_settings_line_training">A training day: its target is about 15% more than the plan\'s base.</string>
     <string name="plans_settings_line_rest">A rest day: its target is about 15% less than the plan\'s base.</string>
     <string name="plans_settings_line_own_target">The day\'s own target: %1$s kcal.</string>

@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.data.remote.SwapPreviewDto
 import net.whiteravens.dietapp.domain.CookedPlace
 import net.whiteravens.dietapp.domain.CookingChange
+import net.whiteravens.dietapp.domain.DaySettingsWeek
 import net.whiteravens.dietapp.domain.MealCooking
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.CalorieTarget
@@ -56,6 +57,7 @@ import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Recipe
@@ -300,10 +302,24 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
     listOutOfDate = listOutOfDate,
     unchanged = unchanged,
     cooking = cooking?.toDomain(),
+    week = week?.let {
+        DaySettingsWeek(
+            target = it.target,
+            averageNow = it.average.now,
+            averageAlone = it.average.alone,
+            averageEvened = it.average.evened,
+            paceNow = it.pace.now,
+            paceAlone = it.pace.alone,
+            paceEvened = it.pace.evened,
+            unevenAlone = it.unevenAlone,
+            evenedTarget = it.evenedTarget,
+            otherDays = it.otherDays,
+        )
+    },
 )
 
-/** The settings as a request carries them; the revision and the limits that may give way go with a change only. */
-fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = null, together: Boolean = false) = DaySettingsDto(
+/** The settings as a request carries them; the revision, the limits that may give way and the evening of the week go with a change only. */
+fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = null, together: Boolean = false, evenWeek: Boolean = false) = DaySettingsDto(
     dayType = dayType,
     skip = skip,
     mealCount = mealCount,
@@ -313,6 +329,7 @@ fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = n
     revision = revision,
     allowRelaxations = allowRelaxations,
     together = together,
+    evenWeek = evenWeek,
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
@@ -323,6 +340,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     dietType = dietType,
     days = days.map { it.toDomain(report) },
     averageDailyNutrition = averageDailyNutrition.toDomain(),
+    weeks = weeks.map { PlanWeek(it.from, it.to, it.target, it.average, it.uneven) },
     syncedAt = syncedAt,
     targetMacros = targetMacros.toDomain(),
     ingredientReuse = ingredientReuseScore,

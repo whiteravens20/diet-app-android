@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.data.remote.ApplyFavoriteSetRequest
 import net.whiteravens.dietapp.data.remote.ApplyMealSwapRequest
 import net.whiteravens.dietapp.data.remote.DayOverrideDto
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
 import net.whiteravens.dietapp.data.remote.GeneratePlanRequest
 import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
@@ -513,8 +514,20 @@ class MealPlanRepository @Inject constructor(
         revision: Int,
         allowRelaxations: List<String>? = null,
         together: Boolean = false,
+        evenWeek: Boolean = false,
     ): MealPlan {
-        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations, together)) }
+        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations, together, evenWeek)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
+    /**
+     * Evens out the week of a plan that [date] is in, on the plan at [revision]: its days from today on get
+     * the targets that bring its average back to the plan's target. The plan is kept for offline use; a
+     * plan changed since is refused with `PLAN_CHANGED`.
+     */
+    suspend fun evenWeek(planId: String, date: String, revision: Int): MealPlan {
+        val plan = apiCall(json) { api.evenWeek(planId, EvenWeekRequestDto(date, revision)) }
         mirror(plan)
         return plan.toDomain()
     }

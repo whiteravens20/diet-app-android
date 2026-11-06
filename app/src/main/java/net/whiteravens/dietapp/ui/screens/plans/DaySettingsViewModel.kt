@@ -14,13 +14,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
+import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.ui.common.attempt
+import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -31,11 +35,22 @@ import javax.inject.Inject
  * nothing changes until the settings are saved.
  */
 @HiltViewModel
-class DaySettingsViewModel @Inject constructor(private val plans: MealPlanRepository) : ViewModel() {
+class DaySettingsViewModel @Inject constructor(
+    private val plans: MealPlanRepository,
+    private val users: UserRepository,
+) : ViewModel() {
 
     data class UiState(
         val planId: String = "",
         val dayId: String = "",
+        /** The day, `2026-11-06`: what evening its week out names it by. */
+        val date: String = "",
+        /** The week of the plan the day is in, as the plan said it stood when the window opened. */
+        val week: PlanWeek? = null,
+        /** The last save asked for evens the week out too: letting the limits give way asks the same. */
+        val evenWeek: Boolean = false,
+        /** The unit the pace of the week is said in: the account's, and until it is read, that of where the phone is. */
+        val unit: WeightUnit = WeightUnit.of(null, Locale.getDefault()),
         /** The settings the window started from: what the kind goes back to when a skipped day is no longer skipped. */
         val start: DaySettings? = null,
         /** The kind as the window chooses it: `normal` | `training` | `rest` | `skip`. */
@@ -83,18 +98,26 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         /** Whether the typed target, or the typed minutes, is no whole number; an empty field is none. The API says what it takes. */
         val targetNotWhole: Boolean get() = target.typed() == null
         val cookTimeNotWhole: Boolean get() = cookTime.typed() == null
+
+        /** The change alone leaves the week off the plan's target: it can be saved alone, or with the week evened out. */
+        val twoWays: Boolean get() = current && preview?.unchanged == false && preview.week?.unevenAlone == true
+
+        /** Nothing of the day changes and its week stands off its target: the week can be evened out as it is. */
+        val evenAlone: Boolean get() = current && preview?.unchanged == true && week?.uneven == true
     }
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
     private var asking: Job? = null
 
-    /** The window on [day], as its settings stand. */
-    fun open(planId: String, day: PlanDay) {
+    /** The window on [day] of [week], as its settings stand. */
+    fun open(planId: String, day: PlanDay, week: PlanWeek? = null) {
         val settings = day.settings ?: return
         _state.value = UiState(
             planId = planId,
             dayId = day.id,
+            date = day.date,
+            week = week,
             start = settings,
             kind = if (settings.skip) SKIP else settings.dayType,
             mealCount = settings.mealCount,
@@ -103,6 +126,10 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
             useUpBy = settings.useUpBy,
         )
         ask(pause = false)
+        viewModelScope.launch {
+            val unit = attempt { users.me() }.getOrNull()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) } ?: return@launch
+            _state.update { it.copy(unit = unit) }
+        }
     }
 
     fun setKind(kind: String) = edit { it.copy(kind = kind) }
@@ -116,14 +143,34 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
         _state.update { it.copy(only = on) }
     }
 
-    /** Saves the settings on the plan as the preview had it. */
-    fun save() = send(allowRelaxations = null)
+    /** Saves the settings on the plan as the preview had it; with [evenWeek], the week of the day is evened out with them. */
+    fun save(evenWeek: Boolean = false) {
+        _state.update { it.copy(evenWeek = evenWeek) }
+        send(allowRelaxations = null)
+    }
 
-    /** Saves them again, letting the limits that stood in the way give way. */
+    /** Saves them again, letting the limits that stood in the way give way, the week evened out as the save asked. */
     fun letGiveWay() {
         val needed = _state.value.inTheWay ?: return
         // The refusal names them in the order in which they give way.
         send(allowRelaxations = needed.needs)
+    }
+
+    /** Evens out the week of the day as it is, on the plan at the preview's revision. */
+    fun evenWeek() {
+        val current = _state.value
+        val preview = current.preview ?: return
+        if (current.saving || !current.evenAlone) return
+        viewModelScope.launch {
+            _state.update { it.copy(saving = true, error = null, stale = false) }
+            attempt { plans.evenWeek(current.planId, current.date, preview.revision) }
+                .onSuccess { plan -> _state.update { it.copy(saving = false, saved = plan) } }
+                .onFailure { e ->
+                    val changed = e is ApiException && e.code == "PLAN_CHANGED"
+                    _state.update { it.copy(saving = false, error = e, stale = changed) }
+                    if (changed) ask(pause = false)
+                }
+        }
     }
 
     private fun edit(change: (UiState) -> UiState) {
@@ -164,6 +211,7 @@ class DaySettingsViewModel @Inject constructor(private val plans: MealPlanReposi
                     preview.revision,
                     allowRelaxations,
                     together = !current.only && preview.cooking?.changes?.isNotEmpty() == true,
+                    evenWeek = current.evenWeek,
                 )
             }
                 .onSuccess { plan -> _state.update { it.copy(saving = false, saved = plan) } }

@@ -363,6 +363,10 @@ interface DietApiService {
     @PUT("meal-plans/{id}/days/{dayId}/settings")
     suspend fun applyDaySettings(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: DaySettingsDto): MealPlanDto
 
+    /** Evens out the week of a plan a day is in, on the plan at the revision it was read at. */
+    @POST("meal-plans/{id}/weeks/even")
+    suspend fun evenWeek(@Path("id") id: String, @Body body: EvenWeekRequestDto): MealPlanDto
+
     /** Takes a meal off its day; the day is balanced again without it. */
     @DELETE("meal-plans/{id}/meals/{mealId}")
     suspend fun removeMeal(@Path("id") id: String, @Path("mealId") mealId: String): RebalanceResultDto
