@@ -175,14 +175,20 @@ tasks.withType<Test>().configureEach {
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
 /**
- * Writes the API's own words for every code it refuses a request with, in English and Polish, from
- * the copy of its list of codes (contract/errors.json, beside the contract): string resources named
- * `error_code_<code>` and a map from each code to its text, which `errorMessage` reads.
+ * Writes the API's own words for every code it refuses a request with, in every language the app
+ * ships, from the copy of its list of codes (contract/errors.json, beside the contract): string
+ * resources named `error_code_<code>` and a map from each code to its text, which `errorMessage`
+ * reads. The list has a sentence in each language diet-app ships. A language joins `languages`
+ * once diet-app ships it too: before that, the build stops on a code with no sentence in it.
  */
 abstract class WriteErrorTexts : DefaultTask() {
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val codes: RegularFileProperty
+
+    /** The languages the app ships: English goes into `values`, each of the others into its own folder. */
+    @get:Input
+    abstract val shipped: ListProperty<String>
 
     @get:OutputDirectory
     abstract val resources: DirectoryProperty
@@ -196,25 +202,27 @@ abstract class WriteErrorTexts : DefaultTask() {
         val list = groovy.json.JsonSlurper().parse(codes.get().asFile) as Map<String, Map<String, Any?>>
         val rows = list.map { (code, entry) ->
             val messages = entry["messages"] as Map<String, String?>
-            fun text(language: String) = checkNotNull(messages[language]) { "contract/errors.json: $code has no text in $language" }
-            Triple(code, text("en"), text("pl"))
+            code to shipped.get().associateWith { language ->
+                checkNotNull(messages[language]?.ifBlank { null }) { "contract/errors.json: $code has no text in $language" }
+            }
         }
         check(rows.isNotEmpty()) { "contract/errors.json lists no code" }
         fun xml(text: String) = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             .replace("\\", "\\\\").replace("'", "\\'").replace("\"", "\\\"")
             .let { if (it.startsWith("@") || it.startsWith("?")) "\\$it" else it }
         fun name(code: String) = "error_code_" + code.lowercase()
-        for ((folder, column) in listOf("values" to 1, "values-pl" to 2)) {
-            val file = resources.get().dir(folder).file("errors.xml").asFile
+        // Gradle keeps what an earlier run wrote: a language taken off the list leaves no folder behind.
+        resources.get().asFile.deleteRecursively()
+        for (language in shipped.get()) {
+            val file = resources.get().dir(if (language == "en") "values" else "values-$language").file("errors.xml").asFile
             file.parentFile.mkdirs()
             file.writeText(
                 buildString {
                     appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
                     appendLine("<!-- Written by the build from contract/errors.json. -->")
                     appendLine("<resources>")
-                    rows.forEach { row ->
-                        val text = if (column == 1) row.second else row.third
-                        appendLine("    <string name=\"${name(row.first)}\" formatted=\"false\">${xml(text)}</string>")
+                    rows.forEach { (code, texts) ->
+                        appendLine("    <string name=\"${name(code)}\" formatted=\"false\">${xml(texts.getValue(language))}</string>")
                     }
                     appendLine("</resources>")
                 },
@@ -231,7 +239,7 @@ abstract class WriteErrorTexts : DefaultTask() {
                 appendLine()
                 appendLine("/** The text of every code the API refuses a request with, in the API's own words. */")
                 appendLine("internal val ERROR_TEXTS: Map<String, Int> = mapOf(")
-                rows.forEach { row -> appendLine("    \"${row.first}\" to R.string.${name(row.first)},") }
+                rows.forEach { (code, _) -> appendLine("    \"$code\" to R.string.${name(code)},") }
                 appendLine(")")
             },
         )
@@ -240,6 +248,7 @@ abstract class WriteErrorTexts : DefaultTask() {
 
 val writeErrorTexts = tasks.register<WriteErrorTexts>("writeErrorTexts") {
     codes.set(rootProject.layout.projectDirectory.file("contract/errors.json"))
+    shipped.set(languages)
 }
 
 /**
