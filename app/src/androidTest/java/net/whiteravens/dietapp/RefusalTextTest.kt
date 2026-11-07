@@ -89,7 +89,8 @@ class RefusalTextTest {
             }
         }
         compose.waitForIdle()
-        return said.mapValues { (_, texts) -> texts.map { checkNotNull(it) } }
+        // As the eye reads them: a number keeps its word with a no-break space, which reads as a plain one.
+        return said.mapValues { (_, texts) -> texts.map { checkNotNull(it).replace('\u00A0', ' ') } }
     }
 
     @Test

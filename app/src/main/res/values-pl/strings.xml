@@ -61,7 +61,7 @@
     <string name="auth_name">Imię</string>
     <string name="auth_email">E-mail</string>
     <string name="auth_password">Hasło</string>
-    <string name="auth_password_rules">Co najmniej 12 znaków, wielka i mała litera oraz cyfra.</string>
+    <string name="auth_password_rules">Co najmniej 12 znaków, wielka i mała litera oraz cyfra.</string>
     <string name="auth_sign_in_button">Zaloguj się</string>
     <string name="auth_second_step_title">Logowanie dwuetapowe</string>
     <string name="auth_second_step_body">Wpisz sześciocyfrowy kod z aplikacji uwierzytelniającej. Jeśli nie masz telefonu, wpisz jeden z kodów zapasowych.</string>
@@ -85,9 +85,9 @@
     <string name="dashboard_no_profiles">Utwórz pierwszy profil, aby wyliczyć cel kaloryczny i wygenerować plan posiłków.</string>
     <plurals name="dashboard_subtitle">
         <item quantity="one">Twój cel kaloryczny i podział makro.</item>
-        <item quantity="few">Cele kaloryczne dla %d profili.</item>
-        <item quantity="many">Cele kaloryczne dla %d profili.</item>
-        <item quantity="other">Cele kaloryczne dla %d profili.</item>
+        <item quantity="few">Cele kaloryczne dla %d profili.</item>
+        <item quantity="many">Cele kaloryczne dla %d profili.</item>
+        <item quantity="other">Cele kaloryczne dla %d profili.</item>
     </plurals>
     <string name="dashboard_daily_target">Cel dzienny</string>
     <string name="dashboard_manual_hint">Ustawione ręcznie</string>
@@ -128,16 +128,16 @@
     <string name="overview_favourites_hint">%1$s z %2$s to przepisy oznaczone jako ulubione albo jedzone często.</string>
     <string name="overview_shopping_hint">Odhaczono %1$s z %2$s na listach planu.</string>
     <plurals name="overview_meals">
-        <item quantity="one">%d posiłku</item>
-        <item quantity="few">%d posiłków</item>
-        <item quantity="many">%d posiłków</item>
-        <item quantity="other">%d posiłku</item>
+        <item quantity="one">%d posiłku</item>
+        <item quantity="few">%d posiłków</item>
+        <item quantity="many">%d posiłków</item>
+        <item quantity="other">%d posiłku</item>
     </plurals>
     <plurals name="overview_entries">
-        <item quantity="one">%d pozycji</item>
-        <item quantity="few">%d pozycji</item>
-        <item quantity="many">%d pozycji</item>
-        <item quantity="other">%d pozycji</item>
+        <item quantity="one">%d pozycji</item>
+        <item quantity="few">%d pozycji</item>
+        <item quantity="many">%d pozycji</item>
+        <item quantity="other">%d pozycji</item>
     </plurals>
     <string name="overview_day_of">%1$s z %2$s kcal</string>
     <string name="dashboard_kcal_per_day">kcal/dzień</string>
@@ -191,16 +191,16 @@
     <string name="account_leave_sending">Wysyłanie…</string>
     <string name="account_leave_drop">Porzuć i wyloguj</string>
     <plurals name="changes_waiting">
-        <item quantity="one">%1$d zmiana czeka na wysłanie</item>
-        <item quantity="few">%1$d zmiany czekają na wysłanie</item>
-        <item quantity="many">%1$d zmian czeka na wysłanie</item>
-        <item quantity="other">%1$d zmiany czeka na wysłanie</item>
+        <item quantity="one">%1$d zmiana czeka na wysłanie</item>
+        <item quantity="few">%1$d zmiany czekają na wysłanie</item>
+        <item quantity="many">%1$d zmian czeka na wysłanie</item>
+        <item quantity="other">%1$d zmiany czeka na wysłanie</item>
     </plurals>
     <plurals name="account_leave_waiting">
-        <item quantity="one">%1$d zmiana zrobiona na tym telefonie czeka na wysłanie. Wysłać ją przed wylogowaniem czy porzucić?</item>
-        <item quantity="few">%1$d zmiany zrobione na tym telefonie czekają na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
-        <item quantity="many">%1$d zmian zrobionych na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
-        <item quantity="other">%1$d zmiany zrobionej na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
+        <item quantity="one">%1$d zmiana zrobiona na tym telefonie czeka na wysłanie. Wysłać ją przed wylogowaniem czy porzucić?</item>
+        <item quantity="few">%1$d zmiany zrobione na tym telefonie czekają na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
+        <item quantity="many">%1$d zmian zrobionych na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
+        <item quantity="other">%1$d zmiany zrobionej na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
     </plurals>
     <string name="offline_readonly">Offline — stan z %1$s; posiłki można oznaczać jako zjedzone, dodawać i usuwać, inne zmiany wymagają połączenia</string>
 
@@ -224,22 +224,22 @@
     <string name="plans_calendar_legend_off">Dzień odbiega od celu o więcej niż jedną dziesiątą.</string>
     <string name="plans_calendar_legend_eaten">Posiłki oznaczone jako zjedzone, spośród posiłków danego dnia.</string>
     <string name="plans_calendar_legend_skipped">— to dzień pominięty w planie: nic na nim nie zaplanowano.</string>
-    <string name="plans_calendar_legend_more">+1 i podobne: tyle innych planów obejmuje ten sam dzień. Kalendarz pokazuje plan utworzony najpóźniej.</string>
+    <string name="plans_calendar_legend_more">+1 i podobne: tyle innych planów obejmuje ten sam dzień. Kalendarz pokazuje plan utworzony najpóźniej.</string>
     <string name="plans_calendar_day_planned">%1$s: %2$s z %3$s kcal%4$s, %5$s%6$s. Wybierz, aby otworzyć plan.</string>
     <string name="plans_calendar_day_skipped">%1$s: dzień pominięty w planie%2$s. Wybierz, aby otworzyć plan.</string>
     <string name="plans_calendar_over">, powyżej celu</string>
     <string name="plans_calendar_under">, poniżej celu</string>
     <plurals name="plans_calendar_eaten">
-        <item quantity="one">zjedzono %1$s z %2$d posiłku</item>
-        <item quantity="few">zjedzono %1$s z %2$d posiłków</item>
-        <item quantity="many">zjedzono %1$s z %2$d posiłków</item>
-        <item quantity="other">zjedzono %1$s z %2$d posiłku</item>
+        <item quantity="one">zjedzono %1$s z %2$d posiłku</item>
+        <item quantity="few">zjedzono %1$s z %2$d posiłków</item>
+        <item quantity="many">zjedzono %1$s z %2$d posiłków</item>
+        <item quantity="other">zjedzono %1$s z %2$d posiłku</item>
     </plurals>
     <plurals name="plans_calendar_more">
         <item quantity="one">, a ten dzień obejmuje jeszcze jeden plan</item>
-        <item quantity="few">, a ten dzień obejmują jeszcze %1$d plany</item>
-        <item quantity="many">, a ten dzień obejmuje jeszcze %1$d planów</item>
-        <item quantity="other">, a ten dzień obejmuje jeszcze %1$d planu</item>
+        <item quantity="few">, a ten dzień obejmują jeszcze %1$d plany</item>
+        <item quantity="many">, a ten dzień obejmuje jeszcze %1$d planów</item>
+        <item quantity="other">, a ten dzień obejmuje jeszcze %1$d planu</item>
     </plurals>
     <plurals name="plans_card_title">
         <item quantity="one">%1$s · %2$d dzień</item>
@@ -264,9 +264,9 @@
     <string name="plans_pantry_unused">Żaden przepis, który mógł trafić do tego planu, nie korzysta z tego, co jest w spiżarni.</string>
     <plurals name="plans_conflicts_notice">
         <item quantity="one">Jeden posiłek tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
-        <item quantity="few">%1$d posiłki tego planu zawierają coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
-        <item quantity="many">%1$d posiłków tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
-        <item quantity="other">%1$d posiłku tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+        <item quantity="few">%1$d posiłki tego planu zawierają coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+        <item quantity="many">%1$d posiłków tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
+        <item quantity="other">%1$d posiłku tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
     </plurals>
     <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
     <string name="plans_day_macros_of">Białko %1$s z %2$s g · tłuszcz %3$s z %4$s g · węglowodany %5$s z %6$s g</string>
@@ -281,10 +281,10 @@
     <string name="plans_auto_balanced_chip">przeliczono ×%1$s</string>
     <string name="plans_packs_line">Produkty nietrwałe po otwarciu: jadłospis zużywa %1$s%% tego, co kupuje.</string>
     <plurals name="plans_packs_line_wasted">
-        <item quantity="one">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
-        <item quantity="few">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
-        <item quantity="many">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
-        <item quantity="other">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
+        <item quantity="one">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
+        <item quantity="few">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
+        <item quantity="many">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
+        <item quantity="other">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
     </plurals>
     <string name="plans_packs_left">%1$s: zostaje %2$s z opakowania %3$s</string>
     <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
@@ -417,40 +417,40 @@
     <string name="plans_reroll_kept">Bez zmian:</string>
     <string name="plans_reroll_kept_nothing">Nic z planu nie zostaje bez zmian.</string>
     <plurals name="plans_reroll_kept_outside">
-        <item quantity="one">%1$d dzień poza wybranymi</item>
-        <item quantity="few">%1$d dni poza wybranymi</item>
-        <item quantity="many">%1$d dni poza wybranymi</item>
-        <item quantity="other">%1$d dnia poza wybranymi</item>
+        <item quantity="one">%1$d dzień poza wybranymi</item>
+        <item quantity="few">%1$d dni poza wybranymi</item>
+        <item quantity="many">%1$d dni poza wybranymi</item>
+        <item quantity="other">%1$d dnia poza wybranymi</item>
     </plurals>
     <plurals name="plans_reroll_kept_past">
-        <item quantity="one">%1$d dzień, który już minął</item>
-        <item quantity="few">%1$d dni, które już minęły</item>
-        <item quantity="many">%1$d dni, które już minęły</item>
-        <item quantity="other">%1$d dnia, które już minęły</item>
+        <item quantity="one">%1$d dzień, który już minął</item>
+        <item quantity="few">%1$d dni, które już minęły</item>
+        <item quantity="many">%1$d dni, które już minęły</item>
+        <item quantity="other">%1$d dnia, które już minęły</item>
     </plurals>
     <plurals name="plans_reroll_kept_skipped">
-        <item quantity="one">%1$d pominięty dzień</item>
-        <item quantity="few">%1$d pominięte dni</item>
-        <item quantity="many">%1$d pominiętych dni</item>
-        <item quantity="other">%1$d pominiętego dnia</item>
+        <item quantity="one">%1$d pominięty dzień</item>
+        <item quantity="few">%1$d pominięte dni</item>
+        <item quantity="many">%1$d pominiętych dni</item>
+        <item quantity="other">%1$d pominiętego dnia</item>
     </plurals>
     <plurals name="plans_reroll_kept_eaten">
-        <item quantity="one">%1$d posiłek oznaczony jako zjedzony</item>
-        <item quantity="few">%1$d posiłki oznaczone jako zjedzone</item>
-        <item quantity="many">%1$d posiłków oznaczonych jako zjedzone</item>
-        <item quantity="other">%1$d posiłku oznaczonego jako zjedzony</item>
+        <item quantity="one">%1$d posiłek oznaczony jako zjedzony</item>
+        <item quantity="few">%1$d posiłki oznaczone jako zjedzone</item>
+        <item quantity="many">%1$d posiłków oznaczonych jako zjedzone</item>
+        <item quantity="other">%1$d posiłku oznaczonego jako zjedzony</item>
     </plurals>
     <plurals name="plans_reroll_kept_custom">
-        <item quantity="one">%1$d własny posiłek</item>
-        <item quantity="few">%1$d własne posiłki</item>
-        <item quantity="many">%1$d własnych posiłków</item>
-        <item quantity="other">%1$d własnego posiłku</item>
+        <item quantity="one">%1$d własny posiłek</item>
+        <item quantity="few">%1$d własne posiłki</item>
+        <item quantity="many">%1$d własnych posiłków</item>
+        <item quantity="other">%1$d własnego posiłku</item>
     </plurals>
     <plurals name="plans_reroll_kept_locked">
-        <item quantity="one">%1$d posiłek przypięty do swojego przepisu</item>
-        <item quantity="few">%1$d posiłki przypięte do swoich przepisów</item>
-        <item quantity="many">%1$d posiłków przypiętych do swoich przepisów</item>
-        <item quantity="other">%1$d posiłku przypiętego do swojego przepisu</item>
+        <item quantity="one">%1$d posiłek przypięty do swojego przepisu</item>
+        <item quantity="few">%1$d posiłki przypięte do swoich przepisów</item>
+        <item quantity="many">%1$d posiłków przypiętych do swoich przepisów</item>
+        <item quantity="other">%1$d posiłku przypiętego do swojego przepisu</item>
     </plurals>
     <string name="plans_reroll_nothing_past">Wybrane dni już minęły, a dni, które minęły, zostają bez zmian. Zaznacz powyżej „Dni, które już minęły”, żeby ułożyć ponownie również je.</string>
     <string name="plans_reroll_nothing_kept">W wybranych dniach nic by się nie zmieniło.</string>
@@ -474,31 +474,31 @@
     <string name="plans_ways_now">Obecnie: %1$s z %2$s kcal. %3$s</string>
     <string name="plans_ways_now_none">Plan nie zostawia żadnego otwartego opakowania, z którego zostaje ponad jedna piąta.</string>
     <plurals name="plans_ways_now_packs">
-        <item quantity="one">Plan zostawia %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
-        <item quantity="few">Plan zostawia %1$d otwarte opakowania, z których zostaje ponad jedna piąta.</item>
-        <item quantity="many">Plan zostawia %1$d otwartych opakowań, z których zostaje ponad jedna piąta.</item>
-        <item quantity="other">Plan zostawia %1$d otwartego opakowania, z którego zostaje ponad jedna piąta.</item>
+        <item quantity="one">Plan zostawia %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
+        <item quantity="few">Plan zostawia %1$d otwarte opakowania, z których zostaje ponad jedna piąta.</item>
+        <item quantity="many">Plan zostawia %1$d otwartych opakowań, z których zostaje ponad jedna piąta.</item>
+        <item quantity="other">Plan zostawia %1$d otwartego opakowania, z którego zostaje ponad jedna piąta.</item>
     </plurals>
     <string name="plans_ways_packs_none">Z nim plan nie zostawiłby żadnego otwartego opakowania, z którego zostaje ponad jedna piąta.</string>
     <plurals name="plans_ways_packs">
-        <item quantity="one">Z nim plan zostawiłby %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
-        <item quantity="few">Z nim plan zostawiłby %1$d otwarte opakowania, z których zostaje ponad jedna piąta.</item>
-        <item quantity="many">Z nim plan zostawiłby %1$d otwartych opakowań, z których zostaje ponad jedna piąta.</item>
-        <item quantity="other">Z nim plan zostawiłby %1$d otwartego opakowania, z którego zostaje ponad jedna piąta.</item>
+        <item quantity="one">Z nim plan zostawiłby %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
+        <item quantity="few">Z nim plan zostawiłby %1$d otwarte opakowania, z których zostaje ponad jedna piąta.</item>
+        <item quantity="many">Z nim plan zostawiłby %1$d otwartych opakowań, z których zostaje ponad jedna piąta.</item>
+        <item quantity="other">Z nim plan zostawiłby %1$d otwartego opakowania, z którego zostaje ponad jedna piąta.</item>
     </plurals>
     <string name="plans_reroll_replaced">Zastąpione: %1$s w %2$s.</string>
     <string name="plans_reroll_no_meal">żaden posiłek</string>
     <plurals name="plans_reroll_meals">
-        <item quantity="one">%1$d posiłek</item>
-        <item quantity="few">%1$d posiłki</item>
-        <item quantity="many">%1$d posiłków</item>
-        <item quantity="other">%1$d posiłku</item>
+        <item quantity="one">%1$d posiłek</item>
+        <item quantity="few">%1$d posiłki</item>
+        <item quantity="many">%1$d posiłków</item>
+        <item quantity="other">%1$d posiłku</item>
     </plurals>
     <plurals name="plans_reroll_days">
-        <item quantity="one">%1$d dniu</item>
-        <item quantity="few">%1$d dniach</item>
-        <item quantity="many">%1$d dniach</item>
-        <item quantity="other">%1$d dnia</item>
+        <item quantity="one">%1$d dniu</item>
+        <item quantity="few">%1$d dniach</item>
+        <item quantity="many">%1$d dniach</item>
+        <item quantity="other">%1$d dnia</item>
     </plurals>
     <string name="ai_mark_label">Z pomocą AI</string>
     <string name="ai_mark_picked">Ten przepis wybrał dla tego posiłku model AI, spośród przepisów pasujących do Twojego planu.</string>
@@ -526,10 +526,10 @@
     <string name="recipes_clear_filters">Wyczyść filtry</string>
     <string name="recipes_more_filters">Więcej filtrów</string>
     <plurals name="recipes_more_filters_on">
-        <item quantity="one">Więcej filtrów: %1$d aktywny</item>
-        <item quantity="few">Więcej filtrów: %1$d aktywne</item>
-        <item quantity="many">Więcej filtrów: %1$d aktywnych</item>
-        <item quantity="other">Więcej filtrów: %1$d aktywnego</item>
+        <item quantity="one">Więcej filtrów: %1$d aktywny</item>
+        <item quantity="few">Więcej filtrów: %1$d aktywne</item>
+        <item quantity="many">Więcej filtrów: %1$d aktywnych</item>
+        <item quantity="other">Więcej filtrów: %1$d aktywnego</item>
     </plurals>
     <string name="recipes_cuisine">Kuchnia</string>
     <string name="recipes_min_protein">Białko min. (g)</string>
@@ -560,10 +560,10 @@
     <string name="recipes_submit_failed">Nie udało się wysłać przepisu.</string>
     <string name="recipes_filters">Filtry</string>
     <plurals name="recipes_filters_on">
-        <item quantity="one">Filtry: %d aktywny</item>
-        <item quantity="few">Filtry: %d aktywne</item>
-        <item quantity="many">Filtry: %d aktywnych</item>
-        <item quantity="other">Filtry: %d aktywnego</item>
+        <item quantity="one">Filtry: %d aktywny</item>
+        <item quantity="few">Filtry: %d aktywne</item>
+        <item quantity="many">Filtry: %d aktywnych</item>
+        <item quantity="other">Filtry: %d aktywnego</item>
     </plurals>
     <string name="recipes_filters_apply">Pokaż przepisy</string>
     <string name="recipes_write">Napisz przepis</string>
@@ -584,24 +584,24 @@
     <string name="draft_use_favorites">Preferuj moje ulubione składniki</string>
     <string name="draft_use_favorites_empty">Dodaj ulubione składniki w profilu, aby użyć tej opcji.</string>
     <plurals name="draft_use_favorites_count">
-        <item quantity="one">%1$d ulubiony składnik w tym profilu.</item>
-        <item quantity="few">%1$d ulubione składniki w tym profilu.</item>
-        <item quantity="many">%1$d ulubionych składników w tym profilu.</item>
-        <item quantity="other">%1$d ulubionego składnika w tym profilu.</item>
+        <item quantity="one">%1$d ulubiony składnik w tym profilu.</item>
+        <item quantity="few">%1$d ulubione składniki w tym profilu.</item>
+        <item quantity="many">%1$d ulubionych składników w tym profilu.</item>
+        <item quantity="other">%1$d ulubionego składnika w tym profilu.</item>
     </plurals>
     <string name="draft_respect_exclusions">Pomijaj moje wykluczone składniki</string>
     <string name="draft_respect_exclusions_empty">Dodaj wykluczone składniki w profilu, aby użyć tej opcji.</string>
     <plurals name="draft_respect_exclusions_count">
-        <item quantity="one">%1$d wykluczony składnik w tym profilu.</item>
-        <item quantity="few">%1$d wykluczone składniki w tym profilu.</item>
-        <item quantity="many">%1$d wykluczonych składników w tym profilu.</item>
-        <item quantity="other">%1$d wykluczonego składnika w tym profilu.</item>
+        <item quantity="one">%1$d wykluczony składnik w tym profilu.</item>
+        <item quantity="few">%1$d wykluczone składniki w tym profilu.</item>
+        <item quantity="many">%1$d wykluczonych składników w tym profilu.</item>
+        <item quantity="other">%1$d wykluczonego składnika w tym profilu.</item>
     </plurals>
     <plurals name="draft_allergens_respected">
-        <item quantity="one">%1$d alergen z profilu jest zawsze wykluczony.</item>
-        <item quantity="few">%1$d alergeny z profilu są zawsze wykluczone.</item>
-        <item quantity="many">%1$d alergenów z profilu jest zawsze wykluczonych.</item>
-        <item quantity="other">%1$d alergenu z profilu jest zawsze wykluczone.</item>
+        <item quantity="one">%1$d alergen z profilu jest zawsze wykluczony.</item>
+        <item quantity="few">%1$d alergeny z profilu są zawsze wykluczone.</item>
+        <item quantity="many">%1$d alergenów z profilu jest zawsze wykluczonych.</item>
+        <item quantity="other">%1$d alergenu z profilu jest zawsze wykluczone.</item>
     </plurals>
     <string name="draft_add_to_favorites">Dodaj do ulubionych tego profilu</string>
     <string name="draft_determinism_hint">Wartości odżywcze są przeliczane z bazy składników po wygenerowaniu — AI nigdy nie pisze kalorii ani makro.</string>
@@ -665,8 +665,8 @@
     <string name="own_recipe_nothing_found">W katalogu nie ma takiego składnika.</string>
     <string name="own_recipe_allergen_hint">Alergeny liczymy tylko z listy składników. Jeśli krok dodaje coś, czego na niej nie ma, na przykład orzechy do posypania, dopisz to jako składnik.</string>
     <string name="own_recipe_step_number">Krok %1$d</string>
-    <string name="own_recipe_step_up">Przesuń krok %1$d wyżej</string>
-    <string name="own_recipe_step_down">Przesuń krok %1$d niżej</string>
+    <string name="own_recipe_step_up">Przesuń krok %1$d wyżej</string>
+    <string name="own_recipe_step_down">Przesuń krok %1$d niżej</string>
     <string name="own_recipe_remove_step">Usuń krok %1$d</string>
     <string name="own_recipe_add_step">Dodaj krok</string>
     <string name="own_recipe_steps_none">Napisz co najmniej jeden krok.</string>
@@ -684,21 +684,21 @@
     <string name="own_recipe_saving">Zapisywanie…</string>
     <plurals name="own_recipe_meals_at_least">
         <item quantity="one">Wybierz co najmniej jeden posiłek.</item>
-        <item quantity="few">Wybierz co najmniej %1$d posiłki.</item>
-        <item quantity="many">Wybierz co najmniej %1$d posiłków.</item>
-        <item quantity="other">Wybierz co najmniej %1$d posiłku.</item>
+        <item quantity="few">Wybierz co najmniej %1$d posiłki.</item>
+        <item quantity="many">Wybierz co najmniej %1$d posiłków.</item>
+        <item quantity="other">Wybierz co najmniej %1$d posiłku.</item>
     </plurals>
     <plurals name="own_recipe_lines_at_most">
         <item quantity="one">Najwyżej jeden składnik.</item>
-        <item quantity="few">Najwyżej %1$d składniki.</item>
-        <item quantity="many">Najwyżej %1$d składników.</item>
-        <item quantity="other">Najwyżej %1$d składnika.</item>
+        <item quantity="few">Najwyżej %1$d składniki.</item>
+        <item quantity="many">Najwyżej %1$d składników.</item>
+        <item quantity="other">Najwyżej %1$d składnika.</item>
     </plurals>
     <plurals name="own_recipe_steps_at_most">
         <item quantity="one">Najwyżej jeden krok.</item>
-        <item quantity="few">Najwyżej %1$d kroki.</item>
-        <item quantity="many">Najwyżej %1$d kroków.</item>
-        <item quantity="other">Najwyżej %1$d kroku.</item>
+        <item quantity="few">Najwyżej %1$d kroki.</item>
+        <item quantity="many">Najwyżej %1$d kroków.</item>
+        <item quantity="other">Najwyżej %1$d kroku.</item>
     </plurals>
 
     <!-- Favourites: the recipes a profile marked, worded as the web application words them. -->
@@ -722,10 +722,10 @@
     <string name="favorites_sort_calories">Najpierw najlżejsze</string>
     <string name="favorites_legend">Po ulubiony przepis planer sięga chętniej, a po jedzony często — jeszcze chętniej; przepis do unikania nigdy nie jest planowany, proponowany przy zamianach ani sugerowany.</string>
     <plurals name="favorites_count">
-        <item quantity="one">%d przepis</item>
-        <item quantity="few">%d przepisy</item>
-        <item quantity="many">%d przepisów</item>
-        <item quantity="other">%d przepisu</item>
+        <item quantity="one">%d przepis</item>
+        <item quantity="few">%d przepisy</item>
+        <item quantity="many">%d przepisów</item>
+        <item quantity="other">%d przepisu</item>
     </plurals>
     <string name="favorites_facts">%1$s kcal na porcję · %2$s</string>
     <string name="favorites_marked_as">Jak oznaczony jest przepis %1$s</string>
@@ -737,10 +737,10 @@
     <string name="favorites_new_tag_of">Nowy tag dla przepisu %1$s</string>
     <string name="favorites_add_tag">Dodaj tag</string>
     <plurals name="favorites_tags_full">
-        <item quantity="one">Przepis ma najwyżej %1$d tag.</item>
-        <item quantity="few">Przepis ma najwyżej %1$d tagi.</item>
-        <item quantity="many">Przepis ma najwyżej %1$d tagów.</item>
-        <item quantity="other">Przepis ma najwyżej %1$d tagu.</item>
+        <item quantity="one">Przepis ma najwyżej %1$d tag.</item>
+        <item quantity="few">Przepis ma najwyżej %1$d tagi.</item>
+        <item quantity="many">Przepis ma najwyżej %1$d tagów.</item>
+        <item quantity="other">Przepis ma najwyżej %1$d tagu.</item>
     </plurals>
     <string name="favorites_none_filtered">Żaden oznaczony przepis nie pasuje.</string>
     <string name="favorites_empty_title">Nic jeszcze nie oznaczono</string>
@@ -796,14 +796,14 @@
     <string name="weight_target_hint">Waga z profilu: %1$s · cel: %2$s</string>
     <string name="weight_target_label">cel</string>
     <string name="weight_series_entry">Wpis</string>
-    <string name="weight_series_mean">Średnia 7 dni</string>
-    <string name="weight_empty">Zapisz wagę, aby zobaczyć trend z 90 dni.</string>
+    <string name="weight_series_mean">Średnia 7 dni</string>
+    <string name="weight_empty">Zapisz wagę, aby zobaczyć trend z 90 dni.</string>
     <string name="weight_remove_latest">Usuń ostatni wpis</string>
     <string name="weight_remove_latest_label">%1$s · %2$s</string>
     <string name="weight_remove_latest_confirm">Usunąć ostatnią zapisaną wagę (%1$s · %2$s)?</string>
     <string name="weight_remove_failed">Nie udało się usunąć wpisu wagi.</string>
     <string name="weight_read_failed">Nie udało się odczytać wag.</string>
-    <string name="weight_chart_point">%1$s: wpis %2$s, średnia 7 dni %3$s</string>
+    <string name="weight_chart_point">%1$s: wpis %2$s, średnia 7 dni %3$s</string>
 
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
@@ -841,16 +841,16 @@
     <string name="shopping_proposals_none">Nic: żaden wiersz nie zastąpi innego i z żadnego opakowania nie zostanie ponad jedna piąta.</string>
     <string name="shopping_proposal_merge">%1$s (zamiast: %2$s) w %3$s — do kupienia %4$s mniej</string>
     <plurals name="shopping_proposal_meals">
-        <item quantity="one">%d posiłku</item>
-        <item quantity="few">%d posiłkach</item>
-        <item quantity="many">%d posiłkach</item>
-        <item quantity="other">%d posiłku</item>
+        <item quantity="one">%d posiłku</item>
+        <item quantity="few">%d posiłkach</item>
+        <item quantity="many">%d posiłkach</item>
+        <item quantity="other">%d posiłku</item>
     </plurals>
     <plurals name="shopping_proposal_packs">
-        <item quantity="one">o %d opakowanie</item>
-        <item quantity="few">o %d opakowania</item>
-        <item quantity="many">o %d opakowań</item>
-        <item quantity="other">o %d opakowania</item>
+        <item quantity="one">o %d opakowanie</item>
+        <item quantity="few">o %d opakowania</item>
+        <item quantity="many">o %d opakowań</item>
+        <item quantity="other">o %d opakowania</item>
     </plurals>
     <string name="shopping_proposal_merge_how">Zamień to w planie.</string>
     <string name="shopping_proposal_merge_then">Ta lista powie wtedy, że nie odpowiada już planowi i będzie można ją zaktualizować.</string>
@@ -886,7 +886,7 @@
     <string name="appearance_palette_hint">Dopóki nie wybierzesz tu innego, aplikacja ma schemat ustawiony dla konta w aplikacji webowej. Wybór zrobiony tutaj zostaje na tym telefonie, a jasny lub ciemny wygląd zależy od ustawienia telefonu.</string>
     <string name="updates_title">Nowe wersje aplikacji</string>
     <string name="updates_ask">Sprawdzaj, czy jest nowa wersja</string>
-    <string name="updates_ask_hint">Aplikacja pyta GitHub o numer najnowszej wersji przy uruchomieniu i po powrocie na ekran, najwyżej raz na 6 godzin. Nie wysyła przy tym nic o koncie.</string>
+    <string name="updates_ask_hint">Aplikacja pyta GitHub o numer najnowszej wersji przy uruchomieniu i po powrocie na ekran, najwyżej raz na 6 godzin. Nie wysyła przy tym nic o koncie.</string>
     <string name="update_available">Jest nowa wersja aplikacji: %1$s</string>
     <string name="update_size">Plik ma %1$s MB.</string>
     <string name="update_get">Pobierz</string>
@@ -918,10 +918,10 @@
     <string name="account_ai_mode_none_hint">Każda funkcja AI korzysta z wbudowanego silnika. Żadne zapytanie nie opuszcza instancji.</string>
     <string name="account_ai_mode_admin">Użyj domyślnego dostawcy instancji</string>
     <plurals name="account_ai_mode_admin_hint">
-        <item quantity="one">Korzystasz z dostawcy operatora, z limitem %1$d zapytania na miesiąc.</item>
-        <item quantity="few">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
-        <item quantity="many">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
-        <item quantity="other">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
+        <item quantity="one">Korzystasz z dostawcy operatora, z limitem %1$d zapytania na miesiąc.</item>
+        <item quantity="few">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
+        <item quantity="many">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
+        <item quantity="other">Korzystasz z dostawcy operatora, z limitem %1$d zapytań na miesiąc.</item>
     </plurals>
     <string name="account_ai_mode_admin_unavailable">Operator nie skonfigurował domyślnego dostawcy.</string>
     <string name="account_ai_mode_admin_disabled">Operator nie udostępnił współdzielonego AI użytkownikom tej instancji.</string>
@@ -937,17 +937,17 @@
     <string name="account_ai_disclaimer">AI pomaga tworzyć przepisy i dobierać zamiany, ale może się mylić. Zawsze sprawdzaj wyniki AI pod kątem swoich potrzeb żywieniowych i zdrowia.</string>
     <string name="account_ai_allowance">Miesięczne użycie</string>
     <plurals name="account_ai_allowance_used">
-        <item quantity="one">Wykorzystano %1$d/%2$d zapytania w tym miesiącu</item>
-        <item quantity="few">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
-        <item quantity="many">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
-        <item quantity="other">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
+        <item quantity="one">Wykorzystano %1$d/%2$d zapytania w tym miesiącu</item>
+        <item quantity="few">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
+        <item quantity="many">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
+        <item quantity="other">Wykorzystano %1$d/%2$d zapytań w tym miesiącu</item>
     </plurals>
     <string name="account_ai_instance_used_up">Wspólna pula zapytań AI tej instancji na ten miesiąc została wykorzystana.</string>
     <string name="account_ai_allowance_frees">Następne zapytanie odblokuje się %1$s</string>
     <string name="account_ai_no_access">AI instancji nie jest teraz dostępne dla tego konta.</string>
     <string name="account_ai_new_account">Do %1$s to konto jest nowe: dzieli mniejszą część puli instancji z innymi nowymi kontami.</string>
     <string name="account_ai_new_accounts_used_up">Nowe konta wykorzystały na razie swoją część puli instancji. Od %1$s to konto ma pełny limit.</string>
-    <string name="account_ai_allowance_unused">Nie użyto jeszcze żadnych zapytań — licznik resetuje się 30 dni po pierwszym wywołaniu.</string>
+    <string name="account_ai_allowance_unused">Nie użyto jeszcze żadnych zapytań — licznik resetuje się 30 dni po pierwszym wywołaniu.</string>
     <string name="account_ai_providers">Dostawcy AI</string>
     <string name="account_ai_providers_body">Własne klucze do OpenAI, Anthropic, OpenRouter lub Ollama. Klucze są szyfrowane na dysku i nigdy nie są zwracane do klienta.</string>
     <string name="account_ai_providers_none">Brak skonfigurowanych dostawców — i nic nie szkodzi. Aplikacja działa w pełni bez AI; wbudowany silnik obsłuży wszystko.</string>
@@ -1075,16 +1075,16 @@
     <string name="error_generic">Coś poszło nie tak. Spróbuj ponownie.</string>
     <string name="error_network">Nie można połączyć się z serwerem. Sprawdź połączenie.</string>
     <plurals name="error_held_up_seconds">
-        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %1$d sekundę.</item>
-        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %1$d sekundy.</item>
-        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %1$d sekund.</item>
-        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %1$d sekundy.</item>
+        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %1$d sekundę.</item>
+        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %1$d sekundy.</item>
+        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %1$d sekund.</item>
+        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %1$d sekundy.</item>
     </plurals>
     <plurals name="error_held_up_minutes">
-        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %1$d minutę.</item>
-        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %1$d minuty.</item>
-        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %1$d minut.</item>
-        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %1$d minuty.</item>
+        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %1$d minutę.</item>
+        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %1$d minuty.</item>
+        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %1$d minut.</item>
+        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %1$d minuty.</item>
     </plurals>
     <!-- What a field says when the API refused what it holds: the kind of refusal and its bound, or that what was typed is no number at all. -->
     <string name="refusal_at_least">Co najmniej %1$s.</string>
@@ -1093,16 +1093,16 @@
     <string name="refusal_less_than">Mniej niż %1$s.</string>
     <string name="refusal_empty">To pole nie może być puste.</string>
     <plurals name="refusal_characters_at_least">
-        <item quantity="one">Co najmniej %1$d znak.</item>
-        <item quantity="few">Co najmniej %1$d znaki.</item>
-        <item quantity="many">Co najmniej %1$d znaków.</item>
-        <item quantity="other">Co najmniej %1$d znaku.</item>
+        <item quantity="one">Co najmniej %1$d znak.</item>
+        <item quantity="few">Co najmniej %1$d znaki.</item>
+        <item quantity="many">Co najmniej %1$d znaków.</item>
+        <item quantity="other">Co najmniej %1$d znaku.</item>
     </plurals>
     <plurals name="refusal_characters_at_most">
-        <item quantity="one">Najwyżej %1$d znak.</item>
-        <item quantity="few">Najwyżej %1$d znaki.</item>
-        <item quantity="many">Najwyżej %1$d znaków.</item>
-        <item quantity="other">Najwyżej %1$d znaku.</item>
+        <item quantity="one">Najwyżej %1$d znak.</item>
+        <item quantity="few">Najwyżej %1$d znaki.</item>
+        <item quantity="many">Najwyżej %1$d znaków.</item>
+        <item quantity="other">Najwyżej %1$d znaku.</item>
     </plurals>
     <string name="refusal_other">Serwer tego nie przyjmuje.</string>
     <string name="refusal_not_a_number">Wpisz liczbę.</string>
@@ -1111,22 +1111,22 @@
     <string name="error_not_the_api">Serwer odpowiedział kodem %1$d, ale nie odpowiedzią API: mogło odpowiedzieć coś, co stoi przed nim, na przykład serwer pośredniczący.</string>
     <plurals name="plans_no_recipe_left">
         <item quantity="one">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu jedyny przepis na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
-        <item quantity="few">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu wszystkie %1$d przepisy na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
-        <item quantity="many">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu wszystkie %1$d przepisów na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
-        <item quantity="other">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu wszystkie %1$d przepisu na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
+        <item quantity="few">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu wszystkie %1$d przepisy na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
+        <item quantity="many">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu wszystkie %1$d przepisów na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
+        <item quantity="other">Alergeny, pomijane składniki i przepisy oznaczone do unikania wykluczają w tym profilu wszystkie %1$d przepisu na posiłek „%2$s” w diecie „%3$s”, więc planu nie udało się ułożyć.</item>
     </plurals>
     <string name="plans_no_recipe_in_catalogue_fewer">W diecie „%2$s” nie ma przepisu na posiłek „%1$s”, więc planu nie udało się ułożyć. Zmień dietę albo zmniejsz liczbę posiłków dziennie: w formularzu powyżej dla tego planu albo w profilu dla wszystkich planów.</string>
     <string name="plans_no_recipe_in_catalogue">W diecie „%2$s” nie ma przepisu na posiłek „%1$s”, więc planu nie udało się ułożyć. Zmień dietę: w formularzu powyżej dla tego planu albo w profilu dla wszystkich planów.</string>
 
     <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
     <string name="target_note_goal_held">Twój cel redukcji jest wstrzymany: plany trzymają się zapotrzebowania, dopóki w profilu nie potwierdzisz, że rozumiesz ryzyko.</string>
-    <string name="target_note_minor">Masz mniej niż 18 lat. Te wartości pochodzą ze wzoru dla dorosłych i są dla Ciebie przybliżeniem; odchudzanie w tym wieku to sprawa do omówienia z lekarzem.</string>
+    <string name="target_note_minor">Masz mniej niż 18 lat. Te wartości pochodzą ze wzoru dla dorosłych i są dla Ciebie przybliżeniem; odchudzanie w tym wieku to sprawa do omówienia z lekarzem.</string>
     <string name="target_note_underweight">Twój wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może Ci zaszkodzić.</string>
-    <string name="target_note_maintenance_under_floor">Twoje zapotrzebowanie jest niższe niż %1$d kcal, czyli najniższy cel, jaki wylicza plan, więc redukcja nie jest planowana: celem jest Twoje zapotrzebowanie.</string>
-    <string name="target_note_safety_floor_applied">Cel podniesiono do %1$d kcal, czyli najniższego, jaki wylicza plan. Deficyt, który z tego wynika, to %2$d kcal dziennie.</string>
-    <string name="target_note_deficit_capped">Wybrane tempo wymaga %1$d kcal dziennie mniej. To więcej niż jedna czwarta Twojego zapotrzebowania, więc plan odejmuje %2$d.</string>
-    <string name="target_note_below_floor">Wpisany cel jest niższy niż %1$d kcal, czyli najniższy, jaki wyliczyłby plan.</string>
-    <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
+    <string name="target_note_maintenance_under_floor">Twoje zapotrzebowanie jest niższe niż %1$d kcal, czyli najniższy cel, jaki wylicza plan, więc redukcja nie jest planowana: celem jest Twoje zapotrzebowanie.</string>
+    <string name="target_note_safety_floor_applied">Cel podniesiono do %1$d kcal, czyli najniższego, jaki wylicza plan. Deficyt, który z tego wynika, to %2$d kcal dziennie.</string>
+    <string name="target_note_deficit_capped">Wybrane tempo wymaga %1$d kcal dziennie mniej. To więcej niż jedna czwarta Twojego zapotrzebowania, więc plan odejmuje %2$d.</string>
+    <string name="target_note_below_floor">Wpisany cel jest niższy niż %1$d kcal, czyli najniższy, jaki wyliczyłby plan.</string>
+    <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
     <string name="plans_day_over">Ponad cel</string>
     <string name="plans_day_under">Poniżej celu</string>
     <string name="plans_day_over_hint">Ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel. Dopasuj porcje, zamień posiłek albo usuń jeden.</string>
@@ -1194,24 +1194,24 @@
     <string name="profiles_title">Profile</string>
     <plurals name="profiles_subhead">
         <item quantity="one">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć jeden profil. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
-        <item quantity="few">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć do %1$d profili: np. po jednym na członka rodziny albo do porównania różnych podejść do diety. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
-        <item quantity="many">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć do %1$d profili: np. po jednym na członka rodziny albo do porównania różnych podejść do diety. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
-        <item quantity="other">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć do %1$d profilu. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
+        <item quantity="few">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć do %1$d profili: np. po jednym na członka rodziny albo do porównania różnych podejść do diety. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
+        <item quantity="many">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć do %1$d profili: np. po jednym na członka rodziny albo do porównania różnych podejść do diety. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
+        <item quantity="other">Profil to dane, z których liczony jest Twój cel kaloryczny. Konto w tej instancji może mieć do %1$d profilu. Edycja profilu przelicza jego cele; usunięcie kasuje też powiązane plany posiłków i listy zakupów.</item>
     </plurals>
     <plurals name="profiles_at_limit">
         <item quantity="one">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: jeden profil. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
-        <item quantity="few">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: %1$d profile. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
-        <item quantity="many">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: %1$d profili. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
-        <item quantity="other">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: %1$d profilu. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
+        <item quantity="few">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: %1$d profile. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
+        <item quantity="many">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: %1$d profili. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
+        <item quantity="other">Osiągnięto limit, na który ta instancja pozwala jednemu kontu: %1$d profilu. Edytuj jeden z istniejących lub usuń jeden, aby utworzyć nowy.</item>
     </plurals>
     <string name="profiles_new">Nowy profil</string>
     <string name="profiles_add">Dodaj profil</string>
     <string name="profiles_editing">Edycja profilu: %1$s</string>
     <plurals name="profiles_age">
-        <item quantity="one">%1$d rok</item>
-        <item quantity="few">%1$d lata</item>
-        <item quantity="many">%1$d lat</item>
-        <item quantity="other">%1$d roku</item>
+        <item quantity="one">%1$d rok</item>
+        <item quantity="few">%1$d lata</item>
+        <item quantity="many">%1$d lat</item>
+        <item quantity="other">%1$d roku</item>
     </plurals>
     <string name="profiles_summary">%1$s · %2$s cm · %3$s · %4$s</string>
     <string name="profiles_delete_confirm">Usunąć „%1$s”? Powiązane plany posiłków i listy zakupów również zostaną usunięte.</string>
@@ -1251,7 +1251,7 @@
     <string name="profile_split_protein">Białko (%)</string>
     <string name="profile_split_fat">Tłuszcz (%)</string>
     <string name="profile_split_carbs">Węglowodany (%)</string>
-    <string name="profile_split_sum">Suma: %1$d %%.</string>
+    <string name="profile_split_sum">Suma: %1$d %%.</string>
     <string name="profile_reminder">Przypomnienie o wadze</string>
     <string name="profile_reminder_hint">Jak często aplikacja przypomina o zapisaniu wagi.</string>
     <string name="profile_reminder_off">Wyłączone</string>
@@ -1282,20 +1282,20 @@
     <string name="profile_label_limit_saturated_fat_at_most">Tłuszcze nasycone najwyżej</string>
     <string name="profile_label_limit_sugars_at_most">Cukry najwyżej</string>
     <string name="profile_label_limit_unit">g dziennie</string>
-    <string name="profile_label_limit_starts">Po włączeniu limit startuje od 5 g soli (WHO), 25 g błonnika (EFSA), 20 g tłuszczów nasyconych i 90 g cukrów (wartości referencyjne z etykiet w UE).</string>
+    <string name="profile_label_limit_starts">Po włączeniu limit startuje od 5 g soli (WHO), 25 g błonnika (EFSA), 20 g tłuszczów nasyconych i 90 g cukrów (wartości referencyjne z etykiet w UE).</string>
     <string name="profile_same_as_above">jak wyżej</string>
     <string name="profile_add_kind_limit">Dodaj wyjątek</string>
     <string name="profile_remove_kind_limit_short">Usuń</string>
     <string name="profile_remove_kind_limit">Usuń wyjątek: %1$s</string>
     <string name="profile_pantry_cool_down">Przerwa od spiżarni (co ile planów)</string>
-    <string name="profile_pantry_cool_down_hint">Po tylu kolejnych planach opartych o spiżarnię następny pomija preferencję spiżarni dla urozmaicenia. 0 wyłącza przerwę.</string>
+    <string name="profile_pantry_cool_down_hint">Po tylu kolejnych planach opartych o spiżarnię następny pomija preferencję spiżarni dla urozmaicenia. 0 wyłącza przerwę.</string>
     <string name="profile_saving">Zapisywanie…</string>
     <string name="profile_save_changes">Zapisz zmiany</string>
     <string name="profile_create">Utwórz profil</string>
     <!-- What a field the API would refuse says: in the web application, the browser says it. -->
     <string name="profile_wizard_title">Ustaw swój profil</string>
     <string name="profile_wizard_intro">Trzy krótkie kroki. Liczby pod „Co z tego wynika” zmieniają się wraz z tym, co wpisujesz, a przed ostatnim krokiem nic nie jest zapisywane.</string>
-    <string name="profile_wizard_progress">Krok %1$d z %2$d: %3$s</string>
+    <string name="profile_wizard_progress">Krok %1$d z %2$d: %3$s</string>
     <string name="profile_wizard_step_body">O Tobie</string>
     <string name="profile_wizard_step_goal">Twój cel</string>
     <string name="profile_wizard_step_food">Jak jesz</string>
@@ -1317,7 +1317,7 @@
     <string name="profile_disliked_hint">Planer i zamiany sięgają po przepis z którymś z nich tylko wtedy, gdy nic innego nie pasuje do posiłku. Żeby wykluczyć produkt całkowicie, dodaj go do „Unikanych składników”.</string>
     <string name="profile_avoided">Unikane składniki</string>
     <string name="profile_avoided_hint">Planer pomija przepisy zawierające te składniki.</string>
-    <string name="profile_risk_minor">Poniżej 18 lat wartości w tej aplikacji są przybliżeniem, a odchudzanie to sprawa do omówienia z lekarzem.</string>
+    <string name="profile_risk_minor">Poniżej 18 lat wartości w tej aplikacji są przybliżeniem, a odchudzanie to sprawa do omówienia z lekarzem.</string>
     <string name="profile_risk_underweight">Przy takim wzroście i masie wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może zaszkodzić.</string>
     <string name="profile_risk_held">Dopóki pole poniżej nie jest zaznaczone, cel jest zapisany, ale plany trzymają się zapotrzebowania.</string>
     <string name="profile_risk_acknowledge">Rozumiem ryzyko i chcę, aby plany były układane pod ten cel.</string>
@@ -1347,13 +1347,13 @@
     <string name="pickers_no_matches">Brak wyników.</string>
     <string name="pickers_add_ticked">Dodaj zaznaczone (%1$d)</string>
     <string name="pickers_remove">Usuń %1$s</string>
-    <string name="catalogue_none">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę.</string>
-    <string name="catalogue_none_fewer">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę albo najwyżej %3$d posiłki dziennie.</string>
+    <string name="catalogue_none">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę.</string>
+    <string name="catalogue_none_fewer">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę albo najwyżej %3$d posiłki dziennie.</string>
     <plurals name="catalogue_thin">
-        <item quantity="one">W diecie „%2$s” na jeden z %3$d posiłków dziennie jest tylko %1$d przepis: plany będą często powtarzać to samo danie.</item>
-        <item quantity="few">W diecie „%2$s” na jeden z %3$d posiłków dziennie są tylko %1$d przepisy: plany będą często powtarzać to samo danie.</item>
-        <item quantity="many">W diecie „%2$s” na jeden z %3$d posiłków dziennie jest tylko %1$d przepisów: plany będą często powtarzać to samo danie.</item>
-        <item quantity="other">W diecie „%2$s” na jeden z %3$d posiłków dziennie jest tylko %1$d przepisu: plany będą często powtarzać to samo danie.</item>
+        <item quantity="one">W diecie „%2$s” na jeden z %3$d posiłków dziennie jest tylko %1$d przepis: plany będą często powtarzać to samo danie.</item>
+        <item quantity="few">W diecie „%2$s” na jeden z %3$d posiłków dziennie są tylko %1$d przepisy: plany będą często powtarzać to samo danie.</item>
+        <item quantity="many">W diecie „%2$s” na jeden z %3$d posiłków dziennie jest tylko %1$d przepisów: plany będą często powtarzać to samo danie.</item>
+        <item quantity="other">W diecie „%2$s” na jeden z %3$d posiłków dziennie jest tylko %1$d przepisu: plany będą często powtarzać to samo danie.</item>
     </plurals>
     <string name="catalogue_diet_none">%1$s (brak przepisów)</string>
     <string name="catalogue_diet_thin">%1$s (mało przepisów)</string>
@@ -1405,15 +1405,15 @@
     <string name="plans_generate_button">Wygeneruj plan</string>
     <plurals name="plans_limits_in_the_way">
         <item quantity="one">Tego planu nie da się ułożyć w jego limitach. Jeden posiłek wyszedłby poza limit: %2$s.</item>
-        <item quantity="few">Tego planu nie da się ułożyć w jego limitach. %1$d posiłki wyszłyby poza limit: %2$s.</item>
-        <item quantity="many">Tego planu nie da się ułożyć w jego limitach. %1$d posiłków wyszłoby poza limit: %2$s.</item>
-        <item quantity="other">Tego planu nie da się ułożyć w jego limitach. %1$d posiłku wyszłoby poza limit: %2$s.</item>
+        <item quantity="few">Tego planu nie da się ułożyć w jego limitach. %1$d posiłki wyszłyby poza limit: %2$s.</item>
+        <item quantity="many">Tego planu nie da się ułożyć w jego limitach. %1$d posiłków wyszłoby poza limit: %2$s.</item>
+        <item quantity="other">Tego planu nie da się ułożyć w jego limitach. %1$d posiłku wyszłoby poza limit: %2$s.</item>
     </plurals>
     <plurals name="plans_limits_in_the_way_more">
         <item quantity="one">i jeszcze jeden posiłek</item>
-        <item quantity="few">i jeszcze %1$d posiłki</item>
-        <item quantity="many">i jeszcze %1$d posiłków</item>
-        <item quantity="other">i jeszcze %1$d posiłku</item>
+        <item quantity="few">i jeszcze %1$d posiłki</item>
+        <item quantity="many">i jeszcze %1$d posiłków</item>
+        <item quantity="other">i jeszcze %1$d posiłku</item>
     </plurals>
     <plurals name="plans_let_give_way">
         <item quantity="one">Ułóż plan i pozwól przekroczyć ten limit</item>
@@ -1540,15 +1540,15 @@
     <string name="plans_even_week">Wyrównaj tydzień</string>
     <string name="plans_even_week_note">Dni tego tygodnia od dziś dostaną nowe cele: te same dania w innych porcjach.</string>
     <plurals name="plans_settings_week_even_note">
-        <item quantity="one">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cel %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
-        <item quantity="few">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
-        <item quantity="many">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
-        <item quantity="other">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="one">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cel %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="few">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="many">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="other">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
     </plurals>
     <string name="plans_settings_line_training">Dzień treningowy: cel około 15% wyższy niż zwykły dzień tego tygodnia.</string>
     <string name="plans_settings_line_rest">Dzień odpoczynku: cel około 15% niższy niż zwykły dzień tego tygodnia.</string>
     <string name="plans_settings_line_own_target">Własny cel dnia: %1$s kcal.</string>
-    <string name="plans_settings_line_cook_time">Przepisy do %1$d min.</string>
+    <string name="plans_settings_line_cook_time">Przepisy do %1$d min.</string>
     <string name="plans_settings_line_use_up">Najpierw przepisy zużywające żywność z krótką datą.</string>
     <string name="plans_fate_stays">zostaje bez zmian</string>
     <string name="plans_fate_stays_eaten">zostaje, jest zjedzony</string>
@@ -1559,10 +1559,10 @@
     <string name="plans_fate_removed_fewer">znika: dzień ma mniej posiłków</string>
     <string name="plans_fate_removed_skipped">znika: dzień jest pominięty</string>
     <plurals name="plans_settings_meal_count_option">
-        <item quantity="one">%1$d posiłek</item>
-        <item quantity="few">%1$d posiłki</item>
-        <item quantity="many">%1$d posiłków</item>
-        <item quantity="other">%1$d posiłku</item>
+        <item quantity="one">%1$d posiłek</item>
+        <item quantity="few">%1$d posiłki</item>
+        <item quantity="many">%1$d posiłków</item>
+        <item quantity="other">%1$d posiłku</item>
     </plurals>
     <string name="about_title">O aplikacji</string>
     <string name="about_instance">Ta instancja</string>
@@ -1571,10 +1571,10 @@
     <string name="about_max_profiles">Profile na jedno konto</string>
     <string name="about_max_repeats">Ten sam przepis w planie najwyżej</string>
     <plurals name="about_max_repeats_times">
-        <item quantity="one">%d raz</item>
-        <item quantity="few">%d razy</item>
-        <item quantity="many">%d razy</item>
-        <item quantity="other">%d razy</item>
+        <item quantity="one">%d raz</item>
+        <item quantity="few">%d razy</item>
+        <item quantity="many">%d razy</item>
+        <item quantity="other">%d razy</item>
     </plurals>
     <string name="about_operator">Sprawy tej instancji kieruj do jej operatora:</string>
     <string name="about_operator_not_set">Operator tej instancji nie opublikował adresu kontaktowego.</string>
@@ -1600,15 +1600,15 @@
     <string name="notifications_title">Powiadomienia</string>
     <plurals name="notifications_unread">
         <item quantity="one">Nowe powiadomienie</item>
-        <item quantity="few">%d nowe powiadomienia</item>
-        <item quantity="many">%d nowych powiadomień</item>
-        <item quantity="other">%d nowego powiadomienia</item>
+        <item quantity="few">%d nowe powiadomienia</item>
+        <item quantity="many">%d nowych powiadomień</item>
+        <item quantity="other">%d nowego powiadomienia</item>
     </plurals>
     <string name="notifications_empty">Brak nowości.</string>
     <string name="notifications_dismiss">Ukryj</string>
     <string name="notifications_read_all">Oznacz wszystkie jako przeczytane</string>
     <string name="phone_notifications_title">Powiadomienia w telefonie</string>
-    <string name="phone_notifications_about">Gdy są włączone, aplikacja pyta serwer o nowe mniej więcej co 15 minut, a gdy telefon leży nieużywany, Android może to odłożyć nawet o kilka godzin. Dotknięcie otwiera listę.</string>
+    <string name="phone_notifications_about">Gdy są włączone, aplikacja pyta serwer o nowe mniej więcej co 15 minut, a gdy telefon leży nieużywany, Android może to odłożyć nawet o kilka godzin. Dotknięcie otwiera listę.</string>
     <string name="phone_notifications_show">Pokazuj je w telefonie</string>
     <string name="phone_notifications_not_allowed">Android nie pozwala aplikacji pokazywać powiadomień. Możesz na to zezwolić w ustawieniach systemu.</string>
     <string name="phone_notifications_open_settings">Otwórz ustawienia</string>
@@ -1617,10 +1617,10 @@
     <string name="phone_notifications_channel">Powiadomienia z serwera</string>
     <string name="phone_notifications_channel_about">To, co serwer ma do przekazania kontu, na przykład przypomnienie o wadze.</string>
     <plurals name="notifications_weight_reminder">
-        <item quantity="one">Czas się zważyć — od ostatniego wpisu minął %d dzień.</item>
-        <item quantity="few">Czas się zważyć — od ostatniego wpisu minęły %d dni.</item>
-        <item quantity="many">Czas się zważyć — od ostatniego wpisu minęło %d dni.</item>
-        <item quantity="other">Czas się zważyć — od ostatniego wpisu minęło %d dnia.</item>
+        <item quantity="one">Czas się zważyć — od ostatniego wpisu minął %d dzień.</item>
+        <item quantity="few">Czas się zważyć — od ostatniego wpisu minęły %d dni.</item>
+        <item quantity="many">Czas się zważyć — od ostatniego wpisu minęło %d dni.</item>
+        <item quantity="other">Czas się zważyć — od ostatniego wpisu minęło %d dnia.</item>
     </plurals>
     <string name="notifications_weight_first">Dodaj pierwszy wpis wagi, aby uruchomić wykres trendu.</string>
     <string name="notifications_preferences_review">Części składników lub przepisów, które były u Ciebie oznaczone, nie ma już w katalogu. Sprawdź unikane i ulubione składniki oraz zestawy ulubionych.</string>
@@ -1682,7 +1682,7 @@
     <string name="diary_search_failed">Nie udało się wyszukać. Spróbuj ponownie.</string>
     <string name="diary_search_offline">Wyszukiwanie wymaga połączenia. Własny posiłek można wpisać bez niego: zostanie wysłany, gdy połączenie wróci.</string>
     <string name="diary_per_serving">%1$s kcal w porcji</string>
-    <string name="diary_per_100">%1$s kcal w 100 %2$s</string>
+    <string name="diary_per_100">%1$s kcal w 100 %2$s</string>
     <string name="diary_change_pick">Wybierz inny</string>
     <string name="diary_servings_field">Porcje</string>
     <string name="diary_quantity">Ilość</string>
@@ -1724,34 +1724,34 @@
     <string name="change_kind_diary_changed">zmiana wpisu w dzienniku</string>
     <string name="change_kind_diary_removed">usunięcie wpisu z dziennika</string>
     <plurals name="diary_servings">
-        <item quantity="one">%1$d porcja</item>
-        <item quantity="few">%1$d porcje</item>
-        <item quantity="many">%1$d porcji</item>
-        <item quantity="other">%1$d porcji</item>
+        <item quantity="one">%1$d porcja</item>
+        <item quantity="few">%1$d porcje</item>
+        <item quantity="many">%1$d porcji</item>
+        <item quantity="other">%1$d porcji</item>
     </plurals>
     <plurals name="diary_copied">
         <item quantity="one">Skopiowano jeden wpis.</item>
-        <item quantity="few">Skopiowano %1$d wpisy.</item>
-        <item quantity="many">Skopiowano %1$d wpisów.</item>
-        <item quantity="other">Skopiowano %1$d wpisu.</item>
+        <item quantity="few">Skopiowano %1$d wpisy.</item>
+        <item quantity="many">Skopiowano %1$d wpisów.</item>
+        <item quantity="other">Skopiowano %1$d wpisu.</item>
     </plurals>
     <plurals name="diary_sum_leaves_out">
         <item quantity="one">Bez jednej zmiany czekającej na wysłanie.</item>
-        <item quantity="few">Bez %1$d zmian czekających na wysłanie.</item>
-        <item quantity="many">Bez %1$d zmian czekających na wysłanie.</item>
-        <item quantity="other">Bez %1$d zmiany czekającej na wysłanie.</item>
+        <item quantity="few">Bez %1$d zmian czekających na wysłanie.</item>
+        <item quantity="many">Bez %1$d zmian czekających na wysłanie.</item>
+        <item quantity="other">Bez %1$d zmiany czekającej na wysłanie.</item>
     </plurals>
     <plurals name="plans_diary_line">
-        <item quantity="one">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpis).</item>
-        <item quantity="few">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisy).</item>
-        <item quantity="many">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisów).</item>
-        <item quantity="other">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisu).</item>
+        <item quantity="one">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpis).</item>
+        <item quantity="few">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisy).</item>
+        <item quantity="many">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisów).</item>
+        <item quantity="other">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisu).</item>
     </plurals>
     <string name="diary_kind_product">Produkt</string>
     <string name="diary_pick_product_first">Najpierw znajdź i wybierz produkt.</string>
     <string name="diary_product_no_figures_short">Ten produkt nie ma wartości do dodania.</string>
     <string name="diary_product_field">Kod kreskowy albo nazwa</string>
-    <string name="diary_product_hint">Kod ma 8, 12 albo 13 cyfr. Nazwa wymaga co najmniej trzech liter i szuka tylko wśród produktów, które zna ta instancja.</string>
+    <string name="diary_product_hint">Kod ma 8, 12 albo 13 cyfr. Nazwa wymaga co najmniej trzech liter i szuka tylko wśród produktów, które zna ta instancja.</string>
     <string name="diary_product_scan">Skanuj</string>
     <string name="diary_product_check">Sprawdź kod</string>
     <string name="diary_product_code_bad">To nie jest poprawny kod: sprawdź cyfry.</string>
@@ -1766,9 +1766,9 @@
     <string name="diary_product_lacking">≈ Etykieta nie podaje wszystkich makroskładników: brakujące zostaną oszacowane z proporcji celu dnia i oznaczone jako szacunek.</string>
     <string name="diary_product_energy_worked_out">≈ Etykieta nie podaje energii: jest wyliczona z makroskładników i oznaczona jako szacunek.</string>
     <string name="diary_product_source">Dane:</string>
-    <string name="diary_product_serving">1 porcja (%1$s)</string>
+    <string name="diary_product_serving">1 porcja (%1$s)</string>
     <string name="diary_product_pack">Całe opakowanie (%1$s)</string>
-    <string name="diary_label_in_100">W 100 %1$s</string>
+    <string name="diary_label_in_100">W 100 %1$s</string>
     <string name="diary_label_energy">Energia</string>
     <string name="diary_label_protein">Białko</string>
     <string name="diary_label_fat">Tłuszcz</string>
@@ -1792,8 +1792,8 @@
     <string name="scanner_light_off">Wyłącz latarkę</string>
     <string name="about_products_source">Wartości produktów z kodem kreskowym pochodzą z Open Food Facts, bazy dostępnej na licencji Open Database License, a jej zawartość na licencji Database Contents License. Wpisują je jej użytkownicy i mogą być błędne.</string>
     <string name="scanner_no_camera">Na tym telefonie nie ma aparatu do użycia. Wpisz kod.</string>
-    <string name="plans_cook_days">Ugotuj na 2 dni</string>
-    <string name="plans_cook_meals">Ugotuj na 2 posiłki</string>
+    <string name="plans_cook_days">Ugotuj na 2 dni</string>
+    <string name="plans_cook_meals">Ugotuj na 2 posiłki</string>
     <string name="plans_cook_hint">Gotujesz raz, na %1$s i %2$s.</string>
     <string name="plans_from_hint">Nie gotujesz: to reszta dania %1$s.</string>
     <string name="plans_not_cooked">Jeśli %1$s nie było gotowania, ugotuj dziś: ilości są dla tego posiłku.</string>
@@ -1929,7 +1929,7 @@
     <string name="products_unit">Mierzony w</string>
     <string name="products_pack_amount">Opakowanie ma (%1$s)</string>
     <string name="products_serving_amount">Porcja to (%1$s)</string>
-    <string name="products_in_100">W 100 %1$s</string>
+    <string name="products_in_100">W 100 %1$s</string>
     <string name="products_figures_hint">Wystarczą kalorie. Czego nie wpiszesz, dziennik oszacuje i oznaczy ≈.</string>
     <string name="products_calories">Kalorie (kcal)</string>
     <string name="products_protein">Białko (g)</string>
@@ -1942,9 +1942,9 @@
     <string name="products_err_code">To nie jest kod EAN ani UPC: sprawdź cyfry.</string>
     <string name="products_err_name">Nazwa musi mieć literę lub cyfrę.</string>
     <string name="products_err_amount">Liczba większa od 0, najwyżej 100000.</string>
-    <string name="products_err_calories">Podaj kalorie: od 0 do 900 w 100.</string>
-    <string name="products_err_figure">Liczba od 0 do 100.</string>
-    <string name="products_err_macros">Białko, tłuszcz i węglowodany to razem najwyżej 105 g w 100.</string>
+    <string name="products_err_calories">Podaj kalorie: od 0 do 900 w 100.</string>
+    <string name="products_err_figure">Liczba od 0 do 100.</string>
+    <string name="products_err_macros">Białko, tłuszcz i węglowodany to razem najwyżej 105 g w 100.</string>
     <string name="products_err_sugars">Cukry są częścią węglowodanów: nie może ich być więcej.</string>
     <string name="products_err_saturated">Tłuszcze nasycone są częścią tłuszczu: nie może ich być więcej.</string>
     <string name="products_change_leaves_queue">Zapisanie wycofa go z kolejki: trzeba będzie wysłać go jeszcze raz.</string>

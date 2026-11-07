@@ -41,6 +41,29 @@ class FigureLinesTest {
         }
     }
 
+    /**
+     * A number of a text with a plain space before the word or sign after it, which a narrow screen may
+     * leave alone at the end of a line: a placeholder of a number (`%d`, `%1$d`) or one written out.
+     */
+    private val looseCount = Regex("""(%(?:\d+\$)?d|(?<![\p{L}\p{N}.,%$])\d+(?:[.,]\d+)?) (?=[\p{L}%])""")
+
+    @Test
+    fun `no number of any language is parted from the word after it`() {
+        for (folder in folders) {
+            assertEquals(folder, emptyList<String>(), texts(folder).filterValues { looseCount.containsMatchIn(it) }.keys.toList())
+        }
+    }
+
+    @Test
+    fun `finds a number apart from its word, whether a placeholder or written out`() {
+        assertTrue(looseCount.containsMatchIn("Cele kaloryczne dla %d profili."))
+        assertTrue(looseCount.containsMatchIn("%1\$d z %2\$d dni"))
+        assertTrue(looseCount.containsMatchIn("Co najmniej 12 znaków"))
+        assertTrue(looseCount.containsMatchIn("1,5 l"))
+        assertFalse(looseCount.containsMatchIn("Co najmniej 12\u00A0znaków, %d\u00A0dni, 7 · 8"))
+        assertFalse(looseCount.containsMatchIn("Krok2 i %1\$s z %2\$s"))
+    }
+
     @Test
     fun `the average day of a plan breaks only after a dot, while its opening words may break`() {
         val polish = texts("values-pl")
