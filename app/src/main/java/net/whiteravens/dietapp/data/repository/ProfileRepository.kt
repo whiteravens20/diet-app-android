@@ -199,4 +199,5 @@ fun ProfileDto.toDetails() = ProfileDetails(
         labelLimits = preferences.labelLimits.toDomain(),
     ),
     riskAcknowledged = riskAcknowledgedAt != null,
+    expenditureCorrectionKcal = expenditureCorrectionKcal,
 )

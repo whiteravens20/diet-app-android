@@ -14,6 +14,23 @@ data class WeekWater(val counted: Int, val averageMl: Int?, val target: Int?, va
 data class WeightTrend(val kgPerWeek: Double?, val targetKg: Double?, val reachesTargetOn: LocalDate?)
 
 /**
+ * What the diary and the weights say of what a profile really uses ([estimate], kcal a day) against
+ * the formula's [maintenance], and the [correction] of the target proposed or kept: [state] is
+ * `too_little`, `near`, `proposed`, `later` or `kept`.
+ */
+data class Expenditure(
+    val state: String,
+    val estimate: Int?,
+    val maintenance: Int,
+    val correction: Int?,
+    val target: Int,
+    val targetCorrected: Int?,
+) {
+    /** A correction is proposed, with what it comes of. */
+    val proposed: Boolean get() = state == "proposed" && estimate != null && correction != null
+}
+
+/**
  * A profile's week in sum, [from] to [to]: what its [counted] days ate on average against their
  * targets, how many came within a tenth of them, the [empty] days no average counts, what the
  * days drank and where the weight leads.

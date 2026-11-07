@@ -68,6 +68,9 @@ class ProfileFormViewModel @Inject constructor(
         val saved: Profile? = null,
         /** The name of the profile edited, as it is kept; null for a new one. */
         val editing: String? = null,
+        /** The id of the profile edited, and the correction of its target it keeps, kcal a day. */
+        val editingId: String? = null,
+        val correction: Int? = null,
     ) {
         /**
          * Why losing weight is a risk for the body the form describes, as the API's last answer for
@@ -146,7 +149,16 @@ class ProfileFormViewModel @Inject constructor(
                 attempt { profiles.profile(id) }
                     .onSuccess { details ->
                         kept = details
-                        _state.update { it.copy(loading = false, unit = unit, form = ProfileForm.of(details, unit), editing = details.figures.name) }
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                unit = unit,
+                                form = ProfileForm.of(details, unit),
+                                editing = details.figures.name,
+                                editingId = details.id,
+                                correction = details.expenditureCorrectionKcal,
+                            )
+                        }
                     }
                     .onFailure { e -> _state.update { it.copy(loading = false, unit = unit, error = e) } }
             }

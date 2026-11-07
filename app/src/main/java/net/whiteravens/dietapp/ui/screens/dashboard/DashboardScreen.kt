@@ -57,6 +57,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
 import net.whiteravens.dietapp.ui.components.UpdateCard
+import net.whiteravens.dietapp.ui.components.ExpenditureCard
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.WaterCard
 import net.whiteravens.dietapp.ui.components.WeekSummaryCard
@@ -174,6 +175,7 @@ fun DashboardScreen(
                             today,
                             onOpenPlan,
                             onNewPlan = { onNewPlan(stats.profile.id) },
+                            onTargetChanged = { viewModel.targetChanged(stats.profile.id) },
                             weight = {
                                 val inView = remember { BringIntoViewRequester() }
                                 if (stats.profile.id == showWeightOf) {
@@ -211,6 +213,7 @@ private fun ProfileSummary(
     today: @Composable () -> Unit,
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: () -> Unit,
+    onTargetChanged: () -> Unit,
     weight: @Composable () -> Unit,
     sets: @Composable () -> Unit,
 ) {
@@ -287,6 +290,8 @@ private fun ProfileSummary(
                 }
             }
         }
+
+        ExpenditureCard(profileId = profile.id, onDecided = onTargetChanged)
 
         PlanOverviewCard(stats.overview, stats.overviewError, onOpen = onOpenPlan, onNewPlan = onNewPlan)
 

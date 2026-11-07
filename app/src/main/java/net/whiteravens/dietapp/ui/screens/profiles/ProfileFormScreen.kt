@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
+import net.whiteravens.dietapp.ui.components.KeptCorrection
 
 /**
  * A profile's form, for a new profile or one kept, in four parts: the body, the goal, the food and
@@ -81,6 +82,12 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                         PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
                         TargetWeightField(form, state.unit, marks, viewModel::edit)
                         OwnTargetField(form, marks, viewModel::edit)
+                        // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
+                        val correction = state.correction
+                        val editingId = state.editingId
+                        if (correction != null && editingId != null) {
+                            KeptCorrection(profileId = editingId, correction = correction, onDecided = viewModel::load)
+                        }
                         RiskBox(
                             reasons = state.risks,
                             acknowledged = form.acknowledgeRisk,

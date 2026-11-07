@@ -1,0 +1,12 @@
+{
+  "state": "proposed",
+  "days": 16,
+  "weights": 5,
+  "estimate": 2550,
+  "maintenance": 2685,
+  "correction": -135,
+  "target": 2135,
+  "targetCorrected": 2000,
+  "checkedOn": "2026-11-07",
+  "laterUntil": null
+}

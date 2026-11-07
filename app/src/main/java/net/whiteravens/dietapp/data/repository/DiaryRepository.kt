@@ -18,6 +18,8 @@ import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.IngredientDto
 import net.whiteravens.dietapp.data.remote.ProductDto
 import net.whiteravens.dietapp.data.remote.UpdateDiaryEntryRequest
+import net.whiteravens.dietapp.data.remote.ExpenditureDto
+import net.whiteravens.dietapp.data.remote.ExpenditureRequest
 import net.whiteravens.dietapp.data.remote.WeekSummaryDto
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -33,6 +35,7 @@ import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.Expenditure
 import net.whiteravens.dietapp.domain.WeekSummary
 import net.whiteravens.dietapp.domain.WeekWater
 import net.whiteravens.dietapp.domain.WeightTrend
@@ -57,6 +60,21 @@ class DiaryRepository @Inject constructor(
     private val json: Json,
     private val queue: ChangeQueue,
 ) {
+    /** What [profileId]'s diary and weights say it really uses, and the correction proposed or kept. */
+    suspend fun expenditure(profileId: String): Expenditure = apiCall(json) { api.expenditure(profileId) }.toDomain()
+
+    /** Takes the correction proposed for [profileId]. */
+    suspend fun acceptExpenditure(profileId: String): Expenditure =
+        apiCall(json) { api.acceptExpenditure(ExpenditureRequest(profileId)) }.toDomain()
+
+    /** Puts [profileId]'s proposal off for two weeks. */
+    suspend fun putOffExpenditure(profileId: String): Expenditure =
+        apiCall(json) { api.putOffExpenditure(ExpenditureRequest(profileId)) }.toDomain()
+
+    /** Takes [profileId]'s kept correction away. */
+    suspend fun dropExpenditure(profileId: String): Expenditure =
+        apiCall(json) { api.dropExpenditure(ExpenditureRequest(profileId)) }.toDomain()
+
     /** [profileId]'s week in sum: the seven days that end with [to]. */
     suspend fun week(profileId: String, to: LocalDate): WeekSummary =
         apiCall(json) { api.weekSummary(profileId, to.toString()) }.toDomain()
@@ -254,4 +272,13 @@ private fun WeekSummaryDto.toDomain() = WeekSummary(
     withinTarget = withinTarget,
     water = WeekWater(water.counted, water.averageMl, water.target, water.reached),
     weight = WeightTrend(weight.kgPerWeek, weight.targetKg, weight.reachesTargetOn?.let(LocalDate::parse)),
+)
+
+private fun ExpenditureDto.toDomain() = Expenditure(
+    state = state,
+    estimate = estimate,
+    maintenance = maintenance,
+    correction = correction,
+    target = target,
+    targetCorrected = targetCorrected,
 )

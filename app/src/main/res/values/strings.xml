@@ -1891,4 +1891,14 @@
         <item quantity="one">Water: %1$s of %2$s a day on average, on target %3$d\u00A0of %4$d\u00A0day.</item>
         <item quantity="other">Water: %1$s of %2$s a day on average, on target %3$d\u00A0of %4$d\u00A0days.</item>
     </plurals>
+    <!-- The real expenditure -->
+    <string name="expenditure_title">Real expenditure</string>
+    <string name="expenditure_proposed_more">Your diary and weights of the last 3\u00A0weeks come to about %1$d\u00A0kcal a day, %2$d\u00A0kcal more than the formula says. The daily target would be %3$d\u00A0kcal instead of %4$d.</string>
+    <string name="expenditure_proposed_less">Your diary and weights of the last 3\u00A0weeks come to about %1$d\u00A0kcal a day, %2$d\u00A0kcal less than the formula says. The daily target would be %3$d\u00A0kcal instead of %4$d.</string>
+    <string name="expenditure_note">Only a proposal. Plans already made keep their target.</string>
+    <string name="expenditure_accept">Accept</string>
+    <string name="expenditure_later">Not now</string>
+    <string name="expenditure_kept">The target holds a correction from the real expenditure: %1$s\u00A0kcal a day.</string>
+    <string name="expenditure_drop">Remove the correction</string>
+    <string name="expenditure_act_failed">The decision could not be saved.</string>
 </resources>

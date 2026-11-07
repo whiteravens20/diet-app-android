@@ -215,6 +215,22 @@ interface DietApiService {
 
     // ── Diary ───────────────────────────────────────────────────────────────
 
+    /** What the diary and the weights of the three weeks before today say a profile really uses, and the correction proposed. */
+    @GET("diary/expenditure")
+    suspend fun expenditure(@Query("profileId") profileId: String): ExpenditureDto
+
+    /** Takes the correction proposed; refused where none is. */
+    @POST("diary/expenditure/accept")
+    suspend fun acceptExpenditure(@Body body: ExpenditureRequest): ExpenditureDto
+
+    /** Puts the proposal off for two weeks. */
+    @POST("diary/expenditure/later")
+    suspend fun putOffExpenditure(@Body body: ExpenditureRequest): ExpenditureDto
+
+    /** Takes a kept correction away: the formula's target again, and no proposal for two weeks. */
+    @POST("diary/expenditure/drop")
+    suspend fun dropExpenditure(@Body body: ExpenditureRequest): ExpenditureDto
+
     /** A profile's week in sum: the seven days that end with [to] (`YYYY-MM-DD`), yesterday where it is not given. */
     @GET("diary/week")
     suspend fun weekSummary(@Query("profileId") profileId: String, @Query("to") to: String? = null): WeekSummaryDto

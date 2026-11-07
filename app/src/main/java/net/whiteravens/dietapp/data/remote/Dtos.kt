@@ -546,6 +546,8 @@ data class ProfileDto(
     val preferences: ProfilePreferencesDto = ProfilePreferencesDto(),
     /** When the profile said it understands the risk of a target held at maintenance, or null. */
     val riskAcknowledgedAt: String? = null,
+    /** The correction of the target the real expenditure brought, in kcal a day; null where none is kept. */
+    val expenditureCorrectionKcal: Int? = null,
     val createdAt: String,
     val updatedAt: String,
 )
@@ -746,6 +748,32 @@ data class WaterDayDto(
 data class AddWaterRequest(val profileId: String, val day: String, val ml: Int)
 
 // ── The week in sum (packages/shared/src/summary.ts) ────────────────────────
+
+/**
+ * What the diary and the weights say of what a profile really uses, worked out once a week:
+ * [state] is `too_little`, `near`, `proposed`, `later` or `kept`.
+ */
+@Serializable
+data class ExpenditureDto(
+    val state: String,
+    val days: Int,
+    val weights: Int,
+    /** The expenditure worked out, in kcal a day; null with too little to go by. */
+    val estimate: Int?,
+    /** The formula's maintenance, with no correction. */
+    val maintenance: Int,
+    /** The correction proposed or kept, in kcal a day against the formula; null where there is none. */
+    val correction: Int?,
+    /** The daily target as it stands, and as it would with the correction proposed. */
+    val target: Int,
+    val targetCorrected: Int?,
+    val checkedOn: String?,
+    val laterUntil: String?,
+)
+
+/** The profile whose real expenditure is acted on. */
+@Serializable
+data class ExpenditureRequest(val profileId: String)
 
 /** The water of a week: the days that hold some, what they hold on average, and how many reached the target. */
 @Serializable

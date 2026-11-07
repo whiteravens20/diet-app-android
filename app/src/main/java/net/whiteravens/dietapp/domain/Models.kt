@@ -133,6 +133,8 @@ data class Profile(
     val weightKg: Double,
     /** The weight the profile works towards, in kilograms, or null where it names none. */
     val targetWeightKg: Double?,
+    /** The correction of the target the real expenditure brought, kcal a day; null where none is kept. */
+    val expenditureCorrectionKcal: Int? = null,
 )
 
 /** The account's profiles as they were last read on this phone, at [readAt] (the phone's milliseconds). */
@@ -237,6 +239,8 @@ data class ProfileDetails(
     val figures: ProfileFigures,
     val preferences: ProfilePreferences,
     val riskAcknowledged: Boolean,
+    /** The correction of the target the real expenditure brought, kcal a day; null where none is kept. */
+    val expenditureCorrectionKcal: Int? = null,
 )
 
 /**

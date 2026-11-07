@@ -2023,4 +2023,14 @@
         <item quantity="many">Woda: średnio %1$s z %2$s dziennie, w celu %3$d\u00A0z %4$d\u00A0dni.</item>
         <item quantity="other">Woda: średnio %1$s z %2$s dziennie, w celu %3$d\u00A0z %4$d\u00A0dnia.</item>
     </plurals>
+    <!-- The real expenditure -->
+    <string name="expenditure_title">Rzeczywisty wydatek</string>
+    <string name="expenditure_proposed_more">Z dziennika i wag z ostatnich 3\u00A0tygodni wychodzi około %1$d\u00A0kcal dziennie, o %2$d\u00A0kcal więcej niż liczy wzór. Cel dzienny byłby %3$d\u00A0kcal zamiast %4$d.</string>
+    <string name="expenditure_proposed_less">Z dziennika i wag z ostatnich 3\u00A0tygodni wychodzi około %1$d\u00A0kcal dziennie, o %2$d\u00A0kcal mniej niż liczy wzór. Cel dzienny byłby %3$d\u00A0kcal zamiast %4$d.</string>
+    <string name="expenditure_note">To tylko propozycja. Plany już ułożone zostają przy swoim celu.</string>
+    <string name="expenditure_accept">Przyjmij</string>
+    <string name="expenditure_later">Nie teraz</string>
+    <string name="expenditure_kept">Cel uwzględnia poprawkę z rzeczywistego wydatku: %1$s\u00A0kcal dziennie.</string>
+    <string name="expenditure_drop">Usuń poprawkę</string>
+    <string name="expenditure_act_failed">Nie udało się zapisać decyzji.</string>
 </resources>

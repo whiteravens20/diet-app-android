@@ -22,6 +22,7 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DiaryAmount
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.domain.Expenditure
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.WeekSummary
 import net.whiteravens.dietapp.domain.WeekWater
@@ -437,5 +438,30 @@ class DiaryRepositoryTest {
         assertEquals(null, empty.eaten)
         assertEquals(null, empty.water.averageMl)
         assertEquals(WeightTrend(null, null, null), empty.weight)
+    }
+
+    @Test
+    fun `the real expenditure is asked for by its profile, and a correction proposed is taken with the profile named`() {
+        server.enqueue(answer(200, "expenditure-proposed"))
+        server.enqueue(answer(200, "expenditure-kept"))
+        val diary = repository()
+
+        val proposed = runBlocking { diary.expenditure(profileId) }
+        val taken = runBlocking { diary.acceptExpenditure(profileId) }
+
+        val asked = server.takeRequest().requestUrl!!
+        assertEquals("/api/diary/expenditure", asked.encodedPath)
+        assertEquals(profileId, asked.queryParameter("profileId"))
+        assertEquals(Expenditure("proposed", estimate = 2550, maintenance = 2685, correction = -135, target = 2135, targetCorrected = 2000), proposed)
+        assertTrue(proposed.proposed)
+
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/diary/expenditure/accept", sent.requestUrl!!.encodedPath)
+        assertEquals(mapOf("profileId" to profileId), json.parseToJsonElement(sent.body.readUtf8()).jsonObject.mapValues { it.value.jsonPrimitive.content })
+        // Kept: nothing is proposed any more, and the target holds the correction.
+        assertEquals("kept", taken.state)
+        assertEquals(false, taken.proposed)
+        assertEquals(2000, taken.target)
     }
 }

@@ -371,6 +371,9 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    /** [profileId]'s target changed elsewhere (a correction of the real expenditure taken or dropped): it is read again. */
+    fun targetChanged(profileId: String) = readTargetAgain(profileId)
+
     /**
      * Reads [profileId] again after a change of its weights was sent: the newest weight logged is the
      * profile's, and its calorie target and today's, where no plan holds the day, are worked out from
