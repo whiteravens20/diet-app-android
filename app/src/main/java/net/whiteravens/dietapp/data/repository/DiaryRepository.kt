@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.IngredientDto
 import net.whiteravens.dietapp.data.remote.ProductDto
 import net.whiteravens.dietapp.data.remote.UpdateDiaryEntryRequest
+import net.whiteravens.dietapp.data.remote.WeekSummaryDto
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
@@ -32,6 +33,9 @@ import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.WeekSummary
+import net.whiteravens.dietapp.domain.WeekWater
+import net.whiteravens.dietapp.domain.WeightTrend
 import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.ProductSource
 import java.time.Duration
@@ -53,6 +57,10 @@ class DiaryRepository @Inject constructor(
     private val json: Json,
     private val queue: ChangeQueue,
 ) {
+    /** [profileId]'s week in sum: the seven days that end with [to]. */
+    suspend fun week(profileId: String, to: LocalDate): WeekSummary =
+        apiCall(json) { api.weekSummary(profileId, to.toString()) }.toDomain()
+
     /** The day as it was last read on this phone; null where it was not, or not for a while. */
     suspend fun keptDay(profileId: String, date: LocalDate): DiaryDay? = kept.diaryDay(profileId, date.toString())?.let { row ->
         readOrDrop({ json.decodeFromString<DiaryDayDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
@@ -234,4 +242,16 @@ internal fun ProductDto.toDomain() = Product(
     energyWorkedOut = energyWorkedOut,
     doubtful = doubtful,
     correction = correction,
+)
+
+private fun WeekSummaryDto.toDomain() = WeekSummary(
+    from = LocalDate.parse(from),
+    to = LocalDate.parse(to),
+    counted = counted,
+    empty = empty,
+    eaten = eaten?.toDomain(),
+    target = target?.toDomain(),
+    withinTarget = withinTarget,
+    water = WeekWater(water.counted, water.averageMl, water.target, water.reached),
+    weight = WeightTrend(weight.kgPerWeek, weight.targetKg, weight.reachesTargetOn?.let(LocalDate::parse)),
 )

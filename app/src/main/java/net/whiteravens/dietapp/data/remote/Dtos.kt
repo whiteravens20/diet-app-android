@@ -745,6 +745,43 @@ data class WaterDayDto(
 @Serializable
 data class AddWaterRequest(val profileId: String, val day: String, val ml: Int)
 
+// ── The week in sum (packages/shared/src/summary.ts) ────────────────────────
+
+/** The water of a week: the days that hold some, what they hold on average, and how many reached the target. */
+@Serializable
+data class WeekWaterDto(
+    val counted: Int,
+    /** In millilitres; null where no day holds water. */
+    val averageMl: Int?,
+    /** The profile's target a day; null where it names none. */
+    val target: Int?,
+    val reached: Int,
+)
+
+/** Where a profile's weights lead: the fitted line's pace a week, the weight worked towards, and the day it is reached. */
+@Serializable
+data class WeightTrendDto(
+    val kgPerWeek: Double?,
+    val targetKg: Double?,
+    /** The day (`YYYY-MM-DD`) the line reaches the target weight; null where it is flat or leads away. */
+    val reachesTargetOn: String?,
+)
+
+/** A profile's week in sum: what its days ate on average against their targets, what they drank, where the weight leads. */
+@Serializable
+data class WeekSummaryDto(
+    val from: String,
+    val to: String,
+    /** The days with an entry or an eaten meal, and those with neither, which no average counts. */
+    val counted: Int,
+    val empty: Int,
+    val eaten: NutritionDto?,
+    val target: NutritionDto?,
+    val withinTarget: Int,
+    val water: WeekWaterDto,
+    val weight: WeightTrendDto,
+)
+
 // ── Ingredients (packages/shared/src/ingredient.ts) ─────────────────────────
 
 /**

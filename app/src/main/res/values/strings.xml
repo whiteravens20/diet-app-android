@@ -1865,4 +1865,30 @@
         <item quantity="one">On target: %1$d\u00A0of %2$d\u00A0day</item>
         <item quantity="other">On target: %1$d\u00A0of %2$d\u00A0days</item>
     </plurals>
+    <!-- The week in sum -->
+    <string name="week_title">The last 7\u00A0days</string>
+    <string name="week_title_of">A week in sum</string>
+    <string name="week_eaten">On average %1$d\u00A0of %2$d\u00A0kcal a day</string>
+    <string name="week_nothing">Nothing was written on these days.</string>
+    <string name="week_macros">Protein %1$d\u00A0of %2$d\u00A0g\u00A0· fat %3$d\u00A0of %4$d\u00A0g\u00A0· carbs %5$d\u00A0of %6$d\u00A0g</string>
+    <string name="week_trend">Weight: %1$s a week.</string>
+    <string name="week_water_no_target">Water: %1$s a day on average.</string>
+    <string name="week_trend_none">The weight\'s trend shows after at least 3\u00A0weighings within 14\u00A0days.</string>
+    <string name="week_reaches">At this pace the weight reaches %1$s around %2$s.</string>
+    <string name="week_leads_away">At this pace the weight comes no nearer %1$s.</string>
+    <string name="week_previous">Previous week</string>
+    <string name="week_next">Next week</string>
+    <string name="week_read_failed">The week could not be read.</string>
+    <plurals name="week_within">
+        <item quantity="one">On target (±10%%): %1$d\u00A0of %2$d\u00A0day</item>
+        <item quantity="other">On target (±10%%): %1$d\u00A0of %2$d\u00A0days</item>
+    </plurals>
+    <plurals name="week_empty">
+        <item quantity="one">%1$d\u00A0day without entries</item>
+        <item quantity="other">%1$d\u00A0days without entries</item>
+    </plurals>
+    <plurals name="week_water">
+        <item quantity="one">Water: %1$s of %2$s a day on average, on target %3$d\u00A0of %4$d\u00A0day.</item>
+        <item quantity="other">Water: %1$s of %2$s a day on average, on target %3$d\u00A0of %4$d\u00A0days.</item>
+    </plurals>
 </resources>

@@ -1991,4 +1991,36 @@
         <item quantity="many">W celu: %1$d\u00A0z %2$d\u00A0dni</item>
         <item quantity="other">W celu: %1$d\u00A0z %2$d\u00A0dnia</item>
     </plurals>
+    <!-- The week in sum -->
+    <string name="week_title">Ostatnie 7\u00A0dni</string>
+    <string name="week_title_of">Tydzień w skrócie</string>
+    <string name="week_eaten">Średnio %1$d\u00A0z %2$d\u00A0kcal dziennie</string>
+    <string name="week_nothing">W tych dniach nic nie zapisano.</string>
+    <string name="week_macros">Białko %1$d\u00A0z %2$d\u00A0g\u00A0· tłuszcz %3$d\u00A0z %4$d\u00A0g\u00A0· węglowodany %5$d\u00A0z %6$d\u00A0g</string>
+    <string name="week_trend">Waga: %1$s na tydzień.</string>
+    <string name="week_water_no_target">Woda: średnio %1$s dziennie.</string>
+    <string name="week_trend_none">Trend wagi pojawi się po co najmniej 3\u00A0ważeniach w ciągu 14\u00A0dni.</string>
+    <string name="week_reaches">Przy tym tempie waga dojdzie do %1$s około %2$s.</string>
+    <string name="week_leads_away">Przy tym tempie waga nie zbliża się do %1$s.</string>
+    <string name="week_previous">Poprzedni tydzień</string>
+    <string name="week_next">Następny tydzień</string>
+    <string name="week_read_failed">Nie udało się wczytać tygodnia.</string>
+    <plurals name="week_within">
+        <item quantity="one">W granicach celu (±10%%): %1$d\u00A0z %2$d\u00A0dnia</item>
+        <item quantity="few">W granicach celu (±10%%): %1$d\u00A0z %2$d\u00A0dni</item>
+        <item quantity="many">W granicach celu (±10%%): %1$d\u00A0z %2$d\u00A0dni</item>
+        <item quantity="other">W granicach celu (±10%%): %1$d\u00A0z %2$d\u00A0dnia</item>
+    </plurals>
+    <plurals name="week_empty">
+        <item quantity="one">%1$d\u00A0dzień bez wpisów</item>
+        <item quantity="few">%1$d\u00A0dni bez wpisów</item>
+        <item quantity="many">%1$d\u00A0dni bez wpisów</item>
+        <item quantity="other">%1$d\u00A0dnia bez wpisów</item>
+    </plurals>
+    <plurals name="week_water">
+        <item quantity="one">Woda: średnio %1$s z %2$s dziennie, w celu %3$d\u00A0z %4$d\u00A0dnia.</item>
+        <item quantity="few">Woda: średnio %1$s z %2$s dziennie, w celu %3$d\u00A0z %4$d\u00A0dni.</item>
+        <item quantity="many">Woda: średnio %1$s z %2$s dziennie, w celu %3$d\u00A0z %4$d\u00A0dni.</item>
+        <item quantity="other">Woda: średnio %1$s z %2$s dziennie, w celu %3$d\u00A0z %4$d\u00A0dnia.</item>
+    </plurals>
 </resources>

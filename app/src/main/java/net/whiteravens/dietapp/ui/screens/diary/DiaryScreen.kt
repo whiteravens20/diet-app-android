@@ -85,6 +85,7 @@ import net.whiteravens.dietapp.ui.screens.products.OwnProductDialog
 import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.components.held
 import net.whiteravens.dietapp.ui.components.WaterCard
+import net.whiteravens.dietapp.ui.components.WeekSummaryCard
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -292,6 +293,10 @@ private fun LazyListScope.day(
         item(key = "copy") {
             CopyDay(state, onChoose = viewModel::chooseCopyFrom, onCopy = viewModel::copy)
         }
+    }
+    // The profile's weeks in sum, from the one before today back a week at a time; read again when the day shown changes.
+    if (profileId != null) {
+        item(key = "week") { WeekSummaryCard(profileId = profileId, weeks = true, changed = state.day) }
     }
 }
 

@@ -1,0 +1,30 @@
+{
+  "from": "2026-10-31",
+  "to": "2026-11-06",
+  "counted": 5,
+  "empty": 2,
+  "eaten": {
+    "calories": 2050,
+    "protein": 120,
+    "fat": 70,
+    "carbs": 230
+  },
+  "target": {
+    "calories": 2135,
+    "protein": 133,
+    "fat": 71,
+    "carbs": 240
+  },
+  "withinTarget": 3,
+  "water": {
+    "counted": 4,
+    "averageMl": 1625,
+    "target": 2000,
+    "reached": 1
+  },
+  "weight": {
+    "kgPerWeek": -0.42,
+    "targetKg": 85,
+    "reachesTargetOn": "2027-02-14"
+  }
+}

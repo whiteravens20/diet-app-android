@@ -215,6 +215,10 @@ interface DietApiService {
 
     // ── Diary ───────────────────────────────────────────────────────────────
 
+    /** A profile's week in sum: the seven days that end with [to] (`YYYY-MM-DD`), yesterday where it is not given. */
+    @GET("diary/week")
+    suspend fun weekSummary(@Query("profileId") profileId: String, @Query("to") to: String? = null): WeekSummaryDto
+
     /** A day of a profile's diary: the entries written for it, the plan's meals, and what was eaten against its target. */
     @GET("diary/day")
     suspend fun diaryDay(@Query("profileId") profileId: String, @Query("date") date: String): DiaryDayDto

@@ -23,6 +23,9 @@ import net.whiteravens.dietapp.domain.DiaryAmount
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.WeekSummary
+import net.whiteravens.dietapp.domain.WeekWater
+import net.whiteravens.dietapp.domain.WeightTrend
 import net.whiteravens.dietapp.testing.MemoryChanges
 import net.whiteravens.dietapp.testing.MemoryKeptReads
 import net.whiteravens.dietapp.testing.changeQueue
@@ -402,5 +405,37 @@ class DiaryRepositoryTest {
         assertTrue(egg.units.isNotEmpty())
         assertNotNull(egg.caloriesPer100)
         assertEquals("g", egg.canonicalUnit)
+    }
+
+    @Test
+    fun `a week in sum is asked for by its profile and its last day, and read with what it ate, drank and where the weight leads`() {
+        server.enqueue(answer(200, "week-summary"))
+        server.enqueue(answer(200, "week-summary-empty"))
+        val diary = repository()
+
+        val week = runBlocking { diary.week(profileId, LocalDate.parse("2026-11-06")) }
+        val empty = runBlocking { diary.week(profileId, LocalDate.parse("2026-11-06")) }
+
+        val asked = server.takeRequest().requestUrl!!
+        assertEquals("/api/diary/week", asked.encodedPath)
+        assertEquals(mapOf("profileId" to profileId, "to" to "2026-11-06"), asked.queryParameterNames.associateWith { asked.queryParameter(it) })
+        assertEquals(
+            WeekSummary(
+                from = LocalDate.parse("2026-10-31"),
+                to = LocalDate.parse("2026-11-06"),
+                counted = 5,
+                empty = 2,
+                eaten = Nutrition(2050.0, 120.0, 70.0, 230.0),
+                target = Nutrition(2135.0, 133.0, 71.0, 240.0),
+                withinTarget = 3,
+                water = WeekWater(counted = 4, averageMl = 1625, target = 2000, reached = 1),
+                weight = WeightTrend(kgPerWeek = -0.42, targetKg = 85.0, reachesTargetOn = LocalDate.parse("2027-02-14")),
+            ),
+            week,
+        )
+        // A week with nothing written: no averages, no water, no trend.
+        assertEquals(null, empty.eaten)
+        assertEquals(null, empty.water.averageMl)
+        assertEquals(WeightTrend(null, null, null), empty.weight)
     }
 }

@@ -4,6 +4,8 @@ package net.whiteravens.dietapp
 
 import android.Manifest
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
@@ -94,6 +96,28 @@ class DiaryTest {
     private fun submit() {
         screen.onNode(inTheWindow(text(R.string.diary_submit))).performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(inTheWindow(text(R.string.diary_submit))).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun theDiaryGoesThroughTheProfilesWeeksInSumAWeekAtATime() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        openTheDiary()
+
+        // The last seven days, of a new profile with nothing written, and no week after them.
+        screen.scrollToText(text(R.string.week_title))
+        screen.scrollToText(text(R.string.week_nothing))
+        val next = hasText(text(R.string.week_next)) and hasClickAction()
+        screen.scrollTo(next)
+        screen.onNode(next).assertIsNotEnabled()
+        screen.keepScreenshot("diary-the-last-seven-days")
+
+        // A week back, and forth again.
+        screen.onNode(hasText(text(R.string.week_previous)) and hasClickAction()).performScrollTo().performClick()
+        screen.scrollToText(text(R.string.week_title_of))
+        screen.onNode(next).performScrollTo().assertIsEnabled().performClick()
+        screen.scrollToText(text(R.string.week_title))
     }
 
     @Test
