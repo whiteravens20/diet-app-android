@@ -1901,4 +1901,11 @@
     <string name="expenditure_kept">The target holds a correction from the real expenditure: %1$s\u00A0kcal a day.</string>
     <string name="expenditure_drop">Remove the correction</string>
     <string name="expenditure_act_failed">The decision could not be saved.</string>
+    <!-- The target weight reached -->
+    <string name="keep_weight_title">Target weight</string>
+    <string name="keep_weight_reached">The target weight of %1$s is reached. Move to keeping the weight?</string>
+    <string name="keep_weight_note">The daily target then equals maintenance, and a running plan offers it from today.</string>
+    <string name="keep_weight_keep">Move</string>
+    <string name="keep_weight_later">Not now</string>
+    <string name="keep_weight_act_failed">The choice could not be saved.</string>
 </resources>

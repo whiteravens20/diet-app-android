@@ -188,4 +188,40 @@ class ProfileRepositoryTest {
         assertEquals(5, preview.paces.size)
         assertEquals(preview.calculation.dailyTarget, preview.paces.first().dailyTarget, 0.0)
     }
+
+    @Test
+    fun `a profile at its target weight keeps it or puts the offer off by the profile's own routes, read back as the API has it`() {
+        server.enqueue(answer(fixture("profile-keeping-the-weight")))
+        server.enqueue(answer(fixture("profile-target-weight-reached")))
+        val profiles = repository()
+        val id = "cd7e199c-26b1-46cf-bac7-768b39d528de"
+        val today = java.time.LocalDate.parse("2026-11-07")
+
+        val kept = runBlocking { profiles.keepWeight(id) }
+        val putOff = runBlocking { profiles.putOffKeepingWeight(id) }
+
+        val keep = server.takeRequest()
+        assertEquals("POST", keep.method)
+        assertEquals("/api/profiles/$id/keep-weight", keep.requestUrl!!.encodedPath)
+        assertEquals("/api/profiles/$id/keep-weight/later", server.takeRequest().requestUrl!!.encodedPath)
+        // Kept: the pace keeps the weight, and nothing is offered any more.
+        assertFalse(kept.offersToKeep(today))
+        assertTrue(putOff.targetWeightReached)
+        assertEquals(85.0, putOff.targetWeightKg)
+    }
+
+    @Test
+    fun `the offer to keep the weight waits out the day it was put off to, and needs a target weight`() {
+        val profile = net.whiteravens.dietapp.domain.Profile(
+            id = "p", name = "Adam", dietType = "balanced", mealCount = 4, weightKg = 85.0, targetWeightKg = 85.0,
+            targetWeightReached = true,
+        )
+        val today = java.time.LocalDate.parse("2026-11-07")
+
+        assertTrue(profile.offersToKeep(today))
+        assertTrue(!profile.copy(targetReachedLaterUntil = today.plusDays(3)).offersToKeep(today))
+        assertTrue(profile.copy(targetReachedLaterUntil = today).offersToKeep(today))
+        assertTrue(!profile.copy(targetWeightKg = null).offersToKeep(today))
+        assertTrue(!profile.copy(targetWeightReached = false).offersToKeep(today))
+    }
 }

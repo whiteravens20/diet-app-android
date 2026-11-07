@@ -142,6 +142,14 @@ interface DietApiService {
     @PUT("profiles/{id}")
     suspend fun updateProfile(@Path("id") id: String, @Body body: ProfileUpdateDto): ProfileDto
 
+    /** The target weight reached: the pace becomes keeping the weight, so the daily target equals maintenance. */
+    @POST("profiles/{id}/keep-weight")
+    suspend fun keepWeight(@Path("id") id: String): ProfileDto
+
+    /** The offer to keep the weight put off for two weeks. */
+    @POST("profiles/{id}/keep-weight/later")
+    suspend fun putOffKeepingWeight(@Path("id") id: String): ProfileDto
+
     @DELETE("profiles/{id}")
     suspend fun deleteProfile(@Path("id") id: String)
 

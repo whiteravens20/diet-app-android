@@ -135,7 +135,15 @@ data class Profile(
     val targetWeightKg: Double?,
     /** The correction of the target the real expenditure brought, kcal a day; null where none is kept. */
     val expenditureCorrectionKcal: Int? = null,
-)
+    /** The newest weight came down to the target weight while the pace still loses. */
+    val targetWeightReached: Boolean = false,
+    /** The day the offer to keep the weight comes back, where it was put off. */
+    val targetReachedLaterUntil: java.time.LocalDate? = null,
+) {
+    /** The offer to keep the weight is due on [today]: the target weight reached, and the offer not put off past today. */
+    fun offersToKeep(today: java.time.LocalDate): Boolean =
+        targetWeightReached && targetWeightKg != null && targetReachedLaterUntil?.isAfter(today) != true
+}
 
 /** The account's profiles as they were last read on this phone, at [readAt] (the phone's milliseconds). */
 data class KeptProfiles(val profiles: List<Profile>, val readAt: Long)

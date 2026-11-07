@@ -95,6 +95,8 @@ fun ProfileDto.toDomain() = Profile(
     weightKg = weightKg,
     targetWeightKg = targetWeightKg,
     expenditureCorrectionKcal = expenditureCorrectionKcal,
+    targetWeightReached = targetWeightReached,
+    targetReachedLaterUntil = targetReachedLaterUntil?.let(java.time.LocalDate::parse),
 )
 
 fun NutritionDto.toDomain() = Nutrition(

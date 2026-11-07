@@ -548,6 +548,10 @@ data class ProfileDto(
     val riskAcknowledgedAt: String? = null,
     /** The correction of the target the real expenditure brought, in kcal a day; null where none is kept. */
     val expenditureCorrectionKcal: Int? = null,
+    /** The newest weight came down to the target weight while the pace still loses, the target not typed in. */
+    val targetWeightReached: Boolean = false,
+    /** The day (`YYYY-MM-DD`) the offer to keep the weight comes back, where it was put off. */
+    val targetReachedLaterUntil: String? = null,
     val createdAt: String,
     val updatedAt: String,
 )

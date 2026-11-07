@@ -58,11 +58,13 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
 import net.whiteravens.dietapp.ui.components.UpdateCard
 import net.whiteravens.dietapp.ui.components.ExpenditureCard
+import net.whiteravens.dietapp.ui.components.KeepWeightCard
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.WaterCard
 import net.whiteravens.dietapp.ui.components.WeekSummaryCard
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.notifications.NotificationsBell
+import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -176,6 +178,9 @@ fun DashboardScreen(
                             onOpenPlan,
                             onNewPlan = { onNewPlan(stats.profile.id) },
                             onTargetChanged = { viewModel.targetChanged(stats.profile.id) },
+                            unit = state.unit,
+                            // The pace changed with the choice: the profile and its target are read again.
+                            onProfileChanged = { viewModel.shownAgain(cameToTheFront = false) },
                             weight = {
                                 val inView = remember { BringIntoViewRequester() }
                                 if (stats.profile.id == showWeightOf) {
@@ -214,6 +219,8 @@ private fun ProfileSummary(
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: () -> Unit,
     onTargetChanged: () -> Unit,
+    unit: WeightUnit,
+    onProfileChanged: () -> Unit,
     weight: @Composable () -> Unit,
     sets: @Composable () -> Unit,
 ) {
@@ -290,6 +297,8 @@ private fun ProfileSummary(
                 }
             }
         }
+
+        KeepWeightCard(profile = profile, unit = unit, onDecided = onProfileChanged)
 
         ExpenditureCard(profileId = profile.id, onDecided = onTargetChanged)
 

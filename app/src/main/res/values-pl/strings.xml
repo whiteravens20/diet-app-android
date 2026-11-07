@@ -2033,4 +2033,11 @@
     <string name="expenditure_kept">Cel uwzględnia poprawkę z rzeczywistego wydatku: %1$s\u00A0kcal dziennie.</string>
     <string name="expenditure_drop">Usuń poprawkę</string>
     <string name="expenditure_act_failed">Nie udało się zapisać decyzji.</string>
+    <!-- The target weight reached -->
+    <string name="keep_weight_title">Waga docelowa</string>
+    <string name="keep_weight_reached">Osiągnięto wagę docelową %1$s. Przejść na utrzymanie wagi?</string>
+    <string name="keep_weight_note">Cel dzienny zrówna się wtedy z zapotrzebowaniem, a plan w toku zaproponuje go od dziś.</string>
+    <string name="keep_weight_keep">Przejdź</string>
+    <string name="keep_weight_later">Nie teraz</string>
+    <string name="keep_weight_act_failed">Nie udało się zapisać decyzji.</string>
 </resources>

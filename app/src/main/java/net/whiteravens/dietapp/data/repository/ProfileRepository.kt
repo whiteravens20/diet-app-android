@@ -43,6 +43,12 @@ class ProfileRepository @Inject constructor(
 
     suspend fun profile(id: String): ProfileDetails = apiCall(json) { api.profile(id) }.toDetails()
 
+    /** Moves [id] to keeping its weight, its target weight reached: the profile as it then is. */
+    suspend fun keepWeight(id: String): Profile = apiCall(json) { api.keepWeight(id) }.toDomain()
+
+    /** Puts [id]'s offer to keep the weight off for two weeks. */
+    suspend fun putOffKeepingWeight(id: String): Profile = apiCall(json) { api.putOffKeepingWeight(id) }.toDomain()
+
     /**
      * Makes a profile, with [limits] on how often its plans repeat themselves, or the API's own
      * where they are null; [acknowledgeRisk] is said only by a form that showed the risk of its goal.
