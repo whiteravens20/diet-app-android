@@ -1929,4 +1929,6 @@
     <string name="notifications_cooking_cover_lunch">lunch</string>
     <string name="notifications_cooking_cover_snack">a snack</string>
     <string name="notifications_cooking_cover_dinner">dinner</string>
+    <!-- A reminder of water once a press of an amount added it -->
+    <string name="notifications_water_added">Added %1$s\u00A0· %2$s</string>
 </resources>

@@ -22,6 +22,8 @@ import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
+import net.whiteravens.dietapp.domain.AccountNotification
+import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.notify.NotificationsWorker
 import net.whiteravens.dietapp.notify.PhoneNotifier
 import net.whiteravens.dietapp.testing.Instance
@@ -29,11 +31,15 @@ import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openAccountSettings
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
+import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Instant
+import java.time.LocalDate
+import java.util.UUID
 
 /**
  * The account's notifications on the phone, against the instance the CI starts: it makes an account
@@ -118,5 +124,41 @@ class PhoneNotificationsTest {
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
         screen.onNodeWithText(text(R.string.phone_notifications_show)).performScrollTo().performClick()
         screen.waitUntil(10_000) { !scheduled() }
+    }
+
+    /** What the application's notifications on the phone say, as the eye reads them. */
+    private fun shownTexts(): List<String> =
+        context.getSystemService(NotificationManager::class.java).activeNotifications
+            .filter { it.notification.channelId == PhoneNotifier.CHANNEL }
+            .map { it.notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString().replace('\u00A0', ' ') }
+
+    @Test
+    fun aPressOfAnAmountOnAReminderOfWaterAddsItWithoutOpeningTheAppAndSaysSoBeforeItGoes() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(context.packageName, Manifest.permission.POST_NOTIFICATIONS)
+        }
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        val today = LocalDate.now()
+        val reminder = AccountNotification(UUID.randomUUID().toString(), profileId, NotificationAbout.WaterReminder(today, 0, 2000), Instant.now())
+        PhoneNotifier.show(context, listOf(reminder), mapOf(profileId to "Ala"))
+
+        // The reminder carries the amounts of the water card.
+        val said = text(R.string.notifications_water_reminder, "0\u00A0${text(R.string.unit_liter)}", "2\u00A0${text(R.string.unit_liter)}").replace('\u00A0', ' ')
+        // The system takes a notification in a moment after it was posted.
+        fun posted() = context.getSystemService(NotificationManager::class.java).activeNotifications.firstOrNull {
+            it.notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString().replace('\u00A0', ' ') == said
+        }
+        screen.waitUntil(10_000) { posted() != null }
+        val posted = posted()!!
+        assertEquals(listOf("+200 ml", "+250 ml", "+330 ml"), posted.notification.actions.map { it.title.toString().replace('\u00A0', ' ') })
+
+        // A press adds its amount to the reminded profile's day, says so for a moment, and the reminder goes.
+        posted.notification.actions[2].actionIntent.send()
+        screen.waitForTheApi(20_000) { Instance.water(account, profileId, today) == 330 }
+        val added = text(R.string.notifications_water_added, "330\u00A0${text(R.string.unit_ml)}", "Ala").replace('\u00A0', ' ')
+        screen.waitUntil(10_000) { added in shownTexts() }
+        screen.waitUntil(15_000) { added !in shownTexts() }
     }
 }

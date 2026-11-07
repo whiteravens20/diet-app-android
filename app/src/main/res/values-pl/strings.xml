@@ -2061,4 +2061,6 @@
     <string name="notifications_cooking_cover_lunch">obiad</string>
     <string name="notifications_cooking_cover_snack">przekąskę</string>
     <string name="notifications_cooking_cover_dinner">kolację</string>
+    <!-- A reminder of water once a press of an amount added it -->
+    <string name="notifications_water_added">Dodano %1$s\u00A0· %2$s</string>
 </resources>
