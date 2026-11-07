@@ -243,6 +243,55 @@ class DashboardTest {
         screen.waitForTheApi { Instance.water(account, profileId, today) == 580 }
     }
 
+    @Test
+    fun threeWeeksWrittenProposeTheRealExpenditureWhichIsTakenAndTheWeekSaysThemInSum() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        val today = LocalDate.now()
+        // Sixteen of the 21 days before today written, and five weights over them: more is eaten than the formula says, and the weight holds.
+        (1..21).filter { it % 4 != 0 }.forEach { back -> Instance.writeInTheDiary(account, profileId, "Day's meals", 3200, today.minusDays(back.toLong())) }
+        listOf(20, 15, 10, 5, 1).forEach { back -> Instance.logWeight(account, profileId, 80.0, today.minusDays(back.toLong())) }
+        screen.startSignedIn(account)
+
+        // A proposal, said to be one, which the dashboard asks about.
+        screen.scrollToText(text(R.string.expenditure_title))
+        screen.scrollToText(text(R.string.expenditure_note))
+        screen.keepScreenshot("dashboard-real-expenditure")
+
+        // The week before today in sum: what was eaten against the target, the days counted and the weight's way,
+        // its last line, brought into view with the card above it.
+        screen.scrollToText(text(R.string.week_title))
+        val (trend, _) = text(R.string.week_trend, "\u0000").split("\u0000")
+        screen.waitForText(trend, substring = true)
+        screen.onNodeWithText(trend, substring = true).performScrollTo()
+        screen.keepScreenshot("dashboard-the-week-in-sum")
+
+        // Taken: the profile keeps the correction, and nothing is proposed any more.
+        screen.scrollToText(text(R.string.expenditure_note))
+        screen.onNode(hasText(text(R.string.expenditure_accept)) and hasClickAction()).performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { !Instance.profile(account, profileId).isNull("expenditureCorrectionKcal") }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.expenditure_title)).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun aProfileAtItsTargetWeightIsOfferedToKeepItAndMovesToKeepingIt() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala", targetWeightKg = 79.0)
+        Instance.chooseWeightUnit(account, "kg")
+        Instance.logWeight(account, profileId, 78.5, LocalDate.now())
+        screen.startSignedIn(account)
+
+        // The newest weight came down to the one worked towards: the dashboard offers to keep it.
+        screen.scrollToText(text(R.string.keep_weight_title))
+        screen.scrollToText(text(R.string.keep_weight_note))
+        screen.keepScreenshot("dashboard-target-weight-reached")
+
+        // Moved: the pace keeps the weight, and the offer goes.
+        screen.onNode(hasText(text(R.string.keep_weight_keep)) and hasClickAction()).performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { Instance.profile(account, profileId).isNull("weeklyLossTarget") }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.keep_weight_title)).fetchSemanticsNodes().isEmpty() }
+    }
+
     /** Millilitres as the card says them, in litres kept with their unit. */
     private fun liters(ml: Int): String =
         heldTogether("${NumberFormat.getNumberInstance(Locale.getDefault()).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(ml / 1000.0)} ${text(R.string.unit_liter)}")

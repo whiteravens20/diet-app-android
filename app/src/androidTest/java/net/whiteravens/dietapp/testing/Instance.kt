@@ -107,12 +107,13 @@ object Instance {
         return (0 until codes.length()).map { codes.getString(it) }
     }
 
-    /** A profile of [account] with what the web application's form asks for, and the rest left to the API. */
-    fun newProfile(account: Account, name: String = "Me"): String =
+    /** A profile of [account] with what the web application's form asks for, a weight to work towards where [targetWeightKg], and the rest left to the API. */
+    fun newProfile(account: Account, name: String = "Me", targetWeightKg: Double? = null): String =
         call(
             "POST",
             "profiles",
-            JSONObject().put("name", name).put("age", 30).put("sex", "male").put("heightCm", 180).put("weightKg", 80),
+            JSONObject().put("name", name).put("age", 30).put("sex", "male").put("heightCm", 180).put("weightKg", 80)
+                .apply { targetWeightKg?.let { put("targetWeightKg", it) } },
             token = account.accessToken,
             expect = 201,
         ).getString("id")
