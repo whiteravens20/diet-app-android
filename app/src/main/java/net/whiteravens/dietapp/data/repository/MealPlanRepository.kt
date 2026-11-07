@@ -34,6 +34,7 @@ import net.whiteravens.dietapp.data.remote.SwapIngredientRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.TakeDayVariationRequest
 import net.whiteravens.dietapp.data.remote.EnteredNutritionDto
+import net.whiteravens.dietapp.data.remote.RetargetRequestDto
 import net.whiteravens.dietapp.data.remote.UndoSwapRequest
 import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
@@ -528,6 +529,16 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun evenWeek(planId: String, date: String, revision: Int): MealPlan {
         val plan = apiCall(json) { api.evenWeek(planId, EvenWeekRequestDto(date, revision)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
+    /**
+     * Takes the profile's target into the running plan [planId] from today, on the plan at [revision]:
+     * the plan as it then is, kept for offline use. A plan changed since is refused with `PLAN_CHANGED`.
+     */
+    suspend fun retarget(planId: String, revision: Int): MealPlan {
+        val plan = apiCall(json) { api.retarget(planId, RetargetRequestDto(revision)) }
         mirror(plan)
         return plan.toDomain()
     }

@@ -75,8 +75,10 @@ before that day written and six weights: its week in sum, and the correction of 
 proposed and taken), `week-summary-empty.json`, `profile-target-weight-reached.json`,
 `profile-keeping-the-weight-later.json` and `profile-keeping-the-weight.json` (a second profile with
 nothing written, whose newest weight then came down to its target weight: the offer to keep it put
-off, then taken) from API 0.218.0, captured on 2026-11-07 from an instance of diet-app's `dev` at
-`e95a172`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+off, then taken), `meal-plan-target-moved.json` and `meal-plan-retargeted.json` (a plan of three
+days from that day, made for the first profile before its correction was taken: both targets, then
+the profile's taken) from API 0.218.0, captured on 2026-11-07 from an instance of diet-app's `dev`
+at `e95a172`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

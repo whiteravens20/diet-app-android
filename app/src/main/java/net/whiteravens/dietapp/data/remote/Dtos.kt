@@ -1297,8 +1297,18 @@ data class MealPlanDto(
     val report: GenerationReportDto? = null,
     /** How many times the plan has been changed; a change from an older one is refused with `PLAN_CHANGED`. */
     val revision: Int,
+    /** A running plan whose profile's target moved since it was made, by 100 kcal or more: both targets; null otherwise. */
+    val targetMoved: TargetMovedDto? = null,
     val createdAt: String,
 )
+
+/** The profile's target now, and the one a running plan counts, in kcal a day. */
+@Serializable
+data class TargetMovedDto(val profileTarget: Int, val planTarget: Int)
+
+/** Takes the profile's target into a running plan from today, on the plan at [revision]. */
+@Serializable
+data class RetargetRequestDto(val revision: Int)
 
 /** Where a plan's averages stand: [calories] `over` | `under` outside a tenth of the target, [macros] far from the share aimed at. */
 @Serializable

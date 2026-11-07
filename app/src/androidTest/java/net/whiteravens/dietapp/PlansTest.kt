@@ -420,6 +420,36 @@ class PlansTest {
     }
 
     @Test
+    fun aPlanWhoseProfilesTargetMovedSaysBothTargetsAndTakesTheProfilesFromToday() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 3)
+        // A list of the plan's days: taking the new target says first that the list goes out of date.
+        Instance.newShoppingList(account, planId, LocalDate.now(), LocalDate.now().plusDays(2))
+        // Ten kilograms less today: the profile's target moves by more than the plan lets pass.
+        Instance.logWeight(account, profileId, 70.0, LocalDate.now())
+        val (profileTarget, planTarget) = Instance.targetMoved(account, planId)!!
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // Both targets, what taking the profile's does, and what it does to the list.
+        val moved = text(R.string.plans_target_moved, profileTarget, planTarget)
+        screen.scrollToText(moved)
+        val take = hasText(text(R.string.plans_retarget)) and hasClickAction()
+        screen.scrollTo(take)
+        screen.waitForText(text(R.string.plans_retarget_note))
+        screen.waitForText(text(R.string.plans_list_out_of_date_days))
+        screen.keepScreenshot("plans-a-target-moved")
+        screen.onNode(take).performScrollTo().performClick()
+        screen.waitForTheApi(60_000) { Instance.targetMoved(account, planId) == null }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(moved).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
     fun aDayMadeATrainingDayAloneLeavesItsWeekOffTheTargetTillTheWeekIsEvenedOut() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)

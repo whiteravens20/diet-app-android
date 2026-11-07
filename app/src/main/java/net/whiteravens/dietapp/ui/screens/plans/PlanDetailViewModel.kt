@@ -477,6 +477,21 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
+    /** Takes the profile's target into the plan from today, the same dishes in other portions. */
+    fun retarget() {
+        val plan = _state.value.plan ?: return
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.retarget(planId, plan.revision) }
+                .onSuccess { taken -> _state.update { it.copy(plan = taken, changing = false, rebalance = null, lastSwap = null) } }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
+
     fun dismissRebalance() {
         _state.update { it.copy(rebalance = null, lastSwap = null, notice = null) }
     }

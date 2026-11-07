@@ -1908,4 +1908,8 @@
     <string name="keep_weight_keep">Move</string>
     <string name="keep_weight_later">Not now</string>
     <string name="keep_weight_act_failed">The choice could not be saved.</string>
+    <!-- A running plan whose profile target moved -->
+    <string name="plans_target_moved">The profile\'s target is now %1$d\u00A0kcal, this plan counts %2$d\u00A0kcal.</string>
+    <string name="plans_retarget">Take it from today</string>
+    <string name="plans_retarget_note">The days from today get targets from the profile\'s target, with the same dishes in other portions. The days before them stay as they were.</string>
 </resources>

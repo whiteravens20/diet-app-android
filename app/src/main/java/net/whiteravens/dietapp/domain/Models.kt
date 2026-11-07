@@ -529,6 +529,9 @@ data class PlanWeek(
     val listOutOfDate: Boolean = false,
 )
 
+/** The profile's target now ([profileTarget]), and the one a running plan counts ([planTarget]), kcal a day. */
+data class TargetMoved(val profileTarget: Int, val planTarget: Int)
+
 data class MealPlan(
     val id: String,
     val profileId: String,
@@ -561,6 +564,8 @@ data class MealPlan(
     val averageMacrosOff: Boolean = false,
     /** It was made for cooking ahead. */
     val cooksAhead: Boolean = false,
+    /** A running plan whose profile's target moved since it was made: both targets; null otherwise. */
+    val targetMoved: TargetMoved? = null,
 ) {
     /** The meals that hold something the profile has ruled out since the plan was made. */
     val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }

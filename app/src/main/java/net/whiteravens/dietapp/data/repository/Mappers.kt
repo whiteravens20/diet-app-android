@@ -73,6 +73,7 @@ import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.TargetMoved
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
 
@@ -361,6 +362,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     averageOff = averageOff?.calories,
     averageMacrosOff = averageOff?.macros == true,
     cooksAhead = options.mealPrepFriendly,
+    targetMoved = targetMoved?.let { TargetMoved(it.profileTarget, it.planTarget) },
 )
 
 fun RebalanceSummaryDto.toDomain() = Rebalance(

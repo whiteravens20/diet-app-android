@@ -91,6 +91,7 @@ import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
+import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
@@ -455,6 +456,18 @@ fun PlanDetailScreen(
                 }
                 if (plan.conflicts > 0) {
                     item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
+                }
+                // The profile's target moved since the plan was made: both said, and taken from today at a press.
+                plan.targetMoved?.let { moved ->
+                    item(key = "target-moved") {
+                        val today = LocalDate.now().toString()
+                        TargetMovedNote(
+                            moved,
+                            listed = plan.days.any { it.date >= today && !it.skipped && it.listed },
+                            enabled = !readOnly && !busy,
+                            onTake = viewModel::retarget,
+                        )
+                    }
                 }
 
                 item {
@@ -1666,6 +1679,23 @@ private fun WeekLine(week: PlanWeek, enabled: Boolean, onEven: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
+        }
+    }
+}
+
+/**
+ * A running plan whose profile's target moved since it was made (a change of activity, the newest
+ * weight, a correction of the real expenditure), as the web says it: both targets, and the way to
+ * take the profile's from today, said beforehand with what it does to a shopping list.
+ */
+@Composable
+private fun TargetMovedNote(moved: TargetMoved, listed: Boolean, enabled: Boolean, onTake: () -> Unit) {
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.plans_target_moved, moved.profileTarget, moved.planTarget), style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = onTake, enabled = enabled) { Text(stringResource(R.string.plans_retarget)) }
+            Text(stringResource(R.string.plans_retarget_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ListNote(listed, several = true)
         }
     }
 }

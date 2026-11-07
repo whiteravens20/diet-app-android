@@ -2040,4 +2040,8 @@
     <string name="keep_weight_keep">Przejdź</string>
     <string name="keep_weight_later">Nie teraz</string>
     <string name="keep_weight_act_failed">Nie udało się zapisać decyzji.</string>
+    <!-- A running plan whose profile target moved -->
+    <string name="plans_target_moved">Cel profilu to teraz %1$d\u00A0kcal, ten plan liczy %2$d\u00A0kcal.</string>
+    <string name="plans_retarget">Przyjmij od dziś</string>
+    <string name="plans_retarget_note">Dni od dziś dostaną cele z celu profilu, z tymi samymi daniami w innych porcjach. Wcześniejsze dni zostaną, jak były.</string>
 </resources>

@@ -3,6 +3,9 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
+import net.whiteravens.dietapp.data.remote.RetargetRequestDto
+import net.whiteravens.dietapp.data.remote.TargetMovedDto
+import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.data.remote.PlanWeekDto
 import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Rebalanced
@@ -480,6 +483,35 @@ class PlanDetailViewModelTest {
         val model = model(api)
 
         model.evenWeek(PlanWeek(plan.startDate, plan.days.last().date, target = 2135.0, average = 2179.0, uneven = true))
+
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
+        assertNotNull(model.state.value.error)
+    }
+
+    @Test
+    fun `a moved target is taken from today on the plan at the revision it was read at, and the plan answered is shown`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan.copy(targetMoved = TargetMovedDto(profileTarget = 2156, planTarget = 2416))
+        coEvery { api.retarget(plan.id, RetargetRequestDto(plan.revision)) } returns plan.copy(revision = plan.revision + 1)
+        val model = model(api)
+        assertEquals(TargetMoved(profileTarget = 2156, planTarget = 2416), model.state.value.plan?.targetMoved)
+
+        model.retarget()
+
+        coVerify(exactly = 1) { api.retarget(plan.id, RetargetRequestDto(plan.revision)) }
+        assertEquals(plan.revision + 1, model.state.value.plan?.revision)
+        assertNull(model.state.value.plan?.targetMoved)
+        assertNull(model.state.value.error)
+    }
+
+    @Test
+    fun `a moved target refused because the plan changed meanwhile loads the plan again and says why`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan.copy(targetMoved = TargetMovedDto(profileTarget = 2156, planTarget = 2416))
+        coEvery { api.retarget(plan.id, any()) } throws refused(409, "PLAN_CHANGED")
+        val model = model(api)
+
+        model.retarget()
 
         coVerify(exactly = 2) { api.mealPlan(plan.id) }
         assertNotNull(model.state.value.error)

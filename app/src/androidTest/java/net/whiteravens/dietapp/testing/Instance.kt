@@ -319,6 +319,11 @@ object Instance {
     fun firstWeek(account: Account, planId: String): JSONObject =
         call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("weeks").getJSONObject(0)
 
+    /** The profile's target and the plan's, where the profile's moved by 100 kcal or more since [planId] was made; null otherwise. */
+    fun targetMoved(account: Account, planId: String): Pair<Int, Int>? =
+        call("GET", "meal-plans/$planId", token = account.accessToken).optJSONObject("targetMoved")
+            ?.let { it.getInt("profileTarget") to it.getInt("planTarget") }
+
     /** A shopping list of the days of [planId] from [from] to [to], made as the app makes one. */
     fun newShoppingList(account: Account, planId: String, from: LocalDate, to: LocalDate): String =
         call(

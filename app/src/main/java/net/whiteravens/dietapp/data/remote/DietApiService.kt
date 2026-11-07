@@ -412,6 +412,13 @@ interface DietApiService {
     @POST("meal-plans/{id}/weeks/even")
     suspend fun evenWeek(@Path("id") id: String, @Body body: EvenWeekRequestDto): MealPlanDto
 
+    /**
+     * Takes the profile's target into a running plan from today: its days from today get targets from
+     * it, the same dishes in other portions; refused with `PLAN_CHANGED` from an older revision.
+     */
+    @POST("meal-plans/{id}/retarget")
+    suspend fun retarget(@Path("id") id: String, @Body body: RetargetRequestDto): MealPlanDto
+
     /** Takes a meal off its day; the day is balanced again without it. */
     @DELETE("meal-plans/{id}/meals/{mealId}")
     suspend fun removeMeal(@Path("id") id: String, @Path("mealId") mealId: String): RebalanceResultDto

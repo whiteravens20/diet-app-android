@@ -44,6 +44,7 @@ import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.UseUpTake
 import net.whiteravens.dietapp.domain.WayMeal
 import net.whiteravens.dietapp.domain.SwapAsk
+import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -422,6 +423,29 @@ class MealPlanRepositoryTest {
         assertEquals(listOf("snack"), preview.added)
         assertEquals(2300.0, preview.targetThen, 0.0)
         assertNull("no day's total is said before its new recipes are drawn", preview.dayCalories)
+    }
+
+    @Test
+    fun `a running plan whose profile's target moved says both, and takes the profile's from today on the plan at its revision`() {
+        server.enqueue(answer("meal-plan-target-moved"))
+        server.enqueue(answer("meal-plan-retargeted"))
+        val cache = Cache()
+        val plans = repository(cache)
+
+        val moved = runBlocking { plans.refreshPlan("3b5e406f-5b59-4503-af22-754625a7d902") }
+        val taken = runBlocking { plans.retarget(moved.id, moved.revision) }
+
+        // The correction of the real expenditure took the profile's target from 2416 kcal to 2156.
+        assertEquals(TargetMoved(profileTarget = 2156, planTarget = 2416), moved.targetMoved)
+        assertEquals("/api/meal-plans/3b5e406f-5b59-4503-af22-754625a7d902", server.takeRequest().path)
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/meal-plans/${moved.id}/retarget", sent.requestUrl!!.encodedPath)
+        assertEquals(mapOf("revision" to "${moved.revision}"), json.parseToJsonElement(sent.body.readUtf8()).jsonObject.mapValues { it.value.jsonPrimitive.content })
+        // Taken: nothing is said of it any more, and the phone keeps the plan as it now is.
+        assertNull(taken.targetMoved)
+        assertEquals(moved.revision + 1, taken.revision)
+        assertEquals(listOf(moved.id, moved.id), cache.plans.map { it.id })
     }
 
     @Test
