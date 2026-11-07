@@ -1,12 +1,1 @@
-{
-  "state": "kept",
-  "days": 16,
-  "weights": 5,
-  "estimate": 2550,
-  "maintenance": 2685,
-  "correction": -135,
-  "target": 2000,
-  "targetCorrected": null,
-  "checkedOn": "2026-11-07",
-  "laterUntil": null
-}
+{"days":16,"weights":6,"estimate":2710,"maintenance":2966,"target":2156,"checkedOn":"2026-11-07","laterUntil":null,"state":"kept","correction":-260,"targetCorrected":null}

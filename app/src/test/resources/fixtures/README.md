@@ -67,7 +67,16 @@ the catalogue update asked the first to review its preferences, which favoured a
 catalogue has; `meal-plans-of-an-unknown-profile.json`, `shopping-lists-of-an-unknown-plan.json` and
 `shopping-list-unknown.json` (each asked by an id the account does not have) from API 0.127.0,
 captured on 2026-10-28 from a local build of diet-app's API at `a1c7df4`, whose code the candidate
-`13beb18` left as it was; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+`13beb18` left as it was; `water-day.json` (two glasses of a day, after water on five of the six
+days before it), `water-added.json` (a third glass), `water-removed.json` (the second glass taken
+away), `water-entry-unknown.json` (the same glass taken away again), `week-summary.json`,
+`expenditure-proposed.json` and `expenditure-kept.json` (a profile with sixteen of the 21 days
+before that day written and six weights: its week in sum, and the correction of its real expenditure
+proposed and taken), `week-summary-empty.json`, `profile-target-weight-reached.json`,
+`profile-keeping-the-weight-later.json` and `profile-keeping-the-weight.json` (a second profile with
+nothing written, whose newest weight then came down to its target weight: the offer to keep it put
+off, then taken) from API 0.218.0, captured on 2026-11-07 from an instance of diet-app's `dev` at
+`e95a172`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

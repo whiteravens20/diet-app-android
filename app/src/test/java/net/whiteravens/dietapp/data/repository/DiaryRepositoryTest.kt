@@ -426,18 +426,18 @@ class DiaryRepositoryTest {
                 to = LocalDate.parse("2026-11-06"),
                 counted = 5,
                 empty = 2,
-                eaten = Nutrition(2050.0, 120.0, 70.0, 230.0),
-                target = Nutrition(2135.0, 133.0, 71.0, 240.0),
-                withinTarget = 3,
-                water = WeekWater(counted = 4, averageMl = 1625, target = 2000, reached = 1),
-                weight = WeightTrend(kgPerWeek = -0.42, targetKg = 85.0, reachesTargetOn = LocalDate.parse("2027-02-14")),
+                eaten = Nutrition(2440.0, 122.0, 81.0, 300.0),
+                target = Nutrition(2416.0, 151.0, 81.0, 272.0),
+                withinTarget = 5,
+                water = WeekWater(counted = 5, averageMl = 1840, target = 2000, reached = 3),
+                weight = WeightTrend(kgPerWeek = -0.23, targetKg = 85.0, reachesTargetOn = LocalDate.parse("2027-04-03")),
             ),
             week,
         )
-        // A week with nothing written: no averages, no water, no trend.
+        // A week with nothing written: no averages, no water, no trend; the target weight all the same.
         assertEquals(null, empty.eaten)
         assertEquals(null, empty.water.averageMl)
-        assertEquals(WeightTrend(null, null, null), empty.weight)
+        assertEquals(WeightTrend(null, 63.5, null), empty.weight)
     }
 
     @Test
@@ -452,7 +452,7 @@ class DiaryRepositoryTest {
         val asked = server.takeRequest().requestUrl!!
         assertEquals("/api/diary/expenditure", asked.encodedPath)
         assertEquals(profileId, asked.queryParameter("profileId"))
-        assertEquals(Expenditure("proposed", estimate = 2550, maintenance = 2685, correction = -135, target = 2135, targetCorrected = 2000), proposed)
+        assertEquals(Expenditure("proposed", estimate = 2710, maintenance = 2966, correction = -260, target = 2416, targetCorrected = 2156), proposed)
         assertTrue(proposed.proposed)
 
         val sent = server.takeRequest()
@@ -462,6 +462,6 @@ class DiaryRepositoryTest {
         // Kept: nothing is proposed any more, and the target holds the correction.
         assertEquals("kept", taken.state)
         assertEquals(false, taken.proposed)
-        assertEquals(2000, taken.target)
+        assertEquals(2156, taken.target)
     }
 }

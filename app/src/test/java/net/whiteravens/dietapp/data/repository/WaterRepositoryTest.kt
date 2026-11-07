@@ -78,7 +78,7 @@ class WaterRepositoryTest {
         assertEquals(mapOf("profileId" to profileId, "day" to "2026-11-07"), asked.queryParameterNames.associateWith { asked.queryParameter(it) })
         assertEquals(600, read.ml)
         assertEquals(2000, read.target)
-        assertEquals(WaterEntry("0f8c2a4e-5b1d-4c3e-9a7f-2d6e8b1c4a90", 250, Instant.parse("2026-11-07T13:05:00Z")), read.last)
+        assertEquals(WaterEntry("b6ae1a19-555e-40bd-878b-fb9198a3395b", 250, Instant.parse("2026-11-07T21:17:09.557Z")), read.last)
         assertEquals(7, read.days.size)
         assertEquals(WaterPoint(day, 600), read.days.last())
         // On target: the first, the fourth and the sixth day.
@@ -129,14 +129,15 @@ class WaterRepositoryTest {
     @Test
     fun `an entry is removed by its id, and its removal is done when the entry is gone by the time it is sent again`() {
         server.enqueue(answer(200, "water-removed"))
-        val entry = WaterEntry("0f8c2a4e-5b1d-4c3e-9a7f-2d6e8b1c4a90", 250, Instant.parse("2026-11-07T13:05:00Z"))
+        val entry = WaterEntry("b6ae1a19-555e-40bd-878b-fb9198a3395b", 250, Instant.parse("2026-11-07T21:17:09.557Z"))
 
         val removed = runBlocking { repository().delete(profileId, day, entry) }
 
         val sent = server.takeRequest()
         assertEquals("DELETE", sent.method)
         assertEquals("/api/water/${entry.id}", sent.requestUrl!!.encodedPath)
-        assertEquals(350, (removed as Submitted.Sent).answer.ml)
+        // 600 ml and the 330 added before, less the 250 taken away.
+        assertEquals(680, (removed as Submitted.Sent).answer.ml)
 
         var answering = false
         server.dispatcher = object : Dispatcher() {

@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
+import net.whiteravens.dietapp.data.remote.ProfileDto
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.IngredientChoice
@@ -192,9 +193,9 @@ class ProfileRepositoryTest {
     @Test
     fun `a profile at its target weight keeps it or puts the offer off by the profile's own routes, read back as the API has it`() {
         server.enqueue(answer(fixture("profile-keeping-the-weight")))
-        server.enqueue(answer(fixture("profile-target-weight-reached")))
+        server.enqueue(answer(fixture("profile-keeping-the-weight-later")))
         val profiles = repository()
-        val id = "cd7e199c-26b1-46cf-bac7-768b39d528de"
+        val id = "e3b492e6-db95-4c1c-a478-588e9c1d0c45"
         val today = java.time.LocalDate.parse("2026-11-07")
 
         val kept = runBlocking { profiles.keepWeight(id) }
@@ -206,8 +207,16 @@ class ProfileRepositoryTest {
         assertEquals("/api/profiles/$id/keep-weight/later", server.takeRequest().requestUrl!!.encodedPath)
         // Kept: the pace keeps the weight, and nothing is offered any more.
         assertFalse(kept.offersToKeep(today))
+        assertFalse(kept.targetWeightReached)
+        // Put off: still at the target weight, offered again in two weeks.
         assertTrue(putOff.targetWeightReached)
-        assertEquals(85.0, putOff.targetWeightKg)
+        assertEquals(java.time.LocalDate.parse("2026-11-21"), putOff.targetReachedLaterUntil)
+        assertFalse(putOff.offersToKeep(today))
+        assertTrue(putOff.offersToKeep(java.time.LocalDate.parse("2026-11-21")))
+        // As the API reads a profile whose newest weight came down to its target weight: offered.
+        val reached = json.decodeFromString<ProfileDto>(fixture("profile-target-weight-reached")).toDomain()
+        assertEquals(63.5, reached.targetWeightKg)
+        assertTrue(reached.offersToKeep(today))
     }
 
     @Test
