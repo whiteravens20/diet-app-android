@@ -1933,4 +1933,22 @@
     <string name="notifications_water_added">Added %1$s\u00A0· %2$s</string>
     <!-- A change of a household list's row, as the changes waiting name it -->
     <string name="change_kind_household_row">a change of a household list\'s row</string>
+    <!-- The household lists of the shopping screen, as the web says them -->
+    <string name="household_title">Household lists</string>
+    <string name="household_subhead">One list from the plans of several profiles for the same days. Each plan keeps its part, and what you buy beyond the needs goes into the profiles\' pantries by what their plans need.</string>
+    <string name="household_open">New household list</string>
+    <string name="household_plans">Plans</string>
+    <string name="household_plan_of">%1$s\'s plan</string>
+    <string name="household_no_plan">No plan on these days</string>
+    <string name="household_at_least_two">Choose the plans of two profiles at least.</string>
+    <string name="household_make">Make the household list</string>
+    <string name="household_pick">%1$s\u00A0· %2$s</string>
+    <string name="household_for_whom">For: %1$s</string>
+    <string name="household_stale">A plan\'s menu changed after this list was made, so it no longer matches what the plans need.</string>
+    <string name="household_delete_confirm">Delete the household list? Its parts in the plans\' lists go with it.</string>
+    <string name="household_replaces">The lists of these plans that cover these days give way to their parts. What was already bought for them counts towards the new list.</string>
+    <string name="household_packs_hint">Where something is sold in packs, its row says how many it takes. Press that when you have bought them: what the plans do not need of them goes into the profiles\' pantries by what their plans need.</string>
+    <string name="shopping_part_of">This list is a part of a household list: %1$s. A tick here changes this plan\'s part only.</string>
+    <string name="shopping_open_household">Open the household list</string>
+    <string name="shopping_replaces_part">A list of these days is a part of a household list: %1$s. A new list takes its place, and the household list loses this plan\'s part.</string>
 </resources>

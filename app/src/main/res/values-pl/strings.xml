@@ -2065,4 +2065,22 @@
     <string name="notifications_water_added">Dodano %1$s\u00A0· %2$s</string>
     <!-- A change of a household list's row, as the changes waiting name it -->
     <string name="change_kind_household_row">zmiana wiersza listy dla domu</string>
+    <!-- The household lists of the shopping screen, as the web says them -->
+    <string name="household_title">Listy dla domu</string>
+    <string name="household_subhead">Jedna lista z planów kilku profili na te same dni. Każdy plan ma w niej swoją część, a to, co kupisz ponad potrzeby, trafia do spiżarni profili według potrzeb ich planów.</string>
+    <string name="household_open">Nowa lista dla domu</string>
+    <string name="household_plans">Plany</string>
+    <string name="household_plan_of">Plan: %1$s</string>
+    <string name="household_no_plan">Brak planu w te dni</string>
+    <string name="household_at_least_two">Wybierz plany co najmniej dwóch profili.</string>
+    <string name="household_make">Utwórz listę dla domu</string>
+    <string name="household_pick">%1$s\u00A0· %2$s</string>
+    <string name="household_for_whom">Dla: %1$s</string>
+    <string name="household_stale">Jadłospis jednego z planów zmienił się po utworzeniu tej listy, więc nie odpowiada już temu, czego plany potrzebują.</string>
+    <string name="household_delete_confirm">Usunąć listę dla domu? Razem z nią znikną jej części w listach planów.</string>
+    <string name="household_replaces">Listy tych planów obejmujące te dni ustąpią miejsca ich częściom. To, co już na nie kupiono, zostanie policzone na poczet nowej listy.</string>
+    <string name="household_packs_hint">Przy tym, co sprzedaje się w opakowaniach, wiersz podaje, ile ich trzeba. Po zakupie naciśnij tę liczbę: to, czego plany z nich nie potrzebują, trafi do spiżarni profili według potrzeb ich planów.</string>
+    <string name="shopping_part_of">Ta lista to część listy dla domu: %1$s. Odhaczenie tutaj zmienia tylko część tego planu.</string>
+    <string name="shopping_open_household">Otwórz listę dla domu</string>
+    <string name="shopping_replaces_part">Lista z tych dni jest częścią listy dla domu: %1$s. Nowa lista zajmie jej miejsce, a lista dla domu straci część tego planu.</string>
 </resources>

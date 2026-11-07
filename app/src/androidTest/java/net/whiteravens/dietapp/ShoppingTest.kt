@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyAncestor
@@ -88,6 +89,47 @@ class ShoppingTest {
         screen.waitUntil(10_000) { screen.onAllNodes(waiting).fetchSemanticsNodes().isEmpty() }
         list.performScrollToNode(row)
         screen.keepScreenshot("shopping-a-row-ticked-offline-sent")
+    }
+
+    @Test
+    fun aHouseholdListIsMadeOfAPlanOfEachProfileSaysWhomEachRowIsForAndARowTickedIsTickedOnTheServer() {
+        val account = Instance.newAccount()
+        val ala = Instance.newProfile(account, name = "Ala")
+        val ola = Instance.newProfile(account, name = "Ola")
+        Instance.newPlan(account, ala)
+        Instance.newPlan(account, ola)
+        val language = text(R.string.api_language)
+        screen.signIn(account)
+        screen.openTab(text(R.string.nav_shopping))
+        val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+
+        // Two profiles: the card of household lists, whose form begins with each profile's plan of the days chosen.
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.household_open))) }.isSuccess }
+        screen.onNode(hasText(text(R.string.household_open)) and hasClickAction()).performClick()
+        val make = hasText(text(R.string.household_make)) and hasClickAction()
+        list.performScrollToNode(make)
+        screen.waitUntil(30_000) { runCatching { screen.onNode(make).assertIsEnabled() }.isSuccess }
+        screen.onNodeWithText(text(R.string.household_replaces)).performScrollTo()
+        screen.keepScreenshot("shopping-a-household-list-asked-for")
+        screen.onNode(make).performScrollTo().performClick()
+        screen.waitForTheApi(60_000) { Instance.householdRows(account, language).isNotEmpty() }
+
+        // Made and opened: for whom, and under each row what each profile needs of it.
+        val forWhom = text(R.string.household_for_whom, "Ala and Ola")
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(forWhom)) }.isSuccess }
+        screen.keepScreenshot("shopping-a-household-list")
+
+        // A row ticked on it is ticked on the server.
+        val name = Instance.householdRows(account, language).keys.first()
+        val row = hasText(name) and isToggleable()
+        list.performScrollToNode(row)
+        // The household list stands above the plan's list, whose part may hold the same row.
+        screen.onAllNodes(row)[0].performClick()
+        screen.waitForTheApi(30_000) { Instance.householdRows(account, language)[name] == true }
+
+        // Ala's plan's list says it is a part of the household list.
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.shopping_part_of, "Ala and Ola"))) }.isSuccess }
+        screen.keepScreenshot("shopping-a-part-of-a-household-list")
     }
 
     @Test

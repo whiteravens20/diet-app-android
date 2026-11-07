@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.shopping
 
+import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.RowPacks
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
@@ -48,5 +49,21 @@ class ListTakeOutTest {
         val done = list.copy(groups = list.groups.map { group -> group.copy(items = group.items.map { it.copy(checked = true) }) })
 
         assertEquals("Shopping list, 13–19 Oct 2026\n\nEverything on this list is ticked off.", listText(done, words))
+    }
+
+    @Test
+    fun `a household list's text says under each row what each profile needs of it`() {
+        val household = HouseholdList(
+            id = "home",
+            fromDate = "2026-10-13",
+            toDate = "2026-10-19",
+            parts = emptyList(),
+            groups = list.groups,
+            totalEstimatedCalories = 1441.0,
+            stale = false,
+        )
+        val shared = words.copy(shares = mapOf("feta" to "Adam\u00A0300 g\u00A0· Ewa\u00A0100 g"))
+
+        assertEquals("Shopping list, 13–19 Oct 2026\n\nDairy\n- Feta: 350 g (2 × 200 g)\n  Adam 300 g · Ewa 100 g", householdText(household, shared))
     }
 }

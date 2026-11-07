@@ -481,6 +481,17 @@ object Instance {
     }
 
     /** The rows of the shopping list of [planId] in [language], by name, and whether each is ticked. */
+    /** The rows of the account's newest household list, by name, ticked or not; empty where it has none. */
+    fun householdRows(account: Account, language: String): Map<String, Boolean> {
+        val lists = JSONArray(send("GET", "household-lists", null, account.accessToken, 200, language))
+        if (lists.length() == 0) return emptyMap()
+        val groups = lists.getJSONObject(0).getJSONArray("groups")
+        return (0 until groups.length()).flatMap { g ->
+            val items = groups.getJSONObject(g).getJSONArray("items")
+            (0 until items.length()).map { items.getJSONObject(it).let { item -> item.getString("name") to item.getBoolean("checked") } }
+        }.toMap()
+    }
+
     fun shoppingRows(account: Account, planId: String, language: String): Map<String, Boolean> {
         val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))
         val groups = lists.getJSONObject(0).getJSONArray("groups")

@@ -3,6 +3,8 @@
 package net.whiteravens.dietapp.ui.screens.shopping
 
 import net.whiteravens.dietapp.domain.ShoppingList
+import net.whiteravens.dietapp.domain.HouseholdList
+import net.whiteravens.dietapp.domain.ShoppingGroup
 
 /** The words a shopping list is written out with, in the reader's language, with what each row comes to already in them. */
 data class ListWords(
@@ -16,20 +18,30 @@ data class ListWords(
     val toBuy: Map<String, String>,
     /** The packs of each row whose packs are what is still to be bought, by the row's id: `2 × 250 g`. */
     val packs: Map<String, String>,
+    /** What each profile needs of each row of a household list, by the row's id: `Adam 345 g · Ewa 80 g`. */
+    val shares: Map<String, String> = emptyMap(),
 ) {
     fun aisle(code: String): String = aisles[code] ?: code
 }
 
 /** The list as a text somebody can send: what is still to be bought, under its aisles. What is ticked is done with. */
-fun listText(list: ShoppingList, words: ListWords): String {
-    val open = list.groups.map { group -> group to group.items.filter { !it.checked } }.filter { (_, left) -> left.isNotEmpty() }
+fun listText(list: ShoppingList, words: ListWords): String = textOf(list.groups, words)
+
+/** A household list as a text somebody can send: as a plan's list, each row with what each profile needs of it under it. */
+fun householdText(list: HouseholdList, words: ListWords): String = textOf(list.groups, words)
+
+private fun textOf(groups: List<ShoppingGroup>, words: ListWords): String {
+    val open = groups.map { group -> group to group.items.filter { !it.checked } }.filter { (_, left) -> left.isNotEmpty() }
     val lines = mutableListOf(words.title)
     if (open.isEmpty()) lines += listOf("", words.nothing)
     for ((group, left) in open) {
         lines += ""
         lines += words.aisle(group.category)
         // What is sold in packs says how many, for whoever stands at the shelf.
-        left.forEach { item -> lines += "- ${item.name}: ${words.toBuy[item.id].orEmpty()}${words.packs[item.id]?.let { " ($it)" }.orEmpty()}" }
+        left.forEach { item ->
+            lines += "- ${item.name}: ${words.toBuy[item.id].orEmpty()}${words.packs[item.id]?.let { " ($it)" }.orEmpty()}"
+            words.shares[item.id]?.let { lines += "  ${it.replace('\u00A0', ' ')}" }
+        }
     }
     return lines.joinToString("\n")
 }

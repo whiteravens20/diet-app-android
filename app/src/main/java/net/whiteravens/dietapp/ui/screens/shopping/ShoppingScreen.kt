@@ -2,6 +2,11 @@
 
 package net.whiteravens.dietapp.ui.screens.shopping
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.ui.common.formatList
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,17 +99,36 @@ import kotlin.math.roundToInt
  * The shopping lists of a plan: made for the whole plan or for some of its days, grouped by aisle,
  * ticked off while shopping; a list the plan's menu changed under is made again, and a list is
  * deleted from its menu. What a list could do without leads to the plan at the day it concerns,
- * which [onOpenPlan] opens.
+ * which [onOpenPlan] opens. An account of two profiles or more has its household lists above them:
+ * one list of a plan of each profile for some days, whose part a plan's list says it is.
  */
 @Composable
 fun ShoppingScreen(
     onOpenPlan: (planId: String, day: String?) -> Unit,
     onTurnAiOn: () -> Unit,
     viewModel: ShoppingViewModel = hiltViewModel(),
+    household: HouseholdViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val households by household.state.collectAsStateWithLifecycle()
+    // The household list to delete, while that waits for a yes.
+    var deletingHousehold by rememberSaveable { mutableStateOf<String?>(null) }
+    val rows = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    // A household list made or deleted changed the plans' own lists of its days; a plan's list made or
+    // deleted may have taken a household list's part: each side is read again.
+    LaunchedEffect(households.changed) { if (households.changed > 0) viewModel.retry() }
+    var listsSeen by remember { mutableStateOf<List<String>?>(null) }
+    val listIds = state.lists.map { it.id }
+    LaunchedEffect(listIds) {
+        if (listsSeen != null && listsSeen != listIds) household.load()
+        listsSeen = listIds
+    }
     // Read again on being shown again: a plan or a list may have been made, changed or deleted in the meantime.
-    WhenShownAgain(viewModel::shownAgain)
+    WhenShownAgain { cameToTheFront ->
+        viewModel.shownAgain(cameToTheFront)
+        household.load()
+    }
     // The window that makes a list for some of the plan's days, while it is open.
     var choosingDays by rememberSaveable { mutableStateOf(false) }
     // The list to delete, while that waits for a yes.
@@ -140,6 +164,7 @@ fun ShoppingScreen(
     state.plan?.takeIf { choosingDays }?.let { plan ->
         ListDaysDialog(
             plan = plan,
+            parts = state.lists.filter { it.household != null },
             onMake = { from, to ->
                 choosingDays = false
                 viewModel.generate(from, to)
@@ -163,9 +188,32 @@ fun ShoppingScreen(
         )
     }
 
+    households.opened?.takeIf { it.id == deletingHousehold }?.let { list ->
+        AlertDialog(
+            onDismissRequest = { deletingHousehold = null },
+            text = { Text(stringResource(R.string.household_delete_confirm)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deletingHousehold = null
+                        household.delete(list)
+                    },
+                ) { Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { deletingHousehold = null }) { Text(stringResource(R.string.common_cancel)) } },
+        )
+    }
+
     val busy = state.generating || state.deleting
-    PullToRead(state.pulled, viewModel::pull) {
+    PullToRead(
+        state.pulled,
+        {
+            viewModel.pull()
+            household.load()
+        },
+    ) {
         LazyColumn(
+            state = rows,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -175,6 +223,21 @@ fun ShoppingScreen(
                     title = stringResource(R.string.nav_shopping),
                     subtitle = stringResource(R.string.shopping_subtitle),
                 )
+            }
+            // The household lists: one list from the plans of several profiles, the one opened under them.
+            if (state.profiles.size > 1) {
+                item(key = "household") { HouseholdCard(households, state.profiles, household) }
+                households.shown?.let { list ->
+                    householdList(
+                        list,
+                        households,
+                        onChange = household::change,
+                        onUpdate = { household.update(list) },
+                        onShare = { words -> shareText(context, words.title, householdText(list, words), chooser) },
+                        onTableAndPrint = { web.open("shopping-lists") },
+                        onDelete = { deletingHousehold = list.id }.takeUnless { households.offline || households.making || households.deleting },
+                    )
+                }
             }
             // The profiles to choose among, where there is more than one.
             if (state.profiles.size > 1) item {
@@ -286,6 +349,20 @@ fun ShoppingScreen(
                             onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
                         )
                     }
+                    // A part of a household list says so, with the way to the whole list.
+                    list.household?.let { part ->
+                        item(key = "household-part") {
+                            AppCard {
+                                Text(stringResource(R.string.shopping_part_of, formatList(part.profiles)), style = MaterialTheme.typography.bodyMedium)
+                                TextButton(
+                                    onClick = {
+                                        household.show(part.id)
+                                        scope.launch { rows.animateScrollToItem(HOUSEHOLD_CARD) }
+                                    },
+                                ) { Text(stringResource(R.string.shopping_open_household)) }
+                            }
+                        }
+                    }
                     if (list.stale) {
                         item(key = "stale") {
                             AppCard {
@@ -395,7 +472,7 @@ private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onTableAndPrint:
 
 /** What can be done with a list as a whole: sent as a text, as a table or printed in the web application, or deleted. */
 @Composable
-private fun ListActions(onShare: () -> Unit, onTableAndPrint: () -> Unit, onDelete: (() -> Unit)?) {
+internal fun ListActions(onShare: () -> Unit, onTableAndPrint: () -> Unit, onDelete: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -418,7 +495,7 @@ private fun ListActions(onShare: () -> Unit, onTableAndPrint: () -> Unit, onDele
  * the last moves the last with it, and the other way round.
  */
 @Composable
-private fun ListDaysDialog(plan: MealPlanSummary, onMake: (from: String, to: String) -> Unit, onDismiss: () -> Unit) {
+private fun ListDaysDialog(plan: MealPlanSummary, parts: List<ShoppingList>, onMake: (from: String, to: String) -> Unit, onDismiss: () -> Unit) {
     val first = LocalDate.parse(plan.startDate)
     var from by rememberSaveable { mutableStateOf(first.toString()) }
     var to by rememberSaveable { mutableStateOf(first.plusDays(plan.durationDays - 1L).toString()) }
@@ -435,6 +512,13 @@ private fun ListDaysDialog(plan: MealPlanSummary, onMake: (from: String, to: Str
                     to = day.toString()
                     if (to < from) from = to
                 })
+                parts.firstOrNull { it.meets(from, to) }?.household?.let { part ->
+                    Text(
+                        stringResource(R.string.shopping_replaces_part, formatList(part.profiles)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         },
         confirmButton = { TextButton(onClick = { onMake(from, to) }) { Text(stringResource(R.string.shopping_generate_button)) } },
@@ -451,7 +535,7 @@ private fun ListDaysDialog(plan: MealPlanSummary, onMake: (from: String, to: Str
  * row whose change waits to be sent says so.
  */
 @Composable
-private fun ShoppingItemRow(
+internal fun ShoppingItemRow(
     item: ShoppingItem,
     busy: Boolean,
     readOnly: Boolean,
@@ -511,6 +595,10 @@ private fun ShoppingItemRow(
                     }
                     item.pantryBestBefore?.takeIf { item.atHome > 0 }?.let { day ->
                         LabelChip(stringResource(R.string.shopping_best_before, formatDate(day)), modifier = Modifier.padding(top = 2.dp))
+                    }
+                    // On a household list, what each profile's plan needs of the row.
+                    if (item.shares.isNotEmpty()) {
+                        Text(sharesLine(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
                 }
@@ -584,3 +672,6 @@ private fun AmountField(label: String, value: String, unit: String, enabled: Boo
 /** A field's text for an amount: empty for none, the number in the language's own way otherwise, without grouping. */
 private fun fieldOf(amount: Double, locale: Locale): String =
     if (amount <= 0.0) "" else NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(amount)
+
+/** Where the household card stands among the screen's items: under the header. */
+private const val HOUSEHOLD_CARD = 1
