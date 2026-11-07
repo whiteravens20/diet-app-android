@@ -86,6 +86,7 @@ fun SessionUserDto.toDomain() = SessionUser(
     weightUnit = weightUnit,
     aiMode = aiMode,
     palette = palette,
+    timeZone = timeZone,
 )
 
 fun ProfileDto.toDomain() = Profile(

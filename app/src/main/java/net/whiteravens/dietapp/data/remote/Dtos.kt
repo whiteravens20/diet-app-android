@@ -225,11 +225,17 @@ data class SessionUserDto(
     val aiMode: String,
     /** `kg` | `lb`, or null for the unit of the account's language. */
     val weightUnit: String? = null,
+    /** The time zone the account's clients last sent (as IANA names it), whose hours its reminders keep; null until one sends it. */
+    val timeZone: String? = null,
 )
 
 /** PATCH `/users/me` with the AI mode chosen: `none`, `admin` or `byok`; the account's other settings are left as they are. */
 @Serializable
 data class UpdateUserSettingsRequest(val aiMode: String)
+
+/** PATCH `/users/me` with the phone's time zone, as IANA names it; the account's other settings are left as they are. */
+@Serializable
+data class TimeZoneRequest(val timeZone: String)
 
 /** PATCH `/users/me` with the unit the account's weights are shown in: `kg`, `lb`, or null, sent as null, to go by where the phone is. */
 @Serializable

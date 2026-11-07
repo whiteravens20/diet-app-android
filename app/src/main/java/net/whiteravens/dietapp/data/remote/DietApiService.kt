@@ -35,6 +35,10 @@ interface DietApiService {
     @PATCH("users/me")
     suspend fun chooseWeightUnit(@Body body: WeightUnitRequest): SessionUserDto
 
+    /** Saves the phone's time zone as the account's, whose hours the account's reminders keep. */
+    @PATCH("users/me")
+    suspend fun saveTimeZone(@Body body: TimeZoneRequest): SessionUserDto
+
     /** Sends the mail that confirms the account's address again; answered 202. */
     @POST("users/me/email/resend-verification")
     suspend fun resendVerification()

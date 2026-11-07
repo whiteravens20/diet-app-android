@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.data.local.CachedProfile
 import net.whiteravens.dietapp.data.local.KeptReadsDao
 import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.TimeZoneRequest
 import net.whiteravens.dietapp.data.remote.UpdateUserSettingsRequest
 import net.whiteravens.dietapp.data.remote.WeightUnitRequest
 import net.whiteravens.dietapp.data.remote.apiCall
@@ -20,6 +21,7 @@ import net.whiteravens.dietapp.domain.KeptProfiles
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.SessionUser
 import java.io.IOException
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,6 +54,16 @@ class UserRepository @Inject constructor(
     /** Chooses the unit the account's weights are shown and typed in, `kg` or `lb`; null gives the choice back to where the phone is. */
     suspend fun chooseWeightUnit(unit: String?): SessionUser =
         heard(apiCall(json) { api.chooseWeightUnit(WeightUnitRequest(unit)) }.toDomain())
+
+    /**
+     * Saves the phone's time zone ([zone], as IANA names it) as the account's where the account says
+     * another or none, so that its reminders come at the hours of where the phone is, as the web
+     * application does for its browser; nothing is sent where it says the same.
+     */
+    suspend fun keepTimeZone(zone: String = ZoneId.systemDefault().id) {
+        if (me().timeZone == zone) return
+        heard(apiCall(json) { api.saveTimeZone(TimeZoneRequest(zone)) }.toDomain())
+    }
 
     /** Sends the mail that confirms the account's address again. */
     suspend fun resendVerification() = apiCall(json) { api.resendVerification() }

@@ -24,6 +24,8 @@ data class SessionUser(
     val aiMode: String,
     /** The colour scheme the web set for the account, by the API's name for it ([Palette.wire]). */
     val palette: String = Palette.DEFAULT.wire,
+    /** The time zone whose hours the account's reminders keep, as IANA names it; null until a client sends one. */
+    val timeZone: String? = null,
 )
 
 /** Whether the account signs in with a second step, since when, and how many recovery codes it has left. */

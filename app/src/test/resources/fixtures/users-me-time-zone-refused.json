@@ -1,0 +1,1 @@
+{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"timeZone","message":"Must be a time zone as IANA names it, such as Europe/Warsaw.","code":"custom"}]}

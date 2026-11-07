@@ -75,6 +75,7 @@ import net.whiteravens.dietapp.ui.components.LocalBrowserCode
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
+import net.whiteravens.dietapp.ui.components.TimeZoneViewModel
 import net.whiteravens.dietapp.ui.screens.about.AboutScreen
 import net.whiteravens.dietapp.ui.screens.about.LibrariesScreen
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
@@ -234,6 +235,7 @@ private fun MainScaffold(
     onNotificationsOpened: () -> Unit,
     confirmEmail: ConfirmEmailViewModel = hiltViewModel(),
     changes: ChangesViewModel = hiltViewModel(),
+    timeZone: TimeZoneViewModel = hiltViewModel(),
 ) {
     val confirmation by confirmEmail.state.collectAsStateWithLifecycle()
     val waiting by changes.waiting.collectAsStateWithLifecycle()
@@ -241,6 +243,11 @@ private fun MainScaffold(
     // Read again whenever the app comes to the front: an address confirmed in the browser takes the notice away.
     LifecycleResumeEffect(confirmEmail) {
         confirmEmail.load()
+        onPauseOrDispose {}
+    }
+    // The phone's time zone, whose hours the account's reminders keep, saved as the account's where it is another.
+    LifecycleResumeEffect(timeZone) {
+        timeZone.keep()
         onPauseOrDispose {}
     }
     val navController = rememberNavController()

@@ -154,6 +154,38 @@ class UserRepositoryTest {
     }
 
     @Test
+    fun `the phone's time zone is saved as the account's where the account names none, and nothing is sent where it names the same`() {
+        server.enqueue(answer("users-me-no-time-zone"))
+        server.enqueue(answer("users-me-time-zone-saved"))
+        server.enqueue(answer("users-me-time-zone-saved"))
+        val users = repository()
+
+        runBlocking { users.keepTimeZone("Europe/Warsaw") }
+        runBlocking { users.keepTimeZone("Europe/Warsaw") }
+
+        assertEquals("GET", server.takeRequest().method)
+        val saved = server.takeRequest()
+        assertEquals("PATCH", saved.method)
+        assertEquals("/api/users/me", saved.requestUrl!!.encodedPath)
+        assertEquals(json.parseToJsonElement("""{"timeZone":"Europe/Warsaw"}"""), json.parseToJsonElement(saved.body.readUtf8()))
+        // The account then names the phone's zone: it is read, and nothing more is sent.
+        assertEquals("GET", server.takeRequest().method)
+        assertEquals(3, server.requestCount)
+    }
+
+    @Test
+    fun `a zone other than the one the account names is sent, and one the API does not know is refused to whoever keeps it`() {
+        server.enqueue(answer("users-me-time-zone-saved"))
+        server.enqueue(answer("users-me-time-zone-refused").setResponseCode(400))
+
+        val refused = runCatching { runBlocking { repository().keepTimeZone("Mars/Olympus") } }.exceptionOrNull() as ApiException
+
+        server.takeRequest()
+        assertEquals(json.parseToJsonElement("""{"timeZone":"Mars/Olympus"}"""), json.parseToJsonElement(server.takeRequest().body.readUtf8()))
+        assertEquals("VALIDATION_FAILED", refused.code)
+    }
+
+    @Test
     fun `the AI mode every answer about the account says is told to whoever follows it`() {
         server.enqueue(answer("users-me"))
         server.enqueue(answer("users-me-ai-admin"))
