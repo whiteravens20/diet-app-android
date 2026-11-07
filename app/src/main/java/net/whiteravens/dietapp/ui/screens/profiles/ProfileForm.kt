@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.profiles
 
 import net.whiteravens.dietapp.domain.CalorieQuestion
+import net.whiteravens.dietapp.domain.DEFAULT_WATER_TARGET_ML
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.KindLimit
 import net.whiteravens.dietapp.domain.LabelLimit
@@ -91,6 +92,7 @@ enum class ProfileField(val path: String) {
     HEIGHT("heightCm"),
     WEIGHT("weightKg"),
     TARGET_WEIGHT("targetWeightKg"),
+    WATER_TARGET("waterTargetMl"),
     OWN_TARGET("manualCalorieTarget"),
     SPLIT("customMacroSplit"),
     SPLIT_PROTEIN("customMacroSplit.protein"),
@@ -237,6 +239,10 @@ data class ProfileForm(
     val split: SplitTyped = SplitTyped.of(ProfileChoices.FIRST_SPLIT),
     val allergens: Set<String> = emptySet(),
     val weightReminderCadence: String = "weekly",
+    /** The water a day in ml as typed; a new profile starts at the API's 2 l, and an empty one has no target. */
+    val waterTarget: String = DEFAULT_WATER_TARGET_ML.toString(),
+    val cookingReminders: Boolean = true,
+    val waterReminders: Boolean = false,
     val limits: LimitsTyped = LimitsTyped.of(ProfileChoices.FIRST_LIMITS),
     /** The limits from labels, each turned on or off. */
     val labels: Map<LabelLimit, LabelLimitTyped> = LabelLimitTyped.NONE,
@@ -249,6 +255,7 @@ data class ProfileForm(
     fun problems(unit: WeightUnit): Set<ProfileField> = buildSet {
         addAll(questionProblems(unit))
         if (targetWeight.isNotBlank() && weightKg(targetWeight, keptTargetWeightKg, unit) == null) add(ProfileField.TARGET_WEIGHT)
+        if (!waterTarget.emptyOrWhole()) add(ProfileField.WATER_TARGET)
         if (limits.consecutiveDays.trim().toIntOrNull() == null) add(ProfileField.CONSECUTIVE_DAYS)
         if (limits.timesPerWeek.trim().toIntOrNull() == null) add(ProfileField.TIMES_PER_WEEK)
         if (!limits.kindPerDay.emptyOrWhole()) add(ProfileField.KIND_PER_DAY)
@@ -309,6 +316,9 @@ data class ProfileForm(
             manualCalorieTarget = asked.manualCalorieTarget,
             mealCount = mealCount,
             weightReminderCadence = weightReminderCadence,
+            waterTargetMl = waterTarget.trim().toIntOrNull(),
+            cookingReminders = cookingReminders,
+            waterReminders = waterReminders,
             // The custom diet's split as the form shows it; on another diet the profile keeps the one it has.
             customMacroSplit = if (dietType == "custom") asked.customMacroSplit else keptSplit,
             allergens = ProfileChoices.ALLERGENS.filter { it in allergens },
@@ -342,6 +352,7 @@ data class ProfileForm(
         ProfileField.HEIGHT -> height
         ProfileField.WEIGHT -> weight
         ProfileField.TARGET_WEIGHT -> targetWeight
+        ProfileField.WATER_TARGET -> waterTarget
         ProfileField.OWN_TARGET -> ownTarget
         ProfileField.SPLIT -> dietType to split
         ProfileField.SPLIT_PROTEIN -> split.protein
@@ -375,6 +386,9 @@ data class ProfileForm(
                 split = SplitTyped.of(figures.customMacroSplit ?: ProfileChoices.FIRST_SPLIT),
                 allergens = figures.allergens.toSet(),
                 weightReminderCadence = figures.weightReminderCadence,
+                waterTarget = figures.waterTargetMl?.toString().orEmpty(),
+                cookingReminders = figures.cookingReminders,
+                waterReminders = figures.waterReminders,
                 limits = LimitsTyped.of(kept.preferences.limits),
                 labels = LabelLimit.entries.associateWith { LabelLimitTyped.of(it, kept.preferences.labelLimits[it]) },
                 acknowledgeRisk = kept.riskAcknowledged,

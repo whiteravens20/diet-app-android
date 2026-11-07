@@ -81,6 +81,7 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                         FormSection(stringResource(R.string.profile_section_goal))
                         PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
                         TargetWeightField(form, state.unit, marks, viewModel::edit)
+                        WaterTargetField(form, marks, viewModel::edit)
                         OwnTargetField(form, marks, viewModel::edit)
                         // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
                         val correction = state.correction
@@ -94,6 +95,7 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                             onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
                         )
                         ReminderField(form, viewModel::edit)
+                        ReminderChoices(form, viewModel::edit)
                         FormSection(stringResource(R.string.profile_section_food))
                         DietFields(form, marks, rules, viewModel::edit)
                         FormSection(stringResource(R.string.profile_section_variety))

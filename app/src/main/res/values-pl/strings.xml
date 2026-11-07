@@ -2044,4 +2044,11 @@
     <string name="plans_target_moved">Cel profilu to teraz %1$d\u00A0kcal, ten plan liczy %2$d\u00A0kcal.</string>
     <string name="plans_retarget">Przyjmij od dziś</string>
     <string name="plans_retarget_note">Dni od dziś dostaną cele z celu profilu, z tymi samymi daniami w innych porcjach. Wcześniejsze dni zostaną, jak były.</string>
+    <!-- The profile form's water target and reminders -->
+    <string name="profile_water_target">Cel wody na dzień (ml)</string>
+    <string name="profile_water_target_hint">Puste: bez celu.</string>
+    <string name="profile_cooking_reminders">Przypomnienie o gotowaniu na zapas</string>
+    <string name="profile_cooking_reminders_hint">O 18:00\u00A0dzień wcześniej, gdy plan gotuje danie na dwa dni albo dwa posiłki.</string>
+    <string name="profile_water_reminders">Przypomnienie o wodzie</string>
+    <string name="profile_water_reminders_hint">Od 9:00\u00A0do 21:00, gdy picie zostaje w tyle za celem dnia, najwyżej co 3\u00A0godziny.</string>
 </resources>

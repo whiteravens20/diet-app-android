@@ -60,7 +60,8 @@ class ProfileRepositoryTest {
     private val figures = ProfileFigures(
         name = "Ala", age = 30, sex = null, heightCm = 168.0, weightKg = 64.5, targetWeightKg = null,
         activityLevel = "light", dietType = "balanced", weeklyLossTarget = null, manualCalorieTarget = null,
-        mealCount = 4, weightReminderCadence = "weekly", customMacroSplit = null, allergens = listOf("gluten"),
+        mealCount = 4, weightReminderCadence = "weekly", waterTargetMl = null, cookingReminders = false, waterReminders = true,
+        customMacroSplit = null, allergens = listOf("gluten"),
     )
 
     @Test
@@ -75,6 +76,10 @@ class ProfileRepositoryTest {
         val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
         assertEquals(JsonNull, body["weeklyLossTarget"])
         assertEquals(JsonNull, body["sex"])
+        // No water target is the profile's own choice, sent as such beside both reminders.
+        assertEquals(JsonNull, body["waterTargetMl"])
+        assertEquals("false", body.getValue("cookingReminders").jsonPrimitive.content)
+        assertEquals("true", body.getValue("waterReminders").jsonPrimitive.content)
         assertFalse("acknowledgeRisk" in body)
         val preferences = body.getValue("preferences").jsonObject
         assertEquals(setOf("allergens"), preferences.keys)
@@ -167,6 +172,25 @@ class ProfileRepositoryTest {
         assertEquals(JsonNull, preferences.getValue("maxMealsPerDaySameKind"))
         assertEquals("7", preferences.getValue("maxMealsPerWeekSameKind").jsonPrimitive.content)
         assertEquals("""[{"kind":"eggs","perDay":null,"perWeek":3}]""", preferences.getValue("kindLimits").toString())
+    }
+
+    @Test
+    fun `a profile's water target and reminders are read as the API has them, and kept as the form changes them`() {
+        server.enqueue(answer(fixture("profile-target-weight-reached")))
+        server.enqueue(answer(fixture("profile-target-weight-reached")))
+        val kept = runBlocking { repository().profile("e3b492e6-db95-4c1c-a478-588e9c1d0c45") }
+
+        assertEquals(2000, kept.figures.waterTargetMl)
+        assertTrue(kept.figures.cookingReminders)
+        assertFalse(kept.figures.waterReminders)
+
+        runBlocking { repository().update(kept.id, kept.figures.copy(waterTargetMl = 2500, waterReminders = true), kept.preferences, acknowledgeRisk = null) }
+
+        server.takeRequest()
+        val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("2500", body.getValue("waterTargetMl").jsonPrimitive.content)
+        assertEquals("true", body.getValue("cookingReminders").jsonPrimitive.content)
+        assertEquals("true", body.getValue("waterReminders").jsonPrimitive.content)
     }
 
     @Test

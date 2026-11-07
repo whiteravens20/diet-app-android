@@ -11,6 +11,9 @@ val WATER_AMOUNTS_ML = listOf(200, 250, 330)
 /** The most one entry of water may hold, in millilitres, as the API takes it. */
 const val MAX_WATER_ENTRY_ML = 5000
 
+/** The water a day a new profile aims at, in millilitres, as the API gives one asked for nothing. */
+const val DEFAULT_WATER_TARGET_ML = 2000
+
 /** An entry of water: what "Usuń ostatni wpis" names and removes. */
 data class WaterEntry(val id: String, val ml: Int, val at: Instant)
 

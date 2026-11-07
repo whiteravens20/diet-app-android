@@ -32,12 +32,14 @@ class ProfileFormTest {
         limits: PlanLimits = ProfileChoices.FIRST_LIMITS,
         labelLimits: LabelLimits = LabelLimits(),
         riskAcknowledged: Boolean = false,
+        waterTargetMl: Int? = 1500,
     ) = ProfileDetails(
         id = "p",
         figures = ProfileFigures(
             name = "Ala", age = 30, sex = "female", heightCm = 168.0, weightKg = weightKg, targetWeightKg = targetWeightKg,
             activityLevel = "light", dietType = dietType, weeklyLossTarget = "0.5", manualCalorieTarget = null,
-            mealCount = 4, weightReminderCadence = "daily", customMacroSplit = split, allergens = listOf("gluten"),
+            mealCount = 4, weightReminderCadence = "daily", waterTargetMl = waterTargetMl, cookingReminders = false,
+            waterReminders = true, customMacroSplit = split, allergens = listOf("gluten"),
         ),
         preferences = ProfilePreferences(
             favoriteIngredientIds = emptyList(), excludedIngredientIds = emptyList(), dislikedIngredientIds = emptyList(),
@@ -262,9 +264,35 @@ class ProfileFormTest {
         assertEquals("light", form.activityLevel)
         assertEquals(4, form.mealCount)
         assertEquals("daily", form.weightReminderCadence)
+        assertEquals("1500", form.waterTarget)
+        assertFalse(form.cookingReminders)
+        assertTrue(form.waterReminders)
         assertEquals(setOf("gluten"), form.allergens)
         assertEquals(limits, form.planLimits())
         assertTrue(form.acknowledgeRisk)
+        // A profile with no water target shows the field empty, and gives none back.
+        val dry = ProfileForm.of(kept(waterTargetMl = null), WeightUnit.KG)
+        assertEquals("", dry.waterTarget)
+        assertEquals(null, dry.figures(WeightUnit.KG)!!.waterTargetMl)
+    }
+
+    @Test
+    fun `a new profile aims at the API's 2 l a day, reminded to cook ahead and not to drink, and the water target is the form's to read as a whole number`() {
+        val figures = filled.figures(WeightUnit.KG)!!
+        assertEquals(2000, figures.waterTargetMl)
+        assertTrue(figures.cookingReminders)
+        assertFalse(figures.waterReminders)
+
+        assertEquals(null, filled.copy(waterTarget = " ").figures(WeightUnit.KG)!!.waterTargetMl)
+        assertTrue(ProfileField.WATER_TARGET in filled.copy(waterTarget = "2,5").problems(WeightUnit.KG))
+        assertEquals(null, filled.copy(waterTarget = "2,5").figures(WeightUnit.KG))
+        // Past the API's bounds is the API's to refuse, by the field's own name.
+        val past = filled.copy(waterTarget = "20000")
+        assertEquals(20000, past.figures(WeightUnit.KG)!!.waterTargetMl)
+        assertEquals(
+            mapOf(ProfileField.WATER_TARGET to FieldRefusal.TooBig(10000.0, inclusive = true)),
+            ProfileRefusals.of(refusal("profile-water-target-refused").fieldRefusals, past).fields,
+        )
     }
 
     @Test

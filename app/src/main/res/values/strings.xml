@@ -1912,4 +1912,11 @@
     <string name="plans_target_moved">The profile\'s target is now %1$d\u00A0kcal, this plan counts %2$d\u00A0kcal.</string>
     <string name="plans_retarget">Take it from today</string>
     <string name="plans_retarget_note">The days from today get targets from the profile\'s target, with the same dishes in other portions. The days before them stay as they were.</string>
+    <!-- The profile form's water target and reminders -->
+    <string name="profile_water_target">Water a day (ml)</string>
+    <string name="profile_water_target_hint">Empty: no target.</string>
+    <string name="profile_cooking_reminders">Reminder to cook ahead</string>
+    <string name="profile_cooking_reminders_hint">At 6\u00A0pm the day before, when the plan cooks a dish for two days or two meals.</string>
+    <string name="profile_water_reminders">Reminder to drink</string>
+    <string name="profile_water_reminders_hint">From 9\u00A0am to 9\u00A0pm, when drinking falls behind the day\'s target, at most every 3\u00A0hours.</string>
 </resources>

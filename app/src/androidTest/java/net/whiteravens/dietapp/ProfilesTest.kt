@@ -142,6 +142,13 @@ class ProfilesTest {
         screen.onNode(hasText(text(R.string.activity_very_active)) and hasAnyAncestor(isPopup())).performClick()
         screen.waitForText(text(R.string.profile_activity_hint_very_active))
         screen.keepScreenshot("profiles-what-a-level-means")
+        // The water a day may stay empty and says so; the profile drinks more, and is reminded to.
+        val water = hasText(text(R.string.profile_water_target)) and hasSetTextAction()
+        screen.onNode(water).assert(hasStateDescription(text(R.string.common_optional)))
+        screen.onNode(water).performScrollTo().performTextReplacement("2500")
+        press(text(R.string.profile_water_reminders))
+        screen.onNodeWithText(text(R.string.profile_water_reminders)).performScrollTo()
+        screen.keepScreenshot("profiles-water-and-reminders")
         press(text(R.string.profile_save_changes))
         screen.waitForText(text(R.string.profiles_add))
 
@@ -149,6 +156,9 @@ class ProfilesTest {
         assertEquals(31, edited.getInt("age"))
         assertEquals("non_binary", edited.getString("sex"))
         assertEquals("very_active", edited.getString("activityLevel"))
+        assertEquals(2500, edited.getInt("waterTargetMl"))
+        assertEquals(true, edited.getBoolean("waterReminders"))
+        assertEquals(true, edited.getBoolean("cookingReminders"))
         // A weight shown in another unit and left as it was is kept to the hundredth it was.
         assertEquals(80.0, edited.getDouble("weightKg"), 0.0)
 

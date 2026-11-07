@@ -78,6 +78,7 @@ import net.whiteravens.dietapp.ui.common.proteinKindLabel
 import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.reminderCadenceLabel
 import net.whiteravens.dietapp.ui.common.sexLabel
+import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.components.DOT
@@ -343,6 +344,19 @@ internal fun TargetWeightField(form: ProfileForm, unit: WeightUnit, marks: Profi
     )
 }
 
+/** The water a day the profile aims at, in ml; empty for none. */
+@Composable
+internal fun WaterTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
+    FormField(
+        value = form.waterTarget,
+        onValueChange = { typed -> onEdit { it.copy(waterTarget = typed) } },
+        label = stringResource(R.string.profile_water_target),
+        optional = true,
+        hint = stringResource(R.string.profile_water_target_hint),
+        problem = marks.of(ProfileField.WATER_TARGET),
+    )
+}
+
 /** A calorie target of one's own, in place of the one the pace comes to. */
 @Composable
 internal fun OwnTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
@@ -558,6 +572,23 @@ internal fun ReminderField(form: ProfileForm, onEdit: FormEdit) {
         optionLabel = { reminderCadenceLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(weightReminderCadence = chosen) } },
         hint = stringResource(R.string.profile_reminder_hint),
+    )
+}
+
+/** The reminders to cook ahead and to drink, each with when it comes. */
+@Composable
+internal fun ReminderChoices(form: ProfileForm, onEdit: FormEdit) {
+    CheckRow(
+        label = stringResource(R.string.profile_cooking_reminders),
+        hint = stringResource(R.string.profile_cooking_reminders_hint),
+        checked = form.cookingReminders,
+        onChange = { ticked -> onEdit { it.copy(cookingReminders = ticked) } },
+    )
+    CheckRow(
+        label = stringResource(R.string.profile_water_reminders),
+        hint = stringResource(R.string.profile_water_reminders_hint),
+        checked = form.waterReminders,
+        onChange = { ticked -> onEdit { it.copy(waterReminders = ticked) } },
     )
 }
 

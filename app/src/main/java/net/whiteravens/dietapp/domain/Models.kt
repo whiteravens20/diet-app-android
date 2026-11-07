@@ -167,6 +167,12 @@ data class ProfileFigures(
     val manualCalorieTarget: Int?,
     val mealCount: Int,
     val weightReminderCadence: String,
+    /** What the profile aims to drink a day, in ml; null for no target. */
+    val waterTargetMl: Int?,
+    /** Reminded the day before a dish its plan cooks for two days or two meals. */
+    val cookingReminders: Boolean,
+    /** Reminded to drink while the day's water falls behind its target. */
+    val waterReminders: Boolean,
     /** The split of energy on the `custom` diet, in per cent; null on another. */
     val customMacroSplit: MacroSplit?,
     val allergens: List<String>,

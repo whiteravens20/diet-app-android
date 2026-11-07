@@ -541,6 +541,12 @@ data class ProfileDto(
     val mealCount: Int,
     /** How often the profile is reminded to log its weight: `off` | `daily` | `weekly`. */
     val weightReminderCadence: String,
+    /** What the profile aims to drink a day, in ml; null for no target. */
+    val waterTargetMl: Int? = null,
+    /** Reminded at 6 pm the day before a dish its plan cooks for two days or two meals. */
+    val cookingReminders: Boolean = true,
+    /** Reminded to drink while the day's water falls behind its target. */
+    val waterReminders: Boolean = false,
     /** The split of energy on the `custom` diet; null on another diet that kept none. */
     val customMacroSplit: MacroSplitDto? = null,
     val preferences: ProfilePreferencesDto = ProfilePreferencesDto(),
@@ -575,6 +581,9 @@ data class NewProfileDto(
     val manualCalorieTarget: Int?,
     val mealCount: Int,
     val weightReminderCadence: String,
+    val waterTargetMl: Int?,
+    val cookingReminders: Boolean,
+    val waterReminders: Boolean,
     val customMacroSplit: MacroSplitDto?,
     val acknowledgeRisk: Boolean? = null,
     val preferences: NewProfilePreferencesDto,
@@ -611,6 +620,9 @@ data class ProfileUpdateDto(
     val manualCalorieTarget: Int?,
     val mealCount: Int,
     val weightReminderCadence: String,
+    val waterTargetMl: Int?,
+    val cookingReminders: Boolean,
+    val waterReminders: Boolean,
     val customMacroSplit: MacroSplitDto?,
     val acknowledgeRisk: Boolean? = null,
     val preferences: ProfilePreferencesUpdateDto,
