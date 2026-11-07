@@ -16,20 +16,24 @@ produces — it never computes nutrition itself. The backend is the single sourc
   unit tests to a copy of the contract the API publishes, in `contract/`, and
   `ApiException` types the API's envelope of a refusal.
 - `data/config/` keeps the server's address, and the address of its web application, where
-  the app opens in the browser what it leaves to it, and the colour scheme the app is drawn in:
-  one chosen on the phone, else the account's, which every answer about the account says.
+  the app opens in the browser what it leaves to it, the colour scheme the app is drawn in:
+  one chosen on the phone, else the account's, which every answer about the account says, and
+  the profile water was added for last, which the icon's shortcuts add to (`WateredStore`).
 - `data/auth/` keeps the tokens in `TokenStore` (DataStore, sealed under a key of the
   Android Keystore), and an OkHttp interceptor and authenticator attach the access token and
   refresh it on a 401 that says it is no good.
-- `data/local/` is the Room `CacheDatabase`: copies of meal plans, shopping lists and days of the
-  diary, what screens need of the profiles to open without a network, and the changes made on the
-  phone that wait to be sent.
+- `data/local/` is the Room `CacheDatabase`: copies of meal plans, shopping lists, household lists
+  and days of the diary, what screens need of the profiles to open without a network, and the
+  changes made on the phone that wait to be sent.
 - `data/sync/` is `ChangeQueue`: a change goes to the server at once, or is kept and sent in
   its turn by `ChangesWorker` once there is a network.
 - `data/repository/` joins them: a repository asks the API, and for meal plans and shopping
   lists keeps a copy in the cache that is shown first.
 - `data/notify/` keeps whether the phone's notifications are on and which were shown, and
-  `notify/` holds the background work that reads them and what the phone shows.
+  `notify/` holds the background work that reads them, what the phone shows, what a press of a
+  reminder of water's amount does without opening the app (`WaterReminderReceiver`), and the
+  icon's shortcuts that add water (`WaterShortcuts`, started through `WaterShortcutActivity`, an
+  activity with nothing to show).
 - `data/update/` asks the build's channel for the version file beside its APK (`Updates`),
   and downloads, checks and hands a newer build to Android's installer (`UpdateInstaller`).
   A build's channel is a `BuildConfig` field set per build type in `app/build.gradle.kts`.
@@ -41,8 +45,8 @@ produces — it never computes nutrition itself. The backend is the single sourc
 1. A screen's ViewModel asks a repository for data when the screen opens, when it is pulled
    down, and when it is shown again (from another screen at once, on coming back to the front
    at most every thirty seconds).
-2. For plans and shopping lists the repository returns the **Room cache** first (instant
-   render, works offline), then calls the API and, on success, updates the cache.
+2. For plans, shopping lists and household lists the repository returns the **Room cache**
+   first (instant render, works offline), then calls the API and, on success, updates the cache.
 3. On network failure what the screen read last stands, and the UI says it is offline and
    since what time; a "not found" answer drops the copy of what was deleted elsewhere.
 
@@ -73,7 +77,7 @@ never leak into `ui` — repositories map `data.remote.*Dto` to `domain` models.
 | New screen | `ui/screens/`, with a Hilt ViewModel and a repository behind it |
 | New API call | `data/remote/DietApiService.kt`, or `ModelApiService.kt` where the server waits for an AI provider, and `Dtos.kt` |
 | Caching or offline behaviour | `data/local/` and `data/repository/` |
-| The phone's notifications | `data/notify/` (on or off, what was shown, the schedule) and `notify/` (the background work, what the phone shows) |
+| The phone's notifications | `data/notify/` (on or off, what was shown, the schedule) and `notify/` (the background work, what the phone shows, a water reminder's amounts, the icon's shortcuts) |
 | Dependency wiring | `di/AppModule.kt` |
 | A library or plugin, or its version | `gradle/libs.versions.toml`, then the verification metadata and the lockfiles ([CONTRIBUTING.md](../CONTRIBUTING.md#dependencies)) |
 | Contract change | `contract/`, then `Dtos.kt` until `ContractTest` passes ([contracts/api-contract.md](contracts/api-contract.md)) |
@@ -98,17 +102,18 @@ Running the app against a backend is described in [running-locally.md](running-l
 
 The API binding, the DTO mirror, the auth plumbing and the offline-first repositories are
 in place, and the screens for signing in, the dashboard with the account's notifications,
-meal plans, the diary with its scanner, the products of one's own, recipes, the
-favourites, the shopping list, the pantry, the profiles with their preferences, the
-account and the About screen are built on them, with tests on the JVM and journeys on
-emulators. What the app
+its water, its week in sum and its real expenditure, meal plans, the diary with its scanner,
+the products of one's own, recipes, the favourites, the shopping list and the household
+lists, the pantry, the profiles with their preferences, the account and the About screen
+are built on them, with tests on the JVM and journeys on emulators. What the app
 leaves to the web application (the calculator, a plan or a list as a table or printed,
 favourite sets made and changed, and the account's password, address, name, language of
 its mails, data in a file and deletion) it opens there, in the browser, signed in with a
 one-time code that the page uses once its reader says the account is theirs. The changes
-that make sense without a network (a shopping list's rows, meals eaten, a day's own meals
-and meals taken off it, a diary's entries, weights, the pantry, recipes' marks and notifications read) wait for
-one in a queue, described in [sync-strategy.md](sync-strategy.md).
+that make sense without a network (a shopping list's and a household list's rows, meals
+eaten, a day's own meals and meals taken off it, a diary's entries, weights, water, the
+pantry, recipes' marks and notifications read) wait for one in a queue, described in
+[sync-strategy.md](sync-strategy.md).
 
 Still to come is the first release: a signing key, a release workflow and the round with
 testers before it.

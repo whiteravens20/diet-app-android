@@ -13,10 +13,10 @@ when one returns.
   shows, and at most every thirty seconds when the app comes back to the front, so that
   switching between apps does not spend the API's limit of requests. There are no change
   cursors: one account's data is a few small pages.
-- The first page of each profile's plans, every plan opened and the shopping lists are
-  mirrored into the Room cache (`CachedPlanList`, `CachedMealPlan`, `CachedShoppingList`)
-  as JSON of the app's own wire class, which holds what the app read of the answer, with the
-  time they were read. Those screens show the copy first and the answer of the network when
+- The first page of each profile's plans, every plan opened, the shopping lists and the
+  household lists are mirrored into the Room cache (`CachedPlanList`, `CachedMealPlan`,
+  `CachedShoppingList`, `CachedHouseholdList`) as JSON of the app's own wire class, which holds
+  what the app read of the answer, with the time they were read. Those screens show the copy first and the answer of the network when
   it comes.
 - A screen whose reading anew fails for want of a network keeps what it read and says
   when: "Offline — as of 14:32", and how many changes made on the phone wait to be sent.
@@ -44,8 +44,12 @@ when one returns.
   thirty seconds, as the screens read anew. The app reads the route also whenever the
   dashboard is shown again, for its bell.
 - Each notification is shown on the phone once, known by its id and the time it was made;
-  the phone keeps the keys of the unread ones alone. Nothing is marked read from the
-  phone's notification: a tap opens the application's list.
+  the phone keeps the keys of the unread ones alone. A tap opens the application's list. A
+  reminder of water is the exception: a tap opens the dashboard at its profile's water card,
+  and its three amounts add water to that profile's day without opening the application, through
+  the queue below; either reads the reminder, the same way.
+- The server makes the reminders at the hours of the account's time zone, which the app saves as
+  the phone's whenever it comes to the front and the account names another.
 - No device registers anywhere and no service of a third party takes part: the server keeps
   the notifications for the app to read. Signing out turns them off and forgets what was
   shown.
@@ -53,10 +57,11 @@ when one returns.
 ## Changes made without a network
 
 Some changes are made without a network as well, as they are in a shop or a kitchen without
-a signal: a shopping list's row, its tick and its amounts, a meal of a plan marked eaten or
-not, a meal of one's own added to a day and a meal taken off its day, a diary's entry written,
-changed or taken out, a weight logged or removed, a pantry's row put in, changed or taken out,
-a recipe's mark put on or taken off, and a notification read. Everything else that changes
+a signal: a shopping list's or a household list's row, its tick and its amounts, a meal of a
+plan marked eaten or not, a meal of one's own added to a day and a meal taken off its day, a
+diary's entry written, changed or taken out, a weight logged or removed, water added (from its
+card, a reminder or the icon's shortcuts) or taken back, a pantry's row put in, changed or taken
+out, a recipe's mark put on or taken off, and a notification read. Everything else that changes
 something asks the server first, and is off while there is no network: reading every
 notification at once among it, as the server would read those that came after them too, and
 copying a day of the diary or resizing its meals, whose outcome is the server's to say.
@@ -75,7 +80,7 @@ it is written, so the window says so and leads to a meal of one's own.
    front. Sent, the copy the server answers is kept, and the screen reads it and is no
    longer offline.
 3. A value set, such as a tick or an amount, is sent again as it is. An addition, such as a
-   weight, a pantry's row, a meal of one's own or a diary's entry, is sent every time with the key
+   weight, water, a pantry's row, a meal of one's own or a diary's entry, is sent every time with the key
    it was given when it was made
    (`Idempotency-Key`), and with the moment it was made, so that the server writes it once
    however often it comes. A removal of something the server no longer has (404) was made.

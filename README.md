@@ -37,17 +37,28 @@ account once you say on the page that the account it names is yours.
   meals per day and the target macro split, each macronutrient by its share of the energy
   and its grams; its weight log, today's weight logged in the
   account's unit and the last one taken back, with ninety days of weights drawn beside the
-  mean of each seven days and the weight it works towards. A profile's favourite sets are
+  mean of each seven days and the weight it works towards. Its water: 200, 250 or 330 ml at a
+  press, or an amount of your own, the last entry taken back, and the seven days to today drawn
+  against the target, each day that reached it ticked. Its last seven days in sum: what was
+  eaten on average against the target, the days within a tenth of it, the water, and where the
+  weight leads. A correction of the target that three weeks of the diary and the weights propose,
+  to accept or put off, and, once the newest weight reaches the one worked towards, the offer to
+  move to keeping it. A profile's favourite sets are
   made and changed in the web application, which its card opens in the browser. The bell
   in its header counts the notifications not read yet, each with the profile it is for: a
-  reminder to log a weight, which leads to that profile's weights, and a request to review
+  reminder to log a weight, which leads to that profile's weights, a reminder to drink, which
+  leads to its water, a reminder to cook ahead, and a request to review
   a profile's preferences after a catalogue update took away something it had marked,
   which leads to the profiles, and what became of a product you sent, which leads to your
   products; each can be put away, or all read at once.
 - **Notifications on the phone**, off until you turn them on in the account's settings
   (Android 13 and later ask for the permission then): the app asks the server for new
   notifications about every fifteen minutes and whenever you come back to it, and shows
-  each once, with the profile it is for, and a tap opens the list. Android may put the checks off for hours on a phone at
+  each once, with the profile it is for, and a tap opens the list. A reminder to drink carries
+  the water card's amounts, which add water to that profile's day without opening the app and
+  say so for a moment, and a tap on it opens the profile's water card; a reminder to cook ahead
+  names the dishes cooked tomorrow for later and what each also covers. The phone's time zone
+  is saved as the account's, so that the server's reminders come at the phone's hours. Android may put the checks off for hours on a phone at
   rest; the settings say when the system holds the app back to save battery, and open the
   page where that is changed. Signing out turns them off.
 - **Meal plans.** The plans of a profile and a month of them as a calendar, a new plan
@@ -62,7 +73,9 @@ account once you say on the page that the account it names is yours.
   days or two meals says which, and what you change of it goes to the other meal too, said
   before the choice, unless you keep it to this day. What a swap did is said, with what the
   day comes to, and it can be taken back. A day that has passed keeps its dishes, a meal is
-  marked eaten from its day on, and a day or a plan far from its macros says so. The plan as a
+  marked eaten from its day on, and a day or a plan far from its macros says so. A plan under
+  way whose profile's target moved says both targets, and takes the profile's from today with
+  the same dishes in other portions. The plan as a
   table or printed is the web application's, which the plan's menu opens in the browser.
 - **Recipes.** Search in the recipe library; a recipe with its nutrition per serving,
   ingredients and steps, put among a profile's favourites from its view, and the
@@ -79,7 +92,8 @@ account once you say on the page that the account it names is yours.
   by its figures, the macronutrients left out estimated by the server and said to be. An
   entry of a product says where its figures came from. Each changed or taken out; another day
   copied into this one; the plan's day resized around what was written, and the plan's day
-  saying what the diary adds to it.
+  saying what the diary adds to it. The day's water, and the profile's weeks in sum, a week
+  back or forth at a time.
 - **My products**, where the instance offers products. What its base does not know, written
   from the label for yourself alone, on a screen of its own or from the diary's window; only
   the energy is needed, and what is left out is estimated and said to be. With its code and
@@ -91,12 +105,15 @@ account once you say on the page that the account it names is yours.
   the window says so and leads to a meal of your own.
 - **Shopping list.** Generated from a plan, grouped by store section, with what the
   pantry already covers, items ticked off as you shop, and what is left to buy sent as a
-  text. The list as a table or printed is the web application's, which the list's menu
+  text. With two profiles or more, a household list: one list of a plan of each profile for
+  the same days, each row saying what each profile needs of it, and each plan's own list of
+  those days a part of it, which says so. The list as a table or printed is the web application's, which the list's menu
   opens in the browser.
 - **Profiles.** The first profile set up in three steps from the empty dashboard, with
   what its figures come to as they are typed; profiles made, edited and deleted up to what
   the instance allows, each pace of loss with what it comes to in a day, and the risk of a
-  loss for somebody under 18 or underweight to acknowledge; a profile's allergens,
+  loss for somebody under 18 or underweight to acknowledge; the water it aims at a day,
+  and whether it is reminded to cook ahead and to drink; a profile's allergens,
   cuisines and lists of ingredients changed in place.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
   the diary, the profiles, the favourites, the pantry, your products and the account's settings: its e-mail status
@@ -127,18 +144,21 @@ account once you say on the page that the account it names is yours.
 - **Up to date, and offline.** Every screen reads what it shows anew when it opens, when you
   pull it down, and when you come back to it: at once from another screen of the app, and at
   most every thirty seconds when you return to the app. A screen that cannot reach the
-  server keeps what it read last and says what time that was. Meal plans, shopping lists and
-  days of the diary you have opened stay readable without a connection, also when the app
+  server keeps what it read last and says what time that was. Meal plans, shopping lists,
+  household lists and days of the diary you have opened stay readable without a connection, also when the app
   was started without one, from the profiles the phone keeps. A meal is marked eaten, a meal
   of your own added to a day or a meal taken off it, a diary's entry written, changed or
   taken out, a weight logged or the last one removed, a pantry's rows put in, changed or
-  taken out, a recipe's mark set or taken off, a notification read, and a shopping list's
-  rows are ticked and their amounts told, without one as well: each change is marked as
+  taken out, water added or taken back, a recipe's mark set or taken off, a notification
+  read, and a shopping list's or a household list's rows are ticked and their amounts told,
+  without one as well: each change is marked as
   waiting, the screen says how many wait, and each goes by itself once there is a network;
   a diary's day keeps the server's sum until then, and says how many changes it leaves out;
   one the server refuses is said, with why. Finding a recipe, an ingredient or a product takes
   a connection; a meal of your own by its figures does not. Signing
   out while changes wait asks first whether to send them or drop them.
+- **Water from the app's icon.** Holding the icon offers 200, 250 and 330 ml, which go to
+  the profile water was added for last on the phone, without opening the app.
 - **A colour scheme** of the six the web application has: the account's, which the web
   application sets, until another is chosen in the account's settings on the phone, where the
   choice stays. Light or dark follows the phone.
