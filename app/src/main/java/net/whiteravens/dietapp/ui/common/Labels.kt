@@ -422,5 +422,32 @@ fun notificationText(resources: Resources, about: NotificationAbout): String = w
         if (about.fromOpenFoodFacts) R.string.notifications_product_replaced_open_food_facts else R.string.notifications_product_replaced_instance,
         about.name,
     )
+    is NotificationAbout.WaterReminder -> resources.getString(R.string.notifications_water_reminder, liters(resources, about.ml), liters(resources, about.target))
+    is NotificationAbout.CookingReminder -> resources.getString(R.string.notifications_cooking_reminder, cookedAhead(resources, about))
     is NotificationAbout.Other -> resources.getString(R.string.notifications_unknown)
+}
+
+/** Millilitres in litres, to two decimals at most, kept with their unit: `0.5 L`. */
+private fun liters(resources: Resources, ml: Int): String {
+    val number = NumberFormat.getNumberInstance(resources.configuration.locales[0]).apply { isGroupingUsed = false; maximumFractionDigits = 2 }
+    return "${number.format(ml / 1000.0)}\u00A0${resources.getString(R.string.unit_liter)}"
+}
+
+/** The dishes of a reminder to cook ahead by what else they cover, the day after or another meal of their day, as the web says them. */
+private fun cookedAhead(resources: Resources, about: NotificationAbout.CookingReminder): String {
+    val list = ListFormatter.getInstance(resources.configuration.locales[0])
+    return about.dishes.groupBy { dish -> dish.alsoMealType.takeIf { dish.alsoDate == about.date } }.map { (meal, cooked) ->
+        resources.getString(R.string.notifications_cooking_group, list.format(cooked.map { it.dish }), cover(resources, meal))
+    }.joinToString("; ")
+}
+
+/** What else a dish cooked ahead covers: the day after (null), or a meal of its day. */
+private fun cover(resources: Resources, meal: String?): String = when (meal) {
+    null -> resources.getString(R.string.notifications_cooking_cover_next_day)
+    "breakfast" -> resources.getString(R.string.notifications_cooking_cover_breakfast)
+    "second_breakfast" -> resources.getString(R.string.notifications_cooking_cover_second_breakfast)
+    "lunch" -> resources.getString(R.string.notifications_cooking_cover_lunch)
+    "snack" -> resources.getString(R.string.notifications_cooking_cover_snack)
+    "dinner" -> resources.getString(R.string.notifications_cooking_cover_dinner)
+    else -> meal
 }

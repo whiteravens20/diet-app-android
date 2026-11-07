@@ -2051,4 +2051,14 @@
     <string name="profile_cooking_reminders_hint">O 18:00\u00A0dzień wcześniej, gdy plan gotuje danie na dwa dni albo dwa posiłki.</string>
     <string name="profile_water_reminders">Przypomnienie o wodzie</string>
     <string name="profile_water_reminders_hint">Od 9:00\u00A0do 21:00, gdy picie zostaje w tyle za celem dnia, najwyżej co 3\u00A0godziny.</string>
+    <!-- The reminders of water and of cooking ahead, as the web says them -->
+    <string name="notifications_water_reminder">Woda dziś: %1$s z %2$s.</string>
+    <string name="notifications_cooking_reminder">Jutro gotujesz na zapas: %1$s.</string>
+    <string name="notifications_cooking_group">%1$s, też na %2$s</string>
+    <string name="notifications_cooking_cover_next_day">pojutrze</string>
+    <string name="notifications_cooking_cover_breakfast">śniadanie</string>
+    <string name="notifications_cooking_cover_second_breakfast">drugie śniadanie</string>
+    <string name="notifications_cooking_cover_lunch">obiad</string>
+    <string name="notifications_cooking_cover_snack">przekąskę</string>
+    <string name="notifications_cooking_cover_dinner">kolację</string>
 </resources>

@@ -16,11 +16,13 @@ import net.whiteravens.dietapp.MainActivity
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.notify.NewNotifications
 import net.whiteravens.dietapp.domain.AccountNotification
+import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.ui.common.notificationText
 
 /**
  * The account's notifications as the phone shows them: one channel, one notification for each, in
- * the words of the application's list, which a tap opens. Nothing is marked read on the phone.
+ * the words of the application's list, which a tap opens; a tap on a reminder of water opens its
+ * profile's water on the dashboard instead, and reads the reminder.
  */
 object PhoneNotifier {
     /** The one channel, which the user can silence in the system's settings. */
@@ -28,6 +30,13 @@ object PhoneNotifier {
 
     /** What a tap asks the application for: its list of notifications. */
     const val OPEN_NOTIFICATIONS = "net.whiteravens.dietapp.action.OPEN_NOTIFICATIONS"
+
+    /** What a tap on a reminder of water asks the application for: the profile's water on the dashboard, the reminder read. */
+    const val OPEN_WATER = "net.whiteravens.dietapp.action.OPEN_WATER"
+
+    /** The profile a reminder of water is for, and the reminder, as its intents carry them. */
+    const val EXTRA_PROFILE = "profileId"
+    const val EXTRA_NOTIFICATION = "notificationId"
 
     fun ensureChannel(context: Context) {
         val channel = NotificationChannelCompat.Builder(CHANNEL, NotificationManagerCompat.IMPORTANCE_DEFAULT)
@@ -50,6 +59,13 @@ object PhoneNotifier {
         .setAction(OPEN_NOTIFICATIONS)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
+    /** The intent a tap on a reminder of water gives the application. */
+    fun openingWater(context: Context, profileId: String, notificationId: String): Intent = Intent(context, MainActivity::class.java)
+        .setAction(OPEN_WATER)
+        .putExtra(EXTRA_PROFILE, profileId)
+        .putExtra(EXTRA_NOTIFICATION, notificationId)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+
     /** Shows [fresh], each as the profile it is for ([names], by id) and what it says. */
     fun show(context: Context, fresh: List<AccountNotification>, names: Map<String, String>) {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
@@ -63,6 +79,17 @@ object PhoneNotifier {
         val manager = NotificationManagerCompat.from(context)
         fresh.forEach { notification ->
             val text = notificationText(context.resources, notification.about)
+            val key = NewNotifications.keyOf(notification).hashCode()
+            val opens = when (notification.about) {
+                // Each its own intent, so that one tapped opens the water of the profile it is for.
+                is NotificationAbout.WaterReminder -> PendingIntent.getActivity(
+                    context,
+                    key,
+                    openingWater(context, notification.profileId, notification.id),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+                else -> tap
+            }
             val shown = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(names[notification.profileId] ?: context.getString(R.string.app_name))
@@ -70,10 +97,10 @@ object PhoneNotifier {
                 .setStyle(NotificationCompat.BigTextStyle().bigText(text))
                 .setWhen(notification.createdAt.toEpochMilli())
                 .setShowWhen(true)
-                .setContentIntent(tap)
+                .setContentIntent(opens)
                 .setAutoCancel(true)
                 .build()
-            manager.notify(NewNotifications.keyOf(notification).hashCode(), shown)
+            manager.notify(key, shown)
         }
     }
 }

@@ -354,9 +354,18 @@ sealed interface NotificationAbout {
     /** A product of the account's own gave way to what [fromOpenFoodFacts] or the instance's base knows of its code. */
     data class ProductReplaced(val name: String, val fromOpenFoodFacts: Boolean) : NotificationAbout
 
+    /** Time to drink: what the profile's [day] held ([ml]) against its [target] when the reminder was made. */
+    data class WaterReminder(val day: java.time.LocalDate, val ml: Int, val target: Int) : NotificationAbout
+
+    /** The dishes a plan of the profile cooks ahead on [date], each with what else it covers. */
+    data class CookingReminder(val date: java.time.LocalDate, val dishes: List<CookedAhead>) : NotificationAbout
+
     /** A kind this version of the app does not know, named as the API names it. */
     data class Other(val type: String) : NotificationAbout
 }
+
+/** A dish cooked once for later as well: its title, and what else it covers, a meal ([alsoMealType]) of the day [alsoDate]. */
+data class CookedAhead(val dish: String, val alsoDate: java.time.LocalDate, val alsoMealType: String)
 
 /** One scheduled meal. [name] is the recipe title or the custom-meal name. */
 data class Meal(

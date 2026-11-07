@@ -78,7 +78,7 @@ import kotlin.math.roundToInt
  * counts the notifications not read yet and opens them on [onOpenNotifications]; under the header,
  * where the account uses AI, its requests are said, and open the account's settings on
  * [onOpenAccount]. With [showWeightOf], the weights of that profile are brought into view, and
- * [onWeightShown] says so.
+ * [onWeightShown] says so; with [showWaterOf], its water, and [onWaterShown] says so.
  */
 @Composable
 fun DashboardScreen(
@@ -91,6 +91,8 @@ fun DashboardScreen(
     onScan: (profileId: String) -> Unit,
     showWeightOf: String? = null,
     onWeightShown: () -> Unit = {},
+    showWaterOf: String? = null,
+    onWaterShown: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     update: UpdateViewModel = hiltViewModel(),
 ) {
@@ -103,10 +105,11 @@ fun DashboardScreen(
     val list = rememberLazyListState()
     // The items before the profiles': the header, the offline line and a newer build's card where they show.
     val leading = 1 + (if (state.readAt != null && state.offline) 1 else 0) + (if (newer != null) 1 else 0)
-    // The profile's card is composed first, if it is out of sight, and its weights then brought into view.
-    LaunchedEffect(showWeightOf, state.profiles) {
-        val at = state.profiles.indexOfFirst { it.profile.id == showWeightOf }
-        if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == showWeightOf }) list.scrollToItem(at + leading)
+    // The profile's card is composed first, if it is out of sight, and its weights or its water then brought into view.
+    val shownOf = showWeightOf ?: showWaterOf
+    LaunchedEffect(shownOf, state.profiles) {
+        val at = state.profiles.indexOfFirst { it.profile.id == shownOf }
+        if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == shownOf }) list.scrollToItem(at + leading)
     }
 
     PullToRead(state.pulled, viewModel::pull) {
@@ -201,6 +204,18 @@ fun DashboardScreen(
                                     )
                                 }
                             },
+                            water = {
+                                val inView = remember { BringIntoViewRequester() }
+                                if (stats.profile.id == showWaterOf) {
+                                    LaunchedEffect(inView) {
+                                        inView.bringIntoView()
+                                        onWaterShown()
+                                    }
+                                }
+                                Box(Modifier.bringIntoViewRequester(inView)) {
+                                    WaterCard(profileId = stats.profile.id, day = LocalDate.now())
+                                }
+                            },
                         ) {
                             FavoriteSetsInTheBrowser(onOpen = { web.open("dashboard") })
                         }
@@ -222,6 +237,7 @@ private fun ProfileSummary(
     unit: WeightUnit,
     onProfileChanged: () -> Unit,
     weight: @Composable () -> Unit,
+    water: @Composable () -> Unit,
     sets: @Composable () -> Unit,
 ) {
     val profile = stats.profile
@@ -304,7 +320,7 @@ private fun ProfileSummary(
 
         PlanOverviewCard(stats.overview, stats.overviewError, onOpen = onOpenPlan, onNewPlan = onNewPlan)
 
-        WaterCard(profileId = profile.id, day = LocalDate.now())
+        water()
 
         WeekSummaryCard(profileId = profile.id)
 

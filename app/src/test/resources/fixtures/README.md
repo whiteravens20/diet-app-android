@@ -80,8 +80,11 @@ days from that day, made for the first profile before its correction was taken: 
 the profile's taken), `profile-water-target-refused.json` (a new profile that would drink 20 l a
 day), `users-me-no-time-zone.json`, `users-me-time-zone-saved.json` and
 `users-me-time-zone-refused.json` (an account that names no time zone, Europe/Warsaw saved as its
-own, and a zone nobody knows refused) from API 0.218.0, captured on 2026-11-07 from an instance of
-diet-app's `dev` at `e95a172`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+own, and a zone nobody knows refused), `notifications-reminders.json` (what the worker reminded a
+profile of, its account's clients in America/Sao_Paulo, half a litre drunk and a plan for cooking
+ahead from the next day: to drink, to cook ahead and to log a weight) from API 0.218.0, captured on
+2026-11-07 from an instance of diet-app's `dev` at `e95a172`; the others from API 0.19.0, captured
+on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

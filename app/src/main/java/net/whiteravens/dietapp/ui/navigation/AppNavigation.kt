@@ -126,6 +126,9 @@ import kotlin.reflect.KClass
 /** The profile whose weights the dashboard brings into view, which a weight reminder opened leaves it. */
 private const val SHOW_WEIGHT_OF = "showWeightOf"
 
+/** The profile whose water the dashboard brings into view, which a reminder of water opened leaves it. */
+private const val SHOW_WATER_OF = "showWaterOf"
+
 /**
  * Signed-in state for the root switch (null while the token store loads), the version of the
  * server, asked when the app starts and again whenever the server's address changes, and the
@@ -187,6 +190,8 @@ class RootViewModel @Inject constructor(
 fun DietAppRoot(
     openNotifications: Boolean = false,
     onNotificationsOpened: () -> Unit = {},
+    openWaterOf: String? = null,
+    onWaterOpened: () -> Unit = {},
     viewModel: RootViewModel = hiltViewModel(),
 ) {
     val signedIn by viewModel.isSignedIn.collectAsStateWithLifecycle()
@@ -202,7 +207,7 @@ fun DietAppRoot(
         when (signedIn) {
             null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
             false -> AuthScreen(serverVersion = serverVersion)
-            true -> MainScaffold(serverVersion, openNotifications, onNotificationsOpened)
+            true -> MainScaffold(serverVersion, openNotifications, onNotificationsOpened, openWaterOf, onWaterOpened)
         }
     }
 }
@@ -226,13 +231,17 @@ private val topLevelDestinations = listOf(
 
 /**
  * The tabs and what opens from them. With [openNotifications], a tap on a phone's notification
- * asked for the list of notifications: it is opened, and [onNotificationsOpened] says so.
+ * asked for the list of notifications: it is opened, and [onNotificationsOpened] says so. With
+ * [openWaterOf], a tap on a reminder of water asked for that profile's water: the dashboard is
+ * opened at it, and [onWaterOpened] says so.
  */
 @Composable
 private fun MainScaffold(
     serverVersion: ServerVersion,
     openNotifications: Boolean,
     onNotificationsOpened: () -> Unit,
+    openWaterOf: String?,
+    onWaterOpened: () -> Unit,
     confirmEmail: ConfirmEmailViewModel = hiltViewModel(),
     changes: ChangesViewModel = hiltViewModel(),
     timeZone: TimeZoneViewModel = hiltViewModel(),
@@ -255,6 +264,13 @@ private fun MainScaffold(
         if (openNotifications) {
             navController.navigate(NotificationsRoute) { launchSingleTop = true }
             onNotificationsOpened()
+        }
+    }
+    LaunchedEffect(openWaterOf) {
+        if (openWaterOf != null) {
+            navController.popBackStack<DashboardRoute>(inclusive = false)
+            navController.getBackStackEntry<DashboardRoute>().savedStateHandle[SHOW_WATER_OF] = openWaterOf
+            onWaterOpened()
         }
     }
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -316,6 +332,7 @@ private fun MainScaffold(
             ) {
                 composable<DashboardRoute> { entry ->
                     val weightOf by entry.savedStateHandle.getStateFlow<String?>(SHOW_WEIGHT_OF, null).collectAsStateWithLifecycle()
+                    val waterOf by entry.savedStateHandle.getStateFlow<String?>(SHOW_WATER_OF, null).collectAsStateWithLifecycle()
                     DashboardScreen(
                         onCreateProfile = { navController.navigate(ProfilesRoute) },
                         onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
@@ -326,6 +343,8 @@ private fun MainScaffold(
                         onScan = { profileId -> navController.navigate(DiaryRoute(profileId, adding = true, scanning = true)) },
                         showWeightOf = weightOf,
                         onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
+                        showWaterOf = waterOf,
+                        onWaterShown = { entry.savedStateHandle[SHOW_WATER_OF] = null },
                     )
                 }
                 composable<PlansRoute> {
@@ -405,6 +424,10 @@ private fun MainScaffold(
                         onBack = { navController.popBackStack() },
                         onWeight = { profileId ->
                             navController.getBackStackEntry<DashboardRoute>().savedStateHandle[SHOW_WEIGHT_OF] = profileId
+                            navController.popBackStack<DashboardRoute>(inclusive = false)
+                        },
+                        onWater = { profileId ->
+                            navController.getBackStackEntry<DashboardRoute>().savedStateHandle[SHOW_WATER_OF] = profileId
                             navController.popBackStack<DashboardRoute>(inclusive = false)
                         },
                         onPreferences = { navController.navigate(ProfilesRoute) { popUpTo<NotificationsRoute> { inclusive = true } } },

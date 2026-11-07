@@ -1919,4 +1919,14 @@
     <string name="profile_cooking_reminders_hint">At 6\u00A0pm the day before, when the plan cooks a dish for two days or two meals.</string>
     <string name="profile_water_reminders">Reminder to drink</string>
     <string name="profile_water_reminders_hint">From 9\u00A0am to 9\u00A0pm, when drinking falls behind the day\'s target, at most every 3\u00A0hours.</string>
+    <!-- The reminders of water and of cooking ahead, as the web says them -->
+    <string name="notifications_water_reminder">Water today: %1$s of %2$s.</string>
+    <string name="notifications_cooking_reminder">Tomorrow you cook ahead: %1$s.</string>
+    <string name="notifications_cooking_group">%1$s, also for %2$s</string>
+    <string name="notifications_cooking_cover_next_day">the day after</string>
+    <string name="notifications_cooking_cover_breakfast">breakfast</string>
+    <string name="notifications_cooking_cover_second_breakfast">second breakfast</string>
+    <string name="notifications_cooking_cover_lunch">lunch</string>
+    <string name="notifications_cooking_cover_snack">a snack</string>
+    <string name="notifications_cooking_cover_dinner">dinner</string>
 </resources>

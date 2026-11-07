@@ -16,15 +16,19 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
+import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.update.UpdateInstaller
 import net.whiteravens.dietapp.data.update.Updates
+import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.Palette
 import net.whiteravens.dietapp.notify.PhoneNotifier
 import net.whiteravens.dietapp.ui.common.Returns
+import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.DietAppRoot
 import net.whiteravens.dietapp.ui.theme.DietAppTheme
 import javax.inject.Inject
@@ -47,8 +51,18 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var installer: UpdateInstaller
 
+    @Inject
+    lateinit var notifications: NotificationRepository
+
+    @Inject
+    @ApplicationScope
+    lateinit var application: CoroutineScope
+
     /** A tap on a phone's notification asked for the list of notifications, not opened yet. */
     private var openNotifications by mutableStateOf(false)
+
+    /** A tap on a reminder of water asked for that profile's water, not opened yet. */
+    private var openWaterOf by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -56,6 +70,7 @@ class MainActivity : ComponentActivity() {
         // Only on a start of its own: an activity made again, the phone turned, has been asked already.
         if (savedInstanceState == null) {
             openNotifications = intent?.action == PhoneNotifier.OPEN_NOTIFICATIONS
+            water(intent)
             intent?.takeIf { it.action == UpdateInstaller.STATUS }?.let { status -> installer.answered(status, ::startActivity) }
         }
         // The phone's notifications, where they are on, keep the schedule this version asks for.
@@ -66,7 +81,12 @@ class MainActivity : ComponentActivity() {
             palette?.let { scheme ->
                 DietAppTheme(palette = scheme) {
                     Surface(Modifier.fillMaxSize()) {
-                        DietAppRoot(openNotifications = openNotifications, onNotificationsOpened = { openNotifications = false })
+                        DietAppRoot(
+                            openNotifications = openNotifications,
+                            onNotificationsOpened = { openNotifications = false },
+                            openWaterOf = openWaterOf,
+                            onWaterOpened = { openWaterOf = null },
+                        )
                     }
                 }
             }
@@ -76,8 +96,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.action == PhoneNotifier.OPEN_NOTIFICATIONS) openNotifications = true
+        water(intent)
         // What the system's installer answered of a newer build: the question it asks the user, or how it ended.
         if (intent.action == UpdateInstaller.STATUS) installer.answered(intent, ::startActivity)
+    }
+
+    /** A tap on a reminder of water: its profile's water is opened, and the reminder read, through the queue without a network. */
+    private fun water(intent: Intent?) {
+        if (intent?.action != PhoneNotifier.OPEN_WATER) return
+        openWaterOf = intent.getStringExtra(PhoneNotifier.EXTRA_PROFILE)
+        val reminder = intent.getStringExtra(PhoneNotifier.EXTRA_NOTIFICATION) ?: return
+        application.launch { attempt { notifications.read(reminder) } }
     }
 
     // Counted before the screens resume, so that they know the application came back to the front.

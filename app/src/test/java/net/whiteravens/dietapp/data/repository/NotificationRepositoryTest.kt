@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.domain.NotificationAbout
+import net.whiteravens.dietapp.domain.CookedAhead
 import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -30,6 +31,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * The account's notifications read, one marked read, without a network as well, and all at once,
@@ -164,6 +166,39 @@ class NotificationRepositoryTest {
         assertEquals("POST", sent.method)
         assertEquals("/api/notifications/read-all", sent.requestUrl!!.encodedPath)
         assertEquals(2, marked)
+    }
+
+    @Test
+    fun `a reminder of water says the day's water against its target, and one to cook ahead the dishes of its day and what each also covers`() {
+        server.enqueue(answer(200, "notifications-reminders"))
+
+        val read = runBlocking { repository().unread() }
+
+        val adam = "019b678b-524f-4ef5-a25f-d7b49e27857b"
+        val dayAfter = LocalDate.parse("2026-11-09")
+        assertEquals(
+            listOf(
+                AccountNotification("3219a624-604a-4a8f-b46e-6ad448534179", adam, NotificationAbout.WaterReminder(LocalDate.parse("2026-11-07"), 500, 2000), Instant.parse("2026-11-07T22:07:33.348Z")),
+                AccountNotification(
+                    "87f0552a-a001-489c-8077-308ad6d2e1e0",
+                    adam,
+                    NotificationAbout.CookingReminder(
+                        LocalDate.parse("2026-11-08"),
+                        listOf(
+                            CookedAhead("Savory millet skillet with tofu and mushrooms", dayAfter, "breakfast"),
+                            CookedAhead("Red lentil and tofu stew with millet", dayAfter, "lunch"),
+                            CookedAhead("Red lentil and pumpkin seed fritters with lemon", dayAfter, "snack"),
+                            CookedAhead("Ginger tofu with buckwheat and vegetables", dayAfter, "dinner"),
+                        ),
+                    ),
+                    Instant.parse("2026-11-07T22:07:33.164Z"),
+                ),
+                AccountNotification("234cae17-a37a-4504-9687-7e5247b86991", adam, NotificationAbout.WeightReminder(null), Instant.parse("2026-11-07T22:07:33.064Z")),
+            ),
+            read,
+        )
+        // A payload this version cannot read leaves the kind unknown rather than half said.
+        assertEquals(NotificationAbout.Other("water_reminder"), NotificationDto("n", adam, type = "water_reminder", createdAt = "2026-11-07T22:07:33.348Z").toDomain().about)
     }
 
     @Test

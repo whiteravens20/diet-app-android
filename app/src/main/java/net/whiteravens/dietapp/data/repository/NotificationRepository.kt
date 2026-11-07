@@ -19,6 +19,9 @@ import net.whiteravens.dietapp.domain.NotificationAbout
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.serialization.json.JsonArray
+import net.whiteravens.dietapp.domain.CookedAhead
+import java.time.LocalDate
 
 /**
  * The notifications of the account's profiles: those not read yet, one read, all read. One read goes
@@ -60,6 +63,8 @@ internal fun NotificationDto.toDomain() = AccountNotification(
         "product_rejected" -> NotificationAbout.ProductRejected(payload.text("name"), payload.text("reason"))
         "product_withdrawn" -> NotificationAbout.ProductWithdrawn(payload.text("name"), payload.text("reason"))
         "product_replaced" -> NotificationAbout.ProductReplaced(payload.text("name"), payload.text("replacedBy") == "open_food_facts")
+        "water_reminder" -> payload.waterReminder() ?: NotificationAbout.Other(type)
+        "cooking_reminder" -> payload.cookingReminder() ?: NotificationAbout.Other(type)
         else -> NotificationAbout.Other(type)
     },
     createdAt = Instant.parse(createdAt),
@@ -67,3 +72,19 @@ internal fun NotificationDto.toDomain() = AccountNotification(
 
 /** A word of a notification's payload; nothing where it is not there. */
 private fun JsonElement?.text(key: String): String = ((this as? JsonObject)?.get(key) as? JsonPrimitive)?.contentOrNull.orEmpty()
+
+private fun JsonElement?.number(key: String): Int? = ((this as? JsonObject)?.get(key) as? JsonPrimitive)?.intOrNull
+
+private fun JsonElement?.day(key: String): LocalDate? = text(key).takeIf { it.isNotEmpty() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+/** A reminder of water's payload; null where it is not one. */
+private fun JsonElement?.waterReminder(): NotificationAbout.WaterReminder? =
+    NotificationAbout.WaterReminder(day("day") ?: return null, number("ml") ?: return null, number("target") ?: return null)
+
+/** A reminder to cook ahead's payload; null where it is not one. */
+private fun JsonElement?.cookingReminder(): NotificationAbout.CookingReminder? {
+    val dishes = ((this as? JsonObject)?.get("dishes") as? JsonArray)?.map { dish ->
+        CookedAhead(dish.text("dish"), dish.day("alsoDate") ?: return null, dish.text("alsoMealType"))
+    }
+    return NotificationAbout.CookingReminder(day("date") ?: return null, dishes?.takeIf { it.isNotEmpty() } ?: return null)
+}

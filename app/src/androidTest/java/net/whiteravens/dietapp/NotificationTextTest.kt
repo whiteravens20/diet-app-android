@@ -10,19 +10,21 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import net.whiteravens.dietapp.domain.CookedAhead
 import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.ui.common.notificationText
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
 import java.util.Locale
 
 /**
  * What a notification says, in English and in Polish, as the web application says it: a reminder of
  * the weight counting the days since the last one, in each plural form, one where nothing is logged
- * yet, the review of preferences and a kind this version does not know; and how the bell counts
- * what is not read yet.
+ * yet, the review of preferences, a reminder of water, one to cook ahead by what its dishes also
+ * cover, and a kind this version does not know; and how the bell counts what is not read yet.
  */
 @RunWith(AndroidJUnit4::class)
 class NotificationTextTest {
@@ -41,6 +43,15 @@ class NotificationTextTest {
         NotificationAbout.ProductWithdrawn("Chleb", "Złe dane."),
         NotificationAbout.ProductReplaced("Chleb", fromOpenFoodFacts = true),
         NotificationAbout.ProductReplaced("Chleb", fromOpenFoodFacts = false),
+        NotificationAbout.WaterReminder(LocalDate.parse("2026-11-07"), 500, 2000),
+        NotificationAbout.CookingReminder(
+            LocalDate.parse("2026-11-08"),
+            listOf(
+                CookedAhead("Owsianka", LocalDate.parse("2026-11-09"), "breakfast"),
+                CookedAhead("Gulasz", LocalDate.parse("2026-11-09"), "lunch"),
+                CookedAhead("Zupa", LocalDate.parse("2026-11-08"), "dinner"),
+            ),
+        ),
         NotificationAbout.Other("plan_ready"),
     )
 
@@ -89,6 +100,8 @@ class NotificationTextTest {
                 "“Chleb” was withdrawn from the base and is back among your products: Złe dane.",
                 "Open Food Facts now knows “Chleb” by its code, so your copy gave way to it. Diary entries keep their figures.",
                 "The base of this instance now has “Chleb” under its code, so your copy gave way to it. Diary entries keep their figures.",
+                "Water today: 0.5 L of 2 L.",
+                "Tomorrow you cook ahead: Owsianka and Gulasz, also for the day after; Zupa, also for dinner.",
                 "A notification this version of the application cannot show.",
                 "New notification",
                 "4 new notifications",
@@ -111,6 +124,8 @@ class NotificationTextTest {
                 "„Chleb” wycofano z bazy i wrócił do Twoich produktów: Złe dane.",
                 "Open Food Facts zna już „Chleb” po kodzie, więc Twoja kopia ustąpiła. Wpisy w dzienniku zachowują swoje wartości.",
                 "Baza tej instancji ma już „Chleb” pod tym kodem, więc Twoja kopia ustąpiła. Wpisy w dzienniku zachowują swoje wartości.",
+                "Woda dziś: 0,5 l z 2 l.",
+                "Jutro gotujesz na zapas: Owsianka i Gulasz, też na pojutrze; Zupa, też na kolację.",
                 "Powiadomienie, którego ta wersja aplikacji nie umie pokazać.",
                 "Nowe powiadomienie",
                 "4 nowe powiadomienia",

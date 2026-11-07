@@ -49,13 +49,15 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 /**
  * The account's notifications not read yet, the newest first, each with the profile it is for. One
  * opened is read and leads where it points: a weight reminder to its profile's weights on the
- * dashboard ([onWeight]), a review of preferences to the profiles ([onPreferences]). One put away is
- * read where it stands, and all can be read at once.
+ * dashboard ([onWeight]), a reminder of water to its water there ([onWater]), a review of
+ * preferences to the profiles ([onPreferences]). One put away is read where it stands, and all can be
+ * read at once.
  */
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
     onWeight: (profileId: String) -> Unit,
+    onWater: (profileId: String) -> Unit,
     onPreferences: () -> Unit,
     onProducts: () -> Unit,
     viewModel: NotificationsViewModel = hiltViewModel(),
@@ -108,13 +110,18 @@ fun NotificationsScreen(
                 else -> items(state.shownItems, key = { it.id }) { notification ->
                     val go: (() -> Unit)? = when (notification.about) {
                         is NotificationAbout.WeightReminder -> { { onWeight(notification.profileId) } }
+                        // The profile's water card, as the web's link under a reminder's amounts.
+                        is NotificationAbout.WaterReminder -> { { onWater(notification.profileId) } }
                         NotificationAbout.PreferencesReview -> onPreferences
                         is NotificationAbout.ProductAccepted,
                         is NotificationAbout.ProductRejected,
                         is NotificationAbout.ProductWithdrawn,
                         is NotificationAbout.ProductReplaced,
                         -> onProducts
-                        is NotificationAbout.Other -> null
+                        // The web opens nothing from it either: what it cooks is in the plan's day.
+                        is NotificationAbout.CookingReminder,
+                        is NotificationAbout.Other,
+                        -> null
                     }
                     NotificationCard(
                         notification,
