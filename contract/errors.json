@@ -423,6 +423,15 @@
       "pl": "Brak zmian do zapisania."
     }
   },
+  "EXPENDITURE_NOTHING_PROPOSED": {
+    "statuses": [
+      409
+    ],
+    "messages": {
+      "en": "No correction of the target is proposed for this profile now.",
+      "pl": "Dla tego profilu nie ma teraz propozycji poprawki celu."
+    }
+  },
   "FAVORITE_LIMIT_REACHED": {
     "statuses": [
       409
@@ -475,6 +484,24 @@
     "messages": {
       "en": "You don't have access to that.",
       "pl": "Brak dostępu."
+    }
+  },
+  "HOUSEHOLD_LIST_NOT_FOUND": {
+    "statuses": [
+      404
+    ],
+    "messages": {
+      "en": "Household shopping list not found.",
+      "pl": "Nie znaleziono listy zakupów dla domu."
+    }
+  },
+  "HOUSEHOLD_PROFILE_TWICE": {
+    "statuses": [
+      400
+    ],
+    "messages": {
+      "en": "A household list takes one plan of each profile.",
+      "pl": "Lista dla domu bierze jeden plan z każdego profilu."
     }
   },
   "IDEMPOTENCY_KEY_REUSED": {
@@ -977,8 +1004,8 @@
       429
     ],
     "messages": {
-      "en": "You can write or change at most 50 products in 24 hours.",
-      "pl": "W ciągu doby możesz dodać lub zmienić najwyżej 50 produktów."
+      "en": "You can write or change at most 50 products in 24 hours.",
+      "pl": "W ciągu doby możesz dodać lub zmienić najwyżej 50 produktów."
     }
   },
   "OWN_PRODUCT_LIMIT": {
@@ -986,8 +1013,8 @@
       409
     ],
     "messages": {
-      "en": "An account holds at most 500 products of its own.",
-      "pl": "Konto może mieć najwyżej 500 własnych produktów."
+      "en": "An account holds at most 500 products of its own.",
+      "pl": "Konto może mieć najwyżej 500 własnych produktów."
     }
   },
   "OWN_PRODUCT_NOT_FOUND": {
@@ -1013,8 +1040,8 @@
       429
     ],
     "messages": {
-      "en": "You can send at most 10 products to the base in 24 hours.",
-      "pl": "W ciągu doby możesz wysłać do bazy najwyżej 10 produktów."
+      "en": "You can send at most 10 products to the base in 24 hours.",
+      "pl": "W ciągu doby możesz wysłać do bazy najwyżej 10 produktów."
     }
   },
   "OWN_RECIPE_DAILY_LIMIT": {
@@ -1098,6 +1125,15 @@
       "pl": "Nie znaleziono planu posiłków."
     }
   },
+  "PLAN_TARGET_TYPED": {
+    "statuses": [
+      409
+    ],
+    "messages": {
+      "en": "This plan keeps the target typed when it was made: the profile's target does not change it.",
+      "pl": "Ten plan ma cel wpisany przy jego tworzeniu: cel profilu go nie zmienia."
+    }
+  },
   "PRODUCTS_NOT_OFFERED": {
     "statuses": [
       404
@@ -1157,8 +1193,8 @@
       409
     ],
     "messages": {
-      "en": "The last import of these countries began less than 24 hours ago.",
-      "pl": "Ostatni import tych krajów zaczął się mniej niż 24 godziny temu."
+      "en": "The last import of these countries began less than 24 hours ago.",
+      "pl": "Ostatni import tych krajów zaczął się mniej niż 24 godziny temu."
     }
   },
   "PRODUCT_LOOKUPS_BUSY": {
@@ -1175,7 +1211,7 @@
       429
     ],
     "messages": {
-      "en": "That is all the new codes an account can check in 24 hours. Products this instance knows still work.",
+      "en": "That is all the new codes an account can check in 24 hours. Products this instance knows still work.",
       "pl": "Konto może sprawdzić tyle nowych kodów w ciągu doby. Produkty, które ta instancja już zna, działają dalej."
     }
   },
@@ -1610,6 +1646,24 @@
     "messages": {
       "en": "A verification mail was sent a moment ago. Look for it, or ask again in a couple of minutes.",
       "pl": "Wiadomość z linkiem potwierdzającym została wysłana przed chwilą. Sprawdź skrzynkę albo poproś ponownie za parę minut."
+    }
+  },
+  "WATER_DAY_FULL": {
+    "statuses": [
+      409
+    ],
+    "messages": {
+      "en": "This day holds no more entries of water.",
+      "pl": "Ten dzień nie zmieści więcej wpisów wody."
+    }
+  },
+  "WATER_ENTRY_NOT_FOUND": {
+    "statuses": [
+      404
+    ],
+    "messages": {
+      "en": "That water entry is not there any more.",
+      "pl": "Tego wpisu wody już nie ma."
     }
   },
   "WEIGHT_DAY_FULL": {

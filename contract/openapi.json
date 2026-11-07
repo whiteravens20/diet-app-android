@@ -3615,6 +3615,284 @@
         }
       }
     },
+    "/api/diary/expenditure": {
+      "get": {
+        "operationId": "DiarySummary_expenditure",
+        "tags": [
+          "diary"
+        ],
+        "summary": "What the diary and the weights of the three weeks before today say a profile really uses, worked out again once a week, and the correction of its target that comes of it: proposed, never applied unasked.",
+        "description": "What the diary and the weights of the three weeks before today say a profile really uses, worked out again once a week, and the correction of its target that comes of it: proposed, never applied unasked.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expenditure"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/diary/expenditure/accept": {
+      "post": {
+        "operationId": "DiarySummary_accept",
+        "tags": [
+          "diary"
+        ],
+        "summary": "Take the correction proposed; refused with `EXPENDITURE_NOTHING_PROPOSED` where none is.",
+        "description": "Take the correction proposed; refused with `EXPENDITURE_NOTHING_PROPOSED` where none is.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenditureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expenditure"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/diary/expenditure/drop": {
+      "post": {
+        "operationId": "DiarySummary_drop",
+        "tags": [
+          "diary"
+        ],
+        "summary": "Take a kept correction away: the formula's target again, and no proposal for two weeks.",
+        "description": "Take a kept correction away: the formula's target again, and no proposal for two weeks.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenditureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expenditure"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/diary/expenditure/later": {
+      "post": {
+        "operationId": "DiarySummary_later",
+        "tags": [
+          "diary"
+        ],
+        "summary": "Put the proposal off for two weeks.",
+        "description": "Put the proposal off for two weeks.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenditureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expenditure"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/diary/week": {
+      "get": {
+        "operationId": "DiarySummary_week",
+        "tags": [
+          "diary"
+        ],
+        "summary": "The week of a profile in sum: the seven days that end with `?to=`, or with yesterday by the client's day.",
+        "description": "The week of a profile in sum: the seven days that end with `?to=`, or with yesterday by the client's day. What the days with an entry or an eaten meal ate on average against what they aimed at, how many came within a tenth of it, and where the weights of the last 28 days lead.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CalendarDay"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
     "/api/favorite-sets": {
       "get": {
         "operationId": "FavoriteSets_list",
@@ -4044,6 +4322,250 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/household-lists": {
+      "get": {
+        "operationId": "HouseholdLists_list",
+        "tags": [
+          "household-lists"
+        ],
+        "summary": "The household lists of the account, the newest first.",
+        "description": "The household lists of the account, the newest first.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HouseholdList"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      },
+      "post": {
+        "operationId": "HouseholdLists_generate",
+        "tags": [
+          "household-lists"
+        ],
+        "summary": "Make a household list of plans of several profiles, one a profile, for the same days.",
+        "description": "Make a household list of plans of several profiles, one a profile, for the same days. Each plan's lists that share a day with its part are replaced, as by a list of its own.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateHouseholdListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdList"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/household-lists/{id}": {
+      "get": {
+        "operationId": "HouseholdLists_get",
+        "tags": [
+          "household-lists"
+        ],
+        "summary": "One household list.",
+        "description": "One household list.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdList"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "HouseholdLists_remove",
+        "tags": [
+          "household-lists"
+        ],
+        "summary": "Delete a household list and its parts.",
+        "description": "Delete a household list and its parts. What was obtained for days still ahead goes into each profile's pantry.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; the answer has no body."
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/household-lists/{id}/items/{itemId}": {
+      "patch": {
+        "operationId": "HouseholdLists_updateItem",
+        "tags": [
+          "household-lists"
+        ],
+        "summary": "Change a row of a household list, and with it the row of each part: what the household holds, what is at home, or the tick.",
+        "description": "Change a row of a household list, and with it the row of each part: what the household holds, what is at home, or the tick.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShoppingItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdList"
                 }
               }
             }
@@ -5517,6 +6039,80 @@
         }
       }
     },
+    "/api/meal-plans/{id}/retarget": {
+      "post": {
+        "operationId": "MealPlans_retarget",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "Take the profile's target from today: the plan's target becomes the one the profile has now, its days from today get their targets from it, kinds of day and their own targets kept, the same dishes in other portions; days before today stay (`RetargetPlanRequest`).",
+        "description": "Take the profile's target from today: the plan's target becomes the one the profile has now, its days from today get their targets from it, kinds of day and their own targets kept, the same dishes in other portions; days before today stay (`RetargetPlanRequest`).\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetargetPlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
     "/api/meal-plans/{id}/use-up": {
       "post": {
         "operationId": "MealPlans_useUpSuggestions",
@@ -6976,6 +7572,106 @@
           "default": {
             "$ref": "#/components/responses/Refused"
           }
+        }
+      }
+    },
+    "/api/profiles/{id}/keep-weight": {
+      "post": {
+        "operationId": "Profiles_keepWeight",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Keep the weight once the target weight is reached: the pace becomes keeping the weight.",
+        "description": "Keep the weight once the target weight is reached: the pace becomes keeping the weight.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/profiles/{id}/keep-weight/later": {
+      "post": {
+        "operationId": "Profiles_putOffKeepingWeight",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Put the offer to keep the weight off for two weeks from the client's day (\"Nie teraz\").",
+        "description": "Put the offer to keep the weight off for two weeks from the client's day (\"Nie teraz\").\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
         }
       }
     },
@@ -9403,6 +10099,165 @@
         }
       }
     },
+    "/api/water": {
+      "get": {
+        "operationId": "Water_day",
+        "tags": [
+          "water"
+        ],
+        "summary": "The water of a day of a profile's calendar (`?day=`): what was drunk in all, against its target.",
+        "description": "The water of a day of a profile's calendar (`?day=`): what was drunk in all, against its target.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CalendarDay"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaterDay"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      },
+      "post": {
+        "operationId": "Water_add",
+        "tags": [
+          "water"
+        ],
+        "summary": "Water drunk on a day of today or at most a year before it, answered with the day as it is then.",
+        "description": "Water drunk on a day of today or at most a year before it, answered with the day as it is then. A day holds at most 50 entries. Sent again with the same `Idempotency-Key` within a week, it writes nothing and is answered with the day as it is now.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "A key the client chose for this addition, such as a UUID, quoted or not. Sent again with the same key within a week, the request is answered from what the first one wrote and writes nothing; the same key with another request is refused with 422 `IDEMPOTENCY_KEY_REUSED`.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWaterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaterDay"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 60,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/water/{id}": {
+      "delete": {
+        "operationId": "Water_remove",
+        "tags": [
+          "water"
+        ],
+        "summary": "Remove an entry written by mistake, answered with its day as it is then.",
+        "description": "Remove an entry written by mistake, answered with its day as it is then.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaterDay"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 60,
+          "seconds": 60
+        }
+      }
+    },
     "/api/weights": {
       "get": {
         "operationId": "Weights_list",
@@ -9578,8 +10433,7 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "maxLength": 64
+              "$ref": "#/components/schemas/TimeZone"
             }
           }
         ],
@@ -9979,6 +10833,28 @@
         "required": [
           "profileId",
           "recipeId"
+        ]
+      },
+      "AddWaterRequest": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "ml": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "profileId",
+          "day",
+          "ml"
         ]
       },
       "AdminAiAccess": {
@@ -11735,6 +12611,12 @@
           "acknowledgeRisk": {
             "default": false,
             "type": "boolean"
+          },
+          "expenditureCorrection": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -5000,
+            "maximum": 5000
           }
         },
         "required": [
@@ -13486,6 +14368,110 @@
           "revision"
         ]
       },
+      "Expenditure": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "too_little",
+              "near",
+              "proposed",
+              "later",
+              "kept"
+            ]
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "weights": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maintenance": {
+            "type": "integer"
+          },
+          "correction": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "type": "integer"
+          },
+          "targetCorrected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checkedOn": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "laterUntil": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "days",
+          "weights",
+          "estimate",
+          "maintenance",
+          "correction",
+          "target",
+          "targetCorrected",
+          "checkedOn",
+          "laterUntil"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenditureRequest": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "profileId"
+        ]
+      },
       "FavoriteMark": {
         "type": "object",
         "properties": {
@@ -13807,6 +14793,31 @@
         ],
         "additionalProperties": false
       },
+      "GenerateHouseholdListRequest": {
+        "type": "object",
+        "properties": {
+          "planIds": {
+            "minItems": 2,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "fromDate": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "toDate": {
+            "$ref": "#/components/schemas/CalendarDay"
+          }
+        },
+        "required": [
+          "planIds",
+          "fromDate",
+          "toDate"
+        ]
+      },
       "GeneratePlanRequest": {
         "type": "object",
         "properties": {
@@ -13958,6 +14969,280 @@
           "status",
           "db",
           "time"
+        ],
+        "additionalProperties": false
+      },
+      "HouseholdList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "toDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "parts": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "planId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "profileId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "fromDate": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "toDate": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "stale": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "listId",
+                "planId",
+                "profileId",
+                "profile",
+                "fromDate",
+                "toDate",
+                "stale"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HouseholdListGroup"
+            }
+          },
+          "totalEstimatedCalories": {
+            "type": "number",
+            "minimum": 0
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "fromDate",
+          "toDate",
+          "parts",
+          "groups",
+          "totalEstimatedCalories",
+          "stale",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "HouseholdListGroup": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HouseholdListItem"
+            }
+          },
+          "estimatedCalories": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "category",
+          "items",
+          "estimatedCalories"
+        ],
+        "additionalProperties": false
+      },
+      "HouseholdListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ingredientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          "totalQuantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          },
+          "displayUnit": {
+            "$ref": "#/components/schemas/DisplayUnit"
+          },
+          "gramsPerPiece": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "alreadyHaveQuantity": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "toBuyQuantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "purchasedQuantity": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pantryBestBefore": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estimatedCalories": {
+            "type": "number",
+            "minimum": 0
+          },
+          "packs": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "size": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "sizeUnit": {
+                    "$ref": "#/components/schemas/DisplayUnit"
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "count",
+                  "size",
+                  "sizeUnit",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checked": {
+            "default": false,
+            "type": "boolean"
+          },
+          "shares": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "profileId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "totalQuantity": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "profileId",
+                "profile",
+                "totalQuantity"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "ingredientId",
+          "name",
+          "category",
+          "totalQuantity",
+          "unit",
+          "displayUnit",
+          "gramsPerPiece",
+          "alreadyHaveQuantity",
+          "toBuyQuantity",
+          "purchasedQuantity",
+          "pantryBestBefore",
+          "estimatedCalories",
+          "packs",
+          "checked",
+          "shares"
         ],
         "additionalProperties": false
       },
@@ -15619,6 +16904,29 @@
               "$ref": "#/components/schemas/PlanWeek"
             }
           },
+          "targetMoved": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profileTarget": {
+                    "type": "integer"
+                  },
+                  "planTarget": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "profileTarget",
+                  "planTarget"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "averageDailyNutrition": {
             "$ref": "#/components/schemas/Nutrition"
           },
@@ -15697,6 +17005,7 @@
           "dietType",
           "days",
           "weeks",
+          "targetMoved",
           "averageDailyNutrition",
           "targetMacros",
           "averageOff",
@@ -16336,7 +17645,9 @@
           "product_accepted",
           "product_rejected",
           "product_replaced",
-          "product_withdrawn"
+          "product_withdrawn",
+          "cooking_reminder",
+          "water_reminder"
         ]
       },
       "Nutrition": {
@@ -18578,6 +19889,19 @@
               }
             ]
           },
+          "waterTargetMl": {
+            "default": 2000,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 250,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "activityLevel": {
             "default": "moderate",
             "$ref": "#/components/schemas/ActivityLevel"
@@ -18619,6 +19943,14 @@
           "weightReminderCadence": {
             "default": "weekly",
             "$ref": "#/components/schemas/WeightReminderCadence"
+          },
+          "cookingReminders": {
+            "default": true,
+            "type": "boolean"
+          },
+          "waterReminders": {
+            "default": false,
+            "type": "boolean"
           },
           "customMacroSplit": {
             "default": null,
@@ -18672,6 +20004,29 @@
               }
             ]
           },
+          "expenditureCorrectionKcal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetWeightReached": {
+            "type": "boolean"
+          },
+          "targetReachedLaterUntil": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -18688,17 +20043,23 @@
           "heightCm",
           "weightKg",
           "targetWeightKg",
+          "waterTargetMl",
           "activityLevel",
           "dietType",
           "weeklyLossTarget",
           "manualCalorieTarget",
           "mealCount",
           "weightReminderCadence",
+          "cookingReminders",
+          "waterReminders",
           "customMacroSplit",
           "preferences",
           "id",
           "userId",
           "riskAcknowledgedAt",
+          "expenditureCorrectionKcal",
+          "targetWeightReached",
+          "targetReachedLaterUntil",
           "createdAt",
           "updatedAt"
         ],
@@ -18751,6 +20112,19 @@
               }
             ]
           },
+          "waterTargetMl": {
+            "default": 2000,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 250,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "activityLevel": {
             "default": "moderate",
             "$ref": "#/components/schemas/ActivityLevel"
@@ -18795,6 +20169,14 @@
           "weightReminderCadence": {
             "default": "weekly",
             "$ref": "#/components/schemas/WeightReminderCadence"
+          },
+          "cookingReminders": {
+            "default": true,
+            "type": "boolean"
+          },
+          "waterReminders": {
+            "default": false,
+            "type": "boolean"
           },
           "customMacroSplit": {
             "default": null,
@@ -19224,6 +20606,18 @@
               }
             ]
           },
+          "waterTargetMl": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 250,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "manualCalorieTarget": {
             "anyOf": [
               {
@@ -19243,6 +20637,12 @@
           },
           "weightReminderCadence": {
             "$ref": "#/components/schemas/WeightReminderCadence"
+          },
+          "cookingReminders": {
+            "type": "boolean"
+          },
+          "waterReminders": {
+            "type": "boolean"
           },
           "customMacroSplit": {
             "anyOf": [
@@ -21396,6 +22796,19 @@
         ],
         "additionalProperties": false
       },
+      "RetargetPlanRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
       "RetiredIngredient": {
         "type": "object",
         "properties": {
@@ -21766,6 +23179,16 @@
                 "type": "null"
               }
             ]
+          },
+          "timeZone": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimeZone"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -21779,7 +23202,8 @@
           "theme",
           "palette",
           "aiMode",
-          "weightUnit"
+          "weightUnit",
+          "timeZone"
         ],
         "additionalProperties": false
       },
@@ -22026,6 +23450,33 @@
           "stale": {
             "type": "boolean"
           },
+          "household": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "profiles"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -22039,6 +23490,7 @@
           "groups",
           "totalEstimatedCalories",
           "stale",
+          "household",
           "createdAt"
         ],
         "additionalProperties": false
@@ -22600,6 +24052,10 @@
           "system"
         ]
       },
+      "TimeZone": {
+        "type": "string",
+        "maxLength": 64
+      },
       "TranslationGenerateSpec": {
         "type": "object",
         "properties": {
@@ -22733,6 +24189,9 @@
                 "type": "null"
               }
             ]
+          },
+          "timeZone": {
+            "$ref": "#/components/schemas/TimeZone"
           }
         }
       },
@@ -22977,10 +24436,206 @@
           "token"
         ]
       },
+      "WaterDay": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "ml": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "entries": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "last": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WaterEntry"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "days": {
+            "minItems": 7,
+            "maxItems": 7,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "$ref": "#/components/schemas/CalendarDay"
+                },
+                "ml": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "day",
+                "ml"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "day",
+          "ml",
+          "target",
+          "entries",
+          "last",
+          "days"
+        ],
+        "additionalProperties": false
+      },
+      "WaterEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ml": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ml",
+          "at"
+        ],
+        "additionalProperties": false
+      },
       "WebAddress": {
         "type": "string",
         "maxLength": 500,
         "format": "uri"
+      },
+      "WeekSummary": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "to": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "counted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "empty": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "eaten": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Nutrition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Nutrition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "withinTarget": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "water": {
+            "$ref": "#/components/schemas/WeekWater"
+          },
+          "weight": {
+            "$ref": "#/components/schemas/WeightTrend"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "counted",
+          "empty",
+          "eaten",
+          "target",
+          "withinTarget",
+          "water",
+          "weight"
+        ],
+        "additionalProperties": false
+      },
+      "WeekWater": {
+        "type": "object",
+        "properties": {
+          "counted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "averageMl": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reached": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          }
+        },
+        "required": [
+          "counted",
+          "averageMl",
+          "target",
+          "reached"
+        ],
+        "additionalProperties": false
       },
       "WeeklyLossTarget": {
         "type": "string",
@@ -23060,6 +24715,39 @@
           "daily",
           "weekly"
         ]
+      },
+      "WeightTrend": {
+        "type": "object",
+        "properties": {
+          "kgPerWeek": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "targetKg": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "reachesTargetOn": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kgPerWeek",
+          "targetKg",
+          "reachesTargetOn"
+        ],
+        "additionalProperties": false
       },
       "WeightUnit": {
         "type": "string",
