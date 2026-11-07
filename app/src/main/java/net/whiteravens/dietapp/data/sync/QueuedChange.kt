@@ -33,6 +33,17 @@ sealed interface QueuedChange {
         val have: Double? = null,
     ) : QueuedChange
 
+    /** A row of a household list ticked or not, or what of it is at home or was bought (0 for nothing). */
+    @Serializable
+    @SerialName("household-row")
+    data class HouseholdRow(
+        val householdId: String,
+        val itemId: String,
+        val checked: Boolean? = null,
+        val atHome: Double? = null,
+        val have: Double? = null,
+    ) : QueuedChange
+
     /** A meal of a plan marked eaten or not. */
     @Serializable
     @SerialName("eaten")

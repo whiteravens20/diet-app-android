@@ -1013,6 +1013,8 @@ data class ShoppingItem(
     val checked: Boolean,
     /** What a piece weighs, for a row counted in pieces of some kind; null for one weighed. */
     val gramsPerPiece: Double? = null,
+    /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
+    val shares: List<ItemShare> = emptyList(),
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome
@@ -1081,6 +1083,8 @@ data class ShoppingList(
     val createdAt: String,
     /** Epoch millis of the cache row this came from; null when fresh off the network. */
     val syncedAt: Long?,
+    /** The household list this one is a part of; null for a list of its own. */
+    val household: HouseholdOf? = null,
 ) {
     val rows: Int get() = groups.sumOf { it.items.size }
     val ticked: Int get() = groups.sumOf { group -> group.items.count { it.checked } }
@@ -1088,6 +1092,46 @@ data class ShoppingList(
     /** Whether the list is for a day of the days from [from] to [to] (yyyy-MM-dd). */
     fun meets(from: String, to: String): Boolean = fromDate <= to && from <= toDate
 }
+
+/** What a profile's plan needs of a row of a household list, in the row's unit. */
+data class ItemShare(val profileId: String, val profile: String, val totalQuantity: Double)
+
+/** The household list a plan's own list is a part of, and the profiles it is for. */
+data class HouseholdOf(val id: String, val profiles: List<String>)
+
+/**
+ * One list from the plans of several profiles for the same days, each plan's own list of the days a
+ * part of it ([parts]): its rows summed by ingredient, each with what each profile needs of it.
+ */
+data class HouseholdList(
+    val id: String,
+    val fromDate: String,
+    val toDate: String,
+    val parts: List<HouseholdPart>,
+    val groups: List<ShoppingGroup>,
+    val totalEstimatedCalories: Double,
+    /** A plan's menu of the days changed after the list was made. */
+    val stale: Boolean,
+    /** Epoch millis of the cache row this came from; null when fresh off the network. */
+    val syncedAt: Long? = null,
+) {
+    val rows: Int get() = groups.sumOf { it.items.size }
+    val ticked: Int get() = groups.sumOf { group -> group.items.count { it.checked } }
+
+    /** The names of the profiles it is for, in its parts' order. */
+    val profiles: List<String> get() = parts.map { it.profile }
+}
+
+/** A plan's own list as a part of a household list: whose plan it is, its days, and whether it is out of date. */
+data class HouseholdPart(
+    val listId: String,
+    val planId: String,
+    val profileId: String,
+    val profile: String,
+    val fromDate: String,
+    val toDate: String,
+    val stale: Boolean,
+)
 
 /** What the app knows of the version of the server it talks to. */
 sealed interface ServerVersion {

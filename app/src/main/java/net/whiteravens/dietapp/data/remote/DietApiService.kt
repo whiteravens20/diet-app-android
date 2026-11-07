@@ -539,4 +539,20 @@ interface DietApiService {
         @Path("itemId") itemId: String,
         @Body body: UpdateShoppingItemRequest,
     ): ShoppingListDto
+
+    /** The account's household lists, the newest first. */
+    @GET("household-lists")
+    suspend fun householdLists(): List<HouseholdListDto>
+
+    /** Makes a household list of plans of several profiles for some days; the plans' own lists of the days give way to their parts. */
+    @POST("household-lists")
+    suspend fun makeHouseholdList(@Body body: GenerateHouseholdListRequest): HouseholdListDto
+
+    /** Deletes a household list and its parts in the plans' lists. */
+    @DELETE("household-lists/{id}")
+    suspend fun deleteHouseholdList(@Path("id") id: String)
+
+    /** Changes a row of a household list, as a row of a plan's list is changed; the list as it then is. */
+    @PATCH("household-lists/{id}/items/{itemId}")
+    suspend fun updateHouseholdItem(@Path("id") id: String, @Path("itemId") itemId: String, @Body body: UpdateShoppingItemRequest): HouseholdListDto
 }

@@ -82,9 +82,13 @@ day), `users-me-no-time-zone.json`, `users-me-time-zone-saved.json` and
 `users-me-time-zone-refused.json` (an account that names no time zone, Europe/Warsaw saved as its
 own, and a zone nobody knows refused), `notifications-reminders.json` (what the worker reminded a
 profile of, its account's clients in America/Sao_Paulo, half a litre drunk and a plan for cooking
-ahead from the next day: to drink, to cook ahead and to log a weight) from API 0.218.0, captured on
-2026-11-07 from an instance of diet-app's `dev` at `e95a172`; the others from API 0.19.0, captured
-on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+ahead from the next day: to drink, to cook ahead and to log a weight), `household-list-made.json`,
+`household-lists.json`, `household-list-ticked.json`, `shopping-lists-household-part.json`,
+`household-list-profile-twice.json`, `household-lists-none.json` and `household-list-unknown.json`
+(a household list of Adam's and Ewa's plans of three days for the first two: made, read, its first
+row ticked, Adam's part among his plan's lists, two plans of Adam's refused, and none left once it
+was deleted, deleted again) from API 0.218.0, captured on 2026-11-07 from an instance of diet-app's
+`dev` at `e95a172`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

@@ -74,6 +74,11 @@ import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.TargetMoved
+import net.whiteravens.dietapp.data.remote.HouseholdListDto
+import net.whiteravens.dietapp.domain.HouseholdList
+import net.whiteravens.dietapp.domain.HouseholdOf
+import net.whiteravens.dietapp.domain.HouseholdPart
+import net.whiteravens.dietapp.domain.ItemShare
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
 
@@ -451,6 +456,7 @@ fun ShoppingListItemDto.toDomain() = ShoppingItem(
     packs = packs?.let { RowPacks(it.count, it.size, it.sizeUnit, it.quantity) },
     checked = checked,
     gramsPerPiece = gramsPerPiece,
+    shares = shares.map { ItemShare(it.profileId, it.profile, it.totalQuantity) },
 )
 
 fun ShoppingListGroupDto.toDomain() = ShoppingGroup(
@@ -468,5 +474,17 @@ fun ShoppingListDto.toDomain(syncedAt: Long? = null) = ShoppingList(
     totalEstimatedCalories = totalEstimatedCalories,
     stale = stale,
     createdAt = createdAt,
+    syncedAt = syncedAt,
+    household = household?.let { HouseholdOf(it.id, it.profiles) },
+)
+
+fun HouseholdListDto.toDomain(syncedAt: Long? = null) = HouseholdList(
+    id = id,
+    fromDate = fromDate,
+    toDate = toDate,
+    parts = parts.map { HouseholdPart(it.listId, it.planId, it.profileId, it.profile, it.fromDate, it.toDate, it.stale) },
+    groups = groups.map(ShoppingListGroupDto::toDomain),
+    totalEstimatedCalories = totalEstimatedCalories,
+    stale = stale,
     syncedAt = syncedAt,
 )

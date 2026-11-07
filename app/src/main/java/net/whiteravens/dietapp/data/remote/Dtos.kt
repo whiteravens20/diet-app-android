@@ -1862,6 +1862,8 @@ data class ShoppingListItemDto(
     /** How the row is bought in packs; null for an ingredient not sold in packs, or nothing left to buy. */
     val packs: ShoppingPacksDto? = null,
     val checked: Boolean = false,
+    /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
+    val shares: List<ItemShareDto> = emptyList(),
 )
 
 /** [count] packs of [size] [sizeUnit], which come to [quantity] in the row's unit. */
@@ -1889,8 +1891,51 @@ data class ShoppingListDto(
      * resized after the list was made. Generating a list for the same dates again replaces it.
      */
     val stale: Boolean,
+    /** The household list the list is a part of, with the profiles it is for; null for a list of its own. */
+    val household: ShoppingListHouseholdDto? = null,
     val createdAt: String,
 )
+
+/** What a profile's plan needs of a row of a household list, in the row's unit. */
+@Serializable
+data class ItemShareDto(val profileId: String, val profile: String, val totalQuantity: Double)
+
+/** The household list a plan's own list is a part of: its id, and the names of the profiles it is for. */
+@Serializable
+data class ShoppingListHouseholdDto(val id: String, val profiles: List<String>)
+
+/**
+ * A household list: one list from the plans of several profiles for the same days, each plan's own
+ * list of the days a part of it, its rows summed by ingredient with what each profile needs of them.
+ */
+@Serializable
+data class HouseholdListDto(
+    val id: String,
+    val fromDate: String,
+    val toDate: String,
+    val parts: List<HouseholdPartDto>,
+    val groups: List<ShoppingListGroupDto>,
+    val totalEstimatedCalories: Double,
+    /** A plan's menu of the days changed after the list was made. */
+    val stale: Boolean,
+    val createdAt: String,
+)
+
+/** A plan's own list as a part of a household list: whose plan it is, its days, and whether it is out of date. */
+@Serializable
+data class HouseholdPartDto(
+    val listId: String,
+    val planId: String,
+    val profileId: String,
+    val profile: String,
+    val fromDate: String,
+    val toDate: String,
+    val stale: Boolean,
+)
+
+/** POST `/household-lists`: a household list of the plans [planIds], one of each profile, for the days from [fromDate] to [toDate]. */
+@Serializable
+data class GenerateHouseholdListRequest(val planIds: List<String>, val fromDate: String, val toDate: String)
 
 /** An ingredient named by its id and its name. */
 @Serializable

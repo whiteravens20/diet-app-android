@@ -82,6 +82,27 @@ interface CacheDao {
     suspend fun deleteShoppingList(id: String)
 }
 
+/** A household list of the account, as the API answered it. */
+@Entity(tableName = "cached_household_list")
+data class CachedHouseholdList(
+    @PrimaryKey val id: String,
+    val json: String,
+    val syncedAt: Long,
+)
+
+/** The household lists kept for a start without a network. */
+@Dao
+interface HouseholdListDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(list: CachedHouseholdList)
+
+    @Query("SELECT * FROM cached_household_list ORDER BY syncedAt DESC")
+    suspend fun all(): List<CachedHouseholdList>
+
+    @Query("DELETE FROM cached_household_list WHERE id = :id")
+    suspend fun delete(id: String)
+}
+
 /** A day of a profile's diary, as `GET /diary/day` answered it. */
 @Entity(tableName = "cached_diary_day", primaryKeys = ["profileId", "date"])
 data class CachedDiaryDay(
@@ -196,10 +217,10 @@ interface PendingChangeDao {
 }
 
 @Database(
-    entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class, PendingChangeRow::class, CachedDiaryDay::class, CachedProfile::class],
-    version = 4,
+    entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class, PendingChangeRow::class, CachedDiaryDay::class, CachedProfile::class, CachedHouseholdList::class],
+    version = 5,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
 )
 abstract class CacheDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao
@@ -207,6 +228,8 @@ abstract class CacheDatabase : RoomDatabase() {
     abstract fun pendingChanges(): PendingChangeDao
 
     abstract fun keptReads(): KeptReadsDao
+
+    abstract fun householdLists(): HouseholdListDao
 
     companion object {
         /** The file the app keeps it in. */

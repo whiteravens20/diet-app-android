@@ -189,4 +189,7 @@ object AppModule {
 
     @Provides
     fun keptReadsDao(db: CacheDatabase) = db.keptReads()
+
+    @Provides
+    fun householdListDao(db: CacheDatabase) = db.householdLists()
 }

@@ -2063,4 +2063,6 @@
     <string name="notifications_cooking_cover_dinner">kolację</string>
     <!-- A reminder of water once a press of an amount added it -->
     <string name="notifications_water_added">Dodano %1$s\u00A0· %2$s</string>
+    <!-- A change of a household list's row, as the changes waiting name it -->
+    <string name="change_kind_household_row">zmiana wiersza listy dla domu</string>
 </resources>

@@ -37,6 +37,9 @@
 -keep class net.whiteravens.dietapp.data.local.CachedDiaryDay { *; }
 -keep class net.whiteravens.dietapp.data.local.CacheDao { *; }
 -keep class net.whiteravens.dietapp.data.local.CachedMealPlan { *; }
+-keep class net.whiteravens.dietapp.data.local.CachedShoppingList { *; }
+-keep class net.whiteravens.dietapp.data.local.HouseholdListDao { *; }
+-keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
 

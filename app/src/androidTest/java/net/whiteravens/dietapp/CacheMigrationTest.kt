@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.local.CacheDatabase
+import net.whiteravens.dietapp.data.local.CachedHouseholdList
 import net.whiteravens.dietapp.data.local.CachedDiaryDay
 import net.whiteravens.dietapp.data.local.CachedProfile
 import net.whiteravens.dietapp.data.local.PendingChangeRow
@@ -100,6 +101,29 @@ class CacheMigrationTest {
 
                 assertEquals("{}", cache.keptReads().diaryDay("profile", "2026-10-31")?.json)
                 assertEquals(listOf("b"), cache.keptReads().profiles().map { it.id })
+            }
+        } finally {
+            cache.close()
+        }
+    }
+
+    @Test
+    fun aCacheFromBeforeTheHouseholdListsKeepsItsCopiesAndGainsAnEmptyOneOfThem() {
+        leftBy(4) { db ->
+            db.execSQL("INSERT INTO cached_shopping_list (id, planId, json, syncedAt) VALUES ('list', 'plan', '{\"id\":\"list\"}', 1)")
+            db.execSQL("INSERT INTO pending_change (kind, change, madeAt) VALUES ('shopping-row', '{}', 2)")
+        }
+
+        val cache = CacheDatabase.open(context, name)
+        try {
+            runBlocking {
+                assertEquals("{\"id\":\"list\"}", cache.cacheDao().shoppingList("list")?.json)
+                assertEquals(listOf("shopping-row"), cache.pendingChanges().waiting().first().map { it.kind })
+                assertEquals(emptyList<CachedHouseholdList>(), cache.householdLists().all())
+
+                cache.householdLists().upsert(CachedHouseholdList("household", "{}", 3))
+
+                assertEquals(listOf("household"), cache.householdLists().all().map { it.id })
             }
         } finally {
             cache.close()
