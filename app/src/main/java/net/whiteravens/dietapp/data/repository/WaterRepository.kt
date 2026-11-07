@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
+import net.whiteravens.dietapp.data.config.WateredStore
 import net.whiteravens.dietapp.data.remote.AddWaterRequest
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.WaterDayDto
@@ -23,13 +24,14 @@ import javax.inject.Singleton
  * The water a profile drinks, by day of its calendar: a day read, an amount added, an entry
  * removed. An addition or a removal goes through the queue of changes, and waits there for a
  * network where there is none: an addition with a key that has the server write it once however
- * often it is sent.
+ * often it is sent. The profile water was added for is the one the icon's shortcuts add to next.
  */
 @Singleton
 class WaterRepository @Inject constructor(
     private val api: DietApiService,
     private val json: Json,
     private val queue: ChangeQueue,
+    private val watered: WateredStore,
 ) {
     /** The water of [profileId]'s [day], with the seven days that end with it. */
     suspend fun day(profileId: String, day: LocalDate): WaterDay =
@@ -38,7 +40,7 @@ class WaterRepository @Inject constructor(
     /** Adds [ml] to [profileId]'s [day]: the day as the API then has it, or kept to be sent in its turn. */
     suspend fun add(profileId: String, day: LocalDate, ml: Int): Submitted<WaterDay> {
         val queued = QueuedChange.WaterAdded(profileId, day.toString(), ml, UUID.randomUUID().toString())
-        return queue.submit(queued) { send(queued) }
+        return queue.submit(queued) { send(queued) }.also { watered.watered(profileId) }
     }
 
     /** Sends water added; answers its day as the API then has it. */

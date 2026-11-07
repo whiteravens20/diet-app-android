@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import android.content.Intent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -20,7 +21,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.AnnotatedString
+import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.heldTogether
@@ -40,6 +43,7 @@ import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.ui.common.formatDate
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -228,6 +232,15 @@ class DashboardTest {
         screen.onNodeWithText(text(R.string.water_remove_last)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.water(account, profileId, today) == 250 }
         screen.scrollTo(drunk(250))
+
+        // The icon's shortcuts are the card's amounts, and one adds to the profile watered last without a screen.
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        assertEquals(
+            listOf("+200 ml", "+250 ml", "+330 ml"),
+            ShortcutManagerCompat.getDynamicShortcuts(context).sortedBy { it.rank }.map { it.shortLabel.toString().replace('\u00A0', ' ') },
+        )
+        context.startActivity(WaterShortcutActivity.adding(context, 330).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        screen.waitForTheApi { Instance.water(account, profileId, today) == 580 }
     }
 
     /** Millilitres as the card says them, in litres kept with their unit. */

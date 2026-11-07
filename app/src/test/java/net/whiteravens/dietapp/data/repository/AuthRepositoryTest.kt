@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.data.auth.Session
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.config.AppearanceStore
+import net.whiteravens.dietapp.data.config.WateredStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.local.CacheDatabase
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
@@ -27,6 +28,7 @@ import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.SignInResult
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.notify.WaterShortcuts
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
@@ -138,17 +140,21 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `the end of a session takes the phone's notifications and the account's colours away and clears the cached copies, before the tokens`() {
+    fun `the end of a session takes the phone's notifications, the account's colours and the icon's shortcuts away and clears the cached copies, before the tokens`() {
         val cache = mockk<CacheDatabase>(relaxed = true)
         val tokens = mockk<TokenStore>(relaxed = true)
         val phoneNotifications = mockk<PhoneNotificationsSwitch>(relaxed = true)
         val appearance = mockk<AppearanceStore>(relaxed = true)
+        val watered = mockk<WateredStore>(relaxed = true)
+        val shortcuts = mockk<WaterShortcuts>(relaxed = true)
 
-        runBlocking { SessionEnd(tokens, cache, phoneNotifications, appearance).end() }
+        runBlocking { SessionEnd(tokens, cache, phoneNotifications, appearance, watered, shortcuts).end() }
 
         coVerifyOrder {
             phoneNotifications.forget()
             appearance.forgetAccount()
+            shortcuts.remove()
+            watered.forget()
             cache.clearAllTables()
             tokens.clear()
         }

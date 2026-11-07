@@ -7,6 +7,8 @@
 -keep class net.whiteravens.dietapp.R$* { *; }
 -keep class net.whiteravens.dietapp.BuildConfig { *; }
 -keep class net.whiteravens.dietapp.MainActivity { *; }
+-keep class net.whiteravens.dietapp.WaterShortcutActivity { *; }
+-keep class net.whiteravens.dietapp.WaterShortcutActivity$Companion { *; }
 -keep class net.whiteravens.dietapp.ui.common.LabelsKt { *; }
 -keep class net.whiteravens.dietapp.ui.common.FieldRefusalsKt { *; }
 -keep class net.whiteravens.dietapp.ui.common.Bound { *; }

@@ -76,6 +76,7 @@ import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.components.TimeZoneViewModel
+import net.whiteravens.dietapp.notify.WaterShortcuts
 import net.whiteravens.dietapp.ui.screens.about.AboutScreen
 import net.whiteravens.dietapp.ui.screens.about.LibrariesScreen
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
@@ -142,6 +143,7 @@ class RootViewModel @Inject constructor(
     private val server: ServerRepository,
     private val localNetwork: LocalNetworkAccess,
     browserCodes: BrowserCodes,
+    private val shortcuts: WaterShortcuts,
 ) : ViewModel() {
     val isSignedIn: StateFlow<Boolean?> = auth.isSignedIn
         .map { it as Boolean? }
@@ -171,6 +173,9 @@ class RootViewModel @Inject constructor(
         }
         viewModelScope.launch { auth.retryRevocation() }
     }
+
+    /** The icon's shortcuts adding water, made anew in the phone's language of the moment while an account is signed in. */
+    fun offerShortcuts() = shortcuts.publish()
 
     /** Asked again when the app comes to the front: the permission may have been given in the settings since. */
     fun checkLocalNetwork() {
@@ -207,7 +212,10 @@ fun DietAppRoot(
         when (signedIn) {
             null -> Box(Modifier.fillMaxSize()) // token store still loading; next frame decides
             false -> AuthScreen(serverVersion = serverVersion)
-            true -> MainScaffold(serverVersion, openNotifications, onNotificationsOpened, openWaterOf, onWaterOpened)
+            true -> {
+                LaunchedEffect(viewModel) { viewModel.offerShortcuts() }
+                MainScaffold(serverVersion, openNotifications, onNotificationsOpened, openWaterOf, onWaterOpened)
+            }
         }
     }
 }

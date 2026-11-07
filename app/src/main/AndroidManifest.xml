@@ -47,6 +47,15 @@
             </intent-filter>
         </activity>
 
+        <!-- A shortcut of the icon adding water, with no screen of its own; only the shortcuts the application makes start it. -->
+        <activity
+            android:name=".WaterShortcutActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- A press of an amount on a reminder of water: only the application's own notifications send it. -->
         <receiver
             android:name=".notify.WaterReminderReceiver"

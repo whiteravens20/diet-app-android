@@ -2,6 +2,16 @@
 
 package net.whiteravens.dietapp.data.repository
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import net.whiteravens.dietapp.data.config.WateredStore
+import net.whiteravens.dietapp.domain.Profile
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import java.io.File
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
@@ -44,6 +54,13 @@ class WaterRepositoryTest {
     private val json = AppModule.json()
     private lateinit var server: MockWebServer
 
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private val watered by lazy { WateredStore(PreferenceDataStoreFactory.create(scope = scope, produceFile = { File(folder.root, "watered.preferences_pb") })) }
+
     private val profileId = "5c52d79a-1aa4-4614-8005-ff8210b3bc3b"
     private val day = LocalDate.parse("2026-11-07")
 
@@ -55,13 +72,14 @@ class WaterRepositoryTest {
 
     @After
     fun stop() {
+        scope.cancel()
         runCatching { server.shutdown() }
     }
 
     private fun repository(queue: ChangeQueue = changeQueue()): WaterRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return WaterRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json, queue)
+        return WaterRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json, queue, watered)
     }
 
     private fun answer(status: Int, name: String) =
@@ -101,6 +119,12 @@ class WaterRepositoryTest {
         assertEquals(330, body.getValue("ml").jsonPrimitive.int)
         UUID.fromString(sent.getHeader("Idempotency-Key"))
         assertEquals(930, (added as Submitted.Sent).answer.ml)
+        // The icon's shortcuts add to it next, of the account's profiles; before any water, to the first.
+        val ala = Profile("a", "Ala", "balanced", 4, 64.0, null)
+        val other = Profile(profileId, "Adam", "balanced", 4, 90.0, null)
+        assertEquals(other, runBlocking { watered.profileOf(listOf(ala, other)) })
+        runBlocking { watered.forget() }
+        assertEquals(ala, runBlocking { watered.profileOf(listOf(ala, other)) })
     }
 
     @Test
