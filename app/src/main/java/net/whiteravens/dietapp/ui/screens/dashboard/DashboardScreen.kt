@@ -58,8 +58,10 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.StatCard
 import net.whiteravens.dietapp.ui.components.UpdateCard
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
+import net.whiteravens.dietapp.ui.components.WaterCard
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.notifications.NotificationsBell
+import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -286,6 +288,8 @@ private fun ProfileSummary(
         }
 
         PlanOverviewCard(stats.overview, stats.overviewError, onOpen = onOpenPlan, onNewPlan = onNewPlan)
+
+        WaterCard(profileId = profile.id, day = LocalDate.now())
 
         if (target != null) {
             AppCard {

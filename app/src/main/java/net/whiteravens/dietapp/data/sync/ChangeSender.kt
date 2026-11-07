@@ -8,6 +8,7 @@ import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
+import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,6 +22,7 @@ class ChangeSender @Inject constructor(
     private val lists: ShoppingListRepository,
     private val plans: MealPlanRepository,
     private val weights: WeightRepository,
+    private val water: WaterRepository,
     private val pantry: PantryRepository,
     private val favorites: FavoriteRepository,
     private val notifications: NotificationRepository,
@@ -32,6 +34,8 @@ class ChangeSender @Inject constructor(
             is QueuedChange.Eaten -> plans.send(change)
             is QueuedChange.WeightLogged -> weights.send(change)
             is QueuedChange.WeightDeleted -> weights.send(change)
+            is QueuedChange.WaterAdded -> water.send(change)
+            is QueuedChange.WaterDeleted -> water.send(change)
             is QueuedChange.PantryAdded -> pantry.send(change)
             is QueuedChange.PantryChanged -> pantry.send(change)
             is QueuedChange.PantryRemoved -> pantry.send(change)

@@ -172,6 +172,8 @@
     <string name="change_kind_eaten">a meal\'s eaten mark</string>
     <string name="change_kind_weight_logged">a new weight entry</string>
     <string name="change_kind_weight_deleted">a weight entry\'s removal</string>
+    <string name="change_kind_water_added">a water entry</string>
+    <string name="change_kind_water_deleted">a water entry\'s removal</string>
     <string name="change_kind_pantry_added">a new pantry item</string>
     <string name="change_kind_pantry_changed">a change of a pantry item</string>
     <string name="change_kind_pantry_removed">a pantry item\'s removal</string>
@@ -1840,4 +1842,27 @@
     <string name="notifications_product_withdrawn">“%1$s” was withdrawn from the base and is back among your products: %2$s</string>
     <string name="notifications_product_replaced_open_food_facts">Open Food Facts now knows “%1$s” by its code, so your copy gave way to it. Diary entries keep their figures.</string>
     <string name="notifications_product_replaced_instance">The base of this instance now has “%1$s” under its code, so your copy gave way to it. Diary entries keep their figures.</string>
+    <!-- Water -->
+    <string name="water_title">Water</string>
+    <string name="water_drunk">%1$s of %2$s</string>
+    <string name="water_drunk_no_target">%1$s drunk</string>
+    <string name="water_add_ml">+%1$d\u00A0ml</string>
+    <string name="water_own">Own amount (ml)</string>
+    <string name="water_add">Add water</string>
+    <string name="water_not_an_amount">A whole number of millilitres, from 1\u00A0to 5000.</string>
+    <string name="water_remove_last">Remove the last entry</string>
+    <string name="water_remove_last_label">%1$s\u00A0· %2$s</string>
+    <string name="water_days_label">Water of the 7\u00A0days to %1$s</string>
+    <string name="water_day_line">%1$s: %2$s</string>
+    <string name="water_day_reached">%1$s: %2$s, target reached</string>
+    <string name="water_add_failed">The water could not be saved.</string>
+    <string name="water_remove_failed">The water entry could not be removed.</string>
+    <string name="water_read_failed">The water could not be read.</string>
+    <string name="water_waiting_only">Added without a network: %1$s. The rest of the day shows once it is sent.</string>
+    <string name="unit_liter">L</string>
+    <string name="unit_ml">ml</string>
+    <plurals name="water_in_target">
+        <item quantity="one">On target: %1$d\u00A0of %2$d\u00A0day</item>
+        <item quantity="other">On target: %1$d\u00A0of %2$d\u00A0days</item>
+    </plurals>
 </resources>

@@ -48,6 +48,16 @@ sealed interface QueuedChange {
     @SerialName("weight-deleted")
     data class WeightDeleted(val profileId: String, val id: String) : DoneWhenGone
 
+    /** Water drunk on the [day] (yyyy-MM-dd) of a profile's calendar, in millilitres. */
+    @Serializable
+    @SerialName("water-added")
+    data class WaterAdded(val profileId: String, val day: String, val ml: Int, override val key: String) : Addition
+
+    /** An entry of water of a profile removed: of its [day] (yyyy-MM-dd), [ml] of it, which the card leaves out until it is sent. */
+    @Serializable
+    @SerialName("water-deleted")
+    data class WaterDeleted(val profileId: String, val id: String, val day: String, val ml: Int) : DoneWhenGone
+
     /**
      * Some of an ingredient put into a profile's pantry, in [unit], best before [bestBefore]
      * (yyyy-MM-dd) where it has a day; [name] and [category] as the screen shows it until the server

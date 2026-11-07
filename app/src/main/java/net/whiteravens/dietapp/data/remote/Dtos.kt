@@ -710,6 +710,41 @@ data class WeightDayDto(
 @Serializable
 data class LogWeightRequest(val profileId: String, val kg: Double, val recordedAt: String)
 
+// ── Water (packages/shared/src/water.ts) ────────────────────────────────────
+
+/** One entry of water: what "Usuń ostatni wpis" names and removes. */
+@Serializable
+data class WaterEntryDto(
+    val id: String,
+    val ml: Int,
+    /** When it was written (ISO-8601). */
+    val at: String,
+)
+
+/** What one of the days up to the asked one holds. */
+@Serializable
+data class WaterDayPointDto(
+    /** The day (`YYYY-MM-DD`). */
+    val day: String,
+    val ml: Int,
+)
+
+/** The water of a profile's day: in all against the profile's target, its last entry, and the seven days that end with it. */
+@Serializable
+data class WaterDayDto(
+    val day: String,
+    val ml: Int,
+    /** The profile's target a day, in millilitres; null where it names none. */
+    val target: Int?,
+    val entries: Int,
+    val last: WaterEntryDto?,
+    /** The seven days that end with this one, the oldest first. */
+    val days: List<WaterDayPointDto>,
+)
+
+@Serializable
+data class AddWaterRequest(val profileId: String, val day: String, val ml: Int)
+
 // ── Ingredients (packages/shared/src/ingredient.ts) ─────────────────────────
 
 /**

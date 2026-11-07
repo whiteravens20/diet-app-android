@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
+import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
@@ -33,6 +35,7 @@ import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
+import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.ui.common.formatDate
@@ -189,6 +192,47 @@ class DashboardTest {
         val before = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(80.6)
         screen.waitForText("(${text(R.string.weight_remove_latest_label, "$before kg", formatDate(threeDaysAgo.toString()))})")
     }
+
+    @Test
+    fun waterIsAddedOnItsProfilesCardAtAPressOrTypedAndTheLastEntryTakenBack() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        val today = LocalDate.now()
+        screen.startSignedIn(account)
+        fun drunk(ml: Int) = hasText(text(R.string.water_drunk, liters(ml), liters(2000)))
+
+        // A new profile drinks to 2 l a day, and nothing was drunk today.
+        screen.scrollToText(text(R.string.water_title))
+        screen.scrollTo(drunk(0))
+
+        // 250 ml at a press, on the card and on the server.
+        val glass = hasText(text(R.string.water_add_ml, 250)) and hasClickAction()
+        screen.scrollTo(glass)
+        screen.waitForEnabled(text(R.string.water_add_ml, 250))
+        screen.onNode(glass).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.water(account, profileId, today) == 250 }
+        screen.scrollTo(drunk(250))
+
+        // 120 ml typed, and the field emptied.
+        val own = hasText(text(R.string.water_own)) and hasSetTextAction()
+        screen.scrollTo(own)
+        screen.onNode(own).performScrollTo().performTextInput("120")
+        screen.putKeyboardAway()
+        screen.onNode(hasText(text(R.string.water_add)) and hasClickAction()).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.water(account, profileId, today) == 370 }
+        screen.scrollTo(drunk(370))
+        screen.onNodeWithText(text(R.string.water_remove_last)).performScrollTo()
+        screen.keepScreenshot("dashboard-water")
+
+        // The last entry taken back: the 120 ml, and the 250 ml are left.
+        screen.onNodeWithText(text(R.string.water_remove_last)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.water(account, profileId, today) == 250 }
+        screen.scrollTo(drunk(250))
+    }
+
+    /** Millilitres as the card says them, in litres kept with their unit. */
+    private fun liters(ml: Int): String =
+        heldTogether("${NumberFormat.getNumberInstance(Locale.getDefault()).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(ml / 1000.0)} ${text(R.string.unit_liter)}")
 
     @Test
     fun aWeightLoggedWithoutANetworkWaitsAndIsLoggedOnTheServerOnceTheNetworkIsBack() {

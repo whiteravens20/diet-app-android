@@ -180,6 +180,23 @@ interface DietApiService {
     @DELETE("weights/{id}")
     suspend fun deleteWeight(@Path("id") id: String)
 
+    // ── Water ───────────────────────────────────────────────────────────────
+
+    /** The water of a profile's [day] (`YYYY-MM-DD`), with the seven days that end with it. */
+    @GET("water")
+    suspend fun water(@Query("profileId") profileId: String, @Query("day") day: String): WaterDayDto
+
+    /**
+     * Adds water drunk on a profile's day; answers the day as it then is. Sent again with the same
+     * [key] within a week, it writes nothing and is answered as the first one was.
+     */
+    @POST("water")
+    suspend fun addWater(@Header("Idempotency-Key") key: String?, @Body body: AddWaterRequest): WaterDayDto
+
+    /** Removes an entry of water written by mistake; answers its day as it then is. */
+    @DELETE("water/{id}")
+    suspend fun deleteWater(@Path("id") id: String): WaterDayDto
+
     // ── Notifications ───────────────────────────────────────────────────────
 
     /** The notifications of the account's profiles that are not read yet. */

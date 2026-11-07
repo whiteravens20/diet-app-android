@@ -1,0 +1,5 @@
+{
+  "statusCode": 404,
+  "error": "WATER_ENTRY_NOT_FOUND",
+  "message": "Water entry not found."
+}

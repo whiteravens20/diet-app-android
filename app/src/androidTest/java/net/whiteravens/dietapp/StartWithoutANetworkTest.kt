@@ -84,7 +84,8 @@ class StartWithoutANetworkTest {
             screen.onNode(hasText(text(R.string.diary_submit)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
             screen.scrollToText("Road snack")
             screen.waitForText(text(R.string.change_waiting))
-            screen.waitForText(plural(R.plurals.diary_sum_leaves_out, 1, 1))
+            // The day's sum is the list's first item, which the scroll to the entry may have taken out of it.
+            screen.scrollToText(plural(R.plurals.diary_sum_leaves_out, 1, 1))
             screen.keepScreenshot("start-without-a-network-an-entry-waiting")
 
             // With the network back it goes by itself.

@@ -84,6 +84,7 @@ import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
 import net.whiteravens.dietapp.ui.screens.products.OwnProductDialog
 import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.components.held
+import net.whiteravens.dietapp.ui.components.WaterCard
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -253,6 +254,11 @@ private fun LazyListScope.day(
                 )
             }
         }
+    }
+    // The day's water, where the diary takes entries for it: not a day still to come, nor one over a year back.
+    val profileId = state.profileId
+    if (profileId != null && !state.ahead && !state.tooOld) {
+        item(key = "water") { WaterCard(profileId = profileId, day = state.date) }
     }
     item(key = "add") {
         when {

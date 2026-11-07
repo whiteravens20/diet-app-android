@@ -180,6 +180,10 @@ object Instance {
         return (0 until list.length()).map { list.getJSONObject(it).getDouble("kg") }
     }
 
+    /** What a profile of [account] drank on [day], in millilitres, as the API counts it. */
+    fun water(account: Account, profileId: String, day: LocalDate): Int =
+        JSONObject(send("GET", "water?profileId=$profileId&day=$day", null, account.accessToken, 200, null)).getInt("ml")
+
     /** How many notifications of [account] are not read yet. */
     fun unreadNotifications(account: Account): Int =
         JSONArray(send("GET", "notifications/unread", null, account.accessToken, 200, null)).length()

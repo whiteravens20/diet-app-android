@@ -110,6 +110,8 @@ private fun changeKind(change: QueuedChange?): String = when (change) {
     is QueuedChange.Eaten -> stringResource(R.string.change_kind_eaten)
     is QueuedChange.WeightLogged -> stringResource(R.string.change_kind_weight_logged)
     is QueuedChange.WeightDeleted -> stringResource(R.string.change_kind_weight_deleted)
+    is QueuedChange.WaterAdded -> stringResource(R.string.change_kind_water_added)
+    is QueuedChange.WaterDeleted -> stringResource(R.string.change_kind_water_deleted)
     is QueuedChange.PantryAdded -> stringResource(R.string.change_kind_pantry_added)
     is QueuedChange.PantryChanged -> stringResource(R.string.change_kind_pantry_changed)
     is QueuedChange.PantryRemoved -> stringResource(R.string.change_kind_pantry_removed)

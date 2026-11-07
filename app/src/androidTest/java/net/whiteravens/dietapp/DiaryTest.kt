@@ -70,6 +70,13 @@ class DiaryTest {
     }
 
     /** The way back, wherever the list was scrolled to: a header scrolled far enough is no longer composed. */
+    /** The day's button to add to it, reached first: the day's water card stands above it. */
+    private fun pressAdd() {
+        val add = hasText(text(R.string.diary_add_title)) and hasClickAction()
+        screen.scrollTo(add)
+        screen.onNode(add).performScrollTo().performClick()
+    }
+
     private fun goBack() {
         screen.scrollTo(hasContentDescription(text(R.string.common_back)))
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
@@ -125,7 +132,7 @@ class DiaryTest {
         Instance.newProfile(account, name = "Ala")
         screen.startSignedIn(account)
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
 
         // Nothing is picked: a recipe cannot be written yet, and the window says what it waits for.
         screen.waitForText(text(R.string.diary_pick_recipe_first))
@@ -139,7 +146,8 @@ class DiaryTest {
         screen.waitForText(text(R.string.refusal_at_most, number(5000)))
         screen.keepScreenshot("diary-the-window-refusing")
         screen.onNode(inTheWindow(text(R.string.common_cancel))).performClick()
-        screen.waitForText(text(R.string.diary_empty_title))
+        // Below the day's water card: reached, not waited for.
+        screen.scrollToText(text(R.string.diary_empty_title))
     }
 
     @Test
@@ -152,7 +160,7 @@ class DiaryTest {
         openTheDiary()
 
         // A recipe found by its title, in a serving and a half.
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
         screen.onNode(hasText(text(R.string.diary_search_recipe)) and hasSetTextAction()).performTextInput(recipe)
         val foundRecipe = hasText(recipe) and hasClickAction() and !hasSetTextAction()
         screen.waitUntil(20_000) { screen.onAllNodes(foundRecipe).fetchSemanticsNodes().isNotEmpty() }
@@ -166,7 +174,7 @@ class DiaryTest {
         screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf(recipe) }
 
         // An ingredient found by its name, in pieces.
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
+        pressAdd()
         screen.onNode(inTheWindow(text(R.string.diary_kind_ingredient))).performClick()
         screen.onNode(hasText(text(R.string.diary_search_ingredient)) and hasSetTextAction()).performTextInput(ingredient)
         val foundIngredient = hasText(ingredient) and hasClickAction() and !hasSetTextAction()
@@ -262,7 +270,7 @@ class DiaryTest {
         screen.waitForText(text(R.string.diary_eaten_line, "0", target))
 
         screen.airplaneMode(true)
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
 
         // A search needs a connection, and says what can be written without one.
         screen.onNode(inTheWindow(text(R.string.diary_kind_recipe))).performClick()
@@ -301,7 +309,7 @@ class DiaryTest {
         screen.waitForText(text(R.string.diary_eaten_line, "0", target))
 
         screen.airplaneMode(true)
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
         writeMeal("Second thoughts", "100")
         submit()
         screen.scrollToText("Second thoughts")
@@ -311,7 +319,7 @@ class DiaryTest {
 
         // With the network back nothing of it goes: what is written next is all the server has.
         screen.airplaneMode(false)
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
+        pressAdd()
         writeMeal("A sure thing", "100")
         submit()
         screen.waitForTheApi(30_000) { Instance.diaryEntries(account, profileId) == listOf("A sure thing") }
@@ -334,7 +342,7 @@ class DiaryTest {
         screen.startSignedIn(account)
 
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("chleb babci")
         screen.waitForText(text(R.string.diary_product_nothing_here))
@@ -366,7 +374,7 @@ class DiaryTest {
         screen.waitForText(text(R.string.diary_entry_source_own))
 
         // Found again by its name, marked as one's own.
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
+        pressAdd()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("chleb babci")
         screen.waitForText("${heldTogether(text(R.string.diary_per_100, "245", "g"))}$HELD_DOT${text(R.string.diary_product_own_mark)}")
@@ -379,7 +387,7 @@ class DiaryTest {
         screen.startSignedIn(account)
 
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("mleko probne")
         screen.waitForText("Mleko próbne 3,2%, Próbna Marka")
@@ -416,7 +424,7 @@ class DiaryTest {
         val milk = "Mleko próbne 3,2%, Próbna Marka"
 
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
         screen.waitForText(text(R.string.diary_search_recipe))
         typeForAProduct("mleko probne")
         screen.waitForText(milk)
@@ -427,6 +435,7 @@ class DiaryTest {
         screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf(milk) }
 
         // The entry's window offers the correction; the form starts from what the base says.
+        screen.scrollTo(hasContentDescription(text(R.string.diary_edit_label, milk)))
         screen.onNodeWithContentDescription(text(R.string.diary_edit_label, milk)).performScrollTo().performClick()
         screen.onNode(inTheWindow(text(R.string.diary_entry_correct))).performScrollTo().performClick()
         // The entry's button is worded as the form's title: the form is open once its intro shows.
@@ -442,7 +451,7 @@ class DiaryTest {
         screen.scrollToText(milk)
         screen.waitForText(text(R.string.diary_entry_source_own))
         screen.keepScreenshot("diary-an-entry-of-a-correction")
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performScrollTo().performClick()
+        pressAdd()
         typeForAProduct("mleko probne")
         screen.waitForText(text(R.string.diary_product_own_mark), substring = true)
     }
@@ -454,7 +463,7 @@ class DiaryTest {
         screen.startSignedIn(account)
 
         openTheDiary()
-        screen.onNode(hasText(text(R.string.diary_add_title)) and hasClickAction()).performClick()
+        pressAdd()
         screen.waitForText(text(R.string.diary_search_recipe))
 
         // A slip of the finger is said at once, and asks nobody.
