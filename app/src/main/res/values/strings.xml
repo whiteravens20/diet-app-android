@@ -805,7 +805,7 @@
     <!-- The notice in one sentence at the bottom of the screen, its whole at "More", as the web says them -->
     <string name="confirm_email_short_plain">Confirm your email address (optional).</string>
     <string name="confirm_email_short_ai">Confirm your email address (unlocks the instance\'s AI).</string>
-    <string name="confirm_email_more">More</string>
+    <string name="confirm_email_more">Details</string>
     <string name="confirm_email_resend">Send a new link</string>
     <string name="confirm_email_sending">Sending…</string>
     <string name="confirm_email_sent">A new link is on its way.</string>

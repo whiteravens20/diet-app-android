@@ -129,7 +129,7 @@ fun ServerVersionNotice(version: ServerVersion, modifier: Modifier = Modifier) {
 
 /**
  * Says at the bottom of every screen that the account's address is not confirmed, where it is not:
- * in one sentence, and at "More" what confirming gives on this instance, with a button that sends the
+ * in one sentence, and at "Details" what confirming gives on this instance, with a button that sends the
  * link again (a link lasts an hour) and "Not now", which puts the notice aside. It is drawn in the calm
  * colours of a card, not those of a warning. Shows nothing where no address waits.
  */
@@ -151,7 +151,7 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
                 )
-                // One sentence, so that the notice takes little of the screen; the whole at "More".
+                // One sentence, so that the notice takes little of the screen; the whole at "Details".
                 Text(
                     if (more) {
                         stringResource(if (state.unlocksAi) R.string.confirm_email_notice_ai else R.string.confirm_email_notice_plain, address)
