@@ -21,6 +21,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -124,14 +128,15 @@ fun ServerVersionNotice(version: ServerVersion, modifier: Modifier = Modifier) {
 }
 
 /**
- * Says over every screen that the account's address is not confirmed, where it is not: that
- * confirming is not needed, what it gives on this instance, with a button that sends the link again
- * (a link lasts an hour) and "Not now", which puts the notice aside. It is drawn in the calm colours of
- * a card, not those of a warning. Shows nothing where no address waits.
+ * Says at the bottom of every screen that the account's address is not confirmed, where it is not:
+ * in one sentence, and at "More" what confirming gives on this instance, with a button that sends the
+ * link again (a link lasts an hour) and "Not now", which puts the notice aside. It is drawn in the calm
+ * colours of a card, not those of a warning. Shows nothing where no address waits.
  */
 @Composable
 fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Unit, onLater: () -> Unit, modifier: Modifier = Modifier) {
     val address = state.waiting ?: return
+    var more by rememberSaveable { mutableStateOf(false) }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
@@ -146,8 +151,13 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
                 )
+                // One sentence, so that the notice takes little of the screen; the whole at "More".
                 Text(
-                    stringResource(if (state.unlocksAi) R.string.confirm_email_notice_ai else R.string.confirm_email_notice_plain, address),
+                    if (more) {
+                        stringResource(if (state.unlocksAi) R.string.confirm_email_notice_ai else R.string.confirm_email_notice_plain, address)
+                    } else {
+                        stringResource(if (state.unlocksAi) R.string.confirm_email_short_ai else R.string.confirm_email_short_plain)
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f),
                 )
@@ -169,6 +179,7 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
                     Text(stringResource(if (state.sending) R.string.confirm_email_sending else R.string.confirm_email_resend))
                 }
                 TextButton(onClick = onLater) { Text(stringResource(R.string.confirm_email_later)) }
+                if (!more) TextButton(onClick = { more = true }) { Text(stringResource(R.string.confirm_email_more)) }
             }
         }
     }

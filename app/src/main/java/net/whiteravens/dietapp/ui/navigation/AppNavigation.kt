@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -292,39 +293,45 @@ private fun MainScaffold(
         topBar = {
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
                 ServerVersionNotice(serverVersion, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-                ConfirmEmailNotice(
-                    confirmation,
-                    onResend = confirmEmail::resend,
-                    onLater = confirmEmail::later,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
                 RefusedChangesNotice(refused, onSeen = changes::dismiss, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
         },
         bottomBar = {
-            if (onTopLevel) {
-                NavigationBar {
-                    topLevelDestinations.forEach { dest ->
-                        val selected = currentDestination?.hierarchy
-                            ?.any { it.hasRoute(dest.routeClass) } == true
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(dest.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+            // An address not confirmed is said over the bottom of the screen, as the web says it: it comes once the
+            // account is read, and a screen that gets shorter at its bottom keeps what is on it where it is.
+            Column {
+                ConfirmEmailNotice(
+                    confirmation,
+                    onResend = confirmEmail::resend,
+                    onLater = confirmEmail::later,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .then(if (onTopLevel) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars)),
+                )
+                if (onTopLevel) {
+                    NavigationBar {
+                        topLevelDestinations.forEach { dest ->
+                            val selected = currentDestination?.hierarchy
+                                ?.any { it.hasRoute(dest.routeClass) } == true
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    navController.navigate(dest.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(dest.icon, contentDescription = null) },
-                            // One line: a second one would lift this item's icon above the others'.
-                            label = { Text(stringResource(dest.label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            // The chosen tab's label in the primary colour, which is held to AA on the bar; the
-                            // default, the secondary colour, is the web's accent, which is not text.
-                            colors = NavigationBarItemDefaults.colors(selectedTextColor = MaterialTheme.colorScheme.primary),
-                        )
+                                },
+                                icon = { Icon(dest.icon, contentDescription = null) },
+                                // One line: a second one would lift this item's icon above the others'.
+                                label = { Text(stringResource(dest.label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                // The chosen tab's label in the primary colour, which is held to AA on the bar; the
+                                // default, the secondary colour, is the web's accent, which is not text.
+                                colors = NavigationBarItemDefaults.colors(selectedTextColor = MaterialTheme.colorScheme.primary),
+                            )
+                        }
                     }
                 }
             }

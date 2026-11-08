@@ -802,6 +802,10 @@
     <string name="confirm_email_notice_ai">Confirming %1$s is optional, but on this instance it unlocks the instance\'s AI. Open the link in the message sent to this address: it works for an hour.</string>
     <string name="confirm_email_notice_plain">Confirming %1$s is optional: every feature works without it. A confirmed address makes sure a link to change your password reaches you. The link in the message works for an hour.</string>
     <string name="confirm_email_later">Not now</string>
+    <!-- The notice in one sentence at the bottom of the screen, its whole at "More", as the web says them -->
+    <string name="confirm_email_short_plain">Confirm your email address (optional).</string>
+    <string name="confirm_email_short_ai">Confirm your email address (unlocks the instance\'s AI).</string>
+    <string name="confirm_email_more">More</string>
     <string name="confirm_email_resend">Send a new link</string>
     <string name="confirm_email_sending">Sending…</string>
     <string name="confirm_email_sent">A new link is on its way.</string>

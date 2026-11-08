@@ -869,6 +869,10 @@
     <string name="confirm_email_notice_ai">Potwierdzenie adresu %1$s jest nieobowiązkowe, ale na tej instancji odblokowuje AI instancji. Kliknij link z wiadomości wysłanej na ten adres: jest ważny godzinę.</string>
     <string name="confirm_email_notice_plain">Potwierdzenie adresu %1$s jest nieobowiązkowe: wszystkie funkcje działają bez niego. Potwierdzony adres daje pewność, że link do zmiany hasła do Ciebie dotrze. Link z wiadomości jest ważny godzinę.</string>
     <string name="confirm_email_later">Nie teraz</string>
+    <!-- The notice in one sentence at the bottom of the screen, its whole at "More", as the web says them -->
+    <string name="confirm_email_short_plain">Potwierdź adres e-mail (nieobowiązkowe).</string>
+    <string name="confirm_email_short_ai">Potwierdź adres e-mail (odblokowuje AI instancji).</string>
+    <string name="confirm_email_more">Więcej</string>
     <string name="confirm_email_resend">Wyślij nowy link</string>
     <string name="confirm_email_sending">Wysyłanie…</string>
     <string name="confirm_email_sent">Nowy link jest w drodze.</string>
