@@ -6,6 +6,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -133,6 +135,7 @@ fun ServerVersionNotice(version: ServerVersion, modifier: Modifier = Modifier) {
  * link again (a link lasts an hour) and "Not now", which puts the notice aside. It is drawn in the calm
  * colours of a card, not those of a warning. Shows nothing where no address waits.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Unit, onLater: () -> Unit, modifier: Modifier = Modifier) {
     val address = state.waiting ?: return
@@ -174,7 +177,8 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Its three buttons take a second line on a narrow phone, where a row would squeeze the last one.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onResend, enabled = !state.sending, shape = MaterialTheme.shapes.medium) {
                     Text(stringResource(if (state.sending) R.string.confirm_email_sending else R.string.confirm_email_resend))
                 }
