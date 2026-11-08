@@ -208,18 +208,30 @@ private fun refusalText(error: ApiException): String {
 
 /** A number in the language of the app's texts, to at most [fractionDigits] decimals, nothing between its thousands: `2150`, `0,25`. */
 @Composable
-fun formatNumber(value: Number, fractionDigits: Int = 0): String =
-    NumberFormat.getNumberInstance(LocalConfiguration.current.locales[0]).apply { isGroupingUsed = false; maximumFractionDigits = fractionDigits }.format(value)
+fun formatNumber(value: Number, fractionDigits: Int = 0): String = numberIn(LocalConfiguration.current.locales[0], value, fractionDigits)
 
 /** A part of one as the language writes a share of a hundred: `45%`, `45 %`. */
 @Composable
-fun formatPercent(part: Double): String =
-    NumberFormat.getPercentInstance(LocalConfiguration.current.locales[0]).apply { isGroupingUsed = false; maximumFractionDigits = 0 }.format(part)
+fun formatPercent(part: Double): String = percentIn(LocalConfiguration.current.locales[0], part)
 
-/** A whole number that always says which way it goes: `+120`, `-80`, `+0`. */
+/** A whole number that always says which way it goes: `+120`, `−80`, `+0`. */
 @Composable
-fun formatSigned(value: Double): String =
-    (NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]) as DecimalFormat).apply { isGroupingUsed = false; positivePrefix = "+" }.format(value.roundToInt())
+fun formatSigned(value: Double): String = signedIn(LocalConfiguration.current.locales[0], value)
+
+/** [formatNumber] in [locale]. */
+internal fun numberIn(locale: Locale, value: Number, fractionDigits: Int = 0): String =
+    minus(NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = fractionDigits }.format(value))
+
+/** [formatPercent] in [locale]. */
+internal fun percentIn(locale: Locale, part: Double): String =
+    minus(NumberFormat.getPercentInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 0 }.format(part))
+
+/** [formatSigned] in [locale]. */
+internal fun signedIn(locale: Locale, value: Double): String =
+    minus((NumberFormat.getIntegerInstance(locale) as DecimalFormat).apply { isGroupingUsed = false; positivePrefix = "+" }.format(value.roundToInt()))
+
+/** A negative number with the minus sign, as print sets it, where the number formats write a hyphen: `−2`, not `-2`. */
+private fun minus(text: String): String = text.replaceFirst('-', '\u2212')
 
 /** Several things named one after another, as the language joins them: `rice, oats and tofu`. */
 @Composable
