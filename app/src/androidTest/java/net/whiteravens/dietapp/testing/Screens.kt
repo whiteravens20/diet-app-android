@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.testing
 
 import android.graphics.Bitmap
+import android.icu.text.ListFormatter
 import android.os.Bundle
 import android.os.Parcel
 import android.view.Choreographer
@@ -56,6 +57,11 @@ import java.util.concurrent.TimeUnit
 /** A text of the app's, in the language the device runs in, with [args] put in. */
 fun text(@StringRes id: Int, vararg args: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
+
+/** [items] joined as the app joins a list of them, in the language the device runs in: "Ala and Ola", "Ala i Ola". */
+fun joined(vararg items: String): String =
+    ListFormatter.getInstance(InstrumentationRegistry.getInstrumentation().targetContext.resources.configuration.locales[0])
+        .format(items.toList())
 
 /**
  * A short figure as the app shows it in a line of figures, `400 kcal`: its words held together by

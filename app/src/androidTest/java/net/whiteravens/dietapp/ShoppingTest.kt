@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
+import net.whiteravens.dietapp.testing.joined
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
@@ -115,7 +116,7 @@ class ShoppingTest {
         screen.waitForTheApi(60_000) { Instance.householdRows(account, language).isNotEmpty() }
 
         // Made and opened: for whom, and under each row what each profile needs of it.
-        val forWhom = text(R.string.household_for_whom, "Ala and Ola")
+        val forWhom = text(R.string.household_for_whom, joined("Ala", "Ola"))
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(forWhom)) }.isSuccess }
         screen.keepScreenshot("shopping-a-household-list")
 
@@ -128,7 +129,7 @@ class ShoppingTest {
         screen.waitForTheApi(30_000) { Instance.householdRows(account, language)[name] == true }
 
         // Ala's plan's list says it is a part of the household list.
-        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.shopping_part_of, "Ala and Ola"))) }.isSuccess }
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.shopping_part_of, joined("Ala", "Ola")))) }.isSuccess }
         screen.keepScreenshot("shopping-a-part-of-a-household-list")
     }
 
