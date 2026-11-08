@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasParent
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -110,5 +111,40 @@ class NotificationsTest {
         // Back on the dashboard, the bell counts none.
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
         screen.scrollTo(bell(0))
+    }
+
+    /**
+     * The reminder to drink that the worker's first pass made for the account CI names in `waterEmail`
+     * and `waterPassword`: Ala, in a time zone where it was two in the afternoon, had drunk nothing.
+     */
+    @Test
+    fun aReminderToDrinkInTheListAddsWaterAtAPressAndSaysSoBeforeItGoes() {
+        val arguments = InstrumentationRegistry.getArguments()
+        val email = arguments.getString("waterEmail")
+        val password = arguments.getString("waterPassword")
+        assumeTrue("no account reminded to drink", email != null && password != null)
+        val account = Instance.signedIn(email!!, password!!)
+        val day = Instance.remindedToDrinkOn(account)!!
+        val profileId = Instance.profiles(account).single().getString("id")
+        screen.startSignedIn(account)
+        val liter = text(R.string.unit_liter)
+        val reminder = text(R.string.notifications_water_reminder, "0\u00A0$liter", "2\u00A0$liter")
+        val amount = hasText(text(R.string.water_add_ml, 250)) and hasClickAction()
+
+        // The reminder carries the water card's amounts, and the way to the card under them.
+        openTheBell(Instance.unreadNotifications(account))
+        screen.scrollTo(notification("Ala", reminder))
+        screen.scrollTo(amount)
+        screen.onNodeWithText(text(R.string.notifications_water_go)).assertIsDisplayed()
+        screen.keepScreenshot("notifications-a-reminder-to-drink")
+
+        // A press adds its amount to the day the reminder is about, says so for a moment, and the reminder goes, read.
+        screen.onNode(amount).performClick()
+        val added = text(R.string.notifications_water_added_amount, "250\u00A0${text(R.string.unit_ml)}")
+        screen.waitForText(added)
+        screen.keepScreenshot("notifications-water-added")
+        screen.waitForTheApi(20_000) { Instance.water(account, profileId, day) == 250 }
+        screen.waitUntil(15_000) { screen.onAllNodesWithText(added).fetchSemanticsNodes().isEmpty() }
+        screen.waitForTheApi(20_000) { Instance.remindedToDrinkOn(account) == null }
     }
 }

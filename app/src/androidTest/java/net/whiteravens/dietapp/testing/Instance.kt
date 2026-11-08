@@ -189,6 +189,14 @@ object Instance {
     fun unreadNotifications(account: Account): Int =
         JSONArray(send("GET", "notifications/unread", null, account.accessToken, 200, null)).length()
 
+    /** The day the unread reminder to drink of [account] is about, in the account's time zone; null where none is unread. */
+    fun remindedToDrinkOn(account: Account): LocalDate? {
+        val list = JSONArray(send("GET", "notifications/unread", null, account.accessToken, 200, null))
+        return (0 until list.length()).map { list.getJSONObject(it) }
+            .firstOrNull { it.getString("type") == "water_reminder" }
+            ?.let { LocalDate.parse(it.getJSONObject("payload").getString("day")) }
+    }
+
     /** The ids of a profile's plans, as the API lists them. */
     fun planIds(account: Account, profileId: String): List<String> {
         val items = call("GET", "meal-plans?profileId=$profileId", token = account.accessToken).getJSONArray("items")

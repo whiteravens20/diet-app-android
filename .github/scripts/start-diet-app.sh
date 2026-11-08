@@ -12,7 +12,9 @@
 # (`$NOTIFIED_ACCOUNT` in the job's environment, or printed outside CI): two profiles, Ala and Ola,
 # each favouring an ingredient no catalogue has. The worker's first pass reminds both to log a
 # weight, and the catalogue update takes the ingredient away and asks both to review their
-# preferences.
+# preferences. A third account, `waterEmail` and `waterPassword`, lives in a time zone where it is
+# two in the afternoon, with a profile reminded to drink that has drunk nothing: the worker's
+# first pass reminds it to drink.
 #
 # The operator's AI provider is an Ollama server at the address the settings template gives, where
 # nothing answers: the journeys choose it and read what it allows, and none waits for a model. The
@@ -116,6 +118,26 @@ read -r notified_email notified_password notified_token <<< "$(notified_account)
 read -r phone_email phone_password phone_token <<< "$(notified_account)"
 unread_of() { curl -fsS -H "Authorization: Bearer $1" "$api/notifications/unread" | jq length; }
 
+# An account where it is two in the afternoon now (Etc/GMT-2 is two hours ahead of UTC), with Ala
+# reminded to drink towards the 2 l a new profile aims at. Prints its address, password and token.
+water_account() {
+  local email password token ahead zone
+  email="water-$(openssl rand -hex 4)@example.test"
+  password="Water-$(openssl rand -hex 12)"
+  ahead=$((14 - 10#$(date -u +%H)))
+  if [ "$ahead" -gt 0 ]; then zone="Etc/GMT-$ahead"; elif [ "$ahead" -lt 0 ]; then zone="Etc/GMT+$((-ahead))"; else zone="Etc/GMT"; fi
+  token=$(jq -n --arg email "$email" --arg password "$password" \
+      '{email: $email, password: $password, displayName: "Water"}' |
+    curl -fsS -H 'Content-Type: application/json' --data @- "$api/auth/register" | jq -r .tokens.accessToken)
+  jq -n --arg zone "$zone" '{weightUnit: "kg", timeZone: $zone}' |
+    curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -X PATCH --data @- "$api/users/me" > /dev/null
+  jq -n '{name: "Ala", age: 30, sex: "female", heightCm: 168, weightKg: 64, waterReminders: true}' |
+    curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data @- "$api/profiles" > /dev/null
+  echo "$email $password $token"
+}
+read -r water_email water_password water_token <<< "$(water_account)"
+reminded_to_drink() { curl -fsS -H "Authorization: Bearer $1" "$api/notifications/unread" | jq '[.[] | select(.type == "water_reminder")] | length'; }
+
 compose up -d worker
 
 # The admin API takes requests only from the application's own origin.
@@ -142,25 +164,30 @@ fi
 curl -fsS -c "$jar" -b "$jar" -H "$origin" -X DELETE "$api/admin/session" > /dev/null
 rm -f "$jar"
 
-# Two reminders from the worker's first pass and two reviews from the update, for each account.
+# Two reminders from the worker's first pass and two reviews from the update, for each account,
+# and a reminder to drink for the third.
 unread=0
 phone_unread=0
+water_unread=0
 for _ in $(seq 1 60); do
   unread=$(unread_of "$notified_token")
   phone_unread=$(unread_of "$phone_token")
-  [ "$unread" = 4 ] && [ "$phone_unread" = 4 ] && break
+  water_unread=$(reminded_to_drink "$water_token")
+  [ "$unread" = 4 ] && [ "$phone_unread" = 4 ] && [ "$water_unread" = 1 ] && break
   sleep 1
 done
-if [ "$unread" != 4 ] || [ "$phone_unread" != 4 ]; then
+if [ "$unread" != 4 ] || [ "$phone_unread" != 4 ] || [ "$water_unread" != 1 ]; then
   compose logs --no-color --tail 40 worker
-  echo "::error::The accounts for the notifications have $unread and $phone_unread unread, not the 4 the tests read."
+  echo "::error::The accounts for the notifications have $unread and $phone_unread unread, not the 4 the tests read, and $water_unread reminders to drink, not 1."
   exit 1
 fi
 arguments="-Pandroid.testInstrumentationRunnerArguments.notifiedEmail=$notified_email -Pandroid.testInstrumentationRunnerArguments.notifiedPassword=$notified_password"
 arguments="$arguments -Pandroid.testInstrumentationRunnerArguments.phoneEmail=$phone_email -Pandroid.testInstrumentationRunnerArguments.phonePassword=$phone_password"
+arguments="$arguments -Pandroid.testInstrumentationRunnerArguments.waterEmail=$water_email -Pandroid.testInstrumentationRunnerArguments.waterPassword=$water_password"
 if [ -n "${GITHUB_ENV:-}" ]; then
   echo "::add-mask::$notified_password"
   echo "::add-mask::$phone_password"
+  echo "::add-mask::$water_password"
   echo "NOTIFIED_ACCOUNT=$arguments" >> "$GITHUB_ENV"
 else
   echo "Gradle arguments for the notifications' journey: $arguments"
