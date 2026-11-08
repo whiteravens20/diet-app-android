@@ -33,13 +33,14 @@ class ProfileFormTest {
         labelLimits: LabelLimits = LabelLimits(),
         riskAcknowledged: Boolean = false,
         waterTargetMl: Int? = 1500,
+        waterTracking: Boolean = true,
     ) = ProfileDetails(
         id = "p",
         figures = ProfileFigures(
             name = "Ala", age = 30, sex = "female", heightCm = 168.0, weightKg = weightKg, targetWeightKg = targetWeightKg,
             activityLevel = "light", dietType = dietType, weeklyLossTarget = "0.5", manualCalorieTarget = null,
-            mealCount = 4, weightReminderCadence = "daily", waterTargetMl = waterTargetMl, cookingReminders = false,
-            waterReminders = true, customMacroSplit = split, allergens = listOf("gluten"),
+            mealCount = 4, weightReminderCadence = "daily", waterTargetMl = waterTargetMl, waterTracking = waterTracking,
+            cookingReminders = false, waterReminders = true, customMacroSplit = split, allergens = listOf("gluten"),
         ),
         preferences = ProfilePreferences(
             favoriteIngredientIds = emptyList(), excludedIngredientIds = emptyList(), dislikedIngredientIds = emptyList(),
@@ -293,6 +294,28 @@ class ProfileFormTest {
             mapOf(ProfileField.WATER_TARGET to FieldRefusal.TooBig(10000.0, inclusive = true)),
             ProfileRefusals.of(refusal("profile-water-target-refused").fieldRefusals, past).fields,
         )
+    }
+
+    @Test
+    fun `a profile tracks water to begin with, and one that stops keeps the target and the reminder it had, whatever the hidden field holds`() {
+        assertTrue(filled.waterTracking)
+        assertTrue(filled.figures(WeightUnit.KG)!!.waterTracking)
+        assertTrue(ProfileForm.of(kept(), WeightUnit.KG).waterTracking)
+        assertFalse(ProfileForm.of(kept(waterTracking = false), WeightUnit.KG).waterTracking)
+
+        // Typed wrong and unticked out of sight: nothing holds the form back, and the profile keeps its 1.5 l and its reminder.
+        val stopped = ProfileForm.of(kept(), WeightUnit.KG).copy(waterTarget = "2,5", waterReminders = false, waterTracking = false)
+        assertEquals(emptySet<ProfileField>(), stopped.problems(WeightUnit.KG))
+        val figures = stopped.figures(WeightUnit.KG)!!
+        assertFalse(figures.waterTracking)
+        assertEquals(1500, figures.waterTargetMl)
+        assertTrue(figures.waterReminders)
+        // A kept profile with no target keeps none.
+        assertEquals(null, ProfileForm.of(kept(waterTargetMl = null), WeightUnit.KG).copy(waterTarget = "3000", waterTracking = false).figures(WeightUnit.KG)!!.waterTargetMl)
+        // A new profile that does not track water starts at what a new one starts with.
+        val fresh = filled.copy(waterTarget = "", waterReminders = true, waterTracking = false).figures(WeightUnit.KG)!!
+        assertEquals(2000, fresh.waterTargetMl)
+        assertFalse(fresh.waterReminders)
     }
 
     @Test

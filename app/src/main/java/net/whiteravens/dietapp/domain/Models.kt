@@ -141,6 +141,8 @@ data class Profile(
     val targetWeightReached: Boolean = false,
     /** The day the offer to keep the weight comes back, where it was put off. */
     val targetReachedLaterUntil: java.time.LocalDate? = null,
+    /** Whether the profile tracks water: off, the app shows none of its water. */
+    val waterTracking: Boolean = true,
 ) {
     /** The offer to keep the weight is due on [today]: the target weight reached, and the offer not put off past today. */
     fun offersToKeep(today: java.time.LocalDate): Boolean =
@@ -171,6 +173,8 @@ data class ProfileFigures(
     val weightReminderCadence: String,
     /** What the profile aims to drink a day, in ml; null for no target. */
     val waterTargetMl: Int?,
+    /** Whether the profile tracks water: off, the app shows none of its water and no reminder to drink comes. */
+    val waterTracking: Boolean,
     /** Reminded the day before a dish its plan cooks for two days or two meals. */
     val cookingReminders: Boolean,
     /** Reminded to drink while the day's water falls behind its target. */

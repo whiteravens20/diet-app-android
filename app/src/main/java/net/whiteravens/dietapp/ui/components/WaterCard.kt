@@ -41,6 +41,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.WATER_AMOUNTS_ML
 import net.whiteravens.dietapp.domain.WaterDay
@@ -58,7 +67,12 @@ import java.time.format.DateTimeFormatter
  * dashboard it is today's; in the diary it is the day the diary shows.
  */
 @Composable
-fun WaterCard(profileId: String, day: LocalDate, viewModel: WaterViewModel = hiltViewModel(key = "water-$profileId-$day")) {
+fun WaterCard(
+    profileId: String,
+    day: LocalDate,
+    onOpenProfile: (() -> Unit)? = null,
+    viewModel: WaterViewModel = hiltViewModel(key = "water-$profileId-$day"),
+) {
     LaunchedEffect(profileId, day) { viewModel.open(profileId, day) }
     // Shown again, from another screen or coming back to the front: the day as it now is.
     LifecycleResumeEffect(viewModel) {
@@ -66,12 +80,16 @@ fun WaterCard(profileId: String, day: LocalDate, viewModel: WaterViewModel = hil
         onPauseOrDispose {}
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val noteClosed by viewModel.noteClosed.collectAsStateWithLifecycle()
     WaterCardContent(
         state,
         onAdd = { viewModel.add(it) },
         onType = viewModel::type,
         onAddTyped = viewModel::addTyped,
         onRemoveLast = viewModel::removeLast,
+        noteShown = !noteClosed,
+        onCloseNote = viewModel::closeNote,
+        onOpenProfile = onOpenProfile,
     )
 }
 
@@ -83,6 +101,9 @@ internal fun WaterCardContent(
     onType: (String) -> Unit,
     onAddTyped: () -> Unit,
     onRemoveLast: () -> Unit,
+    noteShown: Boolean = false,
+    onCloseNote: () -> Unit = {},
+    onOpenProfile: (() -> Unit)? = null,
 ) {
     val shown = state.shown
     val ready = state.ready
@@ -146,7 +167,37 @@ internal fun WaterCardContent(
                 }
             }
             shown?.let { WaterChart(it) }
+            if (noteShown) TurnOffNote(onClose = onCloseNote, onOpenProfile = onOpenProfile)
         }
+    }
+}
+
+/** That the card can be turned off in the profile, said once, as the web says it, until it is closed. */
+@Composable
+private fun TurnOffNote(onClose: () -> Unit, onOpenProfile: (() -> Unit)?) {
+    val link = stringResource(R.string.water_note_link)
+    val whole = stringResource(R.string.water_note, link)
+    val linked = MaterialTheme.colorScheme.primary
+    val text = buildAnnotatedString {
+        append(whole)
+        val start = whole.indexOf(link)
+        if (onOpenProfile != null && start >= 0) {
+            addLink(
+                LinkAnnotation.Clickable(
+                    tag = "profile",
+                    styles = TextLinkStyles(SpanStyle(color = linked, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline)),
+                ) { onOpenProfile() },
+                start,
+                start + link.length,
+            )
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small).padding(start = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        IconButton(onClick = onClose) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close)) }
     }
 }
 

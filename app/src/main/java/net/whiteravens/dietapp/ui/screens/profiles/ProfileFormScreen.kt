@@ -81,7 +81,8 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                         FormSection(stringResource(R.string.profile_section_goal))
                         PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
                         TargetWeightField(form, state.unit, marks, viewModel::edit)
-                        WaterTargetField(form, marks, viewModel::edit)
+                        WaterTrackingChoice(form, viewModel::edit)
+                        if (form.waterTracking) WaterTargetField(form, marks, viewModel::edit)
                         OwnTargetField(form, marks, viewModel::edit)
                         // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
                         val correction = state.correction

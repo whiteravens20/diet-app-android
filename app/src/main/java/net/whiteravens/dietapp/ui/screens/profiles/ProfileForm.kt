@@ -241,6 +241,8 @@ data class ProfileForm(
     val weightReminderCadence: String = "weekly",
     /** The water a day in ml as typed; a new profile starts at the API's 2 l, and an empty one has no target. */
     val waterTarget: String = DEFAULT_WATER_TARGET_ML.toString(),
+    /** Whether the profile tracks water; off, its target and its reminder to drink are kept as they are, out of sight. */
+    val waterTracking: Boolean = true,
     val cookingReminders: Boolean = true,
     val waterReminders: Boolean = false,
     val limits: LimitsTyped = LimitsTyped.of(ProfileChoices.FIRST_LIMITS),
@@ -250,12 +252,16 @@ data class ProfileForm(
     val keptWeightKg: Double? = null,
     val keptTargetWeightKg: Double? = null,
     val keptSplit: MacroSplit? = null,
+    /** The target and the reminder to drink the profile had, which it keeps while water is not tracked; a new one's as it starts. */
+    val keptWaterTargetMl: Int? = DEFAULT_WATER_TARGET_ML,
+    val keptWaterReminders: Boolean = false,
 ) {
     /** The fields that hold no number where one is needed, or what is no whole number; an empty one that may be empty is none. */
     fun problems(unit: WeightUnit): Set<ProfileField> = buildSet {
         addAll(questionProblems(unit))
         if (targetWeight.isNotBlank() && weightKg(targetWeight, keptTargetWeightKg, unit) == null) add(ProfileField.TARGET_WEIGHT)
-        if (!waterTarget.emptyOrWhole()) add(ProfileField.WATER_TARGET)
+        // Out of sight while water is not tracked, the target holds nothing back.
+        if (waterTracking && !waterTarget.emptyOrWhole()) add(ProfileField.WATER_TARGET)
         if (limits.consecutiveDays.trim().toIntOrNull() == null) add(ProfileField.CONSECUTIVE_DAYS)
         if (limits.timesPerWeek.trim().toIntOrNull() == null) add(ProfileField.TIMES_PER_WEEK)
         if (!limits.kindPerDay.emptyOrWhole()) add(ProfileField.KIND_PER_DAY)
@@ -316,9 +322,11 @@ data class ProfileForm(
             manualCalorieTarget = asked.manualCalorieTarget,
             mealCount = mealCount,
             weightReminderCadence = weightReminderCadence,
-            waterTargetMl = waterTarget.trim().toIntOrNull(),
+            // While water is not tracked, the target and the reminder to drink are out of sight and stay as the profile had them.
+            waterTargetMl = if (waterTracking) waterTarget.trim().toIntOrNull() else keptWaterTargetMl,
+            waterTracking = waterTracking,
             cookingReminders = cookingReminders,
-            waterReminders = waterReminders,
+            waterReminders = if (waterTracking) waterReminders else keptWaterReminders,
             // The custom diet's split as the form shows it; on another diet the profile keeps the one it has.
             customMacroSplit = if (dietType == "custom") asked.customMacroSplit else keptSplit,
             allergens = ProfileChoices.ALLERGENS.filter { it in allergens },
@@ -387,6 +395,7 @@ data class ProfileForm(
                 allergens = figures.allergens.toSet(),
                 weightReminderCadence = figures.weightReminderCadence,
                 waterTarget = figures.waterTargetMl?.toString().orEmpty(),
+                waterTracking = figures.waterTracking,
                 cookingReminders = figures.cookingReminders,
                 waterReminders = figures.waterReminders,
                 limits = LimitsTyped.of(kept.preferences.limits),
@@ -395,6 +404,8 @@ data class ProfileForm(
                 keptWeightKg = figures.weightKg,
                 keptTargetWeightKg = figures.targetWeightKg,
                 keptSplit = figures.customMacroSplit,
+                keptWaterTargetMl = figures.waterTargetMl,
+                keptWaterReminders = figures.waterReminders,
             )
         }
     }

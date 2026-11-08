@@ -102,6 +102,7 @@ fun DiaryScreen(
     onBack: () -> Unit,
     onProfiles: () -> Unit,
     onOpenPlan: (planId: String, day: String) -> Unit,
+    onEditProfile: (profileId: String) -> Unit = {},
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -214,7 +215,7 @@ fun DiaryScreen(
                                 }
                             }
 
-                            else -> day(state, viewModel, onOpenPlan)
+                            else -> day(state, viewModel, onOpenPlan, onEditProfile)
                         }
                     }
                 }
@@ -240,6 +241,7 @@ private fun LazyListScope.day(
     state: DiaryViewModel.UiState,
     viewModel: DiaryViewModel,
     onOpenPlan: (planId: String, day: String) -> Unit,
+    onEditProfile: (profileId: String) -> Unit,
 ) {
     item(key = "summary") {
         val day = state.day
@@ -258,8 +260,9 @@ private fun LazyListScope.day(
     }
     // The day's water, where the diary takes entries for it: not a day still to come, nor one over a year back.
     val profileId = state.profileId
-    if (profileId != null && !state.ahead && !state.tooOld) {
-        item(key = "water") { WaterCard(profileId = profileId, day = state.date) }
+    val tracksWater = state.profiles.firstOrNull { it.id == profileId }?.waterTracking != false
+    if (profileId != null && tracksWater && !state.ahead && !state.tooOld) {
+        item(key = "water") { WaterCard(profileId = profileId, day = state.date, onOpenProfile = { onEditProfile(profileId) }) }
     }
     item(key = "add") {
         when {

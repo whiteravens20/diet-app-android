@@ -549,6 +549,8 @@ data class ProfileDto(
     val weightReminderCadence: String,
     /** What the profile aims to drink a day, in ml; null for no target. */
     val waterTargetMl: Int? = null,
+    /** Whether the profile tracks water: off, the app shows none of its water and no reminder to drink comes. */
+    val waterTracking: Boolean = true,
     /** Reminded at 6 pm the day before a dish its plan cooks for two days or two meals. */
     val cookingReminders: Boolean = true,
     /** Reminded to drink while the day's water falls behind its target. */
@@ -588,6 +590,7 @@ data class NewProfileDto(
     val mealCount: Int,
     val weightReminderCadence: String,
     val waterTargetMl: Int?,
+    val waterTracking: Boolean,
     val cookingReminders: Boolean,
     val waterReminders: Boolean,
     val customMacroSplit: MacroSplitDto?,
@@ -627,6 +630,7 @@ data class ProfileUpdateDto(
     val mealCount: Int,
     val weightReminderCadence: String,
     val waterTargetMl: Int?,
+    val waterTracking: Boolean,
     val cookingReminders: Boolean,
     val waterReminders: Boolean,
     val customMacroSplit: MacroSplitDto?,
@@ -828,7 +832,8 @@ data class WeekSummaryDto(
     val eaten: NutritionDto?,
     val target: NutritionDto?,
     val withinTarget: Int,
-    val water: WeekWaterDto,
+    /** What the days drank; null for a profile that does not track water. */
+    val water: WeekWaterDto? = null,
     val weight: WeightTrendDto,
 )
 

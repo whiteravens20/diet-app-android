@@ -344,6 +344,17 @@ internal fun TargetWeightField(form: ProfileForm, unit: WeightUnit, marks: Profi
     )
 }
 
+/** Whether the profile tracks water, and what that switches: its water card, its week's water, its reminder to drink. */
+@Composable
+internal fun WaterTrackingChoice(form: ProfileForm, onEdit: FormEdit) {
+    CheckRow(
+        label = stringResource(R.string.profile_water_tracking),
+        hint = stringResource(R.string.profile_water_tracking_hint),
+        checked = form.waterTracking,
+        onChange = { ticked -> onEdit { it.copy(waterTracking = ticked) } },
+    )
+}
+
 /** The water a day the profile aims at, in ml; empty for none. */
 @Composable
 internal fun WaterTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
@@ -584,12 +595,15 @@ internal fun ReminderChoices(form: ProfileForm, onEdit: FormEdit) {
         checked = form.cookingReminders,
         onChange = { ticked -> onEdit { it.copy(cookingReminders = ticked) } },
     )
-    CheckRow(
-        label = stringResource(R.string.profile_water_reminders),
-        hint = stringResource(R.string.profile_water_reminders_hint),
-        checked = form.waterReminders,
-        onChange = { ticked -> onEdit { it.copy(waterReminders = ticked) } },
-    )
+    // Out of sight while water is not tracked, and kept as it is.
+    if (form.waterTracking) {
+        CheckRow(
+            label = stringResource(R.string.profile_water_reminders),
+            hint = stringResource(R.string.profile_water_reminders_hint),
+            checked = form.waterReminders,
+            onChange = { ticked -> onEdit { it.copy(waterReminders = ticked) } },
+        )
+    }
 }
 
 /** How often a plan of the profile may repeat itself. */

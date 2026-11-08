@@ -30,9 +30,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.swipe
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
@@ -298,6 +300,21 @@ fun ComposeTestRule.openTab(label: String) {
 /** The box a screen is pulled down in to read it anew: it offers a screen reader the same as an action. */
 val pullable: SemanticsMatcher = SemanticsMatcher("can be pulled down to read anew") { node ->
     node.config.getOrNull(SemanticsActions.CustomActions)?.any { it.label == text(R.string.pull_to_read) } == true
+}
+
+/**
+ * Presses the words [link] in the text the node of [shown] holds, where a link of the text stands,
+ * as a finger does: in the middle of the words, as the text lays them out.
+ */
+fun ComposeTestRule.pressLink(shown: SemanticsMatcher, link: String) {
+    val node = onNode(shown).performScrollTo()
+    val layouts = mutableListOf<TextLayoutResult>()
+    node.fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!.invoke(layouts)
+    val layout = layouts.single()
+    val start = layout.layoutInput.text.text.indexOf(link)
+    check(start >= 0) { "\"$link\" is not in the text" }
+    val words = layout.getBoundingBox(start + link.length / 2)
+    node.performTouchInput { click(words.center) }
 }
 
 /**

@@ -43,6 +43,7 @@ data class WeekSummary(
     val eaten: Nutrition?,
     val target: Nutrition?,
     val withinTarget: Int,
-    val water: WeekWater,
+    /** What the days drank; null for a profile that does not track water. */
+    val water: WeekWater?,
     val weight: WeightTrend,
 )

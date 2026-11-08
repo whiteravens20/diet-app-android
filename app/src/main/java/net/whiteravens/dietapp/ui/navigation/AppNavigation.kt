@@ -353,6 +353,7 @@ private fun MainScaffold(
                         onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
                         showWaterOf = waterOf,
                         onWaterShown = { entry.savedStateHandle[SHOW_WATER_OF] = null },
+                        onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId)) },
                     )
                 }
                 composable<PlansRoute> {
@@ -384,6 +385,7 @@ private fun MainScaffold(
                         onBack = { navController.popBackStack() },
                         onProfiles = { navController.navigate(ProfilesRoute) },
                         onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
+                        onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId)) },
                     )
                 }
                 composable<RecipesRoute> {

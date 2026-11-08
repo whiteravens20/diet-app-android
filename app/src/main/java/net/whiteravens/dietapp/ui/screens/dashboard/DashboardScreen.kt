@@ -93,6 +93,7 @@ fun DashboardScreen(
     onWeightShown: () -> Unit = {},
     showWaterOf: String? = null,
     onWaterShown: () -> Unit = {},
+    onEditProfile: (profileId: String) -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     update: UpdateViewModel = hiltViewModel(),
 ) {
@@ -204,7 +205,13 @@ fun DashboardScreen(
                                     )
                                 }
                             },
-                            water = {
+                            water = water@{
+                                // A profile that does not track water has no card of it, and a reminder of before that led here
+                                // is done with, so that the card does not come into view by itself once water is tracked again.
+                                if (!stats.profile.waterTracking) {
+                                    if (stats.profile.id == showWaterOf) LaunchedEffect(Unit) { onWaterShown() }
+                                    return@water
+                                }
                                 val inView = remember { BringIntoViewRequester() }
                                 if (stats.profile.id == showWaterOf) {
                                     LaunchedEffect(inView) {
@@ -213,7 +220,7 @@ fun DashboardScreen(
                                     }
                                 }
                                 Box(Modifier.bringIntoViewRequester(inView)) {
-                                    WaterCard(profileId = stats.profile.id, day = LocalDate.now())
+                                    WaterCard(profileId = stats.profile.id, day = LocalDate.now(), onOpenProfile = { onEditProfile(stats.profile.id) })
                                 }
                             },
                         ) {

@@ -81,6 +81,17 @@ class UserRepositoryTest {
     }
 
     @Test
+    fun `a profile kept without a network is kept tracking water or not, as the API has it`() {
+        server.enqueue(answer("profiles-one-not-tracking-water"))
+        val users = repository()
+
+        val read = runBlocking { users.profiles() }
+
+        assertEquals(listOf(true, false), read.map { it.waterTracking })
+        assertEquals(read, runBlocking { users.keptProfiles() }?.profiles)
+    }
+
+    @Test
     fun `without a network the profiles are those kept, and before any was kept the failure stands`() {
         server.enqueue(answer("profiles"))
         val read = runBlocking { repository().profiles() }

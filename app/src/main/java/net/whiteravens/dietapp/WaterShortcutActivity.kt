@@ -27,9 +27,10 @@ import java.time.LocalDate
 
 /**
  * A shortcut of the application's icon, without a screen of its own: its amount goes to today of
- * the profile watered last on this phone, or of the account's first profile, through the queue of
- * changes without a network, and a short message says so ("Added 330 ml · Adam"). Signed out, or
- * before any profile was read on this phone, the application opens instead.
+ * the profile watered last on this phone, or of the account's first profile, among those that track
+ * water, through the queue of changes without a network, and a short message says so ("Added 330 ml
+ * · Adam"). Signed out, before any profile was read on this phone, or where no profile tracks water,
+ * the application opens instead.
  */
 class WaterShortcutActivity : ComponentActivity() {
     /** What a shortcut takes from the application's graph. */
@@ -57,7 +58,11 @@ class WaterShortcutActivity : ComponentActivity() {
         val parts = EntryPointAccessors.fromApplication(app, Parts::class.java)
         // Read at once, from what the phone keeps: the application can be opened only while this is in front.
         val profile = runBlocking(Dispatchers.IO) {
-            if (ml <= 0 || parts.tokens().current() == null) null else parts.users().keptProfiles()?.let { parts.watered().profileOf(it.profiles) }
+            if (ml <= 0 || parts.tokens().current() == null) {
+                null
+            } else {
+                parts.users().keptProfiles()?.let { kept -> parts.watered().profileOf(kept.profiles.filter { it.waterTracking }) }
+            }
         }
         if (profile == null) {
             startActivity(Intent(this, MainActivity::class.java))

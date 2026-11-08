@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -30,6 +31,7 @@ import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.pressLink
 import net.whiteravens.dietapp.testing.pullDown
 import net.whiteravens.dietapp.testing.pullable
 import net.whiteravens.dietapp.testing.putKeyboardAway
@@ -233,6 +235,11 @@ class DashboardTest {
         screen.waitForTheApi { Instance.water(account, profileId, today) == 250 }
         screen.scrollTo(drunk(250))
 
+        // The note under the card, that it can be turned off in the profile, closed, says it no more.
+        val note = text(R.string.water_note, text(R.string.water_note_link))
+        screen.onNode(hasContentDescription(text(R.string.common_close)) and hasAnySibling(hasText(note))).performScrollTo().performClick()
+        screen.waitUntil(5_000) { screen.onAllNodesWithText(note).fetchSemanticsNodes().isEmpty() }
+
         // The icon's shortcuts are the card's amounts, and one adds to the profile watered last without a screen.
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals(
@@ -241,6 +248,39 @@ class DashboardTest {
         )
         context.startActivity(WaterShortcutActivity.adding(context, 330).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         screen.waitForTheApi { Instance.water(account, profileId, today) == 580 }
+    }
+
+    @Test
+    fun theWaterCardSaysItCanBeTurnedOffInTheProfileWhereItsLinkLeadsAndTurnedOffThereTheCardIsGone() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        val link = text(R.string.water_note_link)
+        val note = text(R.string.water_note, link)
+        val tracking = text(R.string.profile_water_tracking)
+        val target = hasText(text(R.string.profile_water_target)) and hasSetTextAction()
+
+        // Under the card, a note whose link opens the profile's form.
+        screen.scrollToText(text(R.string.water_title))
+        screen.scrollToText(note)
+        screen.keepScreenshot("dashboard-water-note")
+        screen.pressLink(hasText(note), link)
+        screen.waitForText(text(R.string.profiles_editing, "Ala"))
+
+        // Turned off there, the target and the reminder to drink go out of sight. The form is one scrolled column, not a list.
+        screen.waitUntil(20_000) { screen.onAllNodes(target).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(target).performScrollTo()
+        screen.onNodeWithText(tracking).performScrollTo().performClick()
+        screen.waitUntil(5_000) { screen.onAllNodes(target).fetchSemanticsNodes().isEmpty() }
+        screen.onNodeWithText(tracking).performScrollTo()
+        screen.keepScreenshot("profiles-water-not-tracked")
+        screen.onNodeWithText(text(R.string.profile_save_changes)).performScrollTo().performClick()
+        screen.waitForTheApi(20_000) { !Instance.profile(account, profileId).getBoolean("waterTracking") }
+
+        // Back on the dashboard, the profile has no water card: the card would stand above its split of macronutrients.
+        screen.scrollToText(text(R.string.dashboard_macro_split))
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.water_title)).fetchSemanticsNodes().isEmpty() }
+        screen.onNodeWithText(text(R.string.dashboard_macro_split)).assertIsDisplayed()
     }
 
     @Test

@@ -88,7 +88,11 @@ ahead from the next day: to drink, to cook ahead and to log a weight), `househol
 (a household list of Adam's and Ewa's plans of three days for the first two: made, read, its first
 row ticked, Adam's part among his plan's lists, two plans of Adam's refused, and none left once it
 was deleted, deleted again) from API 0.218.0, captured on 2026-11-07 from an instance of diet-app's
-`dev` at `e95a172`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
+`dev` at `e95a172`; `profiles-one-not-tracking-water.json`, `profile-not-tracking-water.json` and
+`week-summary-not-tracking-water.json` (two profiles, the second made not tracking water, both with
+water written on three of the days before: the account's profiles, the second of them, and its
+week, which says nothing of water) from API 0.218.0, captured on 2026-11-08 from an instance of
+diet-app's `dev` at `2bc205b`; the others from API 0.19.0, captured on 2026-10-13. The accounts they were captured with were test accounts, deleted afterwards. Tokens, the
 sign-in challenge and the enrolment of a second step are replaced by `<removed>`. The files are
 refreshed from a running backend and never edited by hand: a test that needs another answer gets it
 captured.

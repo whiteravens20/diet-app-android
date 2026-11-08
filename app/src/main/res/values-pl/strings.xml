@@ -2087,4 +2087,9 @@
     <string name="shopping_replaces_part">Lista z tych dni jest częścią listy dla domu: %1$s. Nowa lista zajmie jej miejsce, a lista dla domu straci część tego planu.</string>
     <!-- Under a reminder of water's amounts in the list of notifications, as the web's bell has it -->
     <string name="notifications_water_go">Przejdź do pulpitu</string>
+    <!-- Whether a profile tracks water, and the water card's note on turning it off, as the web says them -->
+    <string name="profile_water_tracking">Śledzenie wody</string>
+    <string name="profile_water_tracking_hint">Karta wody na Pulpicie i w dzienniku, woda w podsumowaniu tygodnia i przypomnienie o wodzie. Po wyłączeniu to, co zapisane, zostaje.</string>
+    <string name="water_note">Nie potrzebujesz karty wody? Wyłączysz ją %1$s.</string>
+    <string name="water_note_link">w profilu</string>
 </resources>

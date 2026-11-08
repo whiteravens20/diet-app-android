@@ -108,6 +108,29 @@ class CacheMigrationTest {
     }
 
     @Test
+    fun aCacheFromBeforeWaterCouldBeTurnedOffKeepsItsProfilesTrackingWater() {
+        leftBy(5) { db ->
+            db.execSQL(
+                "INSERT INTO cached_profile (id, position, name, dietType, mealCount, weightKg, targetWeightKg, syncedAt) " +
+                    "VALUES ('a', 0, 'Ala', 'balanced', 4, 70.0, NULL, 5)",
+            )
+        }
+
+        val cache = CacheDatabase.open(context, name)
+        try {
+            runBlocking {
+                assertEquals(listOf(CachedProfile("a", 0, "Ala", "balanced", 4, 70.0, null, 5, waterTracking = true)), cache.keptReads().profiles())
+
+                cache.keptReads().replaceProfiles(listOf(CachedProfile("a", 0, "Ala", "balanced", 4, 70.0, null, 6, waterTracking = false)))
+
+                assertEquals(false, cache.keptReads().profiles().single().waterTracking)
+            }
+        } finally {
+            cache.close()
+        }
+    }
+
+    @Test
     fun aCacheFromBeforeTheHouseholdListsKeepsItsCopiesAndGainsAnEmptyOneOfThem() {
         leftBy(4) { db ->
             db.execSQL("INSERT INTO cached_shopping_list (id, planId, json, syncedAt) VALUES ('list', 'plan', '{\"id\":\"list\"}', 1)")

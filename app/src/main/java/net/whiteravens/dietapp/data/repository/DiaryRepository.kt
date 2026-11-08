@@ -270,7 +270,7 @@ private fun WeekSummaryDto.toDomain() = WeekSummary(
     eaten = eaten?.toDomain(),
     target = target?.toDomain(),
     withinTarget = withinTarget,
-    water = WeekWater(water.counted, water.averageMl, water.target, water.reached),
+    water = water?.let { WeekWater(it.counted, it.averageMl, it.target, it.reached) },
     weight = WeightTrend(weight.kgPerWeek, weight.targetKg, weight.reachesTargetOn?.let(LocalDate::parse)),
 )
 

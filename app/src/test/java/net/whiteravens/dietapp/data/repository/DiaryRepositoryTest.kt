@@ -436,8 +436,17 @@ class DiaryRepositoryTest {
         )
         // A week with nothing written: no averages, no water, no trend; the target weight all the same.
         assertEquals(null, empty.eaten)
-        assertEquals(null, empty.water.averageMl)
+        assertEquals(null, empty.water!!.averageMl)
         assertEquals(WeightTrend(null, 63.5, null), empty.weight)
+    }
+
+    @Test
+    fun `the week of a profile that does not track water says nothing of water, what its days hold of it included`() {
+        server.enqueue(answer(200, "week-summary-not-tracking-water"))
+
+        val week = runBlocking { repository().week(profileId, LocalDate.parse("2026-11-07")) }
+
+        assertEquals(null, week.water)
     }
 
     @Test

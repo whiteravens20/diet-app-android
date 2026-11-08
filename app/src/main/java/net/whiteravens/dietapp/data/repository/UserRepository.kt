@@ -74,7 +74,10 @@ class UserRepository @Inject constructor(
         val now = System.currentTimeMillis()
         kept.replaceProfiles(
             read.mapIndexed { position, profile ->
-                CachedProfile(profile.id, position, profile.name, profile.dietType, profile.mealCount, profile.weightKg, profile.targetWeightKg, now)
+                CachedProfile(
+                    profile.id, position, profile.name, profile.dietType, profile.mealCount, profile.weightKg, profile.targetWeightKg, now,
+                    waterTracking = profile.waterTracking,
+                )
             },
         )
         return read
@@ -83,7 +86,10 @@ class UserRepository @Inject constructor(
     /** The account's profiles as they were last read, and when; null before they were ever read on this phone. */
     suspend fun keptProfiles(): KeptProfiles? {
         val rows = kept.profiles().takeIf { it.isNotEmpty() } ?: return null
-        return KeptProfiles(rows.map { Profile(it.id, it.name, it.dietType, it.mealCount, it.weightKg, it.targetWeightKg) }, rows.first().syncedAt)
+        return KeptProfiles(
+            rows.map { Profile(it.id, it.name, it.dietType, it.mealCount, it.weightKg, it.targetWeightKg, waterTracking = it.waterTracking) },
+            rows.first().syncedAt,
+        )
     }
 
     /** The account's profiles, as they were last read where the server cannot be reached and they were read before. */

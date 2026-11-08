@@ -117,11 +117,13 @@ private fun WeekLines(week: WeekSummary, unit: WeightUnit) {
     if (week.empty > 0 && week.counted > 0) {
         Text(pluralStringResource(R.plurals.week_empty, week.empty, week.empty), style = MaterialTheme.typography.bodySmall, color = muted)
     }
-    week.water.averageMl?.let { average ->
-        val aim = week.water.target
+    // Nothing for a profile that does not track water, or a week that holds none.
+    val water = week.water
+    water?.averageMl?.let { average ->
+        val aim = water.target
         Text(
             if (aim == null) stringResource(R.string.week_water_no_target, liters(average))
-            else pluralStringResource(R.plurals.week_water, week.water.counted, liters(average), liters(aim), week.water.reached, week.water.counted),
+            else pluralStringResource(R.plurals.week_water, water.counted, liters(average), liters(aim), water.reached, water.counted),
             style = MaterialTheme.typography.bodyMedium,
         )
     }

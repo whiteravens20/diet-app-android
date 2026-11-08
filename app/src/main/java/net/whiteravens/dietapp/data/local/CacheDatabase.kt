@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.local
 
 import android.content.Context
 import androidx.room.AutoMigration
+import androidx.room.ColumnInfo
 import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -114,7 +115,8 @@ data class CachedDiaryDay(
 
 /**
  * A profile of the account as a screen needs it without a network, in the order the API keeps them
- * ([position]): what a screen names it by and what its figures are shown against, none of the rest.
+ * ([position]): what a screen names it by, what its figures are shown against and whether it
+ * tracks water, none of the rest. A profile kept before it could stop tracking water tracks it.
  */
 @Entity(tableName = "cached_profile")
 data class CachedProfile(
@@ -126,6 +128,7 @@ data class CachedProfile(
     val weightKg: Double,
     val targetWeightKg: Double?,
     val syncedAt: Long,
+    @ColumnInfo(defaultValue = "1") val waterTracking: Boolean = true,
 )
 
 /** What is read so that the application opens without a network: the account's profiles, and the days of their diaries. */
@@ -218,9 +221,9 @@ interface PendingChangeDao {
 
 @Database(
     entities = [CachedPlanList::class, CachedMealPlan::class, CachedShoppingList::class, PendingChangeRow::class, CachedDiaryDay::class, CachedProfile::class, CachedHouseholdList::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
+    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6)],
 )
 abstract class CacheDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao

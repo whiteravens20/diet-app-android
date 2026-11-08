@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.remote
 
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -39,10 +40,11 @@ class RequestJsonTest {
             ProfileUpdateDto(
                 name = "Ala", age = 30, sex = null, heightCm = 170.0, weightKg = 65.0, targetWeightKg = null,
                 activityLevel = "moderate", dietType = "balanced", weeklyLossTarget = null, manualCalorieTarget = null,
-                mealCount = 3, weightReminderCadence = "weekly", waterTargetMl = null, cookingReminders = true,
-                waterReminders = false, customMacroSplit = null, preferences = preferences,
+                mealCount = 3, weightReminderCadence = "weekly", waterTargetMl = null, waterTracking = false,
+                cookingReminders = true, waterReminders = false, customMacroSplit = null, preferences = preferences,
             ),
         )
+        assertEquals(JsonPrimitive(false), body["waterTracking"])
 
         for (field in listOf("sex", "targetWeightKg", "weeklyLossTarget", "manualCalorieTarget", "waterTargetMl", "customMacroSplit")) {
             assertEquals(field, JsonNull, body[field])
@@ -67,8 +69,8 @@ class RequestJsonTest {
             NewProfileDto(
                 name = "Ala", age = 30, sex = "female", heightCm = 170.0, weightKg = 65.0, targetWeightKg = null,
                 activityLevel = "moderate", dietType = "balanced", weeklyLossTarget = null, manualCalorieTarget = null,
-                mealCount = 3, weightReminderCadence = "weekly", waterTargetMl = 2000, cookingReminders = true,
-                waterReminders = false, customMacroSplit = null,
+                mealCount = 3, weightReminderCadence = "weekly", waterTargetMl = 2000, waterTracking = true,
+                cookingReminders = true, waterReminders = false, customMacroSplit = null,
                 preferences = NewProfilePreferencesDto(allergens = listOf("gluten")),
             ),
         )

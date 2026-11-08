@@ -1955,4 +1955,9 @@
     <string name="shopping_replaces_part">A list of these days is a part of a household list: %1$s. A new list takes its place, and the household list loses this plan\'s part.</string>
     <!-- Under a reminder of water's amounts in the list of notifications, as the web's bell has it -->
     <string name="notifications_water_go">Go to the dashboard</string>
+    <!-- Whether a profile tracks water, and the water card's note on turning it off, as the web says them -->
+    <string name="profile_water_tracking">Track water</string>
+    <string name="profile_water_tracking_hint">The water card on the dashboard and in the diary, water in the week in sum, and the reminder to drink. Turned off, what was written stays.</string>
+    <string name="water_note">No need for the water card? You can turn it off %1$s.</string>
+    <string name="water_note_link">in the profile</string>
 </resources>

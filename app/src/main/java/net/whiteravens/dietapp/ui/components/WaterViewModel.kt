@@ -7,12 +7,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.config.WaterNoteStore
 import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
@@ -36,7 +39,16 @@ import javax.inject.Inject
 class WaterViewModel @Inject constructor(
     private val water: WaterRepository,
     private val queue: ChangeQueue,
+    private val notes: WaterNoteStore,
 ) : ViewModel() {
+
+    /** Whether the note on turning the card off was closed on this phone; taken as closed until read, so that it never flashes. */
+    val noteClosed: StateFlow<Boolean> = notes.closed.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    /** Closes the note on turning the card off, for every card of this phone. */
+    fun closeNote() {
+        viewModelScope.launch { notes.close() }
+    }
 
     /** What went wrong on the card. */
     sealed interface Problem {
