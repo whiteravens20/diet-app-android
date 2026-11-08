@@ -194,4 +194,20 @@ class FigureLinesTest {
         assertTrue(looseSign.containsMatchIn("Dziennik oszacuje i oznaczy ≈."))
         assertFalse(looseSign.containsMatchIn("Dziennik oznaczy\u00A0≈. Suma ≥ 12 g"))
     }
+
+    /** A Polish word of one letter with a plain space after it: a narrow screen may leave it alone at a line's end. */
+    private val looseLetter = Regex("""(?:^|[\s(„"»>\u00A0]|\\n)[wziaouWZIAOU] (?=\S)""")
+
+    @Test
+    fun `no Polish word of one letter is parted from the word after it`() {
+        assertEquals(emptyList<String>(), texts("values-pl").filterValues { looseLetter.containsMatchIn(shown(it)) }.keys.toList())
+    }
+
+    @Test
+    fun `finds a Polish word of one letter left alone`() {
+        assertTrue(looseLetter.containsMatchIn("Wyłączysz ją w profilu."))
+        assertTrue(looseLetter.containsMatchIn("W tym przepisie"))
+        assertTrue(looseLetter.containsMatchIn("Koniec.\\nW tym"))
+        assertFalse(looseLetter.containsMatchIn("Wyłączysz ją w\u00A0profilu i\u00A0tyle, B 12 g"))
+    }
 }
