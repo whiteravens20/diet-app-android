@@ -178,4 +178,20 @@ class FigureLinesTest {
         assertFalse(looseFigure.containsMatchIn("\"\${formatNumber(kcal)}\\u00A0kcal\""))
         assertFalse(looseFigure.containsMatchIn("\"\${name} gotuje\""))
     }
+
+    /** A sign that ends a sentence with a plain space before it: a narrow screen may begin a line with it alone. */
+    private val looseSign = Regex("""(?<=\S) [≈≥≤](?=[.,;:!?)<]|$)""")
+
+    @Test
+    fun `no sign of any language that ends a sentence is parted from the word before it`() {
+        for (folder in folders) {
+            assertEquals(folder, emptyList<String>(), texts(folder).filterValues { looseSign.containsMatchIn(shown(it)) }.keys.toList())
+        }
+    }
+
+    @Test
+    fun `finds a sign left alone at the end of a sentence`() {
+        assertTrue(looseSign.containsMatchIn("Dziennik oszacuje i oznaczy ≈."))
+        assertFalse(looseSign.containsMatchIn("Dziennik oznaczy\u00A0≈. Suma ≥ 12 g"))
+    }
 }

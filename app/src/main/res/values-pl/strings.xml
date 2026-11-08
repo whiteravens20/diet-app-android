@@ -1838,7 +1838,7 @@
     <string name="plans_estimated_chip">≈ szacunek</string>
     <string name="plans_from_diary_chip">z dziennika</string>
     <string name="plans_custom_estimated_note">Własny posiłek: makroskładników, których nie wpisano, jest szacunek z celu dnia.</string>
-    <string name="plans_custom_macros_optional">Wystarczą kalorie. Czego nie wpiszesz, to oszacujemy z celu dnia i oznaczymy ≈.</string>
+    <string name="plans_custom_macros_optional">Wystarczą kalorie. Czego nie wpiszesz, to oszacujemy z celu dnia i oznaczymy ≈.</string>
     <string name="plans_custom_total_estimated">Posiłek doda do dnia: %1$s kcal. Brakujące makroskładniki zostaną oszacowane z celu dnia.</string>
     <string-array name="plans_cooking_day_for">
         <item>poniedziałek</item>
@@ -1936,7 +1936,7 @@
     <string name="products_pack_amount">Opakowanie ma (%1$s)</string>
     <string name="products_serving_amount">Porcja to (%1$s)</string>
     <string name="products_in_100">W 100 %1$s</string>
-    <string name="products_figures_hint">Wystarczą kalorie. Czego nie wpiszesz, dziennik oszacuje i oznaczy ≈.</string>
+    <string name="products_figures_hint">Wystarczą kalorie. Czego nie wpiszesz, dziennik oszacuje i oznaczy ≈.</string>
     <string name="products_calories">Kalorie (kcal)</string>
     <string name="products_protein">Białko (g)</string>
     <string name="products_fat">Tłuszcz (g)</string>
