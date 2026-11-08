@@ -58,7 +58,18 @@ import kotlin.math.roundToInt
 @Composable
 fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Unit, viewModel: RecipeDraftViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.drafted) { state.drafted?.let { onDrafted(it.id) } }
+    // The view model outlives the window, which a turned screen draws anew: every way of closing it,
+    // and the recipe it opens, end what it held, so that the next window opens afresh.
+    val close = {
+        viewModel.closed()
+        onDismiss()
+    }
+    LaunchedEffect(state.drafted) {
+        state.drafted?.let {
+            viewModel.closed()
+            onDrafted(it.id)
+        }
+    }
 
     var profileId by rememberSaveable { mutableStateOf<String?>(null) }
     val profile = state.profiles.firstOrNull { it.id == profileId } ?: state.profiles.firstOrNull()
@@ -75,14 +86,14 @@ fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Un
     var respectExclusions by rememberSaveable { mutableStateOf(true) }
     var addToFavorites by rememberSaveable { mutableStateOf(true) }
 
-    ScreenDialog(onDismiss) {
+    ScreenDialog(close) {
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.draft_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+                TextButton(onClick = close) { Text(stringResource(R.string.common_close)) }
             }
             Note(stringResource(R.string.draft_subhead))
             Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), modifier = Modifier.fillMaxWidth()) {
@@ -127,7 +138,7 @@ fun RecipeDraftDialog(onDrafted: (recipeId: String) -> Unit, onDismiss: () -> Un
                 if (state.toCurators) Note(stringResource(R.string.draft_curators_note))
                 state.error?.let { ErrorBanner(errorMessage(it)) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+                    TextButton(onClick = close) { Text(stringResource(R.string.common_cancel)) }
                     Button(
                         onClick = {
                             viewModel.draft(

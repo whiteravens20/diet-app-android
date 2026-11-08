@@ -25,6 +25,10 @@ import javax.inject.Inject
  * profiles it can be for, with what each favours, excludes and is allergic to; whether the
  * instance's model writes it, which puts it before the curators as well; the draft asked for
  * once; and the recipe the model wrote, which the window opens.
+ *
+ * It lives as long as the screen of recipes, longer than one window: each window starts afresh
+ * ([closed] ends one), and what a window that has gone asked for lands among one's own recipes
+ * and changes nothing of the next.
  */
 @HiltViewModel
 class RecipeDraftViewModel @Inject constructor(
@@ -47,6 +51,9 @@ class RecipeDraftViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    /** The window the requests belong to: one closed has its requests' answers come to nothing. */
+    private var window = 0
+
     init {
         viewModelScope.launch {
             attempt { profiles.profiles() }
@@ -60,11 +67,21 @@ class RecipeDraftViewModel @Inject constructor(
 
     fun draft(ask: RecipeDraftAsk) {
         if (_state.value.drafting) return
+        val asked = window
         viewModelScope.launch {
             _state.update { it.copy(drafting = true, error = null) }
-            attempt { recipes.draft(ask) }
+            val answer = attempt { recipes.draft(ask) }
+            // A window closed while the model wrote: the recipe is among one's own, and nothing opens it.
+            if (asked != window) return@launch
+            answer
                 .onSuccess { recipe -> _state.update { it.copy(drafting = false, drafted = recipe) } }
                 .onFailure { e -> _state.update { it.copy(drafting = false, error = e) } }
         }
+    }
+
+    /** The window closes: the next one opens with nothing drafted, asked for or refused. */
+    fun closed() {
+        window += 1
+        _state.update { it.copy(drafting = false, drafted = null, error = null) }
     }
 }

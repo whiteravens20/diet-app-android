@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.ui.screens.recipes
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -18,6 +19,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.toDetails
 import net.whiteravens.dietapp.data.repository.toDomain
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipeDraftAsk
 import net.whiteravens.dietapp.domain.SessionUser
 import net.whiteravens.dietapp.testing.fixture
@@ -65,6 +67,56 @@ class RecipeDraftViewModelTest {
         model.draft(ask)
 
         assertEquals(recipe.id, model.state.value.drafted?.id)
+        assertNull(model.state.value.error)
+        assertFalse(model.state.value.drafting)
+    }
+
+    @Test
+    fun `a window opened again starts afresh, the recipe drafted in the one before opening nothing`() {
+        val recipes = mockk<RecipeRepository>()
+        coEvery { recipes.draft(any()) } returns recipe
+        val model = RecipeDraftViewModel(recipes, profiles, users)
+        model.draft(RecipeDraftAsk(profileId = profile.id, dietType = "vegan"))
+        assertEquals(recipe.id, model.state.value.drafted?.id)
+
+        model.closed()
+
+        assertNull(model.state.value.drafted)
+        assertFalse(model.state.value.drafting)
+        assertNull(model.state.value.error)
+    }
+
+    @Test
+    fun `what a window closed while the model wrote asked for opens nothing and holds up nothing in the next`() {
+        val recipes = mockk<RecipeRepository>()
+        val written = CompletableDeferred<Recipe>()
+        coEvery { recipes.draft(any()) } coAnswers { written.await() } andThen recipe
+        val model = RecipeDraftViewModel(recipes, profiles, users)
+        val ask = RecipeDraftAsk(profileId = profile.id, dietType = "vegan")
+        model.draft(ask)
+        assertTrue(model.state.value.drafting)
+
+        model.closed()
+        written.complete(recipe)
+
+        assertNull(model.state.value.drafted)
+        assertFalse(model.state.value.drafting)
+        // The next window asks, and its own answer opens its recipe.
+        model.draft(ask)
+        assertEquals(recipe.id, model.state.value.drafted?.id)
+    }
+
+    @Test
+    fun `a refusal that comes after its window closed is said in no window`() {
+        val recipes = mockk<RecipeRepository>()
+        val written = CompletableDeferred<Recipe>()
+        coEvery { recipes.draft(any()) } coAnswers { written.await() }
+        val model = RecipeDraftViewModel(recipes, profiles, users)
+        model.draft(RecipeDraftAsk(profileId = profile.id, dietType = "vegan"))
+
+        model.closed()
+        written.completeExceptionally(ApiException(503, "AI_UNAVAILABLE", "No model answered."))
+
         assertNull(model.state.value.error)
         assertFalse(model.state.value.drafting)
     }
