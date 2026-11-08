@@ -216,12 +216,12 @@ internal fun ProductAmount(product: Product, form: EntryForm, problem: String?, 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             serving?.let { amount ->
                 OutlinedButton(onClick = { viewModel.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = plainNumber(amount)) } }) {
-                    Text(stringResource(R.string.diary_product_serving, "${plainNumber(amount)} $unit"))
+                    Text(stringResource(R.string.diary_product_serving, "${plainNumber(amount)}\u00A0$unit"))
                 }
             }
             pack?.let { amount ->
                 OutlinedButton(onClick = { viewModel.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = plainNumber(amount)) } }) {
-                    Text(stringResource(R.string.diary_product_pack, "${plainNumber(amount)} $unit"))
+                    Text(stringResource(R.string.diary_product_pack, "${plainNumber(amount)}\u00A0$unit"))
                 }
             }
         }

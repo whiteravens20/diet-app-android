@@ -245,7 +245,7 @@ private fun WeekOutcome(week: DaySettingsWeek, unit: WeightUnit) {
     val average = if (now == alone) stringResource(R.string.plans_settings_week_average, now, target)
     else stringResource(R.string.plans_settings_week_average_change, now, alone, target)
     val pace = week.paceAlone
-    val weight = "${formatNumber(abs(unit.shown(pace)), 2)} ${unit.code}"
+    val weight = "${formatNumber(abs(unit.shown(pace)), 2)}\u00A0${unit.code}"
     val paced = when {
         abs(pace) < 0.05 -> stringResource(R.string.plans_settings_week_pace_keep)
         pace > 0 -> stringResource(R.string.plans_settings_week_pace_loss, weight)

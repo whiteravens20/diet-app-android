@@ -81,7 +81,7 @@ fun KeepWeightCard(
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.keep_weight_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.keep_weight_reached, held("${formatNumber(unit.shown(target), 1)} ${unit.code}")), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.keep_weight_reached, held("${formatNumber(unit.shown(target), 1)}\u00A0${unit.code}")), style = MaterialTheme.typography.bodyMedium)
             Text(stringResource(R.string.keep_weight_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { viewModel.decide(profile.id, keep = true) }, enabled = !state.deciding) { Text(stringResource(R.string.keep_weight_keep)) }

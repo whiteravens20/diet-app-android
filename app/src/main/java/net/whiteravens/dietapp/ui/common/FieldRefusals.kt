@@ -63,7 +63,7 @@ private fun Bound.Number.say(figure: Double, up: Boolean): String {
     // a nought rounded up from just under it is a nought, not a negative one.
     val rounded = (if (up) ceil(shown - EPSILON) else floor(shown + EPSILON)) / scale + 0.0
     val number = formatNumber(rounded, decimals)
-    return if (unit == null) number else "$number $unit"
+    return if (unit == null) number else "$number\u00A0$unit"
 }
 
 private const val EPSILON = 1e-9

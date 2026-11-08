@@ -94,7 +94,7 @@ fun MacroLegend(labels: List<String>, grams: List<Double>, modifier: Modifier = 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(8.dp).clip(CircleShape).background(colors[i]))
                 Column(Modifier.padding(start = 6.dp)) {
-                    Text("${grams[i].roundToInt()} g", style = MaterialTheme.typography.labelLarge)
+                    Text("${grams[i].roundToInt()}\u00A0g", style = MaterialTheme.typography.labelLarge)
                     Text(
                         percents?.let { "$label$DOT${it[i]}%" } ?: label,
                         style = MaterialTheme.typography.labelSmall,

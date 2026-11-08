@@ -150,4 +150,4 @@ private fun liters(ml: Int): String = held("${formatNumber(ml / 1000.0, 2)} ${st
 
 /** Kilograms in the account's [unit], to a tenth, kept with the unit: `0,4 kg`. */
 @Composable
-private fun weight(kg: Double, unit: WeightUnit): String = held("${formatNumber(unit.shown(kg), 1)} ${unit.code}")
+private fun weight(kg: Double, unit: WeightUnit): String = held("${formatNumber(unit.shown(kg), 1)}\u00A0${unit.code}")

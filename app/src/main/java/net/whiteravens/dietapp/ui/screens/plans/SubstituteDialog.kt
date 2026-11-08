@@ -206,7 +206,7 @@ private fun PreviewOf(preview: SubstitutionPreview, acceptChange: Boolean, onAcc
 @Composable
 private fun Delta(label: String, before: Double, after: Double, grams: Boolean) {
     val digits = if (grams) 1 else 0
-    val unit = if (grams) " g" else ""
+    val unit = if (grams) "\u00A0g" else ""
     val diff = ((after - before) * 10).roundToInt() / 10.0
     val sign = if (diff > 0) "+" else ""
     Row {

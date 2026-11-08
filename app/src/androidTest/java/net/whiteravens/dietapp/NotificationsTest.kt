@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.scrollTo
@@ -82,7 +83,7 @@ class NotificationsTest {
         // A reminder leads to the weights of its profile on the dashboard: Ola's, the second profile's, out of sight before.
         screen.scrollTo(notification("Ola", reminder))
         screen.onNode(notification("Ola", reminder)).performClick()
-        val olasWeights = text(R.string.weight_reference_hint, "${NumberFormat.getNumberInstance(Locale.getDefault()).format(58)} kg")
+        val olasWeights = text(R.string.weight_reference_hint, heldTogether("${NumberFormat.getNumberInstance(Locale.getDefault()).format(58)} kg"))
         screen.waitForText(olasWeights)
         screen.onNodeWithText(olasWeights).assertIsDisplayed()
         screen.keepScreenshot("notifications-a-reminder-followed")

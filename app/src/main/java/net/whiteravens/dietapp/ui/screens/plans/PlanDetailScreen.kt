@@ -1010,10 +1010,10 @@ private fun daySettingsLine(day: PlanDay): String? {
 private fun macrosLine(nutrition: Nutrition): String =
     inOneLine(
         listOf(
-            "${stringResource(R.string.macros_protein)} ${formatNumber(nutrition.protein.roundToInt())} g",
-            "${stringResource(R.string.macros_fat)} ${formatNumber(nutrition.fat.roundToInt())} g",
-            "${stringResource(R.string.macros_carbs)} ${formatNumber(nutrition.carbs.roundToInt())} g",
-            "${formatNumber(nutrition.calories.roundToInt())} kcal",
+            "${stringResource(R.string.macros_protein)} ${formatNumber(nutrition.protein.roundToInt())}\u00A0g",
+            "${stringResource(R.string.macros_fat)} ${formatNumber(nutrition.fat.roundToInt())}\u00A0g",
+            "${stringResource(R.string.macros_carbs)} ${formatNumber(nutrition.carbs.roundToInt())}\u00A0g",
+            "${formatNumber(nutrition.calories.roundToInt())}\u00A0kcal",
         ),
     )
 
@@ -1521,9 +1521,9 @@ private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: S
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Figure(formatNumber(meal.nutrition.calories.roundToInt()), "kcal")
-                    Figure("${formatNumber(meal.nutrition.protein.roundToInt())} g", stringResource(R.string.macros_protein))
-                    Figure("${formatNumber(meal.nutrition.fat.roundToInt())} g", stringResource(R.string.macros_fat))
-                    Figure("${formatNumber(meal.nutrition.carbs.roundToInt())} g", stringResource(R.string.macros_carbs))
+                    Figure("${formatNumber(meal.nutrition.protein.roundToInt())}\u00A0g", stringResource(R.string.macros_protein))
+                    Figure("${formatNumber(meal.nutrition.fat.roundToInt())}\u00A0g", stringResource(R.string.macros_fat))
+                    Figure("${formatNumber(meal.nutrition.carbs.roundToInt())}\u00A0g", stringResource(R.string.macros_carbs))
                 }
                 meal.label?.let { LabelGrid(it) }
                 cookHint(meal, date)?.let { Hint(it) }

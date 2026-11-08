@@ -70,7 +70,7 @@ class DashboardTest {
         screen.signIn(account)
 
         screen.waitForText("Ala")
-        screen.waitForText("$target ${text(R.string.unit_kcal)}")
+        screen.waitForText(heldTogether("$target ${text(R.string.unit_kcal)}"))
         screen.keepScreenshot("dashboard-a-profile")
 
         // A profile's favourite sets are made and changed in the web application, whose dashboard opens in the browser.
@@ -196,7 +196,7 @@ class DashboardTest {
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(80.6) }
         val before = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(80.6)
-        screen.waitForText("(${text(R.string.weight_remove_latest_label, "$before kg", formatDate(threeDaysAgo.toString()))})")
+        screen.waitForText("(${text(R.string.weight_remove_latest_label, heldTogether("$before kg"), formatDate(threeDaysAgo.toString()))})")
     }
 
     @Test
@@ -355,7 +355,7 @@ class DashboardTest {
         screen.onNode(hasText(text(R.string.weight_log)) and hasClickAction()).performScrollTo().performClick()
         val today = formatDate(LocalDate.now().toString())
         val kg = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(81.5)
-        val latest = "(${text(R.string.weight_remove_latest_label, "$kg kg", today)})"
+        val latest = "(${text(R.string.weight_remove_latest_label, heldTogether("$kg kg"), today)})"
         screen.waitForText(latest)
         screen.waitForText(text(R.string.change_waiting))
         screen.onNodeWithText(text(R.string.change_waiting)).performScrollTo()

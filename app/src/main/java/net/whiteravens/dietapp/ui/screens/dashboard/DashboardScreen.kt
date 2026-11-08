@@ -268,7 +268,7 @@ private fun ProfileSummary(
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatCard(
                 label = stringResource(R.string.dashboard_daily_target),
-                value = target?.let { "${it.dailyTarget.roundToInt()} $kcal" } ?: "—",
+                value = target?.let { "${it.dailyTarget.roundToInt()}\u00A0$kcal" } ?: "—",
                 icon = AppIcons.Target,
                 hint = target?.let {
                     stringResource(
@@ -280,7 +280,7 @@ private fun ProfileSummary(
             )
             StatCard(
                 label = stringResource(R.string.dashboard_maintenance),
-                value = target?.let { "${it.maintenance.roundToInt()} $kcal" } ?: "—",
+                value = target?.let { "${it.maintenance.roundToInt()}\u00A0$kcal" } ?: "—",
                 icon = AppIcons.Flame,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
@@ -290,7 +290,7 @@ private fun ProfileSummary(
             // Under maintenance a deficit, above it a surplus: the label says which, the number how much.
             StatCard(
                 label = stringResource(if (target != null && target.dailyDeficit < 0) R.string.dashboard_daily_surplus else R.string.dashboard_daily_deficit),
-                value = target?.let { "${abs(it.dailyDeficit).roundToInt()} $kcal" } ?: "—",
+                value = target?.let { "${abs(it.dailyDeficit).roundToInt()}\u00A0$kcal" } ?: "—",
                 icon = AppIcons.Schedule,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )

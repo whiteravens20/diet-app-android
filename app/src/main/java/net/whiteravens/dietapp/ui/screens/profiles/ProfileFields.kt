@@ -326,7 +326,7 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
 private fun paceLabel(pace: String?, unit: WeightUnit): String {
     if (pace == null) return stringResource(R.string.profile_pace_none)
     val kg = pace.toDouble()
-    val amount = if (unit == WeightUnit.LB) "${formatNumber(unit.shown(kg), 1)} lb" else "${formatNumber(kg, 2)} kg"
+    val amount = if (unit == WeightUnit.LB) "${formatNumber(unit.shown(kg), 1)}\u00A0lb" else "${formatNumber(kg, 2)}\u00A0kg"
     return stringResource(R.string.profile_pace_lose, amount)
 }
 

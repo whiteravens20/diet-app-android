@@ -106,8 +106,8 @@
     <string name="overview_none_cta">Ułóż plan</string>
     <string name="overview_failed">Nie udało się odczytać podsumowania planu.</string>
     <string name="overview_energy">Energia na dzień</string>
-    <string name="overview_energy_value">%1$s kcal</string>
-    <string name="overview_energy_hint">Średnio, przy celu %1$s kcal.</string>
+    <string name="overview_energy_value">%1$s kcal</string>
+    <string name="overview_energy_hint">Średnio, przy celu %1$s kcal.</string>
     <string name="overview_eaten">Zjedzone</string>
     <string name="overview_eaten_not_yet_hint">Żaden dzień planu jeszcze nie nadszedł.</string>
     <string name="overview_on_diet">Zgodne z dietą</string>
@@ -117,7 +117,7 @@
     <string name="overview_shopping">Zakupy</string>
     <string name="overview_shopping_none_hint">Plan nie ma jeszcze listy zakupów.</string>
     <string name="overview_macros">Makroskładniki dnia: zaplanowane i cel</string>
-    <string name="overview_macro_value">%1$s z %2$s g</string>
+    <string name="overview_macro_value">%1$s z %2$s g</string>
     <string name="overview_days">Dzień po dniu</string>
     <string name="overview_series_planned">Zaplanowane</string>
     <string name="overview_series_target">Cel</string>
@@ -139,7 +139,7 @@
         <item quantity="many">%d pozycji</item>
         <item quantity="other">%d pozycji</item>
     </plurals>
-    <string name="overview_day_of">%1$s z %2$s kcal</string>
+    <string name="overview_day_of">%1$s z %2$s kcal</string>
     <string name="dashboard_kcal_per_day">kcal/dzień</string>
     <string name="dashboard_ai_left">AI: %1$s/%2$s w tym miesiącu</string>
     <string name="dashboard_ai_own">AI: własny klucz, bez limitu</string>
@@ -270,7 +270,7 @@
         <item quantity="many">%1$d posiłków tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
         <item quantity="other">%1$d posiłku tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
     </plurals>
-    <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
+    <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
     <string name="plans_day_macros_of">Białko %1$s z %2$s g · tłuszcz %3$s z %4$s g · węglowodany %5$s z %6$s g</string>
     <string name="plans_custom_chip">Własny</string>
     <string name="plans_custom_meal">Własny posiłek</string>
@@ -307,8 +307,8 @@
     <string name="plans_rebalance_title">Przeliczono porcje dnia</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
     <string name="plans_rebalance_best_effort">Dzień nadal jest poza celem: dopasowanie porcji nie wystarczyło.</string>
-    <string name="plans_rebalance_left_over">Reszta planu nadal ma %1$s kcal nadwyżki: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
-    <string name="plans_rebalance_left_under">W reszcie planu nadal brakuje %1$s kcal: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
+    <string name="plans_rebalance_left_over">Reszta planu nadal ma %1$s kcal nadwyżki: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
+    <string name="plans_rebalance_left_under">W reszcie planu nadal brakuje %1$s kcal: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
     <string name="plans_rebalance_undo">Cofnij ostatnie przeliczenie</string>
     <string name="plans_rebalance_dismiss">Zamknij</string>
     <string name="plans_custom_modal_title">Dodaj własny posiłek</string>
@@ -338,7 +338,7 @@
     <string name="plans_off_diet_tag">spoza diety</string>
     <string name="plans_offer_title">Przepis w miejsce tego posiłku</string>
     <string name="plans_offer_macros">Białko %1$s g · tłuszcz %2$s g · węglowodany %3$s g</string>
-    <string name="plans_offer_day">Dzień miałby %1$s z %2$s kcal, zanim pozostałe posiłki zostaną do niego dopasowane.</string>
+    <string name="plans_offer_day">Dzień miałby %1$s z %2$s kcal, zanim pozostałe posiłki zostaną do niego dopasowane.</string>
     <string name="plans_offer_take">Zamień na ten przepis</string>
     <string name="plans_offer_another">Inna propozycja</string>
     <string name="plans_swap_with_pantry">Zamiany preferują to, co masz w spiżarni</string>
@@ -352,14 +352,14 @@
     <string name="ai_fallback_provider_timeout">Dostawca AI był zbyt wolny — wybierz mniejszy model lub usługę w chmurze. Tym razem korzystam z wbudowanego silnika.</string>
     <string name="ai_fallback_key_unreadable">Zapisanego klucza AI nie da się już odczytać — wprowadź go ponownie w Ustawieniach. Tym razem korzystam z wbudowanego silnika.</string>
     <string name="ai_fallback_invalid_output">Odpowiedzi AI nie dało się użyć — wyboru dokonał wbudowany silnik.</string>
-    <string name="plans_offer_line">Zamiast tego: %1$s, %2$s: %3$s kcal zamiast %4$s.</string>
+    <string name="plans_offer_line">Zamiast tego: %1$s, %2$s: %3$s kcal zamiast %4$s.</string>
     <plurals name="plans_offer_servings">
         <item quantity="one">%1$s porcja</item>
-        <item quantity="few">%1$s porcje</item>
-        <item quantity="many">%1$s porcji</item>
-        <item quantity="other">%1$s porcji</item>
+        <item quantity="few">%1$s porcje</item>
+        <item quantity="many">%1$s porcji</item>
+        <item quantity="other">%1$s porcji</item>
     </plurals>
-    <string name="plans_offer_servings_fraction">%1$s porcji</string>
+    <string name="plans_offer_servings_fraction">%1$s porcji</string>
     <string name="ai_off_note">AI jest wyłączone dla tego konta, więc akcje, które pytają model, są nieaktywne. %1$s, żeby z nich korzystać.</string>
     <string name="ai_off_turn_on">Włącz AI w Ustawieniach konta</string>
     <string name="plans_substitute_ingr">Zamień wybrany skł.</string>
@@ -465,7 +465,7 @@
     <string name="plans_ways_way">Wariant %1$s</string>
     <string name="plans_ways_take">Wybierz ten dzień</string>
     <string name="plans_ways_stays">zostaje</string>
-    <string name="plans_ways_meal_energy">%1$s kcal</string>
+    <string name="plans_ways_meal_energy">%1$s kcal</string>
     <string name="plans_ways_day_line">%1$s z %2$s kcal · białko %3$s g · tłuszcz %4$s g · węglowodany %5$s g</string>
     <string name="plans_ways_none">W limitach planu katalog nie daje innego wariantu tego dnia.</string>
     <string name="weigh_ask">Poproś model o ocenę</string>
@@ -473,7 +473,7 @@
     <string name="weigh_tooltip">Model ustawia te propozycje w kolejności i mówi o każdej jedno zdanie. Niczego nie dodaje i niczego nie zmienia. Jedno zapytanie z Twojego limitu AI.</string>
     <string name="weigh_weighed">Kolejność ustalił model. To, co jest proponowane, pochodzi z planera, tak jak każda liczba.</string>
     <string name="ai_mark_weighed">Model o tym: „%1$s”</string>
-    <string name="plans_ways_now">Obecnie: %1$s z %2$s kcal. %3$s</string>
+    <string name="plans_ways_now">Obecnie: %1$s z %2$s kcal. %3$s</string>
     <string name="plans_ways_now_none">Plan nie zostawia żadnego otwartego opakowania, z którego zostaje ponad jedna piąta.</string>
     <plurals name="plans_ways_now_packs">
         <item quantity="one">Plan zostawia %1$d otwarte opakowanie, z którego zostaje ponad jedna piąta.</item>
@@ -621,8 +621,8 @@
     <string name="complexity_simple">Proste</string>
     <string name="complexity_medium">Średnie</string>
     <string name="complexity_complex">Złożone</string>
-    <string name="draft_kcal_value">%1$s kcal</string>
-    <string name="draft_minutes_value">%1$s min</string>
+    <string name="draft_kcal_value">%1$s kcal</string>
+    <string name="draft_minutes_value">%1$s min</string>
     <string name="recipes_nutrition_per_serving">Wartości odżywcze na porcję</string>
     <string name="recipes_ingredients">Składniki</string>
     <string name="recipes_steps">Kroki</string>
@@ -827,7 +827,7 @@
     <string name="shopping_copy_nothing">Wszystko z tej listy jest odhaczone.</string>
     <string name="shopping_summary">Odhaczone %1$s/%2$s · łącznie %3$s kcal</string>
     <string name="shopping_delete_confirm">Usunąć tę listę zakupów?</string>
-    <string name="shopping_aisle_energy">około %1$s kcal</string>
+    <string name="shopping_aisle_energy">około %1$s kcal</string>
     <string name="shopping_find_entry">Znajdź pozycję</string>
     <string name="shopping_find_entry_placeholder">Nazwa składnika…</string>
     <string name="shopping_find_entry_none">Żadna pozycja tej listy nie ma „%1$s” w nazwie.</string>
@@ -1149,8 +1149,8 @@
     <string name="shopping_stale">Jadłospis planu zmienił się po utworzeniu tej listy, więc nie odpowiada już temu, czego plan potrzebuje.</string>
     <string name="shopping_stale_update">Zaktualizuj listę</string>
     <string name="shopping_stale_hint">To, co już masz, zostanie policzone na poczet nowej listy.</string>
-    <string name="amount_g">%1$s g</string>
-    <string name="amount_ml">%1$s ml</string>
+    <string name="amount_g">%1$s g</string>
+    <string name="amount_ml">%1$s ml</string>
     <string name="amount_with_grams">%1$s (%2$s)</string>
     <string name="unit_name_piece">szt.</string>
     <string name="unit_name_slice">kromki</string>
@@ -1173,10 +1173,10 @@
         <item quantity="other">%1$s szczypty</item>
     </plurals>
     <plurals name="amount_piece">
-        <item quantity="one">%1$s sztuka</item>
-        <item quantity="few">%1$s sztuki</item>
-        <item quantity="many">%1$s sztuk</item>
-        <item quantity="other">%1$s sztuki</item>
+        <item quantity="one">%1$s sztuka</item>
+        <item quantity="few">%1$s sztuki</item>
+        <item quantity="many">%1$s sztuk</item>
+        <item quantity="other">%1$s sztuki</item>
     </plurals>
     <plurals name="amount_slice">
         <item quantity="one">%1$s kromka</item>
@@ -1244,7 +1244,7 @@
     <string name="profile_pace">Tempo</string>
     <string name="profile_pace_none">Utrzymać wagę</string>
     <string name="profile_pace_lose">Chudnąć %1$s na tydzień</string>
-    <string name="profile_pace_comes_to">%1$s kcal dziennie</string>
+    <string name="profile_pace_comes_to">%1$s kcal dziennie</string>
     <string name="profile_pace_slowed">spowolnione</string>
     <string name="profile_pace_held">wstrzymane</string>
     <string name="profile_pace_slowed_note">Tempo oznaczone jako „spowolnione” odebrałoby więcej niż jedną czwartą Twojego zapotrzebowania albo zeszło poniżej najniższego celu, jaki wylicza plan, więc plan odejmuje mniej.</string>
@@ -1338,13 +1338,13 @@
     <string name="calorie_preview_maintenance">Zapotrzebowanie</string>
     <string name="calorie_preview_at_rest">W spoczynku</string>
     <string name="calorie_preview_target_next">Cel dzienny zobaczysz w następnym kroku, gdy wybierzesz tempo.</string>
-    <string name="calorie_preview_kcal">%1$s kcal</string>
+    <string name="calorie_preview_kcal">%1$s kcal</string>
     <string name="calorie_preview_at_maintenance">Celem jest Twoje zapotrzebowanie: redukcja nie jest planowana.</string>
     <string name="calorie_preview_held">Cel redukcji jest wstrzymany, dopóki w formularzu nie potwierdzisz, że rozumiesz ryzyko, więc celem jest Twoje zapotrzebowanie.</string>
-    <string name="calorie_preview_under">%1$s kcal dziennie poniżej Twojego zapotrzebowania.</string>
-    <string name="calorie_preview_over">%1$s kcal dziennie powyżej Twojego zapotrzebowania.</string>
+    <string name="calorie_preview_under">%1$s kcal dziennie poniżej Twojego zapotrzebowania.</string>
+    <string name="calorie_preview_over">%1$s kcal dziennie powyżej Twojego zapotrzebowania.</string>
     <string name="calorie_preview_macros">Białko %1$s g · tłuszcz %2$s g · węglowodany %3$s g dziennie.</string>
-    <string name="calorie_preview_said">Cel dzienny: %1$s kcal.</string>
+    <string name="calorie_preview_said">Cel dzienny: %1$s kcal.</string>
     <string name="calorie_preview_not_advice">To przybliżenie dla zdrowej osoby dorosłej, a nie porada medyczna. Więcej w %1$s.</string>
     <string name="calorie_preview_terms">regulaminie</string>
     <string name="calculator_title">Kalkulator</string>
@@ -1401,7 +1401,7 @@
     <string name="plans_meals_a_day">Posiłków dziennie</string>
     <string name="plans_calorie_target">Dzienny cel kalorii (kcal)</string>
     <string name="plans_choices_hint">Dieta, liczba posiłków i cel kalorii dotyczą tylko tego planu. Profil zostaje bez zmian.</string>
-    <string name="plans_calorie_target_hint">Puste: cel z profilu, %1$s kcal dziennie.</string>
+    <string name="plans_calorie_target_hint">Puste: cel z profilu, %1$s kcal dziennie.</string>
     <string name="plans_apply_prefs">Zastosuj preferencje</string>
     <string name="plans_apply_prefs_hint">Działają niezależnie: możesz zaznaczyć dowolne z nich albo żadnej. Alergeny zawsze są pomijane.</string>
     <string name="plans_honour_avoid">Pomijaj składniki z mojej listy unikanych</string>
@@ -1521,14 +1521,14 @@
     <string name="plans_settings_fix_fields">Popraw zaznaczone pola, żeby zobaczyć, co się zmieni.</string>
     <string name="plans_settings_unchanged">Nic się nie zmieni.</string>
     <string name="plans_settings_skip_note">Dzień zostanie pominięty: zostaną tylko zjedzone posiłki, a dzień nie będzie liczony jako niedobór ani do średnich planu.</string>
-    <string name="plans_settings_target_same">Cel dnia bez zmian: %1$s kcal.</string>
-    <string name="plans_settings_target_change">Cel dnia: %1$s → %2$s kcal.</string>
-    <string name="plans_settings_target_macros">Makro celu: białko %1$s g, tłuszcz %2$s g, węglowodany %3$s g.</string>
+    <string name="plans_settings_target_same">Cel dnia bez zmian: %1$s kcal.</string>
+    <string name="plans_settings_target_change">Cel dnia: %1$s → %2$s kcal.</string>
+    <string name="plans_settings_target_macros">Makro celu: białko %1$s g, tłuszcz %2$s g, węglowodany %3$s g.</string>
     <string name="plans_settings_below_floor">Ten cel jest niższy niż najniższy, jaki wylicza plan.</string>
     <string name="plans_settings_added">Dochodzi: %1$s.</string>
     <string name="plans_settings_drawn_note">Przepisy nowych posiłków zostaną dobrane przy zapisie, w granicach limitów planu; porcje pozostałych dopasują się do celu dnia.</string>
-    <string name="plans_settings_day_calories">Dzień będzie miał około %1$s kcal.</string>
-    <string name="plans_settings_day_calories_off">Dzień będzie miał około %1$s kcal: ponad jedną dziesiątą od celu, bo porcje nie wystarczą. Różnicę możesz potem rozłożyć na resztę planu.</string>
+    <string name="plans_settings_day_calories">Dzień będzie miał około %1$s kcal.</string>
+    <string name="plans_settings_day_calories_off">Dzień będzie miał około %1$s kcal: ponad jedną dziesiątą od celu, bo porcje nie wystarczą. Różnicę możesz potem rozłożyć na resztę planu.</string>
     <string name="plans_settings_list_out_of_date">Lista zakupów obejmująca ten dzień będzie do odświeżenia.</string>
     <string name="plans_list_out_of_date_days">Lista zakupów obejmująca te dni będzie do odświeżenia.</string>
     <string name="plans_settings_other_days">Inne dni planu się nie zmieniają.</string>
@@ -1536,24 +1536,24 @@
     <string name="plans_settings_save_day">Zapisz ten dzień</string>
     <string name="plans_settings_save_and_even">Zapisz i wyrównaj tydzień</string>
     <string name="plans_settings_even_week">Wyrównaj tydzień</string>
-    <string name="plans_settings_even_week_note">Średni cel dnia w tym tygodniu to %1$s kcal przy celu planu %2$s kcal. „Wyrównaj tydzień” zmieni cele dni tego tygodnia od dziś: te same dania w innych porcjach.</string>
-    <string name="plans_settings_week_average">Średni cel dnia w tym tygodniu: %1$s kcal przy celu planu %2$s kcal.</string>
-    <string name="plans_settings_week_average_change">Średni cel dnia w tym tygodniu: %1$s → %2$s kcal przy celu planu %3$s kcal.</string>
+    <string name="plans_settings_even_week_note">Średni cel dnia w tym tygodniu to %1$s kcal przy celu planu %2$s kcal. „Wyrównaj tydzień” zmieni cele dni tego tygodnia od dziś: te same dania w innych porcjach.</string>
+    <string name="plans_settings_week_average">Średni cel dnia w tym tygodniu: %1$s kcal przy celu planu %2$s kcal.</string>
+    <string name="plans_settings_week_average_change">Średni cel dnia w tym tygodniu: %1$s → %2$s kcal przy celu planu %3$s kcal.</string>
     <string name="plans_settings_week_pace_loss">Przy takim średnim celu waga spada o około %1$s na tydzień.</string>
     <string name="plans_settings_week_pace_gain">Przy takim średnim celu waga rośnie o około %1$s na tydzień.</string>
     <string name="plans_settings_week_pace_keep">Przy takim średnim celu waga zostaje mniej więcej bez zmian.</string>
-    <string name="plans_week_uneven">Średni cel dnia w tym tygodniu: %1$s kcal, cel planu: %2$s kcal.</string>
+    <string name="plans_week_uneven">Średni cel dnia w tym tygodniu: %1$s kcal, cel planu: %2$s kcal.</string>
     <string name="plans_even_week">Wyrównaj tydzień</string>
     <string name="plans_even_week_note">Dni tego tygodnia od dziś dostaną nowe cele: te same dania w innych porcjach.</string>
     <plurals name="plans_settings_week_even_note">
-        <item quantity="one">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cel %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
-        <item quantity="few">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
-        <item quantity="many">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
-        <item quantity="other">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="one">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cel %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="few">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="many">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innych dni tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
+        <item quantity="other">„Zapisz i wyrównaj tydzień” da temu dniu %1$s kcal i zmieni cele %2$d innego dnia tego tygodnia od dziś: te same dania w innych porcjach. Średni cel dnia w tym tygodniu wyniesie %3$s kcal.</item>
     </plurals>
     <string name="plans_settings_line_training">Dzień treningowy: cel około 15% wyższy niż zwykły dzień tego tygodnia.</string>
     <string name="plans_settings_line_rest">Dzień odpoczynku: cel około 15% niższy niż zwykły dzień tego tygodnia.</string>
-    <string name="plans_settings_line_own_target">Własny cel dnia: %1$s kcal.</string>
+    <string name="plans_settings_line_own_target">Własny cel dnia: %1$s kcal.</string>
     <string name="plans_settings_line_cook_time">Przepisy do %1$d min.</string>
     <string name="plans_settings_line_use_up">Najpierw przepisy zużywające żywność z krótką datą.</string>
     <string name="plans_fate_stays">zostaje bez zmian</string>
@@ -1645,7 +1645,7 @@
     <string name="diary_add">Dodaj</string>
     <string name="diary_add_to">Dodaj wpis do posiłku: %1$s</string>
     <string name="diary_eaten_title">Zjedzone</string>
-    <string name="diary_eaten_line">%1$s z %2$s kcal</string>
+    <string name="diary_eaten_line">%1$s z %2$s kcal</string>
     <string name="diary_eaten_macros">Białko %1$s z %2$s g · tłuszcz %3$s z %4$s g · węglowodany %5$s z %6$s g</string>
     <string name="diary_target_from_plan">Cel to cel dnia planu.</string>
     <string name="diary_target_from_profile">Żaden plan nie obejmuje tego dnia: cel to cel profilu.</string>
@@ -1653,10 +1653,10 @@
     <string name="diary_estimated_note">≈ Część wartości to szacunek: posiłek wpisany po samych kaloriach ma białko, tłuszcz i węglowodany oszacowane z proporcji celu dnia.</string>
     <string name="diary_plan_over">Ponad cel</string>
     <string name="diary_plan_under">Poniżej celu</string>
-    <string name="diary_plan_over_note">Licząc wpisy dziennika jako zjedzone, dzień planu ma %1$s kcal ponad cel.</string>
-    <string name="diary_plan_under_note">Licząc wpisy dziennika jako zjedzone, dzień planu ma %1$s kcal mniej niż cel.</string>
-    <string name="diary_plan_over_plain">Dzień planu ma %1$s kcal ponad cel.</string>
-    <string name="diary_plan_under_plain">Dzień planu ma %1$s kcal mniej niż cel.</string>
+    <string name="diary_plan_over_note">Licząc wpisy dziennika jako zjedzone, dzień planu ma %1$s kcal ponad cel.</string>
+    <string name="diary_plan_under_note">Licząc wpisy dziennika jako zjedzone, dzień planu ma %1$s kcal mniej niż cel.</string>
+    <string name="diary_plan_over_plain">Dzień planu ma %1$s kcal ponad cel.</string>
+    <string name="diary_plan_under_plain">Dzień planu ma %1$s kcal mniej niż cel.</string>
     <string name="diary_plan_on_target">Licząc wpisy dziennika jako zjedzone, dzień planu mieści się w celu.</string>
     <string name="diary_plan_on_target_plain">Dzień planu mieści się w celu.</string>
     <string name="diary_rebalance">Dopasuj porcje dnia</string>
@@ -1665,9 +1665,9 @@
     <string name="diary_open_plan">Otwórz plan</string>
     <string name="diary_from_plan">Z planu</string>
     <string name="diary_eaten_of">Zjedzone: %1$s</string>
-    <string name="diary_meal_kcal">%1$s kcal</string>
+    <string name="diary_meal_kcal">%1$s kcal</string>
     <string name="diary_entry_macros">B %1$s g · T %2$s g · W %3$s g</string>
-    <string name="diary_servings_part">%1$s porcji</string>
+    <string name="diary_servings_part">%1$s porcji</string>
     <string name="diary_estimated">szacunek</string>
     <string name="diary_edit_label">Zmień: %1$s</string>
     <string name="diary_remove_label">Usuń: %1$s</string>
@@ -1687,8 +1687,8 @@
     <string name="diary_no_results">Nic nie znaleziono.</string>
     <string name="diary_search_failed">Nie udało się wyszukać. Spróbuj ponownie.</string>
     <string name="diary_search_offline">Wyszukiwanie wymaga połączenia. Własny posiłek można wpisać bez niego: zostanie wysłany, gdy połączenie wróci.</string>
-    <string name="diary_per_serving">%1$s kcal w porcji</string>
-    <string name="diary_per_100">%1$s kcal w 100 %2$s</string>
+    <string name="diary_per_serving">%1$s kcal w porcji</string>
+    <string name="diary_per_100">%1$s kcal w 100 %2$s</string>
     <string name="diary_change_pick">Wybierz inny</string>
     <string name="diary_servings_field">Porcje</string>
     <string name="diary_quantity">Ilość</string>
@@ -1700,7 +1700,7 @@
     <string name="diary_fat">Tłuszcz (g)</string>
     <string name="diary_carbs">Węglowodany (g)</string>
     <string name="diary_macros_optional">Zostaw białko, tłuszcz lub węglowodany puste, gdy ich nie znasz: zostaną oszacowane z proporcji celu dnia i oznaczone jako szacunek.</string>
-    <string name="diary_adds_line">Doda do dnia %1$s kcal.</string>
+    <string name="diary_adds_line">Doda do dnia %1$s kcal.</string>
     <string name="diary_submit">Dodaj do dziennika</string>
     <string name="diary_edit_title">Zmień wpis</string>
     <string name="diary_err_remove">Nie udało się usunąć wpisu.</string>
@@ -1725,7 +1725,7 @@
     <string name="plans_resize_day_note">Liczy wpisy dziennika jako zjedzone i daje niezjedzonym posiłkom z przepisów inne porcje, żeby dzień jak najbardziej zbliżył się do celu.</string>
     <string name="plans_resize_nothing">Porcje są już tak blisko celu, jak pozwalają ich granice.</string>
     <string name="plans_reroll_diary_counts">To, co dziennik ma na te dni, liczy się jako zjedzone: posiłki wypełnią to, co zostanie z celu każdego dnia.</string>
-    <string name="plans_ways_diary_counted">Te liczby obejmują %1$s kcal z dziennika jako zjedzone: każdy wariant wypełnia to, co zostaje z celu.</string>
+    <string name="plans_ways_diary_counted">Te liczby obejmują %1$s kcal z dziennika jako zjedzone: każdy wariant wypełnia to, co zostaje z celu.</string>
     <string name="change_kind_diary_added">nowy wpis w dzienniku (%1$s)</string>
     <string name="change_kind_diary_changed">zmiana wpisu w dzienniku</string>
     <string name="change_kind_diary_removed">usunięcie wpisu z dziennika</string>
@@ -1748,10 +1748,10 @@
         <item quantity="other">Bez %1$d zmiany czekającej na wysłanie.</item>
     </plurals>
     <plurals name="plans_diary_line">
-        <item quantity="one">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpis).</item>
-        <item quantity="few">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisy).</item>
-        <item quantity="many">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisów).</item>
-        <item quantity="other">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisu).</item>
+        <item quantity="one">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpis).</item>
+        <item quantity="few">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisy).</item>
+        <item quantity="many">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisów).</item>
+        <item quantity="other">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisu).</item>
     </plurals>
     <string name="diary_kind_product">Produkt</string>
     <string name="diary_pick_product_first">Najpierw znajdź i wybierz produkt.</string>
@@ -1784,7 +1784,7 @@
     <string name="diary_label_fiber">Błonnik</string>
     <string name="diary_label_salt">Sól</string>
     <string name="diary_label_unknown">brak</string>
-    <string name="diary_label_grams">%1$s g</string>
+    <string name="diary_label_grams">%1$s g</string>
     <string name="diary_entry_source_own">Dane: własny produkt</string>
     <string name="diary_entry_source_instance">Dane: dodane przez użytkownika tej instancji</string>
     <string name="diary_entry_source">Dane: Open Food Facts</string>
@@ -1810,7 +1810,7 @@
     <string name="plans_cooking_only_chosen">Tylko wybrane dni</string>
     <string name="plans_cooking_stays">Bez zmian zostaje: %1$s. Ugotowana na to porcja zostanie niewykorzystana.</string>
     <string name="plans_cooking_same">To samo co %1$s</string>
-    <string name="plans_offer_day_after">Dzień po zamianie: %1$s z %2$s kcal.</string>
+    <string name="plans_offer_day_after">Dzień po zamianie: %1$s z %2$s kcal.</string>
     <string name="plans_offer_outside">Ten przepis jest poza limitem: %1$s. Posiłek będzie to oznaczał.</string>
     <string name="plans_word_day">Dzień: %1$s z %2$s kcal · białko %3$s z %4$s g</string>
     <string name="plans_swap_done_title">Posiłek zamieniony</string>
@@ -1839,7 +1839,7 @@
     <string name="plans_from_diary_chip">z dziennika</string>
     <string name="plans_custom_estimated_note">Własny posiłek: makroskładników, których nie wpisano, jest szacunek z celu dnia.</string>
     <string name="plans_custom_macros_optional">Wystarczą kalorie. Czego nie wpiszesz, to oszacujemy z celu dnia i oznaczymy ≈.</string>
-    <string name="plans_custom_total_estimated">Posiłek doda do dnia: %1$s kcal. Brakujące makroskładniki zostaną oszacowane z celu dnia.</string>
+    <string name="plans_custom_total_estimated">Posiłek doda do dnia: %1$s kcal. Brakujące makroskładniki zostaną oszacowane z celu dnia.</string>
     <string-array name="plans_cooking_day_for">
         <item>poniedziałek</item>
         <item>wtorek</item>
@@ -1890,9 +1890,9 @@
     </string-array>
     <plurals name="plans_portion_recipe">
         <item quantity="one">%1$s porcję</item>
-        <item quantity="few">%1$s porcje</item>
-        <item quantity="many">%1$s porcji</item>
-        <item quantity="other">%1$s porcji</item>
+        <item quantity="few">%1$s porcje</item>
+        <item quantity="many">%1$s porcji</item>
+        <item quantity="other">%1$s porcji</item>
     </plurals>
 
     <string name="products_limits">Możesz mieć %1$s produktów, dodać lub zmienić %2$s dziennie i wysłać %3$s dziennie.</string>
@@ -1915,7 +1915,7 @@
     <string name="products_correct_title">Popraw dane produktu</string>
     <string name="products_correct_intro">Przepisz wartości z opakowania. Zapisana poprawka jest tylko Twoja: Twoje skany tego kodu pokażą ją zamiast danych z bazy, a inni dalej będą widzieć dane z bazy. Żeby poprawka trafiła do wszystkich, popraw produkt w Open Food Facts: tam można dodać zdjęcia etykiety, a ta instancja z czasem sama pobierze zmianę.</string>
     <string name="products_correct_at_off">Popraw w Open Food Facts</string>
-    <string name="products_macros">białko %1$s g, tłuszcz %2$s g, węglowodany %3$s g</string>
+    <string name="products_macros">białko %1$s g, tłuszcz %2$s g, węglowodany %3$s g</string>
     <string name="products_reason">Powód: %1$s</string>
     <string name="products_doubtful">Te wartości się nie zgadzają. Sprawdź je na etykiecie.</string>
     <string name="products_edit">Zmień</string>

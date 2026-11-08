@@ -107,8 +107,8 @@
     <string name="overview_none_cta">Make a plan</string>
     <string name="overview_failed">Could not read what the plan comes to.</string>
     <string name="overview_energy">Energy a day</string>
-    <string name="overview_energy_value">%1$s kcal</string>
-    <string name="overview_energy_hint">On average, against a target of %1$s kcal.</string>
+    <string name="overview_energy_value">%1$s kcal</string>
+    <string name="overview_energy_hint">On average, against a target of %1$s kcal.</string>
     <string name="overview_eaten">Eaten</string>
     <string name="overview_eaten_not_yet_hint">No day of the plan has come yet.</string>
     <string name="overview_on_diet">On the diet</string>
@@ -118,7 +118,7 @@
     <string name="overview_shopping">Shopping</string>
     <string name="overview_shopping_none_hint">The plan has no shopping list yet.</string>
     <string name="overview_macros">What a day holds, against what it aims at</string>
-    <string name="overview_macro_value">%1$s of %2$s g</string>
+    <string name="overview_macro_value">%1$s of %2$s g</string>
     <string name="overview_days">Day by day</string>
     <string name="overview_series_planned">Planned</string>
     <string name="overview_series_target">Target</string>
@@ -136,7 +136,7 @@
         <item quantity="one">%d entry</item>
         <item quantity="other">%d entries</item>
     </plurals>
-    <string name="overview_day_of">%1$s of %2$s kcal</string>
+    <string name="overview_day_of">%1$s of %2$s kcal</string>
     <string name="dashboard_kcal_per_day">kcal/day</string>
     <string name="dashboard_ai_left">AI: %1$s/%2$s this month</string>
     <string name="dashboard_ai_own">AI: your own key, no quota</string>
@@ -253,7 +253,7 @@
         <item quantity="one">One meal of this plan holds something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
         <item quantity="other">%1$d meals of this plan hold something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
     </plurals>
-    <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
+    <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
     <string name="plans_day_macros_of">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
     <string name="plans_custom_chip">Custom</string>
     <string name="plans_custom_meal">Custom meal</string>
@@ -288,8 +288,8 @@
     <string name="plans_rebalance_title">The portions of the day were sized again</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
     <string name="plans_rebalance_best_effort">The day is still off its target: sizing its meals could not close the gap.</string>
-    <string name="plans_rebalance_left_over">The rest of the plan is still %1$s kcal over: the other days have no more room inside their own targets.</string>
-    <string name="plans_rebalance_left_under">The rest of the plan is still %1$s kcal short: the other days have no more room inside their own targets.</string>
+    <string name="plans_rebalance_left_over">The rest of the plan is still %1$s kcal over: the other days have no more room inside their own targets.</string>
+    <string name="plans_rebalance_left_under">The rest of the plan is still %1$s kcal short: the other days have no more room inside their own targets.</string>
     <string name="plans_rebalance_undo">Undo last rebalance</string>
     <string name="plans_rebalance_dismiss">Dismiss</string>
     <string name="plans_custom_modal_title">Add a custom meal</string>
@@ -319,7 +319,7 @@
     <string name="plans_off_diet_tag">off-diet</string>
     <string name="plans_offer_title">A recipe in the place of this meal</string>
     <string name="plans_offer_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g</string>
-    <string name="plans_offer_day">The day would hold %1$s of %2$s kcal before its other meals are balanced around this one.</string>
+    <string name="plans_offer_day">The day would hold %1$s of %2$s kcal before its other meals are balanced around this one.</string>
     <string name="plans_offer_take">Swap it in</string>
     <string name="plans_offer_another">Another</string>
     <string name="plans_swap_with_pantry">Bias swaps toward what\'s in my pantry</string>
@@ -333,12 +333,12 @@
     <string name="ai_fallback_provider_timeout">AI provider was too slow — try a smaller model or a cloud provider. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_key_unreadable">Your saved AI key can no longer be read — enter it again in Settings. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_invalid_output">The AI\'s answer could not be used — the rule-based engine picked instead.</string>
-    <string name="plans_offer_line">Instead: %1$s, %2$s: %3$s kcal in place of %4$s.</string>
+    <string name="plans_offer_line">Instead: %1$s, %2$s: %3$s kcal in place of %4$s.</string>
     <plurals name="plans_offer_servings">
-        <item quantity="one">%1$s serving</item>
-        <item quantity="other">%1$s servings</item>
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
     </plurals>
-    <string name="plans_offer_servings_fraction">%1$s servings</string>
+    <string name="plans_offer_servings_fraction">%1$s servings</string>
     <string name="ai_off_note">AI is turned off for this account, so the actions that ask a model are switched off. %1$s to use them.</string>
     <string name="ai_off_turn_on">Turn AI on in Account settings</string>
     <string name="plans_substitute_ingr">Swap chosen ingr.</string>
@@ -432,7 +432,7 @@
     <string name="plans_ways_way">Way %1$s</string>
     <string name="plans_ways_take">Take this day</string>
     <string name="plans_ways_stays">stays</string>
-    <string name="plans_ways_meal_energy">%1$s kcal</string>
+    <string name="plans_ways_meal_energy">%1$s kcal</string>
     <string name="plans_ways_day_line">%1$s of %2$s kcal · protein %3$s g · fat %4$s g · carbs %5$s g</string>
     <string name="plans_ways_none">The catalogue leaves no other way to fill this day inside the limits of the plan.</string>
     <string name="weigh_ask">Ask a model to weigh them</string>
@@ -440,7 +440,7 @@
     <string name="weigh_tooltip">A model puts these in order and says a sentence of each. It adds none and changes none. One request of your AI allowance.</string>
     <string name="weigh_weighed">A model put these in order. What is proposed is the planner’s own, and so is every figure.</string>
     <string name="ai_mark_weighed">A model says of this: “%1$s”</string>
-    <string name="plans_ways_now">As it is: %1$s of %2$s kcal. %3$s</string>
+    <string name="plans_ways_now">As it is: %1$s of %2$s kcal. %3$s</string>
     <string name="plans_ways_now_none">The plan leaves no opened pack more than a fifth full.</string>
     <plurals name="plans_ways_now_packs">
         <item quantity="one">The plan leaves %1$d opened pack more than a fifth full.</item>
@@ -570,8 +570,8 @@
     <string name="complexity_simple">Simple</string>
     <string name="complexity_medium">Medium</string>
     <string name="complexity_complex">Complex</string>
-    <string name="draft_kcal_value">%1$s kcal</string>
-    <string name="draft_minutes_value">%1$s min</string>
+    <string name="draft_kcal_value">%1$s kcal</string>
+    <string name="draft_minutes_value">%1$s min</string>
     <string name="recipes_nutrition_per_serving">Nutrition per serving</string>
     <string name="recipes_ingredients">Ingredients</string>
     <string name="recipes_steps">Steps</string>
@@ -764,7 +764,7 @@
     <string name="shopping_copy_nothing">Everything on this list is ticked off.</string>
     <string name="shopping_summary">%1$s/%2$s items checked · %3$s kcal total</string>
     <string name="shopping_delete_confirm">Delete this shopping list?</string>
-    <string name="shopping_aisle_energy">about %1$s kcal</string>
+    <string name="shopping_aisle_energy">about %1$s kcal</string>
     <string name="shopping_find_entry">Find an entry</string>
     <string name="shopping_find_entry_placeholder">Name of an ingredient…</string>
     <string name="shopping_find_entry_none">No entry of this list has “%1$s” in its name.</string>
@@ -1067,8 +1067,8 @@
     <string name="shopping_stale">The plan\'s menu changed after this list was made, so it no longer matches what the plan needs.</string>
     <string name="shopping_stale_update">Update the list</string>
     <string name="shopping_stale_hint">What you already have for it is counted for the new one.</string>
-    <string name="amount_g">%1$s g</string>
-    <string name="amount_ml">%1$s ml</string>
+    <string name="amount_g">%1$s g</string>
+    <string name="amount_ml">%1$s ml</string>
     <string name="amount_with_grams">%1$s (%2$s)</string>
     <string name="unit_name_piece">pieces</string>
     <string name="unit_name_slice">slices</string>
@@ -1087,8 +1087,8 @@
         <item quantity="other">%1$s pinches</item>
     </plurals>
     <plurals name="amount_piece">
-        <item quantity="one">%1$s piece</item>
-        <item quantity="other">%1$s pieces</item>
+        <item quantity="one">%1$s piece</item>
+        <item quantity="other">%1$s pieces</item>
     </plurals>
     <plurals name="amount_slice">
         <item quantity="one">%1$s slice</item>
@@ -1144,7 +1144,7 @@
     <string name="profile_pace">Pace</string>
     <string name="profile_pace_none">Keep my weight</string>
     <string name="profile_pace_lose">Lose %1$s a week</string>
-    <string name="profile_pace_comes_to">%1$s kcal a day</string>
+    <string name="profile_pace_comes_to">%1$s kcal a day</string>
     <string name="profile_pace_slowed">slowed</string>
     <string name="profile_pace_held">on hold</string>
     <string name="profile_pace_slowed_note">A pace marked “slowed” would take more than a quarter of your maintenance, or go under the lowest a calculated plan goes, so the plan takes less.</string>
@@ -1238,13 +1238,13 @@
     <string name="calorie_preview_maintenance">Maintenance</string>
     <string name="calorie_preview_at_rest">At rest</string>
     <string name="calorie_preview_target_next">You will see the daily target on the next step, once you choose a pace.</string>
-    <string name="calorie_preview_kcal">%1$s kcal</string>
+    <string name="calorie_preview_kcal">%1$s kcal</string>
     <string name="calorie_preview_at_maintenance">The target is your maintenance: no loss is planned.</string>
     <string name="calorie_preview_held">The goal to lose weight is on hold until its risk is acknowledged in the form, so the target is your maintenance.</string>
-    <string name="calorie_preview_under">%1$s kcal a day under your maintenance.</string>
-    <string name="calorie_preview_over">%1$s kcal a day over your maintenance.</string>
+    <string name="calorie_preview_under">%1$s kcal a day under your maintenance.</string>
+    <string name="calorie_preview_over">%1$s kcal a day over your maintenance.</string>
     <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g a day.</string>
-    <string name="calorie_preview_said">Daily target: %1$s kcal.</string>
+    <string name="calorie_preview_said">Daily target: %1$s kcal.</string>
     <string name="calorie_preview_not_advice">An approximation for a healthy adult, not medical advice. More in the %1$s.</string>
     <string name="calorie_preview_terms">terms</string>
     <string name="calculator_title">Calculator</string>
@@ -1300,7 +1300,7 @@
     <string name="plans_meals_a_day">Meals a day</string>
     <string name="plans_calorie_target">Daily calorie target (kcal)</string>
     <string name="plans_choices_hint">Diet, meals a day and calorie target hold for this plan only. The profile stays as it is.</string>
-    <string name="plans_calorie_target_hint">Empty: the profile’s target, %1$s kcal a day.</string>
+    <string name="plans_calorie_target_hint">Empty: the profile’s target, %1$s kcal a day.</string>
     <string name="plans_apply_prefs">Apply preferences</string>
     <string name="plans_apply_prefs_hint">They work independently — tick any of them, or none. Allergens are always honoured.</string>
     <string name="plans_honour_avoid">Honour my avoid list</string>
@@ -1414,14 +1414,14 @@
     <string name="plans_settings_fix_fields">Correct the fields that are marked to see what changes.</string>
     <string name="plans_settings_unchanged">Nothing changes.</string>
     <string name="plans_settings_skip_note">The day is skipped: only the meals eaten stay, and the day counts neither as a shortfall nor in the plan\'s averages.</string>
-    <string name="plans_settings_target_same">The day\'s target stays at %1$s kcal.</string>
-    <string name="plans_settings_target_change">The day\'s target: %1$s → %2$s kcal.</string>
-    <string name="plans_settings_target_macros">It aims at protein %1$s g, fat %2$s g, carbohydrate %3$s g.</string>
+    <string name="plans_settings_target_same">The day\'s target stays at %1$s kcal.</string>
+    <string name="plans_settings_target_change">The day\'s target: %1$s → %2$s kcal.</string>
+    <string name="plans_settings_target_macros">It aims at protein %1$s g, fat %2$s g, carbohydrate %3$s g.</string>
     <string name="plans_settings_below_floor">This target is under the lowest a calculated plan goes.</string>
     <string name="plans_settings_added">Added: %1$s.</string>
     <string name="plans_settings_drawn_note">The recipes of the new meals are chosen when this is saved, inside the plan\'s limits; the portions of the others adjust to the day\'s target.</string>
-    <string name="plans_settings_day_calories">The day will hold about %1$s kcal.</string>
-    <string name="plans_settings_day_calories_off">The day will hold about %1$s kcal: more than a tenth off its target, since the portions are not enough. The difference can then be spread over the rest of the plan.</string>
+    <string name="plans_settings_day_calories">The day will hold about %1$s kcal.</string>
+    <string name="plans_settings_day_calories_off">The day will hold about %1$s kcal: more than a tenth off its target, since the portions are not enough. The difference can then be spread over the rest of the plan.</string>
     <string name="plans_settings_list_out_of_date">The shopping list that covers this day will need to be made again.</string>
     <string name="plans_list_out_of_date_days">The shopping list that covers these days will need to be made again.</string>
     <string name="plans_settings_other_days">The plan\'s other days stay as they are.</string>
@@ -1429,22 +1429,22 @@
     <string name="plans_settings_save_day">Save this day</string>
     <string name="plans_settings_save_and_even">Save and even out the week</string>
     <string name="plans_settings_even_week">Even out the week</string>
-    <string name="plans_settings_even_week_note">This week\'s average daily target is %1$s kcal, at a plan target of %2$s kcal. “Even out the week” changes the targets of this week\'s days from today: the same dishes in other portions.</string>
-    <string name="plans_settings_week_average">The week\'s average daily target: %1$s kcal, at a plan target of %2$s kcal.</string>
-    <string name="plans_settings_week_average_change">The week\'s average daily target: %1$s → %2$s kcal, at a plan target of %3$s kcal.</string>
+    <string name="plans_settings_even_week_note">This week\'s average daily target is %1$s kcal, at a plan target of %2$s kcal. “Even out the week” changes the targets of this week\'s days from today: the same dishes in other portions.</string>
+    <string name="plans_settings_week_average">The week\'s average daily target: %1$s kcal, at a plan target of %2$s kcal.</string>
+    <string name="plans_settings_week_average_change">The week\'s average daily target: %1$s → %2$s kcal, at a plan target of %3$s kcal.</string>
     <string name="plans_settings_week_pace_loss">At this average target, weight falls by about %1$s a week.</string>
     <string name="plans_settings_week_pace_gain">At this average target, weight rises by about %1$s a week.</string>
     <string name="plans_settings_week_pace_keep">At this average target, weight stays about the same.</string>
-    <string name="plans_week_uneven">This week\'s average daily target: %1$s kcal, the plan\'s target: %2$s kcal.</string>
+    <string name="plans_week_uneven">This week\'s average daily target: %1$s kcal, the plan\'s target: %2$s kcal.</string>
     <string name="plans_even_week">Even out the week</string>
     <string name="plans_even_week_note">This week\'s days from today get new targets: the same dishes in other portions.</string>
     <plurals name="plans_settings_week_even_note">
-        <item quantity="one">“Save and even out the week” gives this day %1$s kcal and changes the target of %2$d other day of this week from today: the same dishes in other portions. The week\'s average daily target comes to %3$s kcal.</item>
-        <item quantity="other">“Save and even out the week” gives this day %1$s kcal and changes the targets of %2$d other days of this week from today: the same dishes in other portions. The week\'s average daily target comes to %3$s kcal.</item>
+        <item quantity="one">“Save and even out the week” gives this day %1$s kcal and changes the target of %2$d other day of this week from today: the same dishes in other portions. The week\'s average daily target comes to %3$s kcal.</item>
+        <item quantity="other">“Save and even out the week” gives this day %1$s kcal and changes the targets of %2$d other days of this week from today: the same dishes in other portions. The week\'s average daily target comes to %3$s kcal.</item>
     </plurals>
     <string name="plans_settings_line_training">A training day: its target is about 15% more than a usual day of its week.</string>
     <string name="plans_settings_line_rest">A rest day: its target is about 15% less than a usual day of its week.</string>
-    <string name="plans_settings_line_own_target">The day\'s own target: %1$s kcal.</string>
+    <string name="plans_settings_line_own_target">The day\'s own target: %1$s kcal.</string>
     <string name="plans_settings_line_cook_time">Recipes of %1$d min at most.</string>
     <string name="plans_settings_line_use_up">Recipes that use up what is about to expire come first.</string>
     <string name="plans_fate_stays">stays as it is</string>
@@ -1528,7 +1528,7 @@
     <string name="diary_add">Add</string>
     <string name="diary_add_to">Add an entry to %1$s</string>
     <string name="diary_eaten_title">Eaten</string>
-    <string name="diary_eaten_line">%1$s of %2$s kcal</string>
+    <string name="diary_eaten_line">%1$s of %2$s kcal</string>
     <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
     <string name="diary_target_from_plan">The target is that of the plan\'s day.</string>
     <string name="diary_target_from_profile">No plan holds this day: the target is the profile\'s own.</string>
@@ -1536,10 +1536,10 @@
     <string name="diary_estimated_note">≈ Some figures are estimates: a meal written by its calories alone has its protein, fat and carbohydrate estimated from the proportions of the day\'s target.</string>
     <string name="diary_plan_over">Over target</string>
     <string name="diary_plan_under">Under target</string>
-    <string name="diary_plan_over_note">With what the diary holds counted as eaten, the plan\'s day is %1$s kcal over its target.</string>
-    <string name="diary_plan_under_note">With what the diary holds counted as eaten, the plan\'s day is %1$s kcal under its target.</string>
-    <string name="diary_plan_over_plain">The plan\'s day is %1$s kcal over its target.</string>
-    <string name="diary_plan_under_plain">The plan\'s day is %1$s kcal under its target.</string>
+    <string name="diary_plan_over_note">With what the diary holds counted as eaten, the plan\'s day is %1$s kcal over its target.</string>
+    <string name="diary_plan_under_note">With what the diary holds counted as eaten, the plan\'s day is %1$s kcal under its target.</string>
+    <string name="diary_plan_over_plain">The plan\'s day is %1$s kcal over its target.</string>
+    <string name="diary_plan_under_plain">The plan\'s day is %1$s kcal under its target.</string>
     <string name="diary_plan_on_target">With what the diary holds counted as eaten, the plan\'s day stays within its target.</string>
     <string name="diary_plan_on_target_plain">The plan\'s day stays within its target.</string>
     <string name="diary_rebalance">Resize the day\'s meals</string>
@@ -1548,9 +1548,9 @@
     <string name="diary_open_plan">Open the plan</string>
     <string name="diary_from_plan">From the plan</string>
     <string name="diary_eaten_of">Eaten: %1$s</string>
-    <string name="diary_meal_kcal">%1$s kcal</string>
+    <string name="diary_meal_kcal">%1$s kcal</string>
     <string name="diary_entry_macros">P %1$s g · F %2$s g · C %3$s g</string>
-    <string name="diary_servings_part">%1$s servings</string>
+    <string name="diary_servings_part">%1$s servings</string>
     <string name="diary_estimated">estimate</string>
     <string name="diary_edit_label">Change %1$s</string>
     <string name="diary_remove_label">Remove %1$s</string>
@@ -1570,8 +1570,8 @@
     <string name="diary_no_results">Nothing found.</string>
     <string name="diary_search_failed">The search failed. Try again.</string>
     <string name="diary_search_offline">The search needs a connection. A meal of your own can be written without one, and is sent once the connection is back.</string>
-    <string name="diary_per_serving">%1$s kcal a serving</string>
-    <string name="diary_per_100">%1$s kcal in 100 %2$s</string>
+    <string name="diary_per_serving">%1$s kcal a serving</string>
+    <string name="diary_per_100">%1$s kcal in 100 %2$s</string>
     <string name="diary_change_pick">Pick another</string>
     <string name="diary_servings_field">Servings</string>
     <string name="diary_quantity">Amount</string>
@@ -1583,7 +1583,7 @@
     <string name="diary_fat">Fat (g)</string>
     <string name="diary_carbs">Carbs (g)</string>
     <string name="diary_macros_optional">Leave protein, fat or carbohydrate empty when you do not know it: it is estimated from the proportions of the day\'s target and marked as an estimate.</string>
-    <string name="diary_adds_line">Adds %1$s kcal to the day.</string>
+    <string name="diary_adds_line">Adds %1$s kcal to the day.</string>
     <string name="diary_submit">Add to the diary</string>
     <string name="diary_edit_title">Change the entry</string>
     <string name="diary_err_remove">The entry could not be removed.</string>
@@ -1608,7 +1608,7 @@
     <string name="plans_resize_day_note">Counts the diary\'s entries as eaten and gives the meals from recipes that are not eaten other portions, so that the day comes as close to its target as it can.</string>
     <string name="plans_resize_nothing">The portions are as close to the target as their limits allow.</string>
     <string name="plans_reroll_diary_counts">What the diary holds for these days counts as eaten: the meals fill what is left of each day\'s target.</string>
-    <string name="plans_ways_diary_counted">These figures count %1$s kcal from the diary as eaten: each way fills what is left of the target.</string>
+    <string name="plans_ways_diary_counted">These figures count %1$s kcal from the diary as eaten: each way fills what is left of the target.</string>
     <string name="change_kind_diary_added">a new diary entry (%1$s)</string>
     <string name="change_kind_diary_changed">a change of a diary entry</string>
     <string name="change_kind_diary_removed">a diary entry\'s removal</string>
@@ -1625,8 +1625,8 @@
         <item quantity="other">Not counting %1$d changes waiting to be sent.</item>
     </plurals>
     <plurals name="plans_diary_line">
-        <item quantity="one">The diary adds %2$s kcal to this day (%1$d entry).</item>
-        <item quantity="other">The diary adds %2$s kcal to this day (%1$d entries).</item>
+        <item quantity="one">The diary adds %2$s kcal to this day (%1$d entry).</item>
+        <item quantity="other">The diary adds %2$s kcal to this day (%1$d entries).</item>
     </plurals>
     <string name="diary_kind_product">Product</string>
     <string name="diary_pick_product_first">First find and pick a product.</string>
@@ -1659,7 +1659,7 @@
     <string name="diary_label_fiber">Fibre</string>
     <string name="diary_label_salt">Salt</string>
     <string name="diary_label_unknown">not given</string>
-    <string name="diary_label_grams">%1$s g</string>
+    <string name="diary_label_grams">%1$s g</string>
     <string name="diary_entry_source_own">Data: your own product</string>
     <string name="diary_entry_source_instance">Data: added by a user of this instance</string>
     <string name="diary_entry_source">Data: Open Food Facts</string>
@@ -1688,7 +1688,7 @@
     <string name="plans_cooking_only_chosen">The chosen days only</string>
     <string name="plans_cooking_stays">Stays as it is: %1$s. The portion cooked for it goes unused.</string>
     <string name="plans_cooking_same">The same as %1$s</string>
-    <string name="plans_offer_day_after">The day after the swap: %1$s of %2$s kcal.</string>
+    <string name="plans_offer_day_after">The day after the swap: %1$s of %2$s kcal.</string>
     <string name="plans_offer_outside">This recipe is outside a limit: %1$s. The meal will say so.</string>
     <string name="plans_word_day">The day: %1$s of %2$s kcal · protein %3$s of %4$s g</string>
     <string name="plans_swap_done_title">Meal swapped</string>
@@ -1717,7 +1717,7 @@
     <string name="plans_from_diary_chip">from the diary</string>
     <string name="plans_custom_estimated_note">Custom meal: what was not entered of its macronutrients is estimated from the day\'s target.</string>
     <string name="plans_custom_macros_optional">The calories are enough. What you leave out is estimated from the day\'s target and marked ≈.</string>
-    <string name="plans_custom_total_estimated">The meal adds to the day: %1$s kcal. The macronutrients left out will be estimated from the day\'s target.</string>
+    <string name="plans_custom_total_estimated">The meal adds to the day: %1$s kcal. The macronutrients left out will be estimated from the day\'s target.</string>
     <string-array name="plans_cooking_day_for">
         <item>Monday</item>
         <item>Tuesday</item>
@@ -1767,8 +1767,8 @@
         <item>for dinner</item>
     </string-array>
     <plurals name="plans_portion_recipe">
-        <item quantity="one">%1$s serving</item>
-        <item quantity="other">%1$s servings</item>
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
     </plurals>
 
     <string name="products_limits">You can hold %1$s products, add or change %2$s a day and send %3$s a day.</string>
@@ -1791,7 +1791,7 @@
     <string name="products_correct_title">Correct the product</string>
     <string name="products_correct_intro">Copy the figures from the pack. A saved correction is yours alone: your scans of this code show it instead of the base\'s data, and everybody else still sees the base\'s data. For everybody to have it, correct the product at Open Food Facts: photos of the label can be added there, and this instance picks up the change by itself in time.</string>
     <string name="products_correct_at_off">Correct it at Open Food Facts</string>
-    <string name="products_macros">protein %1$s g, fat %2$s g, carbohydrates %3$s g</string>
+    <string name="products_macros">protein %1$s g, fat %2$s g, carbohydrates %3$s g</string>
     <string name="products_reason">Reason: %1$s</string>
     <string name="products_doubtful">These figures do not add up. Check them against the label.</string>
     <string name="products_edit">Change</string>

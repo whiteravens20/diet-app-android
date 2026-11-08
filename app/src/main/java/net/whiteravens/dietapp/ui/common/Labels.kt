@@ -228,7 +228,7 @@ fun formatList(items: List<String>): String = ListFormatter.getInstance(LocalCon
 /** A weight kept in kilograms, in [unit] (`kg` or `lb`) to at most [fractionDigits] decimals: `64.5 kg`. */
 @Composable
 fun weightLabel(kg: Double, unit: String, fractionDigits: Int = 1): String =
-    "${formatNumber(if (unit == "lb") kg / KG_PER_LB else kg, fractionDigits)} $unit"
+    "${formatNumber(if (unit == "lb") kg / KG_PER_LB else kg, fractionDigits)}\u00A0$unit"
 
 /** One pound in kilograms, as the pound is defined. */
 private const val KG_PER_LB = 0.45359237

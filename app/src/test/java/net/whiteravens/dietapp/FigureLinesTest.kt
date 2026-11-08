@@ -123,4 +123,59 @@ class FigureLinesTest {
         assertFalse(looseDot.containsMatchIn("\"\${day}\$DOT\${meal}\""))
         assertFalse(looseDot.containsMatchIn(withoutComments("/** `Protein 25 g · Fat 10 g` */\n// a · b\n")))
     }
+
+    /** The units and counted words that follow a value put in as text. */
+    private val unit = """(?:g|kg|mg|µg|kcal|ml|l|lb|cm|min|h|%|dni|dnia|dzień|days?|sztuk[ai]?|porcj[ie]|porcji|servings?|pieces?)"""
+
+    /** A value put in as text, `%1$s kcal`, with a plain space before its unit: a narrow screen may leave the number at a line's end. */
+    private val looseUnit = Regex("""%(?:\d+\$)?s $unit(?=[\s.,;:)!?\u00A0<]|$)""")
+
+    @Test
+    fun `no value put in as text in any language is parted from its unit`() {
+        for (folder in folders) {
+            assertEquals(folder, emptyList<String>(), texts(folder).filterValues { looseUnit.containsMatchIn(shown(it)) }.keys.toList())
+        }
+    }
+
+    @Test
+    fun `finds a value put in as text apart from its unit`() {
+        assertTrue(looseUnit.containsMatchIn("Średnio, przy celu %1\$s kcal."))
+        assertTrue(looseUnit.containsMatchIn("Na %1\$s porcji"))
+        assertFalse(looseUnit.containsMatchIn("Średnio, przy celu %1\$s\u00A0kcal, %2\$s gotuje."))
+    }
+
+    /** A figure the code joins to its unit with a plain space: in a string template, or a unit kept with a space before it. */
+    private val looseFigure =
+        Regex("""\$\{[^{}\n]*\} (?:g|kg|mg|kcal|ml|l|lb|min|%)(?![\p{L}\p{N}])|\$\{[^{}\n]*\} \$\{?(?:unit|kcal)\b|\$\w+ \$\{?(?:unit|kcal)\b|" (?:g|kg|kcal|ml)""" + "\"")
+
+    @Test
+    fun `the code holds a figure to its unit`() {
+        val loose = File("src/main/java").walkTopDown()
+            .filter { it.extension == "kt" && looseFigure.containsMatchIn(withoutComments(it.readText())) }
+            .map { it.name }
+            .toList()
+        assertEquals(emptyList<String>(), loose)
+    }
+
+    /** A figure a journey writes for itself with a plain space before its unit, where the app holds them. */
+    private val looseJourneyFigure = Regex("""\$\{?[\w.()]+\}? (?:kg|kcal|g|ml|lb|min)\b|\$\{?[\w.()]+\}? \$\{text\(R\.string\.unit_""")
+
+    @Test
+    fun `no journey waits for a figure parted from its unit`() {
+        val loose = File("src/androidTest/java").walkTopDown()
+            .filter { it.extension == "kt" }
+            .flatMap { file -> file.readLines().filter { looseJourneyFigure.containsMatchIn(it) && "heldTogether(" !in it }.map { "${file.name}: ${it.trim()}" } }
+            .toList()
+        assertEquals(emptyList<String>(), loose)
+    }
+
+    @Test
+    fun `finds a figure the code parts from its unit`() {
+        assertTrue(looseFigure.containsMatchIn("\"\${formatNumber(kcal)} kcal\""))
+        assertTrue(looseFigure.containsMatchIn("\"\${plainNumber(amount)} \$unit\""))
+        assertTrue(looseFigure.containsMatchIn("\"\$number \$unit\""))
+        assertTrue(looseFigure.containsMatchIn("val unit = if (grams) \" g\" else \"\""))
+        assertFalse(looseFigure.containsMatchIn("\"\${formatNumber(kcal)}\\u00A0kcal\""))
+        assertFalse(looseFigure.containsMatchIn("\"\${name} gotuje\""))
+    }
 }

@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
@@ -117,7 +118,7 @@ class ProfilesTest {
         // The dashboard shows the target the profile now has.
         val target = Instance.dailyTarget(account, made.getString("id"))
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
-        screen.waitForText("$target ${text(R.string.unit_kcal)}")
+        screen.waitForText(heldTogether("$target ${text(R.string.unit_kcal)}"))
     }
 
     @Test
