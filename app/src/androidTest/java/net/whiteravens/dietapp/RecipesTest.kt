@@ -212,5 +212,14 @@ class RecipesTest {
         screen.waitForTheApi { Instance.ownRecipes(account).singleOrNull()?.let { (id, servings) -> id != written && servings == 2 } == true }
         screen.waitUntil(20_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("recipes-written-and-edited")
+
+        // Deleted from its view: the question says what becomes of its plans and of a suggestion of it,
+        // and the screen goes back with the recipe gone from the account's own.
+        screen.onNode(hasContentDescription(text(R.string.recipe_delete_title))).performClick()
+        screen.waitForText(text(R.string.recipes_delete_confirm))
+        screen.keepScreenshot("recipes-deleting-ones-own")
+        screen.onNode(hasText(text(R.string.common_delete)) and hasClickAction()).performClick()
+        screen.waitForTheApi { Instance.ownRecipes(account).isEmpty() }
+        screen.waitUntil(20_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isEmpty() }
     }
 }

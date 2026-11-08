@@ -86,6 +86,32 @@ class RecipeDetailViewModelTest {
         RecipeDetailViewModel(SavedStateHandle(mapOf("recipeId" to "soup")), recipes, profiles, favorites, queue)
 
     @Test
+    fun `a recipe of one's own is deleted once, and the screen is told to go back`() {
+        coEvery { recipes.delete("soup") } returns Unit
+        val model = model()
+
+        model.delete()
+        model.delete()
+
+        assertTrue(model.state.value.deleted)
+        assertFalse(model.state.value.deleting)
+        coVerify(exactly = 1) { recipes.delete("soup") }
+    }
+
+    @Test
+    fun `a deletion that fails is said, and the screen stays on the recipe`() {
+        val refusal = ApiException(404, "RECIPE_NOT_FOUND", "Recipe not found.")
+        coEvery { recipes.delete("soup") } throws refusal
+        val model = model()
+
+        model.delete()
+
+        assertEquals(refusal, model.state.value.deleteFailed)
+        assertFalse(model.state.value.deleted)
+        assertFalse(model.state.value.deleting)
+    }
+
+    @Test
     fun `each profile says how it marked the recipe, and one whose marks cannot be read is not offered`() {
         val model = model()
 

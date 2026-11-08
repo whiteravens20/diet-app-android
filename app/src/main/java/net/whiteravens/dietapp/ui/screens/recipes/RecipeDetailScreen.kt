@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -28,7 +29,11 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -78,7 +83,10 @@ import net.whiteravens.dietapp.ui.screens.favorites.sentimentLabel
 import net.whiteravens.dietapp.ui.components.DOT
 import kotlin.math.roundToInt
 
-/** Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps; one of the account's own to [onEdit]. */
+/**
+ * Full recipe: meta chips, how each profile marked it, per-serving nutrition, ingredients, steps; one
+ * of the account's own to [onEdit], or to delete, after which the screen goes [onBack].
+ */
 @Composable
 fun RecipeDetailScreen(
     /** Opened from a meal of a plan: how many servings the meal takes, and whether that is the whole of a cooking. */
@@ -92,6 +100,11 @@ fun RecipeDetailScreen(
     // Read again on being shown again: the recipe or its marks may have been changed elsewhere.
     WhenShownAgain(viewModel::shownAgain)
     val recipe = state.recipe
+    var deleting by rememberSaveable { mutableStateOf(false) }
+    if (deleting) {
+        Confirm(stringResource(R.string.recipes_delete_confirm), stringResource(R.string.common_delete), onYes = viewModel::delete, onDone = { deleting = false })
+    }
+    LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
 
     PullToRead(state.pulled, viewModel::pull) {
         LazyColumn(
@@ -116,9 +129,13 @@ fun RecipeDetailScreen(
                         IconButton(onClick = { onEdit(recipe.id) }) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.own_recipe_edit_title))
                         }
+                        IconButton(onClick = { deleting = true }, enabled = !state.deleting) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.recipe_delete_title))
+                        }
                     }
                 }
             }
+            state.deleteFailed?.let { item { ErrorBanner(stringResource(R.string.recipes_delete_failed)) } }
             state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
 
             state.error?.let {

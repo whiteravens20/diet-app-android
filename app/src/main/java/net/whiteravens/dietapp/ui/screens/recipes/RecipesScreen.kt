@@ -331,7 +331,7 @@ private fun OwnRecipeButtons(drafts: Boolean, aiOn: Boolean?, onWrite: () -> Uni
 
 /** A question to say yes to before [onYes] is done; [onDone] closes it either way. */
 @Composable
-private fun Confirm(question: String, yes: String, onYes: () -> Unit, onDone: () -> Unit) {
+internal fun Confirm(question: String, yes: String, onYes: () -> Unit, onDone: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDone,
         text = { Text(question) },

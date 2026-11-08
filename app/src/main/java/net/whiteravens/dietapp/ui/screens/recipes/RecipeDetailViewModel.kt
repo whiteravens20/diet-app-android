@@ -81,6 +81,11 @@ class RecipeDetailViewModel @Inject constructor(
         val offline: Boolean = false,
         /** The changes of the recipe's marks that wait to be sent, in the order they were made. */
         val waiting: List<QueuedChange> = emptyList(),
+        /** The recipe, one of the account's own, is being deleted. */
+        val deleting: Boolean = false,
+        /** It was deleted: the screen goes back. */
+        val deleted: Boolean = false,
+        val deleteFailed: Throwable? = null,
     ) {
         /** The profile the lines' ingredients are marked for. */
         val prefsProfile: ProfileDetails? get() = profiles.firstOrNull { it.id == prefsProfileId } ?: profiles.firstOrNull()
@@ -166,6 +171,20 @@ class RecipeDetailViewModel @Inject constructor(
             attempt { recipes.byId(recipeId) }
                 .onSuccess { recipe -> _state.update { it.copy(recipe = recipe, pulled = false, readAt = System.currentTimeMillis(), offline = false) } }
                 .onFailure { e -> _state.update { it.copy(pulled = false, offline = e is IOException) } }
+        }
+    }
+
+    /**
+     * Deletes the recipe, one of the account's own: the plans that hold it keep it, and a suggestion
+     * of it stays with the curators. Asked once at a time.
+     */
+    fun delete() {
+        if (_state.value.deleting || _state.value.deleted) return
+        _state.update { it.copy(deleting = true, deleteFailed = null) }
+        viewModelScope.launch {
+            attempt { recipes.delete(recipeId) }
+                .onSuccess { _state.update { it.copy(deleting = false, deleted = true) } }
+                .onFailure { e -> _state.update { it.copy(deleting = false, deleteFailed = e) } }
         }
     }
 
