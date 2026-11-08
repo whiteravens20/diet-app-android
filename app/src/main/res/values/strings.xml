@@ -1931,6 +1931,8 @@
     <string name="notifications_cooking_cover_dinner">dinner</string>
     <!-- A reminder of water once a press of an amount added it -->
     <string name="notifications_water_added">Added %1$s\u00A0· %2$s</string>
+    <!-- The same in the list of notifications, under the profile's name its card shows already -->
+    <string name="notifications_water_added_amount">Added %1$s</string>
     <!-- A change of a household list's row, as the changes waiting name it -->
     <string name="change_kind_household_row">a change of a household list\'s row</string>
     <!-- The household lists of the shopping screen, as the web says them -->
@@ -1951,4 +1953,6 @@
     <string name="shopping_part_of">This list is a part of a household list: %1$s. A tick here changes this plan\'s part only.</string>
     <string name="shopping_open_household">Open the household list</string>
     <string name="shopping_replaces_part">A list of these days is a part of a household list: %1$s. A new list takes its place, and the household list loses this plan\'s part.</string>
+    <!-- Under a reminder of water's amounts in the list of notifications, as the web's bell has it -->
+    <string name="notifications_water_go">Go to the dashboard</string>
 </resources>

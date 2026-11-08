@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.ui.screens.notifications
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.domain.NotificationAbout
+import net.whiteravens.dietapp.domain.WATER_AMOUNTS_ML
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatMoment
@@ -129,6 +132,14 @@ fun NotificationsScreen(
                         enabled = state.marking == null,
                         onOpen = go?.let { { viewModel.open(notification, it) } },
                         onDismiss = { viewModel.dismiss(notification) },
+                        water = (notification.about as? NotificationAbout.WaterReminder)?.let {
+                            WaterPress(
+                                adding = notification.id in state.adding,
+                                added = state.added[notification.id],
+                                failed = notification.id in state.notAdded,
+                                onAdd = { ml -> viewModel.addWater(notification, ml) },
+                            )
+                        },
                     )
                 }
             }
@@ -136,6 +147,10 @@ fun NotificationsScreen(
     }
 }
 
+/** What a reminder of water's amounts are at: one on its way, the ml one added, or a refusal. */
+private class WaterPress(val adding: Boolean, val added: Int?, val failed: Boolean, val onAdd: (Int) -> Unit)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NotificationCard(
     notification: AccountNotification,
@@ -143,6 +158,7 @@ private fun NotificationCard(
     enabled: Boolean,
     onOpen: (() -> Unit)?,
     onDismiss: () -> Unit,
+    water: WaterPress? = null,
 ) {
     AppCard {
         // The text has the card's whole width, which a small phone needs, and the dismissal comes under it.
@@ -155,12 +171,32 @@ private fun NotificationCard(
             profileName?.let {
                 Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             }
-            Text(notificationText(notification.about), style = MaterialTheme.typography.bodyMedium)
+            // What an amount added says in the reminder's place for a moment, as the web's bell says it; the card
+            // names the profile above it already.
+            val added = water?.added?.let { ml ->
+                stringResource(R.string.notifications_water_added_amount, "$ml\u00A0${stringResource(R.string.unit_ml)}")
+            }
+            Text(added ?: notificationText(notification.about), style = MaterialTheme.typography.bodyMedium)
             Text(
                 formatMoment(notification.createdAt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        if (water != null && water.added == null) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                WATER_AMOUNTS_ML.forEach { ml ->
+                    Button(onClick = { water.onAdd(ml) }, enabled = enabled && !water.adding) {
+                        Text(stringResource(R.string.water_add_ml, ml))
+                    }
+                }
+            }
+            if (water.failed) {
+                Text(stringResource(R.string.water_add_failed), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            onOpen?.let { open ->
+                TextButton(onClick = open, enabled = enabled && !water.adding) { Text(stringResource(R.string.notifications_water_go)) }
+            }
         }
         TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.notifications_dismiss))

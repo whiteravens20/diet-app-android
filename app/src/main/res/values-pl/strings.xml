@@ -2063,6 +2063,8 @@
     <string name="notifications_cooking_cover_dinner">kolację</string>
     <!-- A reminder of water once a press of an amount added it -->
     <string name="notifications_water_added">Dodano %1$s\u00A0· %2$s</string>
+    <!-- The same in the list of notifications, under the profile's name its card shows already -->
+    <string name="notifications_water_added_amount">Dodano %1$s</string>
     <!-- A change of a household list's row, as the changes waiting name it -->
     <string name="change_kind_household_row">zmiana wiersza listy dla domu</string>
     <!-- The household lists of the shopping screen, as the web says them -->
@@ -2083,4 +2085,6 @@
     <string name="shopping_part_of">Ta lista to część listy dla domu: %1$s. Odhaczenie tutaj zmienia tylko część tego planu.</string>
     <string name="shopping_open_household">Otwórz listę dla domu</string>
     <string name="shopping_replaces_part">Lista z tych dni jest częścią listy dla domu: %1$s. Nowa lista zajmie jej miejsce, a lista dla domu straci część tego planu.</string>
+    <!-- Under a reminder of water's amounts in the list of notifications, as the web's bell has it -->
+    <string name="notifications_water_go">Przejdź do pulpitu</string>
 </resources>

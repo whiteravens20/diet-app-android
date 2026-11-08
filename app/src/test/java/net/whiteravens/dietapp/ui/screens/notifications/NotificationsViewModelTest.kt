@@ -9,6 +9,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -16,11 +17,13 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.NotificationDto
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.data.repository.toDomain
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.AccountNotification
+import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.fixture
@@ -34,6 +37,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationsViewModelTest {
@@ -62,16 +66,18 @@ class NotificationsViewModelTest {
     /** The changes made on the phone that wait to be sent: none, unless a test makes one without a network. */
     private val queue = changeQueue()
 
+    private val water = mockk<WaterRepository>()
+
     @Test
     fun `the notifications are read with the names of their profiles, and names that cannot be read leave them without one`() {
-        val state = NotificationsViewModel(notifications, users, queue).state.value
+        val state = NotificationsViewModel(notifications, users, queue, water).state.value
 
         assertFalse(state.loading)
         assertEquals(unread, state.items)
         assertEquals(mapOf(review.profileId to "Ala", olasReminder.profileId to "Ola"), state.names)
 
         coEvery { users.profiles() } throws IOException("unreachable")
-        val nameless = NotificationsViewModel(notifications, users, queue).state.value
+        val nameless = NotificationsViewModel(notifications, users, queue, water).state.value
 
         assertEquals(unread, nameless.items)
         assertEquals(emptyMap<String, String>(), nameless.names)
@@ -82,7 +88,7 @@ class NotificationsViewModelTest {
     fun `a list that cannot be read says why, and is asked for again`() {
         val unreachable = IOException("unreachable")
         coEvery { notifications.unread() } throws unreachable
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         assertSame(unreachable, model.state.value.error)
         assertEquals(emptyList<AccountNotification>(), model.state.value.items)
@@ -101,7 +107,7 @@ class NotificationsViewModelTest {
             assertFalse("taken there before it was read", went)
             Submitted.Sent(Unit)
         }
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         model.open(olasReminder) { went = true }
 
@@ -116,7 +122,7 @@ class NotificationsViewModelTest {
         val unreachable = ApiException(503, "SERVICE_UNAVAILABLE", "The service is unavailable.")
         coEvery { notifications.read(review.id) } throws unreachable
         var went = false
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         model.open(review) { went = true }
 
@@ -130,7 +136,7 @@ class NotificationsViewModelTest {
     fun `one the API no longer has for the account is gone from the list, and still leads where it pointed`() {
         coEvery { notifications.read(review.id) } throws ApiException(404, "NOTIFICATION_NOT_FOUND", "Notification not found.")
         var went = false
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         model.open(review) { went = true }
 
@@ -143,7 +149,7 @@ class NotificationsViewModelTest {
     fun `one put away is marked read where it stands, and all are at once`() {
         coEvery { notifications.read(alasReminder.id) } returns Submitted.Sent(Unit)
         coEvery { notifications.readAll() } returns 2
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         model.dismiss(alasReminder)
 
@@ -163,7 +169,7 @@ class NotificationsViewModelTest {
             answered.await()
             Submitted.Sent(Unit)
         }
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         model.dismiss(review)
         assertEquals(review.id, model.state.value.marking)
@@ -179,7 +185,7 @@ class NotificationsViewModelTest {
 
     @Test
     fun `pulled down, the list is read again, and one put away meanwhile stays away from the older answer`() {
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
         val answer = CompletableDeferred<Unit>()
         coEvery { notifications.unread() } coAnswers {
             answer.await()
@@ -198,7 +204,7 @@ class NotificationsViewModelTest {
 
     @Test
     fun `shown again after another screen the list is read again, and a list that cannot be read keeps what was shown`() {
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
         coEvery { notifications.unread() } returns listOf(olasReminder)
 
         model.shownAgain(cameToTheFront = false)
@@ -218,7 +224,7 @@ class NotificationsViewModelTest {
     fun `one opened without a network leaves the list and takes the reader where it points, the reading waiting, and the list is read again once it is sent`() {
         coEvery { notifications.read(review.id) } coAnswers { queue.submit(QueuedChange.NotificationRead(review.id)) { throw IOException("no network") } }
         var went = false
-        val model = NotificationsViewModel(notifications, users, queue)
+        val model = NotificationsViewModel(notifications, users, queue, water)
 
         model.open(review) { went = true }
 
@@ -233,5 +239,45 @@ class NotificationsViewModelTest {
         assertEquals(listOf(alasReminder, olasReminder), model.state.value.items)
         assertEquals(emptySet<String>(), model.state.value.waiting)
         assertFalse(model.state.value.offline)
+    }
+
+    @Test
+    fun `a reminder of water takes an amount for its profile's day, says what it added for a moment, and is read then`() {
+        val scheduler = TestCoroutineScheduler()
+        Dispatchers.setMain(UnconfinedTestDispatcher(scheduler))
+        val reminder = AccountNotification("water-1", review.profileId, NotificationAbout.WaterReminder(LocalDate.parse("2026-11-07"), 500, 2000), review.createdAt)
+        coEvery { notifications.unread() } returns listOf(reminder, review)
+        coEvery { notifications.read("water-1") } returns Submitted.Sent(Unit)
+        coEvery { water.add(review.profileId, LocalDate.parse("2026-11-07"), 330) } returns Submitted.Kept(offline = true)
+        val model = NotificationsViewModel(notifications, users, queue, water)
+
+        model.addWater(reminder, 330)
+
+        // Kept without a network is added all the same: said, and the reminder still there for the moment.
+        assertEquals(mapOf("water-1" to 330), model.state.value.added)
+        assertEquals(listOf(reminder, review), model.state.value.items)
+        coVerify(exactly = 0) { notifications.read(any()) }
+        model.addWater(reminder, 330)
+        coVerify(exactly = 1) { water.add(any(), any(), any()) }
+
+        scheduler.advanceTimeBy(NotificationsViewModel.ADDED_SHOWN_MS + 1)
+        coVerify(exactly = 1) { notifications.read("water-1") }
+        assertEquals(listOf(review), model.state.value.items)
+        assertEquals(emptyMap<String, Int>(), model.state.value.added)
+    }
+
+    @Test
+    fun `an amount the server refuses is said, and the reminder keeps its amounts`() {
+        val reminder = AccountNotification("water-1", review.profileId, NotificationAbout.WaterReminder(LocalDate.parse("2026-11-07"), 500, 2000), review.createdAt)
+        coEvery { notifications.unread() } returns listOf(reminder)
+        coEvery { water.add(any(), any(), any()) } throws ApiException(400, "WATER_DAY_FULL", "The day holds as much water as it can.")
+        val model = NotificationsViewModel(notifications, users, queue, water)
+
+        model.addWater(reminder, 200)
+
+        assertEquals(setOf("water-1"), model.state.value.notAdded)
+        assertEquals(emptyMap<String, Int>(), model.state.value.added)
+        assertEquals(listOf(reminder), model.state.value.items)
+        coVerify(exactly = 0) { notifications.read(any()) }
     }
 }

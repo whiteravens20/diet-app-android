@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,10 +17,12 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.AccountNotification
+import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
@@ -28,13 +31,16 @@ import javax.inject.Inject
 /**
  * The account's notifications that are not read yet, with the names of the profiles they are for:
  * one opened is marked read first, one put away is marked read, without a network as well, where
- * the reading waits to be sent; and all can be at once, with a network.
+ * the reading waits to be sent; and all can be at once, with a network. A reminder of water takes
+ * an amount of the water card, through the queue of changes as well, says what it added for a
+ * moment, and is then read.
  */
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val notifications: NotificationRepository,
     private val users: UserRepository,
     private val queue: ChangeQueue,
+    private val water: WaterRepository,
 ) : ViewModel() {
     data class UiState(
         val loading: Boolean = true,
@@ -52,6 +58,12 @@ class NotificationsViewModel @Inject constructor(
         val offline: Boolean = false,
         /** The notifications whose reading waits to be sent. */
         val waiting: Set<String> = emptySet(),
+        /** The reminders of water with an amount on its way. */
+        val adding: Set<String> = emptySet(),
+        /** What a press of an amount added, in ml, by the reminder, said for a moment before it is read. */
+        val added: Map<String, Int> = emptyMap(),
+        /** The reminders of water whose amount the server refused. */
+        val notAdded: Set<String> = emptySet(),
     ) {
         /** The notifications shown: those read from the server, less those whose reading waits to be sent. */
         val shownItems: List<AccountNotification> get() = items.filterNot { it.id in waiting }
@@ -134,6 +146,28 @@ class NotificationsViewModel @Inject constructor(
         if (submitted is Submitted.Kept) _state.update { it.copy(offline = it.offline || submitted.offline) }
     }
 
+    /**
+     * Adds [ml] to the day the reminder of water [notification] is about, of its profile, or keeps
+     * that to be sent in its turn; says so for a moment, and reads the reminder then, which goes.
+     */
+    fun addWater(notification: AccountNotification, ml: Int) {
+        val about = notification.about as? NotificationAbout.WaterReminder ?: return
+        val id = notification.id
+        if (id in _state.value.adding || id in _state.value.added) return
+        _state.update { it.copy(adding = it.adding + id, notAdded = it.notAdded - id) }
+        viewModelScope.launch {
+            attempt { water.add(notification.profileId, about.day, ml) }
+                .onSuccess {
+                    _state.update { it.copy(adding = it.adding - id, added = it.added + (id to ml)) }
+                    delay(ADDED_SHOWN_MS)
+                    // Read as one opened is: one the API no longer has is gone all the same.
+                    attempt { read(id) }
+                    _state.update { s -> s.copy(items = s.items.filterNot { it.id == id }, added = s.added - id) }
+                }
+                .onFailure { _state.update { it.copy(adding = it.adding - id, notAdded = it.notAdded + id) } }
+        }
+    }
+
     fun readAll() = mark(ALL) { notifications.readAll() }
 
     private fun mark(id: String, then: () -> Unit = {}, block: suspend () -> Unit) {
@@ -154,5 +188,8 @@ class NotificationsViewModel @Inject constructor(
     companion object {
         /** [UiState.marking] while every notification is being marked read. */
         const val ALL = "*"
+
+        /** How long a reminder of water says what a press added before it is read, as the web's bell says it. */
+        const val ADDED_SHOWN_MS = 4_000L
     }
 }
