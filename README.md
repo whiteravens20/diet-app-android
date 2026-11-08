@@ -39,9 +39,10 @@ account once you say on the page that the account it names is yours.
   account's unit and the last one taken back, with ninety days of weights drawn beside the
   mean of each seven days and the weight it works towards. Its water: 200, 250 or 330 ml at a
   press, or an amount of your own, the last entry taken back, and the seven days to today drawn
-  against the target, each day that reached it ticked. Its last seven days in sum: what was
-  eaten on average against the target, the days within a tenth of it, the water, and where the
-  weight leads. A correction of the target that three weeks of the diary and the weights propose,
+  against the target, each day that reached it ticked; a note under the card, until it is closed
+  on the phone, says the card can be turned off in the profile, and leads there. Its last seven
+  days in sum: what was eaten on average against the target, the days within a tenth of it, the
+  water, and where the weight leads. A correction of the target that three weeks of the diary and the weights propose,
   to accept or put off, and, once the newest weight reaches the one worked towards, the offer to
   move to keeping it. A profile's favourite sets are
   made and changed in the web application, which its card opens in the browser. The bell
@@ -112,8 +113,10 @@ account once you say on the page that the account it names is yours.
 - **Profiles.** The first profile set up in three steps from the empty dashboard, with
   what its figures come to as they are typed; profiles made, edited and deleted up to what
   the instance allows, each pace of loss with what it comes to in a day, and the risk of a
-  loss for somebody under 18 or underweight to acknowledge; the water it aims at a day,
-  and whether it is reminded to cook ahead and to drink; a profile's allergens,
+  loss for somebody under 18 or underweight to acknowledge; whether it tracks water (on to
+  begin with; off, its water card, its week's water and the reminder to drink go, and what was
+  written stays), the water it aims at a day, and whether it is reminded to cook ahead and to
+  drink; a profile's allergens,
   cuisines and lists of ingredients changed in place.
 - **More.** What the bottom bar has no room for, as the web application's menu has it:
   the diary, the profiles, the favourites, the pantry, your products and the account's settings: its e-mail status
@@ -158,7 +161,8 @@ account once you say on the page that the account it names is yours.
   a connection; a meal of your own by its figures does not. Signing
   out while changes wait asks first whether to send them or drop them.
 - **Water from the app's icon.** Holding the icon offers 200, 250 and 330 ml, which go to
-  the profile water was added for last on the phone, without opening the app.
+  the profile water was added for last on the phone, of those that track water, without opening
+  the app.
 - **A colour scheme** of the six the web application has: the account's, which the web
   application sets, until another is chosen in the account's settings on the phone, where the
   choice stays. Light or dark follows the phone.

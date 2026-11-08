@@ -25,10 +25,11 @@ when one returns.
   read, and shown first when the day opens. A day neither read nor kept says so, and still takes
   what is written for it.
 - So that the application opens without a network, what a screen needs of the account's profiles
-  is kept beside them (`CachedProfile`: name, diet, number of meals, weights, none of the rest) each
-  time they are read. Started without a network, the dashboard shows those profiles with what was
-  kept of their day, and nothing else of them; the plans and the shopping lists open from their
-  copies. A read that the server refuses never falls back on them.
+  is kept beside them (`CachedProfile`: name, diet, number of meals, weights, whether it tracks
+  water, none of the rest) each time they are read. Started without a network, the dashboard
+  shows those profiles with what was kept of their day, and nothing else of them; the plans and
+  the shopping lists open from their copies. A read that the server refuses never falls back on
+  them.
 - A read answered "not found" (the plan, the list or the profile was deleted elsewhere, or
   is not the account's) drops the copy of it; a list read anew replaces the copies of its
   lists whole; signing out drops every copy.

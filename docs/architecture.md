@@ -17,8 +17,9 @@ produces — it never computes nutrition itself. The backend is the single sourc
   `ApiException` types the API's envelope of a refusal.
 - `data/config/` keeps the server's address, and the address of its web application, where
   the app opens in the browser what it leaves to it, the colour scheme the app is drawn in:
-  one chosen on the phone, else the account's, which every answer about the account says, and
-  the profile water was added for last, which the icon's shortcuts add to (`WateredStore`).
+  one chosen on the phone, else the account's, which every answer about the account says, the
+  profile water was added for last, which the icon's shortcuts add to (`WateredStore`), and
+  whether the water card's note on turning it off was closed on the phone (`WaterNoteStore`).
 - `data/auth/` keeps the tokens in `TokenStore` (DataStore, sealed under a key of the
   Android Keystore), and an OkHttp interceptor and authenticator attach the access token and
   refresh it on a 401 that says it is no good.
