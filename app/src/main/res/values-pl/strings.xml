@@ -2000,7 +2000,7 @@
     <string name="week_title_of">Tydzień w skrócie</string>
     <string name="week_eaten">Średnio %1$d\u00A0z %2$d\u00A0kcal dziennie</string>
     <string name="week_nothing">W tych dniach nic nie zapisano.</string>
-    <string name="week_macros">Białko %1$d\u00A0z %2$d\u00A0g\u00A0· tłuszcz %3$d\u00A0z %4$d\u00A0g\u00A0· węglowodany %5$d\u00A0z %6$d\u00A0g</string>
+    <string name="week_macros">Białko %1$d z %2$d g · tłuszcz %3$d z %4$d g · węglowodany %5$d z %6$d g</string>
     <string name="week_trend">Waga: %1$s na tydzień.</string>
     <string name="week_water_no_target">Woda: średnio %1$s dziennie.</string>
     <string name="week_trend_none">Trend wagi pojawi się po co najmniej 3\u00A0ważeniach w ciągu 14\u00A0dni.</string>

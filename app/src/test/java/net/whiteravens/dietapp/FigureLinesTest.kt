@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import net.whiteravens.dietapp.ui.components.DOT
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -75,6 +76,21 @@ class FigureLinesTest {
             listOf("Protein 136 of 134 g ·", "fat 82 of 71 g ·", "carbs 250 of 249 g"),
             pieces(texts("values").getValue("plans_day_macros_of").format("136", "134", "82", "71", "250", "249")),
         )
+    }
+
+    /** A text as the app shows it: a no-break space written as `\u00A0` read as the space it is. */
+    private fun shown(text: String): String = text.replace("\\u00A0", "\u00A0")
+
+    @Test
+    fun `every line of macronutrients of any language breaks only after a dot, its opening words aside`() {
+        for (folder in folders) {
+            val loose = texts(folder)
+                .filterKeys { "macros" in it }
+                .mapValues { (_, text) -> shown(text) }
+                .filterValues { DOT in it && it.substringAfterLast(": ").split(DOT).any { pair -> ' ' in pair } }
+                .keys.toList()
+            assertEquals(folder, emptyList<String>(), loose)
+        }
     }
 
     @Test

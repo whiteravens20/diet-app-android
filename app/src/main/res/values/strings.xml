@@ -1874,7 +1874,7 @@
     <string name="week_title_of">A week in sum</string>
     <string name="week_eaten">On average %1$d\u00A0of %2$d\u00A0kcal a day</string>
     <string name="week_nothing">Nothing was written on these days.</string>
-    <string name="week_macros">Protein %1$d\u00A0of %2$d\u00A0g\u00A0· fat %3$d\u00A0of %4$d\u00A0g\u00A0· carbs %5$d\u00A0of %6$d\u00A0g</string>
+    <string name="week_macros">Protein %1$d of %2$d g · fat %3$d of %4$d g · carbs %5$d of %6$d g</string>
     <string name="week_trend">Weight: %1$s a week.</string>
     <string name="week_water_no_target">Water: %1$s a day on average.</string>
     <string name="week_trend_none">The weight\'s trend shows after at least 3\u00A0weighings within 14\u00A0days.</string>
