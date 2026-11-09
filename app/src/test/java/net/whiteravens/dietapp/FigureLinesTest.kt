@@ -30,13 +30,20 @@ class FigureLinesTest {
             }
     }
 
-    private val folders = File("src/main/res").listFiles().orEmpty().filter { File(it, "strings.xml").isFile }.map { it.name }
+    /**
+     * The folders of the languages the app ships (`app.languages`, from the build): a folder off that
+     * list may hold a translation still being made, and is held only to what it has
+     * (`TranslationsTest`), never to how its lines break.
+     */
+    private val folders = checkNotNull(System.getProperty("app.languages")) { "The build names the languages it ships." }
+        .split(",")
+        .map { if (it == "en") "values" else "values-$it" }
 
     /** Where a narrow screen may break a text: its pieces between plain spaces, a held space shown as one. */
     private fun pieces(text: String): List<String> = text.split(' ').map { it.replace('\u00A0', ' ') }
 
     @Test
-    fun `no dot of any language starts a line`() {
+    fun `no dot of a language the app ships starts a line`() {
         for (folder in folders) {
             assertEquals(folder, emptyList<String>(), texts(folder).filterValues { it.contains(" ·") }.keys.toList())
         }
@@ -49,7 +56,7 @@ class FigureLinesTest {
     private val looseCount = Regex("""(%(?:\d+\$)?d|(?<![\p{L}\p{N}.,%$])\d+(?:[.,]\d+)?) (?=[\p{L}%])""")
 
     @Test
-    fun `no number of any language is parted from the word after it`() {
+    fun `no number of a language the app ships is parted from the word after it`() {
         for (folder in folders) {
             assertEquals(folder, emptyList<String>(), texts(folder).filterValues { looseCount.containsMatchIn(it) }.keys.toList())
         }
@@ -82,7 +89,7 @@ class FigureLinesTest {
     private fun shown(text: String): String = text.replace("\\u00A0", "\u00A0")
 
     @Test
-    fun `every line of macronutrients of any language breaks only after a dot, its opening words aside`() {
+    fun `every line of macronutrients of a language the app ships breaks only after a dot, its opening words aside`() {
         for (folder in folders) {
             val loose = texts(folder)
                 .filterKeys { "macros" in it }
@@ -131,7 +138,7 @@ class FigureLinesTest {
     private val looseUnit = Regex("""%(?:\d+\$)?s $unit(?=[\s.,;:)!?\u00A0<]|$)""")
 
     @Test
-    fun `no value put in as text in any language is parted from its unit`() {
+    fun `no value put in as text in a language the app ships is parted from its unit`() {
         for (folder in folders) {
             assertEquals(folder, emptyList<String>(), texts(folder).filterValues { looseUnit.containsMatchIn(shown(it)) }.keys.toList())
         }
@@ -183,7 +190,7 @@ class FigureLinesTest {
     private val looseSign = Regex("""(?<=\S) [≈≥≤](?=[.,;:!?)<]|$)""")
 
     @Test
-    fun `no sign of any language that ends a sentence is parted from the word before it`() {
+    fun `no sign of a language the app ships that ends a sentence is parted from the word before it`() {
         for (folder in folders) {
             assertEquals(folder, emptyList<String>(), texts(folder).filterValues { looseSign.containsMatchIn(shown(it)) }.keys.toList())
         }
