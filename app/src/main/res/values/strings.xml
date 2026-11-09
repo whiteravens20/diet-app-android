@@ -1160,7 +1160,7 @@
     <string name="profile_split_protein">Protein (%)</string>
     <string name="profile_split_fat">Fat (%)</string>
     <string name="profile_split_carbs">Carbohydrate (%)</string>
-    <string name="profile_split_sum">Adds up to %1$d %%.</string>
+    <string name="profile_split_sum">Adds up to %1$d%%.</string>
     <string name="profile_reminder">Weight reminder</string>
     <string name="profile_reminder_hint">How often the app nudges you to log your weight.</string>
     <string name="profile_reminder_off">Off</string>
@@ -1299,7 +1299,7 @@
     <string name="plans_meal_prep_hint">A dish is cooked once for two days running.</string>
     <string name="plans_diet">Diet</string>
     <string name="plans_as_in_profile">As in the profile (%1$s)</string>
-    <string name="plans_diet_custom">Custom (%1$s %% protein, %2$s %% fat, %3$s %% carbohydrate)</string>
+    <string name="plans_diet_custom">Custom (%1$s%% protein, %2$s%% fat, %3$s%% carbohydrate)</string>
     <string name="plans_meals_a_day">Meals a day</string>
     <string name="plans_calorie_target">Daily calorie target (kcal)</string>
     <string name="plans_choices_hint">Diet, meals a day and calorie target hold for this plan only. The profile stays as it is.</string>

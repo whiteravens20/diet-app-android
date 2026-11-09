@@ -132,7 +132,7 @@ class FigureLinesTest {
     }
 
     /** The units and counted words that follow a value put in as text. */
-    private val unit = """(?:g|kg|mg|µg|kcal|ml|l|lb|cm|min|h|%|dni|dnia|dzień|days?|sztuk[ai]?|porcj[ie]|porcji|servings?|pieces?)"""
+    private val unit = """(?:g|kg|mg|µg|kcal|ml|l|lb|cm|min|h|dni|dnia|dzień|days?|sztuk[ai]?|porcj[ie]|porcji|servings?|pieces?)"""
 
     /** A value put in as text, `%1$s kcal`, with a plain space before its unit: a narrow screen may leave the number at a line's end. */
     private val looseUnit = Regex("""%(?:\d+\$)?s $unit(?=[\s.,;:)!?\u00A0<]|$)""")
@@ -188,6 +188,42 @@ class FigureLinesTest {
 
     /** A sign that ends a sentence with a plain space before it: a narrow screen may begin a line with it alone. */
     private val looseSign = Regex("""(?<=\S) [≈≥≤](?=[.,;:!?)<]|$)""")
+
+    /** A per cent sign with any space before it: the app writes it right after its number in every language, as the number formats do. */
+    private val spacedPercent = Regex("""(?:%(?:\d+\$)?[sd]|\d)(?: |\u00A0|\\u00A0)%%""")
+
+    /** The same in the code: a value put into a string, then a space and the sign. */
+    private val spacedPercentCode = Regex("""\$(?:\{[^{}]+\}|\w+)(?: |\\u00A0)%(?![\d$])""")
+
+    @Test
+    fun `no per cent sign of a language the app ships stands apart from its number`() {
+        for (folder in folders) {
+            assertEquals(folder, emptyList<String>(), texts(folder).filterValues { spacedPercent.containsMatchIn(it) }.keys.toList())
+        }
+    }
+
+    @Test
+    fun `finds a per cent sign apart from its number, whatever the space`() {
+        assertTrue(spacedPercent.containsMatchIn("Własna (%1${'$'}s %% białka)"))
+        assertTrue(spacedPercent.containsMatchIn("ok.\u00A0%1${'$'}s\u00A0%% zapasów"))
+        assertTrue(spacedPercent.containsMatchIn("do 100\\u00A0%%."))
+        assertFalse(spacedPercent.containsMatchIn("Własna (%1${'$'}s%% białka), 100%% dnia"))
+    }
+
+    @Test
+    fun `the code writes a per cent sign right after its number`() {
+        val spaced = File("src/main/java").walkTopDown().filter { it.extension == "kt" }
+            .filter { spacedPercentCode.containsMatchIn(it.readText()) }.map { it.name }.toList()
+        assertEquals(emptyList<String>(), spaced)
+    }
+
+    @Test
+    fun `finds a per cent sign the code parts from its number`() {
+        assertTrue(spacedPercentCode.containsMatchIn("val share = \"${'$'}{formatNumber(part)} %\""))
+        assertTrue(spacedPercentCode.containsMatchIn("\"${'$'}value\\u00A0%\""))
+        assertTrue(spacedPercentCode.containsMatchIn("\"${'$'}{effect?.fewerRecipes} %\""))
+        assertFalse(spacedPercentCode.containsMatchIn("\"${'$'}{formatNumber(part)}%\""))
+    }
 
     @Test
     fun `no sign of a language the app ships that ends a sentence is parted from the word before it`() {

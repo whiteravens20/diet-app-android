@@ -1260,7 +1260,7 @@
     <string name="profile_split_protein">Białko (%)</string>
     <string name="profile_split_fat">Tłuszcz (%)</string>
     <string name="profile_split_carbs">Węglowodany (%)</string>
-    <string name="profile_split_sum">Suma: %1$d %%.</string>
+    <string name="profile_split_sum">Suma: %1$d%%.</string>
     <string name="profile_reminder">Przypomnienie o wadze</string>
     <string name="profile_reminder_hint">Jak często aplikacja przypomina o zapisaniu wagi.</string>
     <string name="profile_reminder_off">Wyłączone</string>
@@ -1400,7 +1400,7 @@
     <string name="plans_meal_prep_hint">Jedno gotowanie wystarcza na dwa kolejne dni.</string>
     <string name="plans_diet">Dieta</string>
     <string name="plans_as_in_profile">Jak w profilu (%1$s)</string>
-    <string name="plans_diet_custom">Własna (%1$s %% białka, %2$s %% tłuszczu, %3$s %% węglowodanów)</string>
+    <string name="plans_diet_custom">Własna (%1$s%% białka, %2$s%% tłuszczu, %3$s%% węglowodanów)</string>
     <string name="plans_meals_a_day">Posiłków dziennie</string>
     <string name="plans_calorie_target">Dzienny cel kalorii (kcal)</string>
     <string name="plans_choices_hint">Dieta, liczba posiłków i cel kalorii dotyczą tylko tego planu. Profil zostaje bez zmian.</string>
@@ -1411,7 +1411,7 @@
     <string name="plans_prefer_favorites">Preferuj moje ulubione składniki</string>
     <string name="plans_prefer_inventory">Preferuj przepisy korzystające ze spiżarni</string>
     <string name="plans_less_waste">Mniej marnowania</string>
-    <string name="plans_less_waste_hint">Plan mocniej sięga po zapasy ze spiżarni i dokańcza otwarte opakowania, które szybko się psują: w tej diecie zużywa zwykle ok. %1$s %% zapasów zamiast %2$s %% i ok. %3$s %% takich opakowań zamiast %4$s %%. W zamian tydzień ma ok. %5$s %% mniej różnych przepisów, a dni bardziej odbiegają od podziału makroskładników.</string>
+    <string name="plans_less_waste_hint">Plan mocniej sięga po zapasy ze spiżarni i dokańcza otwarte opakowania, które szybko się psują: w tej diecie zużywa zwykle ok. %1$s%% zapasów zamiast %2$s%% i ok. %3$s%% takich opakowań zamiast %4$s%%. W zamian tydzień ma ok. %5$s%% mniej różnych przepisów, a dni bardziej odbiegają od podziału makroskładników.</string>
     <string name="plans_less_waste_hint_custom">Plan mocniej sięga po zapasy ze spiżarni i dokańcza otwarte opakowania, które szybko się psują. W zamian tydzień ma mniej różnych przepisów, a dni bardziej odbiegają od podziału makroskładników.</string>
     <string name="plans_less_waste_limits">Lista unikanych, alergeny i limity planu działają jak zawsze, a ścisły limit powtórzeń zostawia na to mniej miejsca.</string>
     <string name="plans_generating">Generowanie…</string>
