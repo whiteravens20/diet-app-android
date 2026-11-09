@@ -4,10 +4,13 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -20,17 +23,17 @@ import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.isSelected
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performFirstLinkClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -272,6 +275,57 @@ class PlansTest {
             .replaceFirstChar { it.titlecase(Locale.getDefault()) }
         screen.scrollToText(fromToday)
         screen.keepScreenshot("plans-a-dish-from-the-day-before")
+    }
+
+    @Test
+    fun aDishCookedAheadIsSplitByWeightFromItsMealAndAnyDishOnAScreenOfItsOwn() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 2, cookAhead = true)
+        screen.startSignedIn(account)
+        val grams = SemanticsMatcher("an amount in grams") { node ->
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { Regex("^\\d+\u00A0g$").matches(it.text) }
+        }
+        // The amounts of the window in front alone: a meal's window under it lists its lines in grams too.
+        val inFront = { window: SemanticsMatcher -> hasAnyAncestor(isDialog() and hasAnyDescendant(window)) }
+        val amountsIn = { within: SemanticsMatcher ->
+            screen.onAllNodes(grams and within).fetchSemanticsNodes().map { it.config[SemanticsProperties.Text].single().text.substringBefore('\u00A0').toLong() }
+        }
+        val amounts = { amountsIn(SemanticsMatcher("anywhere") { true }) }
+
+        // The plans' screen leads to splitting any dish: there two equal portions of 1001 g are 501 g and 500 g, and what
+        // a split cannot promise is said beside them.
+        screen.openTab(text(R.string.tab_meal_plans))
+        val line = text(R.string.plans_split_line, text(R.string.plans_split_link))
+        screen.waitForText(line)
+        screen.keepScreenshot("plans-the-way-to-splitting")
+        screen.onNodeWithText(line).performFirstLinkClick()
+        screen.waitForText(text(R.string.split_page_intro))
+        screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction()).performTextInput("1001")
+        screen.waitUntil(10_000) { amounts() == listOf(501L, 500L) }
+        // The sentence of the risk stands under this one; the journeys' texts are formatted, and its "100%" is no format.
+        screen.onNodeWithText(text(R.string.split_tare)).performScrollTo()
+        screen.keepScreenshot("split-a-dish-on-its-own")
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
+
+        // The dish cooked for two days is split from its meal, by the energy the plan gives each day's portion, into
+        // whole grams that add up to the food alone: the scale's weight less the empty pot's.
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+        screen.scrollToText(text(R.string.plans_cook_days))
+        val title = Instance.mealToCook(account, planId)
+        screen.onAllNodesWithText(title)[0].performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.split_open)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
+        screen.waitForText(text(R.string.split_plan_intro))
+        screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction()).performTextInput("2660")
+        screen.onNodeWithText(text(R.string.split_in_pot)).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.split_empty_pot)) and hasSetTextAction()).performScrollTo().performTextInput("1410")
+        val split = inFront(hasText(text(R.string.split_plan_intro)))
+        screen.waitUntil(10_000) { amountsIn(split).size == 2 && amountsIn(split).sum() == 1250L }
+        screen.putKeyboardAway()
+        screen.onNode(hasText(text(R.string.split_tare)) and split).performScrollTo()
+        screen.keepScreenshot("plans-a-dish-split-by-weight")
     }
 
     @Test

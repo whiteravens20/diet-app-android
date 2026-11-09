@@ -90,6 +90,7 @@ import net.whiteravens.dietapp.ui.screens.notifications.NotificationsScreen
 import net.whiteravens.dietapp.ui.screens.products.ProductsScreen
 import net.whiteravens.dietapp.ui.screens.pantry.PantryScreen
 import net.whiteravens.dietapp.ui.screens.plans.MealPlansScreen
+import net.whiteravens.dietapp.ui.screens.plans.SplitScreen
 import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileFormScreen
@@ -124,6 +125,7 @@ import kotlin.reflect.KClass
 /** The diary: of a profile and a day where they are named, with the window that adds an entry open where [adding], and the camera over it where [scanning]. */
 @Serializable data class DiaryRoute(val profileId: String? = null, val date: String? = null, val adding: Boolean = false, val scanning: Boolean = false)
 @Serializable data class NewPlanRoute(val profileId: String, val startDate: String? = null)
+@Serializable object SplitRoute
 
 /** The profile whose weights the dashboard brings into view, which a weight reminder opened leaves it. */
 private const val SHOW_WEIGHT_OF = "showWeightOf"
@@ -368,8 +370,10 @@ private fun MainScaffold(
                         onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
                         onNewPlan = { profileId, startDate -> navController.navigate(NewPlanRoute(profileId, startDate)) },
                         onCreateProfile = { navController.navigate(ProfilesRoute) },
+                        onSplit = { navController.navigate(SplitRoute) },
                     )
                 }
+                composable<SplitRoute> { SplitScreen(onBack = { navController.popBackStack() }) }
                 composable<NewPlanRoute> {
                     NewPlanScreen(
                         onBack = { navController.popBackStack() },

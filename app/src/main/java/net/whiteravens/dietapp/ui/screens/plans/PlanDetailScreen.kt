@@ -273,6 +273,7 @@ fun PlanDetailScreen(
             meal = meal,
             date = day.date,
             toCook = toCook,
+            cooking = mealsOfCooking(plan, meal),
             dietType = plan.dietType,
             onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id, toCook.servings, toCook.whole) } },
             onDismiss = { openMealId = null },
@@ -1500,8 +1501,19 @@ private fun SwapOfferDialog(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: String, onOpenRecipe: (() -> Unit)?, onDismiss: () -> Unit) {
+private fun MealDialog(
+    meal: Meal,
+    date: String,
+    toCook: MealToCook,
+    cooking: List<Pair<Meal, String>>,
+    dietType: String,
+    onOpenRecipe: (() -> Unit)?,
+    onDismiss: () -> Unit,
+) {
     val today = LocalDate.now().toString()
+    // The dish cooked at this meal being split into the meals of its cooking, while its window is open.
+    var splitting by rememberSaveable { mutableStateOf(false) }
+    if (splitting) SplitDialog(portionsOfCooking(cooking), onDismiss = { splitting = false })
     ScreenDialog(onDismiss) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1528,6 +1540,9 @@ private fun MealDialog(meal: Meal, date: String, toCook: MealToCook, dietType: S
                 }
                 meal.label?.let { LabelGrid(it) }
                 cookHint(meal, date)?.let { Hint(it) }
+                if (cooking.isNotEmpty()) {
+                    TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
+                }
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))
                 if (toCook.lines.isNotEmpty()) {

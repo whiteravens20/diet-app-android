@@ -49,6 +49,18 @@ class CookingTest {
         return plan
     }
 
+    /** A plan of several days, each its date and its meals. */
+    private fun planOf(vararg days: Pair<String, List<Meal>>): MealPlan {
+        val plan = mockk<MealPlan>()
+        every { plan.days } returns days.map { (date, meals) ->
+            mockk<PlanDay>().also { day ->
+                every { day.date } returns date
+                every { day.meals } returns meals
+            }
+        }
+        return plan
+    }
+
     @Test
     fun `the meal it is cooked at takes what all the meals of its cooking take`() {
         val cook = meal("first", 1.0, "cook", MealCooking(listOf(CookedPlace("second", "2026-11-04", "breakfast", false)), whole))
@@ -70,5 +82,26 @@ class CookingTest {
         val alone = meal("alone", 1.0, null, null)
 
         assertEquals(MealToCook(own, 1.0, false), mealToCook(plan(alone), alone))
+    }
+
+    @Test
+    fun `a dish cooked ahead is split into the meal it is cooked at and those eaten from it, in the plan's order, each with its day`() {
+        val cook = meal("first", 1.0, "cook", MealCooking(listOf(CookedPlace("second", "2026-11-04", "breakfast", false)), whole))
+        val second = meal("second", 1.35, "cooked", MealCooking(listOf(CookedPlace("first", "2026-11-03", "breakfast", false)), whole))
+        val other = meal("other", 1.0, null, null)
+        val plan = planOf("2026-11-03" to listOf(other, cook), "2026-11-04" to listOf(second))
+
+        assertEquals(listOf(cook to "2026-11-03", second to "2026-11-04"), mealsOfCooking(plan, cook))
+    }
+
+    @Test
+    fun `nothing is split from a meal eaten from a dish cooked earlier, or cooked for itself`() {
+        val cook = meal("first", 1.0, "cook", MealCooking(listOf(CookedPlace("second", "2026-11-04", "breakfast", false)), whole))
+        val second = meal("second", 1.35, "cooked", MealCooking(listOf(CookedPlace("first", "2026-11-03", "breakfast", false)), whole))
+        val alone = meal("alone", 1.0, null, null)
+        val plan = planOf("2026-11-03" to listOf(cook, alone), "2026-11-04" to listOf(second))
+
+        assertEquals(emptyList<Pair<Meal, String>>(), mealsOfCooking(plan, second))
+        assertEquals(emptyList<Pair<Meal, String>>(), mealsOfCooking(plan, alone))
     }
 }

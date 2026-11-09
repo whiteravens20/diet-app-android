@@ -138,6 +138,13 @@ internal fun CookingNote(
     }
 }
 
+/** The meals one cooking is eaten at, in the plan's order, with their days: what a dish cooked ahead is split into. None for a meal that is not cooked ahead. */
+internal fun mealsOfCooking(plan: MealPlan, meal: Meal): List<Pair<Meal, String>> {
+    val cooking = meal.cooking.takeIf { meal.cookAhead == "cook" } ?: return emptyList()
+    val ids = setOf(meal.id) + cooking.with.map { it.mealId }
+    return plan.days.flatMap { day -> day.meals.filter { it.id in ids }.map { it to day.date } }
+}
+
 /** What to cook of a meal: its own lines, or those of the whole of a cooking on the meal it is cooked at, and how many servings they are. */
 internal data class MealToCook(val lines: List<MealLine>, val servings: Double, val whole: Boolean)
 

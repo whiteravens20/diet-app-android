@@ -32,6 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +63,7 @@ fun MealPlansScreen(
     onOpenPlan: (planId: String, day: String?) -> Unit,
     onNewPlan: (profileId: String, startDate: String?) -> Unit,
     onCreateProfile: () -> Unit,
+    onSplit: () -> Unit,
     viewModel: MealPlansViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -92,6 +99,7 @@ fun MealPlansScreen(
                         subtitle = stringResource(R.string.plans_subtitle),
                     )
                 }
+                item { SplitLine(onSplit) }
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(state.profiles, key = { it.id }) { profile ->
@@ -201,4 +209,27 @@ private fun ListSkeleton() {
         Skeleton(Modifier.height(32.dp).fillMaxWidth(0.7f))
         repeat(3) { Skeleton(Modifier.fillMaxWidth().height(88.dp)) }
     }
+}
+
+/** The line that leads to splitting a cooked dish on its own screen, its name a link, as the web's plans page has it. */
+@Composable
+private fun SplitLine(onSplit: () -> Unit) {
+    val link = stringResource(R.string.plans_split_link)
+    val whole = stringResource(R.string.plans_split_line, link)
+    val linked = MaterialTheme.colorScheme.primary
+    val text = buildAnnotatedString {
+        append(whole)
+        val start = whole.indexOf(link)
+        if (start >= 0) {
+            addLink(
+                LinkAnnotation.Clickable(
+                    tag = "split",
+                    styles = TextLinkStyles(SpanStyle(color = linked, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline)),
+                ) { onSplit() },
+                start,
+                start + link.length,
+            )
+        }
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
