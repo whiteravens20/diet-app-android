@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,7 +68,8 @@ internal fun RerollDialog(
     viewModel: RerollViewModel = hiltViewModel(key = "reroll-${plan.id}"),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(plan.id) { viewModel.open() }
+    val rules by viewModel.rules.collectAsStateWithLifecycle()
+    LaunchedEffect(plan.id) { viewModel.open(plan) }
     // The user's own day, as the API is told it with the request.
     val today = LocalDate.now().toString()
     val days = plan.days
@@ -85,6 +87,8 @@ internal fun RerollDialog(
     var replaceCustom by rememberSaveable { mutableStateOf(false) }
     var holdLimits by rememberSaveable { mutableStateOf(start.holdLimits) }
     var only by rememberSaveable { mutableStateOf(false) }
+    // Only the whole plan made again can change it: days of it filled again are made as the plan is.
+    var lessWaste by rememberSaveable { mutableStateOf(plan.lessWaste) }
 
     // What the API is asked what a re-roll would do: the days chosen, and what of them may go as well.
     val asked = Reroll(
@@ -128,6 +132,12 @@ internal fun RerollDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.plans_reroll_scope), style = MaterialTheme.typography.titleSmall)
                 Scope(stringResource(R.string.plans_reroll_whole), stringResource(R.string.plans_reroll_whole_hint), scope == RerollScope.WHOLE) { scope = RerollScope.WHOLE }
+                if (scope == RerollScope.WHOLE) {
+                    // Under the whole plan's label: a radio button and its gap to the label.
+                    Box(Modifier.padding(start = 32.dp)) {
+                        LessWasteSwitch(state.wholeDiet?.let { rules?.lessWaste?.get(it) }, checked = lessWaste) { lessWaste = it }
+                    }
+                }
                 Scope(
                     stringResource(R.string.plans_reroll_from_today),
                     stringResource(
@@ -243,6 +253,7 @@ internal fun RerollDialog(
                             replaceCustom = couldGo.custom && replaceCustom,
                             allowRelaxations = emptyList<String>().takeIf { holdLimits && mayGiveWay.isNotEmpty() },
                             together = !only && preview?.cooking?.changes?.isNotEmpty() == true,
+                            lessWaste = lessWaste.takeIf { scope == RerollScope.WHOLE && it != plan.lessWaste },
                         ),
                     )
                 },

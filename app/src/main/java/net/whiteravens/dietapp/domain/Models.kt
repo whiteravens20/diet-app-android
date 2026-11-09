@@ -585,6 +585,10 @@ data class MealPlan(
     val averageMacrosOff: Boolean = false,
     /** It was made for cooking ahead. */
     val cooksAhead: Boolean = false,
+    /** It was made to waste less: leaning much harder on the pantry and on finishing the packs. */
+    val lessWaste: Boolean = false,
+    /** The diet the plan names itself; null where it follows its profile's, also when it is made again. */
+    val ownDiet: String? = null,
     /** A running plan whose profile's target moved since it was made: both targets; null otherwise. */
     val targetMoved: TargetMoved? = null,
 ) {

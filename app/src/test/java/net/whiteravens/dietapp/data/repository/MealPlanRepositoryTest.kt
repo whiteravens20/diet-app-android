@@ -221,6 +221,21 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a plan that wastes less is asked for so, and a plan that does not says nothing of it`() {
+        repeat(2) { server.enqueue(answer("meal-plan").setResponseCode(201)) }
+        val ask = PlanAsk(profileId = "p", startDate = LocalDate.of(2026, 10, 12), durationDays = 3)
+
+        runBlocking {
+            repository(Cache()).generate(ask.copy(lessWaste = true))
+            repository(Cache()).generate(ask)
+        }
+
+        val wasting = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("true", wasting.getValue("lessWaste").jsonPrimitive.content)
+        assertFalse("lessWaste" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
+    }
+
+    @Test
     fun `a refusal for limits names them and the meals that would go outside, and no other refusal does`() {
         val plans = repository(Cache())
         val details = json.parseToJsonElement(
@@ -559,6 +574,20 @@ class MealPlanRepositoryTest {
         // An empty list of limits is every limit held: it is sent.
         assertEquals("""{"from":"2026-10-13","to":"2026-10-15","includePast":true,"allowRelaxations":[]}""", part.body.readUtf8())
         assertEquals("{}", server.takeRequest().body.readUtf8())
+    }
+
+    @Test
+    fun `a whole plan made again is asked to waste less, or no longer, only where the window changed it`() {
+        repeat(2) { server.enqueue(answer("meal-plan")) }
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.reroll("plan-1", Reroll(lessWaste = true))
+            plans.reroll("plan-1", Reroll(lessWaste = false))
+        }
+
+        assertEquals("""{"lessWaste":true}""", server.takeRequest().body.readUtf8())
+        assertEquals("""{"lessWaste":false}""", server.takeRequest().body.readUtf8())
     }
 
     @Test

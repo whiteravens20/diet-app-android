@@ -74,14 +74,28 @@ data class ProductsConfigDto(val offered: Boolean = false, val lookups: Boolean 
 /**
  * What the instance says of plans: the most a recipe repeats in a plan that names no number, where
  * it sets one; the meals of a day at each number of meals a day (`"2"` to `"5"`), in the order of
- * the day; and the limits of a plan that can give way, in the order in which they do.
+ * the day; the limits of a plan that can give way, in the order in which they do; and what a plan
+ * that wastes less does on each diet with a split of its own.
  */
 @Serializable
 data class PlansConfigDto(
     val maxRepeatsPerRecipe: Int? = null,
     val mealSlots: Map<String, List<String>> = emptyMap(),
     val relaxations: List<String> = emptyList(),
+    val lessWaste: Map<String, LessWasteEffectDto> = emptyMap(),
 )
+
+/** A share in hundredths, as a plan has it without "less waste" ([now]) and with it ([less]). */
+@Serializable
+data class ShareChangeDto(val now: Int, val less: Int)
+
+/**
+ * What a plan that wastes less does on a diet, as the instance measured it: the share of the
+ * pantry's stock a week uses and of the opened packs that keep badly, and how many in a hundred
+ * fewer different recipes the week has.
+ */
+@Serializable
+data class LessWasteEffectDto(val pantry: ShareChangeDto, val packs: ShareChangeDto, val fewerRecipes: Int)
 
 /** How many profiles an account may have on the instance; two where it does not say, as the API's default. */
 @Serializable
@@ -1366,6 +1380,8 @@ data class PlanOptionsDto(
     val respectExclusions: Boolean,
     val respectFavorites: Boolean,
     val respectInventory: Boolean,
+    /** It leans much harder on the pantry and on finishing the packs; false on a plan from before it was offered. */
+    val lessWaste: Boolean = false,
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits the plan may give way on when no recipe is left inside them. */
     val allowRelaxations: List<String>,
@@ -1427,6 +1443,8 @@ data class GeneratePlanRequest(
     val respectExclusions: Boolean = true,
     val respectFavorites: Boolean = true,
     val respectInventory: Boolean = true,
+    /** Lean much harder on the pantry and on finishing the packs; the pantry then counts whatever [respectInventory] says. */
+    val lessWaste: Boolean = false,
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val allowRelaxations: List<String>? = null,
@@ -1692,6 +1710,8 @@ data class RegenerateRequest(
     val allowRelaxations: List<String>? = null,
     /** The other meals of each cooking change with the days filled again. */
     val together: Boolean = false,
+    /** Whether the whole plan made again wastes less from now on; left out, as the plan has it. A part of the plan is made as the plan is. */
+    val lessWaste: Boolean? = null,
 )
 
 /**

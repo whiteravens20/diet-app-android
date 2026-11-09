@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.HealthDto
 import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.LessWasteEffect
 import net.whiteravens.dietapp.domain.Supply
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.ServerProbe
@@ -106,6 +107,9 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
                 maxRepeatsPerRecipe = config.plans.maxRepeatsPerRecipe,
                 mealSlots = config.plans.mealSlots.mapNotNull { (count, meals) -> count.toIntOrNull()?.let { it to meals } }.toMap(),
                 relaxations = config.plans.relaxations,
+                lessWaste = config.plans.lessWaste.mapValues { (_, effect) ->
+                    LessWasteEffect(effect.pantry.now, effect.pantry.less, effect.packs.now, effect.packs.less, effect.fewerRecipes)
+                },
                 operatorContact = config.instance.operatorContact,
                 supportUrl = config.instance.supportUrl,
                 productsOffered = config.products.offered,

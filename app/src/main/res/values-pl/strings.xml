@@ -264,6 +264,7 @@
     <string name="plans_pantry_counted">Przy wyborze przepisów uwzględniono spiżarnię.</string>
     <string name="plans_pantry_left_out">W tym planie spiżarnia została pominięta dla urozmaicenia: poprzednie plany się na niej opierały.</string>
     <string name="plans_pantry_unused">Żaden przepis, który mógł trafić do tego planu, nie korzysta z tego, co jest w spiżarni.</string>
+    <string name="plans_less_waste_line">Ten plan marnuje mniej: mocniej korzysta ze spiżarni i dokańcza otwarte opakowania.</string>
     <plurals name="plans_conflicts_notice">
         <item quantity="one">Jeden posiłek tego planu zawiera coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
         <item quantity="few">%1$d posiłki tego planu zawierają coś, co profil wykluczył po ułożeniu planu. Każdy jest oznaczony poniżej: zamień go albo ułóż plan ponownie.</item>
@@ -1409,6 +1410,10 @@
     <string name="plans_honour_avoid">Pomijaj składniki z mojej listy unikanych</string>
     <string name="plans_prefer_favorites">Preferuj moje ulubione składniki</string>
     <string name="plans_prefer_inventory">Preferuj przepisy korzystające ze spiżarni</string>
+    <string name="plans_less_waste">Mniej marnowania</string>
+    <string name="plans_less_waste_hint">Plan mocniej sięga po zapasy ze spiżarni i dokańcza otwarte opakowania, które szybko się psują: w tej diecie zużywa zwykle ok. %1$s %% zapasów zamiast %2$s %% i ok. %3$s %% takich opakowań zamiast %4$s %%. W zamian tydzień ma ok. %5$s %% mniej różnych przepisów, a dni bardziej odbiegają od podziału makroskładników.</string>
+    <string name="plans_less_waste_hint_custom">Plan mocniej sięga po zapasy ze spiżarni i dokańcza otwarte opakowania, które szybko się psują. W zamian tydzień ma mniej różnych przepisów, a dni bardziej odbiegają od podziału makroskładników.</string>
+    <string name="plans_less_waste_limits">Lista unikanych, alergeny i limity planu działają jak zawsze, a ścisły limit powtórzeń zostawia na to mniej miejsca.</string>
     <string name="plans_generating">Generowanie…</string>
     <string name="plans_generate_button">Wygeneruj plan</string>
     <plurals name="plans_limits_in_the_way">

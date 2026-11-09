@@ -169,8 +169,16 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                         CheckRow(stringResource(R.string.plans_prefer_favorites), checked = form.respectFavorites) { ticked ->
                             viewModel.edit { it.copy(respectFavorites = ticked) }
                         }
-                        CheckRow(stringResource(R.string.plans_prefer_inventory), checked = form.respectInventory) { ticked ->
+                        // A plan that wastes less counts the pantry: its box stays ticked while the plan is to waste less.
+                        CheckRow(
+                            stringResource(R.string.plans_prefer_inventory),
+                            checked = form.respectInventory || form.lessWaste,
+                            enabled = !form.lessWaste,
+                        ) { ticked ->
                             viewModel.edit { it.copy(respectInventory = ticked) }
+                        }
+                        LessWasteSwitch(rules?.lessWaste?.get(state.planDiet), checked = form.lessWaste) { ticked ->
+                            viewModel.edit { it.copy(lessWaste = ticked) }
                         }
 
                         AdvancedOptions(

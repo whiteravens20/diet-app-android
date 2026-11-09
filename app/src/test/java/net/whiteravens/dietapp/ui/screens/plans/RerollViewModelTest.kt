@@ -3,9 +3,14 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -14,6 +19,11 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.ProfileRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
+import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.RerollCouldGo
 import net.whiteravens.dietapp.domain.RerollKept
@@ -56,7 +66,25 @@ class RerollViewModelTest {
         }
     }
 
-    private fun opened() = RerollViewModel(plans).also { it.open() }
+    private val server = mockk<ServerRepository>().also {
+        every { it.rules } returns MutableStateFlow<InstanceRules?>(InstanceRules(maxProfiles = 2, catalogueSupply = emptyMap()))
+        coEvery { it.refresh() } just runs
+    }
+
+    /** The profile of the plans, on the vegan diet now. */
+    private val profiles = mockk<ProfileRepository>().also {
+        val vegan = mockk<ProfileDetails>()
+        every { vegan.figures.dietType } returns "vegan"
+        coEvery { it.profile("profile") } returns vegan
+    }
+
+    /** A plan of the profile, on a diet of its own where [ownDiet] names one. */
+    private fun planOn(ownDiet: String?) = mockk<MealPlan>().also {
+        every { it.ownDiet } returns ownDiet
+        every { it.profileId } returns "profile"
+    }
+
+    private fun opened() = RerollViewModel(plans, server, profiles).also { it.open(planOn("keto")) }
 
     @Test
     fun `the window asks at once what the choice it opens on would do, and shows the answer as the choice's`() = runTest(main) {
@@ -138,12 +166,41 @@ class RerollViewModelTest {
         model.ask("plan", 7, whole)
         runCurrent()
 
-        model.open()
-        assertEquals(RerollViewModel.UiState(), model.state.value)
+        model.open(planOn("keto"))
+        assertEquals(RerollViewModel.UiState(wholeDiet = "keto"), model.state.value)
         model.ask("plan", 7, firstDay)
         runCurrent()
 
         assertEquals(listOf(whole, firstDay), asked)
         assertSame(dayAnswer, model.state.value.preview)
+    }
+
+    @Test
+    fun `the whole plan made again is made on the plan's own diet, its profile not asked`() = runTest(main) {
+        val model = opened()
+        runCurrent()
+
+        assertEquals("keto", model.state.value.wholeDiet)
+        coVerify(exactly = 0) { profiles.profile(any()) }
+    }
+
+    @Test
+    fun `a plan that follows its profile is made again on the profile's diet of now`() = runTest(main) {
+        val model = RerollViewModel(plans, server, profiles)
+        model.open(planOn(null))
+        assertNull(model.state.value.wholeDiet)
+        runCurrent()
+
+        assertEquals("vegan", model.state.value.wholeDiet)
+    }
+
+    @Test
+    fun `where the profile cannot be read no diet is known, so no figures are said`() = runTest(main) {
+        coEvery { profiles.profile("profile") } throws ApiException(503, "UNAVAILABLE", "down")
+        val model = RerollViewModel(plans, server, profiles)
+        model.open(planOn(null))
+        runCurrent()
+
+        assertNull(model.state.value.wholeDiet)
     }
 }

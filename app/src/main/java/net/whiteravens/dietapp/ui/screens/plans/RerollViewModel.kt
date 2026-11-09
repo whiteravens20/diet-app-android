@@ -13,6 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.ProfileRepository
+import net.whiteravens.dietapp.data.repository.ServerRepository
+import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.RerollPreview
 import net.whiteravens.dietapp.ui.common.attempt
@@ -21,10 +25,15 @@ import javax.inject.Inject
 /**
  * What making a plan again would do, as the web's window asks it: the API is asked about the choice
  * on the window's screen once the choice has paused, and the answer to an older choice is shown as
- * such until the newer one is there. Nothing is drawn or changed.
+ * such until the newer one is there. Nothing is drawn or changed. It knows as well the diet the whole
+ * plan made again is made for, so that the window says what wasting less costs on it.
  */
 @HiltViewModel
-class RerollViewModel @Inject constructor(private val plans: MealPlanRepository) : ViewModel() {
+class RerollViewModel @Inject constructor(
+    private val plans: MealPlanRepository,
+    private val server: ServerRepository,
+    private val profiles: ProfileRepository,
+) : ViewModel() {
 
     /** A question: what [reroll] would do to the plan [planId] as it stood at [revision]. */
     data class Asked(val planId: String, val revision: Int, val reroll: Reroll)
@@ -38,16 +47,32 @@ class RerollViewModel @Inject constructor(private val plans: MealPlanRepository)
         val current: Boolean = false,
         /** Why the last question could not be answered. */
         val error: Throwable? = null,
+        /** The diet the whole plan made again is made for: the plan's own, or its profile's as it is now; null until known. */
+        val wholeDiet: String? = null,
     )
+
+    /** What the instance says, its figures of a plan that wastes less among them. */
+    val rules: StateFlow<InstanceRules?> = server.rules
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
     private var asking: Job? = null
 
-    /** The window opened anew: nothing of an earlier opening is shown, and the first question goes at once. */
-    fun open() {
+    /**
+     * The window opened anew for [plan]: nothing of an earlier opening is shown, and the first question
+     * goes at once. A plan that follows its profile's diet is made again on the profile's diet of now.
+     */
+    fun open(plan: MealPlan) {
         asking?.cancel()
-        _state.value = UiState()
+        _state.value = UiState(wholeDiet = plan.ownDiet)
+        if (server.rules.value == null) viewModelScope.launch { attempt { server.refresh() } }
+        if (plan.ownDiet == null) {
+            viewModelScope.launch {
+                attempt { profiles.profile(plan.profileId) }.onSuccess { profile ->
+                    _state.update { it.copy(wholeDiet = profile.figures.dietType) }
+                }
+            }
+        }
     }
 
     /**

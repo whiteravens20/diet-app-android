@@ -28,6 +28,8 @@ data class InstanceRules(
     /** Whether the instance offers products with a barcode, and whether a code it does not hold is asked of Open Food Facts. */
     val productsOffered: Boolean = false,
     val productLookups: Boolean = false,
+    /** What a plan that wastes less does on each diet with a split of its own, as the instance measured it. */
+    val lessWaste: Map<String, LessWasteEffect> = emptyMap(),
 ) {
     /** How well the catalogue serves [diet] at [mealCount] meals a day; null where the API does not say. */
     fun supplyOf(diet: String, mealCount: Int): Supply? = catalogueSupply[diet]?.get(mealCount)
@@ -43,6 +45,13 @@ data class InstanceRules(
  * fewest for, and the largest smaller number of meals a day it can make a plan for ([fewerMeals]).
  */
 data class Supply(val level: SupplyLevel, val recipes: Int, val fewerMeals: Int?)
+
+/**
+ * What a plan that wastes less does on a diet, in hundredths: the share of the pantry's stock a week
+ * uses and of the opened packs that keep badly, without the option and with it, and how many in a
+ * hundred fewer different recipes the week has.
+ */
+data class LessWasteEffect(val pantryNow: Int, val pantryLess: Int, val packsNow: Int, val packsLess: Int, val fewerRecipes: Int)
 
 /** `NONE`: a meal has no recipe, so no plan can be made from the catalogue. `THIN`: too few for a week. */
 enum class SupplyLevel { NONE, THIN, ENOUGH }

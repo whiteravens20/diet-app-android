@@ -20,6 +20,8 @@ data class PlanAsk(
     val respectExclusions: Boolean = true,
     val respectFavorites: Boolean = true,
     val respectInventory: Boolean = true,
+    /** Lean much harder on the pantry and on finishing the packs; such a plan counts the pantry. */
+    val lessWaste: Boolean = false,
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val allowRelaxations: List<String> = emptyList(),
@@ -117,6 +119,8 @@ data class Reroll(
     val allowRelaxations: List<String>? = null,
     /** The other meals of each cooking change with the days filled again. */
     val together: Boolean = false,
+    /** Whether the whole plan made again wastes less from now on; null, as the plan has it. */
+    val lessWaste: Boolean? = null,
 )
 
 /**

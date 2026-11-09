@@ -202,6 +202,7 @@ class MealPlanRepository @Inject constructor(
                     respectExclusions = ask.respectExclusions,
                     respectFavorites = ask.respectFavorites,
                     respectInventory = ask.respectInventory,
+                    lessWaste = ask.lessWaste,
                     maxRepeatsPerRecipe = ask.maxRepeatsPerRecipe,
                     allowRelaxations = ask.allowRelaxations.takeIf { it.isNotEmpty() },
                     dayOverrides = ask.days.map { it.toDto() }.takeIf { it.isNotEmpty() },
@@ -649,4 +650,5 @@ private fun Reroll.toRequest() = RegenerateRequest(
     dropIneligibleLocks = dropIneligibleLocks,
     allowRelaxations = allowRelaxations,
     together = together,
+    lessWaste = lessWaste,
 )

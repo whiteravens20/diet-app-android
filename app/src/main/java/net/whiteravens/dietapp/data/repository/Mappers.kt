@@ -369,6 +369,8 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     averageOff = averageOff?.calories,
     averageMacrosOff = averageOff?.macros == true,
     cooksAhead = options.mealPrepFriendly,
+    lessWaste = options.lessWaste,
+    ownDiet = options.dietType,
     targetMoved = targetMoved?.let { TargetMoved(it.profileTarget, it.planTarget) },
 )
 

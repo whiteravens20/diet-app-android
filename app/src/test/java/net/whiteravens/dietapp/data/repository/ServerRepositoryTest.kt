@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.LessWasteEffect
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.domain.Supply
@@ -92,6 +93,18 @@ class ServerRepositoryTest {
         assertEquals(2, rules.maxProfiles)
         assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 62, fewerMeals = 2), rules.supplyOf("balanced", 3))
         assertEquals(Supply(SupplyLevel.ENOUGH, recipes = 57, fewerMeals = 4), rules.supplyOf("balanced", 5))
+    }
+
+    @Test
+    fun `what a plan that wastes less does on each diet is kept as the instance measured it`() {
+        server.enqueue(answer(fixture("config")))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+
+        val rules = checkNotNull(repository.rules.value)
+        assertEquals(LessWasteEffect(pantryNow = 67, pantryLess = 71, packsNow = 69, packsLess = 77, fewerRecipes = 34), rules.lessWaste["keto"])
+        assertEquals(setOf("balanced", "high_protein", "low_carb", "vegetarian", "vegan", "keto", "mediterranean"), rules.lessWaste.keys)
     }
 
     @Test

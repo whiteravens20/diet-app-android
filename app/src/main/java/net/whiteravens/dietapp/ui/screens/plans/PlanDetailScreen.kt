@@ -703,6 +703,7 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp:
                 "left_out" -> Fact(stringResource(R.string.plans_pantry_left_out))
                 "unused" -> Fact(stringResource(R.string.plans_pantry_unused))
             }
+            if (plan.lessWaste) Fact(stringResource(R.string.plans_less_waste_line))
             if (onReroll != null) {
                 OutlinedButton(onClick = { onReroll(RerollStart(RerollScope.WHOLE)) }) { Text(stringResource(R.string.plans_recalculate)) }
             }

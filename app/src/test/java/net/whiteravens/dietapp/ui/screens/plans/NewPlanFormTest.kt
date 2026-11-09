@@ -41,6 +41,17 @@ class NewPlanFormTest {
     }
 
     @Test
+    fun `a plan that wastes less is asked for so, and counts the pantry though its box was unticked`() {
+        val ask = form.copy(respectInventory = false, lessWaste = true).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
+
+        assertTrue(ask.lessWaste)
+        assertTrue(ask.respectInventory)
+        val plain = form.copy(respectInventory = false).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
+        assertFalse(plain.lessWaste)
+        assertFalse(plain.respectInventory)
+    }
+
+    @Test
     fun `an untouched form asks for a week from its day, the rest left to the profile`() {
         val ask = form.ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
 

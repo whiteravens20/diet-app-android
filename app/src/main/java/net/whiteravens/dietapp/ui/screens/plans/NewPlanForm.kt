@@ -88,6 +88,8 @@ data class NewPlanForm(
     val respectExclusions: Boolean = true,
     val respectFavorites: Boolean = true,
     val respectInventory: Boolean = true,
+    /** The plan wastes less; while it does, the pantry counts whatever [respectInventory] says. */
+    val lessWaste: Boolean = false,
     val maxRepeats: String = "",
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val mayGiveWay: List<String> = emptyList(),
@@ -155,7 +157,8 @@ data class NewPlanForm(
             mealPrepFriendly = mealPrepFriendly,
             respectExclusions = respectExclusions,
             respectFavorites = respectFavorites,
-            respectInventory = respectInventory,
+            respectInventory = respectInventory || lessWaste,
+            lessWaste = lessWaste,
             maxRepeatsPerRecipe = maxRepeats.trim().toIntOrNull(),
             allowRelaxations = mayGiveWay,
             days = asked,

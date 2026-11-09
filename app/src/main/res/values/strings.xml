@@ -249,6 +249,7 @@
     <string name="plans_pantry_counted">The pantry counted in the choice of recipes.</string>
     <string name="plans_pantry_left_out">The pantry was left out of this plan for variety: the plans before it leaned on it.</string>
     <string name="plans_pantry_unused">Nothing that is in the pantry is used by a recipe this plan could choose.</string>
+    <string name="plans_less_waste_line">This plan wastes less: it leans harder on the pantry and finishes opened packs.</string>
     <plurals name="plans_conflicts_notice">
         <item quantity="one">One meal of this plan holds something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
         <item quantity="other">%1$d meals of this plan hold something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
@@ -1308,6 +1309,10 @@
     <string name="plans_honour_avoid">Honour my avoid list</string>
     <string name="plans_prefer_favorites">Prefer my favourite ingredients</string>
     <string name="plans_prefer_inventory">Prefer recipes that use my pantry</string>
+    <string name="plans_less_waste">Waste less</string>
+    <string name="plans_less_waste_hint">The plan leans harder on what the pantry holds and finishes opened packs that spoil soon: on this diet it typically uses about %1$s%% of the pantry instead of %2$s%%, and about %3$s%% of such packs instead of %4$s%%. In return a week has about %5$s%% fewer different recipes, and its days stray further from the macro split.</string>
+    <string name="plans_less_waste_hint_custom">The plan leans harder on what the pantry holds and finishes opened packs that spoil soon. In return a week has fewer different recipes, and its days stray further from the macro split.</string>
+    <string name="plans_less_waste_limits">The avoid list, allergens and the plan\'s limits work as always; a strict cap on repeats leaves it less room.</string>
     <string name="plans_generating">Generating…</string>
     <string name="plans_generate_button">Generate plan</string>
     <plurals name="plans_limits_in_the_way">

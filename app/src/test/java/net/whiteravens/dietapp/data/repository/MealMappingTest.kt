@@ -118,6 +118,17 @@ class MealMappingTest {
     }
 
     @Test
+    fun `a plan says whether it wastes less and the diet it names itself, and one from before says it does not`() {
+        val before = plan.toDomain()
+        assertFalse(before.lessWaste)
+        assertNull(before.ownDiet)
+
+        val made = plan.copy(options = plan.options.copy(lessWaste = true, dietType = "keto")).toDomain()
+        assertTrue(made.lessWaste)
+        assertEquals("keto", made.ownDiet)
+    }
+
+    @Test
     fun `a meal balanced by a factor or cooked ahead says so`() {
         val day = plan.days.first()
 
