@@ -311,8 +311,14 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    /** Asks for a recipe to put in the place of [mealId], as [how] says. */
-    fun offerSwap(mealId: String, how: SwapAsk = SwapAsk("random")) = ask(mealId, how, seen = emptyList())
+    /** Asks for a recipe to put in the place of [mealId], as [how] says: of a meal both people share, a dish for both. */
+    fun offerSwap(mealId: String, how: SwapAsk = SwapAsk("random")) = ask(mealId, how.copy(forAll = shared(mealId) != null), seen = emptyList())
+
+    /** Asks the offer on screen again, of a shared meal: for both people, or for this plan alone. */
+    fun offerFor(forAll: Boolean) {
+        val offer = _state.value.offer ?: return
+        ask(offer.mealId, offer.ask.copy(forAll = forAll), seen = emptyList())
+    }
 
     /** Another recipe for the meal of the offer on screen, than those offered for it so far. */
     fun anotherOffer() {

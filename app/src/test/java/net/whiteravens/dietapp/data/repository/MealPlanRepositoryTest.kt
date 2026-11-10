@@ -808,4 +808,19 @@ class MealPlanRepositoryTest {
         assertEquals("""{"apart":true}""", sent.body.readUtf8())
         assertEquals(1, cache.plans.size)
     }
+
+    @Test
+    fun `a dish for both people is offered and taken for both, and a swap for one alone says nothing of it`() {
+        repeat(2) { server.enqueue(answer("meal-plan-swap-preview")) }
+        server.enqueue(answer("meal-plan-swap-apply"))
+        val plans = repository(Cache())
+
+        val both = runBlocking { plans.offerSwap("plan-1", "meal-1", SwapAsk("random", forAll = true)) }
+        runBlocking { plans.offerSwap("plan-1", "meal-1", SwapAsk("random")) }
+        runBlocking { plans.takeSwap(both) }
+
+        assertEquals("true", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("forAll").jsonPrimitive.content)
+        assertFalse("forAll" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
+        assertEquals("true", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("forAll").jsonPrimitive.content)
+    }
 }

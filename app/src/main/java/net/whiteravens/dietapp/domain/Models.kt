@@ -785,7 +785,13 @@ data class OpenPack(
  * model picks among those the engine puts first). [allowOffDiet] is "show all my favourites":
  * the plan's diet is no bar, nor, for a favourite picked by hand, the meal's time of day.
  */
-data class SwapAsk(val strategy: String, val favoriteRecipeId: String? = null, val allowOffDiet: Boolean = false)
+data class SwapAsk(
+    val strategy: String,
+    val favoriteRecipeId: String? = null,
+    val allowOffDiet: Boolean = false,
+    /** Of a shared meal: a dish for both people, held to what both may be given, each to their own portion. */
+    val forAll: Boolean = false,
+)
 
 /**
  * A recipe offered in the place of a meal, and what taking it would do. Nothing is written until

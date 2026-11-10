@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -39,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -378,6 +382,8 @@ fun PlanDetailScreen(
             listedDates = plan?.days.orEmpty().filter { it.listed }.map { it.date }.toSet(),
             offerDate = plan?.days?.firstOrNull { day -> day.meals.any { it.id == offer.mealId } }?.date,
             busy = state.taking || state.offering != null,
+            shared = plan?.days?.firstNotNullOfOrNull { day -> day.meals.firstOrNull { it.id == offer.mealId } }?.shared,
+            onFor = viewModel::offerFor,
             onTake = { together ->
                 changedMeal = offer.mealId
                 viewModel.takeOffer(together)
@@ -1494,6 +1500,10 @@ private fun SwapOfferDialog(
     onTake: (together: Boolean) -> Unit,
     onAnother: () -> Unit,
     onDismiss: () -> Unit,
+    /** What the meal shares with the other plan, of a meal both people eat. */
+    shared: SharedMeal? = null,
+    /** Asks the offer again for both people, or for this plan alone. */
+    onFor: (Boolean) -> Unit = {},
 ) {
     var only by rememberSaveable(offer.mealId) { mutableStateOf(false) }
     AlertDialog(
@@ -1501,6 +1511,13 @@ private fun SwapOfferDialog(
         title = { Text(stringResource(R.string.plans_offer_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // A dish for both is held to what both may be given; for oneself alone the meal stops being shared that day.
+                shared?.let { of ->
+                    Column(Modifier.selectableGroup()) {
+                        ForWhom(stringResource(R.string.plans_offer_for_all, of.with.profileName), offer.ask.forAll, !busy) { onFor(true) }
+                        ForWhom(stringResource(R.string.plans_offer_for_me), !offer.ask.forAll, !busy) { onFor(false) }
+                    }
+                }
                 // A model's own pick says so, with its reason, before it is taken; where a model was asked
                 // and the engine picked, the offer says why.
                 if (offer.pick != null) AiMark(modelPartText(ModelPart.Picked(offer.reason)), spelledOut = true)
@@ -1557,6 +1574,18 @@ private fun SwapOfferDialog(
             }
         },
     )
+}
+
+/** A choice for whom a change of a shared meal is, a finger high. */
+@Composable
+private fun ForWhom(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick),
+    ) {
+        RadioButton(selected = selected, onClick = null, enabled = enabled)
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
+    }
 }
 
 /**

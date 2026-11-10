@@ -1772,6 +1772,8 @@
     <string name="plans_shared_eaten">eaten</string>
     <string name="plans_cook_apart">Cook apart</string>
     <string name="plans_eaten_together">Eaten by both</string>
+    <string name="plans_offer_for_all">For both: you and %1$s</string>
+    <string name="plans_offer_for_me">For me only: the meal stops being shared that day</string>
     <string name="plans_joint_with">Planned together with: %1$s</string>
     <string name="plans_joint_apart">Planned apart, as no dish suits both: %1$s.</string>
     <string name="plans_joint_plan_with">Plan together with</string>

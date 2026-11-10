@@ -1576,6 +1576,8 @@ data class SwapOfferRequest(
     val allowOffDiet: Boolean = false,
     /** Recipes offered already for the meal, which the next offer leaves out. */
     val skip: List<String> = emptyList(),
+    /** Of a shared meal: a dish for both people, held to what both may be given. */
+    val forAll: Boolean = false,
 )
 
 /** A recipe offered in the place of a meal, with what the swap would do to the meal and to its day. */
@@ -1617,6 +1619,8 @@ data class ApplyMealSwapRequest(
     val together: Boolean = false,
     /** The note that came with an offer a model picked: the meal then says that a model chose its recipe. */
     val pick: String? = null,
+    /** Of a shared meal: the dish goes on the other person's meal too, as the offer was asked. */
+    val forAll: Boolean = false,
 )
 
 /** POST `/meal-plans/swap-meal/undo`: the last swap of a plan taken back, on the plan as that swap left it. */
@@ -1630,6 +1634,8 @@ data class AiSwapOfferRequest(
     val plannedMealId: String,
     val respectInventory: Boolean = true,
     val skip: List<String> = emptyList(),
+    /** Of a shared meal: a dish for both people, held to what both may be given. */
+    val forAll: Boolean = false,
 )
 
 /** Who picked an offer a model was asked for: the model, or the engine and why. */

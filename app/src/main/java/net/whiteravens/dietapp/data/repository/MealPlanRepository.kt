@@ -254,7 +254,9 @@ class MealPlanRepository @Inject constructor(
     ): SwapOffer {
         if (ask.strategy == AI_STRATEGY) {
             val preview = apiCall(json) {
-                model.aiOfferSwap(AiSwapOfferRequest(planId = planId, plannedMealId = mealId, respectInventory = respectInventory, skip = seen))
+                model.aiOfferSwap(
+                    AiSwapOfferRequest(planId = planId, plannedMealId = mealId, respectInventory = respectInventory, skip = seen, forAll = ask.forAll),
+                )
             }
             return preview.toDomain(planId, mealId, ask, seen + preview.recipe.id)
         }
@@ -268,6 +270,7 @@ class MealPlanRepository @Inject constructor(
                     respectInventory = respectInventory,
                     allowOffDiet = ask.allowOffDiet,
                     skip = seen,
+                    forAll = ask.forAll,
                 ),
             )
         }
@@ -291,6 +294,7 @@ class MealPlanRepository @Inject constructor(
                     allowOffDiet = offer.ask.allowOffDiet,
                     together = together,
                     pick = offer.pick,
+                    forAll = offer.ask.forAll,
                 ),
             )
         },
