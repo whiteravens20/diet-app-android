@@ -2263,6 +2263,8 @@ data class DiaryPlanMealDto(
     val recipeId: String? = null,
     val eaten: Boolean,
     val nutrition: NutritionDto,
+    /** A meal of a joint plan cooked in one pot: its figures are the planned portion, which a split comes only near. */
+    val fromPot: Boolean = false,
 )
 
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */

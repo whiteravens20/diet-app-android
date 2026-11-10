@@ -492,8 +492,13 @@ private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean,
     Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(meal.name, style = MaterialTheme.typography.bodyMedium)
-            val kcal = meal.calories?.let { stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt())) }
-            Note(listOfNotNull(stringResource(R.string.diary_from_plan), kcal?.let(::held)).joinToString(DOT))
+            // A portion of a shared pot is the plan's, which a split by weight comes only near; its words hold its figure
+            // to its unit themselves, and the rest of them may break as words do.
+            val kcal = meal.calories?.let {
+                if (meal.fromPot) stringResource(R.string.diary_meal_kcal_from_pot, formatNumber(it.roundToInt()))
+                else held(stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt())))
+            }
+            Note(listOfNotNull(stringResource(R.string.diary_from_plan), kcal).joinToString(DOT))
             if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
         }
         Checkbox(checked = meal.eaten, onCheckedChange = { onEaten() }, enabled = enabled, modifier = Modifier.semantics { contentDescription = eaten })

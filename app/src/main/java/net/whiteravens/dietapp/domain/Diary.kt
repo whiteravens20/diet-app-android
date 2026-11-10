@@ -86,6 +86,8 @@ data class DiaryPlanMeal(
     val recipeId: String?,
     val eaten: Boolean,
     val calories: Double?,
+    /** A meal of a joint plan cooked in one pot: [calories] are the planned portion, which a split comes only near. */
+    val fromPot: Boolean = false,
 )
 
 /** An amount of an ingredient an entry holds: as it was given ([quantity] of [unit]), and as it is shown. */

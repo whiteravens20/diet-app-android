@@ -1682,6 +1682,7 @@
     <string name="diary_from_plan">Z planu</string>
     <string name="diary_eaten_of">Zjedzone: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>
+    <string name="diary_meal_kcal_from_pot">≈%1$s\u00A0kcal z\u00A0podziału garnka</string>
     <string name="diary_entry_macros">B %1$s g · T %2$s g · W %3$s g</string>
     <string name="diary_servings_part">%1$s porcji</string>
     <string name="diary_estimated">szacunek</string>

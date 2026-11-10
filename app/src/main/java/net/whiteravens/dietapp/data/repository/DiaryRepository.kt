@@ -206,7 +206,7 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
         DiaryDayPlan(
             id = plan.id,
             skipped = plan.skipped,
-            meals = plan.meals.map { DiaryPlanMeal(it.id, it.mealType, it.name, it.recipeId, it.eaten, it.nutrition.calories) },
+            meals = plan.meals.map { DiaryPlanMeal(it.id, it.mealType, it.name, it.recipeId, it.eaten, it.nutrition.calories, it.fromPot) },
             calorieDelta = plan.calorieDelta,
             offTarget = plan.offTarget,
         )

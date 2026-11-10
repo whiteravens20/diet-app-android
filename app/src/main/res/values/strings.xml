@@ -1565,6 +1565,7 @@
     <string name="diary_from_plan">From the plan</string>
     <string name="diary_eaten_of">Eaten: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>
+    <string name="diary_meal_kcal_from_pot">≈%1$s\u00A0kcal from a shared pot</string>
     <string name="diary_entry_macros">P %1$s g · F %2$s g · C %3$s g</string>
     <string name="diary_servings_part">%1$s servings</string>
     <string name="diary_estimated">estimate</string>
