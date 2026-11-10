@@ -418,6 +418,11 @@
     <string name="plans_reroll_replace_eaten">Posiłki oznaczone jako zjedzone</string>
     <string name="plans_reroll_replace_custom">Moje własne posiłki</string>
     <string name="plans_reroll_hold_limits">Tym razem trzymaj wszystkie limity. Plan może teraz wychodzić poza limit: %1$s.</string>
+    <string name="plans_reroll_for_whom">Dla kogo</string>
+    <string name="plans_reroll_for_all">Dla obu osób: Ty i\u00A0%1$s</string>
+    <string name="plans_reroll_for_me">Tylko dla mnie</string>
+    <string name="plans_reroll_for_all_hint">Te same dni w\u00A0planie drugiej osoby też powstaną od nowa, z\u00A0tymi samymi wspólnymi daniami.</string>
+    <string name="plans_reroll_for_me_hint">Wspólne posiłki tych dni przestaną być wspólne; zjedzone zostają.</string>
     <string name="plans_reroll_kept">Bez zmian:</string>
     <string name="plans_reroll_kept_nothing">Nic z planu nie zostaje bez zmian.</string>
     <plurals name="plans_reroll_kept_outside">

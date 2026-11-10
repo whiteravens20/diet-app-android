@@ -126,6 +126,8 @@ data class Reroll(
     val together: Boolean = false,
     /** Whether the whole plan made again wastes less from now on; null, as the plan has it. */
     val lessWaste: Boolean? = null,
+    /** Of a joint plan: the other plan's same days are made again too, their shared times one dish again. */
+    val forAll: Boolean = false,
 )
 
 /**

@@ -837,4 +837,15 @@ class MealPlanRepositoryTest {
         assertFalse("forAll" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
         assertEquals("true", json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("forAll").jsonPrimitive.content)
     }
+
+    @Test
+    fun `a joint plan is made again for both people where the window says so`() {
+        server.enqueue(answer("meal-plan"))
+
+        runBlocking { repository(Cache()).reroll("plan-1", Reroll(forAll = true)) }
+
+        val sent = server.takeRequest()
+        assertEquals("/api/meal-plans/plan-1/regenerate", sent.path)
+        assertEquals("true", json.parseToJsonElement(sent.body.readUtf8()).jsonObject.getValue("forAll").jsonPrimitive.content)
+    }
 }

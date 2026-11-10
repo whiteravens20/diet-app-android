@@ -669,4 +669,5 @@ private fun Reroll.toRequest() = RegenerateRequest(
     allowRelaxations = allowRelaxations,
     together = together,
     lessWaste = lessWaste,
+    forAll = forAll,
 )

@@ -397,6 +397,11 @@
     <string name="plans_reroll_replace_eaten">Meals marked as eaten</string>
     <string name="plans_reroll_replace_custom">My own meals</string>
     <string name="plans_reroll_hold_limits">Stay inside every limit this time. The plan may now go outside: %1$s.</string>
+    <string name="plans_reroll_for_whom">For whom</string>
+    <string name="plans_reroll_for_all">For both: you and %1$s</string>
+    <string name="plans_reroll_for_me">For me only</string>
+    <string name="plans_reroll_for_all_hint">The same days of the other person\'s plan are made again too, with the same dishes shared.</string>
+    <string name="plans_reroll_for_me_hint">Shared meals of these days stop being shared; eaten ones stay.</string>
     <string name="plans_reroll_kept">Kept as it is:</string>
     <string name="plans_reroll_kept_nothing">Nothing of the plan is kept as it is.</string>
     <plurals name="plans_reroll_kept_outside">

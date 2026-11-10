@@ -89,6 +89,8 @@ internal fun RerollDialog(
     var only by rememberSaveable { mutableStateOf(false) }
     // Only the whole plan made again can change it: days of it filled again are made as the plan is.
     var lessWaste by rememberSaveable { mutableStateOf(plan.lessWaste) }
+    // A joint plan is made again for both, unless the user says for this plan alone.
+    var forAll by rememberSaveable { mutableStateOf(true) }
 
     // What the API is asked what a re-roll would do: the days chosen, and what of them may go as well.
     val asked = Reroll(
@@ -195,6 +197,11 @@ internal fun RerollDialog(
                     if (couldGo.eaten) CheckRow(label = stringResource(R.string.plans_reroll_replace_eaten), checked = replaceEaten) { replaceEaten = it }
                     if (couldGo.custom) CheckRow(label = stringResource(R.string.plans_reroll_replace_custom), checked = replaceCustom) { replaceCustom = it }
                 }
+                plan.joint?.let { joint ->
+                    Text(stringResource(R.string.plans_reroll_for_whom), style = MaterialTheme.typography.titleSmall)
+                    Scope(stringResource(R.string.plans_reroll_for_all, joint.profileName), stringResource(R.string.plans_reroll_for_all_hint), forAll) { forAll = true }
+                    Scope(stringResource(R.string.plans_reroll_for_me), stringResource(R.string.plans_reroll_for_me_hint), !forAll) { forAll = false }
+                }
                 if (mayGiveWay.isNotEmpty()) {
                     CheckRow(label = stringResource(R.string.plans_reroll_hold_limits, limitNames(mayGiveWay)), checked = holdLimits) { holdLimits = it }
                 }
@@ -254,6 +261,7 @@ internal fun RerollDialog(
                             allowRelaxations = emptyList<String>().takeIf { holdLimits && mayGiveWay.isNotEmpty() },
                             together = !only && preview?.cooking?.changes?.isNotEmpty() == true,
                             lessWaste = lessWaste.takeIf { scope == RerollScope.WHOLE && it != plan.lessWaste },
+                            forAll = plan.joint != null && forAll,
                         ),
                     )
                 },
