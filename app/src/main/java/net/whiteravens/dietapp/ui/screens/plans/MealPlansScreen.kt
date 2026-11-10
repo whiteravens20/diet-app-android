@@ -187,7 +187,7 @@ fun MealPlansScreen(
     }
 }
 
-/** A plan in the list: what it is, when it begins, what a day of it holds on average, and a model's hand in it. */
+/** A plan in the list: what it is, when it begins, what a day of it holds on average, with whom it is made, and a model's hand in it. */
 @Composable
 private fun PlanCard(plan: MealPlanSummary, onClick: () -> Unit) {
     AppCard(onClick = onClick) {
@@ -198,6 +198,13 @@ private fun PlanCard(plan: MealPlanSummary, onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp),
         )
+        plan.joint?.let { joint ->
+            Text(
+                stringResource(R.string.plans_joint_with, joint.profileName),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 8.dp))
     }
 }

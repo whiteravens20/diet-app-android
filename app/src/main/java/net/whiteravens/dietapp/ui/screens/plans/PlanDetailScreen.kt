@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -256,7 +257,13 @@ fun PlanDetailScreen(
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
-            text = { Text(stringResource(R.string.plans_delete_confirm)) },
+            text = {
+                val joint = plan?.joint
+                Text(
+                    if (joint == null) stringResource(R.string.plans_delete_confirm)
+                    else "${stringResource(R.string.plans_delete_confirm)} ${stringResource(R.string.plans_delete_joint_note, joint.profileName)}",
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -640,6 +647,13 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onTableAndPrint: () -> U
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 2.dp),
                 )
+                plan.joint?.let { joint ->
+                    Text(
+                        stringResource(R.string.plans_joint_with, joint.profileName),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
             }
         }
@@ -695,6 +709,10 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp:
                 Fact(stringResource(if (off == "over") R.string.plans_average_over else R.string.plans_average_under), color = MaterialTheme.colorScheme.tertiary)
             }
             if (plan.averageMacrosOff) Fact(stringResource(R.string.plans_average_macros), color = MaterialTheme.colorScheme.tertiary)
+            if (plan.apart.isNotEmpty()) {
+                val locale = LocalConfiguration.current.locales[0]
+                Fact(stringResource(R.string.plans_joint_apart, formatList(plan.apart.map { mealTypeLabel(it).lowercase(locale) })))
+            }
             if (plan.packs.bought > 0) PacksLine(plan.packs, useUp.takeIf { plan.packs.open.any { it.wasted } })
             if (plan.mayGiveWay.isNotEmpty()) {
                 Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))

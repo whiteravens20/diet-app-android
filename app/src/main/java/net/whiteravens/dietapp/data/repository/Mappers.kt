@@ -7,6 +7,7 @@ import net.whiteravens.dietapp.data.remote.CalorieCalculationDto
 import net.whiteravens.dietapp.data.remote.DaySettingsDto
 import net.whiteravens.dietapp.data.remote.DaySettingsPreviewDto
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
+import net.whiteravens.dietapp.data.remote.JointPlanDto
 import net.whiteravens.dietapp.data.remote.LabelFigureDto
 import net.whiteravens.dietapp.data.remote.LabelLimitNoteDto
 import net.whiteravens.dietapp.data.remote.LabelLimitsDto
@@ -38,6 +39,7 @@ import net.whiteravens.dietapp.domain.MealCooking
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DayDiary
+import net.whiteravens.dietapp.domain.JointPlan
 import net.whiteravens.dietapp.domain.LabelFigure
 import net.whiteravens.dietapp.domain.LabelLimitNote
 import net.whiteravens.dietapp.domain.LabelLimits
@@ -248,6 +250,8 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
     )
 }
 
+fun JointPlanDto.toDomain() = JointPlan(planId = planId, profileId = profileId, profileName = profileName)
+
 /** What a change of a dish does to the other meals of its cooking. */
 fun CookingChangeDto.toDomain() = CookingChange(
     changes = changes.map { MealPlace(it.date, it.mealType) },
@@ -374,6 +378,8 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     lessWaste = options.lessWaste,
     ownDiet = options.dietType,
     targetMoved = targetMoved?.let { TargetMoved(it.profileTarget, it.planTarget) },
+    joint = joint?.toDomain(),
+    apart = report?.apart.orEmpty(),
 )
 
 fun RebalanceSummaryDto.toDomain() = Rebalance(
@@ -393,6 +399,7 @@ fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
     averageDailyNutrition = averageDailyNutrition.toDomain(),
     ingredientReuse = ingredientReuseScore,
     byModel = generationMode == "ai_assisted",
+    joint = joint?.toDomain(),
 )
 
 fun MealPlanPageDto.toDomain(syncedAt: Long? = null) = MealPlanPage(

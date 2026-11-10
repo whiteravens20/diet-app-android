@@ -205,7 +205,9 @@ class MealPlanRepository @Inject constructor(
                     lessWaste = ask.lessWaste,
                     maxRepeatsPerRecipe = ask.maxRepeatsPerRecipe,
                     allowRelaxations = ask.allowRelaxations.takeIf { it.isNotEmpty() },
-                    dayOverrides = ask.days.map { it.toDto() }.takeIf { it.isNotEmpty() },
+                    // A joint plan is made without settings of its days: each person changes their own after.
+                    dayOverrides = ask.days.map { it.toDto() }.takeIf { it.isNotEmpty() && ask.withProfileId == null },
+                    withProfileId = ask.withProfileId,
                 ),
             )
         }

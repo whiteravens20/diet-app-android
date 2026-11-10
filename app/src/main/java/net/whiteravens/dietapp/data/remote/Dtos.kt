@@ -1138,6 +1138,10 @@ data class PlannedMealDto(
     val label: LabelTotalsDto? = null,
 )
 
+/** The plan of the other profile a plan was made together with. */
+@Serializable
+data class JointPlanDto(val planId: String, val profileId: String, val profileName: String)
+
 /** Another meal of a meal's cooking. */
 @Serializable
 data class CookedPlaceDto(val mealId: String, val date: String, val mealType: String, val eaten: Boolean)
@@ -1336,6 +1340,8 @@ data class MealPlanDto(
     val revision: Int,
     /** A running plan whose profile's target moved since it was made, by 100 kcal or more: both targets; null otherwise. */
     val targetMoved: TargetMovedDto? = null,
+    /** The plan of the other profile this one was made together with; null for a plan of one person. */
+    val joint: JointPlanDto? = null,
     val createdAt: String,
 )
 
@@ -1402,6 +1408,8 @@ data class GenerationReportDto(
     val singleCandidate: List<SingleCandidateDto>,
     /** `counted` | `left_out` | `unused` | `empty` | `not_asked`. */
     val pantry: String,
+    /** Of a joint plan, the times of day both have that are planned apart: no recipe both may be given was left. */
+    val apart: List<String> = emptyList(),
 )
 
 /** One plan in the list of a profile's plans: what the list shows, without its days. */
@@ -1417,6 +1425,8 @@ data class MealPlanSummaryDto(
     val ingredientReuseScore: Double,
     /** `deterministic` | `ai_assisted`. */
     val generationMode: String,
+    /** The plan of the other profile this one was made together with; null for a plan of one person. */
+    val joint: JointPlanDto? = null,
     val createdAt: String,
 )
 
@@ -1449,6 +1459,12 @@ data class GeneratePlanRequest(
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val allowRelaxations: List<String>? = null,
     val dayOverrides: List<DayOverrideDto>? = null,
+    /**
+     * Another profile of the account to plan together with: it gets a plan of its own on the same
+     * days, by its own profile, and at the times of day both have both plans hold the same dish. Sent
+     * without [dayOverrides]; counted as two makings of a plan.
+     */
+    val withProfileId: String? = null,
 )
 
 /** The days of a profile's plans in a span of days: those no plan holds are left out. */

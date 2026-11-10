@@ -25,8 +25,13 @@ data class PlanAsk(
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val allowRelaxations: List<String> = emptyList(),
-    /** The days that differ from the plan; the others follow it. */
+    /** The days that differ from the plan; the others follow it. None for a plan made together with [withProfileId]. */
     val days: List<DayAsk> = emptyList(),
+    /**
+     * Another profile of the account the plan is made together with: it gets a plan of its own on the
+     * same days, by its own profile, the times of day both have holding the same dish.
+     */
+    val withProfileId: String? = null,
 )
 
 /** One day of a plan asked for, where it differs from the plan. */

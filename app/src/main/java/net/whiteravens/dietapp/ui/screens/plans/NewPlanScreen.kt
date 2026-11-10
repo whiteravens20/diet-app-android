@@ -113,6 +113,21 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                         ) { ticked -> viewModel.edit { it.copy(mealPrepFriendly = ticked) } }
                         if (form.cookAheadCannotPair) Hint(stringResource(R.string.plans_prep_cannot_pair), MaterialTheme.colorScheme.tertiary)
                         if (state.overlaps) Hint(stringResource(R.string.plans_overlap_note), MaterialTheme.colorScheme.tertiary)
+                        // Another profile of the account the plan is made together with: each gets a plan, the times both have shared.
+                        if (state.others.isNotEmpty()) {
+                            ChoiceField(
+                                label = stringResource(R.string.plans_joint_plan_with),
+                                options = listOf<String?>(null) + state.others.map { it.first },
+                                selected = form.withProfileId,
+                                optionLabel = { id -> state.others.firstOrNull { it.first == id }?.second ?: stringResource(R.string.plans_joint_plan_none) },
+                                onSelect = { chosen -> viewModel.edit { it.copy(withProfileId = chosen) } },
+                            )
+                            Text(
+                                stringResource(R.string.plans_joint_plan_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
 
                         val custom = profile.figures.customMacroSplit
                         ChoiceField(
@@ -237,7 +252,10 @@ private fun AdvancedOptions(
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
     // A field inside that is marked keeps the options open.
-    val marked = PlanField.MAX_REPEATS in problems || PlanField.MAX_REPEATS in refusals.plan || dayProblems.isNotEmpty() || refusals.days.isNotEmpty()
+    // A joint plan is made without settings of its days: each person changes their own after, in their plan.
+    val withoutDays = form.withProfileId != null
+    val marked = PlanField.MAX_REPEATS in problems || PlanField.MAX_REPEATS in refusals.plan ||
+        (!withoutDays && (dayProblems.isNotEmpty() || refusals.days.isNotEmpty()))
     Surface(
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -253,19 +271,26 @@ private fun AdvancedOptions(
             }
             if (!open && !marked) return@Column
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.plans_advanced_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(if (withoutDays) R.string.plans_advanced_per_day_joint else R.string.plans_advanced_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(stringResource(R.string.plans_advanced_legend_title), style = MaterialTheme.typography.labelMedium)
-                        listOf(
-                            R.string.plans_advanced_legend_day_kind,
-                            R.string.plans_advanced_legend_meals,
-                            R.string.plans_advanced_legend_calories,
-                            R.string.plans_advanced_legend_cook_time,
-                            R.string.plans_advanced_legend_use_up_by,
-                            R.string.plans_advanced_legend_set,
-                            R.string.plans_advanced_legend_lock,
-                        ).forEach { line -> Legend(stringResource(line)) }
+                        // Without settings of days the box explains only what the options hold.
+                        if (!withoutDays) {
+                            listOf(
+                                R.string.plans_advanced_legend_day_kind,
+                                R.string.plans_advanced_legend_meals,
+                                R.string.plans_advanced_legend_calories,
+                                R.string.plans_advanced_legend_cook_time,
+                                R.string.plans_advanced_legend_use_up_by,
+                                R.string.plans_advanced_legend_set,
+                                R.string.plans_advanced_legend_lock,
+                            ).forEach { line -> Legend(stringResource(line)) }
+                        }
                         Legend(
                             defaultMaxRepeats?.let { stringResource(R.string.plans_advanced_legend_variety_most, it.toString()) }
                                 ?: stringResource(R.string.plans_advanced_legend_variety_none),
@@ -291,10 +316,12 @@ private fun AdvancedOptions(
                     }
                 }
                 Text(stringResource(R.string.plans_advanced_may_give_way_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(stringResource(R.string.plans_advanced_per_day), style = MaterialTheme.typography.titleSmall)
-                form.dates.forEach { date ->
-                    DayOptions(date, form.day(date), dayProblems[date].orEmpty(), refusals.days[date].orEmpty(), liked, sets, planMealCount, mealSlots) { change ->
-                        onEditDay(date, change)
+                if (!withoutDays) {
+                    Text(stringResource(R.string.plans_advanced_per_day), style = MaterialTheme.typography.titleSmall)
+                    form.dates.forEach { date ->
+                        DayOptions(date, form.day(date), dayProblems[date].orEmpty(), refusals.days[date].orEmpty(), liked, sets, planMealCount, mealSlots) { change ->
+                            onEditDay(date, change)
+                        }
                     }
                 }
             }

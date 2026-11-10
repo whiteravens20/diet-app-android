@@ -305,6 +305,7 @@
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Dodaj własny posiłek</string>
     <string name="plans_delete_confirm">Usunąć ten plan? Tej operacji nie można cofnąć.</string>
+    <string name="plans_delete_joint_note">Drugi plan (%1$s) zostanie zwykłym planem, bez wspólnych posiłków.</string>
     <string name="plans_rebalance_title">Przeliczono porcje dnia</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
     <string name="plans_rebalance_best_effort">Dzień nadal jest poza celem: dopasowanie porcji nie wystarczyło.</string>
@@ -1450,6 +1451,7 @@
     <string name="plans_limit_kind_same_day">posiłki z tym samym rodzajem białka w jednym dniu</string>
     <string name="plans_advanced_toggle">Pokaż opcje zaawansowane</string>
     <string name="plans_advanced_hint">Dostosuj każdy dzień osobno. Dni, których nie zmienisz, korzystają z ustawień planu.</string>
+    <string name="plans_advanced_per_day_joint">Ustawienia dni zmienisz po utworzeniu, w\u00A0planie każdej osoby.</string>
     <string name="plans_advanced_legend_title">Co robią te opcje</string>
     <string name="plans_advanced_legend_day_kind">Dzień: Treningowy ma około 15% kalorii więcej niż zwykły dzień tego tygodnia, Odpoczynek około 15% mniej, a średni cel dnia w tygodniu pozostaje równy celowi planu. Pomiń zostawia dzień pusty (i poza listą zakupów).</string>
     <string name="plans_advanced_legend_meals">Posiłki: ile posiłków w danym dniu, zastępując ustawienie planu.</string>
@@ -1885,6 +1887,11 @@
     <string name="favorite_sets_apply_no_days">Wszystkie dni tego planu minęły.</string>
     <string name="plans_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s. Poniżej ilości dla Twojego posiłku.</string>
     <string name="plans_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s. Poniżej ilości na całe gotowanie.</string>
+    <string name="plans_joint_with">Wspólny plan z: %1$s</string>
+    <string name="plans_joint_apart">Osobno, bo żadne danie nie pasuje obu osobom: %1$s.</string>
+    <string name="plans_joint_plan_with">Wspólny plan z</string>
+    <string name="plans_joint_plan_none">Z\u00A0nikim</string>
+    <string name="plans_joint_plan_hint">Każda osoba dostaje swój plan na te same dni. O\u00A0porach, które mają obie osoby, oba plany mają to samo danie, każdy swoją porcję. Druga osoba ma dietę, liczbę posiłków i\u00A0cel ze swojego profilu.</string>
     <string name="recipe_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s.</string>
     <string name="recipe_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s.</string>
     <string name="plans_estimated_chip">≈ szacunek</string>

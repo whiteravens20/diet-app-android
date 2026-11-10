@@ -94,6 +94,8 @@ data class NewPlanForm(
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val mayGiveWay: List<String> = emptyList(),
     val days: Map<LocalDate, DayDraft> = emptyMap(),
+    /** Another profile of the account the plan is made together with; such a plan is made without settings of its days. */
+    val withProfileId: String? = null,
 ) {
     /** The plan's days, as many as the duration says, while that is a number of days the form draws. */
     val dates: List<LocalDate>
@@ -130,7 +132,8 @@ data class NewPlanForm(
      * [mealSlots] the meals of a day at each number of meals, as the instance says them.
      */
     fun ask(profileId: String, profileMealCount: Int, sets: List<FavoriteSet>, mealSlots: Map<Int, List<String>>): PlanAsk? {
-        if (problems().isNotEmpty() || dayProblems().isNotEmpty()) return null
+        // The settings of days are not asked for a joint plan: what is wrong in them stands in nobody's way.
+        if (problems().isNotEmpty() || (withProfileId == null && dayProblems().isNotEmpty())) return null
         val planMealCount = mealCount ?: profileMealCount
         val asked = dates.mapNotNull { date ->
             val draft = day(date)
@@ -161,7 +164,8 @@ data class NewPlanForm(
             lessWaste = lessWaste,
             maxRepeatsPerRecipe = maxRepeats.trim().toIntOrNull(),
             allowRelaxations = mayGiveWay,
-            days = asked,
+            days = asked.takeIf { withProfileId == null }.orEmpty(),
+            withProfileId = withProfileId,
         )
     }
 }

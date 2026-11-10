@@ -419,6 +419,9 @@ data class Meal(
     val recipeByModel: Boolean = false,
 )
 
+/** The plan of the other profile a plan was made together with. */
+data class JointPlan(val planId: String, val profileId: String, val profileName: String)
+
 /** Another meal of a meal's cooking: of which day and time of day, and whether it was eaten. */
 data class CookedPlace(val mealId: String, val date: String, val slot: String, val eaten: Boolean)
 
@@ -597,6 +600,10 @@ data class MealPlan(
     val ownDiet: String? = null,
     /** A running plan whose profile's target moved since it was made: both targets; null otherwise. */
     val targetMoved: TargetMoved? = null,
+    /** The plan of the other profile this one was made together with; null for a plan of one person. */
+    val joint: JointPlan? = null,
+    /** Of a joint plan, the times of day both have that are planned apart: no dish both may be given was left. */
+    val apart: List<String> = emptyList(),
 ) {
     /** The meals that hold something the profile has ruled out since the plan was made. */
     val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }
@@ -802,6 +809,8 @@ data class MealPlanSummary(
     val ingredientReuse: Double,
     /** Parts of the plan were chosen with a model's help. */
     val byModel: Boolean,
+    /** The plan of the other profile this one was made together with; null for a plan of one person. */
+    val joint: JointPlan? = null,
 )
 
 /**

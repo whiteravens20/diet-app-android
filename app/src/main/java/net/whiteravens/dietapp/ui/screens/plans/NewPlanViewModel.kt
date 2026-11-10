@@ -72,6 +72,8 @@ class NewPlanViewModel @Inject constructor(
         val made: String? = null,
         /** Another plan of the profile holds some of the days chosen. */
         val overlaps: Boolean = false,
+        /** The account's other profiles, by id and name: whom a plan can be made together with. */
+        val others: List<Pair<String, String>> = emptyList(),
     ) {
         /** The diet and the number of meals the plan is made for: the form's, or the profile's. */
         val planDiet: String get() = form.dietType ?: profile?.figures?.dietType ?: "balanced"
@@ -103,6 +105,10 @@ class NewPlanViewModel @Inject constructor(
             val target = async { attempt { users.calorieTarget(profileId) }.getOrNull() }
             val marked = async { attempt { favorites.marked(profileId) }.getOrDefault(emptyList()) }
             val sets = async { attempt { favorites.sets(profileId) }.getOrDefault(emptyList()) }
+            // Whom the plan can be made together with: what fails to come leaves the field out.
+            val others = async {
+                attempt { profiles.profiles() }.getOrDefault(emptyList()).filter { it.id != profileId }.map { it.id to it.figures.name }
+            }
             attempt { profiles.profile(profileId) }
                 .onSuccess { profile ->
                     _state.update {
@@ -113,6 +119,7 @@ class NewPlanViewModel @Inject constructor(
                             // What a profile marked to avoid is nothing to put into a plan: the API would refuse it.
                             liked = marked.await().filter { recipe -> recipe.sentiment != "avoid" },
                             sets = sets.await(),
+                            others = others.await(),
                         )
                     }
                 }

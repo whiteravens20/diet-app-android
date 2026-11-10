@@ -16,6 +16,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
+import org.junit.Assert.assertNotNull
 
 /** A new plan's form as it is chosen, and the plan the API is asked for from it, as the web's form asks. */
 class NewPlanFormTest {
@@ -174,5 +175,18 @@ class NewPlanFormTest {
         assertEquals(2, ask.maxRepeatsPerRecipe)
         assertEquals(listOf("cook_time", "weekly_cap"), ask.allowRelaxations)
         assertEquals(mapOf("breakfast" to "oats", "lunch" to "soup", "snack" to "nuts"), ask.days.single().locks)
+    }
+
+    @Test
+    fun `a plan made together asks for the other profile without settings of its days, which then hold nothing back`() {
+        val rest = form.copy(days = mapOf(monday to form.day(monday).copy(kind = "rest")), withProfileId = "q")
+        val wrong = form.copy(days = mapOf(monday to form.day(monday).copy(calorieTarget = "abc")), withProfileId = "q")
+
+        val ask = rest.ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
+
+        assertEquals("q", ask.withProfileId)
+        assertEquals(emptyList<DayAsk>(), ask.days)
+        assertNotNull(wrong.ask("p", profileMealCount = 3, sets = sets, mealSlots))
+        assertNull(wrong.copy(withProfileId = null).ask("p", profileMealCount = 3, sets = sets, mealSlots))
     }
 }

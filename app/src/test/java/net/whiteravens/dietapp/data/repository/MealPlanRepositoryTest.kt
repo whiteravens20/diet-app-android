@@ -766,4 +766,18 @@ class MealPlanRepositoryTest {
 
         assertEquals(Nutrition(1554.0, 84.0, 59.0, 167.0), ways.diary)
     }
+
+    @Test
+    fun `a plan made together is asked for with the other profile, and without settings of its days`() {
+        server.enqueue(answer("meal-plan").setResponseCode(201))
+        val monday = LocalDate.of(2026, 10, 12)
+        val ask = PlanAsk(profileId = "p", startDate = monday, durationDays = 3, days = listOf(DayAsk(monday, dayType = "rest")), withProfileId = "q")
+
+        runBlocking { repository(Cache()).generate(ask) }
+
+        val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("q", body.getValue("withProfileId").jsonPrimitive.content)
+        // Each person changes the days of their own plan after: none are sent.
+        assertFalse("dayOverrides" in body)
+    }
 }

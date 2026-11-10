@@ -20,6 +20,8 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import net.whiteravens.dietapp.data.remote.JointPlanDto
+import net.whiteravens.dietapp.domain.JointPlan
 
 /**
  * A plan as a running backend answered it, as the phone shows it: a meal is the share of its
@@ -169,5 +171,17 @@ class MealMappingTest {
         assertEquals(1.25, meal.quantityScale, 0.0)
         assertEquals("cook", meal.cookAhead)
     }
-}
 
+    @Test
+    fun `a plan made together says with whom and which times of day were planned apart, and a plan of one person says neither`() {
+        val joint = plan.copy(
+            joint = JointPlanDto(planId = "plan-2", profileId = "ewa", profileName = "Ewa"),
+            report = GenerationReportDto(relaxations = emptyList(), singleCandidate = emptyList(), pantry = "empty", apart = listOf("snack")),
+        ).toDomain()
+
+        assertEquals(JointPlan("plan-2", "ewa", "Ewa"), joint.joint)
+        assertEquals(listOf("snack"), joint.apart)
+        assertNull(plan.toDomain().joint)
+        assertTrue(plan.toDomain().apart.isEmpty())
+    }
+}

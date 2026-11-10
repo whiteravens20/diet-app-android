@@ -286,6 +286,7 @@
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Add custom meal</string>
     <string name="plans_delete_confirm">Delete this plan? This cannot be undone.</string>
+    <string name="plans_delete_joint_note">The other plan (%1$s) stays as a plan of its own, without shared meals.</string>
     <string name="plans_rebalance_title">The portions of the day were sized again</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
     <string name="plans_rebalance_best_effort">The day is still off its target: sizing its meals could not close the gap.</string>
@@ -1343,6 +1344,7 @@
     <string name="plans_limit_kind_same_day">meals with the same kind of protein in a day</string>
     <string name="plans_advanced_toggle">Show advanced options</string>
     <string name="plans_advanced_hint">Shape each day individually. Untouched days follow the plan defaults.</string>
+    <string name="plans_advanced_per_day_joint">Change the settings of days after the plan is made, in each person\'s plan.</string>
     <string name="plans_advanced_legend_title">What these do</string>
     <string name="plans_advanced_legend_day_kind">Day: Training has about 15% more calories than a usual day of its week, Rest about 15% less, and the week\'s average daily target stays equal to the plan\'s target. Skip leaves the day empty (and off the shopping list).</string>
     <string name="plans_advanced_legend_meals">Meals: how many meals that day, overriding the plan default.</string>
@@ -1761,6 +1763,11 @@
     <string name="favorite_sets_apply_no_days">Every day of this plan is over.</string>
     <string name="plans_portion_meal">The original gives amounts for %1$s, your meal is %2$s. Below are the amounts for your meal.</string>
     <string name="plans_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s. Below are the amounts for all of it.</string>
+    <string name="plans_joint_with">Planned together with: %1$s</string>
+    <string name="plans_joint_apart">Planned apart, as no dish suits both: %1$s.</string>
+    <string name="plans_joint_plan_with">Plan together with</string>
+    <string name="plans_joint_plan_none">Nobody</string>
+    <string name="plans_joint_plan_hint">Each person gets a plan of their own on the same days. At the times of day both have, both plans hold the same dish, a portion for each. The other person\'s diet, meals a day and target come from their profile.</string>
     <string name="recipe_portion_meal">The original gives amounts for %1$s, your meal is %2$s.</string>
     <string name="recipe_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s.</string>
     <string name="plans_estimated_chip">≈ estimate</string>
