@@ -114,7 +114,7 @@ fun AboutScreen(
                 rules?.supportUrl?.let { address ->
                     TextButton(onClick = { web.openOutside(address) }) { Text(stringResource(R.string.about_support)) }
                 }
-                TextButton(onClick = { web.open("terms") }) { Text(stringResource(R.string.about_terms)) }
+                TextButton(onClick = { web.openPublic("terms") }) { Text(stringResource(R.string.about_terms)) }
             }
 
             AppCard {

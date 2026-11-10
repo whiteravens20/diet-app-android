@@ -69,6 +69,17 @@ class WebPages internal constructor(
         }
     }
 
+    /**
+     * Opens [path] of the web application as anyone reads it, without signing the browser in: a page
+     * that needs no account, such as the instance's terms, which the web application's sign-in would
+     * not go on to; nothing while no server is chosen.
+     */
+    fun openPublic(path: String, vararg query: Pair<String, String>) {
+        val app = webApp ?: return
+        val plain = webPage(app, path, *query)
+        show(plain, null, plain)
+    }
+
     /** Opens a page outside the instance, at [address], in the browser: no code goes with it. */
     fun openOutside(address: String) = show(address, null, address)
 }

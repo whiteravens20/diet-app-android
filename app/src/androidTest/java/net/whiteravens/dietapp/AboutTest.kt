@@ -11,8 +11,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
-import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.opensTheBrowserAt
+import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -66,8 +66,8 @@ class AboutTest {
         opensTheBrowserAt(SOURCE_URL) {
             screen.onNodeWithText(text(R.string.about_source)).performScrollTo().performClick()
         }
-        // The instance's terms are a page of its web application, opened signed in as every other.
-        opensSignedInTheBrowser("/terms") {
+        // The instance's terms are a page anyone may read: opened as it is, without signing the browser in.
+        opensTheBrowserAt("${webApp}terms") {
             screen.onNodeWithText(text(R.string.about_terms)).performScrollTo().performClick()
         }
 

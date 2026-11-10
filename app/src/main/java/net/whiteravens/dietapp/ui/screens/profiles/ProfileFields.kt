@@ -840,7 +840,7 @@ internal fun CaloriePreviewCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    NotAdvice(onTerms = { web.open("terms") })
+                    NotAdvice(onTerms = { web.openPublic("terms") })
                 }
                 c != null -> Column(Modifier.alpha(if (behind) 0.6f else 1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column {
@@ -887,7 +887,7 @@ internal fun CaloriePreviewCard(
                             }
                         }
                     }
-                    NotAdvice(onTerms = { web.open("terms") })
+                    NotAdvice(onTerms = { web.openPublic("terms") })
                 }
                 // There are figures to work out, and the answer is on its way: nothing is asked of the reader.
                 waiting -> {
