@@ -23,5 +23,8 @@ const val COPYRIGHT = "Copyright (C) 2026 White Ravens"
 const val HOME_NAME = "White Ravens"
 const val HOME_URL = "https://whiteravens.net"
 
-/** Where the text of the licence is published. */
-const val LICENCE_URL = "https://www.gnu.org/licenses/agpl-3.0.html"
+/**
+ * The licence as the source code holds it, its additional term in NOTICE beside it. It follows
+ * [SOURCE_URL]: a changed version shows the licence of its own code.
+ */
+const val LICENCE_URL = "$SOURCE_URL/blob/HEAD/LICENSE"
