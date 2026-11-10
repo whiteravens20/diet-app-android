@@ -1887,6 +1887,10 @@
     <string name="favorite_sets_apply_no_days">Wszystkie dni tego planu minęły.</string>
     <string name="plans_portion_meal">Oryginał podaje ilości na %1$s, Twój posiłek to %2$s. Poniżej ilości dla Twojego posiłku.</string>
     <string name="plans_portion_whole">Oryginał podaje ilości na %1$s, to gotowanie to %2$s. Poniżej ilości na całe gotowanie.</string>
+    <string name="plans_shared_chip">Wspólne</string>
+    <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
+    <string name="plans_shared_eaten">zjedzone</string>
+    <string name="plans_eaten_together">Zjedzone u\u00A0obu osób</string>
     <string name="plans_joint_with">Wspólny plan z: %1$s</string>
     <string name="plans_joint_apart">Osobno, bo żadne danie nie pasuje obu osobom: %1$s.</string>
     <string name="plans_joint_plan_with">Wspólny plan z</string>

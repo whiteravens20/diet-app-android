@@ -780,4 +780,18 @@ class MealPlanRepositoryTest {
         // Each person changes the days of their own plan after: none are sent.
         assertFalse("dayOverrides" in body)
     }
+
+    @Test
+    fun `a shared meal is marked eaten for both people where the change carries the other's meal, and for one alone where it does not`() {
+        repeat(2) { server.enqueue(answer("meal-plan-swap-apply")) }
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.setEaten("plan-1", "meal-1", eaten = true, also = QueuedChange.OtherMeal("plan-2", "meal-9"))
+            plans.setEaten("plan-1", "meal-1", eaten = false)
+        }
+
+        assertEquals("""{"eaten":true,"forAll":true}""", server.takeRequest().body.readUtf8())
+        assertEquals("""{"eaten":false}""", server.takeRequest().body.readUtf8())
+    }
 }

@@ -128,4 +128,18 @@ class WaitingOverDiaryTest {
         assertFalse(QueuedChange.WeightDeleted("a", "w").isOfADiary())
         assertFalse(QueuedChange.NotificationRead("n").isOfADiary())
     }
+
+    private val theirs = listOf(
+        DiaryPlanMeal("meal-9", "lunch", "Stew", "r", eaten = false, calories = 400.0),
+        DiaryPlanMeal("meal-8", "dinner", "Soup", "s", eaten = false, calories = 300.0),
+    )
+
+    @Test
+    fun `a mark made for both people of a joint plan shows in the other person's diary too, one made for one alone does not`() {
+        val marked = theirs.mealsWithWaiting("plan-2", date, listOf(QueuedChange.Eaten("plan-1", "meal-1", eaten = true, also = QueuedChange.OtherMeal("plan-2", "meal-9"))))
+        val alone = theirs.mealsWithWaiting("plan-2", date, listOf(QueuedChange.Eaten("plan-1", "meal-9", eaten = true)))
+
+        assertEquals(listOf(true, false), marked.map { it.eaten })
+        assertEquals(theirs, alone)
+    }
 }

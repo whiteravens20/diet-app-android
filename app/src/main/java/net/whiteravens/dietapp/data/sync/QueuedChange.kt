@@ -44,10 +44,10 @@ sealed interface QueuedChange {
         val have: Double? = null,
     ) : QueuedChange
 
-    /** A meal of a plan marked eaten or not. */
+    /** A meal of a plan marked eaten or not; [also], of a shared meal, the other person's meal marked with it. */
     @Serializable
     @SerialName("eaten")
-    data class Eaten(val planId: String, val mealId: String, val eaten: Boolean) : QueuedChange
+    data class Eaten(val planId: String, val mealId: String, val eaten: Boolean, val also: OtherMeal? = null) : QueuedChange
 
     /** A weight of a profile, taken at [recordedAt] (an instant as ISO 8601). */
     @Serializable
@@ -127,6 +127,10 @@ sealed interface QueuedChange {
     @Serializable
     @SerialName("meal-removed")
     data class MealRemoved(val planId: String, val mealId: String) : DoneWhenGone
+
+    /** The other person's meal of a shared meal, which a change of this one is made to as well. */
+    @Serializable
+    data class OtherMeal(val planId: String, val mealId: String)
 
     /** A recipe marked for a profile (`favorite`, `often`, `avoid`), with its tags: what was said of it before is replaced. */
     @Serializable

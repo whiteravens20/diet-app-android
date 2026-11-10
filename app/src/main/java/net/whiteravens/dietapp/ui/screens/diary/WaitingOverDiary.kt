@@ -30,14 +30,18 @@ internal fun List<DiaryEntry>.entriesWithWaiting(profileId: String, date: String
     }
 }
 
+/** The meal of the plan [planId] a change of an eaten mark is made to: its own, or the other person's of a mark for both. */
+private fun QueuedChange.Eaten.mealOf(planId: String): String? = if (this.planId == planId) mealId else also?.takeIf { it.planId == planId }?.mealId
+
 /**
  * The meals of the plan [planId] on the day of [date], with its changes that wait to be sent over them:
  * a meal marked eaten or not, a meal of one's own on the day under its key, beside the others or in the
- * place of the one it replaces, and a meal taken off the day left out.
+ * place of the one it replaces, and a meal taken off the day left out; a change made for both people of
+ * a joint plan shows in the other person's diary as well.
  */
 internal fun List<DiaryPlanMeal>.mealsWithWaiting(planId: String, date: String, waiting: List<QueuedChange>): List<DiaryPlanMeal> = waiting.fold(this) { meals, change ->
     when (change) {
-        is QueuedChange.Eaten -> if (change.planId == planId) meals.map { if (it.id == change.mealId) it.copy(eaten = change.eaten) else it } else meals
+        is QueuedChange.Eaten -> meals.map { if (it.id == change.mealOf(planId)) it.copy(eaten = change.eaten) else it }
         is QueuedChange.MealRemoved -> if (change.planId == planId) meals.filterNot { it.id == change.mealId } else meals
         is QueuedChange.OwnMealAdded -> if (change.planId == planId && change.date == date) {
             meals.filterNot { it.id == change.replaces } + DiaryPlanMeal(change.key, change.slot, change.name, null, false, change.calories * change.servings)

@@ -417,7 +417,26 @@ data class Meal(
     val recipeSource: RecipeSource? = null,
     /** A model wrote its recipe or had a part in it, whoever chose it for the meal: said with the recipe when it is sent. */
     val recipeByModel: Boolean = false,
+    /** A meal of a joint plan both people eat, each a portion of their own; null for a meal of this plan alone. */
+    val shared: SharedMeal? = null,
 )
+
+/** The other person's meal of a shared meal, as their plan holds it: its servings as eaten and its kcal. */
+data class OtherPortion(
+    val mealId: String,
+    val planId: String,
+    val profileName: String,
+    val servings: Double,
+    val calories: Double,
+    val eaten: Boolean,
+)
+
+/**
+ * What a meal of a joint plan shares with the other plan: the other person's portion, and the lines
+ * of the whole pot, both portions (both cookings where the dish is cooked ahead). [apart]: each
+ * portion is cooked on its own; otherwise in one pot, split by weight.
+ */
+data class SharedMeal(val id: String, val apart: Boolean, val with: OtherPortion, val pot: List<MealLine>)
 
 /** The plan of the other profile a plan was made together with. */
 data class JointPlan(val planId: String, val profileId: String, val profileName: String)

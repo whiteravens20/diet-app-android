@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.plans
 import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
 import net.whiteravens.dietapp.data.remote.RetargetRequestDto
 import net.whiteravens.dietapp.data.remote.TargetMovedDto
+import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.data.remote.PlanWeekDto
 import net.whiteravens.dietapp.domain.PlanWeek
@@ -95,6 +96,8 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import net.whiteravens.dietapp.domain.OtherPortion
+import net.whiteravens.dietapp.domain.SharedMeal
 
 /**
  * A meal swapped on the plan's screen, the way the web application swaps one: a recipe is offered,
@@ -967,5 +970,38 @@ class PlanDetailViewModelTest {
 
         assertEquals(DayDiary(5, Nutrition(1554.0, 84.0, 59.0, 167.0)), plan.days[0].diary)
         assertNull(plan.days[1].diary)
+    }
+
+    /** A plan whose first meal both people of a joint plan eat, and the other person's plan, its meal of the same place. */
+    private fun jointPlans(): Pair<MealPlan, MealPlan> {
+        val read = plan.toDomain()
+        val day = read.days.first()
+        val mine = day.meals.first()
+        val other = OtherPortion(mealId = "meal-9", planId = "plan-2", profileName = "Ewa", servings = 1.0, calories = 500.0, eaten = false)
+        val joint = read.copy(days = read.days.map { d -> if (d != day) d else d.copy(meals = d.meals.map { if (it.id == mine.id) it.copy(shared = SharedMeal("shared-1", false, other, emptyList())) else it }) })
+        val theirs = read.copy(
+            id = "plan-2",
+            days = read.days.map { d ->
+                if (d != day) d else d.copy(meals = d.meals.map {
+                    if (it.id == mine.id) it.copy(id = "meal-9", shared = SharedMeal("shared-1", false, other.copy(mealId = mine.id, planId = read.id, profileName = "Adam"), emptyList())) else it
+                })
+            },
+        )
+        return joint to theirs
+    }
+
+    @Test
+    fun `a mark for both people that waits shows on both meals, the other's portion marked too, in either plan`() {
+        val (joint, theirs) = jointPlans()
+        val mine = joint.days.first().meals.first()
+        val both = QueuedChange.Eaten(joint.id, mine.id, eaten = true, also = QueuedChange.OtherMeal("plan-2", "meal-9"))
+
+        val here = joint.withWaiting(listOf(both)).days.first().meals.first { it.id == mine.id }
+        val there = theirs.withWaiting(listOf(both)).days.first().meals.first { it.id == "meal-9" }
+        val alone = theirs.withWaiting(listOf(both.copy(also = null))).days.first().meals.first { it.id == "meal-9" }
+
+        assertTrue(here.eaten && here.shared!!.with.eaten)
+        assertTrue(there.eaten && there.shared!!.with.eaten)
+        assertFalse(alone.eaten)
     }
 }

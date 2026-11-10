@@ -37,6 +37,7 @@ import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.Reroll
+import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
@@ -154,11 +155,12 @@ class PlanDetailViewModel @Inject constructor(
         val shown: MealPlan? get() = plan?.withWaiting(waiting.map(Waiting::change))
 
         /** The meals with a change that waits to be sent: an eaten mark, or a meal of one's own added, under its key. */
-        val waitingMeals: Set<String> get() = waiting.mapNotNullTo(mutableSetOf()) { waiting ->
+        val waitingMeals: Set<String> get() = waiting.flatMapTo(mutableSetOf()) { waiting ->
             when (val change = waiting.change) {
-                is QueuedChange.Eaten -> change.mealId
-                is QueuedChange.OwnMealAdded -> change.key
-                else -> null
+                // A mark for both waits on the other person's meal as well.
+                is QueuedChange.Eaten -> listOfNotNull(change.mealId, change.also?.mealId)
+                is QueuedChange.OwnMealAdded -> listOf(change.key)
+                else -> emptyList()
             }
         }
 
@@ -226,7 +228,7 @@ class PlanDetailViewModel @Inject constructor(
      */
     private fun followWaiting() {
         viewModelScope.launch {
-            queue.waiting.map { waiting -> waiting.filter { planOf(it.change) == planId } }
+            queue.waiting.map { waiting -> waiting.filter { planId in plansOf(it.change) } }
                 .distinctUntilChanged()
                 .collect { waiting ->
                     val sent = _state.value.waiting.any { before -> waiting.none { it.id == before.id } && before.id !in withdrawn }
@@ -340,10 +342,15 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     /** Marks a meal eaten or not; a meal of one's own that waits to be added is marked once the server has it. */
-    fun setEaten(mealId: String, eaten: Boolean) {
+    fun setEaten(mealId: String, eaten: Boolean, forAll: Boolean = false) {
         if (mealId in _state.value.waitingAdditions) return
-        queued { plans.setEaten(planId, mealId, eaten) }
+        val also = shared(mealId)?.takeIf { forAll }?.let { QueuedChange.OtherMeal(it.with.planId, it.with.mealId) }
+        queued { plans.setEaten(planId, mealId, eaten, also) }
     }
+
+    /** What [mealId] shares with the other plan of a joint plan, as the plan on screen has it; null for a meal of this plan alone. */
+    private fun shared(mealId: String): SharedMeal? =
+        _state.value.shown?.days?.firstNotNullOfOrNull { day -> day.meals.firstOrNull { it.id == mealId } }?.shared
 
     /**
      * Adds [meal] of the user's own to the day of [date] (yyyy-MM-dd), beside its meals or in the
@@ -726,23 +733,32 @@ class PlanDetailViewModel @Inject constructor(
     }
 }
 
-/** The plan a change is of; null for a change of anything else. */
-private fun planOf(change: QueuedChange): String? = when (change) {
-    is QueuedChange.Eaten -> change.planId
-    is QueuedChange.OwnMealAdded -> change.planId
-    is QueuedChange.MealRemoved -> change.planId
-    else -> null
+/** The plans a change is of: its own, and the other person's of a change made for both; none for a change of anything else. */
+private fun plansOf(change: QueuedChange): List<String> = when (change) {
+    is QueuedChange.Eaten -> listOfNotNull(change.planId, change.also?.planId)
+    is QueuedChange.OwnMealAdded -> listOf(change.planId)
+    is QueuedChange.MealRemoved -> listOf(change.planId)
+    else -> emptyList()
+}
+
+/** A meal as an eaten mark leaves it: marked, and, of a mark for both, with the other person's portion marked too. */
+private fun Meal.markedBy(change: QueuedChange.Eaten): Meal {
+    val both = setOfNotNull(change.mealId, change.also?.mealId)
+    if (id !in both) return this
+    val other = shared?.takeIf { change.also != null && it.with.mealId in both }
+    return copy(eaten = change.eaten, shared = other?.copy(with = other.with.copy(eaten = change.eaten)) ?: shared)
 }
 
 /**
  * The plan with its changes that wait to be sent over what was read, in the order they were made: a
  * meal marked eaten or not, a meal of one's own on its day, under its key, beside the meals of its
- * time of day or in the place of the one it replaces, and a meal taken off its day left out. The
- * day's sums are the server's, once it has the changes.
+ * time of day or in the place of the one it replaces, and a meal taken off its day left out; a change
+ * made for both people of a joint plan shows in either plan. The day's sums are the server's, once it
+ * has the changes.
  */
-internal fun MealPlan.withWaiting(waiting: List<QueuedChange>): MealPlan = waiting.filter { planOf(it) == id }.fold(this) { plan, change ->
+internal fun MealPlan.withWaiting(waiting: List<QueuedChange>): MealPlan = waiting.filter { id in plansOf(it) }.fold(this) { plan, change ->
     when (change) {
-        is QueuedChange.Eaten -> plan.mapDays { meals -> meals.map { if (it.id == change.mealId) it.copy(eaten = change.eaten) else it } }
+        is QueuedChange.Eaten -> plan.mapDays { meals -> meals.map { it.markedBy(change) } }
         is QueuedChange.OwnMealAdded -> plan.copy(
             days = plan.days.map { day -> if (day.date != change.date) day else day.copy(meals = day.meals.withOwn(change.ownMeal(), change.replaces)) },
         )

@@ -425,14 +425,14 @@ class MealPlanRepository @Inject constructor(
      * Marks a meal eaten or not; its day is balanced again around it. Without a network, or behind
      * changes waiting, the mark is kept to be sent in its turn.
      */
-    suspend fun setEaten(planId: String, mealId: String, eaten: Boolean): Submitted<Rebalanced> {
-        val queued = QueuedChange.Eaten(planId, mealId, eaten)
+    suspend fun setEaten(planId: String, mealId: String, eaten: Boolean, also: QueuedChange.OtherMeal? = null): Submitted<Rebalanced> {
+        val queued = QueuedChange.Eaten(planId, mealId, eaten, also)
         return queue.submit(queued) { send(queued) }
     }
 
-    /** Sends a meal's eaten mark; the plan as the server then has it is kept and given back. */
+    /** Sends a meal's eaten mark, for both people where it carries the other's meal; the plan as the server then has it is kept and given back. */
     suspend fun send(change: QueuedChange.Eaten): Rebalanced =
-        kept(apiCall(json) { api.setMealEaten(change.planId, change.mealId, SetMealEatenRequest(change.eaten)) })
+        kept(apiCall(json) { api.setMealEaten(change.planId, change.mealId, SetMealEatenRequest(change.eaten, forAll = change.also != null)) })
 
     /**
      * Adds a meal of the user's own to the day of [date] (yyyy-MM-dd); the day is balanced around it.

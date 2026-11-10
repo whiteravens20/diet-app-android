@@ -1136,6 +1136,35 @@ data class PlannedMealDto(
     val nutrition: NutritionDto,
     /** Fibre, sugars, salt and saturated fat of the meal as it is eaten; none for a meal of one's own. */
     val label: LabelTotalsDto? = null,
+    /**
+     * A meal of a joint plan both people eat: the same dish at the same day and time of day of the
+     * other plan, each with a portion of their own. Null for a meal of this plan alone.
+     */
+    val shared: SharedMealOfDto? = null,
+)
+
+/** The other person's meal of a shared meal, as their plan holds it; [servings] as eaten. */
+@Serializable
+data class OtherPortionDto(
+    val mealId: String,
+    val planId: String,
+    val profileName: String,
+    val servings: Double,
+    val calories: Double,
+    val eaten: Boolean,
+)
+
+/**
+ * What a meal of a joint plan shares with the other plan: the other person's portion, and what the
+ * dish takes in all, [pot] (both portions, or both cookings where the dish is cooked ahead). [apart]
+ * is each portion cooked on its own; otherwise the dish is cooked in one pot and split by weight.
+ */
+@Serializable
+data class SharedMealOfDto(
+    val id: String,
+    val apart: Boolean,
+    val with: OtherPortionDto,
+    val pot: List<PlannedIngredientDto>,
 )
 
 /** The plan of the other profile a plan was made together with. */
@@ -1844,7 +1873,11 @@ data class TakeDayVariationRequest(val offer: String, val together: Boolean = fa
 
 /** PATCH `/meal-plans/:id/meals/:mealId/eaten`. */
 @Serializable
-data class SetMealEatenRequest(val eaten: Boolean)
+data class SetMealEatenRequest(
+    val eaten: Boolean,
+    /** Of a shared meal: the other person's meal is marked as well, their day balanced as this one is. */
+    val forAll: Boolean = false,
+)
 
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
 @Serializable

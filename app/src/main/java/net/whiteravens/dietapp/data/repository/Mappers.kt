@@ -57,9 +57,11 @@ import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.OpenPack
+import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.PlanWeek
+import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.Recipe
@@ -247,6 +249,14 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         recipeServings = recipe?.servings,
         recipeSource = recipe?.source?.let { RecipeSource(it.url, it.license) },
         recipeByModel = recipe?.byModel == "written" || recipe?.byModel == "changed",
+        shared = shared?.let { of ->
+            SharedMeal(
+                id = of.id,
+                apart = of.apart,
+                with = of.with.let { OtherPortion(it.mealId, it.planId, it.profileName, it.servings, it.calories, it.eaten) },
+                pot = of.pot.map(PlannedIngredientDto::toLine),
+            )
+        },
     )
 }
 

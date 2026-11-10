@@ -21,7 +21,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import net.whiteravens.dietapp.data.remote.JointPlanDto
+import net.whiteravens.dietapp.data.remote.OtherPortionDto
+import net.whiteravens.dietapp.data.remote.SharedMealOfDto
 import net.whiteravens.dietapp.domain.JointPlan
+import net.whiteravens.dietapp.domain.OtherPortion
 
 /**
  * A plan as a running backend answered it, as the phone shows it: a meal is the share of its
@@ -183,5 +186,33 @@ class MealMappingTest {
         assertEquals(listOf("snack"), joint.apart)
         assertNull(plan.toDomain().joint)
         assertTrue(plan.toDomain().apart.isEmpty())
+    }
+
+    @Test
+    fun `a shared meal says the other person's portion and what the pot takes, and every other meal shares nothing`() {
+        val first = plan.days.first()
+        val meal = first.meals.first { it.recipe != null }
+        val pot = meal.ingredients.map { it.copy(quantity = it.quantity * 2) }
+        val joint = plan.copy(
+            days = plan.days.map { day ->
+                if (day != first) day else day.copy(
+                    meals = day.meals.map {
+                        if (it.id != meal.id) it else it.copy(
+                            shared = SharedMealOfDto(
+                                id = "shared-1",
+                                apart = false,
+                                with = OtherPortionDto(mealId = "meal-9", planId = "plan-2", profileName = "Ewa", servings = 1.1, calories = 540.0, eaten = true),
+                                pot = pot,
+                            ),
+                        )
+                    },
+                )
+            },
+        ).toDomain()
+
+        val shared = joint.days.first().meals.first { it.id == meal.id }.shared!!
+        assertEquals(OtherPortion("meal-9", "plan-2", "Ewa", 1.1, 540.0, eaten = true), shared.with)
+        assertEquals(pot.map { it.display.quantity }, shared.pot.map { it.quantity })
+        assertTrue(joint.days.flatMap { it.meals }.filter { it.id != meal.id }.all { it.shared == null })
     }
 }

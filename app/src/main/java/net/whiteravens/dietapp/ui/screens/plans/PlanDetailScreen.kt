@@ -93,6 +93,7 @@ import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.TargetMoved
@@ -573,6 +574,10 @@ fun PlanDetailScreen(
                             onEaten = { eaten ->
                                 changedMeal = meal.id
                                 viewModel.setEaten(meal.id, eaten)
+                            },
+                            onEatenTogether = {
+                                changedMeal = meal.id
+                                viewModel.setEaten(meal.id, eaten = true, forAll = true)
                             },
                             onChange = { how -> viewModel.offerSwap(meal.id, how) },
                             onPickFavorite = { pickingFor = meal.id },
@@ -1070,6 +1075,7 @@ private fun MealCard(
     onSubstitute: () -> Unit,
     onRemove: () -> Unit,
     onOpen: () -> Unit,
+    onEatenTogether: () -> Unit = {},
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
     AppCard(onClick = onOpen) {
@@ -1097,6 +1103,7 @@ private fun MealCard(
                         PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
                     }
                     cookChip(meal, date)?.let { PlainChip(it) }
+                    if (meal.shared != null) PlainChip(stringResource(R.string.plans_shared_chip))
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                     if (waiting) WaitingMark()
                 }
@@ -1114,6 +1121,7 @@ private fun MealCard(
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
+                meal.shared?.let { shared -> SharedPortion(meal, shared, date, today, busy, added, onEatenTogether) }
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -1121,6 +1129,37 @@ private fun MealCard(
                 // Without a network a meal is only taken off its day.
                 MealChanges(meal, parted, date, busy, aiOn, canSwap = !readOnly && changeable && !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
             }
+        }
+    }
+}
+
+/**
+ * What a meal both people of a joint plan eat says under it: the other person's portion, eaten or not,
+ * and, from its day on, one press that marks it eaten in both plans, as the box beside the meal marks it
+ * in this plan alone.
+ */
+@Composable
+private fun SharedPortion(
+    meal: Meal,
+    shared: SharedMeal,
+    date: String,
+    today: String,
+    busy: Boolean,
+    added: Boolean,
+    onEatenTogether: () -> Unit,
+) {
+    val other = shared.with
+    val line = stringResource(R.string.plans_shared_line, other.profileName, servingsWord((other.servings * 10).roundToInt() / 10.0), formatNumber(other.calories.roundToInt()))
+    Text(
+        if (other.eaten) "$line$DOT${stringResource(R.string.plans_shared_eaten)}" else line,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 4.dp),
+    )
+    if (!meal.eaten && !other.eaten && date <= today && !added) {
+        val named = stringResource(R.string.plans_action_for, stringResource(R.string.plans_eaten_together), mealName(meal))
+        TextButton(onClick = onEatenTogether, enabled = !busy, modifier = Modifier.semantics { contentDescription = named }) {
+            Text(stringResource(R.string.plans_eaten_together))
         }
     }
 }
