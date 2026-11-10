@@ -5,12 +5,14 @@ package net.whiteravens.dietapp.data.repository
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.ModelPickDto
+import net.whiteravens.dietapp.data.remote.RecipeSourceDto
 import net.whiteravens.dietapp.data.remote.RelaxedMealDto
 import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.SingleCandidateDto
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.ModelPart
+import net.whiteravens.dietapp.domain.RecipeSource
 import net.whiteravens.dietapp.testing.fixture
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,6 +51,26 @@ class MealMappingTest {
         ).toDomain(plan.days.first().date, plan.report)
 
         assertEquals(listOf("diced", null), meal.lines.take(2).map { it.note })
+    }
+
+    @Test
+    fun `a meal says where its recipe is from and that a model had a part in it`() {
+        val planned = plan.days.first().meals.first { it.recipe != null }
+        val meal = planned.copy(
+            recipe = planned.recipe!!.copy(source = RecipeSourceDto("https://recipes.example/soup", "CC BY 4.0"), byModel = "changed"),
+        ).toDomain(plan.days.first().date, plan.report)
+
+        assertEquals(RecipeSource("https://recipes.example/soup", "CC BY 4.0"), meal.recipeSource)
+        assertTrue(meal.recipeByModel)
+    }
+
+    @Test
+    fun `a meal of a recipe written here, by nobody but people, says no source and no model's part`() {
+        val planned = plan.days.first().meals.first { it.recipe != null }
+        val meal = planned.copy(recipe = planned.recipe!!.copy(source = null, byModel = null)).toDomain(plan.days.first().date, plan.report)
+
+        assertNull(meal.recipeSource)
+        assertFalse(meal.recipeByModel)
     }
 
     @Test

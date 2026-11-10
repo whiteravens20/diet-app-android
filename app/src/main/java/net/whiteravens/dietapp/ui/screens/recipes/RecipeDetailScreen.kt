@@ -328,6 +328,17 @@ private fun RecipeBody(
         }
         recipe.source?.let { SourceLine(it) }
         marks()
+        // Sent as it is written here: the recipe's own servings, whatever meal it was opened from.
+        RecipeShareRow(
+            sharedRecipe(
+                title = recipe.title,
+                servings = recipe.servings.toDouble(),
+                lines = recipe.ingredients.map { SharedLine(it.name, amountLabel(it.quantity, it.unit, it.grams), it.note) },
+                steps = recipe.steps,
+                source = recipe.source,
+                byModel = recipe.byModel != null,
+            ),
+        )
 
         AppCard {
             Text(

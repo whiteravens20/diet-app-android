@@ -632,6 +632,13 @@
     <string name="recipe_cuisine">Kuchnia: %1$s</string>
     <string name="recipe_source">Źródło: %1$s</string>
     <string name="recipe_source_licence">Licencja: %1$s</string>
+    <string name="recipe_share_label">Udostępnij przepis:</string>
+    <string name="recipe_share_text">Tekst</string>
+    <string name="recipe_share_pdf">PDF</string>
+    <string name="recipe_share_chooser">Udostępnij przepis</string>
+    <string name="recipe_share_ingredients_for">Składniki na %1$s</string>
+    <string name="recipe_share_method">Sposób przygotowania</string>
+    <string name="recipe_share_by_model">Przepis powstał z\u00A0pomocą modelu AI. Sprawdź ilości i\u00A0kroki przed gotowaniem.</string>
     <plurals name="recipe_serving_meta">
         <item quantity="one">Wychodzi %1$d porcja · %2$s min przygotowania · %3$s min gotowania</item>
         <item quantity="few">Wychodzą %1$d porcje · %2$s min przygotowania · %3$s min gotowania</item>

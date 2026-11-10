@@ -243,6 +243,8 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         estimated = estimated,
         steps = recipe?.steps.orEmpty(),
         recipeServings = recipe?.servings,
+        recipeSource = recipe?.source?.let { RecipeSource(it.url, it.license) },
+        recipeByModel = recipe?.byModel == "written" || recipe?.byModel == "changed",
     )
 }
 

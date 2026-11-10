@@ -413,6 +413,10 @@ data class Meal(
     val recipeServings: Int? = null,
     /** Fibre, sugars, salt and saturated fat of the meal as it is eaten; none for a meal of one's own. */
     val label: LabelTotals? = null,
+    /** Where its recipe is from, where it was taken in from elsewhere: said with the recipe when it is sent to somebody. */
+    val recipeSource: RecipeSource? = null,
+    /** A model wrote its recipe or had a part in it, whoever chose it for the meal: said with the recipe when it is sent. */
+    val recipeByModel: Boolean = false,
 )
 
 /** Another meal of a meal's cooking: of which day and time of day, and whether it was eaten. */

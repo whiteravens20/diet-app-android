@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import android.content.Intent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -42,9 +43,11 @@ import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
+import net.whiteravens.dietapp.testing.printedAs
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
+import net.whiteravens.dietapp.testing.sharedBy
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
@@ -326,6 +329,61 @@ class PlansTest {
         screen.putKeyboardAway()
         screen.onNode(hasText(text(R.string.split_tare)) and split).performScrollTo()
         screen.keepScreenshot("plans-a-dish-split-by-weight")
+    }
+
+    @Test
+    fun aRecipeIsSentAsATextAndAsAPageToPrintFromAMealOfAPlanAndFromItsOwnScreen() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 2, cookAhead = true)
+        val dish = Instance.dishToSend(account, planId)
+        screen.startSignedIn(account)
+        val inTheWindow = hasAnyAncestor(isDialog())
+
+        // From the meal the dish is cooked at, it goes with what the window shows: the lines of its whole cooking, and
+        // no figure of it.
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+        screen.scrollToText(text(R.string.plans_cook_days))
+        screen.onAllNodesWithText(dish.title)[0].performScrollTo().performClick()
+        val asText = screen.onNode(hasText(text(R.string.recipe_share_text)) and inTheWindow)
+        asText.performScrollTo()
+        screen.keepScreenshot("plans-a-meal-to-send")
+        val fromTheMeal = sharedBy { asText.performClick() }
+        assertEquals(dish.title, fromTheMeal.getStringExtra(Intent.EXTRA_SUBJECT))
+        val mealText = fromTheMeal.getStringExtra(Intent.EXTRA_TEXT).orEmpty().lines()
+        assertEquals(dish.title, mealText[0])
+        assertTrue(mealText[2], mealText[2].startsWith(text(R.string.recipe_share_ingredients_for, "")))
+        assertTrue(mealText[3], mealText[3].startsWith("- ${dish.cookingLine}: "))
+        assertTrue(mealText.contains("${text(R.string.recipe_share_method)}:"))
+        assertTrue(mealText.contains("1. ${dish.firstStep}"))
+        assertFalse(mealText.any { "kcal" in it })
+
+        // As a page to print, under the dish's title: the printing's window is pictured and closed.
+        screen.printedAs(dish.title, "plans-a-meal-to-print") {
+            screen.onNode(hasText(text(R.string.recipe_share_pdf)) and inTheWindow).performScrollTo().performClick()
+        }
+
+        // The recipe's own screen sends it as it is written there: its own servings and lines. The window's buttons
+        // stand under its scrolling part.
+        screen.onNode(hasText(text(R.string.plans_open_recipe)) and inTheWindow).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }
+        screen.waitForText(text(R.string.recipes_nutrition_per_serving))
+        screen.scrollToText(text(R.string.recipe_share_text))
+        screen.onNodeWithText(text(R.string.recipe_share_text)).performScrollTo()
+        screen.keepScreenshot("recipes-a-recipe-to-send")
+        val fromTheRecipe = sharedBy { screen.onNodeWithText(text(R.string.recipe_share_text)).performClick() }
+        val recipeText = fromTheRecipe.getStringExtra(Intent.EXTRA_TEXT).orEmpty().lines()
+        assertEquals(dish.title, recipeText[0])
+        // A text for a message has plain spaces where the app holds words together with no-break ones.
+        assertEquals(
+            "${text(R.string.recipe_share_ingredients_for, plural(R.plurals.plans_portion_recipe, dish.servings, dish.servings.toString()))}:"
+                .replace('\u00A0', ' '),
+            recipeText[2],
+        )
+        assertTrue(recipeText[3], recipeText[3].startsWith("- ${dish.recipeLine}: "))
     }
 
     @Test

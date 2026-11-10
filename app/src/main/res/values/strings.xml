@@ -581,6 +581,13 @@
     <string name="recipe_cuisine">%1$s cuisine</string>
     <string name="recipe_source">From %1$s</string>
     <string name="recipe_source_licence">Licence: %1$s</string>
+    <string name="recipe_share_label">Share the recipe:</string>
+    <string name="recipe_share_text">Text</string>
+    <string name="recipe_share_pdf">PDF</string>
+    <string name="recipe_share_chooser">Share the recipe</string>
+    <string name="recipe_share_ingredients_for">Ingredients for %1$s</string>
+    <string name="recipe_share_method">Method</string>
+    <string name="recipe_share_by_model">This recipe was made with the help of an AI model. Check the amounts and steps before cooking.</string>
     <plurals name="recipe_serving_meta">
         <item quantity="one">Makes %1$d serving · %2$s min prep · %3$s min cook</item>
         <item quantity="other">Makes %1$d servings · %2$s min prep · %3$s min cook</item>

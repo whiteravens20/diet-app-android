@@ -78,6 +78,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.ui.screens.recipes.RecipeShareRow
+import net.whiteravens.dietapp.ui.screens.recipes.SharedLine
+import net.whiteravens.dietapp.ui.screens.recipes.sharedRecipe
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -1545,6 +1548,19 @@ private fun MealDialog(
                 }
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))
+                // A meal of a recipe is sent as the window shows it: this meal's amounts, or those of the whole cooking.
+                if (meal.recipeId != null && toCook.lines.isNotEmpty()) {
+                    RecipeShareRow(
+                        sharedRecipe(
+                            title = meal.name,
+                            servings = toCook.servings,
+                            lines = toCook.lines.map { SharedLine(it.name, amountLabel(it.quantity, it.unit, it.grams), it.note) },
+                            steps = meal.steps,
+                            source = meal.recipeSource,
+                            byModel = meal.recipeByModel,
+                        ),
+                    )
+                }
                 if (toCook.lines.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(stringResource(R.string.recipes_ingredients), style = MaterialTheme.typography.titleMedium)

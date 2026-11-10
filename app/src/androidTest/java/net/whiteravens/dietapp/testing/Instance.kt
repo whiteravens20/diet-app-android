@@ -238,6 +238,23 @@ object Instance {
         return (0 until meals.length()).map(meals::getJSONObject).first { it.optString("cookAhead") == "cook" }.getJSONObject("recipe").getString("title")
     }
 
+    /**
+     * The meal cooked ahead on a plan's first day, as a journey reads what is sent of it: its recipe's title, servings
+     * and first step, the first line of its whole cooking and the first of its recipe as written.
+     */
+    fun dishToSend(account: Account, planId: String): DishToSend {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
+        val meal = (0 until meals.length()).map(meals::getJSONObject).first { it.optString("cookAhead") == "cook" }
+        val recipe = meal.getJSONObject("recipe")
+        return DishToSend(
+            title = recipe.getString("title"),
+            servings = recipe.getInt("servings"),
+            firstStep = recipe.getJSONArray("steps").getString(0),
+            cookingLine = meal.getJSONObject("cooking").getJSONArray("ingredients").getJSONObject(0).getString("name"),
+            recipeLine = recipe.getJSONArray("ingredients").getJSONObject(0).getString("name"),
+        )
+    }
+
     /** The recipes of a day of a plan, by its place among the days. */
     fun dayRecipes(account: Account, planId: String, day: Int): List<String?> {
         val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(day).getJSONArray("meals")
@@ -561,3 +578,6 @@ object Instance {
     /** How many times a request the instance holds up is asked. */
     private const val HELD_UP_TRIES = 4
 }
+
+/** What a journey reads of a dish cooked ahead to check what is sent of it: see [Instance.dishToSend]. */
+data class DishToSend(val title: String, val servings: Int, val firstStep: String, val cookingLine: String, val recipeLine: String)
