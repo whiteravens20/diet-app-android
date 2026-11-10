@@ -796,6 +796,20 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a shared meal is taken off both days where the change carries the other's meal, and off one alone where it does not`() {
+        repeat(2) { server.enqueue(answer("meal-plan-swap-apply")) }
+        val plans = repository(Cache())
+
+        runBlocking {
+            plans.removeMeal("plan-1", "meal-2", also = QueuedChange.OtherMeal("plan-2", "meal-9"))
+            plans.removeMeal("plan-1", "meal-3")
+        }
+
+        assertEquals("/api/meal-plans/plan-1/meals/meal-2?forAll=true", server.takeRequest().path)
+        assertEquals("/api/meal-plans/plan-1/meals/meal-3", server.takeRequest().path)
+    }
+
+    @Test
     fun `how a shared meal is cooked is said to the server, and the plan it answers with is kept on the phone`() {
         server.enqueue(answer("meal-plan"))
         val cache = Cache()

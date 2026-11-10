@@ -123,10 +123,10 @@ sealed interface QueuedChange {
         override val key: String,
     ) : Addition
 
-    /** A meal taken off its day. */
+    /** A meal taken off its day; [also], of a shared meal, the other person's meal taken off with it. */
     @Serializable
     @SerialName("meal-removed")
-    data class MealRemoved(val planId: String, val mealId: String) : DoneWhenGone
+    data class MealRemoved(val planId: String, val mealId: String, val also: OtherMeal? = null) : DoneWhenGone
 
     /** The other person's meal of a shared meal, which a change of this one is made to as well. */
     @Serializable

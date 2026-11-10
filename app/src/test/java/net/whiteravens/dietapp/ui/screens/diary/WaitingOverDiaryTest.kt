@@ -142,4 +142,13 @@ class WaitingOverDiaryTest {
         assertEquals(listOf(true, false), marked.map { it.eaten })
         assertEquals(theirs, alone)
     }
+
+    @Test
+    fun `a removal made for both people of a joint plan shows in the other person's diary too, one made for one alone does not`() {
+        val removed = theirs.mealsWithWaiting("plan-2", date, listOf(QueuedChange.MealRemoved("plan-1", "meal-1", also = QueuedChange.OtherMeal("plan-2", "meal-8"))))
+        val alone = theirs.mealsWithWaiting("plan-2", date, listOf(QueuedChange.MealRemoved("plan-1", "meal-8")))
+
+        assertEquals(listOf("meal-9"), removed.map { it.id })
+        assertEquals(theirs, alone)
+    }
 }

@@ -219,6 +219,9 @@ fun PlanDetailScreen(
     // The meal whose removal from its day is to be confirmed, with what it does said in the window.
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == removing }?.let { meal ->
+        // The other person's meal goes with it only where they have not eaten it.
+        val forBoth = meal.shared?.with?.eaten == false
+        val cancel: @Composable () -> Unit = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.common_cancel)) } }
         AlertDialog(
             onDismissRequest = { removing = null },
             title = { Text(stringResource(R.string.plans_remove_title, mealName(meal))) },
@@ -227,19 +230,32 @@ fun PlanDetailScreen(
                     Text(stringResource(if (meal.eaten) R.string.plans_remove_note_eaten else R.string.plans_remove_note))
                     plan.days.firstOrNull { day -> day.meals.any { it.id == meal.id } }?.let { day ->
                         apartNote(meal, day.date, LocalDate.now().toString())?.let { Text(it) }
+                        meal.shared?.takeIf { forBoth }?.let { Text(stringResource(R.string.plans_remove_shared, it.with.profileName)) }
                         ListNote(day.listed)
                     }
                 }
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        removing = null
-                        viewModel.removeMeal(meal.id)
-                    },
-                ) { Text(stringResource(R.string.plans_remove_confirm), color = MaterialTheme.colorScheme.error) }
+                // Of a meal both people still have, the two ways to take it off and the way back stand one under another.
+                Column(horizontalAlignment = Alignment.End) {
+                    if (forBoth) {
+                        TextButton(
+                            onClick = {
+                                removing = null
+                                viewModel.removeMeal(meal.id, forAll = true)
+                            },
+                        ) { Text(stringResource(R.string.plans_remove_for_all), color = MaterialTheme.colorScheme.error) }
+                    }
+                    TextButton(
+                        onClick = {
+                            removing = null
+                            viewModel.removeMeal(meal.id)
+                        },
+                    ) { Text(stringResource(if (forBoth) R.string.plans_remove_for_me else R.string.plans_remove_confirm), color = MaterialTheme.colorScheme.error) }
+                    if (forBoth) cancel()
+                }
             },
-            dismissButton = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.common_cancel)) } },
+            dismissButton = cancel.takeUnless { forBoth },
         )
     }
 

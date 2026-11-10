@@ -1004,4 +1004,15 @@ class PlanDetailViewModelTest {
         assertTrue(there.eaten && there.shared!!.with.eaten)
         assertFalse(alone.eaten)
     }
+
+    @Test
+    fun `a removal for both people that waits takes both meals off, in either plan`() {
+        val (joint, theirs) = jointPlans()
+        val mine = joint.days.first().meals.first()
+        val both = QueuedChange.MealRemoved(joint.id, mine.id, also = QueuedChange.OtherMeal("plan-2", "meal-9"))
+
+        assertTrue(joint.withWaiting(listOf(both)).days.first().meals.none { it.id == mine.id })
+        assertTrue(theirs.withWaiting(listOf(both)).days.first().meals.none { it.id == "meal-9" })
+        assertTrue(theirs.withWaiting(listOf(both.copy(also = null))).days.first().meals.any { it.id == "meal-9" })
+    }
 }

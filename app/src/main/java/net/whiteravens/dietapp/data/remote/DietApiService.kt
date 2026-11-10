@@ -423,9 +423,13 @@ interface DietApiService {
     @POST("meal-plans/{id}/retarget")
     suspend fun retarget(@Path("id") id: String, @Body body: RetargetRequestDto): MealPlanDto
 
-    /** Takes a meal off its day; the day is balanced again without it. */
+    /** Takes a meal off its day; the day is balanced again without it. [forAll], of a shared meal, off the other person's day too. */
     @DELETE("meal-plans/{id}/meals/{mealId}")
-    suspend fun removeMeal(@Path("id") id: String, @Path("mealId") mealId: String): RebalanceResultDto
+    suspend fun removeMeal(
+        @Path("id") id: String,
+        @Path("mealId") mealId: String,
+        @Query("forAll") forAll: Boolean? = null,
+    ): RebalanceResultDto
 
     /** Says how a shared meal is cooked, in both plans: each portion apart, or in one pot. */
     @PATCH("meal-plans/{id}/shared-meals/{sharedMealId}")

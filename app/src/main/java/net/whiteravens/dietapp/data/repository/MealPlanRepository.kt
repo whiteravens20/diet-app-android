@@ -483,13 +483,14 @@ class MealPlanRepository @Inject constructor(
      * Takes a meal off its day, whichever it is; the day is balanced again without it. Without a
      * network, or behind changes waiting, it is kept to be sent in its turn.
      */
-    suspend fun removeMeal(planId: String, mealId: String): Submitted<Rebalanced> {
-        val queued = QueuedChange.MealRemoved(planId, mealId)
+    suspend fun removeMeal(planId: String, mealId: String, also: QueuedChange.OtherMeal? = null): Submitted<Rebalanced> {
+        val queued = QueuedChange.MealRemoved(planId, mealId, also)
         return queue.submit(queued) { send(queued) }
     }
 
-    /** Sends a meal's taking off its day; the plan as the server then has it is kept and given back. */
-    suspend fun send(change: QueuedChange.MealRemoved): Rebalanced = kept(apiCall(json) { api.removeMeal(change.planId, change.mealId) })
+    /** Sends a meal's taking off its day, off both days where it carries the other's meal; the plan as the server then has it is kept and given back. */
+    suspend fun send(change: QueuedChange.MealRemoved): Rebalanced =
+        kept(apiCall(json) { api.removeMeal(change.planId, change.mealId, forAll = true.takeIf { change.also != null }) })
 
     /**
      * Says how a shared meal is cooked, in both plans: each portion [apart], or in one pot. It needs

@@ -425,9 +425,10 @@ class PlanDetailViewModel @Inject constructor(
      * Takes a meal off its day. One of one's own that waits to be added is taken out of the queue
      * instead, unless it was sent meanwhile: then the plan is read again as the server answered it.
      */
-    fun removeMeal(mealId: String) {
+    fun removeMeal(mealId: String, forAll: Boolean = false) {
         val waiting = _state.value.waitingAdditions[mealId]
-        if (waiting == null) return queued { plans.removeMeal(planId, mealId) }
+        val also = shared(mealId)?.takeIf { forAll && !it.with.eaten }?.let { QueuedChange.OtherMeal(it.with.planId, it.with.mealId) }
+        if (waiting == null) return queued { plans.removeMeal(planId, mealId, also) }
         withdrawn += waiting
         viewModelScope.launch {
             if (!queue.withdraw(waiting)) {
@@ -768,7 +769,7 @@ class PlanDetailViewModel @Inject constructor(
 private fun plansOf(change: QueuedChange): List<String> = when (change) {
     is QueuedChange.Eaten -> listOfNotNull(change.planId, change.also?.planId)
     is QueuedChange.OwnMealAdded -> listOf(change.planId)
-    is QueuedChange.MealRemoved -> listOf(change.planId)
+    is QueuedChange.MealRemoved -> listOfNotNull(change.planId, change.also?.planId)
     else -> emptyList()
 }
 
@@ -793,7 +794,7 @@ internal fun MealPlan.withWaiting(waiting: List<QueuedChange>): MealPlan = waiti
         is QueuedChange.OwnMealAdded -> plan.copy(
             days = plan.days.map { day -> if (day.date != change.date) day else day.copy(meals = day.meals.withOwn(change.ownMeal(), change.replaces)) },
         )
-        is QueuedChange.MealRemoved -> plan.mapDays { meals -> meals.filterNot { it.id == change.mealId } }
+        is QueuedChange.MealRemoved -> plan.mapDays { meals -> meals.filterNot { it.id == change.mealId || it.id == change.also?.mealId } }
         else -> plan
     }
 }

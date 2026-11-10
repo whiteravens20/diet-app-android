@@ -1896,6 +1896,9 @@
     <string name="plans_shared_eaten">zjedzone</string>
     <string name="plans_cook_apart">Gotuj osobno</string>
     <string name="plans_eaten_together">Zjedzone u\u00A0obu osób</string>
+    <string name="plans_remove_shared">%1$s ma to danie w\u00A0swoim planie.</string>
+    <string name="plans_remove_for_all">Usuń u\u00A0obu osób</string>
+    <string name="plans_remove_for_me">Usuń tylko u\u00A0mnie</string>
     <string name="plans_offer_for_all">Dla obu osób: Ty i\u00A0%1$s</string>
     <string name="plans_offer_for_me">Tylko dla mnie: posiłek przestanie być wspólny tego dnia</string>
     <string name="plans_joint_with">Wspólny plan z: %1$s</string>
