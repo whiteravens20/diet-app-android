@@ -5,8 +5,10 @@ package net.whiteravens.dietapp.data.config
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -40,7 +42,9 @@ class WaterNoteStoreTest {
 
         first.close()
         assertTrue(first.closed.first())
-        scopes.single().cancel()
+        // The first store has ended, as the app's has after a restart, before the second opens its file: DataStore
+        // lets one store at a time have a file, and frees it only once the scope that held it has finished.
+        scopes.single().coroutineContext[Job]!!.cancelAndJoin()
         assertTrue(store().closed.first())
     }
 }
