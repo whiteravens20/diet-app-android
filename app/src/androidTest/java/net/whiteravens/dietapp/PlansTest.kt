@@ -332,6 +332,114 @@ class PlansTest {
     }
 
     @Test
+    fun aPlanMadeTogetherSharesItsMealsMarksOneEatenForBothAndSplitsItsPotIntoBothPortions() {
+        val account = Instance.newAccount()
+        val adam = Instance.newProfile(account, name = "Adam")
+        val ewa = Instance.newProfile(account, name = "Ewa")
+        screen.signIn(account)
+        val back = hasContentDescription(text(R.string.common_back))
+        val inAWindow = hasAnyAncestor(isDialog())
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        screen.waitForEnabled(text(R.string.plans_generate))
+        screen.onNode(hasText(text(R.string.plans_generate)) and hasClickAction()).performClick()
+
+        // The form: two days made together with the other profile of the account.
+        screen.waitForText(text(R.string.plans_start_date))
+        screen.onNodeWithText(text(R.string.plans_duration_days)).performTextReplacement("2")
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.plans_joint_plan_with)).performScrollTo().performClick()
+        screen.onNode(hasText("Ewa") and hasClickAction()).performClick()
+        screen.onNodeWithText(text(R.string.plans_joint_plan_hint)).performScrollTo()
+        screen.keepScreenshot("plans-a-plan-made-together")
+        screen.onNode(hasText(text(R.string.plans_generate_button)) and hasClickAction()).performScrollTo().performClick()
+
+        // Each person gets a plan of their own; the one opened says with whom it is made.
+        screen.waitForTheApi(60_000) { Instance.planIds(account, adam).isNotEmpty() && Instance.planIds(account, ewa).isNotEmpty() }
+        val planId = Instance.planIds(account, adam).first()
+        screen.waitForText(text(R.string.plans_joint_with, "Ewa"))
+
+        // A meal both eat says so, with the other's portion.
+        val shared = Instance.sharedMeal(account, planId)
+        val together = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_eaten_together), shared.title))
+        val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), shared.title))
+        screen.scrollTo(together)
+        screen.waitForText("Ewa: ", substring = true)
+        screen.keepScreenshot("plans-a-shared-meal")
+
+        // Another dish for it is asked for both, and the offer says it can be for this plan alone.
+        screen.onAllNodes(change)[0].performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.plans_swap)).performClick()
+        screen.waitForText(text(R.string.plans_offer_for_all, "Ewa"))
+        screen.keepScreenshot("plans-a-shared-swap")
+        screen.onNode(hasText(text(R.string.common_cancel)) and inAWindow).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_offer_title)).fetchSemanticsNodes().isEmpty() }
+
+        // Taking it off its day asks whether off both days or off this one alone.
+        screen.onAllNodes(change)[0].performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.plans_remove)).performClick()
+        screen.waitForText(text(R.string.plans_remove_for_all))
+        screen.keepScreenshot("plans-a-shared-removal")
+        screen.onNode(hasText(text(R.string.common_cancel)) and inAWindow).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_remove_for_all)).fetchSemanticsNodes().isEmpty() }
+
+        // One press marks it eaten in both plans.
+        screen.onAllNodes(together)[0].performScrollTo().performClick()
+        screen.waitForTheApi(20_000) {
+            Instance.mealEaten(account, planId, shared.mealId) && Instance.mealEaten(account, shared.theirPlanId, shared.theirMealId)
+        }
+        putAwayRebalance()
+
+        // Its window gives what the whole pot takes, for both portions, and the pot is split into the portions of both, each by name.
+        screen.onAllNodesWithText(shared.title)[0].performScrollTo().performClick()
+        val pot = text(R.string.plans_portion_pot, "\u0000", "\u0000", "\u0000", "\u0000", "\u0000").split("\u0000")[1].trim(' ', '.', ',', '\u00A0')
+        screen.waitForText(pot, substring = true)
+        screen.onNode(hasText(pot, substring = true) and inAWindow).performScrollTo()
+        screen.keepScreenshot("plans-a-pot")
+        screen.onNode(hasText(text(R.string.split_open)) and inAWindow).performScrollTo().performClick()
+        screen.waitForText(text(R.string.split_plan_intro))
+        // Looked for in the split's window alone: the meal's card under it names the other person too.
+        val splitWindow = isDialog() and hasAnyDescendant(hasText(text(R.string.split_plan_intro)))
+        screen.waitUntil(10_000) {
+            listOf("Adam: ", "Ewa: ").all { name -> screen.onAllNodes(hasText(name, substring = true) and hasAnyAncestor(splitWindow)).fetchSemanticsNodes().isNotEmpty() }
+        }
+        screen.keepScreenshot("plans-a-pot-split")
+        screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(splitWindow)).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.split_plan_intro)).fetchSemanticsNodes().isEmpty() }
+
+        // Its recipe is saved for either person from one row, the two buttons together.
+        screen.onNode(hasText(text(R.string.plans_open_recipe)) and inAWindow).performClick()
+        screen.scrollToText(text(R.string.recipe_save_to_favorites))
+        screen.keepScreenshot("recipes-saved-for-two")
+        screen.scrollTo(back)
+        screen.onNode(back).performClick()
+
+        // The plan is made again for both, or for this plan alone, as its window asks.
+        screen.scrollToText(text(R.string.plans_recalculate))
+        screen.onNodeWithText(text(R.string.plans_recalculate)).performClick()
+        screen.waitForText(text(R.string.plans_reroll_title))
+        // Both choices in view, the window scrolled to the last of them.
+        screen.onNode(hasText(text(R.string.plans_reroll_for_me_hint)) and hasAnyAncestor(isDialog())).performScrollTo()
+        screen.keepScreenshot("plans-make-again-for-whom")
+        screen.onNode(hasText(text(R.string.common_cancel)) and inAWindow).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_reroll_title)).fetchSemanticsNodes().isEmpty() }
+
+        // The list says of the plan with whom it is made.
+        screen.scrollTo(back)
+        screen.onNode(back).performClick()
+        screen.scrollToText(text(R.string.plans_joint_with, "Ewa"))
+        screen.keepScreenshot("plans-a-list-together")
+
+        // The diary says of a portion from the pot that a split comes only near it.
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.diary_title)).performClick()
+        screen.waitForText(text(R.string.diary_subhead))
+        val fromPot = text(R.string.diary_meal_kcal_from_pot, "\u0000").split("\u0000")[1].trim()
+        screen.scrollToText(fromPot, substring = true)
+        screen.keepScreenshot("diary-a-pot-portion")
+    }
+
+    @Test
     fun aRecipeIsSentAsATextAndAsAPageToPrintFromAMealOfAPlanAndFromItsOwnScreen() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)

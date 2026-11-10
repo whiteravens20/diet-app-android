@@ -286,6 +286,23 @@ object Instance {
             .first { it.getString("id") == mealId }.getJSONObject("recipe").getString("title")
     }
 
+    /** A meal both people of a joint plan eat, the first of the plan's first day: its id, its title, and the other person's meal and plan. */
+    data class SharedMealOf(val mealId: String, val title: String, val theirMealId: String, val theirPlanId: String)
+
+    fun sharedMeal(account: Account, planId: String): SharedMealOf {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
+        val meal = (0 until meals.length()).map { meals.getJSONObject(it) }.first { !it.isNull("shared") }
+        val with = meal.getJSONObject("shared").getJSONObject("with")
+        return SharedMealOf(meal.getString("id"), meal.getJSONObject("recipe").getString("title"), with.getString("mealId"), with.getString("planId"))
+    }
+
+    /** Whether a meal of a plan is marked eaten, as the plan answers now. */
+    fun mealEaten(account: Account, planId: String, mealId: String): Boolean {
+        val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")
+        return !(0 until days.length()).flatMap { d -> days.getJSONObject(d).getJSONArray("meals").let { meals -> (0 until meals.length()).map(meals::getJSONObject) } }
+            .first { it.getString("id") == mealId }.isNull("eatenAt")
+    }
+
     /** Deletes a plan, as its menu does. */
     fun deletePlan(account: Account, planId: String) {
         send("DELETE", "meal-plans/$planId", null, account.accessToken, 204, null)
