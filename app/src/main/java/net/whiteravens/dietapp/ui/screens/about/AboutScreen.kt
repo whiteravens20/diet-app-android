@@ -129,8 +129,8 @@ fun AboutScreen(
                 val links = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     // The attribution, the address of the original source whole on a line of its own,
-                    // and the copyright line, as NOTICE has them; White Ravens leads to its home page.
-                    Said(withHomeLinks(stringResource(R.string.about_notice, ATTRIBUTION), links) { web.openOutside(HOME_URL) })
+                    // and the copyright line, as NOTICE has them; White Ravens in the copyright line leads to its home page.
+                    Said(stringResource(R.string.about_notice, ATTRIBUTION))
                     Address(ATTRIBUTION_URL) { web.openOutside(ATTRIBUTION_URL) }
                     Said(withHomeLinks(COPYRIGHT, links) { web.openOutside(HOME_URL) })
                     Said(stringResource(R.string.about_licence), Modifier.padding(top = 8.dp))

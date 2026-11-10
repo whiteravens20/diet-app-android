@@ -19,7 +19,7 @@ const val ATTRIBUTION_URL = "https://github.com/whiteravens20/diet-app-android"
 /** The copyright line of NOTICE, as the legal notices show it. */
 const val COPYRIGHT = "Copyright (C) 2026 White Ravens"
 
-/** White Ravens, as the legal notices name it, and its home page, which the name leads to there. */
+/** White Ravens, as the legal notices name it, and its home page, which the name in the copyright line leads to. */
 const val HOME_NAME = "White Ravens"
 const val HOME_URL = "https://whiteravens.net"
 
