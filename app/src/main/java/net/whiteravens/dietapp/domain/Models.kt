@@ -436,6 +436,8 @@ data class MealLine(
     val unit: String,
     /** What the amount weighs, where it is shown in pieces of some kind. */
     val grams: Double? = null,
+    /** What the recipe says of the line: "diced", "to taste". */
+    val note: String? = null,
 )
 
 data class PlanDay(

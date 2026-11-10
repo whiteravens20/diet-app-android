@@ -42,6 +42,16 @@ class MealMappingTest {
     }
 
     @Test
+    fun `a meal's line says what the recipe says of it`() {
+        val planned = plan.days.first().meals.first { it.recipe != null && it.ingredients.size > 1 }
+        val meal = planned.copy(
+            ingredients = planned.ingredients.mapIndexed { index, line -> if (index == 0) line.copy(note = "diced") else line },
+        ).toDomain(plan.days.first().date, plan.report)
+
+        assertEquals(listOf("diced", null), meal.lines.take(2).map { it.note })
+    }
+
+    @Test
     fun `a meal names the ingredients the profile would rather not eat, and what it has ruled out since`() {
         val planned = plan.days.first().meals.first { it.recipe != null }
         val meal = planned.copy(

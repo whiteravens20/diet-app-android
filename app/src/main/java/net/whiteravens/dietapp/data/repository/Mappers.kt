@@ -256,7 +256,7 @@ fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
 
 /** A planned amount as a meal shows it: rounded, in the unit its kind of food is counted in. */
 fun PlannedIngredientDto.toLine() =
-    MealLine(ingredientId = ingredientId, name = name, quantity = display.quantity, unit = display.unit, grams = display.grams)
+    MealLine(ingredientId = ingredientId, name = name, quantity = display.quantity, unit = display.unit, grams = display.grams, note = note)
 
 fun SwapPreviewDto.toDomain() = SubstitutionPreview(
     before = before.toDomain(),

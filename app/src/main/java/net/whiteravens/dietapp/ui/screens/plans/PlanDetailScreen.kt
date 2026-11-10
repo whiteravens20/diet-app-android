@@ -1551,7 +1551,12 @@ private fun MealDialog(
                         meal.recipeServings?.let { servings -> Hint(portionNote(servings, toCook.servings, toCook.whole)) }
                         toCook.lines.forEach { line ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(line.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                                Column(Modifier.weight(1f)) {
+                                    Text(line.name, style = MaterialTheme.typography.bodyMedium)
+                                    line.note?.let {
+                                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
                                 Text(
                                     amountLabel(line.quantity, line.unit, line.grams),
                                     style = MaterialTheme.typography.bodyMedium,
