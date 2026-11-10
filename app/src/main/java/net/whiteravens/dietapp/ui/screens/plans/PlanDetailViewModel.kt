@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -68,6 +69,7 @@ class PlanDetailViewModel @Inject constructor(
     private val users: UserRepository,
     private val server: ServerRepository,
     private val queue: ChangeQueue,
+    private val profiles: ProfileRepository,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -121,6 +123,8 @@ class PlanDetailViewModel @Inject constructor(
         val liked: List<MarkedRecipe> = emptyList(),
         /** Whether the account has a model to ask; null until that is known. */
         val aiOn: Boolean? = null,
+        /** The name of the plan's profile, of a joint plan: what its portion of a pot is called beside the other's; null until known. */
+        val profileName: String? = null,
         /** An eaten mark, a meal of one's own, a rebalance or the plan's deletion is on its way. */
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
@@ -262,6 +266,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { fresh ->
                     _state.update { it.copy(loading = false, plan = fresh, selectedDay = if (it.plan == null) dayOf(fresh) else it.selectedDay, readAt = System.currentTimeMillis()) }
                     readSwapChoices(fresh.profileId)
+                    if (fresh.joint != null) readProfileName(fresh.profileId)
                 }
                 .onFailure { e ->
                     // A plan the API says is not there was deleted elsewhere: its copy is gone too, and so is the screen's.
@@ -294,6 +299,15 @@ class PlanDetailViewModel @Inject constructor(
             val liked = attempt { favorites.marked(profileId) }.getOrDefault(emptyList()).filter { it.sentiment != "avoid" }
             val aiOn = attempt { users.me() }.getOrNull()?.let { it.aiMode != AiModes.NONE }
             _state.update { it.copy(liked = liked, aiOn = aiOn) }
+        }
+    }
+
+    /** The name of the plan's profile, for the portions of a pot; what fails to come leaves the portion named as the user's. */
+    private fun readProfileName(profileId: String) {
+        if (_state.value.profileName != null) return
+        viewModelScope.launch {
+            val name = attempt { profiles.profile(profileId) }.getOrNull()?.figures?.name
+            _state.update { it.copy(profileName = name) }
         }
     }
 
@@ -346,6 +360,17 @@ class PlanDetailViewModel @Inject constructor(
         if (mealId in _state.value.waitingAdditions) return
         val also = shared(mealId)?.takeIf { forAll }?.let { QueuedChange.OtherMeal(it.with.planId, it.with.mealId) }
         queued { plans.setEaten(planId, mealId, eaten, also) }
+    }
+
+    /** Says how a shared meal is cooked, in both plans: each portion apart, or in one pot. It needs the network. */
+    fun setApart(sharedMealId: String, apart: Boolean) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.setApart(planId, sharedMealId, apart) }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
+                .onFailure { e -> _state.update { it.copy(changing = false, error = e) } }
+        }
     }
 
     /** What [mealId] shares with the other plan of a joint plan, as the plan on screen has it; null for a meal of this plan alone. */

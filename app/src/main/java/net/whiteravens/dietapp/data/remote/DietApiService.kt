@@ -427,6 +427,14 @@ interface DietApiService {
     @DELETE("meal-plans/{id}/meals/{mealId}")
     suspend fun removeMeal(@Path("id") id: String, @Path("mealId") mealId: String): RebalanceResultDto
 
+    /** Says how a shared meal is cooked, in both plans: each portion apart, or in one pot. */
+    @PATCH("meal-plans/{id}/shared-meals/{sharedMealId}")
+    suspend fun setSharedMeal(
+        @Path("id") id: String,
+        @Path("sharedMealId") sharedMealId: String,
+        @Body body: SetSharedMealRequest,
+    ): MealPlanDto
+
     /** Takes one of the ways a day was offered. */
     @POST("meal-plans/{id}/days/{dayId}/variations/take")
     suspend fun takeDayVariation(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: TakeDayVariationRequest): MealPlanDto

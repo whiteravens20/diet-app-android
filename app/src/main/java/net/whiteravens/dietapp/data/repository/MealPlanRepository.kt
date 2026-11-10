@@ -30,6 +30,7 @@ import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
+import net.whiteravens.dietapp.data.remote.SetSharedMealRequest
 import net.whiteravens.dietapp.data.remote.SwapIngredientRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.TakeDayVariationRequest
@@ -485,6 +486,16 @@ class MealPlanRepository @Inject constructor(
 
     /** Sends a meal's taking off its day; the plan as the server then has it is kept and given back. */
     suspend fun send(change: QueuedChange.MealRemoved): Rebalanced = kept(apiCall(json) { api.removeMeal(change.planId, change.mealId) })
+
+    /**
+     * Says how a shared meal is cooked, in both plans: each portion [apart], or in one pot. It needs
+     * the network; the plan as the server then has it is kept and given back.
+     */
+    suspend fun setApart(planId: String, sharedMealId: String, apart: Boolean): MealPlan {
+        val plan = apiCall(json) { api.setSharedMeal(planId, sharedMealId, SetSharedMealRequest(apart)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
 
     /**
      * Spreads what the days from [from] (yyyy-MM-dd; today where it is left out) are off their targets

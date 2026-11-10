@@ -156,7 +156,7 @@ class PlanDetailViewModelTest {
         asking: ModelApiService = mockk(),
         cache: CacheDao = NoCache,
         queue: ChangeQueue = changeQueue(),
-    ) = PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, cache, json, queue), favorites, users, server, queue)
+    ) = PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, cache, json, queue), favorites, users, server, queue, mockk(relaxed = true))
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
@@ -334,7 +334,7 @@ class PlanDetailViewModelTest {
         }
         val queue = changeQueue()
         val plans = MealPlanRepository(api, mockk(), kept, json, queue)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue)
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true))
 
         model.setEaten(meal.id, true)
 
@@ -924,7 +924,7 @@ class PlanDetailViewModelTest {
         coEvery { plans.resizeDay(plan.id, "2026-10-31") } returns Rebalanced(plan, moved, null)
         val users = mockk<UserRepository>(relaxed = true)
         val favorites = mockk<FavoriteRepository>(relaxed = true)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue())
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue(), mockk(relaxed = true))
 
         model.resizeDay("2026-10-31")
 
@@ -948,7 +948,7 @@ class PlanDetailViewModelTest {
         coEvery { plans.cachedPlan(any()) } returns null
         val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
         coEvery { plans.refreshPlan(any()) } returns plan
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue())
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue(), mockk(relaxed = true))
         val meal = plan.days.flatMap { it.meals }.first { it.recipeId != null }
 
         model.substituted(Rebalanced(plan, null, null), meal.id)

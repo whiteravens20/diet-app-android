@@ -1715,6 +1715,7 @@
     <string name="split_kcal_of">Calories of portion %1$d (kcal)</string>
     <string name="split_portion">Portion %1$d</string>
     <string name="split_portion_of">%1$s, %2$s</string>
+    <string name="split_portion_of_who">%1$s: %2$s</string>
     <string name="split_way_legend">What are you weighing?</string>
     <string name="split_way_whole">The whole dish</string>
     <string name="split_way_part">One part</string>
@@ -1763,9 +1764,12 @@
     <string name="favorite_sets_apply_no_days">Every day of this plan is over.</string>
     <string name="plans_portion_meal">The original gives amounts for %1$s, your meal is %2$s. Below are the amounts for your meal.</string>
     <string name="plans_portion_whole">The original gives amounts for %1$s, this cooking comes to %2$s. Below are the amounts for all of it.</string>
+    <string name="plans_portion_pot">The original gives amounts for %1$s. Below are the amounts for the whole pot, %2$s: you %3$s, %4$s %5$s.</string>
+    <string name="plans_portion_you">You</string>
     <string name="plans_shared_chip">Shared</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
     <string name="plans_shared_eaten">eaten</string>
+    <string name="plans_cook_apart">Cook apart</string>
     <string name="plans_eaten_together">Eaten by both</string>
     <string name="plans_joint_with">Planned together with: %1$s</string>
     <string name="plans_joint_apart">Planned apart, as no dish suits both: %1$s.</string>

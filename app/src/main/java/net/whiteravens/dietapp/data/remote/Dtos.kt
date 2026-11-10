@@ -1879,6 +1879,10 @@ data class SetMealEatenRequest(
     val forAll: Boolean = false,
 )
 
+/** PATCH `/meal-plans/:id/shared-meals/:sharedMealId`: a shared meal cooked [apart], each portion on its own, or in one pot. */
+@Serializable
+data class SetSharedMealRequest(val apart: Boolean)
+
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
 @Serializable
 data class AddCustomMealRequest(

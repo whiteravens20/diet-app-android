@@ -285,6 +285,7 @@ fun PlanDetailScreen(
             date = day.date,
             toCook = toCook,
             cooking = mealsOfCooking(plan, meal),
+            ownName = state.profileName ?: stringResource(R.string.plans_portion_you),
             dietType = plan.dietType,
             onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id, toCook.servings, toCook.whole) } },
             onDismiss = { openMealId = null },
@@ -579,6 +580,7 @@ fun PlanDetailScreen(
                                 changedMeal = meal.id
                                 viewModel.setEaten(meal.id, eaten = true, forAll = true)
                             },
+                            onSetApart = { apart -> meal.shared?.let { viewModel.setApart(it.id, apart) } },
                             onChange = { how -> viewModel.offerSwap(meal.id, how) },
                             onPickFavorite = { pickingFor = meal.id },
                             onSubstitute = { substitutingIn = meal.id },
@@ -1076,6 +1078,7 @@ private fun MealCard(
     onRemove: () -> Unit,
     onOpen: () -> Unit,
     onEatenTogether: () -> Unit = {},
+    onSetApart: (Boolean) -> Unit = {},
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
     AppCard(onClick = onOpen) {
@@ -1121,7 +1124,7 @@ private fun MealCard(
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
-                meal.shared?.let { shared -> SharedPortion(meal, shared, date, today, busy, added, onEatenTogether) }
+                meal.shared?.let { shared -> SharedPortion(meal, shared, date, today, readOnly, busy, added, onEatenTogether, onSetApart) }
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -1135,8 +1138,8 @@ private fun MealCard(
 
 /**
  * What a meal both people of a joint plan eat says under it: the other person's portion, eaten or not,
- * and, from its day on, one press that marks it eaten in both plans, as the box beside the meal marks it
- * in this plan alone.
+ * the box to cook each portion apart (in one pot otherwise), and, from its day on, one press that marks
+ * it eaten in both plans, as the box beside the meal marks it in this plan alone.
  */
 @Composable
 private fun SharedPortion(
@@ -1144,9 +1147,11 @@ private fun SharedPortion(
     shared: SharedMeal,
     date: String,
     today: String,
+    readOnly: Boolean,
     busy: Boolean,
     added: Boolean,
     onEatenTogether: () -> Unit,
+    onSetApart: (Boolean) -> Unit,
 ) {
     val other = shared.with
     val line = stringResource(R.string.plans_shared_line, other.profileName, servingsWord((other.servings * 10).roundToInt() / 10.0), formatNumber(other.calories.roundToInt()))
@@ -1156,6 +1161,8 @@ private fun SharedPortion(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 4.dp),
     )
+    // How it is cooked is the same in both plans, and is said to the server at once.
+    CheckRow(label = stringResource(R.string.plans_cook_apart), checked = shared.apart, enabled = !readOnly && !busy, onChange = onSetApart)
     if (!meal.eaten && !other.eaten && date <= today && !added) {
         val named = stringResource(R.string.plans_action_for, stringResource(R.string.plans_eaten_together), mealName(meal))
         TextButton(onClick = onEatenTogether, enabled = !busy, modifier = Modifier.semantics { contentDescription = named }) {
@@ -1569,11 +1576,16 @@ private fun MealDialog(
     dietType: String,
     onOpenRecipe: (() -> Unit)?,
     onDismiss: () -> Unit,
+    /** What this plan's portion of a pot both people cook is called beside the other's. */
+    ownName: String = "",
 ) {
     val today = LocalDate.now().toString()
+    // A pot both people cook is split into both portions of each meal it is eaten at.
+    val pot = meal.shared?.takeUnless { it.apart } != null
+    val split = cooking.ifEmpty { listOf(meal to date).takeIf { pot }.orEmpty() }
     // The dish cooked at this meal being split into the meals of its cooking, while its window is open.
     var splitting by rememberSaveable { mutableStateOf(false) }
-    if (splitting) SplitDialog(portionsOfCooking(cooking), onDismiss = { splitting = false })
+    if (splitting) SplitDialog(if (pot) portionsOfPot(split, ownName) else portionsOfCooking(split), onDismiss = { splitting = false })
     ScreenDialog(onDismiss) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1600,7 +1612,7 @@ private fun MealDialog(
                 }
                 meal.label?.let { LabelGrid(it) }
                 cookHint(meal, date)?.let { Hint(it) }
-                if (cooking.isNotEmpty()) {
+                if (split.isNotEmpty()) {
                     TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
                 }
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
@@ -1621,7 +1633,9 @@ private fun MealDialog(
                 if (toCook.lines.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(stringResource(R.string.recipes_ingredients), style = MaterialTheme.typography.titleMedium)
-                        meal.recipeServings?.let { servings -> Hint(portionNote(servings, toCook.servings, toCook.whole)) }
+                        meal.recipeServings?.let { servings ->
+                            Hint(toCook.pot?.let { potNote(servings, toCook.servings, it) } ?: portionNote(servings, toCook.servings, toCook.whole))
+                        }
                         toCook.lines.forEach { line ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f)) {
@@ -1692,6 +1706,17 @@ internal fun servingsWord(servings: Double): String =
         // A count with a fraction takes the form the languages give fractions.
         stringResource(R.string.plans_offer_servings_fraction, formatNumber(servings, fractionDigits = 1))
     }
+
+/** How far the amounts of a pot both people cook are from those of its recipe as written, and whose portions it holds. */
+@Composable
+private fun potNote(recipeServings: Int, servings: Double, pot: PotPortions): String = stringResource(
+    R.string.plans_portion_pot,
+    pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
+    servingsWord(servings),
+    formatNumber(pot.mine, fractionDigits = 1),
+    pot.name,
+    formatNumber(pot.theirs, fractionDigits = 1),
+)
 
 /** How far the amounts of a meal are from those of its recipe as written. */
 @Composable

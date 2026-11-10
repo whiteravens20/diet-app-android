@@ -13,6 +13,8 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import net.whiteravens.dietapp.domain.OtherPortion
+import net.whiteravens.dietapp.domain.SharedMeal
 
 /** What a meal takes to cook: its own lines, or the whole of a cooking on the meal it is cooked at. */
 class CookingTest {
@@ -103,5 +105,20 @@ class CookingTest {
 
         assertEquals(emptyList<Pair<Meal, String>>(), mealsOfCooking(plan, second))
         assertEquals(emptyList<Pair<Meal, String>>(), mealsOfCooking(plan, alone))
+    }
+
+    @Test
+    fun `a dish both people of a joint plan cook in one pot takes what the pot takes, both portions of each meal of its cooking, and one cooked apart its own`() {
+        val pot = listOf(MealLine("oats", "Oats", 260.0, "g"))
+        val shared = SharedMeal("s", apart = false, with = OtherPortion("theirs", "plan-2", "Ewa", 0.8, 240.0, eaten = false), pot = pot)
+        val alone = meal("alone", 1.2, null, null).copy(shared = shared)
+        val apart = alone.copy(shared = shared.copy(apart = true))
+        val cook = meal("first", 1.0, "cook", MealCooking(listOf(CookedPlace("second", "2026-11-04", "breakfast", false)), whole)).copy(shared = shared)
+        val second = meal("second", 1.3, "cooked", MealCooking(listOf(CookedPlace("first", "2026-11-03", "breakfast", false)), whole))
+            .copy(shared = shared.copy(with = shared.with.copy(mealId = "theirs-2", servings = 1.0)))
+
+        assertEquals(MealToCook(pot, 2.0, true, PotPortions(1.2, "Ewa", 0.8)), mealToCook(plan(alone), alone))
+        assertEquals(MealToCook(own, 1.2, false), mealToCook(plan(apart), apart))
+        assertEquals(MealToCook(pot, 4.1, true, PotPortions(2.3, "Ewa", 1.8)), mealToCook(planOf("2026-11-03" to listOf(cook), "2026-11-04" to listOf(second)), cook))
     }
 }

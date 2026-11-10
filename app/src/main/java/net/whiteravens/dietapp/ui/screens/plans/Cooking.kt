@@ -145,11 +145,25 @@ internal fun mealsOfCooking(plan: MealPlan, meal: Meal): List<Pair<Meal, String>
     return plan.days.flatMap { day -> day.meals.filter { it.id in ids }.map { it to day.date } }
 }
 
-/** What to cook of a meal: its own lines, or those of the whole of a cooking on the meal it is cooked at, and how many servings they are. */
-internal data class MealToCook(val lines: List<MealLine>, val servings: Double, val whole: Boolean)
+/**
+ * What to cook of a meal: its own lines, or those of the whole of a cooking on the meal it is cooked at,
+ * and how many servings they are; of a pot both people of a joint plan cook, the pot's lines, with
+ * [pot] saying whose portions it holds.
+ */
+internal data class MealToCook(val lines: List<MealLine>, val servings: Double, val whole: Boolean, val pot: PotPortions? = null)
+
+/** The portions in a pot both people of a joint plan cook: this plan's, and the other person's by their name. */
+internal data class PotPortions(val mine: Double, val name: String, val theirs: Double)
 
 internal fun mealToCook(plan: MealPlan, meal: Meal): MealToCook {
     val shown = { servings: Double -> (servings * 10).roundToInt() / 10.0 }
+    // A dish both cook in one pot takes what the pot takes: both portions of each meal it is eaten at.
+    meal.shared?.takeUnless { it.apart }?.let { shared ->
+        val cooked = mealsOfCooking(plan, meal).map { it.first }.ifEmpty { listOf(meal) }
+        val mine = cooked.sumOf { it.servings }
+        val theirs = cooked.sumOf { it.shared?.with?.servings ?: 0.0 }
+        return MealToCook(shared.pot, shown(mine + theirs), true, PotPortions(shown(mine), shared.with.profileName, shown(theirs)))
+    }
     val cooking = meal.cooking.takeIf { meal.cookAhead == "cook" } ?: return MealToCook(meal.lines, shown(meal.servings), false)
     val others = cooking.with.map { it.mealId }
     val servings = plan.days.flatMap { it.meals }.filter { it.id in others }.sumOf { it.servings } + meal.servings

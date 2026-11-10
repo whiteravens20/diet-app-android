@@ -794,4 +794,18 @@ class MealPlanRepositoryTest {
         assertEquals("""{"eaten":true,"forAll":true}""", server.takeRequest().body.readUtf8())
         assertEquals("""{"eaten":false}""", server.takeRequest().body.readUtf8())
     }
+
+    @Test
+    fun `how a shared meal is cooked is said to the server, and the plan it answers with is kept on the phone`() {
+        server.enqueue(answer("meal-plan"))
+        val cache = Cache()
+
+        runBlocking { repository(cache).setApart("plan-1", "shared-1", apart = true) }
+
+        val sent = server.takeRequest()
+        assertEquals("PATCH", sent.method)
+        assertEquals("/api/meal-plans/plan-1/shared-meals/shared-1", sent.path)
+        assertEquals("""{"apart":true}""", sent.body.readUtf8())
+        assertEquals(1, cache.plans.size)
+    }
 }

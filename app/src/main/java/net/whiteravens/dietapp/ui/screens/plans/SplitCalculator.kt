@@ -259,6 +259,25 @@ internal fun portionsOfCooking(meals: List<Pair<Meal, String>>): List<SplitPorti
     }
 }
 
+/**
+ * The portions a pot both people of a joint plan cook is split into: of each meal it is eaten at, this
+ * plan's portion under [ownName] and the other person's under theirs, with the energy the plans give each.
+ */
+@Composable
+internal fun portionsOfPot(meals: List<Pair<Meal, String>>, ownName: String): List<SplitPortion> {
+    val locale = LocalConfiguration.current.locales[0]
+    return meals.flatMap { (meal, date) ->
+        val day = LocalDate.parse(date).dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale)
+            .replaceFirstChar { it.titlecase(locale) }
+        val whenEaten = stringResource(R.string.split_portion_of, day, mealTypeLabel(meal.slot).lowercase(locale))
+        val other = meal.shared?.takeUnless { it.apart }?.with
+        listOfNotNull(
+            SplitPortion(key = meal.id, label = stringResource(R.string.split_portion_of_who, ownName, whenEaten), kcal = meal.nutrition.calories),
+            other?.let { SplitPortion(key = it.mealId, label = stringResource(R.string.split_portion_of_who, it.profileName, whenEaten), kcal = it.calories) },
+        )
+    }
+}
+
 /** The window a dish cooked ahead is split in, into the meals of its cooking, by the plan's shares. */
 @Composable
 internal fun SplitDialog(portions: List<SplitPortion>, onDismiss: () -> Unit) {
