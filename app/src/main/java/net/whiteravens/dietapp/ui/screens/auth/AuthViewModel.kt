@@ -54,6 +54,8 @@ class AuthViewModel @Inject constructor(
         val checkFailed: Boolean = false,
         /** A link to set a new password was asked for; whether the address has an account is not said. */
         val resetSent: Boolean = false,
+        /** A sign-up was asked for with the password typed twice differently: nothing was sent. */
+        val passwordsDiffer: Boolean = false,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -64,11 +66,21 @@ class AuthViewModel @Inject constructor(
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
 
+    // A sign-up's password typed a second time, as it is typed blind: held and forgotten as the first.
+    private val _repeated = MutableStateFlow("")
+    val repeated: StateFlow<String> = _repeated.asStateFlow()
+
     private val _secondStepCode = MutableStateFlow("")
     val secondStepCode: StateFlow<String> = _secondStepCode.asStateFlow()
 
     fun typePassword(value: String) {
         _password.value = value
+        _state.update { it.copy(passwordsDiffer = false) }
+    }
+
+    fun typeRepeated(value: String) {
+        _repeated.value = value
+        _state.update { it.copy(passwordsDiffer = false) }
     }
 
     fun typeSecondStepCode(value: String) {
@@ -93,8 +105,14 @@ class AuthViewModel @Inject constructor(
 
     fun signIn(email: String, password: String) = submit(Submission.SignIn(email.trim(), password))
 
-    fun register(email: String, password: String, displayName: String) =
+    /** Makes an account, once its password was typed twice the same; otherwise says so and sends nothing. */
+    fun register(email: String, password: String, displayName: String) {
+        if (password != _repeated.value) {
+            _state.update { it.copy(passwordsDiffer = true) }
+            return
+        }
         submit(Submission.Register(email.trim(), password, displayName.trim()))
+    }
 
     /** Asks for a mail with a link to set a new password for [email]. */
     fun requestPasswordReset(email: String) = submit(Submission.PasswordReset(email.trim()))
@@ -157,6 +175,7 @@ class AuthViewModel @Inject constructor(
         }
         // The password was taken: a second step, if any, asks for a code instead.
         _password.value = ""
+        _repeated.value = ""
     }
 
     /** Runs [block] with the screen busy, and puts what it throws on the screen. */

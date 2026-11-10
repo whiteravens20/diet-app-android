@@ -3,6 +3,8 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -52,6 +54,23 @@ class SignInTest {
         screen.waitForText(text(R.string.dashboard_welcome))
         screen.onNodeWithText(text(R.string.dashboard_no_profiles)).assertIsDisplayed()
         screen.keepScreenshot("signed-in-dashboard-without-profiles")
+    }
+
+    @Test
+    fun aSignUpAsksForThePasswordTwiceAndMakesNoAccountWhereTheTwoDiffer() {
+        screen.onNodeWithText(text(R.string.auth_no_account)).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.auth_name)).performTextInput("Twice")
+        screen.onNodeWithText(text(R.string.auth_email)).performTextInput("twice-${System.currentTimeMillis()}@example.test")
+        screen.onNodeWithText(text(R.string.auth_password)).performTextInput("Twice-Test-Passw0rd")
+        screen.onNodeWithText(text(R.string.auth_repeat_password)).performTextInput("Twice-Test-Passw0rd!")
+        screen.putKeyboardAway()
+        screen.onNode(hasText(text(R.string.auth_create_account_button)) and hasClickAction()).performScrollTo().performClick()
+
+        // Nothing is sent: the form says why at the second field, and stays.
+        screen.waitForText(text(R.string.auth_passwords_dont_match))
+        screen.onNode(hasText(text(R.string.auth_create_account_button)) and hasClickAction()).assertExists()
+        screen.onNodeWithText(text(R.string.auth_repeat_password)).performScrollTo()
+        screen.keepScreenshot("sign-up-passwords-differ")
     }
 
     @Test

@@ -97,6 +97,7 @@ class AntiAbuseCheckTest {
         screen.onNodeWithText(text(R.string.auth_name)).performTextInput("Check")
         screen.onNodeWithText(text(R.string.auth_email)).performTextInput("check@example.test")
         screen.onNodeWithText(text(R.string.auth_password)).performTextInput("Check-Test-Passw0rd")
+        screen.onNodeWithText(text(R.string.auth_repeat_password)).performTextInput("Check-Test-Passw0rd")
         screen.putKeyboardAway()
         // The card's title reads the same as its button.
         screen.onNode(hasText(text(R.string.auth_create_account_button)) and hasClickAction()).performScrollTo().performClick()

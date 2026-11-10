@@ -50,6 +50,34 @@ class AuthViewModelTest {
     }
 
     @Test
+    fun `a sign-up whose password was typed twice differently sends nothing and says so, till either is typed again`() {
+        val model = model()
+        model.typePassword("Long-Enough-Passw0rd")
+        model.typeRepeated("Long-Enough-Passw0rd!")
+
+        model.register(EMAIL, "Long-Enough-Passw0rd", "Alex")
+
+        coVerify(exactly = 0) { auth.register(any(), any(), any(), any()) }
+        assertTrue(model.state.value.passwordsDiffer)
+        model.typeRepeated("Long-Enough-Passw0rd")
+        assertFalse(model.state.value.passwordsDiffer)
+    }
+
+    @Test
+    fun `a sign-up with the password typed twice the same is sent with it, and both are forgotten`() {
+        coEvery { auth.register(EMAIL, "Long-Enough-Passw0rd", "Alex", null) } returns Unit
+        val model = model()
+        model.typePassword("Long-Enough-Passw0rd")
+        model.typeRepeated("Long-Enough-Passw0rd")
+
+        model.register(" $EMAIL ", "Long-Enough-Passw0rd", " Alex ")
+
+        coVerify { auth.register(EMAIL, "Long-Enough-Passw0rd", "Alex", null) }
+        assertEquals("", model.password.value)
+        assertEquals("", model.repeated.value)
+    }
+
+    @Test
     fun `a forgotten password is asked for by mail, and the answer says nothing of the account`() {
         coEvery { auth.requestPasswordReset(EMAIL, null) } returns Unit
         val model = model()

@@ -61,6 +61,8 @@
     <string name="auth_name">Imię</string>
     <string name="auth_email">E-mail</string>
     <string name="auth_password">Hasło</string>
+    <string name="auth_repeat_password">Powtórz hasło</string>
+    <string name="auth_passwords_dont_match">Hasła nie są takie same.</string>
     <string name="auth_password_rules">Co najmniej 12 znaków, wielka i mała litera oraz cyfra.</string>
     <string name="auth_sign_in_button">Zaloguj się</string>
     <string name="auth_second_step_title">Logowanie dwuetapowe</string>

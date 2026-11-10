@@ -73,6 +73,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
     val serverUrl = server.orEmpty()
     val checkSiteKey by viewModel.checkSiteKey.collectAsState()
     val password by viewModel.password.collectAsState()
+    val repeated by viewModel.repeated.collectAsState()
     val secondStepCode by viewModel.secondStepCode.collectAsState()
     val mailsSent by viewModel.mailsSent.collectAsState()
     // The fields a refused form named are marked where they are typed.
@@ -213,6 +214,22 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 modifier = Modifier.fillMaxWidth(),
             )
             if (registerMode) {
+                OutlinedTextField(
+                    value = repeated,
+                    onValueChange = viewModel::typeRepeated,
+                    label = { Text(stringResource(R.string.auth_repeat_password)) },
+                    isError = state.passwordsDiffer,
+                    supportingText = if (state.passwordsDiffer) {
+                        { Text(stringResource(R.string.auth_passwords_dont_match)) }
+                    } else {
+                        null
+                    },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                )
                 Text(
                     stringResource(R.string.auth_password_rules),
                     style = MaterialTheme.typography.bodySmall,
@@ -240,7 +257,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                     else viewModel.signIn(email, password)
                 },
                 enabled = !state.busy && email.isNotBlank() && password.isNotBlank() &&
-                    (!registerMode || displayName.isNotBlank()),
+                    (!registerMode || (displayName.isNotBlank() && repeated.isNotBlank())),
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             ) {

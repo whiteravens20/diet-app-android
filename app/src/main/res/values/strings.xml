@@ -64,6 +64,8 @@
     <string name="auth_name">Name</string>
     <string name="auth_email">Email</string>
     <string name="auth_password">Password</string>
+    <string name="auth_repeat_password">Repeat the password</string>
+    <string name="auth_passwords_dont_match">The two passwords do not match.</string>
     <string name="auth_password_rules">At least 12 characters, with upper- and lowercase letters and a digit.</string>
     <string name="auth_sign_in_button">Sign in</string>
     <string name="auth_second_step_title">Two-step sign-in</string>
