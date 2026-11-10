@@ -267,20 +267,27 @@ private fun Marks(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        marks.forEach { mark ->
-            val sentiment = mark.sentiment
-            FilterChip(
-                selected = sentiment != null,
-                onClick = { onToggle(mark.profileId) },
-                enabled = marking == null,
-                label = { Text(if (sentiment == null || sentiment == "favorite") mark.name else "${mark.name}$DOT${sentimentLabel(sentiment)}") },
-                leadingIcon = if (sentiment != null) {
-                    { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-                } else {
-                    null
-                },
-            )
-            if (mark.profileId in waiting) WaitingMark()
+        // The profiles stay together: on a narrow screen they go under the words as one, as the ways to share do.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            marks.forEach { mark ->
+                val sentiment = mark.sentiment
+                FilterChip(
+                    selected = sentiment != null,
+                    onClick = { onToggle(mark.profileId) },
+                    enabled = marking == null,
+                    label = { Text(if (sentiment == null || sentiment == "favorite") mark.name else "${mark.name}$DOT${sentimentLabel(sentiment)}") },
+                    leadingIcon = if (sentiment != null) {
+                        { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                    } else {
+                        null
+                    },
+                )
+                if (mark.profileId in waiting) WaitingMark()
+            }
         }
     }
     failed?.let {
