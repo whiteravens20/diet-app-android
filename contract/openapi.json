@@ -5639,6 +5639,18 @@
             }
           },
           {
+            "name": "forAll",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
             "name": "X-Client-Date",
             "in": "header",
             "required": false,
@@ -6110,6 +6122,75 @@
         "x-rate-limit": {
           "times": 20,
           "seconds": 60
+        }
+      }
+    },
+    "/api/meal-plans/{id}/shared-meals/{sharedMealId}": {
+      "patch": {
+        "operationId": "MealPlans_setSharedMeal",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "Say how a meal the plan shares with its joint plan is cooked: each portion apart, or in one pot.",
+        "description": "Say how a meal the plan shares with its joint plan is cooked: each portion apart, or in one pot.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sharedMealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSharedMealRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
         }
       }
     },
@@ -11995,6 +12076,10 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "forAll": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
@@ -12268,6 +12353,10 @@
             "$ref": "#/components/schemas/ModelPickNote"
           },
           "together": {
+            "default": false,
+            "type": "boolean"
+          },
+          "forAll": {
             "default": false,
             "type": "boolean"
           }
@@ -14107,6 +14196,9 @@
           },
           "label": {
             "$ref": "#/components/schemas/LabelTotals"
+          },
+          "fromPot": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -14116,7 +14208,8 @@
           "recipeId",
           "eaten",
           "nutrition",
-          "label"
+          "label",
+          "fromPot"
         ],
         "additionalProperties": false
       },
@@ -14885,6 +14978,10 @@
             "items": {
               "$ref": "#/components/schemas/DayOverride"
             }
+          },
+          "withProfileId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
@@ -14942,12 +15039,19 @@
           },
           "pantry": {
             "$ref": "#/components/schemas/PantryUse"
+          },
+          "apart": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MealType"
+            }
           }
         },
         "required": [
           "relaxations",
           "singleCandidate",
-          "pantry"
+          "pantry",
+          "apart"
         ],
         "additionalProperties": false
       },
@@ -17055,6 +17159,35 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "joint": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "planId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profileId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profileName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "profileId",
+                  "profileName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -17075,7 +17208,8 @@
           "options",
           "report",
           "revision",
-          "createdAt"
+          "createdAt",
+          "joint"
         ],
         "additionalProperties": false
       },
@@ -17350,6 +17484,35 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "joint": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "planId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profileId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profileName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "profileId",
+                  "profileName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -17363,7 +17526,8 @@
           "generationMode",
           "options",
           "revision",
-          "createdAt"
+          "createdAt",
+          "joint"
         ],
         "additionalProperties": false
       },
@@ -19192,6 +19356,16 @@
           },
           "label": {
             "$ref": "#/components/schemas/LabelTotals"
+          },
+          "shared": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SharedMealOf"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -19212,7 +19386,8 @@
           "cookAhead",
           "cooking",
           "nutrition",
-          "label"
+          "label",
+          "shared"
         ],
         "additionalProperties": false
       },
@@ -22476,6 +22651,10 @@
           "together": {
             "default": false,
             "type": "boolean"
+          },
+          "forAll": {
+            "default": false,
+            "type": "boolean"
           }
         }
       },
@@ -22507,6 +22686,10 @@
             }
           },
           "together": {
+            "default": false,
+            "type": "boolean"
+          },
+          "forAll": {
             "default": false,
             "type": "boolean"
           },
@@ -23323,10 +23506,25 @@
         "properties": {
           "eaten": {
             "type": "boolean"
+          },
+          "forAll": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
           "eaten"
+        ]
+      },
+      "SetSharedMealRequest": {
+        "type": "object",
+        "properties": {
+          "apart": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "apart"
         ]
       },
       "Sex": {
@@ -23336,6 +23534,65 @@
           "female",
           "non_binary"
         ]
+      },
+      "SharedMealOf": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "apart": {
+            "type": "boolean"
+          },
+          "with": {
+            "type": "object",
+            "properties": {
+              "mealId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "planId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "profileName": {
+                "type": "string"
+              },
+              "servings": {
+                "type": "number"
+              },
+              "calories": {
+                "type": "number"
+              },
+              "eaten": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "mealId",
+              "planId",
+              "profileName",
+              "servings",
+              "calories",
+              "eaten"
+            ],
+            "additionalProperties": false
+          },
+          "pot": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlannedIngredient"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "apart",
+          "with",
+          "pot"
+        ],
+        "additionalProperties": false
       },
       "ShipConfig": {
         "type": "object",
@@ -24052,6 +24309,10 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "forAll": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
