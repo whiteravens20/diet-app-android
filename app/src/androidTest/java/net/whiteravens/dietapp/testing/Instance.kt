@@ -107,13 +107,29 @@ object Instance {
         return (0 until codes.length()).map { codes.getString(it) }
     }
 
-    /** A profile of [account] with what the web application's form asks for, a weight to work towards where [targetWeightKg], and the rest left to the API. */
-    fun newProfile(account: Account, name: String = "Me", targetWeightKg: Double? = null): String =
+    /**
+     * A profile of [account] with what the web application's form asks for, a weight to work towards where
+     * [targetWeightKg], a diet, a day's activity and a number of meals where they are given, and the rest left to the API.
+     */
+    fun newProfile(
+        account: Account,
+        name: String = "Me",
+        targetWeightKg: Double? = null,
+        weightKg: Int = 80,
+        dietType: String? = null,
+        activityLevel: String? = null,
+        mealCount: Int? = null,
+    ): String =
         call(
             "POST",
             "profiles",
-            JSONObject().put("name", name).put("age", 30).put("sex", "male").put("heightCm", 180).put("weightKg", 80)
-                .apply { targetWeightKg?.let { put("targetWeightKg", it) } },
+            JSONObject().put("name", name).put("age", 30).put("sex", "male").put("heightCm", 180).put("weightKg", weightKg)
+                .apply {
+                    targetWeightKg?.let { put("targetWeightKg", it) }
+                    dietType?.let { put("dietType", it) }
+                    activityLevel?.let { put("activityLevel", it) }
+                    mealCount?.let { put("mealCount", it) }
+                },
             token = account.accessToken,
             expect = 201,
         ).getString("id")
@@ -370,6 +386,56 @@ object Instance {
             token = account.accessToken,
             expect = 201,
         ).getString("id")
+
+    /** A meal of a plan with a topping on its plate: its id, its title and the topping's food. */
+    data class Topped(val mealId: String, val title: String, val topping: String)
+
+    /**
+     * A plan of three days from today for [profileId] made together with [withProfileId], made again for both until
+     * today has a topping on a plate of [profileId]'s, eight times at most: the plan's id and that meal, null where no
+     * draw gave one.
+     */
+    fun toppedPlanTogether(account: Account, profileId: String, withProfileId: String): Pair<String, Topped?> {
+        val today = LocalDate.now()
+        val theirs = call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", withProfileId).put("withProfileId", profileId).put("startDate", today.toString())
+                .put("durationDays", 3),
+            token = account.accessToken,
+            expect = 201,
+        )
+        val planId = theirs.getJSONObject("joint").getString("planId")
+        repeat(8) {
+            toppedToday(account, planId)?.let { return planId to it }
+            call(
+                "POST",
+                "meal-plans/${theirs.getString("id")}/regenerate",
+                JSONObject().put("from", today.toString()).put("to", today.plusDays(2).toString()).put("includePast", true)
+                    .put("forAll", true),
+                token = account.accessToken,
+                expect = 201,
+            )
+        }
+        return planId to toppedToday(account, planId)
+    }
+
+    private fun toppedToday(account: Account, planId: String): Topped? {
+        val day = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0)
+        val meals = day.getJSONArray("meals")
+        return (0 until meals.length()).map(meals::getJSONObject).firstOrNull { !it.isNull("topping") }?.let {
+            Topped(
+                it.getString("id"),
+                it.getJSONObject("recipe").getString("title"),
+                it.getJSONObject("topping").getJSONObject("ingredient").getString("name"),
+            )
+        }
+    }
+
+    /** Marks a meal of a plan eaten for its plan alone, as its box does. */
+    fun markEaten(account: Account, planId: String, mealId: String) {
+        call("PATCH", "meal-plans/$planId/meals/$mealId/eaten", JSONObject().put("eaten", true).put("forAll", false), token = account.accessToken)
+    }
 
     /** What a recipe is, as the API answers it: its taste, its form and its starch base. */
     fun recipeTraits(account: Account, recipeId: String): Triple<String, String, String> =

@@ -59,6 +59,7 @@ import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.MealPlanSummary
+import net.whiteravens.dietapp.domain.MealTopping
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.OpenPack
@@ -266,6 +267,7 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         leftover = leftover?.let { LeftoverOf(it.date, it.mealType, it.undoable) },
         carriedTo = carriedTo?.let { MealPlace(it.date, it.mealType) },
         leftoverOffer = leftoverOffer,
+        topping = topping?.let { MealTopping(it.ingredient.toLine(), it.nutrition.toDomain()) },
     )
 }
 
@@ -489,6 +491,7 @@ fun AiMealSwapPreviewDto.toDomain(planId: String, mealId: String, ask: SwapAsk, 
     targetMacros = targetMacros?.toDomain(),
     cooking = cooking?.toDomain(),
     outsideLimits = outsideLimits,
+    toppingName = topping?.name,
 )
 
 fun ShoppingListItemDto.toDomain() = ShoppingItem(

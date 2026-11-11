@@ -1583,6 +1583,7 @@
     <string name="diary_estimated_note">≈ Some figures are estimates: a meal written by its calories alone has its protein, fat and carbohydrate estimated from the proportions of the day\'s target.</string>
     <string name="diary_plan_over">Over target</string>
     <string name="diary_plan_under">Under target</string>
+    <string name="diary_meal_topping">With a topping: %1$s, %2$s</string>
     <string name="diary_plan_over_note">With what the diary holds counted as eaten, the plan\'s day is %1$s kcal over its target.</string>
     <string name="diary_plan_under_note">With what the diary holds counted as eaten, the plan\'s day is %1$s kcal under its target.</string>
     <string name="diary_plan_over_plain">The plan\'s day is %1$s kcal over its target.</string>
@@ -1803,6 +1804,9 @@
     <!-- What is left of a meal, carried to a meal of the next day. -->
     <string name="plans_leftover_action">Leftover for the next day…</string>
     <string name="plans_leftover_title">Leftover for the next day</string>
+    <string name="plans_topping_line">A topping on your plate: %1$s, %2$s, %3$d\u00A0kcal</string>
+    <string name="plans_topping_note">A topping on your plate alone, not in the pot: %1$s, %2$s, %3$d\u00A0kcal.</string>
+    <string name="plans_offer_topping">The model also picked a topping for your plate: %1$s. The plan sets its amount, so that the day keeps its target.</string>
     <string name="plans_leftover_intro">%1$s: what is left takes the place of a meal of the next day. The dish is cooked already, so it goes on no shopping list and its portion does not change.</string>
     <string name="plans_leftover_eaten_legend">Was any of it eaten?</string>
     <string name="plans_leftover_eaten_legend_of">%1$s: was any of this portion eaten?</string>

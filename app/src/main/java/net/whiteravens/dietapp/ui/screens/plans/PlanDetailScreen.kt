@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,6 +84,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.MealTopping
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeShareRow
 import net.whiteravens.dietapp.ui.screens.recipes.SharedLine
 import net.whiteravens.dietapp.ui.screens.recipes.sharedRecipe
@@ -1169,6 +1171,14 @@ private fun MealCard(
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 leftoverHint(meal)?.let { Hint(it) }
+                // What is put on this person's plate beside the dish both eat: the day counts it, the dish's figures do not.
+                meal.topping?.let {
+                    Text(
+                        toppingWords(R.string.plans_topping_line, it),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
                 meal.shared?.let { shared -> SharedPortion(meal, shared, date, today, readOnly, busy, added, onEatenTogether, onSetApart) }
             }
             if (swapping) {
@@ -1599,6 +1609,8 @@ private fun SwapOfferDialog(
                 // and the engine picked, the offer says why.
                 if (offer.pick != null) AiMark(modelPartText(ModelPart.Picked(offer.reason)), spelledOut = true)
                 offer.fallbackReason?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
+                // A topping the model named for this person's plate, put on in the amount the day needs.
+                offer.toppingName?.let { Text(stringResource(R.string.plans_offer_topping, it), style = MaterialTheme.typography.bodySmall) }
                 Text(offerLine(offer), style = MaterialTheme.typography.bodyMedium)
                 Hint(
                     stringResource(
@@ -1719,6 +1731,8 @@ private fun MealDialog(
                 }
                 meal.label?.let { LabelGrid(it) }
                 cookHint(meal, date)?.let { Hint(it) }
+                // The topping is this person's alone: never in the pot, nor in what it is split into.
+                meal.topping?.let { Text(toppingWords(R.string.plans_topping_note, it), style = MaterialTheme.typography.bodyMedium) }
                 if (split.isNotEmpty()) {
                     TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
                 }
@@ -1926,3 +1940,12 @@ private fun TargetMovedNote(moved: TargetMoved, listed: Boolean, enabled: Boolea
         }
     }
 }
+
+/** A topping in the words of [words]: its food, its amount as shown and the kcal it brings. */
+@Composable
+private fun toppingWords(@StringRes words: Int, topping: MealTopping): String = stringResource(
+    words,
+    topping.line.name,
+    amountLabel(topping.line.quantity, topping.line.unit, topping.line.grams),
+    topping.nutrition.calories.roundToInt(),
+)

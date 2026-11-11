@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
+import net.whiteravens.dietapp.data.remote.OfferedToppingDto
 import net.whiteravens.dietapp.data.remote.RetargetRequestDto
 import net.whiteravens.dietapp.data.remote.TargetMovedDto
 import net.whiteravens.dietapp.domain.MealPlan
@@ -610,7 +611,7 @@ class PlanDetailViewModelTest {
     }
 
     @Test
-    fun `an offer a model was asked for says why the engine picked, or that the model did and why`() {
+    fun `an offer a model was asked for says why the engine picked, or that the model did, why, and the topping it named`() {
         val api = mockk<DietApiService>()
         val asking = mockk<ModelApiService>()
         val byEngine = AiMealSwapPreviewDto(
@@ -625,7 +626,11 @@ class PlanDetailViewModelTest {
             aiMeta = AiGenerationMetaDto(usedDeterministicFallback = true, fallbackReason = "quota_exhausted"),
             pick = null,
         )
-        val byModel = byEngine.copy(aiMeta = AiGenerationMetaDto(provider = "openrouter", usedDeterministicFallback = false, reason = "Lighter."), pick = "note")
+        val byModel = byEngine.copy(
+            aiMeta = AiGenerationMetaDto(provider = "openrouter", usedDeterministicFallback = false, reason = "Lighter."),
+            pick = "note",
+            topping = OfferedToppingDto("Large egg"),
+        )
         coEvery { api.mealPlan(plan.id) } returns plan
         coEvery { asking.aiOfferSwap(any()) } returns byEngine andThen byModel
         val model = model(api, asking = asking)
@@ -634,12 +639,14 @@ class PlanDetailViewModelTest {
 
         assertEquals("quota_exhausted", model.state.value.offer?.fallbackReason)
         assertNull(model.state.value.offer?.pick)
+        assertNull(model.state.value.offer?.toppingName)
 
         model.anotherOffer()
 
         assertNull(model.state.value.offer?.fallbackReason)
         assertEquals("note", model.state.value.offer?.pick)
         assertEquals("Lighter.", model.state.value.offer?.reason)
+        assertEquals("Large egg", model.state.value.offer?.toppingName)
         assertEquals("ai", model.state.value.offer?.ask?.strategy)
     }
 

@@ -1175,7 +1175,16 @@ data class PlannedMealDto(
      * `ok`, or why the next day cannot take it: `no_day` | `skipped` | `no_meal`.
      */
     val leftoverOffer: String? = null,
+    /**
+     * What is put on this person's plate beside the dish of a meal both eat, where the shared dishes leave their
+     * day off its split; null where nothing is. Not in [nutrition], which is the dish's: the day counts both.
+     */
+    val topping: MealToppingDto? = null,
 )
+
+/** A topping on one person's plate: the food and amount, and what that holds. */
+@Serializable
+data class MealToppingDto(val ingredient: PlannedIngredientDto, val nutrition: NutritionDto)
 
 /** The meal a leftover was left of, by its day and time of day; [undoable] while the leftover is not eaten. */
 @Serializable
@@ -1705,7 +1714,13 @@ data class AiMealSwapPreviewDto(
     val targetMacros: MacrosDto? = null,
     val cooking: CookingChangeDto? = null,
     val outsideLimits: List<String> = emptyList(),
+    /** The topping the model named for this person's plate beside a dish both eat; its amount is the plan's to set. */
+    val topping: OfferedToppingDto? = null,
 )
+
+/** A topping a model named: the food's name. */
+@Serializable
+data class OfferedToppingDto(val name: String)
 
 @Serializable
 data class RebalanceChangeDto(val mealId: String, val before: Double, val after: Double)
@@ -2370,7 +2385,13 @@ data class DiaryPlanMealDto(
     val nutrition: NutritionDto,
     /** A meal of a joint plan cooked in one pot: its figures are the planned portion, which a split comes only near. */
     val fromPot: Boolean = false,
+    /** What was put on this person's plate beside the dish, counted in [nutrition]; null where nothing was. */
+    val topping: DiaryToppingDto? = null,
 )
+
+/** A topping eaten with a meal of the plan: its food and amount. */
+@Serializable
+data class DiaryToppingDto(val name: String, val display: DisplayAmountDto)
 
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */
 @Serializable

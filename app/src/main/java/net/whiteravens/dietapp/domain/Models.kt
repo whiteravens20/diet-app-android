@@ -425,7 +425,12 @@ data class Meal(
     val carriedTo: MealPlace? = null,
     /** Whether what is left of it can go to the next day: null where not at all; `ok`, `no_day`, `skipped` or `no_meal`. */
     val leftoverOffer: String? = null,
+    /** What is put on this person's plate beside a dish both eat; null where nothing is. Not in [nutrition]. */
+    val topping: MealTopping? = null,
 )
+
+/** A topping on one person's plate: its food and amount ([line]), and what it holds. */
+data class MealTopping(val line: MealLine, val nutrition: Nutrition)
 
 /** The meal a leftover was left of, by its day and time of day; [undoable] while the leftover is not eaten. */
 data class LeftoverOf(val date: String, val slot: String, val undoable: Boolean)
@@ -856,6 +861,8 @@ data class SwapOffer(
     val cooking: CookingChange? = null,
     /** The limits of the plan the recipe would be outside of on this meal. */
     val outsideLimits: List<String> = emptyList(),
+    /** The name of the topping a model named for this person's plate; the plan sets its amount. */
+    val toppingName: String? = null,
 )
 
 /** One plan in a profile's list: what the list shows, without the days. */

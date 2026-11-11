@@ -88,7 +88,12 @@ data class DiaryPlanMeal(
     val calories: Double?,
     /** A meal of a joint plan cooked in one pot: [calories] are the planned portion, which a split comes only near. */
     val fromPot: Boolean = false,
+    /** What was put on this person's plate beside the dish, counted in [calories]: its food and amount. */
+    val topping: DiaryTopping? = null,
 )
+
+/** A topping eaten with a meal of the plan: its food's name and its amount, as shown. */
+data class DiaryTopping(val name: String, val quantity: Double, val unit: String, val grams: Double?)
 
 /** An amount of an ingredient an entry holds: as it was given ([quantity] of [unit]), and as it is shown. */
 data class DiaryAmount(val quantity: Double, val unit: String, val shown: Double, val shownUnit: String)

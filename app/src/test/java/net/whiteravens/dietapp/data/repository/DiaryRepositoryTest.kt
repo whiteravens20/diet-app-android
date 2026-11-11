@@ -6,8 +6,10 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.data.config.ServerConfigStore
@@ -20,6 +22,7 @@ import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DiaryAmount
+import net.whiteravens.dietapp.domain.DiaryTopping
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Expenditure
@@ -104,6 +107,24 @@ class DiaryRepositoryTest {
         assertEquals(listOf("breakfast", "lunch", "snack", "dinner"), plan.meals.map { it.slot })
         assertEquals(listOf(true, false, false, false), plan.meals.map { it.eaten })
         assertEquals(448.0, plan.meals.first().calories)
+    }
+
+    @Test
+    fun `a meal of the plan names what was put on its plate beside the dish, its figures counting it`() {
+        val answer = json.parseToJsonElement(fixture("diary-day")).jsonObject
+        val plan = answer.getValue("plan").jsonObject
+        val meals = plan.getValue("meals").jsonArray
+        val topped = JsonObject(
+            meals[0].jsonObject + ("topping" to json.parseToJsonElement("""{"name":"Large egg","display":{"quantity":2,"unit":"piece","grams":110}}""")),
+        )
+        val body = JsonObject(answer + ("plan" to JsonObject(plan + ("meals" to JsonArray(listOf(topped) + meals.drop(1))))))
+        server.enqueue(MockResponse().setResponseCode(200).setHeader("Content-Type", "application/json").setBody(body.toString()))
+
+        val read = checkNotNull(runBlocking { repository().day(profileId, day) }.plan)
+
+        assertEquals(DiaryTopping("Large egg", 2.0, "piece", 110.0), read.meals.first().topping)
+        assertEquals(448.0, read.meals.first().calories)
+        assertNull(read.meals[1].topping)
     }
 
     @Test

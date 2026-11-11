@@ -1702,6 +1702,7 @@
     <string name="diary_estimated_note">≈ Część wartości to szacunek: posiłek wpisany po samych kaloriach ma białko, tłuszcz i węglowodany oszacowane z proporcji celu dnia.</string>
     <string name="diary_plan_over">Ponad cel</string>
     <string name="diary_plan_under">Poniżej celu</string>
+    <string name="diary_meal_topping">Z\u00A0dodatkiem: %1$s, %2$s</string>
     <string name="diary_plan_over_note">Licząc wpisy dziennika jako zjedzone, dzień planu ma %1$s kcal ponad cel.</string>
     <string name="diary_plan_under_note">Licząc wpisy dziennika jako zjedzone, dzień planu ma %1$s kcal mniej niż cel.</string>
     <string name="diary_plan_over_plain">Dzień planu ma %1$s kcal ponad cel.</string>
@@ -1929,6 +1930,9 @@
     <!-- What is left of a meal, carried to a meal of the next day. -->
     <string name="plans_leftover_action">Resztka na następny dzień…</string>
     <string name="plans_leftover_title">Resztka na następny dzień</string>
+    <string name="plans_topping_line">Dodatek na Twój talerz: %1$s, %2$s, %3$d\u00A0kcal</string>
+    <string name="plans_topping_note">Dodatek tylko na Twój talerz, poza garnkiem: %1$s, %2$s, %3$d\u00A0kcal.</string>
+    <string name="plans_offer_topping">Model wybrał też dodatek na Twój talerz: %1$s. Ilość dobierze plan, tak by dzień trzymał cel.</string>
     <string name="plans_leftover_intro">%1$s: to, co zostało, zajmie miejsce posiłku następnego dnia. Danie jest już ugotowane, więc nie trafi na listę zakupów, a jego porcja się nie zmieni.</string>
     <string name="plans_leftover_eaten_legend">Czy coś zjedzono?</string>
     <string name="plans_leftover_eaten_legend_of">%1$s: czy coś zjedzono z tej porcji?</string>

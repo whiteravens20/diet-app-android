@@ -32,6 +32,7 @@ import net.whiteravens.dietapp.domain.DiaryDayPlan
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.DiaryTopping
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
@@ -206,7 +207,18 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
         DiaryDayPlan(
             id = plan.id,
             skipped = plan.skipped,
-            meals = plan.meals.map { DiaryPlanMeal(it.id, it.mealType, it.name, it.recipeId, it.eaten, it.nutrition.calories, it.fromPot) },
+            meals = plan.meals.map { meal ->
+                DiaryPlanMeal(
+                    meal.id,
+                    meal.mealType,
+                    meal.name,
+                    meal.recipeId,
+                    meal.eaten,
+                    meal.nutrition.calories,
+                    meal.fromPot,
+                    meal.topping?.let { DiaryTopping(it.name, it.display.quantity, it.display.unit, it.display.grams) },
+                )
+            },
             calorieDelta = plan.calorieDelta,
             offTarget = plan.offTarget,
         )

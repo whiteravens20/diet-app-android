@@ -879,6 +879,48 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithText(take).fetchSemanticsNodes().isEmpty() }
     }
 
+    @Test
+    fun aToppingGoesOnThePlateOfThePersonWhoseDayTheSharedDishesLeaveOffItsSplitAndIsEatenWithItsMeal() {
+        val account = Instance.newAccount()
+        // Adam eats high in protein, Ewa as most do: the dishes that suit both leave his days short of protein.
+        val adam = Instance.newProfile(account, name = "Adam", weightKg = 95, dietType = "high_protein", activityLevel = "active", mealCount = 4)
+        val ewa = Instance.newProfile(account, name = "Ewa", mealCount = 4)
+        val (planId, found) = Instance.toppedPlanTogether(account, adam, ewa)
+        val topped = checkNotNull(found) { "eight draws gave no topping on today's plate" }
+        screen.startSignedIn(account)
+        val inAWindow = hasAnyAncestor(isDialog())
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The meal says what is put on Adam's plate beside the dish both eat.
+        val line = text(R.string.plans_topping_line, "\u0000", "\u0000", 0).substringBefore("\u0000") + topped.topping
+        screen.scrollToText(line, substring = true)
+        screen.keepScreenshot("plans-a-topping")
+
+        // Its window says it is on his plate alone, not in the pot.
+        screen.onAllNodesWithText(topped.title)[0].performScrollTo().performClick()
+        val note = text(R.string.plans_topping_note, "\u0000", "\u0000", 0).substringBefore("\u0000")
+        screen.waitForText(note, substring = true)
+        screen.onNode(hasText(note, substring = true) and inAWindow).performScrollTo()
+        screen.keepScreenshot("plans-a-topping-in-the-meal")
+        screen.onNode(hasText(text(R.string.common_close)) and inAWindow).performClick()
+
+        // Eaten, the diary has it with its meal: the tabs are reached from the list of plans.
+        Instance.markEaten(account, planId, topped.mealId)
+        val back = hasContentDescription(text(R.string.common_back))
+        screen.scrollTo(back)
+        screen.onNode(back).performClick()
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.diary_title)).performClick()
+        screen.waitForText(text(R.string.diary_subhead))
+        val eaten = text(R.string.diary_meal_topping, "\u0000", "\u0000").substringBefore("\u0000") + topped.topping
+        screen.scrollToText(eaten, substring = true)
+        screen.keepScreenshot("diary-a-topping")
+    }
+
     /** Puts away the card that says how a change balanced its day, where the change left one. */
     @Test
     fun whatIsLeftOfAMealGoesToAMealOfTheNextDayInAWindowAndComesBackByItsUndo() {

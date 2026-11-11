@@ -499,6 +499,8 @@ private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean,
                 else held(stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt())))
             }
             Note(listOfNotNull(stringResource(R.string.diary_from_plan), kcal).joinToString(DOT))
+            // What was put on this person's plate beside the dish: counted in its figures above.
+            meal.topping?.let { Note(stringResource(R.string.diary_meal_topping, it.name, amountLabel(it.quantity, it.unit, it.grams))) }
             if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
         }
         Checkbox(checked = meal.eaten, onCheckedChange = { onEaten() }, enabled = enabled, modifier = Modifier.semantics { contentDescription = eaten })

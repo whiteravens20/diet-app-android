@@ -39,6 +39,12 @@ import net.whiteravens.dietapp.domain.LeftoverOther
 import net.whiteravens.dietapp.domain.LeftoverPlace
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.Portion
+import net.whiteravens.dietapp.data.remote.DisplayAmountDto
+import net.whiteravens.dietapp.data.remote.MealToppingDto
+import net.whiteravens.dietapp.data.remote.NutritionDto
+import net.whiteravens.dietapp.data.remote.PlannedIngredientDto
+import net.whiteravens.dietapp.domain.MealTopping
+import net.whiteravens.dietapp.domain.Nutrition
 
 /**
  * A plan as a running backend answered it, as the phone shows it: a meal is the share of its
@@ -60,6 +66,22 @@ class MealMappingTest {
 
         assertEquals(meal.ingredients.map { MealLine(it.ingredientId, it.name, it.display.quantity, it.display.unit) }, lines)
         assertNotEquals(meal.recipe!!.ingredients.map { it.display.quantity }, lines.map { it.quantity })
+    }
+
+    @Test
+    fun `a meal names the topping on this person's plate, in its amount as shown, and keeps the dish's own figures`() {
+        val day = plan.days.first { it.meals.any { meal -> meal.recipe != null } }
+        val dto = day.meals.first { it.recipe != null }
+        val topping = MealToppingDto(
+            ingredient = PlannedIngredientDto("t-1", "Turkey breast", 150.0, "g", DisplayAmountDto(150.0, "g"), null),
+            nutrition = NutritionDto(171.0, 35.0, 3.0, 0.0),
+        )
+
+        val meal = dto.copy(topping = topping).toDomain(day.date, plan.report)
+
+        assertEquals(MealTopping(MealLine("t-1", "Turkey breast", 150.0, "g"), Nutrition(171.0, 35.0, 3.0, 0.0)), meal.topping)
+        assertEquals(dto.toDomain(day.date, plan.report).nutrition, meal.nutrition)
+        assertNull(dto.toDomain(day.date, plan.report).topping)
     }
 
     @Test
