@@ -25,6 +25,20 @@ import net.whiteravens.dietapp.data.remote.OtherPortionDto
 import net.whiteravens.dietapp.data.remote.SharedMealOfDto
 import net.whiteravens.dietapp.domain.JointPlan
 import net.whiteravens.dietapp.domain.OtherPortion
+import net.whiteravens.dietapp.data.remote.CookedPlaceDto
+import net.whiteravens.dietapp.data.remote.LeftoverOfDto
+import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
+import net.whiteravens.dietapp.data.remote.LeftoverOtherDto
+import net.whiteravens.dietapp.data.remote.LeftoverPlaceDto
+import net.whiteravens.dietapp.data.remote.LeftoverPortionDto
+import net.whiteravens.dietapp.data.remote.MealPlaceDto
+import net.whiteravens.dietapp.domain.CookedPlace
+import net.whiteravens.dietapp.domain.LeftoverOf
+import net.whiteravens.dietapp.domain.LeftoverOffer
+import net.whiteravens.dietapp.domain.LeftoverOther
+import net.whiteravens.dietapp.domain.LeftoverPlace
+import net.whiteravens.dietapp.domain.MealPlace
+import net.whiteravens.dietapp.domain.Portion
 
 /**
  * A plan as a running backend answered it, as the phone shows it: a meal is the share of its
@@ -214,5 +228,65 @@ class MealMappingTest {
         assertEquals(OtherPortion("meal-9", "plan-2", "Ewa", 1.1, 540.0, eaten = true), shared.with)
         assertEquals(pot.map { it.display.quantity }, shared.pot.map { it.quantity })
         assertTrue(joint.days.flatMap { it.meals }.filter { it.id != meal.id }.all { it.shared == null })
+    }
+
+    @Test
+    fun `a leftover says where it was left, the meal it was left of where its rest is eaten, and a meal whether its rest can go to the next day`() {
+        val first = plan.days.first()
+        val (leftover, source, other) = first.meals.filter { it.recipe != null }.take(3)
+        val marked = plan.copy(
+            days = plan.days.map { day ->
+                if (day != first) day else day.copy(
+                    meals = day.meals.map {
+                        when (it.id) {
+                            leftover.id -> it.copy(leftover = LeftoverOfDto("2026-10-12", "dinner", undoable = true))
+                            source.id -> it.copy(carriedTo = MealPlaceDto("2026-10-14", "lunch"))
+                            other.id -> it.copy(leftoverOffer = "no_day")
+                            else -> it
+                        }
+                    },
+                )
+            },
+        ).toDomain()
+
+        val meals = marked.days.first().meals.associateBy { it.id }
+        assertEquals(LeftoverOf("2026-10-12", "dinner", undoable = true), meals.getValue(leftover.id).leftover)
+        assertEquals(MealPlace("2026-10-14", "lunch"), meals.getValue(source.id).carriedTo)
+        assertEquals("no_day", meals.getValue(other.id).leftoverOffer)
+        assertNull(meals.getValue(other.id).leftover)
+        assertNull(meals.getValue(leftover.id).carriedTo)
+    }
+
+    @Test
+    fun `where a leftover can go is read as the API offers it`() {
+        val offer = LeftoverOfferDto(
+            planId = "plan-2",
+            date = "2026-10-14",
+            portion = LeftoverPortionDto(0.8, 412.0),
+            places = listOf(
+                LeftoverPlaceDto(
+                    mealType = "lunch",
+                    name = "Bean soup",
+                    calories = 600.0,
+                    sharedWith = "Ewa",
+                    cookAhead = "cook",
+                    cookedWith = listOf(CookedPlaceDto("meal-5", "2026-10-15", "lunch", eaten = false)),
+                ),
+            ),
+            other = LeftoverOtherDto("Ewa", eaten = true, portion = LeftoverPortionDto(0.6, 300.0), places = listOf("lunch")),
+        ).toDomain()
+
+        assertEquals(
+            LeftoverOffer(
+                planId = "plan-2",
+                date = "2026-10-14",
+                portion = Portion(0.8, 412.0),
+                places = listOf(
+                    LeftoverPlace("lunch", "Bean soup", 600.0, "Ewa", "cook", listOf(CookedPlace("meal-5", "2026-10-15", "lunch", eaten = false))),
+                ),
+                other = LeftoverOther("Ewa", eaten = true, portion = Portion(0.6, 300.0), places = listOf("lunch")),
+            ),
+            offer,
+        )
     }
 }

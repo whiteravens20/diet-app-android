@@ -1776,6 +1776,51 @@
     <string name="plans_portion_you">You</string>
     <string name="plans_shared_chip">Shared</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
+    <!-- What is left of a meal, carried to a meal of the next day. -->
+    <string name="plans_leftover_action">Leftover for the next day…</string>
+    <string name="plans_leftover_title">Leftover for the next day</string>
+    <string name="plans_leftover_intro">%1$s: what is left takes the place of a meal of the next day. The dish is cooked already, so it goes on no shopping list and its portion does not change.</string>
+    <string name="plans_leftover_eaten_legend">Was any of it eaten?</string>
+    <string name="plans_leftover_eaten_legend_of">%1$s: was any of this portion eaten?</string>
+    <string name="plans_leftover_nothing">None, the whole portion is left</string>
+    <string name="plans_leftover_part">Some</string>
+    <string name="plans_leftover_left_legend">How much is left?</string>
+    <string name="plans_leftover_three_quarters">¾ of the portion</string>
+    <string name="plans_leftover_half">½ of the portion</string>
+    <string name="plans_leftover_quarter">¼ of the portion</string>
+    <string name="plans_leftover_by_weight">By weight</string>
+    <string name="plans_leftover_whole_weight">Whole portion (g)</string>
+    <string name="plans_leftover_left_weight">Left (g)</string>
+    <string name="plans_leftover_weight_share">That is %1$d%% of this portion, %2$s kcal.</string>
+    <string name="plans_leftover_weight_wrong">What is left must weigh less than the whole portion and more than nothing.</string>
+    <string name="plans_leftover_place_legend">Which meal: %1$s</string>
+    <string name="plans_leftover_place">%1$s: instead of “%2$s”, %3$s kcal</string>
+    <string name="plans_leftover_place_shared">This meal is shared: for the other person (%1$s) it stays as it is.</string>
+    <string name="plans_leftover_for_all">For both: you and %1$s</string>
+    <string name="plans_leftover_summary_gone">This meal leaves its day.</string>
+    <string name="plans_leftover_summary_kept">This meal stays on its day as eaten, with the part eaten: %1$s, %2$s kcal.</string>
+    <string name="plans_leftover_summary_day">The leftover: %1$s, %2$s kcal. The other meals of that day not eaten fit its target.</string>
+    <string name="plans_leftover_submit">Carry the leftover</string>
+    <string name="plans_leftover_done">The leftover is %1$s %2$s.</string>
+    <string name="plans_leftover_done_other_plan">The leftover is %1$s %2$s, in the next plan.</string>
+    <string name="plans_leftover_from_hint">No cooking: this is what was left of the %1$s %2$s.</string>
+    <string name="plans_leftover_carried_hint">The rest of this meal is eaten %1$s %2$s.</string>
+    <string name="plans_leftover_undo">Undo the move</string>
+    <string name="plans_leftover_undo_title">Undo the leftover\'s move?</string>
+    <string name="plans_leftover_undo_note">The dish that was here comes back, and the meal this was left of goes back to its day as it was before the move. The portions of both days fit their targets.</string>
+    <string name="plans_leftover_undo_for_all">Undo for both</string>
+    <string name="plans_leftover_undo_for_me">Only for me</string>
+    <string name="plans_leftover_off_no_day">No plan holds the next day.</string>
+    <string name="plans_leftover_off_skipped">The next day is skipped.</string>
+    <string name="plans_leftover_off_no_meal">The next day has no meal a leftover could take the place of.</string>
+    <string name="plans_leftover_offline">Needs a network connection.</string>
+    <string-array name="plans_leftover_meal_of">
+        <item>breakfast</item>
+        <item>second breakfast</item>
+        <item>lunch</item>
+        <item>snack</item>
+        <item>dinner</item>
+    </string-array>
     <string name="plans_shared_eaten">eaten</string>
     <string name="plans_cook_apart">Cook apart</string>
     <string name="plans_eaten_together">Eaten by both</string>

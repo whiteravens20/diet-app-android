@@ -1900,6 +1900,51 @@
     <string name="plans_portion_you">Ty</string>
     <string name="plans_shared_chip">Wspólne</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
+    <!-- What is left of a meal, carried to a meal of the next day. -->
+    <string name="plans_leftover_action">Resztka na następny dzień…</string>
+    <string name="plans_leftover_title">Resztka na następny dzień</string>
+    <string name="plans_leftover_intro">%1$s: to, co zostało, zajmie miejsce posiłku następnego dnia. Danie jest już ugotowane, więc nie trafi na listę zakupów, a jego porcja się nie zmieni.</string>
+    <string name="plans_leftover_eaten_legend">Czy coś zjedzono?</string>
+    <string name="plans_leftover_eaten_legend_of">%1$s: czy coś zjedzono z tej porcji?</string>
+    <string name="plans_leftover_nothing">Nic, zostaje cała porcja</string>
+    <string name="plans_leftover_part">Część</string>
+    <string name="plans_leftover_left_legend">Ile zostało?</string>
+    <string name="plans_leftover_three_quarters">¾ porcji</string>
+    <string name="plans_leftover_half">½ porcji</string>
+    <string name="plans_leftover_quarter">¼ porcji</string>
+    <string name="plans_leftover_by_weight">Z wagi</string>
+    <string name="plans_leftover_whole_weight">Cała porcja (g)</string>
+    <string name="plans_leftover_left_weight">Zostało (g)</string>
+    <string name="plans_leftover_weight_share">To %1$d%% tej porcji, %2$s kcal.</string>
+    <string name="plans_leftover_weight_wrong">To, co zostało, musi ważyć mniej niż cała porcja i więcej niż zero.</string>
+    <string name="plans_leftover_place_legend">Na którą porę: %1$s</string>
+    <string name="plans_leftover_place">%1$s: zamiast „%2$s”, %3$s kcal</string>
+    <string name="plans_leftover_place_shared">Ten posiłek jest wspólny: dla drugiej osoby (%1$s) zostanie bez zmian.</string>
+    <string name="plans_leftover_for_all">Dla obu osób: Ty i %1$s</string>
+    <string name="plans_leftover_summary_gone">Ten posiłek zniknie ze swojego dnia.</string>
+    <string name="plans_leftover_summary_kept">Ten posiłek zostanie w swoim dniu jako zjedzony, ze zjedzoną częścią: %1$s, %2$s kcal.</string>
+    <string name="plans_leftover_summary_day">Resztka: %1$s, %2$s kcal. Pozostałe niezjedzone posiłki tamtego dnia dopasują się do jego celu.</string>
+    <string name="plans_leftover_submit">Przenieś resztkę</string>
+    <string name="plans_leftover_done">Resztka jest %1$s %2$s.</string>
+    <string name="plans_leftover_done_other_plan">Resztka jest %1$s %2$s, w następnym planie.</string>
+    <string name="plans_leftover_from_hint">Nie gotujesz: to resztka %1$s %2$s.</string>
+    <string name="plans_leftover_carried_hint">Reszta tego posiłku jest %1$s %2$s.</string>
+    <string name="plans_leftover_undo">Cofnij przeniesienie</string>
+    <string name="plans_leftover_undo_title">Cofnąć przeniesienie resztki?</string>
+    <string name="plans_leftover_undo_note">Wróci danie, które było tu wcześniej, a posiłek, z którego jest resztka, wróci na swój dzień taki, jak przed przeniesieniem. Porcje obu dni dopasują się do celu.</string>
+    <string name="plans_leftover_undo_for_all">Cofnij u obu osób</string>
+    <string name="plans_leftover_undo_for_me">Tylko u mnie</string>
+    <string name="plans_leftover_off_no_day">Następnego dnia nie ma w żadnym planie.</string>
+    <string name="plans_leftover_off_skipped">Następny dzień jest pominięty.</string>
+    <string name="plans_leftover_off_no_meal">Następny dzień nie ma posiłku, który resztka mogłaby zastąpić.</string>
+    <string name="plans_leftover_offline">Wymaga połączenia z siecią.</string>
+    <string-array name="plans_leftover_meal_of">
+        <item>śniadania</item>
+        <item>drugiego śniadania</item>
+        <item>obiadu</item>
+        <item>przekąski</item>
+        <item>kolacji</item>
+    </string-array>
     <string name="plans_shared_eaten">zjedzone</string>
     <string name="plans_cook_apart">Gotuj osobno</string>
     <string name="plans_eaten_together">Zjedzone u\u00A0obu osób</string>

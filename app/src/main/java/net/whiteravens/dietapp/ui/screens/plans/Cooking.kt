@@ -65,6 +65,35 @@ internal fun cookChip(meal: Meal, date: String): String? {
     }
 }
 
+/** The mark of a leftover: the day it was left on. */
+@Composable
+internal fun leftoverChip(meal: Meal): String? =
+    meal.leftover?.let { capitalised(dayWord(R.array.plans_cooking_day_from, it.date)) }
+
+/** What a leftover is, under it; or, under the meal it was left of, where its rest is eaten. */
+@Composable
+internal fun leftoverHint(meal: Meal): String? {
+    meal.leftover?.let {
+        return stringResource(
+            R.string.plans_leftover_from_hint,
+            mealWord(R.array.plans_leftover_meal_of, it.slot),
+            dayWord(R.array.plans_cooking_day_from, it.date),
+        )
+    }
+    return meal.carriedTo?.let {
+        stringResource(
+            R.string.plans_leftover_carried_hint,
+            dayWord(R.array.plans_cooking_day_on, it.date),
+            mealWord(R.array.plans_cooking_meal_on, it.slot),
+        )
+    }
+}
+
+/** When a meal of [date] at [slot] is eaten, as a sentence says it: "on Wednesday" and "for lunch". */
+@Composable
+internal fun eatenWhen(date: String, slot: String): Pair<String, String> =
+    dayWord(R.array.plans_cooking_day_on, date) to mealWord(R.array.plans_cooking_meal_on, slot)
+
 /** What the mark means. */
 @Composable
 internal fun cookHint(meal: Meal, date: String): String? {
@@ -94,15 +123,19 @@ internal fun notCookedNote(meal: Meal, date: String, today: String): String? {
 
 /** What follows for the other meal when this one leaves the cooking. Of a dish cooked for more than two, the rest are cooked once all the same. */
 @Composable
-internal fun apartNote(meal: Meal, date: String, today: String): String? {
-    val others = meal.cooking?.with.orEmpty()
+internal fun apartNote(meal: Meal, date: String, today: String): String? =
+    apartNote(meal.cookAhead, meal.cooking?.with.orEmpty(), date, today)
+
+/** What follows for the other meals of a cooking ([cookAhead], [others]) when a meal of [date] leaves it. */
+@Composable
+internal fun apartNote(cookAhead: String?, others: List<CookedPlace>, date: String, today: String): String? {
     val other = others.firstOrNull()
-    if (meal.cookAhead == null || other == null || other.eaten || other.date < today) return null
-    if (meal.cookAhead == "cooked" && others.size > 1) return null
+    if (cookAhead == null || other == null || other.eaten || other.date < today) return null
+    if (cookAhead == "cooked" && others.size > 1) return null
     val whenItIs = capitalised(
         if (other.date == date) mealWord(R.array.plans_cooking_meal_on, other.slot) else dayWord(R.array.plans_cooking_day_on, other.date),
     )
-    return stringResource(if (meal.cookAhead == "cook") R.string.plans_cooks_separately else R.string.plans_cooks_for_one, whenItIs)
+    return stringResource(if (cookAhead == "cook") R.string.plans_cooks_separately else R.string.plans_cooks_for_one, whenItIs)
 }
 
 /** A day at its shortest: "Tue", "wt.". */
@@ -157,8 +190,8 @@ internal data class PotPortions(val mine: Double, val name: String, val theirs: 
 
 internal fun mealToCook(plan: MealPlan, meal: Meal): MealToCook {
     val shown = { servings: Double -> (servings * 10).roundToInt() / 10.0 }
-    // A dish both cook in one pot takes what the pot takes: both portions of each meal it is eaten at.
-    meal.shared?.takeUnless { it.apart }?.let { shared ->
+    // A dish both cook in one pot takes what the pot takes: both portions of each meal it is eaten at. A leftover was cooked already.
+    meal.shared?.takeUnless { it.apart || meal.leftover != null }?.let { shared ->
         val cooked = mealsOfCooking(plan, meal).map { it.first }.ifEmpty { listOf(meal) }
         val mine = cooked.sumOf { it.servings }
         val theirs = cooked.sumOf { it.shared?.with?.servings ?: 0.0 }

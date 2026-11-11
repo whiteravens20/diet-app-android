@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.data.remote.LabelFigureDto
 import net.whiteravens.dietapp.data.remote.LabelLimitNoteDto
 import net.whiteravens.dietapp.data.remote.LabelLimitsDto
 import net.whiteravens.dietapp.data.remote.LabelTotalsDto
+import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.CookingChangeDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
@@ -35,6 +36,10 @@ import net.whiteravens.dietapp.data.remote.SwapPreviewDto
 import net.whiteravens.dietapp.domain.CookedPlace
 import net.whiteravens.dietapp.domain.CookingChange
 import net.whiteravens.dietapp.domain.DaySettingsWeek
+import net.whiteravens.dietapp.domain.LeftoverOf
+import net.whiteravens.dietapp.domain.LeftoverOffer
+import net.whiteravens.dietapp.domain.LeftoverOther
+import net.whiteravens.dietapp.domain.LeftoverPlace
 import net.whiteravens.dietapp.domain.MealCooking
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.CalorieTarget
@@ -61,6 +66,7 @@ import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.PlanWeek
+import net.whiteravens.dietapp.domain.Portion
 import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.Rebalance
@@ -257,8 +263,29 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
                 pot = of.pot.map(PlannedIngredientDto::toLine),
             )
         },
+        leftover = leftover?.let { LeftoverOf(it.date, it.mealType, it.undoable) },
+        carriedTo = carriedTo?.let { MealPlace(it.date, it.mealType) },
+        leftoverOffer = leftoverOffer,
     )
 }
+
+/** Where what is left of a meal can go, as the API offers it. */
+fun LeftoverOfferDto.toDomain() = LeftoverOffer(
+    planId = planId,
+    date = date,
+    portion = Portion(portion.servings, portion.calories),
+    places = places.map { place ->
+        LeftoverPlace(
+            slot = place.mealType,
+            name = place.name,
+            calories = place.calories,
+            sharedWith = place.sharedWith,
+            cookAhead = place.cookAhead,
+            cookedWith = place.cookedWith.map { CookedPlace(it.mealId, it.date, it.mealType, it.eaten) },
+        )
+    },
+    other = other?.let { LeftoverOther(it.profileName, it.eaten, Portion(it.portion.servings, it.portion.calories), it.places) },
+)
 
 fun JointPlanDto.toDomain() = JointPlan(planId = planId, profileId = profileId, profileName = profileName)
 

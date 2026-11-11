@@ -24,6 +24,7 @@ import net.whiteravens.dietapp.data.remote.LockedSlotDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
 import net.whiteravens.dietapp.data.remote.ModelApiService
+import net.whiteravens.dietapp.data.remote.PutLeftoverRequest
 import net.whiteravens.dietapp.data.remote.RebalanceRequest
 import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RegenerateRequest
@@ -49,6 +50,7 @@ import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.DayWay
 import net.whiteravens.dietapp.domain.DayWays
 import net.whiteravens.dietapp.domain.IngredientChoice
+import net.whiteravens.dietapp.domain.LeftoverOffer
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.MealPlanPage
 import net.whiteravens.dietapp.domain.OverviewDay
@@ -491,6 +493,30 @@ class MealPlanRepository @Inject constructor(
     /** Sends a meal's taking off its day, off both days where it carries the other's meal; the plan as the server then has it is kept and given back. */
     suspend fun send(change: QueuedChange.MealRemoved): Rebalanced =
         kept(apiCall(json) { api.removeMeal(change.planId, change.mealId, forAll = true.takeIf { change.also != null }) })
+
+    /** Where what is left of a meal can go, and the meals of the next day it may replace. It needs the network. */
+    suspend fun leftoverOffer(planId: String, mealId: String): LeftoverOffer =
+        apiCall(json) { api.leftoverOffer(planId, mealId) }.toDomain()
+
+    /**
+     * Puts what is left of a meal, the part [left] of its portion, in the place of the meal of the next day
+     * at [slot]; [theirLeft] where the other person's leftover goes too. It needs the network; the plan as
+     * the server then has it is kept and given back.
+     */
+    suspend fun putLeftover(planId: String, mealId: String, slot: String, left: Double, theirLeft: Double? = null): Rebalanced =
+        kept(
+            apiCall(json) {
+                api.putLeftover(
+                    planId,
+                    mealId,
+                    PutLeftoverRequest(mealType = slot, left = left, forAll = true.takeIf { theirLeft != null }, theirLeft = theirLeft),
+                )
+            },
+        )
+
+    /** Undoes a leftover not eaten, [forAll] the other person's made with it as well. It needs the network. */
+    suspend fun undoLeftover(planId: String, mealId: String, forAll: Boolean = false): Rebalanced =
+        kept(apiCall(json) { api.undoLeftover(planId, mealId, forAll = true.takeIf { forAll }) })
 
     /**
      * Says how a shared meal is cooked, in both plans: each portion [apart], or in one pot. It needs

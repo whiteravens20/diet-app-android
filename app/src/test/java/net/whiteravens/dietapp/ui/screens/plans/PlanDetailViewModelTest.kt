@@ -98,6 +98,10 @@ import retrofit2.Response
 import java.io.IOException
 import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.SharedMeal
+import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
+import net.whiteravens.dietapp.data.remote.LeftoverPlaceDto
+import net.whiteravens.dietapp.data.remote.LeftoverPortionDto
+import net.whiteravens.dietapp.data.remote.PutLeftoverRequest
 
 /**
  * A meal swapped on the plan's screen, the way the web application swaps one: a recipe is offered,
@@ -1014,5 +1018,94 @@ class PlanDetailViewModelTest {
         assertTrue(joint.withWaiting(listOf(both)).days.first().meals.none { it.id == mine.id })
         assertTrue(theirs.withWaiting(listOf(both)).days.first().meals.none { it.id == "meal-9" })
         assertTrue(theirs.withWaiting(listOf(both.copy(also = null))).days.first().meals.any { it.id == "meal-9" })
+    }
+
+    /** A plan, and where what is left of its first meal with a recipe can go: the meal at lunch of its second day, of [planId]. */
+    private fun leftoverApi(planId: String = plan.id): DietApiService = mockk<DietApiService>().also { api ->
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.leftoverOffer(plan.id, meal.id) } returns LeftoverOfferDto(
+            planId = planId,
+            date = plan.days[1].date,
+            portion = LeftoverPortionDto(1.0, 500.0),
+            places = listOf(LeftoverPlaceDto("lunch", "Soup", 600.0, cookedWith = emptyList())),
+        )
+    }
+
+    /** The meal of the first day the leftovers are of, as the screen shows it. */
+    private fun PlanDetailViewModel.shownMeal() = state.value.plan!!.days.first().meals.first { it.id == meal.id }
+
+    @Test
+    fun `what is left of a meal goes to the next day as its window says, and the plan comes back on that day`() {
+        val api = leftoverApi()
+        val sent = slot<PutLeftoverRequest>()
+        coEvery { api.putLeftover(plan.id, meal.id, capture(sent)) } returns swapped
+        val model = model(api)
+
+        model.openLeftover(model.shownMeal(), plan.days.first().date)
+        assertEquals(plan.days[1].date, model.state.value.leftoverWindow?.offer?.date)
+        model.putLeftover("lunch", 0.5)
+
+        assertEquals(PutLeftoverRequest(mealType = "lunch", left = 0.5), sent.captured)
+        assertNull(model.state.value.leftoverWindow)
+        assertEquals(PlanDetailViewModel.LeftoverWent(plan.days[1].date, "lunch", otherPlan = false), model.state.value.leftoverWent)
+        assertEquals(1, model.state.value.selectedDay)
+
+        model.leftoverWentSeen()
+
+        assertNull(model.state.value.leftoverWent)
+    }
+
+    @Test
+    fun `a leftover for both sends the other person's part, and one that went to the next plan leaves this plan on its day`() {
+        val api = leftoverApi(planId = "plan-next")
+        val sent = slot<PutLeftoverRequest>()
+        coEvery { api.putLeftover(plan.id, meal.id, capture(sent)) } returns swapped
+        val model = model(api)
+
+        model.openLeftover(model.shownMeal(), plan.days.first().date)
+        model.putLeftover("lunch", 1.0, theirLeft = 0.25)
+
+        assertEquals(PutLeftoverRequest(mealType = "lunch", left = 1.0, forAll = true, theirLeft = 0.25), sent.captured)
+        assertEquals(PlanDetailViewModel.LeftoverWent(plan.days[1].date, "lunch", otherPlan = true), model.state.value.leftoverWent)
+        assertEquals(0, model.state.value.selectedDay)
+    }
+
+    @Test
+    fun `a leftover the API refuses keeps its window, which says why, and one it cannot say where to go says that`() {
+        val api = leftoverApi()
+        coEvery { api.putLeftover(plan.id, meal.id, any()) } throws refused(409, "LEFTOVER_NO_PLACE")
+        val model = model(api)
+
+        model.openLeftover(model.shownMeal(), plan.days.first().date)
+        model.putLeftover("lunch", 1.0)
+
+        val window = model.state.value.leftoverWindow!!
+        assertEquals("LEFTOVER_NO_PLACE", (window.error as ApiException).code)
+        assertFalse(window.sending)
+
+        coEvery { api.leftoverOffer(plan.id, meal.id) } throws refused(409, "LEFTOVER_NO_DAY")
+        model.leftoverClosed()
+        model.openLeftover(model.shownMeal(), plan.days.first().date)
+
+        assertNull(model.state.value.leftoverWindow?.offer)
+        assertEquals("LEFTOVER_NO_DAY", (model.state.value.leftoverWindow?.error as ApiException).code)
+    }
+
+    @Test
+    fun `a leftover is undone as asked, for both or for one, and the question is put away`() {
+        val api = leftoverApi()
+        coEvery { api.undoLeftover(plan.id, meal.id, any()) } returns swapped
+        val model = model(api)
+
+        model.askUndoLeftover(model.shownMeal())
+        model.undoLeftover(forAll = true)
+
+        coVerify { api.undoLeftover(plan.id, meal.id, true) }
+        assertNull(model.state.value.undoingLeftover)
+
+        model.askUndoLeftover(model.shownMeal())
+        model.undoLeftover(forAll = false)
+
+        coVerify { api.undoLeftover(plan.id, meal.id, null) }
     }
 }

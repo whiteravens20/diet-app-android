@@ -15,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.SharedMeal
+import net.whiteravens.dietapp.domain.LeftoverOf
 
 /** What a meal takes to cook: its own lines, or the whole of a cooking on the meal it is cooked at. */
 class CookingTest {
@@ -120,5 +121,14 @@ class CookingTest {
         assertEquals(MealToCook(pot, 2.0, true, PotPortions(1.2, "Ewa", 0.8)), mealToCook(plan(alone), alone))
         assertEquals(MealToCook(own, 1.2, false), mealToCook(plan(apart), apart))
         assertEquals(MealToCook(pot, 4.1, true, PotPortions(2.3, "Ewa", 1.8)), mealToCook(planOf("2026-11-03" to listOf(cook), "2026-11-04" to listOf(second)), cook))
+    }
+
+    @Test
+    fun `a leftover shared by both takes what it holds, as it was cooked already`() {
+        val pot = listOf(MealLine("oats", "Oats", 260.0, "g"))
+        val shared = SharedMeal("s", apart = false, with = OtherPortion("theirs", "plan-2", "Ewa", 0.8, 240.0, eaten = false), pot = pot)
+        val leftover = meal("left", 0.6, null, null).copy(shared = shared, leftover = LeftoverOf("2026-11-03", "dinner", undoable = true))
+
+        assertEquals(MealToCook(own, 0.6, false), mealToCook(plan(leftover), leftover))
     }
 }

@@ -880,6 +880,51 @@ class PlansTest {
     }
 
     /** Puts away the card that says how a change balanced its day, where the change left one. */
+    @Test
+    fun whatIsLeftOfAMealGoesToAMealOfTheNextDayInAWindowAndComesBackByItsUndo() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId, days = 2)
+        val (dinnerId, dinner) = Instance.mealAt(account, planId, 0, "dinner")
+        val (_, lunch) = Instance.mealAt(account, planId, 1, "lunch")
+        screen.startSignedIn(account)
+        val inAWindow = hasAnyAncestor(isDialog())
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // Today's dinner: half of it is left, and it goes to tomorrow's lunch.
+        val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), dinner))
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNodeWithText(text(R.string.plans_leftover_action)).performClick()
+        screen.waitForText(text(R.string.plans_leftover_eaten_legend))
+        screen.onNode(hasText(text(R.string.plans_leftover_part)) and inAWindow).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.plans_leftover_half)) and inAWindow).performScrollTo().performClick()
+        val place = text(R.string.plans_leftover_place, text(R.string.meal_lunch), lunch, "\u0000").substringBefore("\u0000")
+        screen.onNode(hasText(place, substring = true) and inAWindow).performScrollTo().performClick()
+        screen.keepScreenshot("plans-a-leftover-window")
+        screen.onNode(hasText(text(R.string.plans_leftover_submit)) and hasClickAction()).performClick()
+        screen.waitForTheApi(20_000) { Instance.isLeftover(account, planId, 1, "lunch") && Instance.mealEaten(account, planId, dinnerId) }
+
+        // The plan says where it went and is on tomorrow, whose lunch is the leftover.
+        screen.waitForText(text(R.string.plans_leftover_done, "\u0000", "\u0000").substringBefore("\u0000"), substring = true)
+        putAwayRebalance()
+        screen.scrollToText(text(R.string.plans_leftover_from_hint, "\u0000", "\u0000").substringBefore("\u0000"), substring = true)
+        screen.keepScreenshot("plans-a-leftover")
+
+        // Undone, the dinner is whole again and tomorrow's lunch is its dish.
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNodeWithText(text(R.string.plans_leftover_undo)).performClick()
+        screen.waitForText(text(R.string.plans_leftover_undo_title))
+        screen.keepScreenshot("plans-a-leftover-undo")
+        screen.onNode(hasText(text(R.string.plans_leftover_undo)) and inAWindow).performClick()
+        screen.waitForTheApi(20_000) { !Instance.isLeftover(account, planId, 1, "lunch") && !Instance.mealEaten(account, planId, dinnerId) }
+    }
+
     private fun putAwayRebalance() {
         val dismiss = text(R.string.plans_rebalance_dismiss)
         if (screen.onAllNodesWithText(dismiss).fetchSemanticsNodes().isNotEmpty()) runCatching { screen.onNodeWithText(dismiss).performClick() }

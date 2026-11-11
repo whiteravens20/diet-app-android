@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal
+import net.whiteravens.dietapp.domain.LeftoverOffer
 import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -98,6 +99,21 @@ class PlanDetailViewModel @Inject constructor(
     data class CustomMealSent(val added: Boolean = false, val refused: Map<String, FieldRefusal> = emptyMap(), val error: Throwable? = null)
 
     /**
+     * The window that carries what is left of [meal] of [date] to the next day: where it can go once the
+     * API said ([offer]), why it could not say, and the leftover on its way.
+     */
+    data class LeftoverWindow(
+        val meal: Meal,
+        val date: String,
+        val offer: LeftoverOffer? = null,
+        val error: Throwable? = null,
+        val sending: Boolean = false,
+    )
+
+    /** Where the last leftover went: the day and time of day, and whether to the next plan. */
+    data class LeftoverWent(val date: String, val slot: String, val otherPlan: Boolean)
+
+    /**
      * A swap that can be taken back: the meal it was of, and the revision it left the plan at; and the
      * recipe a substitution made where no model worded its text, whose words can be corrected.
      */
@@ -148,6 +164,12 @@ class PlanDetailViewModel @Inject constructor(
         val setWindow: SetWindow? = null,
         /** What came of a meal of one's own sent from its window, until the window is put away. */
         val customMeal: CustomMealSent? = null,
+        /** The window that carries what is left of a meal to the next day, while it is open. */
+        val leftoverWindow: LeftoverWindow? = null,
+        /** The leftover whose undo is asked in its window, while it is open. */
+        val undoingLeftover: Meal? = null,
+        /** Where the last leftover went, until it is put away. */
+        val leftoverWent: LeftoverWent? = null,
         /** The changes of the plan that wait to be sent, in the order they were made. */
         val waiting: List<Waiting> = emptyList(),
         val error: Throwable? = null,
@@ -377,6 +399,73 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
                 .onFailure { e -> _state.update { it.copy(changing = false, error = e) } }
         }
+    }
+
+    /**
+     * Opens the window that carries what is left of [meal] of [date] to the next day, and asks the API
+     * where it can go. It needs the network.
+     */
+    fun openLeftover(meal: Meal, date: String) {
+        _state.update { it.copy(leftoverWindow = LeftoverWindow(meal, date), leftoverWent = null) }
+        viewModelScope.launch {
+            attempt { plans.leftoverOffer(planId, meal.id) }
+                .onSuccess { offer -> _state.update { s -> s.copy(leftoverWindow = s.leftoverWindow?.takeIf { it.meal.id == meal.id }?.copy(offer = offer)) } }
+                .onFailure { e -> _state.update { s -> s.copy(leftoverWindow = s.leftoverWindow?.takeIf { it.meal.id == meal.id }?.copy(error = e)) } }
+        }
+    }
+
+    /** The leftover's window put away. */
+    fun leftoverClosed() {
+        _state.update { it.copy(leftoverWindow = null) }
+    }
+
+    /**
+     * Sends the leftover as its window says it: the part [left] of the portion to the meal of the next day
+     * at [slot], [theirLeft] of the other person's where it goes too. The plan comes back on that day,
+     * where it is of this plan.
+     */
+    fun putLeftover(slot: String, left: Double, theirLeft: Double? = null) {
+        val window = _state.value.leftoverWindow ?: return
+        val offer = window.offer ?: return
+        if (window.sending) return
+        viewModelScope.launch {
+            _state.update { it.copy(leftoverWindow = window.copy(sending = true, error = null)) }
+            attempt { plans.putLeftover(planId, window.meal.id, slot, left, theirLeft) }
+                .onSuccess { changed ->
+                    val here = offer.planId == planId
+                    _state.update { s ->
+                        s.copy(
+                            plan = changed.plan,
+                            leftoverWindow = null,
+                            rebalance = null,
+                            lastSwap = null,
+                            leftoverWent = LeftoverWent(offer.date, slot, otherPlan = !here),
+                            selectedDay = changed.plan.days.indexOfFirst { it.date == offer.date }.takeIf { here && it >= 0 } ?: s.selectedDay,
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { s -> s.copy(leftoverWindow = s.leftoverWindow?.copy(sending = false, error = e)) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
+    }
+
+    /** What was said of where the last leftover went, put away. */
+    fun leftoverWentSeen() {
+        _state.update { it.copy(leftoverWent = null) }
+    }
+
+    /** Asks whether to undo the leftover [meal], or puts that question away with null. */
+    fun askUndoLeftover(meal: Meal?) {
+        _state.update { it.copy(undoingLeftover = meal) }
+    }
+
+    /** Undoes the leftover asked of, [forAll] the other person's made with it as well. It needs the network. */
+    fun undoLeftover(forAll: Boolean) {
+        val meal = _state.value.undoingLeftover ?: return
+        _state.update { it.copy(undoingLeftover = null) }
+        change(said = false) { plans.undoLeftover(planId, meal.id, forAll) }
     }
 
     /** What [mealId] shares with the other plan of a joint plan, as the plan on screen has it; null for a meal of this plan alone. */

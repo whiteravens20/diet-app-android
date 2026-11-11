@@ -296,6 +296,19 @@ object Instance {
         return SharedMealOf(meal.getString("id"), meal.getJSONObject("recipe").getString("title"), with.getString("mealId"), with.getString("planId"))
     }
 
+    /** The meal of a plan at [slot] of its day [day]: its id and its title. */
+    fun mealAt(account: Account, planId: String, day: Int, slot: String): Pair<String, String> {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(day).getJSONArray("meals")
+        val meal = (0 until meals.length()).map(meals::getJSONObject).first { it.getString("mealType") == slot }
+        return meal.getString("id") to meal.getJSONObject("recipe").getString("title")
+    }
+
+    /** Whether the meal of a plan at [slot] of its day [day] is a leftover, as the plan answers now. */
+    fun isLeftover(account: Account, planId: String, day: Int, slot: String): Boolean {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(day).getJSONArray("meals")
+        return (0 until meals.length()).map(meals::getJSONObject).any { it.getString("mealType") == slot && !it.isNull("leftover") }
+    }
+
     /** Whether a meal of a plan is marked eaten, as the plan answers now. */
     fun mealEaten(account: Account, planId: String, mealId: String): Boolean {
         val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")

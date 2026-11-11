@@ -419,6 +419,41 @@ data class Meal(
     val recipeByModel: Boolean = false,
     /** A meal of a joint plan both people eat, each a portion of their own; null for a meal of this plan alone. */
     val shared: SharedMeal? = null,
+    /** A leftover: what was left of another meal, eaten here; null for every other meal. */
+    val leftover: LeftoverOf? = null,
+    /** Where what was left of this meal is eaten; null where nothing of it was carried. */
+    val carriedTo: MealPlace? = null,
+    /** Whether what is left of it can go to the next day: null where not at all; `ok`, `no_day`, `skipped` or `no_meal`. */
+    val leftoverOffer: String? = null,
+)
+
+/** The meal a leftover was left of, by its day and time of day; [undoable] while the leftover is not eaten. */
+data class LeftoverOf(val date: String, val slot: String, val undoable: Boolean)
+
+/** A portion of a meal: its servings as eaten and its kcal. */
+data class Portion(val servings: Double, val calories: Double)
+
+/** A meal of the next day a leftover may take the place of. */
+data class LeftoverPlace(
+    val slot: String,
+    val name: String,
+    val calories: Double,
+    /** The other person of a joint plan the meal is shared with: given a leftover for one, it stays theirs alone. */
+    val sharedWith: String?,
+    val cookAhead: String?,
+    val cookedWith: List<CookedPlace>,
+)
+
+/** Of a shared meal, the other person's side of a leftover for both: whether they marked theirs eaten, and the times of day they can take one. */
+data class LeftoverOther(val profileName: String, val eaten: Boolean, val portion: Portion, val places: List<String>)
+
+/** Where what is left of a meal can go: the next day, of [planId], and the meals of it a leftover may replace. */
+data class LeftoverOffer(
+    val planId: String,
+    val date: String,
+    val portion: Portion,
+    val places: List<LeftoverPlace>,
+    val other: LeftoverOther?,
 )
 
 /** The other person's meal of a shared meal, as their plan holds it: its servings as eaten and its kcal. */

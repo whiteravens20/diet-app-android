@@ -39,7 +39,8 @@ import kotlin.math.roundToInt
  * What the last change came to: what the [day] holds now, what was sized again and whether the day
  * is still off its target, and what the week could not take back; the way back, a swap's whole
  * ([swapRevision]) or the portions alone, the rest of the week where the day is off its target, and
- * away. It goes by itself after a while, later where the phone is set to give more time to act.
+ * away. A change that says what it did in a sentence of its own ([said]) says that first. It goes by
+ * itself after a while, later where the phone is set to give more time to act.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -56,12 +57,13 @@ internal fun RebalanceCard(
     onUndoSwap: () -> Unit = {},
     reword: String? = null,
     onReword: (String) -> Unit = {},
+    said: String? = null,
 ) {
     val dismiss by rememberUpdatedState(onDismiss)
     val timeout = LocalAccessibilityManager.current
         ?.calculateRecommendedTimeoutMillis(REBALANCE_SHOWN_MILLIS, containsIcons = false, containsText = true, containsControls = true)
         ?: REBALANCE_SHOWN_MILLIS
-    LaunchedEffect(rebalance, swapRevision, notice) {
+    LaunchedEffect(rebalance, swapRevision, notice, said) {
         delay(timeout)
         dismiss()
     }
@@ -76,6 +78,7 @@ internal fun RebalanceCard(
         modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            said?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             // Why the engine's plain replacement stands where a model was asked to reword the text.
             notice?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
             if (rebalance != null || swap) ChangeSaid(rebalance, swap, day, spreadable)

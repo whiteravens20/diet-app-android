@@ -193,6 +193,13 @@ fun PlanDetailScreen(
         }
     }
 
+    state.leftoverWindow?.let { window ->
+        LeftoverDialog(window = window, onSend = viewModel::putLeftover, onDismiss = viewModel::leftoverClosed)
+    }
+    state.undoingLeftover?.let { meal ->
+        UndoLeftoverDialog(meal = meal, onUndo = viewModel::undoLeftover, onDismiss = { viewModel.askUndoLeftover(null) })
+    }
+
     addingTo?.let { date ->
         // The window stays until the meal is added: a refusal is said by its fields.
         LaunchedEffect(state.customMeal?.added) {
@@ -412,7 +419,12 @@ fun PlanDetailScreen(
     // The card of a rebalance stands over the end of the list: the list ends that much higher, so
     // that nothing of it stays under the card.
     var cardHeight by remember { mutableIntStateOf(0) }
-    val shownCard = state.rebalance != null || state.lastSwap != null || state.notice != null
+    val shownCard = state.rebalance != null || state.lastSwap != null || state.notice != null || state.leftoverWent != null
+    // Where the last leftover went, said by the card at the foot of the plan.
+    val leftoverNotice = state.leftoverWent?.let { went ->
+        val (day, meal) = eatenWhen(went.date, went.slot)
+        stringResource(if (went.otherPlan) R.string.plans_leftover_done_other_plan else R.string.plans_leftover_done, day, meal)
+    }
     val underCard = if (shownCard) with(LocalDensity.current) { cardHeight.toDp() + 16.dp } else 0.dp
     Box(Modifier.fillMaxSize()) {
         PullToRead(state.pulled, viewModel::pull) {
@@ -608,6 +620,8 @@ fun PlanDetailScreen(
                             onSubstitute = { substitutingIn = meal.id },
                             onRemove = { removing = meal.id },
                             onOpen = { openMealId = meal.id },
+                            onLeftover = { viewModel.openLeftover(meal, day.date) },
+                            onUndoLeftover = { viewModel.askUndoLeftover(meal) },
                         )
                     }
                     // What the diary holds for this meal of the day follows its last meal of that kind.
@@ -650,7 +664,11 @@ fun PlanDetailScreen(
                 reword = state.lastSwap?.reword,
                 onReword = viewModel::reword,
                 onRest = { viewModel.spread() },
-                onDismiss = viewModel::dismissRebalance,
+                said = leftoverNotice,
+                onDismiss = {
+                    viewModel.dismissRebalance()
+                    viewModel.leftoverWentSeen()
+                },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
@@ -1101,6 +1119,8 @@ private fun MealCard(
     onOpen: () -> Unit,
     onEatenTogether: () -> Unit = {},
     onSetApart: (Boolean) -> Unit = {},
+    onLeftover: () -> Unit = {},
+    onUndoLeftover: () -> Unit = {},
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
     AppCard(onClick = onOpen) {
@@ -1123,11 +1143,13 @@ private fun MealCard(
                     if (meal.disliked.isNotEmpty()) LabelChip(stringResource(R.string.plans_disliked))
                     if (meal.outsideLimits.isNotEmpty()) CautionChip(stringResource(R.string.plans_outside_limit_chip))
                     if (meal.onlyRecipe) LabelChip(stringResource(R.string.plans_only_recipe_chip))
-                    // A small difference is the sizing of an ordinary day, and says nothing to the reader.
-                    if (abs(meal.quantityScale - 1.0) >= AUTO_BALANCED_FROM) {
+                    // A small difference is the sizing of an ordinary day, and says nothing to the reader; a leftover and the meal it
+                    // was left of are parts of a portion, not resized.
+                    if (abs(meal.quantityScale - 1.0) >= AUTO_BALANCED_FROM && meal.leftover == null && meal.carriedTo == null) {
                         PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
                     }
                     cookChip(meal, date)?.let { PlainChip(it) }
+                    leftoverChip(meal)?.let { PlainChip(it) }
                     if (meal.shared != null) PlainChip(stringResource(R.string.plans_shared_chip))
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                     if (waiting) WaitingMark()
@@ -1146,13 +1168,28 @@ private fun MealCard(
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
+                leftoverHint(meal)?.let { Hint(it) }
                 meal.shared?.let { shared -> SharedPortion(meal, shared, date, today, readOnly, busy, added, onEatenTogether, onSetApart) }
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                // Without a network a meal is only taken off its day.
-                MealChanges(meal, parted, date, busy, aiOn, canSwap = !readOnly && changeable && !meal.eaten && !meal.custom, onChange, onPickFavorite, onSubstitute, onRemove)
+                // Without a network a meal is only taken off its day; a leftover is cooked already, and gets no other dish.
+                MealChanges(
+                    meal,
+                    parted,
+                    date,
+                    busy,
+                    aiOn,
+                    canSwap = !readOnly && changeable && !meal.eaten && !meal.custom && meal.leftover == null,
+                    readOnly = readOnly,
+                    onChange = onChange,
+                    onPickFavorite = onPickFavorite,
+                    onSubstitute = onSubstitute,
+                    onRemove = onRemove,
+                    onLeftover = onLeftover,
+                    onUndoLeftover = onUndoLeftover,
+                )
             }
         }
     }
@@ -1183,8 +1220,10 @@ private fun SharedPortion(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 4.dp),
     )
-    // How it is cooked is the same in both plans, and is said to the server at once.
-    CheckRow(label = stringResource(R.string.plans_cook_apart), checked = shared.apart, enabled = !readOnly && !busy, onChange = onSetApart)
+    // How it is cooked is the same in both plans, and is said to the server at once; a leftover is cooked already.
+    if (meal.leftover == null) {
+        CheckRow(label = stringResource(R.string.plans_cook_apart), checked = shared.apart, enabled = !readOnly && !busy, onChange = onSetApart)
+    }
     if (!meal.eaten && !other.eaten && date <= today && !added) {
         val named = stringResource(R.string.plans_action_for, stringResource(R.string.plans_eaten_together), mealName(meal))
         TextButton(onClick = onEatenTogether, enabled = !busy, modifier = Modifier.semantics { contentDescription = named }) {
@@ -1391,10 +1430,13 @@ private fun MealChanges(
     busy: Boolean,
     aiOn: Boolean,
     canSwap: Boolean,
+    readOnly: Boolean,
     onChange: (SwapAsk) -> Unit,
     onPickFavorite: () -> Unit,
     onSubstitute: () -> Unit,
     onRemove: () -> Unit,
+    onLeftover: () -> Unit,
+    onUndoLeftover: () -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
     Box {
@@ -1426,6 +1468,25 @@ private fun MealChanges(
                 ) { pick { onChange(SwapAsk("ai")) } }
                 Change(stringResource(R.string.plans_swap_fav_ingr), stringResource(R.string.plans_tooltip_swap_by_fav)) { pick { onChange(SwapAsk("favorite_ingredients")) } }
                 Change("${stringResource(R.string.plans_substitute_ingr)} ⇄", stringResource(R.string.plans_tooltip_substitute)) { pick(onSubstitute) }
+            }
+            // What is left of a meal of today or yesterday goes to the next day; why it cannot is said under it.
+            meal.leftoverOffer?.let { offer ->
+                Change(
+                    stringResource(R.string.plans_leftover_action),
+                    when {
+                        readOnly -> stringResource(R.string.plans_leftover_offline)
+                        offer == "ok" -> null
+                        else -> stringResource(leftoverOff(offer))
+                    },
+                    enabled = !readOnly && offer == "ok",
+                ) { pick(onLeftover) }
+            }
+            if (meal.leftover?.undoable == true) {
+                Change(
+                    stringResource(R.string.plans_leftover_undo),
+                    stringResource(R.string.plans_leftover_offline).takeIf { readOnly },
+                    enabled = !readOnly,
+                ) { pick(onUndoLeftover) }
             }
             Change(stringResource(R.string.plans_remove), null) { pick(onRemove) }
         }
@@ -1625,8 +1686,8 @@ private fun MealDialog(
     ownName: String = "",
 ) {
     val today = LocalDate.now().toString()
-    // A pot both people cook is split into both portions of each meal it is eaten at.
-    val pot = meal.shared?.takeUnless { it.apart } != null
+    // A pot both people cook is split into both portions of each meal it is eaten at; a leftover is in its containers already.
+    val pot = meal.shared?.takeUnless { it.apart } != null && meal.leftover == null
     val split = cooking.ifEmpty { listOf(meal to date).takeIf { pot }.orEmpty() }
     // The dish cooked at this meal being split into the meals of its cooking, while its window is open.
     var splitting by rememberSaveable { mutableStateOf(false) }
@@ -1647,6 +1708,7 @@ private fun MealDialog(
                     if (meal.custom) LabelChip(stringResource(R.string.plans_custom_chip))
                     if (meal.estimated) LabelChip(stringResource(R.string.plans_estimated_chip))
                     cookChip(meal, date)?.let { PlainChip(it) }
+                    leftoverChip(meal)?.let { PlainChip(it) }
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -1661,6 +1723,7 @@ private fun MealDialog(
                     TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
                 }
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
+                leftoverHint(meal)?.let { Hint(it) }
                 if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))
                 // A meal of a recipe is sent as the window shows it: this meal's amounts, or those of the whole cooking.
                 if (meal.recipeId != null && toCook.lines.isNotEmpty()) {

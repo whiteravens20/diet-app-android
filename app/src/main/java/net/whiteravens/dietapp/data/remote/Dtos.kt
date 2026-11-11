@@ -1141,7 +1141,23 @@ data class PlannedMealDto(
      * other plan, each with a portion of their own. Null for a meal of this plan alone.
      */
     val shared: SharedMealOfDto? = null,
+    /**
+     * A leftover: what was left of the meal at the place [LeftoverOfDto] names, eaten here in the place of
+     * the dish planned; null for every other meal.
+     */
+    val leftover: LeftoverOfDto? = null,
+    /** Where what was left of this meal is eaten, a leftover; null where nothing of it was carried. */
+    val carriedTo: MealPlaceDto? = null,
+    /**
+     * Whether what is left of this meal can go to a meal of the next day: null where it cannot at all;
+     * `ok`, or why the next day cannot take it: `no_day` | `skipped` | `no_meal`.
+     */
+    val leftoverOffer: String? = null,
 )
+
+/** The meal a leftover was left of, by its day and time of day; [undoable] while the leftover is not eaten. */
+@Serializable
+data class LeftoverOfDto(val date: String, val mealType: String, val undoable: Boolean)
 
 /** The other person's meal of a shared meal, as their plan holds it; [servings] as eaten. */
 @Serializable
@@ -1890,6 +1906,56 @@ data class SetMealEatenRequest(
 /** PATCH `/meal-plans/:id/shared-meals/:sharedMealId`: a shared meal cooked [apart], each portion on its own, or in one pot. */
 @Serializable
 data class SetSharedMealRequest(val apart: Boolean)
+
+/** A portion of a meal: its servings as eaten and its kcal. */
+@Serializable
+data class LeftoverPortionDto(val servings: Double, val calories: Double)
+
+/**
+ * A meal of the next day a leftover may take the place of: what it holds now, the other person of a
+ * joint plan it is shared with ([sharedWith]), and its cooking ahead.
+ */
+@Serializable
+data class LeftoverPlaceDto(
+    val mealType: String,
+    val name: String,
+    val calories: Double,
+    val sharedWith: String? = null,
+    val cookAhead: String? = null,
+    val cookedWith: List<CookedPlaceDto>,
+)
+
+/** Of a shared meal, the other person's side of a leftover for both. */
+@Serializable
+data class LeftoverOtherDto(
+    val profileName: String,
+    val eaten: Boolean,
+    val portion: LeftoverPortionDto,
+    val places: List<String>,
+)
+
+/** GET `/meal-plans/:id/meals/:mealId/leftover`: where what is left of a meal can go. Nothing is written. */
+@Serializable
+data class LeftoverOfferDto(
+    val planId: String,
+    val date: String,
+    val portion: LeftoverPortionDto,
+    val places: List<LeftoverPlaceDto>,
+    val other: LeftoverOtherDto? = null,
+)
+
+/**
+ * POST `/meal-plans/:id/meals/:mealId/leftover`: what is left of a meal, the part [left] of its portion
+ * (1 where nothing was eaten), to the meal of the next day at [mealType]; [forAll] the other person's too,
+ * of which [theirLeft] is left.
+ */
+@Serializable
+data class PutLeftoverRequest(
+    val mealType: String,
+    val left: Double,
+    val forAll: Boolean? = null,
+    val theirLeft: Double? = null,
+)
 
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
 @Serializable
