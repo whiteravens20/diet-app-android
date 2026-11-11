@@ -190,7 +190,7 @@ class RecipeRepositoryTest {
         server.enqueue(answer("own-recipe-updated"))
         val recipes = repository()
 
-        val preview = runBlocking { recipes.preview(2, pancakes.lines) }
+        val preview = runBlocking { recipes.preview(2, pancakes.lines, "Oat pancakes") }
         val written = runBlocking { recipes.write(pancakes) }
         val edited = runBlocking { recipes.edit(written.id, pancakes.copy(servings = 3)) }
 
@@ -199,7 +199,7 @@ class RecipeRepositoryTest {
         assertEquals("/api/recipes/preview", asked.path)
         assertEquals(
             """{"servings":2,"ingredients":[{"ingredientId":"$OATS","quantity":80.0,"unit":"g"},{"ingredientId":"$MILK","quantity":300.0,"unit":"ml"},""" +
-                """{"ingredientId":"$EGG","quantity":2.0,"unit":"piece"}]}""",
+                """{"ingredientId":"$EGG","quantity":2.0,"unit":"piece"}],"title":"Oat pancakes"}""",
             asked.body.readUtf8(),
         )
         assertEquals(325.0, preview.perServing.calories, 0.0)

@@ -17,6 +17,7 @@ import net.whiteravens.dietapp.data.remote.OwnRecipeRequest
 import net.whiteravens.dietapp.data.remote.RecipeProblemsDto
 import net.whiteravens.dietapp.data.remote.RecipeTextRequest
 import net.whiteravens.dietapp.data.remote.apiCall
+import net.whiteravens.dietapp.domain.DishTraits
 import net.whiteravens.dietapp.domain.LineIngredient
 import net.whiteravens.dietapp.domain.OwnRecipe
 import net.whiteravens.dietapp.domain.OwnRecipeLine
@@ -101,12 +102,19 @@ class RecipeRepository @Inject constructor(
         apiCall(json) { api.ingredients(search = search) }.map { it.toLine() }
 
     /**
-     * What a serving of [servings] of [lines] would hold, with the allergens and the diets: the
-     * notes say nothing of it, so they are not sent.
+     * What a serving of [servings] of [lines] would hold, with the allergens and the diets, and the
+     * traits the lines and [title] suggest: the notes say nothing of it, so they are not sent.
      */
-    suspend fun preview(servings: Int, lines: List<OwnRecipeLine>): RecipePreview {
-        val answer = apiCall(json) { api.previewOwnRecipe(OwnRecipePreviewRequest(servings, lines.map { it.copy(note = null).toDto() })) }
-        return RecipePreview(answer.nutritionPerServing.toDomain(), answer.allergens, answer.dietTags)
+    suspend fun preview(servings: Int, lines: List<OwnRecipeLine>, title: String): RecipePreview {
+        val answer = apiCall(json) {
+            api.previewOwnRecipe(OwnRecipePreviewRequest(servings, lines.map { it.copy(note = null).toDto() }, title))
+        }
+        return RecipePreview(
+            answer.nutritionPerServing.toDomain(),
+            answer.allergens,
+            answer.dietTags,
+            answer.traits?.let { DishTraits(it.taste, it.form, it.starchBase) },
+        )
     }
 
     /** Writes [recipe] as one of the account's own, in the language of the app's texts; answers it as it is kept. */
@@ -139,6 +147,9 @@ class RecipeRepository @Inject constructor(
             difficulty = recipe.difficulty,
             cuisine = recipe.cuisine,
             lines = recipe.ingredients.map { OwnRecipeLine(it.ingredientId, it.quantity, it.unit, it.note) },
+            taste = recipe.traits?.taste,
+            form = recipe.traits?.form,
+            starchBase = recipe.traits?.starchBase,
         )
         val ingredients = recipe.ingredients.map { line ->
             found[line.ingredientId]?.toLine() ?: LineIngredient(line.ingredientId, line.name, listOf(line.unit), PIECE)
@@ -185,4 +196,7 @@ private fun OwnRecipe.toDto() = OwnRecipeRequest(
     difficulty = difficulty,
     ingredients = lines.map { it.toDto() },
     cuisine = cuisine,
+    taste = taste,
+    form = form,
+    starchBase = starchBase,
 )

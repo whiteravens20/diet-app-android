@@ -31,13 +31,26 @@ data class OwnRecipe(
     val difficulty: String,
     val cuisine: String?,
     val lines: List<OwnRecipeLine>,
+    /** What the dish is, as kept or chosen: its taste, form and starch base; each null is read as proposed. */
+    val taste: String? = null,
+    val form: String? = null,
+    val starchBase: String? = null,
 )
+
+/** A dish's taste (`savoury` | `sweet`), form and starch base, as set on it or proposed from its ingredients and title. */
+data class DishTraits(val taste: String, val form: String, val starchBase: String)
 
 /** A recipe of one's own as its form starts on it: the recipe as it is kept, and the ingredient of each of its lines, in their order. */
 data class RecipeToEdit(val recipe: OwnRecipe, val ingredients: List<LineIngredient>, val fromSwap: Boolean = false)
 
 /** What a serving of a recipe being written would hold, its allergens and the diets it fits. */
-data class RecipePreview(val perServing: Nutrition, val allergens: List<String>, val dietTags: List<String>)
+data class RecipePreview(
+    val perServing: Nutrition,
+    val allergens: List<String>,
+    val dietTags: List<String>,
+    /** The traits the ingredients and the title suggest; null from an instance that does not propose them. */
+    val traits: DishTraits? = null,
+)
 
 /** A rule of every recipe that a recipe would break, where it would (`titles.en`, `steps.en[3]`, `ingredients[0].quantity`). */
 data class RecipeProblem(val path: String, val rule: String)

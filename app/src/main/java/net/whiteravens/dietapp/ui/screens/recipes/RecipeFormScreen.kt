@@ -55,6 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DIFFICULTIES
+import net.whiteravens.dietapp.domain.DishTraits
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.ui.common.Bound
@@ -128,7 +129,7 @@ fun RecipeFormScreen(
 
             else -> {
                 val marks = state.marks
-                AboutCard(state.form, marks, viewModel::edit)
+                AboutCard(state.form, marks, viewModel::edit, proposed = state.preview?.traits)
                 LinesCard(state, marks, viewModel)
                 StepsCard(state.form, marks, viewModel::edit)
                 ServingCard(state)
@@ -144,9 +145,12 @@ fun RecipeFormScreen(
     }
 }
 
-/** What the recipe is called and what it is, the meals it suits, its servings and times, how hard it is and its kitchen. */
+/**
+ * What the recipe is called and what it is, the meals it suits, its servings and times, how hard it is, its kitchen,
+ * and what the dish is: its taste, form and starch base, as [proposed] from the title and the ingredients until chosen.
+ */
 @Composable
-private fun AboutCard(form: RecipeForm, marks: RecipeMarks, onEdit: RecipeEdit) {
+private fun AboutCard(form: RecipeForm, marks: RecipeMarks, onEdit: RecipeEdit, proposed: DishTraits?) {
     val refused = marks.refusals.fields
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -197,9 +201,59 @@ private fun AboutCard(form: RecipeForm, marks: RecipeMarks, onEdit: RecipeEdit) 
                 optionLabel = { cuisine -> if (cuisine == null) stringResource(R.string.own_recipe_cuisine_none) else cuisineLabel(cuisine) },
                 onSelect = { chosen -> onEdit { it.copy(cuisine = chosen) } },
             )
+            TraitsFields(form, proposed, onEdit)
         }
     }
 }
+
+/** The dish's taste, form and starch base: what the writer chose, else what the preview proposes, else none yet. */
+@Composable
+private fun TraitsFields(form: RecipeForm, proposed: DishTraits?, onEdit: RecipeEdit) {
+    val (taste, shape, base) = form.traits(proposed)
+    Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.own_recipe_traits_legend), style = MaterialTheme.typography.bodyMedium)
+        Hint(stringResource(R.string.own_recipe_traits_hint))
+    }
+    TraitField(stringResource(R.string.own_recipe_field_taste), TASTES, taste) { chosen -> onEdit { it.copy(taste = chosen) } }
+    TraitField(stringResource(R.string.own_recipe_field_form), FORMS, shape) { chosen -> onEdit { it.copy(form = chosen) } }
+    TraitField(stringResource(R.string.own_recipe_field_starch_base), STARCH_BASES, base) { chosen -> onEdit { it.copy(starchBase = chosen) } }
+}
+
+/** One trait: its [values], the one [shown], and before there is any, a word that it comes once there are ingredients. */
+@Composable
+private fun TraitField(label: String, values: List<String>, shown: String?, onChoose: (String) -> Unit) {
+    ChoiceField(
+        label = label,
+        options = if (shown == null) listOf<String?>(null) + values else values,
+        selected = shown,
+        optionLabel = { value -> if (value == null) stringResource(R.string.own_recipe_trait_waiting) else traitLabel(value) },
+        onSelect = { chosen -> chosen?.let(onChoose) },
+    )
+}
+
+private val TASTES = listOf("savoury", "sweet")
+private val FORMS = listOf("plate", "soup", "salad", "sandwich", "porridge_dessert")
+private val STARCH_BASES = listOf("none", "rice", "pasta", "potatoes", "groats", "bread")
+
+/** A trait's value in words. */
+@Composable
+private fun traitLabel(value: String): String = stringResource(
+    when (value) {
+        "savoury" -> R.string.recipe_taste_savoury
+        "sweet" -> R.string.recipe_taste_sweet
+        "plate" -> R.string.recipe_form_plate
+        "soup" -> R.string.recipe_form_soup
+        "salad" -> R.string.recipe_form_salad
+        "sandwich" -> R.string.recipe_form_sandwich
+        "porridge_dessert" -> R.string.recipe_form_porridge_dessert
+        "rice" -> R.string.starch_base_rice
+        "pasta" -> R.string.starch_base_pasta
+        "potatoes" -> R.string.starch_base_potatoes
+        "groats" -> R.string.starch_base_groats
+        "bread" -> R.string.starch_base_bread
+        else -> R.string.starch_base_none
+    },
+)
 
 /** The meals the recipe suits, as many as fit it, in the order of a day; and why the API refused them. */
 @OptIn(ExperimentalLayoutApi::class)

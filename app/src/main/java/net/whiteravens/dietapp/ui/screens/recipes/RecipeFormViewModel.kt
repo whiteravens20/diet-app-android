@@ -148,7 +148,8 @@ class RecipeFormViewModel @Inject constructor(
         // A recipe edited that could not be read has no form to save over it.
         if (current.saving || current.loading || current.loadError != null) return
         val sent = current.form
-        val recipe = sent.recipe()
+        // The traits not chosen go as the preview proposes them.
+        val recipe = sent.recipe(current.preview?.traits)
         _state.update { it.copy(showProblems = true, error = null, yours = null) }
         if (recipe == null) return
         _state.update { it.copy(saving = true) }
@@ -192,7 +193,7 @@ class RecipeFormViewModel @Inject constructor(
                         return@collectLatest
                     }
                     val asked = _state.value.form
-                    attempt { recipes.preview(ask.servings, ask.lines) }
+                    attempt { recipes.preview(ask.servings, ask.lines, ask.title) }
                         .onSuccess { preview ->
                             _state.update { if (it.form.previewAsk() != ask) it else it.copy(preview = preview, previewFailed = null, previewRefusals = RecipeRefusals()) }
                         }

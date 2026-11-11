@@ -981,6 +981,17 @@ data class RecipeDto(
      * one the instance's model wrote, by itself as it was written.
      */
     val submitted: Boolean = false,
+    /** What the dish is: as set on it, or as its ingredients and title suggest; null from an instance that does not say. */
+    val traits: DishTraitsDto? = null,
+)
+
+/** A dish's taste (`savoury` | `sweet`), form (`plate` | `soup` | `salad` | `sandwich` | `porridge_dessert`) and starch base. */
+@Serializable
+data class DishTraitsDto(
+    val taste: String,
+    val form: String,
+    /** `none` | `rice` | `pasta` | `potatoes` | `groats` | `bread`. */
+    val starchBase: String,
 )
 
 /**
@@ -1021,7 +1032,12 @@ data class OwnRecipeLineDto(
 
 /** POST `/recipes/preview`: what a serving of a recipe being written would hold. */
 @Serializable
-data class OwnRecipePreviewRequest(val servings: Int, val ingredients: List<OwnRecipeLineDto>)
+data class OwnRecipePreviewRequest(
+    val servings: Int,
+    val ingredients: List<OwnRecipeLineDto>,
+    /** The title as written so far, which the dish's traits are proposed from with the ingredients. */
+    val title: String = "",
+)
 
 /** What a serving of a recipe being written would hold, its allergens and the diets it fits, as the engine works them out. */
 @Serializable
@@ -1030,6 +1046,8 @@ data class OwnRecipePreviewDto(
     val allergens: List<String>,
     val dietTags: List<String>,
     val labelPerServing: LabelTotalsDto? = null,
+    /** The traits the ingredients and the title suggest; null from an instance that does not propose them. */
+    val traits: DishTraitsDto? = null,
 )
 
 /**
@@ -1050,6 +1068,10 @@ data class OwnRecipeRequest(
     val ingredients: List<OwnRecipeLineDto>,
     /** The kitchen the recipe belongs to; none where it belongs to none. */
     val cuisine: String? = null,
+    /** What the dish is, as the writer chose or left the proposal; each null is read as proposed. */
+    val taste: String? = null,
+    val form: String? = null,
+    val starchBase: String? = null,
 )
 
 /** The details of `RECIPE_INVALID`: each rule the recipe would break, by its place. */

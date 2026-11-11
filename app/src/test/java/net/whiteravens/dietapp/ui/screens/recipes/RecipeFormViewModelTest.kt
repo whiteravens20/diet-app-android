@@ -62,7 +62,7 @@ class RecipeFormViewModelTest {
     private val recipes = mockk<RecipeRepository>().also {
         every { it.problemsOf(any()) } answers { reading.problemsOf(firstArg()) }
         every { it.alreadyYours(any()) } answers { reading.alreadyYours(firstArg()) }
-        coEvery { it.preview(any(), any()) } returns serving
+        coEvery { it.preview(any(), any(), any()) } returns serving
     }
 
     private fun model(recipeId: String? = null) =
@@ -107,11 +107,11 @@ class RecipeFormViewModelTest {
 
         model.fill()
         advanceTimeBy(RecipeFormViewModel.PREVIEW_DELAY_MS / 2)
-        coVerify(exactly = 0) { recipes.preview(any(), any()) }
+        coVerify(exactly = 0) { recipes.preview(any(), any(), any()) }
         advanceTimeBy(RecipeFormViewModel.PREVIEW_DELAY_MS)
         runCurrent()
 
-        coVerify(exactly = 1) { recipes.preview(1, listOf(OwnRecipeLine(OATS, 80.0, "g"), OwnRecipeLine(MILK, 300.0, "ml"))) }
+        coVerify(exactly = 1) { recipes.preview(1, listOf(OwnRecipeLine(OATS, 80.0, "g"), OwnRecipeLine(MILK, 300.0, "ml")), "Oat pancakes") }
         assertSame(serving, model.state.value.preview)
 
         // A note says nothing of a serving; the servings do.
@@ -121,8 +121,19 @@ class RecipeFormViewModelTest {
         advanceTimeBy(1_000)
         runCurrent()
 
-        coVerify(exactly = 2) { recipes.preview(any(), any()) }
-        coVerify(exactly = 1) { recipes.preview(2, any()) }
+        coVerify(exactly = 2) { recipes.preview(any(), any(), any()) }
+        coVerify(exactly = 1) { recipes.preview(2, any(), "Oat pancakes") }
+
+        // The dish's traits are proposed from the title too: a new title is asked about, a space after it is not.
+        model.edit { it.copy(title = "Oat pancakes ") }
+        advanceTimeBy(1_000)
+        runCurrent()
+        coVerify(exactly = 2) { recipes.preview(any(), any(), any()) }
+        model.edit { it.copy(title = "Oat and banana pancakes") }
+        advanceTimeBy(1_000)
+        runCurrent()
+        coVerify(exactly = 3) { recipes.preview(any(), any(), any()) }
+        coVerify(exactly = 1) { recipes.preview(2, any(), "Oat and banana pancakes") }
     }
 
     @Test
@@ -134,13 +145,13 @@ class RecipeFormViewModelTest {
         advanceTimeBy(1_000)
         runCurrent()
 
-        coVerify(exactly = 0) { recipes.preview(any(), any()) }
+        coVerify(exactly = 0) { recipes.preview(any(), any(), any()) }
         assertNull(model.state.value.preview)
     }
 
     @Test
     fun `the fields a serving is refused for are marked, and a mark goes when its field changes`() = runTest(main) {
-        coEvery { recipes.preview(any(), any()) } throws refusal("own-recipe-preview-refused")
+        coEvery { recipes.preview(any(), any(), any()) } throws refusal("own-recipe-preview-refused")
         val model = model()
         runCurrent()
         model.fill()
@@ -164,7 +175,7 @@ class RecipeFormViewModelTest {
     @Test
     fun `a serving that cannot be asked about says why`() = runTest(main) {
         val offline = IOException("no answer")
-        coEvery { recipes.preview(any(), any()) } throws offline
+        coEvery { recipes.preview(any(), any(), any()) } throws offline
         val model = model()
         runCurrent()
         model.fill()

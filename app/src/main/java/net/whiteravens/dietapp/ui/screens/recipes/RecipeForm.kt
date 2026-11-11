@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.recipes
 
+import net.whiteravens.dietapp.domain.DishTraits
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LineIngredient
 import net.whiteravens.dietapp.domain.OwnRecipe
@@ -39,8 +40,8 @@ data class FormLine(
 /** A step of the form, kept by [key], so that what is said of it follows it when it is moved. */
 data class FormStep(val key: Int, val text: String = "")
 
-/** What a serving is asked about: [servings] of [lines], their notes left out. */
-data class PreviewAsk(val servings: Int, val lines: List<OwnRecipeLine>)
+/** What a serving is asked about: [servings] of [lines], their notes left out, and the [title] the traits are proposed from. */
+data class PreviewAsk(val servings: Int, val lines: List<OwnRecipeLine>, val title: String)
 
 /**
  * A recipe of one's own as its form is filled in, the numbers as they are typed. What the API takes
@@ -55,6 +56,10 @@ data class RecipeForm(
     val cookMinutes: String = "0",
     val difficulty: String = "easy",
     val cuisine: String? = null,
+    /** The traits of the dish the writer chose; each not chosen follows what the preview proposes. */
+    val taste: String? = null,
+    val form: String? = null,
+    val starchBase: String? = null,
     val lines: List<FormLine> = emptyList(),
     val steps: List<FormStep> = listOf(FormStep(0)),
     /** The key the next line or step is given. */
@@ -78,11 +83,18 @@ data class RecipeForm(
         if (lines.isEmpty()) return null
         val portions = servings.whole() ?: return null
         val sent = sentLines() ?: return null
-        return PreviewAsk(portions, sent.map { it.copy(note = null) })
+        return PreviewAsk(portions, sent.map { it.copy(note = null) }, title.trim())
     }
 
-    /** The recipe to send, every step as it is typed, or null while a field holds no number where one is asked for. */
-    fun recipe(): OwnRecipe? = OwnRecipe(
+    /** The traits shown: those chosen, else those [proposed]. */
+    fun traits(proposed: DishTraits?): Triple<String?, String?, String?> =
+        Triple(taste ?: proposed?.taste, form ?: proposed?.form, starchBase ?: proposed?.starchBase)
+
+    /**
+     * The recipe to send, every step as it is typed, its traits as shown beside what [proposed] says, or null
+     * while a field holds no number where one is asked for.
+     */
+    fun recipe(proposed: DishTraits? = null): OwnRecipe? = OwnRecipe(
         title = title,
         description = description,
         steps = steps.map { it.text },
@@ -93,6 +105,9 @@ data class RecipeForm(
         difficulty = difficulty,
         cuisine = cuisine,
         lines = sentLines() ?: return null,
+        taste = traits(proposed).first,
+        form = traits(proposed).second,
+        starchBase = traits(proposed).third,
     )
 
     /** The form with [ingredient] on a line of its own after the others, in the unit it is offered in first. */
@@ -155,6 +170,9 @@ data class RecipeForm(
                 cookMinutes = recipe.cookMinutes.toString(),
                 difficulty = recipe.difficulty,
                 cuisine = recipe.cuisine,
+                taste = recipe.taste,
+                form = recipe.form,
+                starchBase = recipe.starchBase,
                 lines = lines,
                 steps = steps,
                 nextKey = lines.size + steps.size,

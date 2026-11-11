@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.recipes
 import io.mockk.mockk
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.di.AppModule
+import net.whiteravens.dietapp.domain.DishTraits
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LineIngredient
 import net.whiteravens.dietapp.domain.OwnRecipe
@@ -71,6 +72,24 @@ class RecipeFormTest {
         assertEquals(ask, filled.copy(lines = filled.lines.map { it.copy(note = "cold") }).previewAsk())
         // What the API is to say, the form does not: a serving of nothing is asked about.
         assertEquals(0, filled.copy(servings = "0").previewAsk()!!.servings)
+        // The title is asked with it, which the dish's traits are proposed from.
+        assertEquals("Oat pancakes", ask.title)
+        assertEquals("Oat pancakes", filled.copy(title = " Oat pancakes ").previewAsk()!!.title)
+    }
+
+    @Test
+    fun `the dish's traits follow what the preview proposes until one is chosen, and go as they are shown`() {
+        val proposed = DishTraits("sweet", "porridge_dessert", "groats")
+
+        assertEquals(Triple(null, null, null), filled.traits(null))
+        assertEquals(Triple("sweet", "porridge_dessert", "groats"), filled.traits(proposed))
+        val chosen = filled.copy(form = "plate")
+        assertEquals(Triple("sweet", "plate", "groats"), chosen.traits(proposed))
+
+        val sent = chosen.recipe(proposed)!!
+        assertEquals(listOf("sweet", "plate", "groats"), listOf(sent.taste, sent.form, sent.starchBase))
+        // Before any preview, nothing is said: the API proposes them itself.
+        assertEquals(listOf(null, "plate", null), filled.copy(form = "plate").recipe().let { listOf(it!!.taste, it.form, it.starchBase) })
     }
 
     @Test
@@ -179,9 +198,14 @@ class RecipeFormTest {
             difficulty = "easy",
             cuisine = "polish",
             lines = listOf(OwnRecipeLine(OATS, 80.0, "g"), OwnRecipeLine(MILK, 212.4, "ml", "warm")),
+            taste = "sweet",
+            form = "porridge_dessert",
+            starchBase = "groats",
         )
 
         val form = RecipeForm.of(RecipeToEdit(kept, listOf(oats, milk)))
+        // The traits it keeps are chosen already: a preview's proposal does not move them.
+        assertEquals(Triple("sweet", "porridge_dessert", "groats"), form.traits(DishTraits("savoury", "plate", "none")))
 
         assertEquals(listOf(FormLine(0, oats, "80", "g", ""), FormLine(1, milk, "212.4", "ml", "warm")), form.lines)
         assertEquals(listOf(FormStep(2, "Blend."), FormStep(3, "Fry.")), form.steps)

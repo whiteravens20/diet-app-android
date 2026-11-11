@@ -371,6 +371,11 @@ object Instance {
             expect = 201,
         ).getString("id")
 
+    /** What a recipe is, as the API answers it: its taste, its form and its starch base. */
+    fun recipeTraits(account: Account, recipeId: String): Triple<String, String, String> =
+        call("GET", "recipes/$recipeId", token = account.accessToken).getJSONObject("traits")
+            .let { Triple(it.getString("taste"), it.getString("form"), it.getString("starchBase")) }
+
     /** The first week of a plan as the plan reads: its target, its average and whether it stands off the target. */
     fun firstWeek(account: Account, planId: String): JSONObject =
         call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("weeks").getJSONObject(0)

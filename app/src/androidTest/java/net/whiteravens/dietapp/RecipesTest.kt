@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -30,6 +31,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -173,6 +175,10 @@ class RecipesTest {
         screen.waitForText(text(R.string.own_recipe_new_intro))
         type(text(R.string.own_recipe_field_description), "Oats cooked in milk.")
         press(text(R.string.meal_breakfast))
+        // Before any ingredient, what the dish is waits for them.
+        screen.onNodeWithText(text(R.string.own_recipe_field_starch_base)).performScrollTo()
+        assertEquals(3, screen.onAllNodesWithText(text(R.string.own_recipe_trait_waiting)).fetchSemanticsNodes().size)
+        screen.keepScreenshot("recipes-written-traits-waiting")
         addIngredient(oats, "60")
         addIngredient(milk, "250")
         type(text(R.string.own_recipe_step_number, 1), "Cook the oats in the milk for five minutes.")
@@ -186,6 +192,11 @@ class RecipesTest {
         screen.onNodeWithText(allergens, substring = true).performScrollTo()
         screen.keepScreenshot("recipes-written-serving")
 
+        // What the dish is, proposed from the ingredients: built on oats, groats.
+        screen.waitForText(text(R.string.starch_base_groats))
+        screen.onNodeWithText(text(R.string.own_recipe_traits_legend)).performScrollTo()
+        screen.keepScreenshot("recipes-written-traits")
+
         // A recipe without a name is refused, and the field says why.
         press(text(R.string.own_recipe_save))
         screen.waitForText(text(R.string.refusal_empty))
@@ -193,11 +204,18 @@ class RecipesTest {
         screen.onNodeWithText(text(R.string.own_recipe_field_title)).performScrollTo()
         screen.keepScreenshot("recipes-written-without-a-name")
         type(text(R.string.own_recipe_field_title), "Oat porridge")
+        // The title names a porridge: the proposal follows it.
+        screen.waitForText(text(R.string.recipe_form_porridge_dessert))
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.own_recipe_field_starch_base)).performScrollTo()
+        screen.keepScreenshot("recipes-written-traits-from-the-title")
         press(text(R.string.own_recipe_save))
 
         // Saved, it opens as one of the account's own: its view, not the form, has the way to edit it.
         screen.waitForTheApi { Instance.ownRecipes(account).size == 1 }
         val written = Instance.ownRecipes(account).single().first
+        // It keeps what the form showed of the dish: oats in milk, nothing sweet in it, a porridge on groats.
+        assertEquals(Triple("savoury", "porridge_dessert", "groats"), Instance.recipeTraits(account, written))
         val edit = hasContentDescription(text(R.string.own_recipe_edit_title))
         screen.waitUntil(20_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isNotEmpty() }
         screen.waitForText("Oat porridge")
