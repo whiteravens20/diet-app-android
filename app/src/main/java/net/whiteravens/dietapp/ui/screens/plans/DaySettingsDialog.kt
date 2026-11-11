@@ -273,6 +273,7 @@ private fun fateText(meal: MealFate): String = stringResource(
         "stays" -> when (meal.because) {
             "eaten" -> R.string.plans_fate_stays_eaten
             "own" -> R.string.plans_fate_stays_own
+            "leftover" -> R.string.plans_fate_stays_leftover
             else -> R.string.plans_fate_stays
         }
         "resized" -> R.string.plans_fate_resized

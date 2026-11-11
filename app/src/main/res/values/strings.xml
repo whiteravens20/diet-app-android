@@ -426,6 +426,10 @@
         <item quantity="one">%1$d meal of your own</item>
         <item quantity="other">%1$d meals of your own</item>
     </plurals>
+    <plurals name="plans_reroll_kept_leftover">
+        <item quantity="one">%1$d leftover of the day before</item>
+        <item quantity="other">%1$d leftovers of the day before</item>
+    </plurals>
     <plurals name="plans_reroll_kept_locked">
         <item quantity="one">%1$d meal locked to its recipe</item>
         <item quantity="other">%1$d meals locked to their recipes</item>
@@ -1473,6 +1477,7 @@
     <string name="plans_fate_stays">stays as it is</string>
     <string name="plans_fate_stays_eaten">stays: it was eaten</string>
     <string name="plans_fate_stays_own">stays: it is your own meal</string>
+    <string name="plans_fate_stays_leftover">stays: it is a leftover</string>
     <string name="plans_fate_resized">the same dish in a new portion</string>
     <string name="plans_fate_redrawn_cook_time">a new recipe: this one takes longer than the limit</string>
     <string name="plans_fate_redrawn_use_up">a new recipe that uses up what is about to expire</string>

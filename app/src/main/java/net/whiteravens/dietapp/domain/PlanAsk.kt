@@ -150,7 +150,16 @@ data class RerollPreview(
  * those the user skips, and on the days filled again the meals eaten, of the user's own ([custom])
  * and locked to their recipe.
  */
-data class RerollKept(val outside: Int, val past: Int, val skipped: Int, val eaten: Int, val custom: Int, val locked: Int)
+data class RerollKept(
+    val outside: Int,
+    val past: Int,
+    val skipped: Int,
+    val eaten: Int,
+    val custom: Int,
+    val locked: Int,
+    /** The leftovers not eaten on the days filled again: they always stay. */
+    val leftover: Int = 0,
+)
 
 /** Whether the days asked for hold days before today, and on the days filled again meals eaten or of the user's own: what a tick could let go. */
 data class RerollCouldGo(val past: Boolean, val eaten: Boolean, val custom: Boolean)

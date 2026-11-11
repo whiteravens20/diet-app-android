@@ -296,6 +296,7 @@ private fun Outcome(preview: RerollPreview) {
         preview.kept.skipped to R.plurals.plans_reroll_kept_skipped,
         preview.kept.eaten to R.plurals.plans_reroll_kept_eaten,
         preview.kept.custom to R.plurals.plans_reroll_kept_custom,
+        preview.kept.leftover to R.plurals.plans_reroll_kept_leftover,
         preview.kept.locked to R.plurals.plans_reroll_kept_locked,
     ).filter { (count, _) -> count > 0 }
     if (kept.isEmpty()) {

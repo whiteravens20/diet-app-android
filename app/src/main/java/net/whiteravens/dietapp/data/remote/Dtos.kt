@@ -1802,7 +1802,16 @@ data class RerollPreviewDto(
 
 /** What a re-roll keeps as it is: days not asked for, before today or skipped, and meals eaten, of one's own or locked on the days filled again. */
 @Serializable
-data class RerollKeptDto(val outside: Int, val past: Int, val skipped: Int, val eaten: Int, val custom: Int, val locked: Int)
+data class RerollKeptDto(
+    val outside: Int,
+    val past: Int,
+    val skipped: Int,
+    val eaten: Int,
+    val custom: Int,
+    /** The leftovers not eaten on the days filled again: they always stay. */
+    val leftover: Int = 0,
+    val locked: Int,
+)
 
 /** What the days asked for hold that the request could let go as well. */
 @Serializable

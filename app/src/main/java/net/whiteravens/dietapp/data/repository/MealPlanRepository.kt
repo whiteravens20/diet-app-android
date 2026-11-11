@@ -335,7 +335,7 @@ class MealPlanRepository @Inject constructor(
         return RerollPreview(
             days = answer.days,
             replaced = answer.replaced,
-            kept = answer.kept.let { RerollKept(it.outside, it.past, it.skipped, it.eaten, it.custom, it.locked) },
+            kept = answer.kept.let { RerollKept(it.outside, it.past, it.skipped, it.eaten, it.custom, it.locked, it.leftover) },
             couldGo = answer.couldGo.let { RerollCouldGo(it.past, it.eaten, it.custom) },
             fromToday = answer.fromToday,
             cooking = answer.cooking?.toDomain(),

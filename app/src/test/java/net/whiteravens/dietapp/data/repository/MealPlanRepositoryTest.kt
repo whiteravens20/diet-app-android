@@ -622,6 +622,20 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a leftover not eaten on a day made again is counted among the meals that stay`() {
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "application/json").setBody(
+                """{"days":1,"replaced":3,"kept":{"outside":0,"past":0,"skipped":0,"eaten":0,"custom":0,"locked":0,"leftover":1},""" +
+                    """"couldGo":{"past":false,"eaten":false,"custom":false},"fromToday":"not_begun"}""",
+            ),
+        )
+
+        val preview = runBlocking { repository(Cache()).previewReroll("plan-1", Reroll(dayId = "day-2")) }
+
+        assertEquals(RerollKept(outside = 0, past = 0, skipped = 0, eaten = 0, custom = 0, locked = 0, leftover = 1), preview.kept)
+    }
+
+    @Test
     fun `other ways to fill a day are asked for unweighed unless a model is to weigh them, and one is taken with its note`() {
         val nutrition = """{"calories":2000,"protein":120,"fat":70,"carbs":210}"""
         val packs = """{"bought":500,"used":450,"wasted":1}"""

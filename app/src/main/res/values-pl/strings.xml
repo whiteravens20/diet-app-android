@@ -457,6 +457,12 @@
         <item quantity="many">%1$d własnych posiłków</item>
         <item quantity="other">%1$d własnego posiłku</item>
     </plurals>
+    <plurals name="plans_reroll_kept_leftover">
+        <item quantity="one">%1$d resztka z poprzedniego dnia</item>
+        <item quantity="few">%1$d resztki z poprzedniego dnia</item>
+        <item quantity="many">%1$d resztek z poprzedniego dnia</item>
+        <item quantity="other">%1$d resztki z poprzedniego dnia</item>
+    </plurals>
     <plurals name="plans_reroll_kept_locked">
         <item quantity="one">%1$d posiłek przypięty do swojego przepisu</item>
         <item quantity="few">%1$d posiłki przypięte do swoich przepisów</item>
@@ -1582,6 +1588,7 @@
     <string name="plans_fate_stays">zostaje bez zmian</string>
     <string name="plans_fate_stays_eaten">zostaje, jest zjedzony</string>
     <string name="plans_fate_stays_own">zostaje, to Twój własny posiłek</string>
+    <string name="plans_fate_stays_leftover">zostaje, to resztka</string>
     <string name="plans_fate_resized">to samo danie w nowej porcji</string>
     <string name="plans_fate_redrawn_cook_time">nowy przepis: obecny trwa dłużej niż limit</string>
     <string name="plans_fate_redrawn_use_up">nowy przepis, który zużyje żywność z krótką datą</string>
