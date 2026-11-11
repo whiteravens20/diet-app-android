@@ -12041,6 +12041,29 @@
                 "type": "null"
               }
             ]
+          },
+          "topping": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -12056,7 +12079,8 @@
           "outsideLimits",
           "revision",
           "aiMeta",
-          "pick"
+          "pick",
+          "topping"
         ],
         "additionalProperties": false
       },
@@ -14435,6 +14459,29 @@
           "label": {
             "$ref": "#/components/schemas/LabelTotals"
           },
+          "topping": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "display": {
+                    "$ref": "#/components/schemas/DisplayAmount"
+                  }
+                },
+                "required": [
+                  "name",
+                  "display"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "fromPot": {
             "type": "boolean"
           }
@@ -14447,6 +14494,7 @@
           "eaten",
           "nutrition",
           "label",
+          "topping",
           "fromPot"
         ],
         "additionalProperties": false
@@ -14471,6 +14519,26 @@
           "medium",
           "hard"
         ]
+      },
+      "DishTraits": {
+        "type": "object",
+        "properties": {
+          "taste": {
+            "$ref": "#/components/schemas/RecipeTaste"
+          },
+          "form": {
+            "$ref": "#/components/schemas/RecipeForm"
+          },
+          "starchBase": {
+            "$ref": "#/components/schemas/StarchBase"
+          }
+        },
+        "required": [
+          "taste",
+          "form",
+          "starchBase"
+        ],
+        "additionalProperties": false
       },
       "DisplayAmount": {
         "type": "object",
@@ -18139,6 +18207,9 @@
               }
             ]
           },
+          "traits": {
+            "$ref": "#/components/schemas/DishTraits"
+          },
           "submitted": {
             "type": "boolean"
           }
@@ -18787,6 +18858,39 @@
                 "type": "null"
               }
             ]
+          },
+          "taste": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecipeTaste"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "form": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecipeForm"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "starchBase": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StarchBase"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -18855,13 +18959,17 @@
             "items": {
               "$ref": "#/components/schemas/DietType"
             }
+          },
+          "traits": {
+            "$ref": "#/components/schemas/DishTraits"
           }
         },
         "required": [
           "nutritionPerServing",
           "labelPerServing",
           "allergens",
-          "dietTags"
+          "dietTags",
+          "traits"
         ],
         "additionalProperties": false
       },
@@ -18880,6 +18988,11 @@
             "items": {
               "$ref": "#/components/schemas/OwnRecipeLine"
             }
+          },
+          "title": {
+            "default": "",
+            "type": "string",
+            "maxLength": 120
           }
         },
         "required": [
@@ -19831,6 +19944,33 @@
                 "type": "null"
               }
             ]
+          },
+          "topping": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "$ref": "#/components/schemas/PlannedIngredient"
+                  },
+                  "nutrition": {
+                    "$ref": "#/components/schemas/Nutrition"
+                  }
+                },
+                "required": [
+                  "key",
+                  "ingredient",
+                  "nutrition"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -19855,7 +19995,8 @@
           "shared",
           "leftover",
           "carriedTo",
-          "leftoverOffer"
+          "leftoverOffer",
+          "topping"
         ],
         "additionalProperties": false
       },
@@ -22038,6 +22179,9 @@
                 "type": "null"
               }
             ]
+          },
+          "traits": {
+            "$ref": "#/components/schemas/DishTraits"
           }
         },
         "required": [
@@ -22118,6 +22262,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/Cuisine"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "traits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DishTraits"
               },
               {
                 "type": "null"
@@ -22242,6 +22396,7 @@
           "cookMinutes",
           "difficulty",
           "cuisine",
+          "traits",
           "complexity",
           "caloriesPerServing",
           "proteinPerServing",
@@ -22415,6 +22570,20 @@
               }
             ]
           },
+          "traits": {
+            "type": "object",
+            "properties": {
+              "taste": {
+                "$ref": "#/components/schemas/RecipeTaste"
+              },
+              "form": {
+                "$ref": "#/components/schemas/RecipeForm"
+              },
+              "starchBase": {
+                "$ref": "#/components/schemas/StarchBase"
+              }
+            }
+          },
           "ingredients": {
             "minItems": 1,
             "maxItems": 200,
@@ -22424,6 +22593,16 @@
             }
           }
         }
+      },
+      "RecipeForm": {
+        "type": "string",
+        "enum": [
+          "plate",
+          "soup",
+          "salad",
+          "sandwich",
+          "porridge_dessert"
+        ]
       },
       "RecipeGenerateSpec": {
         "type": "object",
@@ -23062,6 +23241,13 @@
           "license"
         ],
         "additionalProperties": false
+      },
+      "RecipeTaste": {
+        "type": "string",
+        "enum": [
+          "savoury",
+          "sweet"
+        ]
       },
       "RecipeTextRequest": {
         "type": "object",
@@ -24538,6 +24724,17 @@
           "reason"
         ],
         "additionalProperties": false
+      },
+      "StarchBase": {
+        "type": "string",
+        "enum": [
+          "none",
+          "rice",
+          "pasta",
+          "potatoes",
+          "groats",
+          "bread"
+        ]
       },
       "StoredImportRejection": {
         "type": "object",
