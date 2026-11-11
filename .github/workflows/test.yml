@@ -64,10 +64,46 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # A push to dev of a commit whose dry run passed (this workflow started by hand on a temporary
+  # branch, every screens job green): the same code, contract and instance, so its screens are
+  # not run again; the build and its checks above are. On every other event, on main, and
+  # whenever this job finds nothing or fails, the screens run.
+  dry-run:
+    name: Screens of a dry run of this commit
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    # Its failure only means the screens run: it does not make the run red.
+    continue-on-error: true
+    permissions:
+      actions: read
+    outputs:
+      screens: ${{ steps.find.outputs.screens }}
+    steps:
+      - name: Find a dry run of this commit whose screens passed
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          screens=run
+          for run in $(gh api "repos/$REPO/actions/workflows/test.yml/runs?head_sha=$SHA&event=workflow_dispatch&status=success" --jq '.workflow_runs[].id'); do
+            green=$(gh api "repos/$REPO/actions/runs/$run/jobs" --jq '[.jobs[] | select(.name | startswith("Screens on")) | select(.conclusion == "success")] | length')
+            if [ "$green" -ge 3 ]; then
+              screens=passed
+              echo "The screens of $SHA passed in https://github.com/$REPO/actions/runs/$run" >> "$GITHUB_STEP_SUMMARY"
+              break
+            fi
+          done
+          echo "screens=$screens" >> "$GITHUB_OUTPUT"
+
   # The screens on an emulator, against a diet-app instance started in the same job from
   # the version contract/ was copied from (contract/diet-app.env), with its catalogue.
   screens:
     name: ${{ matrix.name }}
+    needs: dry-run
+    if: ${{ !cancelled() && needs.dry-run.outputs.screens != 'passed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
