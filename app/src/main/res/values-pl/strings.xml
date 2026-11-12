@@ -291,6 +291,13 @@
         <item quantity="many">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowań zostaje ponad jedna piąta.</item>
         <item quantity="other">Produkty nietrwałe po otwarciu: jadłospis zużywa %2$s%% tego, co kupuje, a z %1$d opakowania zostaje ponad jedna piąta.</item>
     </plurals>
+    <string name="plans_packs_line_joint">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%1$s): oba jadłospisy zużywają %2$s%% tego, co kupują.</string>
+    <plurals name="plans_packs_line_joint_wasted">
+        <item quantity="one">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%3$s): oba jadłospisy zużywają %2$s%% tego, co kupują, a z %1$d opakowania zostaje ponad jedna piąta.</item>
+        <item quantity="few">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%3$s): oba jadłospisy zużywają %2$s%% tego, co kupują, a z %1$d opakowań zostaje ponad jedna piąta.</item>
+        <item quantity="many">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%3$s): oba jadłospisy zużywają %2$s%% tego, co kupują, a z %1$d opakowań zostaje ponad jedna piąta.</item>
+        <item quantity="other">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%3$s): oba jadłospisy zużywają %2$s%% tego, co kupują, a z %1$d opakowania zostaje ponad jedna piąta.</item>
+    </plurals>
     <string name="plans_packs_left">%1$s: zostaje %2$s z opakowania %3$s</string>
     <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
     <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>

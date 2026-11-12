@@ -762,7 +762,7 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp:
                 val locale = LocalConfiguration.current.locales[0]
                 Fact(stringResource(R.string.plans_joint_apart, formatList(plan.apart.map { mealTypeLabel(it).lowercase(locale) })))
             }
-            if (plan.packs.bought > 0) PacksLine(plan.packs, useUp.takeIf { plan.packs.open.any { it.wasted } })
+            if (plan.packs.bought > 0) PacksLine(plan.packs, plan.joint?.profileName, useUp.takeIf { plan.packs.open.any { it.wasted } })
             if (plan.mayGiveWay.isNotEmpty()) {
                 Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
                 if (onReroll != null) {
@@ -787,9 +787,12 @@ private fun Fact(text: String, modifier: Modifier = Modifier, color: Color = Mat
     Text(text, style = MaterialTheme.typography.bodySmall, color = color, modifier = modifier)
 }
 
-/** What the menu uses of the packs that do not keep once opened, unfolding into the packs it does not finish. */
+/**
+ * What the menu uses of the packs that do not keep once opened, unfolding into the packs it does not finish.
+ * `together` names the other person of a joint plan, whose menu the server counts with this one: one kitchen.
+ */
 @Composable
-private fun PacksLine(packs: PlanPacks, useUp: (@Composable () -> Unit)?) {
+private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable () -> Unit)?) {
     var open by rememberSaveable { mutableStateOf(false) }
     val percent = formatNumber((packs.used / packs.bought * 100).roundToInt())
     val wasted = packs.open.count { it.wasted }
@@ -802,8 +805,12 @@ private fun PacksLine(packs: PlanPacks, useUp: (@Composable () -> Unit)?) {
                 .semantics { if (open) collapse { open = false; true } else expand { open = true; true } },
         ) {
             Fact(
-                if (wasted == 0) stringResource(R.string.plans_packs_line, percent)
-                else pluralStringResource(R.plurals.plans_packs_line_wasted, wasted, wasted, percent),
+                when {
+                    together != null && wasted == 0 -> stringResource(R.string.plans_packs_line_joint, together, percent)
+                    together != null -> pluralStringResource(R.plurals.plans_packs_line_joint_wasted, wasted, wasted, percent, together)
+                    wasted == 0 -> stringResource(R.string.plans_packs_line, percent)
+                    else -> pluralStringResource(R.plurals.plans_packs_line_wasted, wasted, wasted, percent)
+                },
                 Modifier.weight(1f),
             )
             Icon(
