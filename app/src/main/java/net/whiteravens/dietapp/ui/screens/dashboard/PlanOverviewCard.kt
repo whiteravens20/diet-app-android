@@ -19,7 +19,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +45,7 @@ import net.whiteravens.dietapp.ui.common.formatPercent
 import net.whiteravens.dietapp.ui.components.AppCard
 import java.time.LocalDate
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.ui.components.Text
 
 /**
  * What the plan a profile is living by comes to, as the web's card says it: what a day of it holds

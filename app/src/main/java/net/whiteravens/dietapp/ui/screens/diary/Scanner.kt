@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -54,6 +53,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import net.whiteravens.dietapp.ui.components.Text
 
 /** Whether this phone has let the application use its camera. */
 private fun Context.mayUseCamera(): Boolean =

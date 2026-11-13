@@ -4,7 +4,6 @@ package net.whiteravens.dietapp.ui.screens.account
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -13,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
+import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
 
 /** Whether the application asks for a newer build of itself, on until turned off, and what asking sends. */

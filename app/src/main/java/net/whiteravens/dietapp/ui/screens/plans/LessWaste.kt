@@ -11,7 +11,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +24,7 @@ import net.whiteravens.dietapp.domain.ProfilePreferences
 import net.whiteravens.dietapp.domain.WasteLevel
 import net.whiteravens.dietapp.domain.WasteRules
 import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.components.Text
 
 /** A profile's own limits on repeats: the most days running and times in seven days of one recipe. */
 data class Repeats(val daysInARow: Int, val timesAWeek: Int) {

@@ -25,7 +25,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -54,6 +53,7 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.SecondStepCodeField
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
+import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.UpdateCard
 
 /**

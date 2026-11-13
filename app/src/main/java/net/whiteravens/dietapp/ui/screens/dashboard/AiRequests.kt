@@ -9,7 +9,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,6 +21,7 @@ import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.ui.common.formatMoment
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.Text
 
 /** Why an account that uses the instance's AI has none of its requests left. */
 internal enum class AiShortage { NO_ACCESS, NOT_SHARED, INSTANCE_USED_UP, NEW_ACCOUNTS_USED_UP, USED_UP }

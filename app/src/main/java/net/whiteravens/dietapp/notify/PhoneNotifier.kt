@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.data.notify.NewNotifications
 import net.whiteravens.dietapp.domain.AccountNotification
 import net.whiteravens.dietapp.domain.NotificationAbout
 import net.whiteravens.dietapp.domain.WATER_AMOUNTS_ML
+import net.whiteravens.dietapp.ui.common.holdLetters
 import net.whiteravens.dietapp.ui.common.notificationText
 import java.time.LocalDate
 
@@ -146,19 +147,25 @@ object PhoneNotifier {
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
-    /** A notification of the profile [name] (the application's where it is not known) saying [text], made [at], opening [opens]. */
-    private fun shownAs(context: Context, name: String?, text: String, at: Long, opens: PendingIntent): NotificationCompat.Builder =
-        NotificationCompat.Builder(context, CHANNEL)
+    /**
+     * A notification of the profile [name] (the application's where it is not known) saying [text], made [at], opening
+     * [opens]. The shade lays its words out as a screen does: in Polish its words of one letter are held to the next.
+     */
+    private fun shownAs(context: Context, name: String?, text: String, at: Long, opens: PendingIntent): NotificationCompat.Builder {
+        val locale = context.resources.configuration.locales[0]
+        val said = holdLetters(text, locale)
+        return NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(name ?: context.getString(R.string.app_name))
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentTitle(name?.let { holdLetters(it, locale) } ?: context.getString(R.string.app_name))
+            .setContentText(said)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(said))
             .setWhen(at)
             .setShowWhen(true)
             .setContentIntent(opens)
             .setAutoCancel(true)
             // What a press of an amount says in its place comes quietly.
             .setOnlyAlertOnce(true)
+    }
 }
 
 /** A reminder of water as the phone shows it under [key]: the reminder [notificationId], the profile it is for and its [day], made [at]. */

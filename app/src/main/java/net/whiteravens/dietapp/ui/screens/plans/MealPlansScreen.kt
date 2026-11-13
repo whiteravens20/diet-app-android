@@ -24,7 +24,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -56,6 +55,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import java.time.LocalDate
 import java.time.YearMonth
+import net.whiteravens.dietapp.ui.components.Text
 
 /** Plans per profile: profile chips, a new plan, the profile's plans as a calendar, and the offline-first list of them. */
 @Composable

@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +47,7 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.QrCode
 import net.whiteravens.dietapp.ui.components.SECOND_STEP_CODE_MAX
 import net.whiteravens.dietapp.ui.components.SecondStepCodeField
+import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.account.SecondFactorViewModel.Purpose
 import net.whiteravens.dietapp.ui.screens.account.SecondFactorViewModel.Step
 import java.time.ZoneId

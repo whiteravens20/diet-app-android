@@ -24,7 +24,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -76,6 +75,7 @@ import net.whiteravens.dietapp.ui.components.LocalBrowserCode
 import net.whiteravens.dietapp.ui.components.LocalNetworkDialog
 import net.whiteravens.dietapp.ui.components.LocalWebApp
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
+import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.TimeZoneViewModel
 import net.whiteravens.dietapp.notify.WaterShortcuts
 import net.whiteravens.dietapp.ui.screens.about.AboutScreen

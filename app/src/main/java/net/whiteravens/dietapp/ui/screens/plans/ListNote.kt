@@ -3,10 +3,10 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.ui.components.Text
 
 /**
  * What a change of a plan says before it is made where a shopping list covers a day it changes: the
