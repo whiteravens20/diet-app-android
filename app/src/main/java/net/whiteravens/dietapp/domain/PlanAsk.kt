@@ -22,6 +22,8 @@ data class PlanAsk(
     val respectInventory: Boolean = true,
     /** Lean much harder on the pantry and on finishing the packs; such a plan counts the pantry. */
     val lessWaste: Boolean = false,
+    /** Use up every opened pack within days, the same recipe allowed more often; such a plan wastes less as well. */
+    val noWaste: Boolean = false,
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val allowRelaxations: List<String> = emptyList(),
@@ -126,6 +128,8 @@ data class Reroll(
     val together: Boolean = false,
     /** Whether the whole plan made again wastes less from now on; null, as the plan has it. */
     val lessWaste: Boolean? = null,
+    /** Whether the whole plan made again wastes nothing from now on; null, as the plan has it. */
+    val noWaste: Boolean? = null,
     /** Of a joint plan: the other plan's same days are made again too, their shared times one dish again. */
     val forAll: Boolean = false,
 )
@@ -163,3 +167,24 @@ data class RerollKept(
 
 /** Whether the days asked for hold days before today, and on the days filled again meals eaten or of the user's own: what a tick could let go. */
 data class RerollCouldGo(val past: Boolean, val eaten: Boolean, val custom: Boolean)
+
+/** How much a plan does to waste less of what it buys: as usual, less ("Mniej marnowania"), or nothing ("Bez marnowania"). */
+enum class WasteLevel {
+    USUAL,
+    LESS,
+    NONE,
+    ;
+
+    /** Whether a plan at this level wastes less: one that wastes nothing does as well. */
+    val lessWaste: Boolean get() = this != USUAL
+    val noWaste: Boolean get() = this == NONE
+
+    companion object {
+        /** The level a plan was made at. */
+        fun of(plan: MealPlan): WasteLevel = when {
+            plan.noWaste -> NONE
+            plan.lessWaste -> LESS
+            else -> USUAL
+        }
+    }
+}

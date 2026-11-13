@@ -209,14 +209,17 @@ class MealMappingTest {
     }
 
     @Test
-    fun `a plan says whether it wastes less and the diet it names itself, and one from before says it does not`() {
+    fun `a plan says whether it wastes less or nothing and the diet it names itself, and one from before says it does not`() {
         val before = plan.toDomain()
         assertFalse(before.lessWaste)
+        assertFalse(before.noWaste)
         assertNull(before.ownDiet)
 
         val made = plan.copy(options = plan.options.copy(lessWaste = true, dietType = "keto")).toDomain()
         assertTrue(made.lessWaste)
+        assertFalse(made.noWaste)
         assertEquals("keto", made.ownDiet)
+        assertTrue(plan.copy(options = plan.options.copy(lessWaste = true, noWaste = true)).toDomain().noWaste)
     }
 
     @Test

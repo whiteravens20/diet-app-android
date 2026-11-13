@@ -11,11 +11,13 @@ import net.whiteravens.dietapp.BuildConfig
 import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.HealthDto
+import net.whiteravens.dietapp.data.remote.LessWasteEffectDto
 import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.LessWasteEffect
 import net.whiteravens.dietapp.domain.Supply
 import net.whiteravens.dietapp.domain.SupplyLevel
+import net.whiteravens.dietapp.domain.WasteRules
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import retrofit2.HttpException
@@ -107,8 +109,18 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
                 maxRepeatsPerRecipe = config.plans.maxRepeatsPerRecipe,
                 mealSlots = config.plans.mealSlots.mapNotNull { (count, meals) -> count.toIntOrNull()?.let { it to meals } }.toMap(),
                 relaxations = config.plans.relaxations,
-                lessWaste = config.plans.lessWaste.mapValues { (_, effect) ->
-                    LessWasteEffect(effect.pantry.now, effect.pantry.less, effect.packs.now, effect.packs.less, effect.fewerRecipes)
+                lessWaste = config.plans.lessWaste.mapValues { (_, effect) -> effect.toDomain() },
+                noWaste = config.plans.noWaste.mapValues { (_, effect) -> effect.toDomain() },
+                waste = config.plans.waste?.let { rules ->
+                    WasteRules(
+                        restsLess = rules.less.restsOfDay,
+                        restsNone = rules.none.restsOfDay,
+                        daysInARow = rules.none.daysInARow,
+                        timesAWeek = rules.none.timesAWeek,
+                        twiceADay = rules.none.twiceADay,
+                        meatAndFishDays = rules.none.meatAndFishDays,
+                        otherDays = rules.none.otherDays,
+                    )
                 },
                 operatorContact = config.instance.operatorContact,
                 supportUrl = config.instance.supportUrl,
@@ -139,3 +151,6 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
             ServerVersion.Unknown
         }
 }
+
+/** What a level of a plan that wastes less does on a diet, as the instance measured it. */
+private fun LessWasteEffectDto.toDomain() = LessWasteEffect(pantry.now, pantry.less, packs.now, packs.less, fewerRecipes)

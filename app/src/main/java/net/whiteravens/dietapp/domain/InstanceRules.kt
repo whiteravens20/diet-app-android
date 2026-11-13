@@ -30,6 +30,10 @@ data class InstanceRules(
     val productLookups: Boolean = false,
     /** What a plan that wastes less does on each diet with a split of its own, as the instance measured it. */
     val lessWaste: Map<String, LessWasteEffect> = emptyMap(),
+    /** What a plan that wastes nothing does on each diet with a split of its own, as the instance measured it. */
+    val noWaste: Map<String, LessWasteEffect> = emptyMap(),
+    /** How the two levels of a plan that wastes less plan; null until the instance says. */
+    val waste: WasteRules? = null,
 ) {
     /** How well the catalogue serves [diet] at [mealCount] meals a day; null where the API does not say. */
     fun supplyOf(diet: String, mealCount: Int): Supply? = catalogueSupply[diet]?.get(mealCount)
@@ -52,6 +56,22 @@ data class Supply(val level: SupplyLevel, val recipes: Int, val fewerMeals: Int?
  * hundred fewer different recipes the week has.
  */
 data class LessWasteEffect(val pantryNow: Int, val pantryLess: Int, val packsNow: Int, val packsLess: Int, val fewerRecipes: Int)
+
+/**
+ * How the two levels of a plan that wastes less plan: how many hundredths of a day's calorie target
+ * all the rests of packs its meals finish may add to it ([restsLess], [restsNone]); and of a plan that
+ * wastes nothing, the repeats it allows whatever the profile says, looser ones of the profile staying,
+ * and the days an opened pack of meat or fish, and of anything else, is eaten within at most.
+ */
+data class WasteRules(
+    val restsLess: Int,
+    val restsNone: Int,
+    val daysInARow: Int,
+    val timesAWeek: Int,
+    val twiceADay: Boolean,
+    val meatAndFishDays: Int,
+    val otherDays: Int,
+)
 
 /** `NONE`: a meal has no recipe, so no plan can be made from the catalogue. `THIN`: too few for a week. */
 enum class SupplyLevel { NONE, THIN, ENOUGH }

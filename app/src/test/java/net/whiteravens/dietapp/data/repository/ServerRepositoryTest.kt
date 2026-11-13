@@ -19,12 +19,14 @@ import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.domain.Supply
 import net.whiteravens.dietapp.domain.SupplyLevel
+import net.whiteravens.dietapp.domain.WasteRules
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import javax.net.ssl.SSLHandshakeException
@@ -103,8 +105,28 @@ class ServerRepositoryTest {
         runBlocking { repository.refresh() }
 
         val rules = checkNotNull(repository.rules.value)
-        assertEquals(LessWasteEffect(pantryNow = 67, pantryLess = 71, packsNow = 69, packsLess = 77, fewerRecipes = 34), rules.lessWaste["keto"])
+        assertEquals(LessWasteEffect(pantryNow = 64, pantryLess = 67, packsNow = 62, packsLess = 74, fewerRecipes = 39), rules.lessWaste["keto"])
         assertEquals(setOf("balanced", "high_protein", "low_carb", "vegetarian", "vegan", "keto", "mediterranean"), rules.lessWaste.keys)
+        assertEquals(LessWasteEffect(pantryNow = 64, pantryLess = 37, packsNow = 62, packsLess = 87, fewerRecipes = 61), rules.noWaste["keto"])
+        assertEquals(rules.lessWaste.keys, rules.noWaste.keys)
+    }
+
+    @Test
+    fun `how the two levels of a plan that wastes less plan is kept as the instance says it, and is unknown where it says nothing`() {
+        server.enqueue(answer(fixture("config")))
+        server.enqueue(answer(fixture("config").replace(Regex(""",\s*"waste":\s*\{"less":\s*\{[^}]*},\s*"none":\s*\{[^}]*}}"""), "")))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+        val said = checkNotNull(repository.rules.value).waste
+        runBlocking { repository.refresh() }
+        val unsaid = checkNotNull(repository.rules.value).waste
+
+        assertEquals(
+            WasteRules(restsLess = 3, restsNone = 5, daysInARow = 3, timesAWeek = 5, twiceADay = true, meatAndFishDays = 3, otherDays = 5),
+            said,
+        )
+        assertNull(unsaid)
     }
 
     @Test

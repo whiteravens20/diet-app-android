@@ -221,18 +221,24 @@ class MealPlanRepositoryTest {
     }
 
     @Test
-    fun `a plan that wastes less is asked for so, and a plan that does not says nothing of it`() {
-        repeat(2) { server.enqueue(answer("meal-plan").setResponseCode(201)) }
+    fun `a plan that wastes less or nothing is asked for so, and a plan that does not says nothing of it`() {
+        repeat(3) { server.enqueue(answer("meal-plan").setResponseCode(201)) }
         val ask = PlanAsk(profileId = "p", startDate = LocalDate.of(2026, 10, 12), durationDays = 3)
 
         runBlocking {
             repository(Cache()).generate(ask.copy(lessWaste = true))
+            repository(Cache()).generate(ask.copy(lessWaste = true, noWaste = true))
             repository(Cache()).generate(ask)
         }
 
-        val wasting = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
-        assertEquals("true", wasting.getValue("lessWaste").jsonPrimitive.content)
-        assertFalse("lessWaste" in json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
+        val less = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("true", less.getValue("lessWaste").jsonPrimitive.content)
+        assertFalse("noWaste" in less)
+        val nothing = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("true", nothing.getValue("lessWaste").jsonPrimitive.content)
+        assertEquals("true", nothing.getValue("noWaste").jsonPrimitive.content)
+        val usual = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertFalse("lessWaste" in usual || "noWaste" in usual)
     }
 
     @Test
@@ -577,17 +583,19 @@ class MealPlanRepositoryTest {
     }
 
     @Test
-    fun `a whole plan made again is asked to waste less, or no longer, only where the window changed it`() {
-        repeat(2) { server.enqueue(answer("meal-plan")) }
+    fun `a whole plan made again is asked to waste less, or nothing, or no longer, only where the window changed it`() {
+        repeat(3) { server.enqueue(answer("meal-plan")) }
         val plans = repository(Cache())
 
         runBlocking {
-            plans.reroll("plan-1", Reroll(lessWaste = true))
-            plans.reroll("plan-1", Reroll(lessWaste = false))
+            plans.reroll("plan-1", Reroll(lessWaste = true, noWaste = false))
+            plans.reroll("plan-1", Reroll(lessWaste = true, noWaste = true))
+            plans.reroll("plan-1", Reroll(lessWaste = false, noWaste = false))
         }
 
-        assertEquals("""{"lessWaste":true}""", server.takeRequest().body.readUtf8())
-        assertEquals("""{"lessWaste":false}""", server.takeRequest().body.readUtf8())
+        assertEquals("""{"lessWaste":true,"noWaste":false}""", server.takeRequest().body.readUtf8())
+        assertEquals("""{"lessWaste":true,"noWaste":true}""", server.takeRequest().body.readUtf8())
+        assertEquals("""{"lessWaste":false,"noWaste":false}""", server.takeRequest().body.readUtf8())
     }
 
     @Test

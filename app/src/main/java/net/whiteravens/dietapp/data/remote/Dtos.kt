@@ -83,6 +83,9 @@ data class PlansConfigDto(
     val mealSlots: Map<String, List<String>> = emptyMap(),
     val relaxations: List<String> = emptyList(),
     val lessWaste: Map<String, LessWasteEffectDto> = emptyMap(),
+    /** What a plan that wastes nothing does on each diet with a split of its own. */
+    val noWaste: Map<String, LessWasteEffectDto> = emptyMap(),
+    val waste: WasteRulesDto? = null,
 )
 
 /** A share in hundredths, as a plan has it without "less waste" ([now]) and with it ([less]). */
@@ -96,6 +99,28 @@ data class ShareChangeDto(val now: Int, val less: Int)
  */
 @Serializable
 data class LessWasteEffectDto(val pantry: ShareChangeDto, val packs: ShareChangeDto, val fewerRecipes: Int)
+
+/** How the two levels of a plan that wastes less plan ("Mniej marnowania", "Bez marnowania"). */
+@Serializable
+data class WasteRulesDto(val less: LessWasteRulesDto, val none: NoWasteRulesDto)
+
+/** How many hundredths of a day's calorie target the rests of packs a plan that wastes less gives its meals may add to it. */
+@Serializable
+data class LessWasteRulesDto(val restsOfDay: Int)
+
+/**
+ * Of a plan that wastes nothing: what the rests of packs may add to a day, the repeats it allows
+ * whatever the profile says, and the days an opened pack of meat or fish, and of anything else, is eaten within at most.
+ */
+@Serializable
+data class NoWasteRulesDto(
+    val restsOfDay: Int,
+    val daysInARow: Int,
+    val timesAWeek: Int,
+    val twiceADay: Boolean,
+    val meatAndFishDays: Int,
+    val otherDays: Int,
+)
 
 /** How many profiles an account may have on the instance; two where it does not say, as the API's default. */
 @Serializable
@@ -1470,6 +1495,8 @@ data class PlanOptionsDto(
     val respectInventory: Boolean,
     /** It leans much harder on the pantry and on finishing the packs; false on a plan from before it was offered. */
     val lessWaste: Boolean = false,
+    /** It uses up every opened pack within days, recipes repeated more often; false on a plan from before it was offered. */
+    val noWaste: Boolean = false,
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits the plan may give way on when no recipe is left inside them. */
     val allowRelaxations: List<String>,
@@ -1537,6 +1564,8 @@ data class GeneratePlanRequest(
     val respectInventory: Boolean = true,
     /** Lean much harder on the pantry and on finishing the packs; the pantry then counts whatever [respectInventory] says. */
     val lessWaste: Boolean = false,
+    /** Use up every opened pack within days, the same recipe allowed more often; the plan wastes less as well. */
+    val noWaste: Boolean = false,
     val maxRepeatsPerRecipe: Int? = null,
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val allowRelaxations: List<String>? = null,
@@ -1822,6 +1851,8 @@ data class RegenerateRequest(
     val together: Boolean = false,
     /** Whether the whole plan made again wastes less from now on; left out, as the plan has it. A part of the plan is made as the plan is. */
     val lessWaste: Boolean? = null,
+    /** Whether the whole plan made again wastes nothing from now on; left out, as the plan has it. */
+    val noWaste: Boolean? = null,
     /** Of a joint plan: the other plan's same days are filled again too, their shared times one dish again. */
     val forAll: Boolean = false,
 )

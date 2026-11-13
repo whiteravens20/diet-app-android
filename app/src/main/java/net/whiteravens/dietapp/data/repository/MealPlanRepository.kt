@@ -206,6 +206,7 @@ class MealPlanRepository @Inject constructor(
                     respectFavorites = ask.respectFavorites,
                     respectInventory = ask.respectInventory,
                     lessWaste = ask.lessWaste,
+                    noWaste = ask.noWaste,
                     maxRepeatsPerRecipe = ask.maxRepeatsPerRecipe,
                     allowRelaxations = ask.allowRelaxations.takeIf { it.isNotEmpty() },
                     // A joint plan is made without settings of its days: each person changes their own after.
@@ -695,5 +696,6 @@ private fun Reroll.toRequest() = RegenerateRequest(
     allowRelaxations = allowRelaxations,
     together = together,
     lessWaste = lessWaste,
+    noWaste = noWaste,
     forAll = forAll,
 )
