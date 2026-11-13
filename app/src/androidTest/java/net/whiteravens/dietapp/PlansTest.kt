@@ -939,9 +939,10 @@ class PlansTest {
     @Test
     fun aToppingGoesOnThePlateOfThePersonWhoseDayTheSharedDishesLeaveOffItsSplitAndIsEatenWithItsMeal() {
         val account = Instance.newAccount()
-        // Adam eats high in protein, Ewa as most do: the dishes that suit both leave his days short of protein.
+        // Adam eats high in protein, Ewa vegan: the plant dishes both eat leave his days short of protein, even on a
+        // plate of his own.
         val adam = Instance.newProfile(account, name = "Adam", weightKg = 95, dietType = "high_protein", activityLevel = "active", mealCount = 4)
-        val ewa = Instance.newProfile(account, name = "Ewa", mealCount = 4)
+        val ewa = Instance.newProfile(account, name = "Ewa", dietType = "vegan", mealCount = 4)
         val (planId, found) = Instance.toppedPlanTogether(account, adam, ewa)
         val topped = checkNotNull(found) { "eight draws gave no topping on today's plate" }
         screen.startSignedIn(account)
