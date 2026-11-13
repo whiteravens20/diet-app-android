@@ -979,6 +979,60 @@ class PlansTest {
         screen.keepScreenshot("diary-a-topping")
     }
 
+    @Test
+    fun aSharedDishIsServedOnEachPersonsOwnPlateItsWindowSaysBothPlatesAndAPartIsSplitByThem() {
+        val account = Instance.newAccount()
+        // Adam eats high in protein, Ewa as most do: a dish both eat is served on two plates of their own.
+        val adam = Instance.newProfile(account, name = "Adam", weightKg = 95, dietType = "high_protein", activityLevel = "active", mealCount = 4)
+        val ewa = Instance.newProfile(account, name = "Ewa", mealCount = 4)
+        val (_, found) = Instance.platedPlanTogether(account, adam, ewa)
+        val plated = checkNotNull(found) { "eight draws gave no plate of his own today" }
+        screen.startSignedIn(account)
+        val inAWindow = hasAnyAncestor(isDialog())
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The meal says what Adam's plate holds more and less of than the recipe, and what Ewa's does.
+        val yours = text(R.string.plans_plate_line, text(R.string.plans_plate_you), "\u0000").substringBefore("\u0000")
+        screen.scrollToText(yours, substring = true)
+        screen.keepScreenshot("plans-a-plate")
+
+        // Its window shows both plates of the lines they hold otherwise than the recipe, and how a part is split.
+        screen.onAllNodesWithText(plated.title)[0].performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_plates_title))
+        screen.onNode(hasText(text(R.string.plans_plates_title)) and inAWindow).performScrollTo()
+        screen.keepScreenshot("plans-the-plates-in-the-meal")
+        screen.onNode(hasText(text(R.string.split_part_risk)) and inAWindow).performScrollTo()
+
+        // Split by one part weighed alone: each plate gets of it what the plan gives it.
+        screen.onNode(hasText(text(R.string.split_open)) and inAWindow).performScrollTo().performClick()
+        screen.waitForText(text(R.string.split_plan_intro_parts))
+        val splitWindow = isDialog() and hasAnyDescendant(hasText(text(R.string.split_plan_intro_parts)))
+        val inSplit = hasAnyAncestor(splitWindow)
+        screen.onNode(hasText(text(R.string.split_way_part)) and inSplit).performScrollTo().performClick()
+        val line = plated.lines.first { it.share != null }
+        val theirs = plated.theirs.first { it.name == line.name }
+        screen.onNode(hasText(text(R.string.split_part_which)) and inSplit).performScrollTo().performClick()
+        // A dish's ingredients may not all fit the menu at once.
+        screen.onNode(hasText(line.name) and hasAnyAncestor(isPopup())).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction() and inSplit).performScrollTo().performTextInput("400")
+        val mine = Math.round(400 * line.quantity / (line.quantity + theirs.quantity))
+        val grams = SemanticsMatcher("an amount in grams") { node ->
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { Regex("^\\d+\u00A0g$").matches(it.text) }
+        }
+        val amounts = {
+            screen.onAllNodes(grams and inSplit).fetchSemanticsNodes()
+                .map { it.config[SemanticsProperties.Text].single().text.substringBefore('\u00A0').toLong() }
+        }
+        screen.waitUntil(10_000) { amounts() == listOf(mine, 400 - mine) }
+        screen.putKeyboardAway()
+        screen.onNode(hasText(text(R.string.split_part_risk)) and inSplit).performScrollTo()
+        screen.keepScreenshot("plans-a-part-split-by-the-plates")
+    }
+
     /** Puts away the card that says how a change balanced its day, where the change left one. */
     @Test
     fun whatIsLeftOfAMealGoesToAMealOfTheNextDayInAWindowAndComesBackByItsUndo() {

@@ -486,6 +486,62 @@ object Instance {
         }
     }
 
+    /** A line of a meal on a person's own plate: its ingredient's name, how much of it, exactly, and its share of the recipe. */
+    data class PlateLine(val name: String, val quantity: Double, val share: Double?)
+
+    /** A meal of a plan on a plate of its person's own: its id, its title, its lines and the other person's. */
+    data class Plated(val mealId: String, val title: String, val lines: List<PlateLine>, val theirs: List<PlateLine>)
+
+    /**
+     * A plan of three days from today for [profileId] made together with [withProfileId], made again for both until
+     * today has a meal whose plate of [profileId]'s is not the recipe's, eight times at most: the plan's id and that
+     * meal, null where no draw gave one.
+     */
+    fun platedPlanTogether(account: Account, profileId: String, withProfileId: String): Pair<String, Plated?> {
+        val today = LocalDate.now()
+        val theirs = call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", withProfileId).put("withProfileId", profileId).put("startDate", today.toString())
+                .put("durationDays", 3),
+            token = account.accessToken,
+            expect = 201,
+        )
+        val planId = theirs.getJSONObject("joint").getString("planId")
+        repeat(8) {
+            platedToday(account, planId)?.let { return planId to it }
+            call(
+                "POST",
+                "meal-plans/${theirs.getString("id")}/regenerate",
+                JSONObject().put("from", today.toString()).put("to", today.plusDays(2).toString()).put("includePast", true)
+                    .put("forAll", true),
+                token = account.accessToken,
+                expect = 201,
+            )
+        }
+        return planId to platedToday(account, planId)
+    }
+
+    private fun platedToday(account: Account, planId: String): Plated? {
+        val day = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(0)
+        val meals = day.getJSONArray("meals")
+        val linesOf = { lines: org.json.JSONArray ->
+            (0 until lines.length()).map(lines::getJSONObject).map {
+                PlateLine(it.getString("name"), it.getDouble("quantity"), if (it.has("share")) it.getDouble("share") else null)
+            }
+        }
+        return (0 until meals.length()).map(meals::getJSONObject).firstNotNullOfOrNull { meal ->
+            val lines = linesOf(meal.getJSONArray("ingredients"))
+            if (meal.isNull("shared") || lines.none { it.share != null }) return@firstNotNullOfOrNull null
+            Plated(
+                meal.getString("id"),
+                meal.getJSONObject("recipe").getString("title"),
+                lines,
+                linesOf(meal.getJSONObject("shared").getJSONObject("with").getJSONArray("ingredients")),
+            )
+        }
+    }
+
     /** Marks a meal of a plan eaten for its plan alone, as its box does. */
     fun markEaten(account: Account, planId: String, mealId: String) {
         call("PATCH", "meal-plans/$planId/meals/$mealId/eaten", JSONObject().put("eaten", true).put("forAll", false), token = account.accessToken)
