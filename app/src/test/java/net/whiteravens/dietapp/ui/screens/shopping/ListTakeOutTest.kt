@@ -45,6 +45,16 @@ class ListTakeOutTest {
     }
 
     @Test
+    fun `the text to send says under a row of fresh meat or fish which of its packs to buy later, with its spaces plain`() {
+        val later = words.copy(later = mapOf("feta" to listOf("Of these, buy 1\u00A0pack on Friday (16 Oct) at the earliest.")))
+
+        assertEquals(
+            "Shopping list, 13–19 Oct 2026\n\nDairy\n- Feta: 350 g (2 × 200 g)\n  Of these, buy 1 pack on Friday (16 Oct) at the earliest.",
+            listText(list, later),
+        )
+    }
+
+    @Test
     fun `a list ticked off says so in its text`() {
         val done = list.copy(groups = list.groups.map { group -> group.copy(items = group.items.map { it.copy(checked = true) }) })
 

@@ -45,8 +45,10 @@ import net.whiteravens.dietapp.data.remote.DisplayAmountDto
 import net.whiteravens.dietapp.data.remote.MealToppingDto
 import net.whiteravens.dietapp.data.remote.NutritionDto
 import net.whiteravens.dietapp.data.remote.PlannedIngredientDto
+import net.whiteravens.dietapp.data.remote.BuyLaterDto
 import net.whiteravens.dietapp.domain.MealTopping
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.BuyLater
 
 /**
  * A plan as a running backend answered it, as the phone shows it: a meal is the share of its
@@ -152,6 +154,18 @@ class MealMappingTest {
         assertEquals("over", day.offTarget)
         assertTrue(day.belowSafetyFloor)
         assertTrue(list.stale)
+    }
+
+    @Test
+    fun `a row of a list says which of its packs to buy later and from which day, and a row of an older list says none`() {
+        val read = json.decodeFromString<ShoppingListDto>(fixture("shopping-list"))
+        val first = read.groups.first().items.first()
+        val later = read.copy(
+            groups = listOf(read.groups.first().copy(items = listOf(first.copy(buyLater = listOf(BuyLaterDto(1, "2026-10-16")))))),
+        ).toDomain()
+
+        assertEquals(listOf(BuyLater(1, "2026-10-16")), later.groups.single().items.single().buyLater)
+        assertTrue(read.toDomain().groups.flatMap { it.items }.all { it.buyLater.isEmpty() })
     }
 
     @Test

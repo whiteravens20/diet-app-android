@@ -822,6 +822,19 @@
     <string name="shopping_of_total">(of %1$s)</string>
     <string name="shopping_best_before">best before %1$s</string>
     <string name="shopping_buy_packs">Bought in packs: %1$s of %2$s</string>
+    <plurals name="shopping_buy_later">
+        <item quantity="one">Of these, buy %1$d pack %2$s (%3$s) at the earliest.</item>
+        <item quantity="other">Of these, buy %1$d packs %2$s (%3$s) at the earliest.</item>
+    </plurals>
+    <string-array name="shopping_buy_later_on">
+        <item>on Monday</item>
+        <item>on Tuesday</item>
+        <item>on Wednesday</item>
+        <item>on Thursday</item>
+        <item>on Friday</item>
+        <item>on Saturday</item>
+        <item>on Sunday</item>
+    </string-array>
     <string name="shopping_amounts_of">Amounts of %1$s</string>
     <string name="shopping_proposals_ask">What could this list do without?</string>
     <string name="shopping_proposals_asking">Looking…</string>

@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.ui.screens.shopping
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.RowPacks
@@ -12,6 +14,8 @@ import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.categoryLabel
 import net.whiteravens.dietapp.ui.common.formatDates
+import net.whiteravens.dietapp.ui.common.formatDayMonth
+import java.time.LocalDate
 import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.ShoppingGroup
 import net.whiteravens.dietapp.domain.ShoppingItem
@@ -40,7 +44,22 @@ private fun wordsOf(fromDate: String, toDate: String, groups: List<ShoppingGroup
         toBuy = items.associate { it.id to amountLabel(it.stillToBuy, it.displayUnit, it.gramsOf(it.stillToBuy)) },
         packs = items.filter { it.packsStand }.associate { item -> item.id to packsText(item.packs!!) },
         shares = items.filter { it.shares.isNotEmpty() }.associate { item -> item.id to sharesLine(item) },
+        later = items.associate { item -> item.id to laterLines(item) }.filterValues { it.isNotEmpty() },
     )
+}
+
+/**
+ * Of a row of fresh meat or fish, which of its packs to buy later than the list's first day and from which
+ * day, one sentence each, as the web says it: none for any other row, and once the row is ticked.
+ */
+@Composable
+fun laterLines(item: ShoppingItem): List<String> {
+    if (item.checked) return emptyList()
+    val on = stringArrayResource(R.array.shopping_buy_later_on)
+    return item.buyLater.map { later ->
+        val day = LocalDate.parse(later.from)
+        pluralStringResource(R.plurals.shopping_buy_later, later.packs, later.packs, on[day.dayOfWeek.value - 1], formatDayMonth(later.from))
+    }
 }
 
 /** What each profile's plan needs of a row of a household list, in one line, as the web says it: `Adam 345 g · Ewa 80 g`. */

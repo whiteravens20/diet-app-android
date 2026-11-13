@@ -889,6 +889,21 @@
     <string name="shopping_of_total">(z %1$s)</string>
     <string name="shopping_best_before">najlepiej spożyć przed %1$s</string>
     <string name="shopping_buy_packs">Kupione w opakowaniach: %1$s, %2$s</string>
+    <plurals name="shopping_buy_later">
+        <item quantity="one">Z tego %1$d opakowanie kup najwcześniej %2$s (%3$s).</item>
+        <item quantity="few">Z tego %1$d opakowania kup najwcześniej %2$s (%3$s).</item>
+        <item quantity="many">Z tego %1$d opakowań kup najwcześniej %2$s (%3$s).</item>
+        <item quantity="other">Z tego %1$d opakowania kup najwcześniej %2$s (%3$s).</item>
+    </plurals>
+    <string-array name="shopping_buy_later_on">
+        <item>w poniedziałek</item>
+        <item>we wtorek</item>
+        <item>w środę</item>
+        <item>w czwartek</item>
+        <item>w piątek</item>
+        <item>w sobotę</item>
+        <item>w niedzielę</item>
+    </string-array>
     <string name="shopping_amounts_of">Ilości: %1$s</string>
     <string name="shopping_proposals_ask">Bez czego ta lista mogłaby się obejść?</string>
     <string name="shopping_proposals_asking">Szukam…</string>

@@ -1096,6 +1096,9 @@ data class RecipePage(
  * made and is the user's to correct; [purchasedQuantity] is everything the user has for the row,
  * the part at home included, and null until the row is first changed.
  */
+/** [packs] of a row's packs, bought from the day [from] (yyyy-MM-dd) on at the earliest: bought sooner, they would no longer keep. */
+data class BuyLater(val packs: Int, val from: String)
+
 data class ShoppingItem(
     val id: String,
     val name: String,
@@ -1114,6 +1117,8 @@ data class ShoppingItem(
     /** What is left to buy in the packs the ingredient is sold in; null where it is not sold in packs, or nothing is left to buy. */
     val packs: RowPacks?,
     val checked: Boolean,
+    /** Of a row of fresh meat or fish, which of its [packs] to buy later than the list's first day, and from which day. */
+    val buyLater: List<BuyLater> = emptyList(),
     /** What a piece weighs, for a row counted in pieces of some kind; null for one weighed. */
     val gramsPerPiece: Double? = null,
     /** What each profile's plan needs of the row, on a household list; none on a plan's own. */

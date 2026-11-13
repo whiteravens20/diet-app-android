@@ -2096,6 +2096,8 @@ data class ShoppingListItemDto(
     val gramsPerPiece: Double? = null,
     /** How the row is bought in packs; null for an ingredient not sold in packs, or nothing left to buy. */
     val packs: ShoppingPacksDto? = null,
+    /** Of a row of fresh meat or fish, which of its packs to buy later than the list's first day, and from which day. */
+    val buyLater: List<BuyLaterDto> = emptyList(),
     val checked: Boolean = false,
     /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
     val shares: List<ItemShareDto> = emptyList(),
@@ -2104,6 +2106,10 @@ data class ShoppingListItemDto(
 /** [count] packs of [size] [sizeUnit], which come to [quantity] in the row's unit. */
 @Serializable
 data class ShoppingPacksDto(val count: Int, val size: Double, val sizeUnit: String, val quantity: Double)
+
+/** [packs] of a row's packs, bought from the day [from] (yyyy-MM-dd) on at the earliest. */
+@Serializable
+data class BuyLaterDto(val packs: Int, val from: String)
 
 @Serializable
 data class ShoppingListGroupDto(

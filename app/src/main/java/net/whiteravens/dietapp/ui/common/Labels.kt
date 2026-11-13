@@ -258,6 +258,10 @@ fun formatDates(from: String, to: String): String {
     return format.format(DateInterval(midnight(from), midnight(to)), StringBuffer(), FieldPosition(0)).toString()
 }
 
+/** `2026-07-12` → `12 Jul` in the device locale. */
+fun formatDayMonth(iso: String): String =
+    LocalDate.parse(iso).format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
+
 /** `2026-07-12` → `Sun, 12 Jul` in the device locale. */
 fun formatDayDate(iso: String): String =
     LocalDate.parse(iso).format(DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()))

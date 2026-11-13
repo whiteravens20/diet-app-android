@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.data.remote.ShoppingListDto
 import net.whiteravens.dietapp.data.remote.ShoppingListGroupDto
 import net.whiteravens.dietapp.data.remote.ShoppingListItemDto
 import net.whiteravens.dietapp.data.remote.SwapPreviewDto
+import net.whiteravens.dietapp.domain.BuyLater
 import net.whiteravens.dietapp.domain.CookedPlace
 import net.whiteravens.dietapp.domain.CookingChange
 import net.whiteravens.dietapp.domain.DaySettingsWeek
@@ -517,6 +518,7 @@ fun ShoppingListItemDto.toDomain() = ShoppingItem(
     estimatedCalories = estimatedCalories,
     packs = packs?.let { RowPacks(it.count, it.size, it.sizeUnit, it.quantity) },
     checked = checked,
+    buyLater = buyLater.map { BuyLater(it.packs, it.from) },
     gramsPerPiece = gramsPerPiece,
     shares = shares.map { ItemShare(it.profileId, it.profile, it.totalQuantity) },
 )

@@ -600,6 +600,10 @@ internal fun ShoppingItemRow(
                     if (item.shares.isNotEmpty()) {
                         Text(sharesLine(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    // Fresh meat or fish for a later day: which of its packs to buy later, and from when.
+                    laterLines(item).forEach { later ->
+                        Text(later, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
                 }
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {

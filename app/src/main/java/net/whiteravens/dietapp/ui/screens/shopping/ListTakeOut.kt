@@ -20,6 +20,8 @@ data class ListWords(
     val packs: Map<String, String>,
     /** What each profile needs of each row of a household list, by the row's id: `Adam 345 g · Ewa 80 g`. */
     val shares: Map<String, String> = emptyMap(),
+    /** Of each row of fresh meat or fish, which of its packs to buy later and from which day, one sentence each, by the row's id. */
+    val later: Map<String, List<String>> = emptyMap(),
 ) {
     fun aisle(code: String): String = aisles[code] ?: code
 }
@@ -41,6 +43,7 @@ private fun textOf(groups: List<ShoppingGroup>, words: ListWords): String {
         left.forEach { item ->
             lines += "- ${item.name}: ${words.toBuy[item.id].orEmpty()}${words.packs[item.id]?.let { " ($it)" }.orEmpty()}"
             words.shares[item.id]?.let { lines += "  ${it.replace('\u00A0', ' ')}" }
+            words.later[item.id]?.forEach { lines += "  ${it.replace('\u00A0', ' ')}" }
         }
     }
     return lines.joinToString("\n")
