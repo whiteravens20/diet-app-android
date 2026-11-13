@@ -372,11 +372,11 @@ class PlansTest {
         val title = Instance.mealToCook(account, planId)
         screen.onAllNodesWithText(title)[0].performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.split_open)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
-        screen.waitForText(text(R.string.split_plan_intro))
+        screen.waitForText(text(R.string.split_plan_intro_parts))
         screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction()).performTextInput("2660")
         screen.onNodeWithText(text(R.string.split_in_pot)).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.split_empty_pot)) and hasSetTextAction()).performScrollTo().performTextInput("1410")
-        val split = inFront(hasText(text(R.string.split_plan_intro)))
+        val split = inFront(hasText(text(R.string.split_plan_intro_parts)))
         screen.waitUntil(10_000) { amountsIn(split).size == 2 && amountsIn(split).sum() == 1250L }
         screen.putKeyboardAway()
         screen.onNode(hasText(text(R.string.split_tare)) and split).performScrollTo()
@@ -454,15 +454,15 @@ class PlansTest {
         screen.onNode(hasText(pot, substring = true) and inAWindow).performScrollTo()
         screen.keepScreenshot("plans-a-pot")
         screen.onNode(hasText(text(R.string.split_open)) and inAWindow).performScrollTo().performClick()
-        screen.waitForText(text(R.string.split_plan_intro))
+        screen.waitForText(text(R.string.split_plan_intro_parts))
         // Looked for in the split's window alone: the meal's card under it names the other person too.
-        val splitWindow = isDialog() and hasAnyDescendant(hasText(text(R.string.split_plan_intro)))
+        val splitWindow = isDialog() and hasAnyDescendant(hasText(text(R.string.split_plan_intro_parts)))
         screen.waitUntil(10_000) {
             listOf("Adam: ", "Ewa: ").all { name -> screen.onAllNodes(hasText(name, substring = true) and hasAnyAncestor(splitWindow)).fetchSemanticsNodes().isNotEmpty() }
         }
         screen.keepScreenshot("plans-a-pot-split")
         screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(splitWindow)).performClick()
-        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.split_plan_intro)).fetchSemanticsNodes().isEmpty() }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.split_plan_intro_parts)).fetchSemanticsNodes().isEmpty() }
 
         // Its recipe is saved for either person from one row, the two buttons together.
         screen.onNode(hasText(text(R.string.plans_open_recipe)) and inAWindow).performClick()

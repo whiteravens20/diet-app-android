@@ -38,8 +38,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.MealLine
+import net.whiteravens.dietapp.domain.SplitLine
 import net.whiteravens.dietapp.domain.foodWeight
+import net.whiteravens.dietapp.domain.ingredientsOf
 import net.whiteravens.dietapp.domain.sharesOf
+import net.whiteravens.dietapp.domain.sharesOfIngredient
 import net.whiteravens.dietapp.domain.splitWhole
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatPercent
@@ -55,8 +59,11 @@ import java.time.format.TextStyle
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-/** A portion a dish is split into: what it is called, and the energy it is planned to hold where that is known. */
-internal data class SplitPortion(val key: String, val label: String, val kcal: Double?)
+/**
+ * A portion a dish is split into: what it is called, the energy it is planned to hold where that is known, and
+ * what it takes of each ingredient where the plan says so, by which a part of the dish weighed alone is split.
+ */
+internal data class SplitPortion(val key: String, val label: String, val kcal: Double?, val lines: List<SplitLine>? = null)
 
 /** What is weighed: the whole of a mixed dish, one part of a dish in parts at a time, or pieces counted. */
 private enum class Way { WHOLE, PART, PIECES }
@@ -72,7 +79,9 @@ private fun typed(text: String): Double? = text.trim().replace(',', '.').toDoubl
  * from the energy the plan gives each where [planned] portions are given (a dish cooked ahead),
  * otherwise portions chosen here, equal or by the energy typed for each. The whole dish is weighed,
  * or one part of it at a time, or its pieces counted; a dish weighed in its pot is the scale's
- * weight less the empty pot's. Whole grams and pieces, the last portion taking what is left.
+ * weight less the empty pot's. A part weighed alone of portions that say what they take of each
+ * ingredient is split by what each takes of the ingredient chosen: each plate of a dish both people eat
+ * holds its parts in proportions of its own. Whole grams and pieces, the last portion taking what is left.
  * Nothing is kept beyond the screen, and nothing is asked of the server.
  */
 @Composable
@@ -85,12 +94,19 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
     var inPot by rememberSaveable { mutableStateOf(false) }
     var potText by rememberSaveable { mutableStateOf("") }
     var piecesText by rememberSaveable { mutableStateOf("") }
+    var ingredientId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val portions = planned ?: (1..count).map { n ->
         SplitPortion(n.toString(), stringResource(R.string.split_portion, n), if (byKcal) typed(kcalTexts[n - 1]) else null)
     }
     val kcalMissing = planned == null && byKcal && portions.any { it.kcal == null }
-    val shares = sharesOf(portions.map { it.kcal })
+    // The ingredients a part weighed alone may be, where every portion says what it takes of each.
+    val lines = linesOf(portions)
+    val ingredients = lines?.let(::ingredientsOf).orEmpty()
+    val byIngredient = way == Way.PART && ingredients.isNotEmpty()
+    val chosen = ingredients.firstOrNull { it.ingredientId == ingredientId }?.takeIf { byIngredient }
+    val shares = if (chosen != null) sharesOfIngredient(lines!!, chosen.ingredientId) else sharesOf(portions.map { it.kcal })
+    val unchosen = byIngredient && chosen == null
 
     val onScale = typed(scaleText)
     val emptyPot = if (inPot) typed(potText) else null
@@ -99,7 +115,7 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
     val potTooHeavy = weighed && inPot && food == null
     val pieces = if (way == Way.PIECES) typed(piecesText)?.takeIf { it % 1.0 == 0.0 } else null
     val amounts = when {
-        kcalMissing -> null
+        kcalMissing || unchosen -> null
         way == Way.PIECES -> pieces?.let { splitWhole(it, shares) }
         else -> food?.let { splitWhole(it, shares) }
     }
@@ -140,7 +156,7 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
                     hint = stringResource(
                         when (option) {
                             Way.WHOLE -> R.string.split_way_whole_hint
-                            Way.PART -> R.string.split_way_part_hint
+                            Way.PART -> if (ingredients.isNotEmpty()) R.string.split_way_part_own_hint else R.string.split_way_part_hint
                             Way.PIECES -> R.string.split_way_pieces_hint
                         },
                     ),
@@ -158,6 +174,15 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
                 keyboardType = KeyboardType.Number,
             )
         } else {
+            if (byIngredient) {
+                ChoiceField(
+                    label = stringResource(R.string.split_part_which),
+                    options = listOf<String?>(null) + ingredients.map { it.ingredientId },
+                    selected = chosen?.ingredientId,
+                    optionLabel = { id -> ingredients.firstOrNull { it.ingredientId == id }?.name ?: stringResource(R.string.split_part_choose) },
+                    onSelect = { ingredientId = it },
+                )
+            }
             FormField(
                 value = scaleText,
                 onValueChange = { scaleText = it },
@@ -190,6 +215,8 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
                         Text(
                             when {
                                 kcalMissing -> stringResource(R.string.split_share_unknown)
+                                unchosen -> stringResource(R.string.split_part_unknown)
+                                chosen != null -> stringResource(R.string.split_share, formatPercent(shares[index]))
                                 portion.kcal != null -> stringResource(
                                     R.string.split_share_of_kcal,
                                     formatPercent(shares[index]),
@@ -218,6 +245,16 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
             }
         }
         if (amounts != null && way != Way.PIECES) Hint(stringResource(R.string.split_tare))
+        if (byIngredient) {
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.split_part_risk),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        }
         Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
             Text(
                 stringResource(R.string.split_risk),
@@ -255,6 +292,7 @@ internal fun portionsOfCooking(meals: List<Pair<Meal, String>>): List<SplitPorti
             key = meal.id,
             label = stringResource(R.string.split_portion_of, day, mealTypeLabel(meal.slot).lowercase(locale)),
             kcal = meal.nutrition.calories,
+            lines = splitLines(meal.lines),
         )
     }
 }
@@ -272,13 +310,28 @@ internal fun portionsOfPot(meals: List<Pair<Meal, String>>, ownName: String): Li
         val whenEaten = stringResource(R.string.split_portion_of, day, mealTypeLabel(meal.slot).lowercase(locale))
         val other = meal.shared?.takeUnless { it.apart }?.with
         listOfNotNull(
-            SplitPortion(key = meal.id, label = stringResource(R.string.split_portion_of_who, ownName, whenEaten), kcal = meal.nutrition.calories),
-            other?.let { SplitPortion(key = it.mealId, label = stringResource(R.string.split_portion_of_who, it.profileName, whenEaten), kcal = it.calories) },
+            SplitPortion(
+                key = meal.id,
+                label = stringResource(R.string.split_portion_of_who, ownName, whenEaten),
+                kcal = meal.nutrition.calories,
+                lines = splitLines(meal.lines),
+            ),
+            other?.let {
+                SplitPortion(
+                    key = it.mealId,
+                    label = stringResource(R.string.split_portion_of_who, it.profileName, whenEaten),
+                    kcal = it.calories,
+                    lines = splitLines(it.lines),
+                )
+            },
         )
     }
 }
 
-/** The window a dish cooked ahead is split in, into the meals of its cooking, by the plan's shares. */
+/**
+ * The window a dish cooked ahead, or a pot both people cook, is split in, into the portions of the plan, by the
+ * plan's shares: their energy, or what each takes of a part weighed alone.
+ */
 @Composable
 internal fun SplitDialog(portions: List<SplitPortion>, onDismiss: () -> Unit) {
     ScreenDialog(onDismiss) {
@@ -288,7 +341,7 @@ internal fun SplitDialog(portions: List<SplitPortion>, onDismiss: () -> Unit) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Hint(stringResource(R.string.split_plan_intro))
+                Hint(stringResource(if (splitsByParts(portions)) R.string.split_plan_intro_parts else R.string.split_plan_intro))
                 SplitCalculator(portions)
             }
         }
@@ -310,3 +363,13 @@ fun SplitScreen(onBack: () -> Unit) {
         AppCard { SplitCalculator(planned = null) }
     }
 }
+
+/** What every portion takes of each ingredient; null unless each says so. */
+private fun linesOf(portions: List<SplitPortion>): List<List<SplitLine>>? =
+    portions.map { it.lines }.takeIf { all -> all.isNotEmpty() && all.all { it != null } }?.map { it!! }
+
+/** Whether a part weighed alone can be split by what each portion takes of it. */
+internal fun splitsByParts(portions: List<SplitPortion>): Boolean = linesOf(portions)?.let(::ingredientsOf).orEmpty().isNotEmpty()
+
+/** What a meal takes of each ingredient, exactly, as a split goes by it. */
+private fun splitLines(lines: List<MealLine>): List<SplitLine> = lines.map { SplitLine(it.ingredientId, it.name, it.exact) }

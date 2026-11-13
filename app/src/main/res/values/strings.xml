@@ -1778,6 +1778,7 @@
     <string name="split_title">Split what you cooked</string>
     <string name="split_open">Split what you cooked…</string>
     <string name="split_plan_intro">Each portion\'s share comes from its calories in the plan.</string>
+    <string name="split_plan_intro_parts">Each portion\'s share comes from the plan: from its calories, and for one part weighed alone from how much of it the portion gets.</string>
     <string name="split_page_title">Splitting a dish</string>
     <string name="split_page_intro">Split a cooked dish into portions: equal ones, or by each portion\'s calories. A dish cooked ahead can be split in the plan as well, beside it.</string>
     <string name="split_portions">Portions</string>
@@ -1806,7 +1807,11 @@
     <string name="split_grams">%1$s g</string>
     <string name="split_tare">Put the container on the scale and tare it before you serve a portion.</string>
     <string name="split_risk" formatted="false">Splitting a pot is never 100% exact: in a mixed dish the pieces, the fat and the sauce do not spread evenly, and a scale has its error. If exact proportions matter to you, cook the portions separately.</string>
+    <string name="split_part_which">Which part are you weighing?</string>
+    <string name="split_part_choose">Choose an ingredient</string>
+    <string name="split_part_unknown">Choose the ingredient you are weighing.</string>
     <string name="split_part_risk">Meat and fish are split most exactly raw, before frying. Weigh rice, pasta and groats dry for each person, cook them together and split them in the same proportions: an approximate split, as not every grain takes up as much water. Split vegetables and sauce by weight.</string>
+    <string name="split_way_part_own_hint">A dish in parts, chicken, rice and broccoli for example. Weigh one cooked part and choose it below: each portion gets as much of it as the plan gives it. Then the next.</string>
     <plurals name="split_pieces">
         <item quantity="one">%1$s piece</item>
         <item quantity="other">%1$s pieces</item>

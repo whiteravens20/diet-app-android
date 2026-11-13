@@ -37,3 +37,17 @@ fun foodWeight(onScale: Double, emptyPot: Double?): Double? {
     val food = if (emptyPot == null) onScale else onScale - emptyPot
     return food.takeIf { it.isFinite() && it > 0 }
 }
+
+/** What a portion takes of an ingredient: by which the ingredient, weighed alone, is split. */
+data class SplitLine(val ingredientId: String, val name: String, val quantity: Double)
+
+/** The ingredients the portions take, each once, in the order of their lines. */
+fun ingredientsOf(portions: List<List<SplitLine>>): List<SplitLine> =
+    portions.flatten().distinctBy { it.ingredientId }
+
+/**
+ * Each portion's share of an ingredient weighed alone, as the web works it out: what each takes of it, all its
+ * lines of it together, as parts of one. A plate of a dish both people eat holds its parts in proportions of its own.
+ */
+fun sharesOfIngredient(portions: List<List<SplitLine>>, ingredientId: String): List<Double> =
+    sharesOf(portions.map { lines -> lines.filter { it.ingredientId == ingredientId }.sumOf { it.quantity } })

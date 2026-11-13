@@ -63,4 +63,24 @@ class SplitTest {
         assertNull(foodWeight(1000.0, 1410.0))
         assertNull(foodWeight(0.0, null))
     }
+
+    @Test
+    fun `splits an ingredient weighed alone by what each portion takes of it, each plate in proportions of its own`() {
+        // A plate with more chicken and less rice beside one the other way round.
+        val mine = listOf(SplitLine("chicken", "Chicken", 156.0), SplitLine("rice", "Rice", 48.0))
+        val theirs = listOf(SplitLine("chicken", "Chicken", 84.0), SplitLine("rice", "Rice", 72.0))
+
+        assertEquals(listOf("chicken", "rice"), ingredientsOf(listOf(mine, theirs)).map { it.ingredientId })
+        assertEquals(listOf(650L, 350L), splitWhole(1000.0, sharesOfIngredient(listOf(mine, theirs), "chicken")))
+        assertEquals(listOf(400L, 600L), splitWhole(1000.0, sharesOfIngredient(listOf(mine, theirs), "rice")))
+    }
+
+    @Test
+    fun `counts every line of an ingredient a portion has, and gives nothing to a portion without it`() {
+        val twoLines = listOf(SplitLine("oil", "Oil", 10.0), SplitLine("oil", "Oil", 5.0))
+        val none = listOf(SplitLine("rice", "Rice", 60.0))
+
+        assertEquals(listOf("oil", "rice"), ingredientsOf(listOf(twoLines, none)).map { it.ingredientId })
+        assertEquals(listOf(1.0, 0.0), sharesOfIngredient(listOf(twoLines, none), "oil"))
+    }
 }

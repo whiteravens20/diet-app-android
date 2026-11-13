@@ -1910,6 +1910,7 @@
     <string name="split_title">Podziel ugotowane</string>
     <string name="split_open">Podziel ugotowane…</string>
     <string name="split_plan_intro">Udział każdej porcji wynika z jej kalorii w planie.</string>
+    <string name="split_plan_intro_parts">Udział każdej porcji wynika z planu: z jej kalorii, a przy jednym składniku z tego, ile go dostaje.</string>
     <string name="split_page_title">Podział dania</string>
     <string name="split_page_intro">Podziel ugotowane danie na porcje: równe albo według kalorii każdej z nich. Danie gotowane na zapas podzielisz też w planie, przy nim samym.</string>
     <string name="split_portions">Porcje</string>
@@ -1938,7 +1939,11 @@
     <string name="split_grams">%1$s g</string>
     <string name="split_tare">Pojemnik postaw na wadze i wytaruj ją, zanim nałożysz porcję.</string>
     <string name="split_risk" formatted="false">Podział garnka nigdy nie jest w 100% dokładny: w daniu mieszanym kawałki, tłuszcz i sos nie rozkładają się równo, a waga ma swój błąd. Jeśli zależy Ci na dokładnych proporcjach, ugotuj porcje osobno.</string>
+    <string name="split_part_which">Który składnik ważysz?</string>
+    <string name="split_part_choose">Wybierz składnik</string>
+    <string name="split_part_unknown">Wybierz składnik, który ważysz.</string>
     <string name="split_part_risk">Mięso i rybę najdokładniej podzielisz na surowo, przed smażeniem. Ryż, makaron i kaszę odważ dla każdego na sucho, ugotuj razem i podziel w tych samych proporcjach: to podział przybliżony, bo nie każde ziarno wchłania tyle samo wody. Warzywa i sos podziel wagą.</string>
+    <string name="split_way_part_own_hint">Danie w częściach, na przykład kurczak, ryż i brokuł. Zważ jeden ugotowany składnik i wybierz go poniżej: każda porcja dostaje tyle, ile przewiduje dla niej plan. Potem kolejny.</string>
     <plurals name="split_pieces">
         <item quantity="one">%1$s sztuka</item>
         <item quantity="few">%1$s sztuki</item>
