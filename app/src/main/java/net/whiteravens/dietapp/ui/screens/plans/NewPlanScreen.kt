@@ -187,13 +187,19 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                         // A plan that wastes less counts the pantry: its box stays ticked while the plan is to waste less.
                         CheckRow(
                             stringResource(R.string.plans_prefer_inventory),
-                            checked = form.respectInventory || form.lessWaste,
-                            enabled = !form.lessWaste,
+                            checked = form.respectInventory || form.wasteLevel.lessWaste,
+                            enabled = !form.wasteLevel.lessWaste,
                         ) { ticked ->
                             viewModel.edit { it.copy(respectInventory = ticked) }
                         }
-                        LessWasteSwitch(rules?.lessWaste?.get(state.planDiet), checked = form.lessWaste) { ticked ->
-                            viewModel.edit { it.copy(lessWaste = ticked) }
+                        WasteLevelChoice(
+                            less = rules?.lessWaste?.get(state.planDiet),
+                            none = rules?.noWaste?.get(state.planDiet),
+                            rules = rules?.waste,
+                            repeats = state.profile?.let { Repeats.of(it.preferences) },
+                            level = form.wasteLevel,
+                        ) { level ->
+                            viewModel.edit { it.copy(wasteLevel = level) }
                         }
 
                         AdvancedOptions(

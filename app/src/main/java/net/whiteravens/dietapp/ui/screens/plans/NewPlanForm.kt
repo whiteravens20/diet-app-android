@@ -6,6 +6,7 @@ import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.WasteLevel
 import java.time.LocalDate
 
 /** What the form offers and begins with. */
@@ -88,8 +89,8 @@ data class NewPlanForm(
     val respectExclusions: Boolean = true,
     val respectFavorites: Boolean = true,
     val respectInventory: Boolean = true,
-    /** The plan wastes less; while it does, the pantry counts whatever [respectInventory] says. */
-    val lessWaste: Boolean = false,
+    /** How much the plan does to waste less; while it does, the pantry counts whatever [respectInventory] says. */
+    val wasteLevel: WasteLevel = WasteLevel.USUAL,
     val maxRepeats: String = "",
     /** The limits that may give way when no recipe is left inside them, in the order they do. */
     val mayGiveWay: List<String> = emptyList(),
@@ -160,8 +161,9 @@ data class NewPlanForm(
             mealPrepFriendly = mealPrepFriendly,
             respectExclusions = respectExclusions,
             respectFavorites = respectFavorites,
-            respectInventory = respectInventory || lessWaste,
-            lessWaste = lessWaste,
+            respectInventory = respectInventory || wasteLevel.lessWaste,
+            lessWaste = wasteLevel.lessWaste,
+            noWaste = wasteLevel.noWaste,
             maxRepeatsPerRecipe = maxRepeats.trim().toIntOrNull(),
             allowRelaxations = mayGiveWay,
             days = asked.takeIf { withProfileId == null }.orEmpty(),

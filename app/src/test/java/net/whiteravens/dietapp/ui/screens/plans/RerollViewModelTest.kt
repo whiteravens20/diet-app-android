@@ -3,7 +3,6 @@
 package net.whiteravens.dietapp.ui.screens.plans
 
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -71,10 +70,12 @@ class RerollViewModelTest {
         coEvery { it.refresh() } just runs
     }
 
-    /** The profile of the plans, on the vegan diet now. */
+    /** The profile of the plans, on the vegan diet now, with its own limits on repeats. */
     private val profiles = mockk<ProfileRepository>().also {
         val vegan = mockk<ProfileDetails>()
         every { vegan.figures.dietType } returns "vegan"
+        every { vegan.preferences.maxConsecutiveDaysSameMeal } returns 2
+        every { vegan.preferences.maxTimesPerWeekSameMeal } returns 4
         coEvery { it.profile("profile") } returns vegan
     }
 
@@ -176,12 +177,20 @@ class RerollViewModelTest {
     }
 
     @Test
-    fun `the whole plan made again is made on the plan's own diet, its profile not asked`() = runTest(main) {
+    fun `the whole plan made again is made on the plan's own diet, whatever its profile's is now`() = runTest(main) {
         val model = opened()
         runCurrent()
 
         assertEquals("keto", model.state.value.wholeDiet)
-        coVerify(exactly = 0) { profiles.profile(any()) }
+    }
+
+    @Test
+    fun `the window learns the profile's own limits on repeats, which a plan that wastes nothing loosens`() = runTest(main) {
+        val model = opened()
+        assertNull(model.state.value.repeats)
+        runCurrent()
+
+        assertEquals(Repeats(daysInARow = 2, timesAWeek = 4), model.state.value.repeats)
     }
 
     @Test
@@ -202,5 +211,6 @@ class RerollViewModelTest {
         runCurrent()
 
         assertNull(model.state.value.wholeDiet)
+        assertNull(model.state.value.repeats)
     }
 }

@@ -41,6 +41,7 @@ import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.Reroll
 import net.whiteravens.dietapp.domain.RerollCouldGo
 import net.whiteravens.dietapp.domain.RerollPreview
+import net.whiteravens.dietapp.domain.WasteLevel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.components.CheckRow
@@ -88,7 +89,7 @@ internal fun RerollDialog(
     var holdLimits by rememberSaveable { mutableStateOf(start.holdLimits) }
     var only by rememberSaveable { mutableStateOf(false) }
     // Only the whole plan made again can change it: days of it filled again are made as the plan is.
-    var lessWaste by rememberSaveable { mutableStateOf(plan.lessWaste) }
+    var wasteLevel by rememberSaveable { mutableStateOf(WasteLevel.of(plan)) }
     // A joint plan is made again for both, unless the user says for this plan alone.
     var forAll by rememberSaveable { mutableStateOf(true) }
 
@@ -137,7 +138,13 @@ internal fun RerollDialog(
                 if (scope == RerollScope.WHOLE) {
                     // Under the whole plan's label: a radio button and its gap to the label.
                     Box(Modifier.padding(start = 32.dp)) {
-                        LessWasteSwitch(state.wholeDiet?.let { rules?.lessWaste?.get(it) }, checked = lessWaste) { lessWaste = it }
+                        WasteLevelChoice(
+                            less = state.wholeDiet?.let { rules?.lessWaste?.get(it) },
+                            none = state.wholeDiet?.let { rules?.noWaste?.get(it) },
+                            rules = rules?.waste,
+                            repeats = state.repeats,
+                            level = wasteLevel,
+                        ) { wasteLevel = it }
                     }
                 }
                 Scope(
@@ -251,6 +258,8 @@ internal fun RerollDialog(
             }
         },
         confirmButton = {
+            // Only the whole plan made again changes its level, and it is sent where it changes.
+            val levelChanged = scope == RerollScope.WHOLE && wasteLevel != WasteLevel.of(plan)
             Button(
                 onClick = {
                     onConfirm(
@@ -260,7 +269,8 @@ internal fun RerollDialog(
                             replaceCustom = couldGo.custom && replaceCustom,
                             allowRelaxations = emptyList<String>().takeIf { holdLimits && mayGiveWay.isNotEmpty() },
                             together = !only && preview?.cooking?.changes?.isNotEmpty() == true,
-                            lessWaste = lessWaste.takeIf { scope == RerollScope.WHOLE && it != plan.lessWaste },
+                            lessWaste = wasteLevel.lessWaste.takeIf { levelChanged },
+                            noWaste = wasteLevel.noWaste.takeIf { levelChanged },
                             forAll = plan.joint != null && forAll,
                         ),
                     )

@@ -8,6 +8,7 @@ import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal.TooBig
 import net.whiteravens.dietapp.domain.FieldRefusal.TooSmall
+import net.whiteravens.dietapp.domain.WasteLevel
 import net.whiteravens.dietapp.testing.fixture
 import net.whiteravens.dietapp.testing.refusal
 import org.junit.Assert.assertEquals
@@ -43,13 +44,24 @@ class NewPlanFormTest {
 
     @Test
     fun `a plan that wastes less is asked for so, and counts the pantry though its box was unticked`() {
-        val ask = form.copy(respectInventory = false, lessWaste = true).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
+        val ask = form.copy(respectInventory = false, wasteLevel = WasteLevel.LESS).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
 
         assertTrue(ask.lessWaste)
+        assertFalse(ask.noWaste)
         assertTrue(ask.respectInventory)
         val plain = form.copy(respectInventory = false).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
         assertFalse(plain.lessWaste)
+        assertFalse(plain.noWaste)
         assertFalse(plain.respectInventory)
+    }
+
+    @Test
+    fun `a plan that wastes nothing is asked to waste less as well, and counts the pantry though its box was unticked`() {
+        val ask = form.copy(respectInventory = false, wasteLevel = WasteLevel.NONE).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!
+
+        assertTrue(ask.noWaste)
+        assertTrue(ask.lessWaste)
+        assertTrue(ask.respectInventory)
     }
 
     @Test

@@ -226,6 +226,18 @@ object Instance {
     fun planOptions(account: Account, planId: String): JSONObject =
         call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("options")
 
+    /**
+     * What a level of a plan that wastes less (`lessWaste`, `noWaste`) does on [diet], as the instance measured it,
+     * in the order the form says it: the pantry with the level and without, the packs with it and without, fewer recipes.
+     */
+    fun wasteFigures(level: String, diet: String): List<String> {
+        val effect = call("GET", "config").getJSONObject("plans").getJSONObject(level).getJSONObject(diet)
+        val pantry = effect.getJSONObject("pantry")
+        val packs = effect.getJSONObject("packs")
+        return listOf(pantry.getInt("less"), pantry.getInt("now"), packs.getInt("less"), packs.getInt("now"), effect.getInt("fewerRecipes"))
+            .map { it.toString() }
+    }
+
     /** A plan's first day and how long the plan is: what its card in the list is titled with. */
     fun planStart(account: Account, planId: String): Pair<String, Int> {
         val plan = call("GET", "meal-plans/$planId", token = account.accessToken)

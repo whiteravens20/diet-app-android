@@ -49,6 +49,8 @@ class RerollViewModel @Inject constructor(
         val error: Throwable? = null,
         /** The diet the whole plan made again is made for: the plan's own, or its profile's as it is now; null until known. */
         val wholeDiet: String? = null,
+        /** The profile's own limits on repeats, which a plan that wastes nothing loosens; null until known. */
+        val repeats: Repeats? = null,
     )
 
     /** What the instance says, its figures of a plan that wastes less among them. */
@@ -66,11 +68,10 @@ class RerollViewModel @Inject constructor(
         asking?.cancel()
         _state.value = UiState(wholeDiet = plan.ownDiet)
         if (server.rules.value == null) viewModelScope.launch { attempt { server.refresh() } }
-        if (plan.ownDiet == null) {
-            viewModelScope.launch {
-                attempt { profiles.profile(plan.profileId) }.onSuccess { profile ->
-                    _state.update { it.copy(wholeDiet = profile.figures.dietType) }
-                }
+        // The profile's diet of now, for a plan that follows it, and its own limits on repeats.
+        viewModelScope.launch {
+            attempt { profiles.profile(plan.profileId) }.onSuccess { profile ->
+                _state.update { it.copy(wholeDiet = plan.ownDiet ?: profile.figures.dietType, repeats = Repeats.of(profile.preferences)) }
             }
         }
     }

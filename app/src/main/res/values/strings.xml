@@ -252,6 +252,7 @@
     <string name="plans_pantry_left_out">The pantry was left out of this plan for variety: the plans before it leaned on it.</string>
     <string name="plans_pantry_unused">Nothing that is in the pantry is used by a recipe this plan could choose.</string>
     <string name="plans_less_waste_line">This plan wastes less: it leans harder on the pantry and finishes opened packs.</string>
+    <string name="plans_no_waste_line">This plan wastes the least: it uses up opened packs within days and repeats recipes more often.</string>
     <plurals name="plans_conflicts_notice">
         <item quantity="one">One meal of this plan holds something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
         <item quantity="other">%1$d meals of this plan hold something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
@@ -1357,6 +1358,24 @@
     <string name="plans_less_waste_hint">The plan leans harder on what the pantry holds and finishes opened packs that spoil soon: on this diet it typically uses about %1$s%% of the pantry instead of %2$s%%, and about %3$s%% of such packs instead of %4$s%%. In return a week has about %5$s%% fewer different recipes, and its days stray further from the macro split.</string>
     <string name="plans_less_waste_hint_custom">The plan leans harder on what the pantry holds and finishes opened packs that spoil soon. In return a week has fewer different recipes, and its days stray further from the macro split.</string>
     <string name="plans_less_waste_limits">The avoid list, allergens and the plan\'s limits work as always; a strict cap on repeats leaves it less room.</string>
+    <string name="plans_waste_level">Food waste</string>
+    <string name="plans_waste_usual">Usual plan</string>
+    <string name="plans_waste_usual_hint">The most different recipes in a week. The plan\'s summary says how much is left of the packs it buys.</string>
+    <string name="plans_less_waste_rests">The rest of an opened pack goes into the meal that finishes it, so a day may get up to %1$s%% of its calorie target extra.</string>
+    <string name="plans_no_waste">No waste</string>
+    <string name="plans_no_waste_hint">The plan tries to use up every opened pack of food that spoils within days: meat and fish within %1$s days at most, anything else within %2$s. On this diet it typically uses about %3$s%% of such packs instead of %4$s%% and about %5$s%% of the pantry instead of %6$s%%. In return a week has about %7$s%% fewer different recipes.</string>
+    <string name="plans_no_waste_hint_custom">The plan tries to use up every opened pack of food that spoils within days: meat and fish within %1$s days at most, anything else within %2$s. In return a week has far fewer different recipes.</string>
+    <plurals name="plans_no_waste_days">
+        <item quantity="one">%1$s day in a row</item>
+        <item quantity="other">%1$s days in a row</item>
+    </plurals>
+    <plurals name="plans_no_waste_times">
+        <item quantity="one">%1$s time a week</item>
+        <item quantity="other">%1$s times a week</item>
+    </plurals>
+    <string name="plans_no_waste_loosened">%1$s (your profile: %2$s)</string>
+    <string name="plans_no_waste_repeats">The same recipe may come up to %1$s and up to %2$s, even twice in one day.</string>
+    <string name="plans_no_waste_kept">The limits on meals with the same kind of protein, allergens, the avoid list and the diet work as always. The rest of an opened pack goes into the meal that finishes it, so a day may get up to %1$s%% of its calorie target extra, and days stray further from the macro split.</string>
     <string name="plans_generating">Generating…</string>
     <string name="plans_generate_button">Generate plan</string>
     <plurals name="plans_limits_in_the_way">

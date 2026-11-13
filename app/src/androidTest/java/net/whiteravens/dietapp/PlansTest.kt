@@ -23,6 +23,7 @@ import androidx.compose.ui.test.isNotEnabled
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isPopup
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -190,7 +191,7 @@ class PlansTest {
 
 
     @Test
-    fun aPlanThatWastesLessCountsThePantryAndOnlyTheWholePlanMadeAgainChangesIt() {
+    fun aPlanThatWastesLessOrNothingCountsThePantryAndOnlyTheWholePlanMadeAgainChangesIt() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
         screen.signIn(account)
@@ -204,41 +205,57 @@ class PlansTest {
 
         // The pantry left aside, then a plan that wastes less: it counts the pantry, and holds its box ticked.
         val pantry = hasText(text(R.string.plans_prefer_inventory)) and isToggleable()
-        val lessWaste = hasText(text(R.string.plans_less_waste)) and isToggleable()
+        val usual = hasText(text(R.string.plans_waste_usual)) and isSelectable()
+        val lessWaste = hasText(text(R.string.plans_less_waste)) and isSelectable()
+        val noWaste = hasText(text(R.string.plans_no_waste)) and isSelectable()
         screen.onNode(pantry).performScrollTo().performClick()
         screen.onNode(pantry).assert(isOff())
+        screen.onNode(usual).performScrollTo().assert(isSelected())
         screen.onNode(lessWaste).performScrollTo().performClick()
         screen.onNode(pantry).assert(isOn()).assert(isNotEnabled())
         // What it costs, in the instance's figures for the profile's diet, the balanced one.
-        screen.onNode(lessWaste and hasText(text(R.string.plans_less_waste_hint, "62", "35", "83", "80", "19"), substring = true)).assertExists()
+        val less = Instance.wasteFigures("lessWaste", "balanced")
+        screen.onNode(lessWaste and hasText(text(R.string.plans_less_waste_hint, *less.toTypedArray()), substring = true)).assertExists()
         screen.keepScreenshot("plans-a-plan-that-wastes-less-asked-for")
+        // A plan that wastes nothing: its figures, and what it loosens of a new profile's limits on repeats, 2 days and 3 times.
+        screen.onNode(noWaste).performScrollTo().performClick()
+        screen.onNode(pantry).assert(isOn()).assert(isNotEnabled())
+        val nothing = Instance.wasteFigures("noWaste", "balanced")
+        screen.onNode(noWaste and hasText(text(R.string.plans_no_waste_hint, "3", "5", nothing[2], nothing[3], nothing[0], nothing[1], nothing[4]), substring = true))
+            .assertExists()
+        screen.onNode(noWaste and hasText(text(R.string.plans_no_waste_loosened, plural(R.plurals.plans_no_waste_days, 3, "3"), "2"), substring = true))
+            .assertExists()
+        screen.keepScreenshot("plans-a-plan-that-wastes-nothing-asked-for")
         screen.onNode(hasText(text(R.string.plans_generate_button)) and hasClickAction()).performScrollTo().performClick()
 
         // Made so on the server, the pantry counted, and the plan says it.
         screen.waitForTheApi(60_000) { Instance.planIds(account, profileId).isNotEmpty() }
         val planId = Instance.planIds(account, profileId).first()
         val options = Instance.planOptions(account, planId)
+        assertTrue(options.getBoolean("noWaste"))
         assertTrue(options.getBoolean("lessWaste"))
         assertTrue(options.getBoolean("respectInventory"))
-        screen.scrollToText(text(R.string.plans_less_waste_line))
-        screen.keepScreenshot("plans-a-plan-that-wastes-less")
+        screen.scrollToText(text(R.string.plans_no_waste_line))
+        screen.keepScreenshot("plans-a-plan-that-wastes-nothing")
 
-        // Made again: the whole plan begins as it is and may stop wasting less; a day of it is made as the plan is.
+        // Made again: the whole plan begins as it is and may waste less instead; a day of it is made as the plan is.
         screen.scrollToText(text(R.string.plans_recalculate))
         screen.onNodeWithText(text(R.string.plans_recalculate)).performClick()
         screen.waitForText(text(R.string.plans_reroll_title))
         screen.waitForEnabled(text(R.string.plans_reroll_confirm))
-        screen.onNode(lessWaste).assert(isOn())
-        screen.keepScreenshot("plans-made-again-wasting-less")
+        screen.onNode(noWaste).performScrollTo().assert(isSelected())
+        screen.keepScreenshot("plans-made-again-wasting-nothing")
         screen.onNodeWithText(text(R.string.plans_reroll_day)).performScrollTo().performClick()
-        screen.onNode(lessWaste).assertDoesNotExist()
+        screen.onNode(noWaste).assertDoesNotExist()
         screen.onNodeWithText(text(R.string.plans_reroll_whole)).performScrollTo().performClick()
         val made = Instance.planRevision(account, planId)
         screen.onNode(lessWaste).performScrollTo().performClick()
         screen.waitForEnabled(text(R.string.plans_reroll_confirm))
         screen.onNodeWithText(text(R.string.plans_reroll_confirm)).performClick()
         screen.waitForTheApi(60_000) { Instance.planRevision(account, planId) > made }
-        assertFalse(Instance.planOptions(account, planId).getBoolean("lessWaste"))
+        val again = Instance.planOptions(account, planId)
+        assertTrue(again.getBoolean("lessWaste"))
+        assertFalse(again.getBoolean("noWaste"))
     }
     @Test
     fun aDishCookedForTwoDaysChangesOnBothAndItsMealsSayWhereItComesFrom() {
