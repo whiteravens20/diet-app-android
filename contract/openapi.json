@@ -11401,6 +11401,35 @@
             ],
             "additionalProperties": false
           },
+          "catalogue": {
+            "type": "object",
+            "properties": {
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "$ref": "#/components/schemas/CatalogueGapKind"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "gaps"
+            ],
+            "additionalProperties": false
+          },
           "mail": {
             "type": "object",
             "properties": {
@@ -11421,6 +11450,7 @@
           "api",
           "requests",
           "ai",
+          "catalogue",
           "mail"
         ],
         "additionalProperties": false
@@ -12982,6 +13012,12 @@
           "underweight",
           "below_floor",
           "below_bmr"
+        ]
+      },
+      "CatalogueGapKind": {
+        "type": "string",
+        "enum": [
+          "keep_days"
         ]
       },
       "CatalogueScope": {
@@ -15262,6 +15298,10 @@
             "type": "boolean"
           },
           "lessWaste": {
+            "default": false,
+            "type": "boolean"
+          },
+          "noWaste": {
             "default": false,
             "type": "boolean"
           },
@@ -19319,6 +19359,10 @@
             "default": false,
             "type": "boolean"
           },
+          "noWaste": {
+            "default": false,
+            "type": "boolean"
+          },
           "maxRepeatsPerRecipe": {
             "anyOf": [
               {
@@ -19345,6 +19389,7 @@
           "respectFavorites",
           "respectInventory",
           "lessWaste",
+          "noWaste",
           "maxRepeatsPerRecipe",
           "allowRelaxations"
         ],
@@ -19675,6 +19720,23 @@
               "string",
               "null"
             ]
+          },
+          "rest": {
+            "type": "object",
+            "properties": {
+              "quantity": {
+                "type": "number",
+                "minimum": 0
+              },
+              "display": {
+                "$ref": "#/components/schemas/DisplayAmount"
+              }
+            },
+            "required": [
+              "quantity",
+              "display"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -21737,6 +21799,17 @@
                   "null"
                 ]
               },
+              "androidAppUrl": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "version": {
                 "type": "string"
               }
@@ -21744,6 +21817,7 @@
             "required": [
               "supportUrl",
               "operatorContact",
+              "androidAppUrl",
               "version"
             ],
             "additionalProperties": false
@@ -21846,13 +21920,36 @@
                   "keto",
                   "mediterranean"
                 ]
+              },
+              "noWaste": {
+                "type": "object",
+                "propertyNames": {
+                  "$ref": "#/components/schemas/NamedDiet"
+                },
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/LessWasteEffect"
+                },
+                "required": [
+                  "balanced",
+                  "high_protein",
+                  "low_carb",
+                  "vegetarian",
+                  "vegan",
+                  "keto",
+                  "mediterranean"
+                ]
+              },
+              "waste": {
+                "$ref": "#/components/schemas/WasteRules"
               }
             },
             "required": [
               "maxRepeatsPerRecipe",
               "mealSlots",
               "relaxations",
-              "lessWaste"
+              "lessWaste",
+              "noWaste",
+              "waste"
             ],
             "additionalProperties": false
           }
@@ -23380,6 +23477,9 @@
             "$ref": "#/components/schemas/CalendarDay"
           },
           "lessWaste": {
+            "type": "boolean"
+          },
+          "noWaste": {
             "type": "boolean"
           }
         }
@@ -25503,6 +25603,68 @@
         "required": [
           "token"
         ]
+      },
+      "WasteRules": {
+        "type": "object",
+        "properties": {
+          "less": {
+            "type": "object",
+            "properties": {
+              "restsOfDay": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "restsOfDay"
+            ],
+            "additionalProperties": false
+          },
+          "none": {
+            "type": "object",
+            "properties": {
+              "restsOfDay": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "daysInARow": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "timesAWeek": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "twiceADay": {
+                "type": "boolean"
+              },
+              "meatAndFishDays": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "otherDays": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "restsOfDay",
+              "daysInARow",
+              "timesAWeek",
+              "twiceADay",
+              "meatAndFishDays",
+              "otherDays"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "less",
+          "none"
+        ],
+        "additionalProperties": false
       },
       "WaterDay": {
         "type": "object",
