@@ -32,6 +32,7 @@ import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
+import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.HELD_DOT
@@ -178,15 +179,16 @@ class DiaryTest {
     fun aRecipeAndAnIngredientAreFoundWrittenChangedAndTakenOut() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account, name = "Ala")
-        val (_, recipe) = Instance.recipes(account, 1, "en").single()
-        val (_, ingredient) = Instance.ingredient(account, "Large egg", "en")
+        val language = text(R.string.api_language)
+        val (_, recipe) = Instance.recipes(account, 1, language).single()
+        val (_, ingredient) = Instance.ingredient(account, "Large egg", language)
         screen.startSignedIn(account)
         openTheDiary()
 
         // A recipe found by its title, in a serving and a half.
         pressAdd()
         screen.onNode(hasText(text(R.string.diary_search_recipe)) and hasSetTextAction()).performTextInput(recipe)
-        val foundRecipe = hasText(recipe) and hasClickAction() and !hasSetTextAction()
+        val foundRecipe = hasText(shown(recipe)) and hasClickAction() and !hasSetTextAction()
         screen.waitUntil(20_000) { screen.onAllNodes(foundRecipe).fetchSemanticsNodes().isNotEmpty() }
         screen.putKeyboardAway()
         screen.keepScreenshot("diary-a-recipe-found")
@@ -201,7 +203,7 @@ class DiaryTest {
         pressAdd()
         screen.onNode(inTheWindow(text(R.string.diary_kind_ingredient))).performClick()
         screen.onNode(hasText(text(R.string.diary_search_ingredient)) and hasSetTextAction()).performTextInput(ingredient)
-        val foundIngredient = hasText(ingredient) and hasClickAction() and !hasSetTextAction()
+        val foundIngredient = hasText(shown(ingredient)) and hasClickAction() and !hasSetTextAction()
         screen.waitUntil(20_000) { screen.onAllNodes(foundIngredient).fetchSemanticsNodes().isNotEmpty() }
         screen.putKeyboardAway()
         screen.onNode(foundIngredient).performScrollTo().performClick()
@@ -225,7 +227,7 @@ class DiaryTest {
         // Taken out, without a question: it is written again as easily.
         screen.onNodeWithContentDescription(text(R.string.diary_remove_label, ingredient)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf(recipe) }
-        screen.waitUntil(20_000) { screen.onAllNodesWithText(ingredient).fetchSemanticsNodes().isEmpty() }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(shown(ingredient)).fetchSemanticsNodes().isEmpty() }
     }
 
     @Test

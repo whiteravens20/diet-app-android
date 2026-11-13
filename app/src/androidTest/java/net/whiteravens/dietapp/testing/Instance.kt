@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.testing
 
 import net.whiteravens.dietapp.BuildConfig
+import net.whiteravens.dietapp.R
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -685,7 +686,7 @@ object Instance {
 
     /** What is written for the day [date] of a profile's diary, in the order it was written. */
     fun diaryEntries(account: Account, profileId: String, date: LocalDate = LocalDate.now()): List<String> {
-        val entries = call("GET", "diary/day?profileId=$profileId&date=$date", token = account.accessToken, language = "en").getJSONArray("entries")
+        val entries = call("GET", "diary/day?profileId=$profileId&date=$date", token = account.accessToken).getJSONArray("entries")
         return (0 until entries.length()).map { entries.getJSONObject(it).getString("name") }
     }
 
@@ -810,7 +811,8 @@ object Instance {
             .url(BuildConfig.API_BASE_URL + path)
             .method(method, body?.toString()?.toRequestBody(json))
             .apply { if (token != null) header("Authorization", "Bearer $token") }
-            .apply { if (language != null) header("Accept-Language", language) }
+            // In the language the app asks in: the journeys read what the screens show of it.
+            .header("Accept-Language", language ?: text(R.string.api_language))
             .header("X-Client-Date", LocalDate.now().toString())
             .build()
         repeat(HELD_UP_TRIES) {

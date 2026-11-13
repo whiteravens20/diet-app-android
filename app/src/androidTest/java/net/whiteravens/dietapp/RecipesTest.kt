@@ -26,6 +26,7 @@ import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
+import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -56,7 +57,7 @@ class RecipesTest {
     private fun addIngredient(name: String, amount: String) {
         type(text(R.string.own_recipe_add_ingredient), name)
         screen.putKeyboardAway()
-        val found = hasText(name) and hasClickAction() and !hasSetTextAction()
+        val found = hasText(shown(name)) and hasClickAction() and !hasSetTextAction()
         screen.waitUntil(20_000) { screen.onAllNodes(found).fetchSemanticsNodes().isNotEmpty() }
         screen.onAllNodes(found)[0].performScrollTo().performClick()
         screen.onNodeWithContentDescription(text(R.string.own_recipe_amount_of, name)).performScrollTo().performTextInput(amount)
@@ -74,7 +75,7 @@ class RecipesTest {
 
         // The recipe's card, not the search field that holds its title too. The cards are below the
         // tabs, the search and the filters: with the keyboard up they may begin below its edge.
-        val card = hasText(title) and hasClickAction() and !hasSetTextAction()
+        val card = hasText(shown(title)) and hasClickAction() and !hasSetTextAction()
         val list = screen.onNode(hasScrollToNodeAction())
         screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
         screen.keepScreenshot("recipes-found-by-search")
@@ -96,7 +97,7 @@ class RecipesTest {
 
         screen.openTab(text(R.string.nav_recipes))
         screen.onNodeWithText(text(R.string.recipes_search_placeholder)).performTextInput(title)
-        val card = hasText(title) and hasClickAction() and !hasSetTextAction()
+        val card = hasText(shown(title)) and hasClickAction() and !hasSetTextAction()
         val list = screen.onNode(hasScrollToNodeAction())
         screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
         screen.putKeyboardAway()

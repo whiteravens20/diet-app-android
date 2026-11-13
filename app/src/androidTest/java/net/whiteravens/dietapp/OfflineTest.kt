@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
+import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -74,7 +75,7 @@ class OfflineTest {
         val card = formatDate(startDate)
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
-        screen.scrollToText(title)
+        screen.scrollToText(shown(title))
         // The way back is at the top of the plan, which the meals may have scrolled out of view.
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
         screen.scrollToText(card, substring = true)
@@ -87,7 +88,7 @@ class OfflineTest {
         screen.waitForText(readOnly, substring = true, timeoutMillis = 40_000)
         val said = screen.onNodeWithText(readOnly, substring = true).fetchSemanticsNode().config[SemanticsProperties.Text].joinToString("")
         assertTrue(said, said.matches(Regex(Regex.escape(asOf) + ".*\\d{2}:\\d{2}" + Regex.escape(readOnly))))
-        screen.scrollToText(title)
+        screen.scrollToText(shown(title))
         screen.keepScreenshot("offline-a-plan-from-the-copy")
     }
 
@@ -141,7 +142,7 @@ class OfflineTest {
         val card = formatDate(LocalDate.now().toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
-        screen.scrollToText(title)
+        screen.scrollToText(shown(title))
         val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
 
         // Without a network a meal of one's own is added all the same, and says that it waits to be sent.

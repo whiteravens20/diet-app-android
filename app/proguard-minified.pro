@@ -10,6 +10,7 @@
 -keep class net.whiteravens.dietapp.WaterShortcutActivity { *; }
 -keep class net.whiteravens.dietapp.WaterShortcutActivity$Companion { *; }
 -keep class net.whiteravens.dietapp.ui.common.LabelsKt { *; }
+-keep class net.whiteravens.dietapp.ui.common.HeldLettersKt { *; }
 -keep class net.whiteravens.dietapp.ui.common.FieldRefusalsKt { *; }
 -keep class net.whiteravens.dietapp.ui.common.Bound { *; }
 -keep class net.whiteravens.dietapp.ui.common.Bound$* { *; }

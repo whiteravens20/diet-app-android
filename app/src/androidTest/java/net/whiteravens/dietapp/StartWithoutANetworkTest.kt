@@ -21,6 +21,7 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollToText
+import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -109,7 +110,7 @@ class StartWithoutANetworkTest {
             screen.openTab(text(R.string.tab_meal_plans))
             screen.scrollToText(card, substring = true)
             screen.onNodeWithText(card, substring = true).performClick()
-            screen.scrollToText(title)
+            screen.scrollToText(shown(title))
         }
 
         screen.airplaneMode(true)
@@ -119,7 +120,7 @@ class StartWithoutANetworkTest {
             screen.scrollToText(card, substring = true)
             screen.keepScreenshot("start-without-a-network-the-plans")
             screen.onNodeWithText(card, substring = true).performClick()
-            screen.scrollToText(title)
+            screen.scrollToText(shown(title))
             screen.keepScreenshot("start-without-a-network-a-plan")
         }
     }

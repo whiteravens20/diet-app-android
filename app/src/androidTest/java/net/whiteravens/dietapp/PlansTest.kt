@@ -49,6 +49,7 @@ import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.sharedBy
+import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
@@ -168,7 +169,7 @@ class PlansTest {
         assertNotEquals(before.first(), Instance.firstDayRecipes(account, planId).first())
         screen.keepScreenshot("plans-after-the-swap")
         // The meal that was changed stands where it stood.
-        screen.onAllNodesWithText(Instance.firstMeal(account, planId).first)[0].assertIsDisplayed()
+        screen.onAllNodesWithText(shown(Instance.firstMeal(account, planId).first))[0].assertIsDisplayed()
         // A swap says what its day holds in a card over the meals, and can be taken back from there.
         val swappedAt = Instance.planRevision(account, planId)
         screen.waitForText(text(R.string.plans_undo_swap))
@@ -179,14 +180,14 @@ class PlansTest {
 
         // The meal as planned opens on a tap, over the whole screen: its lines and its steps, and its recipe a tap further.
         val (title, lines) = Instance.firstMeal(account, planId)
-        screen.scrollToText(title)
-        screen.onAllNodesWithText(title)[0].performScrollTo().performClick()
+        screen.scrollToText(shown(title))
+        screen.onAllNodesWithText(shown(title))[0].performScrollTo().performClick()
         screen.waitForText(lines.first())
         screen.onNode(hasText(text(R.string.recipes_steps)) and hasAnyAncestor(isDialog())).performScrollTo()
         screen.keepScreenshot("plans-a-meal-as-planned")
         screen.onNodeWithText(text(R.string.plans_open_recipe)).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }
-        screen.waitForText(title)
+        screen.waitForText(shown(title))
     }
 
 
@@ -280,8 +281,8 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(rest.date)) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
 
         // The meal opened says, under the food of the pack, how much of what it takes is the rest of that pack.
-        screen.scrollToText(rest.title)
-        screen.onAllNodesWithText(rest.title)[0].performScrollTo().performClick()
+        screen.scrollToText(shown(rest.title))
+        screen.onAllNodesWithText(shown(rest.title))[0].performScrollTo().performClick()
         screen.waitForText(rest.food)
         val (before, after) = text(R.string.plans_rest_of_pack, "\u0000").split("\u0000")
         val restLine = SemanticsMatcher("the line of the rest of a pack") { node ->
@@ -370,7 +371,7 @@ class PlansTest {
         screen.onNodeWithText(card, substring = true).performClick()
         screen.scrollToText(text(R.string.plans_cook_days))
         val title = Instance.mealToCook(account, planId)
-        screen.onAllNodesWithText(title)[0].performScrollTo().performClick()
+        screen.onAllNodesWithText(shown(title))[0].performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.split_open)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
         screen.waitForText(text(R.string.split_plan_intro_parts))
         screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction()).performTextInput("2660")
@@ -448,7 +449,7 @@ class PlansTest {
         putAwayRebalance()
 
         // Its window gives what the whole pot takes, for both portions, and the pot is split into the portions of both, each by name.
-        screen.onAllNodesWithText(shared.title)[0].performScrollTo().performClick()
+        screen.onAllNodesWithText(shown(shared.title))[0].performScrollTo().performClick()
         val pot = text(R.string.plans_portion_pot, "\u0000", "\u0000", "\u0000", "\u0000", "\u0000").split("\u0000")[1].trim(' ', '.', ',', '\u00A0')
         screen.waitForText(pot, substring = true)
         screen.onNode(hasText(pot, substring = true) and inAWindow).performScrollTo()
@@ -512,7 +513,7 @@ class PlansTest {
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
         screen.scrollToText(text(R.string.plans_cook_days))
-        screen.onAllNodesWithText(dish.title)[0].performScrollTo().performClick()
+        screen.onAllNodesWithText(shown(dish.title))[0].performScrollTo().performClick()
         val asText = screen.onNode(hasText(text(R.string.recipe_share_text)) and inTheWindow)
         asText.performScrollTo()
         screen.keepScreenshot("plans-a-meal-to-send")
@@ -954,12 +955,12 @@ class PlansTest {
         screen.onNodeWithText(card, substring = true).performClick()
 
         // The meal says what is put on Adam's plate beside the dish both eat.
-        val line = text(R.string.plans_topping_line, "\u0000", "\u0000", 0).substringBefore("\u0000") + topped.topping
+        val line = text(R.string.plans_topping_line, "\u0000", "\u0000", 0).substringBefore("\u0000") + shown(topped.topping)
         screen.scrollToText(line, substring = true)
         screen.keepScreenshot("plans-a-topping")
 
         // Its window says it is on his plate alone, not in the pot.
-        screen.onAllNodesWithText(topped.title)[0].performScrollTo().performClick()
+        screen.onAllNodesWithText(shown(topped.title))[0].performScrollTo().performClick()
         val note = text(R.string.plans_topping_note, "\u0000", "\u0000", 0).substringBefore("\u0000")
         screen.waitForText(note, substring = true)
         screen.onNode(hasText(note, substring = true) and inAWindow).performScrollTo()
@@ -974,7 +975,7 @@ class PlansTest {
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.diary_title)).performClick()
         screen.waitForText(text(R.string.diary_subhead))
-        val eaten = text(R.string.diary_meal_topping, "\u0000", "\u0000").substringBefore("\u0000") + topped.topping
+        val eaten = text(R.string.diary_meal_topping, "\u0000", "\u0000").substringBefore("\u0000") + shown(topped.topping)
         screen.scrollToText(eaten, substring = true)
         screen.keepScreenshot("diary-a-topping")
     }
@@ -1001,7 +1002,7 @@ class PlansTest {
         screen.keepScreenshot("plans-a-plate")
 
         // Its window shows both plates of the lines they hold otherwise than the recipe, and how a part is split.
-        screen.onAllNodesWithText(plated.title)[0].performScrollTo().performClick()
+        screen.onAllNodesWithText(shown(plated.title))[0].performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_plates_title))
         screen.onNode(hasText(text(R.string.plans_plates_title)) and inAWindow).performScrollTo()
         screen.keepScreenshot("plans-the-plates-in-the-meal")
@@ -1017,7 +1018,7 @@ class PlansTest {
         val theirs = plated.theirs.first { it.name == line.name }
         screen.onNode(hasText(text(R.string.split_part_which)) and inSplit).performScrollTo().performClick()
         // A dish's ingredients may not all fit the menu at once.
-        screen.onNode(hasText(line.name) and hasAnyAncestor(isPopup())).performScrollTo().performClick()
+        screen.onNode(hasText(shown(line.name)) and hasAnyAncestor(isPopup())).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction() and inSplit).performScrollTo().performTextInput("400")
         val mine = Math.round(400 * line.quantity / (line.quantity + theirs.quantity))
         val grams = SemanticsMatcher("an amount in grams") { node ->
@@ -1058,7 +1059,7 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.plans_leftover_part)) and inAWindow).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.plans_leftover_half)) and inAWindow).performScrollTo().performClick()
         val place = text(R.string.plans_leftover_place, text(R.string.meal_lunch), lunch, "\u0000").substringBefore("\u0000")
-        screen.onNode(hasText(place, substring = true) and inAWindow).performScrollTo().performClick()
+        screen.onNode(hasText(shown(place), substring = true) and inAWindow).performScrollTo().performClick()
         screen.keepScreenshot("plans-a-leftover-window")
         screen.onNode(hasText(text(R.string.plans_leftover_submit)) and hasClickAction()).performClick()
         screen.waitForTheApi(20_000) { Instance.isLeftover(account, planId, 1, "lunch") && Instance.mealEaten(account, planId, dinnerId) }

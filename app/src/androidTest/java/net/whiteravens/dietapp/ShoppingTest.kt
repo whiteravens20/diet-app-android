@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
+import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -69,7 +70,7 @@ class ShoppingTest {
         val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(isToggleable()) }.isSuccess }
         val name = Instance.shoppingRows(account, planId, language).keys.first()
-        val row = hasText(name) and isToggleable()
+        val row = hasText(shown(name)) and isToggleable()
 
         // Without a network the row is ticked all the same, and says that it waits to be sent; the
         // screen says it is offline, and how many changes wait.
@@ -120,19 +121,19 @@ class ShoppingTest {
 
         // Made and opened: for whom, and under each row what each profile needs of it.
         val forWhom = text(R.string.household_for_whom, joined("Ala", "Ola"))
-        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(forWhom)) }.isSuccess }
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(shown(forWhom))) }.isSuccess }
         screen.keepScreenshot("shopping-a-household-list")
 
         // A row ticked on it is ticked on the server.
         val name = Instance.householdRows(account, language).keys.first()
-        val row = hasText(name) and isToggleable()
+        val row = hasText(shown(name)) and isToggleable()
         list.performScrollToNode(row)
         // The household list stands above the plan's list, whose part may hold the same row.
         screen.onAllNodes(row)[0].performClick()
         screen.waitForTheApi(30_000) { Instance.householdRows(account, language)[name] == true }
 
         // Ala's plan's list says it is a part of the household list.
-        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.shopping_part_of, joined("Ala", "Ola")))) }.isSuccess }
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(shown(text(R.string.shopping_part_of, joined("Ala", "Ola"))))) }.isSuccess }
         screen.keepScreenshot("shopping-a-part-of-a-household-list")
     }
 
@@ -153,8 +154,8 @@ class ShoppingTest {
             .getStringArray(R.array.shopping_buy_later_on)[LocalDate.parse(from).dayOfWeek.value - 1]
         val sentence = plural(R.plurals.shopping_buy_later, packs, packs, on, formatDayMonth(from))
         val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
-        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(sentence)) }.isSuccess }
-        screen.onNode(hasText(name) and isToggleable()).assertExists()
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(shown(sentence))) }.isSuccess }
+        screen.onNode(hasText(shown(name)) and isToggleable()).assertExists()
         screen.keepScreenshot("shopping-fresh-meat-bought-later")
     }
 
@@ -180,7 +181,7 @@ class ShoppingTest {
         assertEquals(false, rows[name])
         screen.keepScreenshot("shopping-a-list-made")
 
-        val row = hasText(name) and isToggleable()
+        val row = hasText(shown(name)) and isToggleable()
         list.performScrollToNode(row)
         screen.onNode(row).performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(row and isOn()).fetchSemanticsNodes().isNotEmpty() }

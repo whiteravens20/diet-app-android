@@ -50,7 +50,9 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.auth.KeystoreSealer
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.remote.AuthTokens
+import net.whiteravens.dietapp.ui.common.holdLetters
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -77,9 +79,12 @@ const val HELD_DOT = "\u00A0· "
 fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(id, count, *args)
 
-/** Waits until something on the screen shows [shown], or a text holding it where [substring], as a person waits for a screen to load. */
-fun ComposeTestRule.waitForText(shown: String, timeoutMillis: Long = 20_000, substring: Boolean = false) {
-    waitUntil(timeoutMillis) { onAllNodesWithText(shown, substring = substring).fetchSemanticsNodes().isNotEmpty() }
+/**
+ * Waits until something on the screen shows [sought], or a text holding it where [substring], as a person waits for a
+ * screen to load. Looked for as the screen shows it ([shown]).
+ */
+fun ComposeTestRule.waitForText(sought: String, timeoutMillis: Long = 20_000, substring: Boolean = false) {
+    waitUntil(timeoutMillis) { onAllNodesWithText(shown(sought), substring = substring).fetchSemanticsNodes().isNotEmpty() }
 }
 
 /**
@@ -120,9 +125,9 @@ private fun keyboardOpen(): Boolean {
     return open
 }
 
-/** [scrollTo] what shows [shown], or a text holding it where [substring]. */
-fun ComposeTestRule.scrollToText(shown: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
-    scrollTo(hasText(shown, substring = substring), timeoutMillis)
+/** [scrollTo] what shows [sought], or a text holding it where [substring], looked for as the screen shows it ([shown]). */
+fun ComposeTestRule.scrollToText(sought: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
+    scrollTo(hasText(shown(sought), substring = substring), timeoutMillis)
 
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
@@ -136,14 +141,37 @@ fun ComposeTestRule.keepScreenshot(name: String) {
     val picture = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
     if (picture == null) {
         println("No screenshot for $name: the device gave none")
-        return
+    } else {
+        try {
+            TestStorage().openOutputFile("screenshots/$name.png").use { out -> picture.compress(Bitmap.CompressFormat.PNG, 100, out) }
+        } catch (e: IOException) {
+            println("No screenshot for $name: ${e.message}")
+        }
     }
-    try {
-        TestStorage().openOutputFile("screenshots/$name.png").use { out -> picture.compress(Bitmap.CompressFormat.PNG, 100, out) }
-    } catch (e: IOException) {
-        println("No screenshot for $name: ${e.message}")
-    }
+    assertNoLooseLetters(name)
 }
+
+/** A Polish word of one letter with a plain space after it: a narrow screen may leave it alone at a line's end. */
+private val LOOSE_LETTER = Regex("""(?:^|[\s(„"»\u00A0])[wziaouWZIAOU] (?=\S)""")
+
+/**
+ * On a device in Polish, every text a screen shows holds its words of one letter to the next: the app's own words,
+ * the names from the data and the lists it joins alike. Checked wherever a journey keeps a picture of the screen, the
+ * picture kept first.
+ */
+private fun ComposeTestRule.assertNoLooseLetters(name: String) {
+    if (Locale.getDefault().language != "pl") return
+    // A screen of the system in front, such as the print preview, holds none of the app's: nothing to check there.
+    val nodes = runCatching {
+        onAllNodes(SemanticsMatcher("shows a text") { SemanticsProperties.Text in it.config }, useUnmergedTree = true).fetchSemanticsNodes()
+    }.getOrElse { if (it is IllegalStateException) return else throw it }
+    val shown = nodes.flatMap { node -> node.config[SemanticsProperties.Text].map { it.text } }
+    val loose = shown.filter { LOOSE_LETTER.containsMatchIn(it) }.distinct()
+    check(loose.isEmpty()) { "$name: a word of one letter left loose in ${loose.joinToString(" | ")}" }
+}
+
+/** A text from the data as the app shows it: in Polish its words of one letter held to the next, as [holdLetters] holds them. */
+fun shown(text: String): String = holdLetters(text, Locale.getDefault())
 
 /**
  * Waits until every window of the app on the screen has drawn what it holds now and handed the frame
