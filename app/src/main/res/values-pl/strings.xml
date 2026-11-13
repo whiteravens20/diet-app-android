@@ -298,6 +298,7 @@
         <item quantity="many">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%3$s): oba jadłospisy zużywają %2$s%% tego, co kupują, a z %1$d opakowań zostaje ponad jedna piąta.</item>
         <item quantity="other">Produkty nietrwałe po otwarciu, liczone razem z drugim planem (%3$s): oba jadłospisy zużywają %2$s%% tego, co kupują, a z %1$d opakowania zostaje ponad jedna piąta.</item>
     </plurals>
+    <string name="plans_rest_of_pack">w tym %1$s reszty opakowania</string>
     <string name="plans_packs_left">%1$s: zostaje %2$s z opakowania %3$s</string>
     <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
     <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>

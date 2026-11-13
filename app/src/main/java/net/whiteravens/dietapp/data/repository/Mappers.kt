@@ -90,6 +90,7 @@ import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.HouseholdOf
 import net.whiteravens.dietapp.domain.HouseholdPart
 import net.whiteravens.dietapp.domain.ItemShare
+import net.whiteravens.dietapp.domain.LineAmount
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
 
@@ -301,7 +302,15 @@ fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
 
 /** A planned amount as a meal shows it: rounded, in the unit its kind of food is counted in. */
 fun PlannedIngredientDto.toLine() =
-    MealLine(ingredientId = ingredientId, name = name, quantity = display.quantity, unit = display.unit, grams = display.grams, note = note)
+    MealLine(
+        ingredientId = ingredientId,
+        name = name,
+        quantity = display.quantity,
+        unit = display.unit,
+        grams = display.grams,
+        note = note,
+        rest = rest?.let { LineAmount(it.display.quantity, it.display.unit, it.display.grams) },
+    )
 
 fun SwapPreviewDto.toDomain() = SubstitutionPreview(
     before = before.toDomain(),

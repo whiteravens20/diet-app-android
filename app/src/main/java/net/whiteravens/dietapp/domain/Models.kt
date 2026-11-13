@@ -504,6 +504,17 @@ data class MealLine(
     val grams: Double? = null,
     /** What the recipe says of the line: "diced", "to taste". */
     val note: String? = null,
+    /** Of the amount, what is the rest of a pack the meal finishes in a plan that wastes less, as it is shown. */
+    val rest: LineAmount? = null,
+)
+
+/** An amount as the server rounds it and names its unit. */
+data class LineAmount(
+    val quantity: Double,
+    /** `g` | `ml` | `piece` | `slice` | `clove` | `handful`. */
+    val unit: String,
+    /** What the amount weighs, where it is shown in pieces of some kind. */
+    val grams: Double? = null,
 )
 
 data class PlanDay(

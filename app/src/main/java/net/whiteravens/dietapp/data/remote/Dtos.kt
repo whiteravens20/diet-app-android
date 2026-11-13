@@ -1108,7 +1108,13 @@ data class PlannedIngredientDto(
     val unit: String,
     val display: DisplayAmountDto,
     val note: String? = null,
+    /** Of the amount, what is the rest of a pack the meal finishes in a plan that wastes less; absent where there is none. */
+    val rest: RestOfPackDto? = null,
 )
+
+/** The rest of a pack in a line of a meal: in the line's unit, and as it is shown. */
+@Serializable
+data class RestOfPackDto(val quantity: Double, val display: DisplayAmountDto)
 
 /** Set when a model chose the recipe of a meal: the reason it gave, when it gave one. */
 @Serializable

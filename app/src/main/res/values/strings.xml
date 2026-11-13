@@ -277,6 +277,7 @@
         <item quantity="one">Packs that do not keep once opened, counted together with the other plan (%3$s): the two menus use %2$s%% of what they buy, and leave more than a fifth of %1$d pack.</item>
         <item quantity="other">Packs that do not keep once opened, counted together with the other plan (%3$s): the two menus use %2$s%% of what they buy, and leave more than a fifth of %1$d packs.</item>
     </plurals>
+    <string name="plans_rest_of_pack">including %1$s left of a pack</string>
     <string name="plans_packs_left">%1$s: %2$s left of a pack of %3$s</string>
     <string name="plans_packs_left_much">%1$s: %2$s left of a pack of %3$s, more than a fifth of it</string>
     <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>

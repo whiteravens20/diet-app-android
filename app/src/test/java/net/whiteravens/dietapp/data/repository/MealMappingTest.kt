@@ -20,6 +20,8 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import net.whiteravens.dietapp.domain.LineAmount
+import net.whiteravens.dietapp.data.remote.RestOfPackDto
 import net.whiteravens.dietapp.data.remote.JointPlanDto
 import net.whiteravens.dietapp.data.remote.OtherPortionDto
 import net.whiteravens.dietapp.data.remote.SharedMealOfDto
@@ -92,6 +94,22 @@ class MealMappingTest {
         ).toDomain(plan.days.first().date, plan.report)
 
         assertEquals(listOf("diced", null), meal.lines.take(2).map { it.note })
+    }
+
+    @Test
+    fun `a meal's line says how much of its amount is the rest of a pack the meal finishes`() {
+        val line = PlannedIngredientDto(
+            "c-1",
+            "Chicken breast",
+            180.0,
+            "g",
+            DisplayAmountDto(180.0, "g"),
+            null,
+            RestOfPackDto(30.0, DisplayAmountDto(30.0, "g")),
+        ).toLine()
+        assertEquals(LineAmount(30.0, "g"), line.rest)
+        assertEquals(180.0, line.quantity, 0.0)
+        assertNull(PlannedIngredientDto("c-1", "Chicken breast", 150.0, "g", DisplayAmountDto(150.0, "g"), null).toLine().rest)
     }
 
     @Test

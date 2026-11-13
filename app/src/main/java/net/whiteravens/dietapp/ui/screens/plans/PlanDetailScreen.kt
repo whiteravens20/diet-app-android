@@ -1752,7 +1752,10 @@ private fun MealDialog(
                         sharedRecipe(
                             title = meal.name,
                             servings = toCook.servings,
-                            lines = toCook.lines.map { SharedLine(it.name, amountLabel(it.quantity, it.unit, it.grams), it.note) },
+                            lines = toCook.lines.map { line ->
+                                val rest = line.rest?.let { stringResource(R.string.plans_rest_of_pack, amountLabel(it.quantity, it.unit, it.grams)) }
+                                SharedLine(line.name, amountLabel(line.quantity, line.unit, line.grams), listOfNotNull(line.note, rest).joinToString("; ").ifEmpty { null })
+                            },
                             steps = meal.steps,
                             source = meal.recipeSource,
                             byModel = meal.recipeByModel,
@@ -1771,6 +1774,13 @@ private fun MealDialog(
                                     Text(line.name, style = MaterialTheme.typography.bodyMedium)
                                     line.note?.let {
                                         Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    line.rest?.let {
+                                        Text(
+                                            stringResource(R.string.plans_rest_of_pack, amountLabel(it.quantity, it.unit, it.grams)),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
                                 }
                                 Text(
