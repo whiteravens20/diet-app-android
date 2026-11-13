@@ -185,8 +185,42 @@ internal fun mealsOfCooking(plan: MealPlan, meal: Meal): List<Pair<Meal, String>
  */
 internal data class MealToCook(val lines: List<MealLine>, val servings: Double, val whole: Boolean, val pot: PotPortions? = null)
 
-/** The portions in a pot both people of a joint plan cook: this plan's, and the other person's by their name. */
-internal data class PotPortions(val mine: Double, val name: String, val theirs: Double)
+/**
+ * The portions in a pot both people of a joint plan cook: this plan's, and the other person's by their name,
+ * with the lines a plate of either takes otherwise than the recipe has it ([platesOf]).
+ */
+internal data class PotPortions(val mine: Double, val name: String, val theirs: Double, val plates: List<PlateRow> = emptyList())
+
+/** A line of a dish both people of a joint plan eat on plates of their own: what each plate takes of it, as it is shown. */
+internal data class PlateRow(val ingredientId: String, val name: String, val mine: MealLine, val theirs: MealLine)
+
+/**
+ * The lines of a dish both people eat that a plate of either holds otherwise than the recipe's proportion: what
+ * each plate takes of them. None where both plates are the recipe's, and for a meal of one plan alone.
+ */
+/** What a person's plate of a shared dish holds more and less of than the recipe, by the names of its lines. */
+@Composable
+internal fun plateWords(who: String, lines: List<MealLine>): String {
+    val more = lines.filter { (it.share ?: 1.0) > 1.0 }.map { it.name }
+    val less = lines.filter { (it.share ?: 1.0) < 1.0 }.map { it.name }
+    val changes = listOfNotNull(
+        more.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.plans_plate_more, formatList(it)) },
+        less.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.plans_plate_less, formatList(it)) },
+    )
+    return stringResource(
+        R.string.plans_plate_line,
+        who,
+        changes.joinToString("; ").ifEmpty { stringResource(R.string.plans_plate_as_recipe) },
+    )
+}
+
+internal fun platesOf(meal: Meal): List<PlateRow> {
+    val theirs = meal.shared?.with?.lines.orEmpty()
+    return meal.lines.mapIndexedNotNull { index, line ->
+        val other = theirs.getOrNull(index)?.takeIf { it.ingredientId == line.ingredientId } ?: return@mapIndexedNotNull null
+        if (line.share == null && other.share == null) null else PlateRow(line.ingredientId, line.name, line, other)
+    }
+}
 
 internal fun mealToCook(plan: MealPlan, meal: Meal): MealToCook {
     val shown = { servings: Double -> (servings * 10).roundToInt() / 10.0 }
@@ -195,7 +229,9 @@ internal fun mealToCook(plan: MealPlan, meal: Meal): MealToCook {
         val cooked = mealsOfCooking(plan, meal).map { it.first }.ifEmpty { listOf(meal) }
         val mine = cooked.sumOf { it.servings }
         val theirs = cooked.sumOf { it.shared?.with?.servings ?: 0.0 }
-        return MealToCook(shared.pot, shown(mine + theirs), true, PotPortions(shown(mine), shared.with.profileName, shown(theirs)))
+        // The plates of one meal: a pot cooked for several holds as many plates of each.
+        val plates = if (cooked.size == 1) platesOf(meal) else emptyList()
+        return MealToCook(shared.pot, shown(mine + theirs), true, PotPortions(shown(mine), shared.with.profileName, shown(theirs), plates))
     }
     val cooking = meal.cooking.takeIf { meal.cookAhead == "cook" } ?: return MealToCook(meal.lines, shown(meal.servings), false)
     val others = cooking.with.map { it.mealId }

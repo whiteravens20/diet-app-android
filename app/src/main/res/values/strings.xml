@@ -1806,6 +1806,7 @@
     <string name="split_grams">%1$s g</string>
     <string name="split_tare">Put the container on the scale and tare it before you serve a portion.</string>
     <string name="split_risk" formatted="false">Splitting a pot is never 100% exact: in a mixed dish the pieces, the fat and the sauce do not spread evenly, and a scale has its error. If exact proportions matter to you, cook the portions separately.</string>
+    <string name="split_part_risk">Meat and fish are split most exactly raw, before frying. Weigh rice, pasta and groats dry for each person, cook them together and split them in the same proportions: an approximate split, as not every grain takes up as much water. Split vegetables and sauce by weight.</string>
     <plurals name="split_pieces">
         <item quantity="one">%1$s piece</item>
         <item quantity="other">%1$s pieces</item>
@@ -1839,6 +1840,15 @@
     <string name="plans_portion_you">You</string>
     <string name="plans_shared_chip">Shared</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
+    <string name="plans_plate_you">Your plate</string>
+    <string name="plans_plate_more">more: %1$s</string>
+    <string name="plans_plate_less">less: %1$s</string>
+    <string name="plans_plate_line">%1$s – %2$s.</string>
+    <string name="plans_plate_as_recipe">as in the recipe</string>
+    <string name="plans_plates_title">The plates</string>
+    <string name="plans_plates_intro">The plan shares these ingredients out otherwise than the recipe, so that each person\'s day keeps their split of macronutrients. Split the rest of the pot by the size of each portion.</string>
+    <string name="plans_plates_ingredient">Ingredient</string>
+    <string name="plans_plates_you">You</string>
     <!-- What is left of a meal, carried to a meal of the next day. -->
     <string name="plans_leftover_action">Leftover for the next day…</string>
     <string name="plans_leftover_title">Leftover for the next day</string>

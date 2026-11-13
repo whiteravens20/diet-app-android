@@ -1938,6 +1938,7 @@
     <string name="split_grams">%1$s g</string>
     <string name="split_tare">Pojemnik postaw na wadze i wytaruj ją, zanim nałożysz porcję.</string>
     <string name="split_risk" formatted="false">Podział garnka nigdy nie jest w 100% dokładny: w daniu mieszanym kawałki, tłuszcz i sos nie rozkładają się równo, a waga ma swój błąd. Jeśli zależy Ci na dokładnych proporcjach, ugotuj porcje osobno.</string>
+    <string name="split_part_risk">Mięso i rybę najdokładniej podzielisz na surowo, przed smażeniem. Ryż, makaron i kaszę odważ dla każdego na sucho, ugotuj razem i podziel w tych samych proporcjach: to podział przybliżony, bo nie każde ziarno wchłania tyle samo wody. Warzywa i sos podziel wagą.</string>
     <plurals name="split_pieces">
         <item quantity="one">%1$s sztuka</item>
         <item quantity="few">%1$s sztuki</item>
@@ -1973,6 +1974,15 @@
     <string name="plans_portion_you">Ty</string>
     <string name="plans_shared_chip">Wspólne</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
+    <string name="plans_plate_you">Twój talerz</string>
+    <string name="plans_plate_more">więcej: %1$s</string>
+    <string name="plans_plate_less">mniej: %1$s</string>
+    <string name="plans_plate_line">%1$s – %2$s.</string>
+    <string name="plans_plate_as_recipe">jak w przepisie</string>
+    <string name="plans_plates_title">Talerze</string>
+    <string name="plans_plates_intro">Plan dzieli te składniki inaczej niż przepis, żeby dzień każdej osoby trzymał jej podział makroskładników. Resztę garnka podziel według wielkości porcji.</string>
+    <string name="plans_plates_ingredient">Składnik</string>
+    <string name="plans_plates_you">Ty</string>
     <!-- What is left of a meal, carried to a meal of the next day. -->
     <string name="plans_leftover_action">Resztka na następny dzień…</string>
     <string name="plans_leftover_title">Resztka na następny dzień</string>

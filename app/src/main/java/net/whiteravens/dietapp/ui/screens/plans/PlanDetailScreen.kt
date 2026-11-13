@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,6 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +80,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -1240,6 +1243,14 @@ private fun SharedPortion(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 4.dp),
     )
+    // Of a dish served on plates of their own: what each plate holds more and less of than the recipe.
+    if (platesOf(meal).isNotEmpty()) {
+        Text(
+            "${plateWords(stringResource(R.string.plans_plate_you), meal.lines)} ${plateWords(other.profileName, other.lines)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
     // How it is cooked is the same in both plans, and is said to the server at once; a leftover is cooked already.
     if (meal.leftover == null) {
         CheckRow(label = stringResource(R.string.plans_cook_apart), checked = shared.apart, enabled = !readOnly && !busy, onChange = onSetApart)
@@ -1743,6 +1754,7 @@ private fun MealDialog(
                 cookHint(meal, date)?.let { Hint(it) }
                 // The topping is this person's alone: never in the pot, nor in what it is split into.
                 meal.topping?.let { Text(toppingWords(R.string.plans_topping_note, it), style = MaterialTheme.typography.bodyMedium) }
+                toCook.pot?.takeIf { it.plates.isNotEmpty() }?.let { Plates(it) }
                 if (split.isNotEmpty()) {
                     TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
                 }
@@ -1848,6 +1860,47 @@ internal fun servingsWord(servings: Double): String =
         // A count with a fraction takes the form the languages give fractions.
         stringResource(R.string.plans_offer_servings_fraction, formatNumber(servings, fractionDigits = 1))
     }
+
+/**
+ * The lines of a pot both people cook whose plates differ from the recipe: what each plate takes of them, under
+ * whose name, and how each part is split as near as a split comes.
+ */
+@Composable
+private fun Plates(pot: PotPortions) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.plans_plates_title), style = MaterialTheme.typography.titleMedium)
+        Hint(stringResource(R.string.plans_plates_intro))
+        PlateRowLine(stringResource(R.string.plans_plates_ingredient), stringResource(R.string.plans_plates_you), pot.name, head = true)
+        pot.plates.forEach { row ->
+            HorizontalDivider()
+            PlateRowLine(
+                row.name,
+                amountLabel(row.mine.quantity, row.mine.unit, row.mine.grams),
+                amountLabel(row.theirs.quantity, row.theirs.unit, row.theirs.grams),
+            )
+        }
+        Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(R.string.split_part_risk),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(12.dp),
+            )
+        }
+    }
+}
+
+/** A row of the plates: the ingredient, then this plate's amount and the other's, or the heads of the three. */
+@Composable
+private fun PlateRowLine(name: String, mine: String, theirs: String, head: Boolean = false) {
+    val style = if (head) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium
+    val color = if (head) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(name, style = style, color = color, modifier = Modifier.weight(1f))
+        Text(mine, style = style, color = color, textAlign = TextAlign.End, modifier = Modifier.width(88.dp))
+        Text(theirs, style = style, color = color, textAlign = TextAlign.End, modifier = Modifier.width(88.dp))
+    }
+}
 
 /** How far the amounts of a pot both people cook are from those of its recipe as written, and whose portions it holds. */
 @Composable
