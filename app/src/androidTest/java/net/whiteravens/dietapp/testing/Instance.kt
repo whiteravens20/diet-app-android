@@ -672,6 +672,46 @@ object Instance {
         }.toMap()
     }
 
+    /**
+     * A plan of a week from today for [profileId] whose lunch is a dish of chicken from the catalogue on its first two
+     * days and its last two, and a shopping list of the week: the plan's id. Chicken keeps two days, so the
+     * weekend's packs are bought later.
+     */
+    fun planWithChickenAtBothEnds(account: Account, profileId: String): String {
+        val today = LocalDate.now()
+        val found = call("GET", "recipes?search=chicken&mealType=lunch&dietType=balanced&pageSize=20", token = account.accessToken)
+            .getJSONArray("items")
+        val chicken = (0 until found.length()).map(found::getJSONObject).first().getString("id")
+        val days = JSONArray()
+        for (day in listOf(0L, 1L, 5L, 6L)) {
+            val lunch = JSONObject().put("mealType", "lunch").put("recipeId", chicken)
+            days.put(JSONObject().put("date", today.plusDays(day).toString()).put("lockedSlots", JSONArray().put(lunch)))
+        }
+        val planId = call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", profileId).put("startDate", today.toString()).put("durationDays", 7).put("mealCount", 3)
+                .put("dayOverrides", days),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+        newShoppingList(account, planId, today, today.plusDays(6))
+        return planId
+    }
+
+    /** Of the rows of a plan's list that say to buy some of their packs later, the first such day of each: its packs and day. */
+    fun buyLater(account: Account, planId: String, language: String): Map<String, Pair<Int, String>> {
+        val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))
+        val groups = lists.getJSONObject(0).getJSONArray("groups")
+        return (0 until groups.length()).flatMap { g ->
+            val items = groups.getJSONObject(g).getJSONArray("items")
+            (0 until items.length()).map(items::getJSONObject).mapNotNull { item ->
+                val later = item.optJSONArray("buyLater")?.takeIf { it.length() > 0 }?.getJSONObject(0) ?: return@mapNotNull null
+                item.getString("name") to (later.getInt("packs") to later.getString("from"))
+            }
+        }.toMap()
+    }
+
     fun shoppingRows(account: Account, planId: String, language: String): Map<String, Boolean> {
         val lists = JSONArray(send("GET", "shopping-lists?planId=$planId", null, account.accessToken, 200, language))
         val groups = lists.getJSONObject(0).getJSONArray("groups")

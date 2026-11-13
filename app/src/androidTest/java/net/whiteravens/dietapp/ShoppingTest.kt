@@ -43,6 +43,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.test.platform.app.InstrumentationRegistry
+import net.whiteravens.dietapp.ui.common.formatDayMonth
+import java.time.LocalDate
 
 @RunWith(AndroidJUnit4::class)
 class ShoppingTest {
@@ -131,6 +134,28 @@ class ShoppingTest {
         // Ala's plan's list says it is a part of the household list.
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.shopping_part_of, joined("Ala", "Ola")))) }.isSuccess }
         screen.keepScreenshot("shopping-a-part-of-a-household-list")
+    }
+
+    @Test
+    fun aRowOfFreshMeatForALaterDaySaysWhichOfItsPacksToBuyLaterAndFromWhen() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.planWithChickenAtBothEnds(account, profileId)
+        val (name, later) = checkNotNull(Instance.buyLater(account, planId, text(R.string.api_language)).entries.firstOrNull()) {
+            "no row of the list says to buy a pack later"
+        }.toPair()
+        val (packs, from) = later
+        screen.signIn(account)
+
+        screen.openTab(text(R.string.nav_shopping))
+        // The row of the week's list says it under its name, as the server counted it: the day in the app's language.
+        val on = InstrumentationRegistry.getInstrumentation().targetContext.resources
+            .getStringArray(R.array.shopping_buy_later_on)[LocalDate.parse(from).dayOfWeek.value - 1]
+        val sentence = plural(R.plurals.shopping_buy_later, packs, packs, on, formatDayMonth(from))
+        val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(sentence)) }.isSuccess }
+        screen.onNode(hasText(name) and isToggleable()).assertExists()
+        screen.keepScreenshot("shopping-fresh-meat-bought-later")
     }
 
     @Test
