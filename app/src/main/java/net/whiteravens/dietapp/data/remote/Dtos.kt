@@ -1135,6 +1135,11 @@ data class PlannedIngredientDto(
     val note: String? = null,
     /** Of the amount, what is the rest of a pack the meal finishes in a plan that wastes less; absent where there is none. */
     val rest: RestOfPackDto? = null,
+    /**
+     * Of a person's own plate of a dish both people of a joint plan eat: how much of the ingredient their
+     * portion holds against the recipe's proportion, from half to one and a half; absent where it is the recipe's.
+     */
+    val share: Double? = null,
 )
 
 /** The rest of a pack in a line of a meal: in the line's unit, and as it is shown. */
@@ -1230,6 +1235,8 @@ data class OtherPortionDto(
     val servings: Double,
     val calories: Double,
     val eaten: Boolean,
+    /** What the other person's portion takes of each ingredient, on their own plate. */
+    val ingredients: List<PlannedIngredientDto> = emptyList(),
 )
 
 /**

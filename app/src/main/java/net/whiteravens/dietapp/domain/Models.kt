@@ -461,7 +461,7 @@ data class LeftoverOffer(
     val other: LeftoverOther?,
 )
 
-/** The other person's meal of a shared meal, as their plan holds it: its servings as eaten and its kcal. */
+/** The other person's meal of a shared meal, as their plan holds it: its servings as eaten, its kcal and its lines. */
 data class OtherPortion(
     val mealId: String,
     val planId: String,
@@ -469,6 +469,8 @@ data class OtherPortion(
     val servings: Double,
     val calories: Double,
     val eaten: Boolean,
+    /** What their portion takes of each ingredient, on their own plate. */
+    val lines: List<MealLine> = emptyList(),
 )
 
 /**
@@ -506,6 +508,13 @@ data class MealLine(
     val note: String? = null,
     /** Of the amount, what is the rest of a pack the meal finishes in a plan that wastes less, as it is shown. */
     val rest: LineAmount? = null,
+    /**
+     * Of a person's own plate of a dish both people of a joint plan eat: how much of the ingredient it holds
+     * against the recipe's proportion; null where it is the recipe's.
+     */
+    val share: Double? = null,
+    /** The amount exactly, in the unit of the recipe's line, unrounded: what a split goes by. */
+    val exact: Double = quantity,
 )
 
 /** An amount as the server rounds it and names its unit. */

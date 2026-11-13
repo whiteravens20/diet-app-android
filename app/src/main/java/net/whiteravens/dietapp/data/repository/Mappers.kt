@@ -262,7 +262,9 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
             SharedMeal(
                 id = of.id,
                 apart = of.apart,
-                with = of.with.let { OtherPortion(it.mealId, it.planId, it.profileName, it.servings, it.calories, it.eaten) },
+                with = of.with.let {
+                    OtherPortion(it.mealId, it.planId, it.profileName, it.servings, it.calories, it.eaten, it.ingredients.map(PlannedIngredientDto::toLine))
+                },
                 pot = of.pot.map(PlannedIngredientDto::toLine),
             )
         },
@@ -311,6 +313,8 @@ fun PlannedIngredientDto.toLine() =
         grams = display.grams,
         note = note,
         rest = rest?.let { LineAmount(it.display.quantity, it.display.unit, it.display.grams) },
+        share = share,
+        exact = quantity,
     )
 
 fun SwapPreviewDto.toDomain() = SubstitutionPreview(

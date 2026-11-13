@@ -68,7 +68,8 @@ class MealMappingTest {
 
         val lines = meal.toDomain(plan.days.first { meal in it.meals }.date, plan.report).lines
 
-        assertEquals(meal.ingredients.map { MealLine(it.ingredientId, it.name, it.display.quantity, it.display.unit) }, lines)
+        // As shown, and exactly beside it for a split.
+        assertEquals(meal.ingredients.map { MealLine(it.ingredientId, it.name, it.display.quantity, it.display.unit, exact = it.quantity) }, lines)
         assertNotEquals(meal.recipe!!.ingredients.map { it.display.quantity }, lines.map { it.quantity })
     }
 
@@ -112,6 +113,15 @@ class MealMappingTest {
         assertEquals(LineAmount(30.0, "g"), line.rest)
         assertEquals(180.0, line.quantity, 0.0)
         assertNull(PlannedIngredientDto("c-1", "Chicken breast", 150.0, "g", DisplayAmountDto(150.0, "g"), null).toLine().rest)
+    }
+
+    @Test
+    fun `a meal's line says how much of it a person's own plate holds, and keeps the amount exactly for a split`() {
+        val line = PlannedIngredientDto("c-1", "Chicken breast", 156.4, "g", DisplayAmountDto(155.0, "g"), null, share = 1.3).toLine()
+        assertEquals(1.3, line.share!!, 0.0)
+        assertEquals(155.0, line.quantity, 0.0)
+        assertEquals(156.4, line.exact, 0.0)
+        assertNull(PlannedIngredientDto("c-1", "Chicken breast", 150.0, "g", DisplayAmountDto(150.0, "g"), null).toLine().share)
     }
 
     @Test
@@ -272,7 +282,15 @@ class MealMappingTest {
                             shared = SharedMealOfDto(
                                 id = "shared-1",
                                 apart = false,
-                                with = OtherPortionDto(mealId = "meal-9", planId = "plan-2", profileName = "Ewa", servings = 1.1, calories = 540.0, eaten = true),
+                                with = OtherPortionDto(
+                                    mealId = "meal-9",
+                                    planId = "plan-2",
+                                    profileName = "Ewa",
+                                    servings = 1.1,
+                                    calories = 540.0,
+                                    eaten = true,
+                                    ingredients = meal.ingredients,
+                                ),
                                 pot = pot,
                             ),
                         )
@@ -282,7 +300,10 @@ class MealMappingTest {
         ).toDomain()
 
         val shared = joint.days.first().meals.first { it.id == meal.id }.shared!!
-        assertEquals(OtherPortion("meal-9", "plan-2", "Ewa", 1.1, 540.0, eaten = true), shared.with)
+        assertEquals(
+            OtherPortion("meal-9", "plan-2", "Ewa", 1.1, 540.0, eaten = true, lines = meal.ingredients.map { it.toLine() }),
+            shared.with,
+        )
         assertEquals(pot.map { it.display.quantity }, shared.pot.map { it.quantity })
         assertTrue(joint.days.flatMap { it.meals }.filter { it.id != meal.id }.all { it.shared == null })
     }
