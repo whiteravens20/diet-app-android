@@ -399,6 +399,48 @@ object Instance {
             expect = 201,
         ).getString("id")
 
+    /** A meal of a plan that takes the rest of a pack: its id, its title, the food of the pack and the meal's day. */
+    data class Rest(val mealId: String, val title: String, val food: String, val date: String)
+
+    /**
+     * A plan of a week from today for [profileId] that wastes nothing, made again until one of its meals takes the rest
+     * of a pack and is the first of the plan with its recipe, eight times at most: the plan's id and that meal, null
+     * where no draw gave one.
+     */
+    fun planWithARest(account: Account, profileId: String): Pair<String, Rest?> {
+        val planId = call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", profileId).put("startDate", LocalDate.now().toString()).put("durationDays", 7)
+                .put("lessWaste", true).put("noWaste", true),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+        repeat(8) {
+            restIn(account, planId)?.let { return planId to it }
+            call("POST", "meal-plans/$planId/regenerate", JSONObject(), token = account.accessToken, expect = 201)
+        }
+        return planId to restIn(account, planId)
+    }
+
+    private fun restIn(account: Account, planId: String): Rest? {
+        val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")
+        val seen = mutableSetOf<String>()
+        for (day in 0 until days.length()) {
+            val date = days.getJSONObject(day).getString("date")
+            val meals = days.getJSONObject(day).getJSONArray("meals")
+            for (index in 0 until meals.length()) {
+                val meal = meals.getJSONObject(index)
+                val title = meal.optJSONObject("recipe")?.getString("title") ?: continue
+                val lines = meal.getJSONArray("ingredients")
+                val rest = (0 until lines.length()).map(lines::getJSONObject).firstOrNull { it.has("rest") && !it.isNull("rest") }
+                if (rest != null && title !in seen) return Rest(meal.getString("id"), title, rest.getString("name"), date)
+                seen += title
+            }
+        }
+        return null
+    }
+
     /** A meal of a plan with a topping on its plate: its id, its title and the topping's food. */
     data class Topped(val mealId: String, val title: String, val topping: String)
 

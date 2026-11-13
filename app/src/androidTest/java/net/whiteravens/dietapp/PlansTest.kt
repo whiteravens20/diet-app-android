@@ -258,6 +258,41 @@ class PlansTest {
         assertFalse(again.getBoolean("noWaste"))
     }
     @Test
+    fun aMealThatFinishesAPackSaysHowMuchOfItIsTheRestOfThePack() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val (_, found) = Instance.planWithARest(account, profileId)
+        val rest = checkNotNull(found) { "eight draws gave no meal that takes the rest of a pack" }
+        screen.startSignedIn(account)
+
+        // The meal's day, chosen in the calendar of plans, a month on where it lies there: the plan opens at it.
+        screen.openTab(text(R.string.tab_meal_plans))
+        screen.waitForText(text(R.string.plans_calendar_title))
+        val day = LocalDate.parse(rest.date)
+        if (YearMonth.from(day) != YearMonth.now()) {
+            screen.onNode(hasContentDescription(text(R.string.plans_calendar_next))).performScrollTo().performClick()
+        }
+        val free = text(R.string.plans_calendar_day_free, spoken(day))
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(dayCell(day)).fetchSemanticsNodes().any { it.config[SemanticsProperties.ContentDescription].single() != free }
+        }
+        screen.onNode(dayCell(day)).performScrollTo().performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(rest.date)) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
+
+        // The meal opened says, under the food of the pack, how much of what it takes is the rest of that pack.
+        screen.scrollToText(rest.title)
+        screen.onAllNodesWithText(rest.title)[0].performScrollTo().performClick()
+        screen.waitForText(rest.food)
+        val (before, after) = text(R.string.plans_rest_of_pack, "\u0000").split("\u0000")
+        val restLine = SemanticsMatcher("the line of the rest of a pack") { node ->
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.startsWith(before) && it.text.endsWith(after) }
+        }
+        screen.waitUntil(20_000) { screen.onAllNodes(restLine and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty() }
+        screen.onAllNodes(restLine and hasAnyAncestor(isDialog()))[0].performScrollTo().assertIsDisplayed()
+        screen.keepScreenshot("plans-the-rest-of-a-pack")
+    }
+
+    @Test
     fun aDishCookedForTwoDaysChangesOnBothAndItsMealsSayWhereItComesFrom() {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
@@ -375,6 +410,11 @@ class PlansTest {
         screen.waitForTheApi(60_000) { Instance.planIds(account, adam).isNotEmpty() && Instance.planIds(account, ewa).isNotEmpty() }
         val planId = Instance.planIds(account, adam).first()
         screen.waitForText(text(R.string.plans_joint_with, "Ewa"))
+
+        // Its packs are counted in one kitchen with the other plan's, and the line says so.
+        val countedTogether = text(R.string.plans_packs_line_joint, "Ewa", "\u0000").substringBefore("\u0000")
+        screen.scrollToText(countedTogether, substring = true)
+        screen.keepScreenshot("plans-packs-counted-together")
 
         // A meal both eat says so, with the other's portion.
         val shared = Instance.sharedMeal(account, planId)
