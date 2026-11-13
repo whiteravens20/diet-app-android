@@ -125,6 +125,7 @@ jobs:
             build-type: debug
             variant: Debug
             test-authority: false
+            locale: ''
           # Android 17, whose rules the app targets: a server on the local network, such as
           # the emulator's host, needs the permission for nearby devices.
           - name: Screens on Android 17
@@ -146,8 +147,11 @@ jobs:
             # The instance served over HTTPS as well, with a certificate from an authority made
             # for the run and installed on the emulator as one the user installed.
             test-authority: true
+            locale: ''
           # The release build as R8 shrinks it (the `minified` build type): what R8 takes out
-          # shows here rather than on a tester's phone.
+          # shows here rather than on a tester's phone. It runs in Polish, the language of the
+          # app's testers: every screen a journey keeps a picture of is checked for a word of one
+          # letter left loose at a line's end.
           - name: Screens on the release build
             api-level: 34
             artifact: screens-release-build
@@ -159,6 +163,7 @@ jobs:
             build-type: minified
             variant: Minified
             test-authority: false
+            locale: pl-PL
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -229,6 +234,7 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
+            .github/scripts/set-locale.sh "${{ matrix.locale }}"
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
@@ -261,6 +267,7 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
+            .github/scripts/set-locale.sh "${{ matrix.locale }}"
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
@@ -293,6 +300,7 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
+            .github/scripts/set-locale.sh "${{ matrix.locale }}"
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
