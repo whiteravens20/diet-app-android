@@ -41,7 +41,11 @@ concurrency:
 jobs:
   write:
     name: Write the metadata
-    if: github.event_name == 'workflow_dispatch' || github.actor == 'dependabot[bot]'
+    # Run by hand, or for a pull request Dependabot opened: its author as well as
+    # the actor of the event, since the actor alone is whoever acted on the pull
+    # request last. zizmor flags any test of the actor; with the author beside it
+    # there is nothing left to pass for Dependabot.
+    if: github.event_name == 'workflow_dispatch' || (github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]') # zizmor: ignore[bot-conditions]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
