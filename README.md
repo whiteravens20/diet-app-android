@@ -281,11 +281,12 @@ independent security review.
   not fix yet stays in the suite as a test that passes while the defect is there and fails
   once it is gone.
 - The screens' tests run on Android 14 and Android 17 emulators on every push and pull
-  request, and on the release build as R8 shrinks it, against a diet-app instance started
-  in the same job from the image of the version `contract/` was copied from, pinned by its
-  digest, with its catalogue loaded. Their report, the app's log of every test, the
-  screenshots they take and the instance's log are kept with the run
-  ([test.yml](.github/workflows/test.yml)).
+  request, and on the release build as R8 shrinks it on an emulator set to Polish, against
+  a diet-app instance started in the same job from the image of the version `contract/` was
+  copied from, pinned by its digest, with its catalogue loaded. In Polish, a test fails
+  when a screen it keeps a picture of shows a word of one letter that a line could end on.
+  Their report, the app's log of every test, the screenshots they take and the instance's
+  log are kept with the run ([test.yml](.github/workflows/test.yml)).
 - CodeQL and a Trivy scan of the repository run on every push and pull request, and again
   every week; Trivy fails the run on a high or critical vulnerability in a version the
   release build ships. Every action a workflow uses is pinned to a commit: a run fails
