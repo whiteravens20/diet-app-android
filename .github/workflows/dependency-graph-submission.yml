@@ -5,7 +5,10 @@
 name: Dependency graph submission
 
 on:
-  workflow_run:
+  # The default branch's copy runs, with a token that can write the graph. It runs
+  # nothing of the change: the action only downloads the graph Dependency graph
+  # wrote and submits it.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: [Dependency graph]
     types: [completed]
 
