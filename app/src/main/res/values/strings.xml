@@ -1257,7 +1257,17 @@
     <string name="profile_pantry_cool_down">Pantry-bias cool-down (plans)</string>
     <string name="profile_pantry_cool_down_hint">After this many consecutive plans that leaned on the pantry, the next round skips the pantry preference for variety. 0 disables the cool-down.</string>
     <string name="profile_saving">Saving…</string>
-    <string name="profile_save_changes">Save changes</string>
+    <string name="profile_autosave_hint">Changes save themselves: a choice at once, a typed field once you leave it.</string>
+    <string name="profile_autosave_saving">Saving…</string>
+    <string name="profile_autosave_saved">Saved</string>
+    <string name="profile_autosave_not_saved">Not everything was saved. Fix the field marked in red.</string>
+    <string name="profile_autosave_offline">Not saved: no connection. It is saved once the network is back.</string>
+    <string name="profile_autosave_done">Done</string>
+    <string name="profile_leave_title">Leave without these changes?</string>
+    <string name="profile_leave_not_saved">Not everything was saved: the field marked in red needs fixing. If you leave now, that change is lost.</string>
+    <string name="profile_leave_offline">Without a connection not everything was saved. If you leave now, these changes are lost.</string>
+    <string name="profile_leave_stay">Stay</string>
+    <string name="profile_leave_anyway">Leave without them</string>
     <string name="profile_create">Create profile</string>
     <!-- What a field the API would refuse says: in the web application, the browser says it. -->
     <string name="profile_wizard_title">Set up your profile</string>

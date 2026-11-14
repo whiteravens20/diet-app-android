@@ -37,9 +37,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -110,6 +114,12 @@ data class ProfileMarks(
 private fun ProfileMarks.of(field: ProfileField, bound: Bound = Bound.Number(), whole: Boolean = true): String? =
     numberProblem(field in notNumbers, refusals.fields[field], bound, whole)
 
+/**
+ * What hears a field of a profile's form left, whatever it holds then: the form of a kept profile, which keeps what a
+ * field holds once it is left. None for a form that keeps nothing before it is sent.
+ */
+internal val LocalFieldLeft = staticCompositionLocalOf<(() -> Unit)?> { null }
+
 /** A field typed into, with its hint, or what is wrong with it once that is said. [accept] says what of a change it takes (`OutlinedField`). */
 @Composable
 internal fun FormField(
@@ -125,6 +135,7 @@ internal fun FormField(
     optional: Boolean = false,
     accept: (String) -> String? = { it },
 ) {
+    val left = LocalFieldLeft.current
     OutlinedField(
         value = value,
         onValueChange = onValueChange,
@@ -136,8 +147,18 @@ internal fun FormField(
         optional = optional,
         accept = accept,
         keyboardOptions = KeyboardOptions(capitalization = capitalization, keyboardType = keyboardType, imeAction = ImeAction.Next),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().then(if (left != null) Modifier.leaving(left) else Modifier),
     )
+}
+
+/** A field that was focused and is no longer: [onLeave] hears it, once each time. */
+private fun Modifier.leaving(onLeave: () -> Unit): Modifier = composed {
+    var focused by remember { mutableStateOf(false) }
+    val left by rememberUpdatedState(onLeave)
+    onFocusChanged { now ->
+        if (focused && !now.isFocused) left()
+        focused = now.isFocused
+    }
 }
 
 /**

@@ -34,6 +34,12 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.KeptCorrection
 import net.whiteravens.dietapp.ui.components.Text
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 
 /**
  * A profile's form, for a new profile or one kept, in four parts: the body, the goal, the food and
@@ -46,6 +52,17 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
     val state by viewModel.state.collectAsStateWithLifecycle()
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     LaunchedEffect(state.saved) { if (state.saved != null) onSaved() }
+    // A kept profile keeps each change as it is made: leaving keeps what the field being typed in holds, and asks
+    // whether to leave behind a change that could not be kept.
+    val focus = LocalFocusManager.current
+    val keeping = state.editingId != null
+    val leave = {
+        focus.clearFocus()
+        viewModel.leave()
+    }
+    BackHandler(enabled = keeping && !state.left) { leave() }
+    LaunchedEffect(state.left) { if (state.left) onBack() }
+    if (state.askLeaving) LeaveBehind(offline = state.autosave == Autosave.OFFLINE, onStay = viewModel::stay, onLeave = viewModel::leaveBehind)
 
     Column(
         modifier = Modifier
@@ -56,8 +73,15 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
     ) {
         ScreenHeader(
             title = state.editing?.let { stringResource(R.string.profiles_editing, it) } ?: stringResource(R.string.profiles_new),
-            onBack = onBack,
+            onBack = if (keeping) leave else onBack,
         )
+        if (keeping) {
+            Text(
+                stringResource(R.string.profile_autosave_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         when {
             state.loading -> {
                 Skeleton(Modifier.fillMaxWidth().height(240.dp))
@@ -73,53 +97,55 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
             else -> {
                 val form = state.form
                 val marks = state.marks
-                AppCard {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FormSection(stringResource(R.string.profile_section_body), first = true)
-                        NameField(form, marks, viewModel::edit)
-                        BodyFields(form, state.unit, marks, viewModel::edit)
-                        FormSection(stringResource(R.string.profile_section_goal))
-                        PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
-                        TargetWeightField(form, state.unit, marks, viewModel::edit)
-                        WaterTrackingChoice(form, viewModel::edit)
-                        if (form.waterTracking) WaterTargetField(form, marks, viewModel::edit)
-                        OwnTargetField(form, marks, viewModel::edit)
-                        // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
-                        val correction = state.correction
-                        val editingId = state.editingId
-                        if (correction != null && editingId != null) {
-                            KeptCorrection(profileId = editingId, correction = correction, onDecided = viewModel::load)
+                // A field of a kept profile keeps what it holds once it is left.
+                CompositionLocalProvider(LocalFieldLeft provides if (keeping) viewModel::keep else null) {
+                    AppCard {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FormSection(stringResource(R.string.profile_section_body), first = true)
+                            NameField(form, marks, viewModel::edit)
+                            BodyFields(form, state.unit, marks, viewModel::edit)
+                            FormSection(stringResource(R.string.profile_section_goal))
+                            PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
+                            TargetWeightField(form, state.unit, marks, viewModel::edit)
+                            WaterTrackingChoice(form, viewModel::edit)
+                            if (form.waterTracking) WaterTargetField(form, marks, viewModel::edit)
+                            OwnTargetField(form, marks, viewModel::edit)
+                            // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
+                            val correction = state.correction
+                            val editingId = state.editingId
+                            if (correction != null && editingId != null) {
+                                KeptCorrection(profileId = editingId, correction = correction, onDecided = viewModel::load)
+                            }
+                            RiskBox(
+                                reasons = state.risks,
+                                acknowledged = form.acknowledgeRisk,
+                                onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
+                            )
+                            ReminderField(form, viewModel::edit)
+                            ReminderChoices(form, viewModel::edit)
+                            FormSection(stringResource(R.string.profile_section_food))
+                            DietFields(form, marks, rules, viewModel::edit)
+                            FormSection(stringResource(R.string.profile_section_variety))
+                            LimitFields(form, marks, viewModel::edit)
+                            FormSection(stringResource(R.string.profile_label_limits))
+                            LabelLimitFields(form, marks, viewModel::edit)
                         }
-                        RiskBox(
-                            reasons = state.risks,
-                            acknowledged = form.acknowledgeRisk,
-                            onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
-                        )
-                        ReminderField(form, viewModel::edit)
-                        ReminderChoices(form, viewModel::edit)
-                        FormSection(stringResource(R.string.profile_section_food))
-                        DietFields(form, marks, rules, viewModel::edit)
-                        FormSection(stringResource(R.string.profile_section_variety))
-                        LimitFields(form, marks, viewModel::edit)
-                        FormSection(stringResource(R.string.profile_label_limits))
-                        LabelLimitFields(form, marks, viewModel::edit)
                     }
                 }
                 CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused)
                 state.error?.let { ErrorBanner(errorMessage(it)) }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = viewModel::save, enabled = !state.saving, shape = MaterialTheme.shapes.medium) {
-                        Text(
-                            stringResource(
-                                when {
-                                    state.saving -> R.string.profile_saving
-                                    state.editing != null -> R.string.profile_save_changes
-                                    else -> R.string.profile_create
-                                },
-                            ),
-                        )
+                if (keeping) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Button(onClick = leave, shape = MaterialTheme.shapes.medium) { Text(stringResource(R.string.profile_autosave_done)) }
+                        AutosaveStatus(state.autosave, Modifier.weight(1f))
                     }
-                    TextButton(onClick = onBack) { Text(stringResource(R.string.common_cancel)) }
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Button(onClick = viewModel::save, enabled = !state.saving, shape = MaterialTheme.shapes.medium) {
+                            Text(stringResource(if (state.saving) R.string.profile_saving else R.string.profile_create))
+                        }
+                        TextButton(onClick = onBack) { Text(stringResource(R.string.common_cancel)) }
+                    }
                 }
             }
         }
@@ -134,5 +160,36 @@ private fun FormSection(title: String, first: Boolean = false) {
         title,
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(top = if (first) 0.dp else 8.dp).semantics { heading() },
+    )
+}
+
+/** What the form of a kept profile says of its changes, beside "Gotowe"; nothing before the first one. */
+@Composable
+private fun AutosaveStatus(status: Autosave, modifier: Modifier = Modifier) {
+    val text = when (status) {
+        Autosave.IDLE -> return
+        Autosave.SAVING -> R.string.profile_autosave_saving
+        Autosave.SAVED -> R.string.profile_autosave_saved
+        Autosave.NOT_SAVED -> R.string.profile_autosave_not_saved
+        Autosave.OFFLINE -> R.string.profile_autosave_offline
+    }
+    val wrong = status == Autosave.NOT_SAVED || status == Autosave.OFFLINE
+    Text(
+        stringResource(text),
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (wrong) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    )
+}
+
+/** Leaving the form of a kept profile while a change is not kept: stay, or leave it behind. */
+@Composable
+private fun LeaveBehind(offline: Boolean, onStay: () -> Unit, onLeave: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onStay,
+        title = { Text(stringResource(R.string.profile_leave_title)) },
+        text = { Text(stringResource(if (offline) R.string.profile_leave_offline else R.string.profile_leave_not_saved)) },
+        confirmButton = { TextButton(onClick = onStay) { Text(stringResource(R.string.profile_leave_stay)) } },
+        dismissButton = { TextButton(onClick = onLeave) { Text(stringResource(R.string.profile_leave_anyway)) } },
     )
 }

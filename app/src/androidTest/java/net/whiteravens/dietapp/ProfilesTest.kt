@@ -17,12 +17,14 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
@@ -34,6 +36,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -57,9 +60,58 @@ class ProfilesTest {
 
     private fun type(label: String, value: String) = screen.onNodeWithText(label).performScrollTo().performTextInput(value)
 
+    /** A journey that takes the network away gives it back, whatever happened to it. */
+    @After
+    fun backOnline() = screen.airplaneMode(false)
+
     private fun press(label: String) {
         screen.putKeyboardAway()
         screen.onNodeWithText(label).performScrollTo().performClick()
+    }
+
+    @Test
+    fun aChangeOfAKeptProfileIsKeptAsItIsMadeAndOneThatMetNoNetworkIsSaidAskedAboutAndSentOnceTheNetworkIsBack() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.profiles_title)).performClick()
+        screen.waitForText("Ala")
+        press(text(R.string.common_edit))
+        screen.waitForText(text(R.string.profiles_editing, "Ala"))
+        screen.waitForText(text(R.string.profile_autosave_hint))
+
+        // A choice is kept the moment it is made, with no button to press.
+        press(text(R.string.profile_activity_level))
+        screen.onNode(hasText(text(R.string.activity_active)) and hasAnyAncestor(isPopup())).performClick()
+        screen.waitForTheApi(20_000) { Instance.profile(account, profileId).getString("activityLevel") == "active" }
+
+        // A field with a label of two lines, chosen: the label stands above the frame, whole.
+        val kindPerDay = hasText(text(R.string.profile_max_meals_per_day_same_kind)) and hasSetTextAction()
+        screen.onNode(kindPerDay).performScrollTo().performClick()
+        screen.keepScreenshot("profiles-long-label-chosen")
+        screen.onNode(kindPerDay).performTextInput("2")
+        // Left for the next field, as the keyboard's key does.
+        screen.onNode(kindPerDay).performImeAction()
+        screen.waitForTheApi(20_000) { Instance.profile(account, profileId).getJSONObject("preferences").optInt("maxMealsPerDaySameKind") == 2 }
+
+        // A field typed into without a network: leaving says it is not kept and asks whether to leave it behind.
+        screen.airplaneMode(true)
+        screen.onNodeWithText(text(R.string.profile_age)).performScrollTo().performTextReplacement("33")
+        press(text(R.string.profile_autosave_done))
+        screen.waitForText(text(R.string.profile_leave_title))
+        screen.keepScreenshot("profiles-leave-without-network")
+        // The window's own button: the window does not scroll.
+        screen.onNodeWithText(text(R.string.profile_leave_stay)).performClick()
+        screen.waitForText(text(R.string.profile_autosave_offline))
+        screen.keepScreenshot("profiles-not-kept-without-network")
+
+        // The network back, the change goes by itself, and the form is left.
+        screen.airplaneMode(false)
+        screen.waitForTheApi(40_000) { Instance.profile(account, profileId).getInt("age") == 33 }
+        screen.waitForText(text(R.string.profile_autosave_saved))
+        press(text(R.string.profile_autosave_done))
+        screen.waitForText(text(R.string.profiles_add))
     }
 
     @Test
@@ -150,7 +202,8 @@ class ProfilesTest {
         press(text(R.string.profile_water_reminders))
         screen.onNodeWithText(text(R.string.profile_water_reminders)).performScrollTo()
         screen.keepScreenshot("profiles-water-and-reminders")
-        press(text(R.string.profile_save_changes))
+        // Each change is kept as it is made: "Gotowe" keeps what the field being typed in holds, and leaves.
+        press(text(R.string.profile_autosave_done))
         screen.waitForText(text(R.string.profiles_add))
 
         val edited = Instance.profile(account, profileId)

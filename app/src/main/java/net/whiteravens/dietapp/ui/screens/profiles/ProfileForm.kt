@@ -353,6 +353,121 @@ data class ProfileForm(
         if (!typed.on) held else held.with(limit, typed.grams.number() ?: return null)
     }
 
+    /**
+     * The figures of [kept] with every field of the form put in where it holds what may be kept, for a form that keeps
+     * each change as it is made: what differs is what is sent. A field that holds no number where one is needed, one
+     * the API refused as it is ([refused]), and a split of the custom diet that does not add up to a hundred stay as
+     * [kept] has them; [notKept] names them.
+     */
+    fun keepable(kept: ProfileFigures, unit: WeightUnit, refused: Set<ProfileField> = emptySet()): ProfileFigures {
+        fun <T> held(field: ProfileField, typed: T?, keptValue: T): T = if (field in refused || typed == null) keptValue else typed
+        val split = split.split()?.takeIf { dietType == "custom" && it.protein + it.fat + it.carbs == 100 && ProfileField.SPLIT !in refused }
+        // The custom diet comes with a split: the one it holds, or the one the profile keeps; with neither, the diet the profile has.
+        val diet = if (dietType == "custom" && split == null && kept.customMacroSplit == null) kept.dietType else dietType
+        return kept.copy(
+            name = held(ProfileField.NAME, name.trim().ifEmpty { null }, kept.name),
+            age = held(ProfileField.AGE, age.trim().toIntOrNull(), kept.age),
+            sex = sex,
+            heightCm = held(ProfileField.HEIGHT, height.number(), kept.heightCm),
+            weightKg = held(ProfileField.WEIGHT, weightKg(weight, keptWeightKg, unit), kept.weightKg),
+            targetWeightKg = if (targetWeight.isBlank() && ProfileField.TARGET_WEIGHT !in refused) {
+                null
+            } else {
+                held(ProfileField.TARGET_WEIGHT, weightKg(targetWeight, keptTargetWeightKg, unit), kept.targetWeightKg)
+            },
+            activityLevel = activityLevel,
+            dietType = diet,
+            weeklyLossTarget = weeklyLossTarget,
+            manualCalorieTarget = if (ownTarget.isBlank() && ProfileField.OWN_TARGET !in refused) {
+                null
+            } else {
+                held(ProfileField.OWN_TARGET, ownTarget.trim().toIntOrNull(), kept.manualCalorieTarget)
+            },
+            mealCount = mealCount,
+            weightReminderCadence = weightReminderCadence,
+            waterTracking = waterTracking,
+            // Out of sight while water is not tracked, the target and the reminder to drink stay as the profile has them.
+            waterTargetMl = when {
+                !waterTracking -> kept.waterTargetMl
+                waterTarget.isBlank() && ProfileField.WATER_TARGET !in refused -> null
+                else -> held(ProfileField.WATER_TARGET, waterTarget.trim().toIntOrNull(), kept.waterTargetMl)
+            },
+            cookingReminders = cookingReminders,
+            waterReminders = if (waterTracking) waterReminders else kept.waterReminders,
+            customMacroSplit = if (diet == "custom") split ?: kept.customMacroSplit else kept.customMacroSplit,
+        )
+    }
+
+    /** The limits of [kept] with every field of the form put in where it holds what may be kept, as [keepable] does with the figures. */
+    fun keepableLimits(kept: PlanLimits, refused: Set<ProfileField> = emptySet()): PlanLimits {
+        fun whole(field: ProfileField, typed: String, keptValue: Int): Int =
+            if (field in refused) keptValue else typed.trim().toIntOrNull() ?: keptValue
+        fun emptyOrWhole(field: ProfileField, typed: String, keptValue: Int?): Int? = when {
+            field in refused -> keptValue
+            typed.isBlank() -> null
+            else -> typed.trim().toIntOrNull() ?: keptValue
+        }
+        val typed = limits
+        return kept.copy(
+            maxConsecutiveDaysSameMeal = whole(ProfileField.CONSECUTIVE_DAYS, typed.consecutiveDays, kept.maxConsecutiveDaysSameMeal),
+            maxTimesPerWeekSameMeal = whole(ProfileField.TIMES_PER_WEEK, typed.timesPerWeek, kept.maxTimesPerWeekSameMeal),
+            maxMealsPerDaySameKind = emptyOrWhole(ProfileField.KIND_PER_DAY, typed.kindPerDay, kept.maxMealsPerDaySameKind),
+            maxMealsPerWeekSameKind = emptyOrWhole(ProfileField.KIND_PER_WEEK, typed.kindPerWeek, kept.maxMealsPerWeekSameKind),
+            // The exceptions go together: while one of them holds what is no whole number, they stay as kept.
+            kindLimits = if (typed.kindLimits.any { it.notWhole.isNotEmpty() }) kept.kindLimits else typed.kindLimits.mapNotNull { it.limit() },
+            inventoryBiasResetEvery = whole(ProfileField.PANTRY_COOL_DOWN, typed.pantryCoolDown, kept.inventoryBiasResetEvery),
+        )
+    }
+
+    /** The limits from labels of [kept] with every one of the form put in where it may be kept: one turned on with no number stays as kept. */
+    fun keepableLabels(kept: LabelLimits, refused: Set<ProfileField> = emptySet()): LabelLimits =
+        LabelLimit.entries.fold(LabelLimits()) { held, limit ->
+            val typed = labels.getValue(limit)
+            val grams = when {
+                limit.field in refused -> kept[limit]
+                !typed.on -> null
+                else -> typed.grams.number() ?: kept[limit]
+            }
+            if (grams == null) held else held.with(limit, grams)
+        }
+
+    /** The fields that hold what cannot be kept as it is: no number where one is needed, no name, a split that does not add up. */
+    fun notKept(unit: WeightUnit): Set<ProfileField> = buildSet {
+        addAll(problems(unit))
+        if (name.isBlank()) add(ProfileField.NAME)
+        if (dietType == "custom" && split.notWhole.isEmpty() && split.sum != 100) add(ProfileField.SPLIT)
+    }
+
+    /**
+     * Whether [after] chose otherwise than this form in one of the choices a form keeps the moment it is made: a list,
+     * a switch, a box, a pace, a meal count, an exception of a kind of protein added, taken away or given another kind.
+     */
+    fun choseOtherwise(after: ProfileForm): Boolean =
+        sex != after.sex ||
+            activityLevel != after.activityLevel ||
+            weeklyLossTarget != after.weeklyLossTarget ||
+            dietType != after.dietType ||
+            mealCount != after.mealCount ||
+            weightReminderCadence != after.weightReminderCadence ||
+            waterTracking != after.waterTracking ||
+            cookingReminders != after.cookingReminders ||
+            waterReminders != after.waterReminders ||
+            acknowledgeRisk != after.acknowledgeRisk ||
+            labels.mapValues { it.value.on } != after.labels.mapValues { it.value.on } ||
+            limits.kindLimits.map { it.kind } != after.limits.kindLimits.map { it.kind }
+
+    /**
+     * The form with what the profile keeps where the form shows it rounded or not at all, as [kept] has it after a
+     * change was kept: what is typed stays as it is.
+     */
+    fun keptFrom(kept: ProfileDetails): ProfileForm = copy(
+        keptWeightKg = kept.figures.weightKg,
+        keptTargetWeightKg = kept.figures.targetWeightKg,
+        keptSplit = kept.figures.customMacroSplit,
+        keptWaterTargetMl = kept.figures.waterTargetMl,
+        keptWaterReminders = kept.figures.waterReminders,
+    )
+
     /** What the field holds as typed: the split as a whole, or a part of it, or another field. */
     fun valueOf(field: ProfileField): Any = when (field) {
         ProfileField.NAME -> name

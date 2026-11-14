@@ -3,6 +3,10 @@
 package net.whiteravens.dietapp.data.repository
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import net.whiteravens.dietapp.data.remote.CaloriePreviewRequestDto
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.KindLimitDto
@@ -10,9 +14,8 @@ import net.whiteravens.dietapp.data.remote.MacroSplitDto
 import net.whiteravens.dietapp.data.remote.NewProfileDto
 import net.whiteravens.dietapp.data.remote.NewProfilePreferencesDto
 import net.whiteravens.dietapp.data.remote.ProfileDto
+import net.whiteravens.dietapp.data.remote.ProfilePatchDto
 import net.whiteravens.dietapp.data.remote.ProfilePreferencesPatchDto
-import net.whiteravens.dietapp.data.remote.ProfilePreferencesUpdateDto
-import net.whiteravens.dietapp.data.remote.ProfileUpdateDto
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.CalorieQuestion
@@ -89,49 +92,66 @@ class ProfileRepository @Inject constructor(
             )
         }.toDomain()
 
-    /** Keeps a profile as it is from now on: its figures, and its preferences as they were. */
-    suspend fun update(id: String, figures: ProfileFigures, preferences: ProfilePreferences, acknowledgeRisk: Boolean?): Profile =
+    suspend fun delete(id: String) = apiCall(json) { api.deleteProfile(id) }
+
+    /**
+     * Keeps the parts of [figures] that [parts] names, by their names in the API, and no other part of the profile,
+     * its preferences least of all: a form that keeps each change as it is made sends what it changed. A part named
+     * that [figures] holds empty is emptied. [acknowledgeRisk] is said where it is not null. The answer is the
+     * profile as it is now.
+     */
+    suspend fun change(id: String, figures: ProfileFigures, parts: Set<String>, acknowledgeRisk: Boolean? = null): ProfileDetails =
         apiCall(json) {
-            api.updateProfile(
+            /** A part named: its value, or JSON null where it is empty; a part not named is left out. */
+            fun <T : Any> part(name: String, value: T?, of: (T) -> JsonElement): JsonElement? =
+                if (name !in parts) null else value?.let(of) ?: JsonNull
+            api.patchProfile(
                 id,
-                ProfileUpdateDto(
-                    name = figures.name,
-                    age = figures.age,
-                    sex = figures.sex,
-                    heightCm = figures.heightCm,
-                    weightKg = figures.weightKg,
-                    targetWeightKg = figures.targetWeightKg,
-                    activityLevel = figures.activityLevel,
-                    dietType = figures.dietType,
-                    weeklyLossTarget = figures.weeklyLossTarget,
-                    manualCalorieTarget = figures.manualCalorieTarget,
-                    mealCount = figures.mealCount,
-                    weightReminderCadence = figures.weightReminderCadence,
-                    waterTargetMl = figures.waterTargetMl,
-                    waterTracking = figures.waterTracking,
-                    cookingReminders = figures.cookingReminders,
-                    waterReminders = figures.waterReminders,
-                    customMacroSplit = figures.customMacroSplit?.toDto(),
-                    acknowledgeRisk = acknowledgeRisk,
-                    preferences = ProfilePreferencesUpdateDto(
-                        favoriteIngredientIds = preferences.favoriteIngredientIds,
-                        excludedIngredientIds = preferences.excludedIngredientIds,
-                        allergens = figures.allergens,
-                        dislikedIngredientIds = preferences.dislikedIngredientIds,
-                        preferredCuisines = preferences.preferredCuisines,
-                        maxConsecutiveDaysSameMeal = preferences.maxConsecutiveDaysSameMeal,
-                        maxTimesPerWeekSameMeal = preferences.maxTimesPerWeekSameMeal,
-                        maxMealsPerDaySameKind = preferences.maxMealsPerDaySameKind,
-                        maxMealsPerWeekSameKind = preferences.maxMealsPerWeekSameKind,
-                        kindLimits = preferences.kindLimits.map { it.toDto() },
-                        inventoryBiasResetEvery = preferences.inventoryBiasResetEvery,
-                        labelLimits = preferences.labelLimits.toDto(),
-                    ),
+                ProfilePatchDto(
+                    name = part("name", figures.name) { JsonPrimitive(it) },
+                    age = part("age", figures.age) { JsonPrimitive(it) },
+                    sex = part("sex", figures.sex) { JsonPrimitive(it) },
+                    heightCm = part("heightCm", figures.heightCm) { JsonPrimitive(it) },
+                    weightKg = part("weightKg", figures.weightKg) { JsonPrimitive(it) },
+                    targetWeightKg = part("targetWeightKg", figures.targetWeightKg) { JsonPrimitive(it) },
+                    waterTargetMl = part("waterTargetMl", figures.waterTargetMl) { JsonPrimitive(it) },
+                    waterTracking = part("waterTracking", figures.waterTracking) { JsonPrimitive(it) },
+                    activityLevel = part("activityLevel", figures.activityLevel) { JsonPrimitive(it) },
+                    dietType = part("dietType", figures.dietType) { JsonPrimitive(it) },
+                    weeklyLossTarget = part("weeklyLossTarget", figures.weeklyLossTarget) { JsonPrimitive(it) },
+                    manualCalorieTarget = part("manualCalorieTarget", figures.manualCalorieTarget) { JsonPrimitive(it) },
+                    customMacroSplit = part("customMacroSplit", figures.customMacroSplit) { json.encodeToJsonElement(it.toDto()) },
+                    mealCount = part("mealCount", figures.mealCount) { JsonPrimitive(it) },
+                    weightReminderCadence = part("weightReminderCadence", figures.weightReminderCadence) { JsonPrimitive(it) },
+                    cookingReminders = part("cookingReminders", figures.cookingReminders) { JsonPrimitive(it) },
+                    waterReminders = part("waterReminders", figures.waterReminders) { JsonPrimitive(it) },
+                    acknowledgeRisk = acknowledgeRisk?.let { JsonPrimitive(it) },
                 ),
             )
-        }.toDomain()
+        }.toDetails()
 
-    suspend fun delete(id: String) = apiCall(json) { api.deleteProfile(id) }
+    /**
+     * Keeps the limits of the profile's plans that [parts] names, by their names in the API, as [limits] and
+     * [labels] hold them, and no other preference. A limit on a kind of protein named that [limits] holds empty is
+     * taken away.
+     */
+    suspend fun changeLimits(id: String, limits: PlanLimits, labels: LabelLimits, parts: Set<String>): ProfileDetails =
+        apiCall(json) {
+            fun <T> part(name: String, value: T): T? = value.takeIf { name in parts }
+            fun kind(name: String, value: Int?): JsonElement? = if (name !in parts) null else value?.let { JsonPrimitive(it) } ?: JsonNull
+            api.updatePreferences(
+                id,
+                ProfilePreferencesPatchDto(
+                    maxConsecutiveDaysSameMeal = part("maxConsecutiveDaysSameMeal", limits.maxConsecutiveDaysSameMeal),
+                    maxTimesPerWeekSameMeal = part("maxTimesPerWeekSameMeal", limits.maxTimesPerWeekSameMeal),
+                    maxMealsPerDaySameKind = kind("maxMealsPerDaySameKind", limits.maxMealsPerDaySameKind),
+                    maxMealsPerWeekSameKind = kind("maxMealsPerWeekSameKind", limits.maxMealsPerWeekSameKind),
+                    kindLimits = part("kindLimits", limits.kindLimits.map { it.toDto() }),
+                    inventoryBiasResetEvery = part("inventoryBiasResetEvery", limits.inventoryBiasResetEvery),
+                    labelLimits = part("labelLimits", labels.toDto()),
+                ),
+            )
+        }.toDetails()
 
     /** Changes the preferences [change] sets, and no other; the answer is the profile as it is now. */
     suspend fun updatePreferences(id: String, change: PreferencesChange): ProfileDetails =

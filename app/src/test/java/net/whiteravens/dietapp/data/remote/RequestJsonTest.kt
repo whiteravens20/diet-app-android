@@ -10,7 +10,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import net.whiteravens.dietapp.di.AppModule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
 
 /** What the app writes into a request: what the API asks to be sent is sent, and nothing it leaves optional is invented. */
@@ -19,46 +18,36 @@ class RequestJsonTest {
 
     private inline fun <reified T> written(body: T): JsonObject = json.encodeToJsonElement(body).jsonObject
 
-    private val preferences = ProfilePreferencesUpdateDto(
-        favoriteIngredientIds = emptyList(),
-        excludedIngredientIds = emptyList(),
-        allergens = emptyList(),
-        dislikedIngredientIds = emptyList(),
-        preferredCuisines = emptyList(),
-        maxConsecutiveDaysSameMeal = 2,
-        maxTimesPerWeekSameMeal = 3,
-        maxMealsPerDaySameKind = null,
-        maxMealsPerWeekSameKind = 7,
-        kindLimits = listOf(KindLimitDto(kind = "fish", perDay = 1, perWeek = null)),
-        inventoryBiasResetEvery = 5,
-        labelLimits = LabelLimitsDto(saltAtMost = 5.0, fiberAtLeast = null, saturatedFatAtMost = null, sugarsAtMost = null),
-    )
+    @Test
+    fun `a change of some parts of a profile sends the parts set, an emptied one as null, and no other`() {
+        val body = written(
+            ProfilePatchDto(weightKg = JsonPrimitive(72.5), targetWeightKg = JsonNull, customMacroSplit = json.encodeToJsonElement(MacroSplitDto(30, 40, 30))),
+        )
+
+        assertEquals(setOf("weightKg", "targetWeightKg", "customMacroSplit"), body.keys)
+        assertEquals(JsonPrimitive(72.5), body["weightKg"])
+        assertEquals(JsonNull, body["targetWeightKg"])
+        assertEquals(setOf("protein", "fat", "carbs"), body.getValue("customMacroSplit").jsonObject.keys)
+    }
 
     @Test
-    fun `a profile kept as it is from now on sends every field, an empty one as null, and every preference`() {
+    fun `a change of the limits of a profile's plans sends the ones set, a limit on a kind taken away as null`() {
         val body = written(
-            ProfileUpdateDto(
-                name = "Ala", age = 30, sex = null, heightCm = 170.0, weightKg = 65.0, targetWeightKg = null,
-                activityLevel = "moderate", dietType = "balanced", weeklyLossTarget = null, manualCalorieTarget = null,
-                mealCount = 3, weightReminderCadence = "weekly", waterTargetMl = null, waterTracking = false,
-                cookingReminders = true, waterReminders = false, customMacroSplit = null, preferences = preferences,
+            ProfilePreferencesPatchDto(
+                maxMealsPerDaySameKind = JsonNull,
+                kindLimits = listOf(KindLimitDto(kind = "fish", perDay = 1, perWeek = null)),
+                labelLimits = LabelLimitsDto(saltAtMost = 5.0, fiberAtLeast = null, saturatedFatAtMost = null, sugarsAtMost = null),
             ),
         )
-        assertEquals(JsonPrimitive(false), body["waterTracking"])
 
-        for (field in listOf("sex", "targetWeightKg", "weeklyLossTarget", "manualCalorieTarget", "waterTargetMl", "customMacroSplit")) {
-            assertEquals(field, JsonNull, body[field])
-        }
-        assertFalse("acknowledgeRisk is said only by a form that showed the risk", "acknowledgeRisk" in body)
-        val sent = body.getValue("preferences").jsonObject
-        assertEquals(ProfilePreferencesUpdateDto.serializer().descriptor.elementsCount, sent.size)
+        assertEquals(setOf("maxMealsPerDaySameKind", "kindLimits", "labelLimits"), body.keys)
         // No limit on a kind of protein is a null the API reads, and an exception sends both its numbers.
-        assertEquals(JsonNull, sent["maxMealsPerDaySameKind"])
-        val exception = sent.getValue("kindLimits").jsonArray.single().jsonObject
+        assertEquals(JsonNull, body["maxMealsPerDaySameKind"])
+        val exception = body.getValue("kindLimits").jsonArray.single().jsonObject
         assertEquals(setOf("kind", "perDay", "perWeek"), exception.keys)
         assertEquals(JsonNull, exception["perWeek"])
         // The API takes all four limits from labels: one the profile does not set is a null, never left out.
-        val labelLimits = sent.getValue("labelLimits").jsonObject
+        val labelLimits = body.getValue("labelLimits").jsonObject
         assertEquals(setOf("saltAtMost", "fiberAtLeast", "saturatedFatAtMost", "sugarsAtMost"), labelLimits.keys)
         assertEquals(JsonNull, labelLimits["sugarsAtMost"])
     }

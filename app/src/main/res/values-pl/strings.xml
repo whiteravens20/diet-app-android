@@ -1363,7 +1363,17 @@
     <string name="profile_pantry_cool_down">Przerwa od spiżarni (co ile planów)</string>
     <string name="profile_pantry_cool_down_hint">Po tylu kolejnych planach opartych o spiżarnię następny pomija preferencję spiżarni dla urozmaicenia. 0 wyłącza przerwę.</string>
     <string name="profile_saving">Zapisywanie…</string>
-    <string name="profile_save_changes">Zapisz zmiany</string>
+    <string name="profile_autosave_hint">Zmiany zapisują się same: wybór od razu, a\u00A0wpisane pole po wyjściu z\u00A0niego.</string>
+    <string name="profile_autosave_saving">Zapisywanie…</string>
+    <string name="profile_autosave_saved">Zapisano</string>
+    <string name="profile_autosave_not_saved">Nie wszystko zapisano. Popraw pole opisane na czerwono.</string>
+    <string name="profile_autosave_offline">Nie zapisano: brak połączenia. Zapisze się, gdy wróci sieć.</string>
+    <string name="profile_autosave_done">Gotowe</string>
+    <string name="profile_leave_title">Wyjść bez tych zmian?</string>
+    <string name="profile_leave_not_saved">Nie wszystko się zapisało: pole opisane na czerwono trzeba poprawić. Jeśli wyjdziesz teraz, ta zmiana przepadnie.</string>
+    <string name="profile_leave_offline">Bez połączenia nie wszystko się zapisało. Jeśli wyjdziesz teraz, te zmiany przepadną.</string>
+    <string name="profile_leave_stay">Zostań</string>
+    <string name="profile_leave_anyway">Wyjdź bez nich</string>
     <string name="profile_create">Utwórz profil</string>
     <!-- What a field the API would refuse says: in the web application, the browser says it. -->
     <string name="profile_wizard_title">Ustaw swój profil</string>

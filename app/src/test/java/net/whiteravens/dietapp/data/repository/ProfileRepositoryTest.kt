@@ -156,23 +156,46 @@ class ProfileRepositoryTest {
     }
 
     @Test
-    fun `a profile kept anew keeps its preferences as they were, its allergens as the form has them`() {
+    fun `a change of a profile sends the parts it names and no other, its preferences least of all`() {
         server.enqueue(answer(fixture("profile")))
         server.enqueue(answer(fixture("profile")))
         val kept = runBlocking { repository().profile("p") }
 
-        val limited = kept.preferences.copy(maxMealsPerWeekSameKind = 7, kindLimits = listOf(KindLimit("eggs", null, 3)))
-
-        runBlocking { repository().update(kept.id, kept.figures.copy(allergens = listOf("milk")), limited, acknowledgeRisk = null) }
+        runBlocking {
+            repository().change(kept.id, kept.figures.copy(weightKg = 72.5, targetWeightKg = null, allergens = listOf("milk"), age = 40), setOf("weightKg", "targetWeightKg"))
+        }
 
         server.takeRequest()
         val sent = server.takeRequest()
-        assertEquals("PUT", sent.method)
-        val preferences = json.parseToJsonElement(sent.body.readUtf8()).jsonObject.getValue("preferences").jsonObject
-        assertEquals(listOf("milk"), preferences.getValue("allergens").jsonArray.map { it.jsonPrimitive.content })
-        assertEquals(JsonNull, preferences.getValue("maxMealsPerDaySameKind"))
-        assertEquals("7", preferences.getValue("maxMealsPerWeekSameKind").jsonPrimitive.content)
-        assertEquals("""[{"kind":"eggs","perDay":null,"perWeek":3}]""", preferences.getValue("kindLimits").toString())
+        assertEquals("PATCH", sent.method)
+        assertEquals("/api/profiles/${kept.id}", sent.path)
+        val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
+        // The age changed too, but it is no part named: a part of a profile goes only when it is the one changed.
+        assertEquals(setOf("weightKg", "targetWeightKg"), body.keys)
+        assertEquals("72.5", body.getValue("weightKg").jsonPrimitive.content)
+        assertEquals(JsonNull, body.getValue("targetWeightKg"))
+    }
+
+    @Test
+    fun `the limits of a profile's plans are changed through its preferences, a limit on a kind taken away as none`() {
+        server.enqueue(answer(fixture("profile")))
+        server.enqueue(answer(fixture("profile")))
+        val kept = runBlocking { repository().profile("p") }
+        val limits = kept.preferences.limits.copy(maxMealsPerDaySameKind = null, maxMealsPerWeekSameKind = 7, kindLimits = listOf(KindLimit("eggs", null, 3)))
+
+        runBlocking {
+            repository().changeLimits(kept.id, limits, kept.preferences.labelLimits, setOf("maxMealsPerDaySameKind", "maxMealsPerWeekSameKind", "kindLimits"))
+        }
+
+        server.takeRequest()
+        val sent = server.takeRequest()
+        assertEquals("PATCH", sent.method)
+        assertEquals("/api/profiles/${kept.id}/preferences", sent.path)
+        val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
+        assertEquals(setOf("maxMealsPerDaySameKind", "maxMealsPerWeekSameKind", "kindLimits"), body.keys)
+        assertEquals(JsonNull, body.getValue("maxMealsPerDaySameKind"))
+        assertEquals("7", body.getValue("maxMealsPerWeekSameKind").jsonPrimitive.content)
+        assertEquals("""[{"kind":"eggs","perDay":null,"perWeek":3}]""", body.getValue("kindLimits").toString())
     }
 
     @Test
@@ -187,14 +210,18 @@ class ProfileRepositoryTest {
         assertFalse(kept.figures.waterReminders)
 
         runBlocking {
-            repository().update(kept.id, kept.figures.copy(waterTargetMl = 2500, waterTracking = false, waterReminders = true), kept.preferences, acknowledgeRisk = null)
+            repository().change(
+                kept.id,
+                kept.figures.copy(waterTargetMl = 2500, waterTracking = false, waterReminders = true),
+                setOf("waterTargetMl", "waterTracking", "waterReminders"),
+            )
         }
 
         server.takeRequest()
         val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals(setOf("waterTargetMl", "waterTracking", "waterReminders"), body.keys)
         assertEquals("2500", body.getValue("waterTargetMl").jsonPrimitive.content)
         assertEquals("false", body.getValue("waterTracking").jsonPrimitive.content)
-        assertEquals("true", body.getValue("cookingReminders").jsonPrimitive.content)
         assertEquals("true", body.getValue("waterReminders").jsonPrimitive.content)
     }
 

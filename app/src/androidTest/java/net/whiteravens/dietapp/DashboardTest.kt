@@ -274,8 +274,9 @@ class DashboardTest {
         screen.waitUntil(5_000) { screen.onAllNodes(target).fetchSemanticsNodes().isEmpty() }
         screen.onNodeWithText(tracking).performScrollTo()
         screen.keepScreenshot("profiles-water-not-tracked")
-        screen.onNodeWithText(text(R.string.profile_save_changes)).performScrollTo().performClick()
+        // Kept the moment it is switched; "Gotowe" leaves the form.
         screen.waitForTheApi(20_000) { !Instance.profile(account, profileId).getBoolean("waterTracking") }
+        screen.onNodeWithText(text(R.string.profile_autosave_done)).performScrollTo().performClick()
 
         // Back on the dashboard, the profile has no water card: the card would stand above its split of macronutrients.
         screen.scrollToText(text(R.string.dashboard_macro_split))

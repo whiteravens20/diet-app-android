@@ -143,9 +143,6 @@ interface DietApiService {
     @POST("profiles")
     suspend fun createProfile(@Body body: NewProfileDto): ProfileDto
 
-    @PUT("profiles/{id}")
-    suspend fun updateProfile(@Path("id") id: String, @Body body: ProfileUpdateDto): ProfileDto
-
     /** The target weight reached: the pace becomes keeping the weight, so the daily target equals maintenance. */
     @POST("profiles/{id}/keep-weight")
     suspend fun keepWeight(@Path("id") id: String): ProfileDto
@@ -159,6 +156,10 @@ interface DietApiService {
 
     @PATCH("profiles/{id}/preferences")
     suspend fun updatePreferences(@Path("id") id: String, @Body body: ProfilePreferencesPatchDto): ProfileDto
+
+    /** Changes some parts of a profile, and no other: its preferences stay as they are. */
+    @PATCH("profiles/{id}")
+    suspend fun patchProfile(@Path("id") id: String, @Body body: ProfilePatchDto): ProfileDto
 
     /** What typed figures come to, and each pace of loss for the same body. Nothing is kept. */
     @POST("profiles/calories")

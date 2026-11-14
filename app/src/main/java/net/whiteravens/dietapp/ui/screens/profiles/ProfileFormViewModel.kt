@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,9 +25,13 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.CalorieQuestion
 import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.LabelLimits
+import net.whiteravens.dietapp.domain.PlanLimits
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.ProfileDetails
+import net.whiteravens.dietapp.domain.ProfileFigures
 import net.whiteravens.dietapp.ui.common.attempt
+import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
 
@@ -71,6 +77,12 @@ class ProfileFormViewModel @Inject constructor(
         /** The id of the profile edited, and the correction of its target it keeps, kcal a day. */
         val editingId: String? = null,
         val correction: Int? = null,
+        /** What the form of a kept profile says of its changes, each kept as it is made. */
+        val autosave: Autosave = Autosave.IDLE,
+        /** Leaving was asked while a change is not kept: the form asks whether to leave it behind. */
+        val askLeaving: Boolean = false,
+        /** The form of a kept profile is left, every change kept or left behind. */
+        val left: Boolean = false,
     ) {
         /**
          * Why losing weight is a risk for the body the form describes, as the API's last answer for
@@ -171,10 +183,148 @@ class ProfileFormViewModel @Inject constructor(
     }
 
     fun edit(change: (ProfileForm) -> ProfileForm) {
+        val before = _state.value.form
         _state.update {
             val now = change(it.form)
             it.copy(form = now, error = null, refusals = it.refusals.after(it.form, now))
         }
+        // The form of a kept profile keeps a choice the moment it is made; a field typed into, once it is left.
+        if (kept != null && before.choseOtherwise(_state.value.form)) keep()
+    }
+
+    /** The changes of the form of a kept profile, kept one after another, the newest on its way last. */
+    private var keeping: Job? = null
+
+    /** Sends the form of a kept profile again a while after a change met no network, while it is open. */
+    private var again: Job? = null
+
+    /**
+     * Keeps what the form of a kept profile holds that the profile does not have yet, a part at a time, so that a
+     * part the API refuses holds no other back: a field left, a choice made, the form left. A field that holds what
+     * cannot be kept says so, and the rest is kept. Nothing for a new profile, which is made as a whole.
+     */
+    fun keep() {
+        if (kept == null) return
+        val before = keeping
+        keeping = viewModelScope.launch {
+            before?.join()
+            keepNow()
+        }
+    }
+
+    private suspend fun keepNow() {
+        val details = kept ?: return
+        val now = _state.value
+        val refused = now.refusals.fields.keys
+        val figures = now.form.keepable(details.figures, now.unit, refused)
+        val limits = now.form.keepableLimits(details.preferences.limits, refused)
+        val labels = now.form.keepableLabels(details.preferences.labelLimits, refused)
+        // Said only where the form shows the risk, and only when it changes.
+        val risk = now.form.acknowledgeRisk.takeIf { now.risks.isNotEmpty() && it != details.riskAcknowledged }
+        val own = partsChanged(details.figures, figures)
+        val preferences = limitPartsChanged(details.preferences.limits, limits, details.preferences.labelLimits, labels)
+        val held = now.form.notKept(now.unit).isNotEmpty() || now.form.kindProblems().isNotEmpty()
+        if (own.isEmpty() && preferences.isEmpty() && risk == null) {
+            // Nothing differs from the profile: what the form holds is kept, a value put back as it was among it.
+            _state.update {
+                val left = held || it.refusals.fields.isNotEmpty() || it.refusals.kinds.isNotEmpty()
+                val status = when {
+                    left -> Autosave.NOT_SAVED
+                    it.autosave == Autosave.IDLE -> Autosave.IDLE
+                    else -> Autosave.SAVED
+                }
+                it.copy(showProblems = it.showProblems || held, autosave = status)
+            }
+            return
+        }
+        _state.update { it.copy(autosave = Autosave.SAVING) }
+        var offline = false
+        var refusedOne = false
+        /** Sends one part; what the API refuses of it is marked at its fields, and a lost network stops the rest. */
+        suspend fun send(fields: Set<ProfileField>, preferencesRoute: Boolean, call: suspend () -> ProfileDetails) {
+            attempt { call() }
+                .onSuccess { answer ->
+                    kept = answer
+                    _state.update {
+                        it.copy(
+                            form = it.form.keptFrom(answer),
+                            editing = answer.figures.name,
+                            correction = answer.expenditureCorrectionKcal,
+                            refusals = it.refusals.copy(fields = it.refusals.fields - fields),
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    if (e is IOException) {
+                        offline = true
+                        return@onFailure
+                    }
+                    refusedOne = true
+                    val named = (e as? ApiException)?.fieldRefusals.orEmpty()
+                        .mapKeys { (path, _) -> if (preferencesRoute) "preferences.$path" else path }
+                    _state.update {
+                        val answer = ProfileRefusals.of(named, it.form)
+                        it.copy(
+                            refusals = it.refusals.copy(fields = it.refusals.fields + answer.fields, kinds = it.refusals.kinds + answer.kinds),
+                            error = e.takeIf { named.isEmpty() || answer.elsewhere.isNotEmpty() },
+                        )
+                    }
+                }
+        }
+        for (part in own) {
+            if (offline) break
+            send(part.flatMap { FIELDS_OF_PARTS[it].orEmpty() }.toSet(), preferencesRoute = false) { profiles.change(details.id, figures, part) }
+        }
+        if (!offline && risk != null) send(emptySet(), preferencesRoute = false) { profiles.change(details.id, figures, emptySet(), risk) }
+        for (part in preferences) {
+            if (offline) break
+            send(FIELDS_OF_PARTS[part].orEmpty(), preferencesRoute = true) { profiles.changeLimits(details.id, limits, labels, setOf(part)) }
+        }
+        _state.update {
+            it.copy(
+                showProblems = it.showProblems || held,
+                autosave = when {
+                    offline -> Autosave.OFFLINE
+                    refusedOne || held -> Autosave.NOT_SAVED
+                    else -> Autosave.SAVED
+                },
+            )
+        }
+        if (offline) sendAgainSoon()
+    }
+
+    /** While the form is open and a change met no network, it is sent again every little while until it goes. */
+    private fun sendAgainSoon() {
+        if (again?.isActive == true) return
+        again = viewModelScope.launch {
+            while (_state.value.autosave == Autosave.OFFLINE) {
+                delay(SEND_AGAIN_MS)
+                keep()
+                keeping?.join()
+            }
+        }
+    }
+
+    /**
+     * Leaves the form of a kept profile once every change on its way is kept; where one is not, the form asks whether
+     * to leave it behind ([stay], [leaveBehind]).
+     */
+    fun leave() {
+        keep()
+        viewModelScope.launch {
+            keeping?.join()
+            val now = _state.value.autosave
+            _state.update { if (now == Autosave.OFFLINE || now == Autosave.NOT_SAVED) it.copy(askLeaving = true) else it.copy(left = true) }
+        }
+    }
+
+    fun stay() {
+        _state.update { it.copy(askLeaving = false) }
+    }
+
+    fun leaveBehind() {
+        again?.cancel()
+        _state.update { it.copy(askLeaving = false, left = true) }
     }
 
     @OptIn(FlowPreview::class)
@@ -234,7 +384,7 @@ class ProfileFormViewModel @Inject constructor(
         }
     }
 
-    /** Saves the form: a new profile, or the kept one as it is from now on, its preferences as they were. */
+    /** Makes the profile the form holds; a kept profile keeps each change as it is made ([keep]). */
     fun save() {
         val current = _state.value
         if (current.saving) return
@@ -247,11 +397,7 @@ class ProfileFormViewModel @Inject constructor(
         }
         // Said only by a form that showed the risk: ticked is yes, not ticked is no.
         val acknowledged = current.form.acknowledgeRisk.takeIf { current.risks.isNotEmpty() }
-        send(current.form) {
-            val before = kept
-            if (before == null) profiles.create(figures, limits, acknowledged, labels)
-            else profiles.update(before.id, figures, before.preferences.with(limits).copy(labelLimits = labels), acknowledged)
-        }
+        send(current.form) { profiles.create(figures, limits, acknowledged, labels) }
     }
 
     /** The first profile's next step, once the fields of this one hold numbers and none the API refused. */
@@ -319,6 +465,64 @@ class ProfileFormViewModel @Inject constructor(
         /** The route's argument naming the profile edited; absent for a new one. */
         const val PROFILE_ID = "profileId"
 
+        /** How long the form of a kept profile waits before it sends a change that met no network again. */
+        const val SEND_AGAIN_MS = 5_000L
+
+        /** The fields of the form each part of a profile is typed in, by the part's name in the API. */
+        private val FIELDS_OF_PARTS: Map<String, Set<ProfileField>> = mapOf(
+            "name" to setOf(ProfileField.NAME),
+            "age" to setOf(ProfileField.AGE),
+            "heightCm" to setOf(ProfileField.HEIGHT),
+            "weightKg" to setOf(ProfileField.WEIGHT),
+            "targetWeightKg" to setOf(ProfileField.TARGET_WEIGHT),
+            "waterTargetMl" to setOf(ProfileField.WATER_TARGET),
+            "manualCalorieTarget" to setOf(ProfileField.OWN_TARGET),
+            "customMacroSplit" to setOf(ProfileField.SPLIT, ProfileField.SPLIT_PROTEIN, ProfileField.SPLIT_FAT, ProfileField.SPLIT_CARBS),
+            "maxConsecutiveDaysSameMeal" to setOf(ProfileField.CONSECUTIVE_DAYS),
+            "maxTimesPerWeekSameMeal" to setOf(ProfileField.TIMES_PER_WEEK),
+            "maxMealsPerDaySameKind" to setOf(ProfileField.KIND_PER_DAY),
+            "maxMealsPerWeekSameKind" to setOf(ProfileField.KIND_PER_WEEK),
+            "inventoryBiasResetEvery" to setOf(ProfileField.PANTRY_COOL_DOWN),
+            "labelLimits" to setOf(ProfileField.LABEL_SALT, ProfileField.LABEL_FIBER, ProfileField.LABEL_SATURATED_FAT, ProfileField.LABEL_SUGARS),
+        )
+
+        /** The parts of a profile [after] has otherwise than [before], each to be sent alone: the custom diet with its split. */
+        internal fun partsChanged(before: ProfileFigures, after: ProfileFigures): List<Set<String>> = buildList {
+            fun part(name: String, changed: Boolean) {
+                if (changed) add(setOf(name))
+            }
+            part("name", before.name != after.name)
+            part("age", before.age != after.age)
+            part("sex", before.sex != after.sex)
+            part("heightCm", before.heightCm != after.heightCm)
+            part("weightKg", before.weightKg != after.weightKg)
+            part("targetWeightKg", before.targetWeightKg != after.targetWeightKg)
+            part("activityLevel", before.activityLevel != after.activityLevel)
+            val toCustom = before.dietType != after.dietType && after.dietType == "custom"
+            if (toCustom) add(setOf("dietType", "customMacroSplit")) else part("dietType", before.dietType != after.dietType)
+            part("customMacroSplit", !toCustom && before.customMacroSplit != after.customMacroSplit)
+            part("weeklyLossTarget", before.weeklyLossTarget != after.weeklyLossTarget)
+            part("manualCalorieTarget", before.manualCalorieTarget != after.manualCalorieTarget)
+            part("mealCount", before.mealCount != after.mealCount)
+            part("weightReminderCadence", before.weightReminderCadence != after.weightReminderCadence)
+            part("waterTracking", before.waterTracking != after.waterTracking)
+            part("waterTargetMl", before.waterTargetMl != after.waterTargetMl)
+            part("cookingReminders", before.cookingReminders != after.cookingReminders)
+            part("waterReminders", before.waterReminders != after.waterReminders)
+        }
+
+        /** The limits of a profile's plans [after] has otherwise than [before], each to be sent alone, by its name in the API. */
+        internal fun limitPartsChanged(before: PlanLimits, after: PlanLimits, labelsBefore: LabelLimits, labelsAfter: LabelLimits): List<String> =
+            buildList {
+                if (before.maxConsecutiveDaysSameMeal != after.maxConsecutiveDaysSameMeal) add("maxConsecutiveDaysSameMeal")
+                if (before.maxTimesPerWeekSameMeal != after.maxTimesPerWeekSameMeal) add("maxTimesPerWeekSameMeal")
+                if (before.maxMealsPerDaySameKind != after.maxMealsPerDaySameKind) add("maxMealsPerDaySameKind")
+                if (before.maxMealsPerWeekSameKind != after.maxMealsPerWeekSameKind) add("maxMealsPerWeekSameKind")
+                if (before.kindLimits != after.kindLimits) add("kindLimits")
+                if (before.inventoryBiasResetEvery != after.inventoryBiasResetEvery) add("inventoryBiasResetEvery")
+                if (labelsBefore != labelsAfter) add("labelLimits")
+            }
+
         /** How long typing pauses before the figures are asked about. */
         const val PREVIEW_DELAY_MS = 400L
 
@@ -333,3 +537,6 @@ class ProfileFormViewModel @Inject constructor(
         )
     }
 }
+
+/** What the form of a kept profile says of its changes: none made yet, one on its way, all kept, one not kept, or one that met no network. */
+enum class Autosave { IDLE, SAVING, SAVED, NOT_SAVED, OFFLINE }

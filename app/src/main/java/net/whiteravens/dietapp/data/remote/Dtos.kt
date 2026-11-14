@@ -653,48 +653,10 @@ data class NewProfilePreferencesDto(
     val inventoryBiasResetEvery: Int? = null,
 )
 
-/** A profile as it is from now on (`PUT /profiles/:id`): every part of it, its preferences too. */
-@Serializable
-data class ProfileUpdateDto(
-    val name: String,
-    val age: Int,
-    val sex: String?,
-    val heightCm: Double,
-    val weightKg: Double,
-    val targetWeightKg: Double?,
-    val activityLevel: String,
-    val dietType: String,
-    val weeklyLossTarget: String?,
-    val manualCalorieTarget: Int?,
-    val mealCount: Int,
-    val weightReminderCadence: String,
-    val waterTargetMl: Int?,
-    val waterTracking: Boolean,
-    val cookingReminders: Boolean,
-    val waterReminders: Boolean,
-    val customMacroSplit: MacroSplitDto?,
-    val acknowledgeRisk: Boolean? = null,
-    val preferences: ProfilePreferencesUpdateDto,
-)
-
-/** Every preference of a profile, as a `PUT` sends them: none is left to a default. */
-@Serializable
-data class ProfilePreferencesUpdateDto(
-    val favoriteIngredientIds: List<String>,
-    val excludedIngredientIds: List<String>,
-    val allergens: List<String>,
-    val dislikedIngredientIds: List<String>,
-    val preferredCuisines: List<String>,
-    val maxConsecutiveDaysSameMeal: Int,
-    val maxTimesPerWeekSameMeal: Int,
-    val maxMealsPerDaySameKind: Int?,
-    val maxMealsPerWeekSameKind: Int?,
-    val kindLimits: List<KindLimitDto>,
-    val inventoryBiasResetEvery: Int,
-    val labelLimits: LabelLimitsDto,
-)
-
-/** Some of a profile's preferences (`PATCH /profiles/:id/preferences`): the ones set, and no other. */
+/**
+ * Some of a profile's preferences (`PATCH /profiles/:id/preferences`): the ones set, and no other. A limit on a kind of
+ * protein is set as a JSON value, null among them where the limit is taken away.
+ */
 @Serializable
 data class ProfilePreferencesPatchDto(
     val favoriteIngredientIds: List<String>? = null,
@@ -702,6 +664,39 @@ data class ProfilePreferencesPatchDto(
     val allergens: List<String>? = null,
     val dislikedIngredientIds: List<String>? = null,
     val preferredCuisines: List<String>? = null,
+    val maxConsecutiveDaysSameMeal: Int? = null,
+    val maxTimesPerWeekSameMeal: Int? = null,
+    val maxMealsPerDaySameKind: JsonElement? = null,
+    val maxMealsPerWeekSameKind: JsonElement? = null,
+    val kindLimits: List<KindLimitDto>? = null,
+    val inventoryBiasResetEvery: Int? = null,
+    val labelLimits: LabelLimitsDto? = null,
+)
+
+/**
+ * Some parts of a profile (`PATCH /profiles/:id`), as a form that keeps each change sends them: a part set is sent as
+ * a JSON value, null among them where the part is emptied, and a part left out (null here) is not sent at all.
+ */
+@Serializable
+data class ProfilePatchDto(
+    val name: JsonElement? = null,
+    val age: JsonElement? = null,
+    val sex: JsonElement? = null,
+    val heightCm: JsonElement? = null,
+    val weightKg: JsonElement? = null,
+    val targetWeightKg: JsonElement? = null,
+    val waterTargetMl: JsonElement? = null,
+    val waterTracking: JsonElement? = null,
+    val activityLevel: JsonElement? = null,
+    val dietType: JsonElement? = null,
+    val weeklyLossTarget: JsonElement? = null,
+    val manualCalorieTarget: JsonElement? = null,
+    val customMacroSplit: JsonElement? = null,
+    val mealCount: JsonElement? = null,
+    val weightReminderCadence: JsonElement? = null,
+    val cookingReminders: JsonElement? = null,
+    val waterReminders: JsonElement? = null,
+    val acknowledgeRisk: JsonElement? = null,
 )
 
 /**
