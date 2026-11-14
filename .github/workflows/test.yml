@@ -108,6 +108,12 @@ jobs:
     if: ${{ !cancelled() && needs.dry-run.outputs.screens != 'passed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # What the entry of the matrix says, as the scripts below read it: variables, never
+    # pasted into a script.
+    env:
+      BUILD_TYPE: ${{ matrix.build-type }}
+      VARIANT: ${{ matrix.variant }}
+      LOCALE: ${{ matrix.locale }}
     strategy:
       fail-fast: false
       matrix:
@@ -195,8 +201,8 @@ jobs:
 
       - name: Build the app and its tests
         run: >-
-          ./gradlew -PtestBuildType=${{ matrix.build-type }}
-          assemble${{ matrix.variant }} assemble${{ matrix.variant }}AndroidTest
+          ./gradlew -PtestBuildType="$BUILD_TYPE"
+          "assemble$VARIANT" "assemble${VARIANT}AndroidTest"
 
       # The emulator, the instance and the tests share the runner's memory with the build's daemons,
       # whose heaps the build leaves full, R8's above all: the Gradle daemon, and the Kotlin daemon
@@ -238,14 +244,14 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
-            .github/scripts/set-locale.sh "${{ matrix.locale }}"
+            .github/scripts/set-locale.sh "$LOCALE"
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
             .github/scripts/wait-for-play-services.sh
             free -m
-            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connected${{ matrix.variant }}AndroidTest
+            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connected${VARIANT}AndroidTest
 
       - name: Keep the results of part 1
         if: ${{ !cancelled() }}
@@ -271,14 +277,14 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
-            .github/scripts/set-locale.sh "${{ matrix.locale }}"
+            .github/scripts/set-locale.sh "$LOCALE"
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
             .github/scripts/wait-for-play-services.sh
             free -m
-            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connected${{ matrix.variant }}AndroidTest
+            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connected${VARIANT}AndroidTest
 
       - name: Keep the results of part 2
         if: ${{ !cancelled() }}
@@ -304,14 +310,14 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
           script: |
-            .github/scripts/set-locale.sh "${{ matrix.locale }}"
+            .github/scripts/set-locale.sh "$LOCALE"
             .github/scripts/keep-emulator-log.sh
             .github/scripts/settle-emulator.sh
             .github/scripts/install-test-authority.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/${{ matrix.build-type }}/app-${{ matrix.build-type }}.apk net.whiteravens.dietapp
+            .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
             .github/scripts/wait-for-play-services.sh
             free -m
-            ./gradlew -PtestBuildType=${{ matrix.build-type }} $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connected${{ matrix.variant }}AndroidTest
+            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connected${VARIANT}AndroidTest
 
       - name: Keep the results of part 3
         if: ${{ !cancelled() }}
