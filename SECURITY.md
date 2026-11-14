@@ -49,6 +49,7 @@ What the code guarantees today, and what it deliberately does not protect agains
 - [x] Every dependency and plugin the build downloads is checked against the signing keys and checksums in `gradle/verification-metadata.xml`, the Gradle distribution against its checksum, and only the versions in the lockfiles resolve ([CONTRIBUTING.md](CONTRIBUTING.md#dependencies))
 - [x] Trivy fails a run on a high or critical vulnerability in a version the release build ships; on a pull request, a dependency review refuses a library the release build would ship with such a vulnerability or under a licence that does not combine with AGPL-3.0
 - [x] CodeQL reads the code on every push and pull request, and every action a workflow uses is pinned to a commit, checked against its version's tag and looked up in GitHub's advisory database
+- [x] zizmor reads the workflows on every run of the security checks, its findings in code scanning; no checkout leaves its token to the steps after it
 - [x] No keystore or signing configuration is kept in the repository
 - [x] An edge build is signed with a key kept as a secret of the `edge` environment, which only `main` can use, and is published with its SHA-256, its signer and a provenance attestation of the workflow run that built it ([edge-apk.yml](.github/workflows/edge-apk.yml))
 

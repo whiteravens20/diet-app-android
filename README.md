@@ -291,7 +291,9 @@ independent security review.
   release build ships. Every action a workflow uses is pinned to a commit: a run fails
   when a pin is not the commit its version tag names, and the pinned versions are looked
   up in GitHub's advisory database ([codeql.yml](.github/workflows/codeql.yml),
-  [security.yml](.github/workflows/security.yml)).
+  [security.yml](.github/workflows/security.yml)). zizmor reads the workflows themselves in
+  the same runs, and what it finds goes to the repository's code scanning alerts beside
+  CodeQL's ([security.yml](.github/workflows/security.yml)).
 - The graph of every Gradle dependency, the build's own tools included, is handed to
   GitHub on every push and pull request, so that Dependabot's alerts cover them
   ([dependency-graph.yml](.github/workflows/dependency-graph.yml)). On a pull request, a
