@@ -8,12 +8,26 @@ set -euo pipefail
 
 language=${1:-}
 [ -n "$language" ] || exit 0
-adb root > /dev/null
-sleep 3
+
+# adb as root, asked again until it is: right after a boot adbd can close the first request
+# ("unable to connect for root: closed") while it restarts as root.
+as_root() {
+  for _ in $(seq 1 20); do
+    adb root > /dev/null 2>&1 || true
+    adb wait-for-device
+    if [ "$(adb shell id -u 2> /dev/null | tr -d '\r')" = 0 ]; then
+      return 0
+    fi
+    sleep 3
+  done
+  echo "::error::adb did not run as root on the emulator"
+  return 1
+}
+
+as_root
 adb shell setprop persist.sys.locale "$language"
 adb reboot
 adb wait-for-device
-until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 3; done
-adb root > /dev/null
-sleep 3
+until [ "$(adb shell getprop sys.boot_completed 2> /dev/null | tr -d '\r')" = "1" ]; do sleep 3; done
+as_root
 echo "The emulator speaks $(adb shell getprop persist.sys.locale | tr -d '\r')."
