@@ -255,7 +255,8 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
         }
         FormField(
             value = form.priority,
-            onValueChange = { typed -> if (typed.length <= 3 && typed.all(Char::isDigit)) actions.edit { it.copy(priority = typed) } },
+            onValueChange = { typed -> actions.edit { it.copy(priority = typed) } },
+            accept = { typed -> typed.takeIf { it.length <= 3 && it.all(Char::isDigit) } },
             label = stringResource(R.string.account_ai_priority),
             optional = true,
             hint = stringResource(R.string.account_ai_priority_hint),

@@ -28,7 +28,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -77,6 +76,7 @@ import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Locale
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * What a profile has at home, as the web's page keeps it: something of the catalogue put in, with
@@ -228,7 +228,7 @@ private fun AddCard(state: PantryViewModel.UiState, viewModel: PantryViewModel) 
                     TextButton(onClick = viewModel::unpick, enabled = enabled) { Text(stringResource(R.string.pantry_change_pick)) }
                 }
             } else {
-                OutlinedTextField(
+                OutlinedField(
                     value = form.search,
                     onValueChange = viewModel::search,
                     label = { Text(stringResource(R.string.pantry_ingredient)) },
@@ -394,9 +394,10 @@ private fun AmountField(
     modifier: Modifier = Modifier,
     description: String? = null,
 ) {
-    OutlinedTextField(
+    OutlinedField(
         value = value,
-        onValueChange = { typedNow -> if (typedNow.isBlank() || PantryViewModel.amountOf(typedNow) != null) onValue(typedNow) },
+        onValueChange = onValue,
+        accept = { typedNow -> typedNow.takeIf { it.isBlank() || PantryViewModel.amountOf(it) != null } },
         label = { Text(label) },
         suffix = unit?.let { { Text(unitName(it)) } },
         singleLine = true,

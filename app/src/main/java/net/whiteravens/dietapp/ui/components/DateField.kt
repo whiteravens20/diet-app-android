@@ -13,7 +13,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.TextButton
@@ -49,7 +48,7 @@ fun DateField(
 ) {
     var picking by rememberSaveable { mutableStateOf(false) }
     Box(modifier) {
-        OutlinedTextField(
+        OutlinedField(
             value = day?.let { formatDate(it.toString()) }.orEmpty(),
             onValueChange = {},
             readOnly = true,
@@ -64,7 +63,8 @@ fun DateField(
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
-            modifier = Modifier.fillMaxWidth().then(if (optional) Modifier.optionalMark() else Modifier),
+            optional = optional,
+            modifier = Modifier.fillMaxWidth(),
         )
         Box(Modifier.matchParentSize().clickable(role = Role.Button, onClickLabel = label) { picking = true })
     }

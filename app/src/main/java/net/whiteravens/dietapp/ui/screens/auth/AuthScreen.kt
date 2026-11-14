@@ -24,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -55,6 +53,8 @@ import net.whiteravens.dietapp.ui.components.ServerUrlDialog
 import net.whiteravens.dietapp.ui.components.ServerVersionNotice
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.UpdateCard
+import net.whiteravens.dietapp.ui.components.OutlinedField
+import net.whiteravens.dietapp.ui.components.OutlinedSecretField
 
 /**
  * Login / registration — the mobile twin of the web `AuthForm`: centered
@@ -182,7 +182,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 modifier = Modifier.padding(bottom = 16.dp),
             )
             if (registerMode) {
-                OutlinedTextField(
+                OutlinedField(
                     value = displayName,
                     onValueChange = { displayName = it },
                     label = { Text(stringResource(R.string.auth_name)) },
@@ -192,7 +192,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                 )
             }
-            OutlinedTextField(
+            OutlinedField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text(stringResource(R.string.auth_email)) },
@@ -202,19 +202,17 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             )
-            OutlinedTextField(
+            OutlinedSecretField(
                 value = password,
                 onValueChange = viewModel::typePassword,
                 label = { Text(stringResource(R.string.auth_password)) },
                 isError = "password" in refused,
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
             )
             if (registerMode) {
-                OutlinedTextField(
+                OutlinedSecretField(
                     value = repeated,
                     onValueChange = viewModel::typeRepeated,
                     label = { Text(stringResource(R.string.auth_repeat_password)) },
@@ -224,8 +222,6 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                     } else {
                         null
                     },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
@@ -373,7 +369,7 @@ private fun PasswordResetCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
                 )
-                OutlinedTextField(
+                OutlinedField(
                     value = email,
                     onValueChange = onEmailChange,
                     label = { Text(stringResource(R.string.auth_email)) },

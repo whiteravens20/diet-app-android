@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,9 +38,10 @@ fun SecondStepCodeField(value: String, onValueChange: (String) -> Unit, isError:
     val focus = remember { FocusRequester() }
     Column {
         key(recovery) {
-            OutlinedTextField(
+            OutlinedField(
                 value = value,
-                onValueChange = { if (it.length <= SECOND_STEP_CODE_MAX) onValueChange(it) },
+                onValueChange = onValueChange,
+                accept = { typed -> typed.takeIf { it.length <= SECOND_STEP_CODE_MAX } },
                 label = { Text(stringResource(if (recovery) R.string.account_second_factor_recovery_code else R.string.account_second_factor_code)) },
                 isError = isError,
                 singleLine = true,

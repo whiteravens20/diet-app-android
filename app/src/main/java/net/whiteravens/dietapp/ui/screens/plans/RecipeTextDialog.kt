@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +37,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Text
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * The window the words of [recipeId], a recipe a substitution made, are corrected in: its title,
@@ -79,13 +79,13 @@ internal fun RecipeTextDialog(
 @Composable
 private fun Words(state: RecipeTextViewModel.UiState, viewModel: RecipeTextViewModel) {
     Text(stringResource(R.string.plans_reword_intro), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    OutlinedTextField(
+    OutlinedField(
         value = state.title,
         onValueChange = viewModel::typeTitle,
         label = { Text(stringResource(R.string.own_recipe_field_title)) },
         modifier = Modifier.fillMaxWidth(),
     )
-    OutlinedTextField(
+    OutlinedField(
         value = state.description,
         onValueChange = viewModel::typeDescription,
         label = { Text(stringResource(R.string.own_recipe_field_description)) },
@@ -96,7 +96,7 @@ private fun Words(state: RecipeTextViewModel.UiState, viewModel: RecipeTextViewM
     state.steps.forEachIndexed { index, step ->
         val number = index + 1
         Row(verticalAlignment = Alignment.Top) {
-            OutlinedTextField(
+            OutlinedField(
                 value = step,
                 onValueChange = { typed -> viewModel.typeStep(index, typed) },
                 label = { Text(stringResource(R.string.own_recipe_step_number, number)) },

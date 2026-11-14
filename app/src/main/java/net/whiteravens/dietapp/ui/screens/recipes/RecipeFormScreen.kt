@@ -31,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,6 +75,7 @@ import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /** A change of the form, as the view model takes it. */
 private typealias RecipeEdit = ((RecipeForm) -> RecipeForm) -> Unit
@@ -359,7 +359,7 @@ private fun LineFields(line: FormLine, marks: RecipeMarks, onEdit: RecipeEdit) {
 /** An ingredient of the catalogue looked for by a part of its name: those found, each to put on a line, or a word that none was. */
 @Composable
 private fun SearchField(state: RecipeFormViewModel.UiState, viewModel: RecipeFormViewModel) {
-    OutlinedTextField(
+    OutlinedField(
         value = state.search,
         onValueChange = viewModel::search,
         label = { Text(stringResource(R.string.own_recipe_add_ingredient)) },
@@ -500,7 +500,7 @@ private fun SaveFailure(state: RecipeFormViewModel.UiState, marks: RecipeMarks, 
 /** A field of several lines, with what is wrong with it once that is said. */
 @Composable
 private fun TextArea(value: String, onValueChange: (String) -> Unit, label: String, problem: String?, modifier: Modifier = Modifier, minLines: Int = 3) {
-    OutlinedTextField(
+    OutlinedField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },

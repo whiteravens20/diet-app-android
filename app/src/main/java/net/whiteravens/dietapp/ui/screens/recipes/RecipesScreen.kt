@@ -25,7 +25,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TextButton
@@ -69,6 +68,7 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.modelPartText
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * The recipe library: the shared recipes and the account's own, searched by words and narrowed by
@@ -167,7 +167,7 @@ fun RecipesScreen(
             }
             if (!mine) {
                 item {
-                    OutlinedTextField(
+                    OutlinedField(
                         value = query,
                         onValueChange = { viewModel.query.value = it },
                         placeholder = { Text(stringResource(R.string.recipes_search_placeholder)) },

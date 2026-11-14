@@ -13,7 +13,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,6 +49,7 @@ import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.modelPartText
 import net.whiteravens.dietapp.ui.screens.profiles.WarningBox
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * The window one ingredient of a meal is substituted in, as the web's: 1. the line that leaves,
@@ -103,7 +103,7 @@ fun SubstituteDialog(
             if (from != null) {
                 Text(emphasized(stringResource(R.string.substitute_step_replace, MARK), from.name), style = MaterialTheme.typography.titleSmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
+                    OutlinedField(
                         value = state.search,
                         onValueChange = viewModel::search,
                         placeholder = { Text(stringResource(R.string.pickers_ingredient_search)) },

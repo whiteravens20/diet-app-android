@@ -29,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -67,6 +66,7 @@ import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel.IngredientList
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * The account's profiles: each with what it is, to edit or delete; a new one up to what the
@@ -413,7 +413,7 @@ private fun IngredientPicker(
                 }
             }
         }
-        OutlinedTextField(
+        OutlinedField(
             value = search.text,
             onValueChange = { viewModel.search(profile.id, list, it) },
             placeholder = { Text(stringResource(R.string.pickers_ingredient_search)) },

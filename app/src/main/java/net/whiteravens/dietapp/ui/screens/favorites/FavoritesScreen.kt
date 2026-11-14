@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -29,7 +28,6 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -68,6 +66,7 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * The recipes a profile marked, to look through and keep in order, as the web's page has them: each
@@ -225,7 +224,7 @@ fun FavoritesScreen(
 private fun Filters(query: String, onQuery: (String) -> Unit, filter: FavoriteFilter, tags: List<String>, onNarrow: (FavoriteFilter) -> Unit) {
     val any = stringResource(R.string.favorites_any)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
+        OutlinedField(
             value = query,
             onValueChange = onQuery,
             label = { Text(stringResource(R.string.favorites_search)) },
@@ -355,14 +354,15 @@ private fun Tags(item: MarkedRecipe, busy: Boolean, onAdd: (String) -> Unit, onR
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(top = 8.dp),
     ) {
-        OutlinedTextField(
+        OutlinedField(
             value = typed,
-            onValueChange = { typed = it.take(FavoriteFilter.TAG_LENGTH) },
+            onValueChange = { typed = it },
+            accept = { it.take(FavoriteFilter.TAG_LENGTH) },
             label = { Text(stringResource(R.string.favorites_new_tag)) },
             singleLine = true,
             enabled = !busy && !full,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { if (typed.isNotBlank()) add() }),
+            onKeyboardAction = { if (typed.isNotBlank()) add() },
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier.weight(1f).semantics { contentDescription = newTagLabel },
         )

@@ -40,7 +40,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -94,6 +93,7 @@ import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Locale
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * The shopping lists of a plan: made for the whole plan or for some of its days, grouped by aisle,
@@ -396,7 +396,7 @@ fun ShoppingScreen(
                         )
                     }
                     item(key = "find") {
-                        OutlinedTextField(
+                        OutlinedField(
                             value = find,
                             onValueChange = { find = it },
                             label = { Text(stringResource(R.string.shopping_find_entry)) },
@@ -661,9 +661,10 @@ internal fun ShoppingItemRow(
 /** A field of a row's amount, in the row's unit; a number under nothing is not taken, an empty field is. */
 @Composable
 private fun AmountField(label: String, value: String, unit: String, enabled: Boolean, onValue: (String) -> Unit) {
-    OutlinedTextField(
+    OutlinedField(
         value = value,
-        onValueChange = { typedNow -> if (typedNow.isBlank() || typedNow.trim().replace(',', '.').toDoubleOrNull()?.let { it >= 0 } == true) onValue(typedNow) },
+        onValueChange = onValue,
+        accept = { typedNow -> typedNow.takeIf { it.isBlank() || it.trim().replace(',', '.').toDoubleOrNull()?.let { amount -> amount >= 0 } == true } },
         label = { Text(label) },
         suffix = { Text(unitName(unit)) },
         singleLine = true,

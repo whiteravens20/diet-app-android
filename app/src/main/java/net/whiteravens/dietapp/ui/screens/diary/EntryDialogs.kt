@@ -21,7 +21,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,6 +56,7 @@ import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import java.io.IOException
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /** What a field of the open window says: what it holds that the API would refuse, once it was sent, or why the API did. */
 @Composable
@@ -268,7 +268,7 @@ private fun Picked(name: String, about: String?, onAgain: () -> Unit) {
  */
 @Composable
 private fun Search(label: String, form: EntryForm, viewModel: DiaryViewModel, found: @Composable () -> Unit) {
-    OutlinedTextField(
+    OutlinedField(
         value = form.search,
         onValueChange = viewModel::search,
         label = { Text(label) },

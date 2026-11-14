@@ -27,7 +27,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -82,7 +81,7 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.components.DOT
-import net.whiteravens.dietapp.ui.components.optionalMark
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /*
  * The fields a profile is made of, as every form that asks for them shows them: the form of a
@@ -111,7 +110,7 @@ data class ProfileMarks(
 private fun ProfileMarks.of(field: ProfileField, bound: Bound = Bound.Number(), whole: Boolean = true): String? =
     numberProblem(field in notNumbers, refusals.fields[field], bound, whole)
 
-/** A field typed into, with its hint, or what is wrong with it once that is said. */
+/** A field typed into, with its hint, or what is wrong with it once that is said. [accept] says what of a change it takes (`OutlinedField`). */
 @Composable
 internal fun FormField(
     value: String,
@@ -124,8 +123,9 @@ internal fun FormField(
     keyboardType: KeyboardType = KeyboardType.Number,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     optional: Boolean = false,
+    accept: (String) -> String? = { it },
 ) {
-    OutlinedTextField(
+    OutlinedField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
@@ -133,10 +133,10 @@ internal fun FormField(
         supportingText = (problem ?: hint)?.let { { Text(it) } },
         isError = problem != null,
         singleLine = true,
+        optional = optional,
+        accept = accept,
         keyboardOptions = KeyboardOptions(capitalization = capitalization, keyboardType = keyboardType, imeAction = ImeAction.Next),
-        shape = MaterialTheme.shapes.medium,
-        // A field that may stay empty says so in its outline.
-        modifier = modifier.fillMaxWidth().then(if (optional) Modifier.optionalMark() else Modifier),
+        modifier = modifier.fillMaxWidth(),
     )
 }
 
@@ -158,7 +158,7 @@ internal fun <T> ChoiceField(
 ) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { expanded = it && enabled }, modifier = modifier.fillMaxWidth()) {
-        OutlinedTextField(
+        OutlinedField(
             value = optionLabel(selected),
             onValueChange = {},
             readOnly = true,

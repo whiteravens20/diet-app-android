@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +50,7 @@ import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.account.SecondFactorViewModel.Purpose
 import net.whiteravens.dietapp.ui.screens.account.SecondFactorViewModel.Step
 import java.time.ZoneId
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /** With this few recovery codes left the card says so. */
 private const val FEW_CODES = 3
@@ -309,9 +309,10 @@ private fun ProofStep(purpose: Purpose, state: SecondFactorViewModel.UiState, ac
 /** A code typed: one the authenticator app shows; at most [SECOND_STEP_CODE_MAX] characters, as the API takes. */
 @Composable
 private fun CodeField(value: String, onValueChange: (String) -> Unit, label: String, hint: String? = null, keyboardType: KeyboardType) {
-    OutlinedTextField(
+    OutlinedField(
         value = value,
-        onValueChange = { if (it.length <= SECOND_STEP_CODE_MAX) onValueChange(it) },
+        onValueChange = onValueChange,
+        accept = { typed -> typed.takeIf { it.length <= SECOND_STEP_CODE_MAX } },
         label = { Text(label) },
         supportingText = hint?.let { { Text(it) } },
         singleLine = true,

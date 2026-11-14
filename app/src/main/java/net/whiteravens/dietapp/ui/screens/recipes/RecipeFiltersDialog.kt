@@ -25,7 +25,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,6 +62,7 @@ import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.AllergenChoice
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
+import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /**
  * Every way the library can be narrowed, as the web's page has them: the diet, the meal, the
@@ -250,9 +250,10 @@ internal fun decimal(text: String): Double? = text.trim().replace(',', '.').toDo
 /** A figure typed in, whole or with decimals as [figure] is, with [problem] where the API refused it. */
 @Composable
 private fun Figure(label: String, value: String, figure: FilterFigure, problem: String?, modifier: Modifier, onValue: (String) -> Unit) {
-    OutlinedTextField(
+    OutlinedField(
         value = value,
-        onValueChange = { typed -> if (typed.isEmpty() || typed.all { it.isDigit() || (!figure.whole && (it == '.' || it == ',')) }) onValue(typed) },
+        onValueChange = onValue,
+        accept = { typed -> typed.takeIf { typed.isEmpty() || typed.all { it.isDigit() || (!figure.whole && (it == '.' || it == ',')) } } },
         label = { Text(label) },
         singleLine = true,
         isError = problem != null,
@@ -295,7 +296,7 @@ private fun IngredientChooser(
             }
         }
         if (chosen.size < RecipeFilter.MAX_INGREDIENTS) {
-            OutlinedTextField(
+            OutlinedField(
                 value = search.text,
                 onValueChange = onSearch,
                 placeholder = { Text(stringResource(R.string.pickers_ingredient_search)) },

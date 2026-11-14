@@ -127,7 +127,8 @@ fun OwnProductDialog(
                 }
                 FormField(
                     value = draft.code,
-                    onValueChange = { typed -> viewModel.type { it.copy(code = typed.take(CODE_LONGEST)) } },
+                    onValueChange = { typed -> viewModel.type { it.copy(code = typed) } },
+                    accept = { it.take(CODE_LONGEST) },
                     label = stringResource(R.string.products_code),
                     optional = true,
                     hint = stringResource(R.string.products_code_hint),
@@ -136,7 +137,8 @@ fun OwnProductDialog(
                 )
                 FormField(
                     value = draft.name,
-                    onValueChange = { typed -> viewModel.type { it.copy(name = typed.take(OwnProductLimits.NAME)) } },
+                    onValueChange = { typed -> viewModel.type { it.copy(name = typed) } },
+                    accept = { it.take(OwnProductLimits.NAME) },
                     label = stringResource(R.string.products_name),
                     problem = problemOf(OwnField.NAME),
                     keyboardType = KeyboardType.Text,
@@ -144,14 +146,16 @@ fun OwnProductDialog(
                 )
                 FormField(
                     value = draft.brand,
-                    onValueChange = { typed -> viewModel.type { it.copy(brand = typed.take(OwnProductLimits.BRAND)) } },
+                    onValueChange = { typed -> viewModel.type { it.copy(brand = typed) } },
+                    accept = { it.take(OwnProductLimits.BRAND) },
                     label = stringResource(R.string.products_brand),
                     optional = true,
                     keyboardType = KeyboardType.Text,
                 )
                 FormField(
                     value = draft.pack,
-                    onValueChange = { typed -> viewModel.type { it.copy(pack = typed.take(OwnProductLimits.PACK)) } },
+                    onValueChange = { typed -> viewModel.type { it.copy(pack = typed) } },
+                    accept = { it.take(OwnProductLimits.PACK) },
                     label = stringResource(R.string.products_pack),
                     optional = true,
                     keyboardType = KeyboardType.Text,
