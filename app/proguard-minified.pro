@@ -28,6 +28,7 @@
 -keep class net.whiteravens.dietapp.domain.NotificationAbout { *; }
 -keep class net.whiteravens.dietapp.domain.NotificationAbout$* { *; }
 -keep class net.whiteravens.dietapp.domain.CookedAhead { *; }
+-keep class net.whiteravens.dietapp.domain.ThawAhead { *; }
 -keep class net.whiteravens.dietapp.domain.AccountNotification { *; }
 -keep class net.whiteravens.dietapp.notify.PhoneNotifier { *; }
 -keep class net.whiteravens.dietapp.notify.NotificationsWorker { *; }
