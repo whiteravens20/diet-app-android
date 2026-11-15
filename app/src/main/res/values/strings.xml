@@ -282,7 +282,8 @@
     <string name="plans_packs_left">%1$s: %2$s left of a pack of %3$s</string>
     <string name="plans_packs_left_much">%1$s: %2$s left of a pack of %3$s, more than a fifth of it</string>
     <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>
-    <string name="plans_packs_explain">Counted from the menu; what was in the freezer when the plan was made goes first, and the rest of what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
+    <string name="plans_packs_explain">Counted from the menu alone; what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
+    <string name="plans_packs_explain_freezer">Counted from the menu; what was in the freezer when the plan was made goes first, and the rest of what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
     <string name="plans_freeze_rest">Freeze the rest of the pack at once: %1$s, %2$s.</string>
     <string name="plans_freeze_portion_later">%1$s for later</string>
     <string name="plans_freeze_portion_on">%1$s (%2$s)</string>

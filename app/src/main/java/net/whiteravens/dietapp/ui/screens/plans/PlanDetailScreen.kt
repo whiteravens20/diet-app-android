@@ -874,7 +874,8 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
                         ),
                     )
                 }
-                Fact(stringResource(R.string.plans_packs_explain))
+                // What the freezer held goes first only in a plan that took something out of it.
+                Fact(stringResource(if (packs.fromFreezer.isNotEmpty()) R.string.plans_packs_explain_freezer else R.string.plans_packs_explain))
                 useUp?.invoke()
             }
         }
