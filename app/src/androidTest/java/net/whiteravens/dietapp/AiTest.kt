@@ -100,6 +100,19 @@ class AiTest {
         assertTrue("the key's field is not a password's", SemanticsProperties.Password in typed)
         assertFalse("the key is shown", typed[SemanticsProperties.EditableText].text.contains(key))
         assertFalse("the key is in the saved state", screen.savedStateHolds(key))
+        // Its eye shows the key as it was typed, the mark of a password gone. The saved state holds it shown too, and
+        // the stop and the return that its check takes the app through leave it dots again.
+        val keyField = screen.onNode(hasText(text(R.string.account_ai_api_key)) and hasSetTextAction())
+        screen.onNodeWithContentDescription(text(R.string.common_show_key)).performScrollTo().performClick()
+        val shownKey = keyField.fetchSemanticsNode().config
+        assertFalse("the shown key keeps the mark of a password", SemanticsProperties.Password in shownKey)
+        assertEquals(key, shownKey[SemanticsProperties.EditableText].text)
+        screen.keepScreenshot("ai-provider-key-shown")
+        assertFalse("the shown key is in the saved state", screen.savedStateHolds(key))
+        val back = keyField.fetchSemanticsNode().config
+        assertTrue("the key is shown after the app came back", SemanticsProperties.Password in back)
+        assertFalse(back[SemanticsProperties.EditableText].text.contains(key))
+        screen.onNodeWithContentDescription(text(R.string.common_show_key)).assertExists()
         screen.keepScreenshot("ai-provider-key-typed")
         screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
         screen.waitForTheApi { Instance.aiProviders(account).size == 2 }

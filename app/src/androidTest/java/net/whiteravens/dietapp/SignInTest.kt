@@ -2,14 +2,23 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
@@ -17,6 +26,9 @@ import net.whiteravens.dietapp.testing.pressToSignIn
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,6 +86,49 @@ class SignInTest {
     }
 
     @Test
+    fun aPasswordIsShownByItsEyeUntilItIsSentOrTheAppIsLeft() {
+        val account = Instance.newAccount()
+        val wrong = "Wrong-Test-Passw0rd"
+        val field = screen.onNode(hasText(text(R.string.auth_password)) and hasSetTextAction())
+        val show = { screen.onNodeWithContentDescription(text(R.string.common_show_password)) }
+        val hide = { screen.onNodeWithContentDescription(text(R.string.common_hide_password)) }
+        screen.onNodeWithText(text(R.string.auth_email)).performTextInput(account.email)
+        field.performTextInput(wrong)
+
+        // Dots with the mark of a password until the eye is pressed; the press leaves the keyboard on the field, and a
+        // screen reader is told what it did. The eye is drawn 40 dp wide, as Material's icon buttons are, and a
+        // finger's 48 dp around it press it.
+        assertHidden(field, wrong)
+        val target = show().fetchSemanticsNode().touchBoundsInRoot
+        with(screen.density) {
+            assertTrue("the eye is a smaller target than a finger", target.width.toDp() >= 48.dp && target.height.toDp() >= 48.dp)
+        }
+        show().performClick()
+        field.assertIsFocused()
+        assertShown(field, wrong)
+        hide().assert(hasStateDescription(text(R.string.common_password_shown)))
+        screen.keepScreenshot("sign-in-password-shown")
+        hide().performClick()
+        assertHidden(field, wrong)
+        show().assert(hasStateDescription(text(R.string.common_password_hidden)))
+
+        // Shown when the app goes to the background, it is dots when the app comes back.
+        show().performClick()
+        screen.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        screen.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        assertHidden(field, wrong)
+
+        // Shown when the form is sent, it is dots from the sending on, and the screen keeps what was typed.
+        show().performClick()
+        screen.putKeyboardAway()
+        screen.pressToSignIn()
+        screen.waitForText(text(R.string.error_code_invalid_credentials))
+        assertHidden(field, wrong)
+        show().performClick()
+        assertShown(field, wrong)
+    }
+
+    @Test
     fun aForgottenPasswordIsAskedForByMailWhereTheInstanceSendsMail() {
         val account = Instance.newAccount()
 
@@ -91,5 +146,17 @@ class SignInTest {
 
         screen.onNodeWithText(text(R.string.auth_back_to_sign_in)).performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_sign_in_title))
+    }
+
+    private fun assertHidden(field: SemanticsNodeInteraction, typed: String) {
+        val config = field.fetchSemanticsNode().config
+        assertTrue("the password's field has no mark of one", SemanticsProperties.Password in config)
+        assertFalse("the password is shown", config[SemanticsProperties.EditableText].text.contains(typed))
+    }
+
+    private fun assertShown(field: SemanticsNodeInteraction, typed: String) {
+        val config = field.fetchSemanticsNode().config
+        assertFalse("the shown password keeps the mark of one", SemanticsProperties.Password in config)
+        assertEquals(typed, config[SemanticsProperties.EditableText].text)
     }
 }

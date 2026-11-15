@@ -22,6 +22,15 @@
     <string name="common_save">Save</string>
     <string name="common_edit">Edit</string>
     <string name="common_close">Close</string>
+    <!-- The eye at a field of a secret: what a press does, and what a screen reader is told once it is done. -->
+    <string name="common_show_password">Show password</string>
+    <string name="common_hide_password">Hide password</string>
+    <string name="common_password_shown">The password is visible.</string>
+    <string name="common_password_hidden">The password is hidden.</string>
+    <string name="common_show_key">Show key</string>
+    <string name="common_hide_key">Hide key</string>
+    <string name="common_key_shown">The key is visible.</string>
+    <string name="common_key_hidden">The key is hidden.</string>
     <string name="plans_open_recipe">Original recipe</string>
 
     <!-- Server setting -->

@@ -3,7 +3,9 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.savedStateHolds
@@ -28,6 +30,9 @@ class SavedStateTest {
         // The e-mail is there, so a search that finds nothing has looked where the screen keeps what it keeps.
         assertTrue("the e-mail is not in the saved state", screen.savedStateHolds(EMAIL))
         assertFalse("the password is in the saved state", screen.savedStateHolds(PASSWORD))
+        // Shown by its eye, it is left out all the same: whether it was shown is kept nowhere either.
+        screen.onNodeWithContentDescription(text(R.string.common_show_password)).performClick()
+        assertFalse("the shown password is in the saved state", screen.savedStateHolds(PASSWORD))
     }
 
     private companion object {

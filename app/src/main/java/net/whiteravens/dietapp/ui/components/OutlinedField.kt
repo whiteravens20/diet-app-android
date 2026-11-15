@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -21,8 +23,10 @@ import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +36,10 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.password
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import net.whiteravens.dietapp.R
 
 /**
@@ -100,11 +108,19 @@ fun OutlinedField(
     )
 }
 
+/** What a field of a secret holds, which the words of its eye name. */
+enum class Secret { Password, Key }
+
 /**
  * A field for a password or another secret, as [OutlinedField] is for the rest: its label above the frame, and what is
  * typed shown as dots, every character. The dots are what the field holds for anyone but the one typing: what a screen
- * reader is given, with the mark of a password, and what is copied. Material's secure field hides the characters only
- * as they are drawn and gives a screen reader the secret itself.
+ * reader is given, with the mark of a password. Material's secure field hides the characters only as they are drawn and
+ * gives a screen reader the secret itself.
+ *
+ * Its eye shows what was typed, the mark of a password gone with the dots, and a second press hides it again. Shown or
+ * not, the keyboard is told it types a password: it offers no words, corrects nothing and learns nothing of it. The
+ * field is dots again whenever the screen sends what it holds ([sending]) and when the app leaves the screen, and
+ * whether it was shown is kept nowhere: a screen opened again, or brought back from the background, shows dots.
  */
 @Composable
 fun OutlinedSecretField(
@@ -115,25 +131,71 @@ fun OutlinedSecretField(
     label: (@Composable () -> Unit)? = null,
     supportingText: (@Composable () -> Unit)? = null,
     isError: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    secret: Secret = Secret.Password,
+    sending: Boolean = false,
     onKeyboardAction: KeyboardActionHandler? = null,
     shape: Shape = MaterialTheme.shapes.medium,
 ) {
+    var shown by remember { mutableStateOf(false) }
+    // Nothing is said of the eye until it is pressed: the field's own mark already says that it is hidden.
+    var told by remember { mutableStateOf(false) }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { shown = false }
+    LaunchedEffect(sending) { if (sending) shown = false }
+    val words = wordsOf(secret)
     OutlinedTextField(
         state = typedState(value, onValueChange),
-        modifier = modifier.semantics { password() },
+        modifier = if (shown) modifier else modifier.semantics { password() },
         enabled = enabled,
         labelPosition = TextFieldLabelPosition.Above(),
         label = labelOf(label, optional = false),
+        trailingIcon = {
+            val said = stringResource(if (shown) words.shown else words.hidden)
+            // A press leaves the focus in the field, and the keyboard up.
+            IconButton(
+                onClick = {
+                    shown = !shown
+                    told = true
+                },
+                enabled = enabled,
+                modifier = Modifier.semantics { if (told) stateDescription = said },
+            ) {
+                Icon(
+                    if (shown) AppIcons.VisibilityOff else AppIcons.Visibility,
+                    contentDescription = stringResource(if (shown) words.hide else words.show),
+                )
+            }
+        },
         supportingText = supportingText,
         isError = isError,
-        outputTransformation = Dots,
-        keyboardOptions = keyboardOptions,
+        outputTransformation = if (shown) null else Dots,
+        keyboardOptions = SecretKeyboard,
         onKeyboardAction = onKeyboardAction,
         lineLimits = TextFieldLineLimits.SingleLine,
         shape = shape,
+        // The eye is no part of a refusal: only the label and the frame take the colour of an error.
+        colors = OutlinedTextFieldDefaults.colors(errorTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant),
     )
 }
+
+/** What the eye of a field says: what a press does, and what has been done. */
+private class EyeWords(val show: Int, val hide: Int, val shown: Int, val hidden: Int)
+
+private fun wordsOf(secret: Secret) = when (secret) {
+    Secret.Password -> EyeWords(
+        R.string.common_show_password,
+        R.string.common_hide_password,
+        R.string.common_password_shown,
+        R.string.common_password_hidden,
+    )
+    Secret.Key -> EyeWords(R.string.common_show_key, R.string.common_hide_key, R.string.common_key_shown, R.string.common_key_hidden)
+}
+
+/** A password's keyboard, with nothing of a word's: no capitals, no corrections, nothing it offers or learns. */
+private val SecretKeyboard = KeyboardOptions(
+    capitalization = KeyboardCapitalization.None,
+    autoCorrectEnabled = false,
+    keyboardType = KeyboardType.Password,
+)
 
 /** Every character a dot, one for one, so that the cursor stands where it stands in what was typed. */
 private val Dots = OutputTransformation {

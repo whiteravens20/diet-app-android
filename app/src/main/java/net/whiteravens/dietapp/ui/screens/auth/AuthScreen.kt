@@ -207,7 +207,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                 onValueChange = viewModel::typePassword,
                 label = { Text(stringResource(R.string.auth_password)) },
                 isError = "password" in refused,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                sending = state.busy,
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -222,7 +222,7 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
                     } else {
                         null
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    sending = state.busy,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 )

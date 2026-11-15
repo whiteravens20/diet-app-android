@@ -157,7 +157,7 @@ private fun AtRest(state: SecondFactorViewModel.UiState, actions: SecondFactorAc
 
 @Composable
 private fun PasswordStep(state: SecondFactorViewModel.UiState, actions: SecondFactorActions) {
-    PasswordField(state.password, actions.typePassword, stringResource(R.string.account_password_current))
+    PasswordField(state.password, actions.typePassword, stringResource(R.string.account_password_current), sending = state.busy)
     Problem(state.error)
     Buttons(
         submit = stringResource(R.string.account_second_factor_continue),
@@ -294,7 +294,7 @@ private fun ProofStep(purpose: Purpose, state: SecondFactorViewModel.UiState, ac
         stringResource(if (purpose == Purpose.SWITCH_OFF) R.string.account_second_factor_switch_off_body else R.string.account_second_factor_new_codes_body),
         style = MaterialTheme.typography.bodyMedium,
     )
-    PasswordField(state.password, actions.typePassword, stringResource(R.string.account_password_current))
+    PasswordField(state.password, actions.typePassword, stringResource(R.string.account_password_current), sending = state.busy)
     SecondStepCodeField(state.code, actions.typeCode)
     Problem(state.error)
     Buttons(

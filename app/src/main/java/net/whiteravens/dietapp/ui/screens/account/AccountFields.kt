@@ -3,15 +3,17 @@
 package net.whiteravens.dietapp.ui.screens.account
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.OutlinedSecretField
+import net.whiteravens.dietapp.ui.components.Secret
+import net.whiteravens.dietapp.ui.components.Text
 
-/** A password typed into one of the account's forms, shown as dots, with [hint] under it where given. */
+/**
+ * A password, or the key of a provider ([secret]), typed into one of the account's forms: shown as dots until its eye
+ * is pressed, with [hint] under it where given, and dots again once the form is [sending] it.
+ */
 @Composable
 internal fun PasswordField(
     value: String,
@@ -20,6 +22,8 @@ internal fun PasswordField(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     hint: String? = null,
+    secret: Secret = Secret.Password,
+    sending: Boolean = false,
 ) {
     OutlinedSecretField(
         value = value,
@@ -27,7 +31,8 @@ internal fun PasswordField(
         label = { Text(label) },
         isError = isError,
         supportingText = hint?.let { { Text(it) } },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        secret = secret,
+        sending = sending,
         shape = MaterialTheme.shapes.medium,
         modifier = modifier.fillMaxWidth(),
     )

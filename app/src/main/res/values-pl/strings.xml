@@ -19,6 +19,14 @@
     <string name="common_save">Zapisz</string>
     <string name="common_edit">Edytuj</string>
     <string name="common_close">Zamknij</string>
+    <string name="common_show_password">Pokaż hasło</string>
+    <string name="common_hide_password">Ukryj hasło</string>
+    <string name="common_password_shown">Hasło jest widoczne.</string>
+    <string name="common_password_hidden">Hasło jest ukryte.</string>
+    <string name="common_show_key">Pokaż klucz</string>
+    <string name="common_hide_key">Ukryj klucz</string>
+    <string name="common_key_shown">Klucz jest widoczny.</string>
+    <string name="common_key_hidden">Klucz jest ukryty.</string>
     <string name="plans_open_recipe">Oryginalny przepis</string>
 
     <!-- Server setting -->

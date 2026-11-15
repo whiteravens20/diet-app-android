@@ -39,6 +39,7 @@ import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.DOT
+import net.whiteravens.dietapp.ui.components.Secret
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
@@ -251,6 +252,8 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
                 label = stringResource(R.string.account_ai_api_key),
                 isError = refusedKey != null,
                 hint = refusedKey,
+                secret = Secret.Key,
+                sending = state.saving,
             )
         }
         FormField(
