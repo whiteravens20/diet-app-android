@@ -290,7 +290,7 @@
     <string name="plans_freeze_portions">Freeze the rest of the pack at once in separate portions: %1$s, %2$s.</string>
     <string name="plans_freeze_keep">Add to the pantry</string>
     <string name="plans_freeze_keep_for">Add to the pantry as frozen: %1$s, %2$s</string>
-    <string name="plans_freeze_in_pantry">In the pantry as frozen.</string>
+    <string name="plans_freeze_in_pantry">Added to the pantry as frozen.</string>
     <string name="plans_thaw_tomorrow">Take out of the freezer for tomorrow: %1$s.</string>
     <string name="plans_thaw_today">Take out of the freezer as early as you can that day: %1$s.</string>
     <string name="plans_thaw_item">%1$s, a portion of %2$s</string>

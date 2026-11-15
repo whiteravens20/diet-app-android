@@ -311,7 +311,7 @@
     <string name="plans_freeze_portions">Zamroź od razu resztę opakowania w osobnych porcjach: %1$s, %2$s.</string>
     <string name="plans_freeze_keep">Dodaj do spiżarni</string>
     <string name="plans_freeze_keep_for">Dodaj do spiżarni jako zamrożone: %1$s, %2$s</string>
-    <string name="plans_freeze_in_pantry">Jest w spiżarni jako zamrożone.</string>
+    <string name="plans_freeze_in_pantry">Dodano do spiżarni jako zamrożone.</string>
     <string name="plans_thaw_tomorrow">Wyjmij z zamrażarki na jutro: %1$s.</string>
     <string name="plans_thaw_today">Tego dnia wyjmij z zamrażarki jak najwcześniej: %1$s.</string>
     <string name="plans_thaw_item">%1$s, porcja %2$s</string>
