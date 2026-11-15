@@ -765,6 +765,8 @@
     <string name="pantry_best_before">Best before</string>
     <string name="pantry_best_before_on">Best before %1$s</string>
     <string name="pantry_expiring_soon">expiring soon</string>
+    <string name="pantry_frozen">frozen</string>
+    <string name="pantry_frozen_name">%1$s, frozen</string>
     <string name="pantry_past_date">past its date</string>
     <string name="pantry_add">Add</string>
     <string name="pantry_change_of">Change %1$s</string>

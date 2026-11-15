@@ -306,6 +306,8 @@ private fun AddCard(state: PantryViewModel.UiState, viewModel: PantryViewModel) 
 @Composable
 private fun RowItem(row: PantryRow, waiting: Boolean, added: Boolean, enabled: Boolean, onChange: (PantryChange) -> Unit, onRemove: () -> Unit) {
     var editing by rememberSaveable(row.id) { mutableStateOf(false) }
+    // A food in the freezer has a row of its own beside the fresh one: each control says which it is of.
+    val name = if (row.frozen) stringResource(R.string.pantry_frozen_name, row.name) else row.name
     Column(Modifier.padding(vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(row.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -317,26 +319,38 @@ private fun RowItem(row: PantryRow, waiting: Boolean, added: Boolean, enabled: B
             val muted = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             // Something put in that waits to be sent is changed once the server has it.
             IconButton(onClick = { editing = !editing }, enabled = enabled && !added, colors = muted) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.pantry_change_of, row.name))
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.pantry_change_of, name))
             }
             IconButton(onClick = onRemove, enabled = enabled, colors = muted) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.pantry_remove_of, row.name))
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.pantry_remove_of, name))
             }
         }
-        // The day on a line of its own, the width of the row, so that a narrow screen does not break it.
-        row.bestBefore?.let { day ->
-            val near = when (freshness(day, LocalDate.now())) {
+        // The day on a line of its own, the width of the row, so that a narrow screen does not break it, after the
+        // mark of what is frozen.
+        if (row.bestBefore != null || row.frozen) {
+            val day = row.bestBefore
+            val near = when (day?.let { freshness(it, LocalDate.now()) }) {
                 Freshness.SOON -> R.string.pantry_expiring_soon
                 Freshness.PAST -> R.string.pantry_past_date
-                Freshness.FINE -> null
+                Freshness.FINE, null -> null
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(R.string.pantry_best_before_on, formatDate(day.toString())),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                )
+                if (row.frozen) {
+                    LabelChip(
+                        stringResource(R.string.pantry_frozen),
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        container = MaterialTheme.colorScheme.secondaryContainer,
+                        content = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+                if (day != null) {
+                    Text(
+                        stringResource(R.string.pantry_best_before_on, formatDate(day.toString())),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                    )
+                }
                 if (near != null) {
                     LabelChip(
                         stringResource(near),
@@ -372,7 +386,7 @@ private fun RowFields(row: PantryRow, enabled: Boolean, onSave: (PantryChange) -
             unit = row.shownUnit,
             enabled = enabled,
             onValue = { typed = it },
-            description = stringResource(R.string.pantry_quantity_of, row.name),
+            description = stringResource(R.string.pantry_quantity_of, if (row.frozen) stringResource(R.string.pantry_frozen_name, row.name) else row.name),
             modifier = Modifier.fillMaxWidth(),
         )
         DayField(day, enabled, onDay = { day = it })

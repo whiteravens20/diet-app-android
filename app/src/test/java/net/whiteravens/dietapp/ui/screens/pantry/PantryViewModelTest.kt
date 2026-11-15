@@ -106,6 +106,28 @@ class PantryViewModelTest {
     }
 
     @Test
+    fun `a food's frozen row stands after its fresh one, its category by name, and the food is still offered fresh`() = runTest(main) {
+        val frozen = PantryRow("chicken-frozen", "chicken", "Chicken breast", "meat", 286.0, "g", LocalDate.parse("2026-12-14"), frozen = true)
+        val fresh = PantryRow("chicken-fresh", "chicken", "Chicken breast", "meat", 100.0, "g", LocalDate.parse("2026-11-16"))
+        val bacon = PantryRow("bacon-row", "bacon", "Bacon", "meat", 150.0, "g", null)
+        val chicken = StockableIngredient("chicken", "Chicken breast", "meat", listOf("g"), "g", "piece")
+        val pantry = pantry(frozen, bacon)
+        coEvery { pantry.ingredients("ch") } returns listOf(chicken)
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.search("ch")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+
+        assertEquals(listOf("meat" to listOf(bacon, frozen)), model.state.value.groups)
+        assertEquals(listOf(chicken), model.state.value.offered)
+        val both = PantryViewModel(pantry(frozen, fresh, bacon), users, queue)
+        runCurrent()
+        assertEquals(listOf("meat" to listOf(bacon, fresh, frozen)), both.state.value.groups)
+    }
+
+    @Test
     fun `an ingredient picked is put in in the unit it is counted in at first, the search emptied`() = runTest(main) {
         val model = PantryViewModel(pantry(), users, queue)
         runCurrent()

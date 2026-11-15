@@ -18,6 +18,8 @@ data class PantryRow(
     val bestBefore: LocalDate?,
     /** What [shown] weighs, where it is in pieces of some kind. */
     val shownGrams: Double? = null,
+    /** In the freezer: a row of its own beside the fresh one of the same ingredient. */
+    val frozen: Boolean = false,
 )
 
 /**

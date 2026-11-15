@@ -916,6 +916,8 @@ data class InventoryItemDto(
     val display: DisplayAmountDto,
     /** The day it is best eaten before (yyyy-MM-dd); null where none is kept. */
     val bestBefore: String? = null,
+    /** In the freezer: a row of its own beside the fresh one of the same ingredient. */
+    val frozen: Boolean = false,
 )
 
 /**

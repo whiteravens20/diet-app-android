@@ -28,6 +28,7 @@ import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import java.io.IOException
+import java.text.Collator
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -106,11 +107,20 @@ class PantryViewModel @Inject constructor(
         val waitingAdditions: Map<String, Long> get() =
             waiting.mapNotNull { waiting -> (waiting.change as? QueuedChange.PantryAdded)?.let { it.key to waiting.id } }.toMap()
 
-        /** The rows under their categories, each category where its first row comes, as the web's page groups them. */
-        val groups: List<Pair<String, List<PantryRow>>> get() = shownRows.groupBy { it.category }.toList()
+        /**
+         * The rows under their categories, each category where its first row comes, as the web's page groups them, and
+         * by name in each, a food's frozen row right after its fresh one.
+         */
+        val groups: List<Pair<String, List<PantryRow>>> get() {
+            val byName = Collator.getInstance()
+            return shownRows.groupBy { it.category }.toList().map { (category, rows) ->
+                category to rows.sortedWith(compareBy<PantryRow, String>(byName) { it.name }.thenBy { it.frozen })
+            }
+        }
 
-        /** The ingredients found that the pantry holds none of yet, as many as the web's list offers. */
-        val offered: List<StockableIngredient> get() = form.found.filter { found -> shownRows.none { it.ingredientId == found.id } }.take(OFFERED)
+        /** The ingredients found that the pantry holds nothing fresh of yet, as many as the web's list offers: what is frozen stands apart. */
+        val offered: List<StockableIngredient> get() =
+            form.found.filter { found -> shownRows.none { it.ingredientId == found.id && !it.frozen } }.take(OFFERED)
 
         /** Whether what the form holds can be put in. */
         val canAdd: Boolean get() = form.picked != null && form.amount != null && profileId != null && !busy

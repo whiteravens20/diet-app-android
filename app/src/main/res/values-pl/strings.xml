@@ -832,6 +832,8 @@
     <string name="pantry_best_before">Najlepiej spożyć przed</string>
     <string name="pantry_best_before_on">Najlepiej spożyć przed %1$s</string>
     <string name="pantry_expiring_soon">wkrótce minie termin</string>
+    <string name="pantry_frozen">zamrożone</string>
+    <string name="pantry_frozen_name">%1$s, zamrożone</string>
     <string name="pantry_past_date">po terminie</string>
     <string name="pantry_add">Dodaj</string>
     <string name="pantry_change_of">Zmień: %1$s</string>
