@@ -339,6 +339,9 @@ data class CalorieTarget(
 /** A notification of one of the account's profiles: what it is about, and when it was made. */
 data class AccountNotification(val id: String, val profileId: String, val about: NotificationAbout, val createdAt: Instant)
 
+/** What a meal takes out of the freezer, as a reminder says it: [amount] in [unit] (`g` | `ml`), at [mealType] where it is the profile's own meal. */
+data class ThawAhead(val name: String, val amount: Int, val unit: String, val mealType: String?)
+
 sealed interface NotificationAbout {
     /** Time to log a weight: [daysSinceLastEntry] since the last one, none where nothing is logged yet. */
     data class WeightReminder(val daysSinceLastEntry: Int?) : NotificationAbout
@@ -361,8 +364,15 @@ sealed interface NotificationAbout {
     /** Time to drink: what the profile's [day] held ([ml]) against its [target] when the reminder was made. */
     data class WaterReminder(val day: java.time.LocalDate, val ml: Int, val target: Int) : NotificationAbout
 
-    /** The dishes a plan of the profile cooks ahead on [date], each with what else it covers. */
-    data class CookingReminder(val date: java.time.LocalDate, val dishes: List<CookedAhead>) : NotificationAbout
+    /**
+     * The dishes a plan of the profile cooks ahead on [date], each with what else it covers, and what the meals of
+     * [date] take out of the freezer ([thaw]), taken out the evening before.
+     */
+    data class CookingReminder(
+        val date: java.time.LocalDate,
+        val dishes: List<CookedAhead>,
+        val thaw: List<ThawAhead> = emptyList(),
+    ) : NotificationAbout
 
     /** A kind this version of the app does not know, named as the API names it. */
     data class Other(val type: String) : NotificationAbout
@@ -825,8 +835,56 @@ data class UseUpSwap(
 /** What a swap takes more of a pack, and what would be left of the pack. */
 data class UseUpTake(val name: String, val unit: String, val amount: Int, val left: Int)
 
-/** What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish. */
-data class PlanPacks(val bought: Double, val used: Double, val open: List<OpenPack>)
+/**
+ * What a plan's menu buys and uses of the packs that do not keep once opened, and the packs it does not finish; of a
+ * plan that wastes nothing, the rests of meat and fish it freezes ([frozen]); and what it takes of what the pantry
+ * held in the freezer when it was made ([fromFreezer]).
+ */
+data class PlanPacks(
+    val bought: Double,
+    val used: Double,
+    val open: List<OpenPack>,
+    val frozen: List<FrozenRest> = emptyList(),
+    val fromFreezer: List<FreezerStock> = emptyList(),
+)
+
+/** What a meal takes out of the freezer on [date] (yyyy-MM-dd); [mealId] null where the meal is none of this plan's. */
+data class Thaw(val date: String, val mealId: String?, val amount: Int)
+
+/**
+ * The rest of a pack of meat or fish the plan freezes on [date], as the meal [mealId] opens it, in portions frozen
+ * apart: one for each later day that takes from it ([thawed]) and one for later ([left]).
+ */
+data class FrozenRest(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`. */
+    val unit: String,
+    /** The day it goes in the freezer (yyyy-MM-dd). */
+    val date: String,
+    val mealId: String?,
+    val amount: Int,
+    val thawed: List<Thaw>,
+    /** What is left of it once the plan is over: what "Dodaj do spiżarni" gives the pantry. */
+    val left: Int,
+    val inPantry: Boolean,
+)
+
+/**
+ * What the pantry held in the freezer of an ingredient when the plan was made, as one portion: out whole the day
+ * before [date], for the meal [mealId], and eaten while it keeps thawed: [eaten] of [amount].
+ */
+data class FreezerStock(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`. */
+    val unit: String,
+    /** The day of the first meal that takes it (yyyy-MM-dd). */
+    val date: String,
+    val mealId: String?,
+    val amount: Int,
+    val eaten: Int,
+)
 
 /** A pack the menu opens and does not finish: what is left of the last one, and whether that is more than a fifth of it. */
 data class OpenPack(

@@ -22,6 +22,7 @@ import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
 import net.whiteravens.dietapp.domain.CookedAhead
 import java.time.LocalDate
+import net.whiteravens.dietapp.domain.ThawAhead
 
 /**
  * The notifications of the account's profiles: those not read yet, one read, all read. One read goes
@@ -81,10 +82,20 @@ private fun JsonElement?.day(key: String): LocalDate? = text(key).takeIf { it.is
 private fun JsonElement?.waterReminder(): NotificationAbout.WaterReminder? =
     NotificationAbout.WaterReminder(day("day") ?: return null, number("ml") ?: return null, number("target") ?: return null)
 
-/** A reminder to cook ahead's payload; null where it is not one. */
+/** A reminder to cook ahead's payload, with what to take out of the freezer; null where it is not one or says nothing. */
 private fun JsonElement?.cookingReminder(): NotificationAbout.CookingReminder? {
     val dishes = ((this as? JsonObject)?.get("dishes") as? JsonArray)?.map { dish ->
         CookedAhead(dish.text("dish"), dish.day("alsoDate") ?: return null, dish.text("alsoMealType"))
-    }
-    return NotificationAbout.CookingReminder(day("date") ?: return null, dishes?.takeIf { it.isNotEmpty() } ?: return null)
+    }.orEmpty()
+    // A reminder made before it said what to take out of the freezer has no `thaw`.
+    val thaw = ((this as? JsonObject)?.get("thaw") as? JsonArray)?.map { taken ->
+        ThawAhead(
+            taken.text("name"),
+            taken.number("amount") ?: return null,
+            taken.text("unit"),
+            ((taken as? JsonObject)?.get("mealType") as? JsonPrimitive)?.takeIf { it.isString }?.content,
+        )
+    }.orEmpty()
+    if (dishes.isEmpty() && thaw.isEmpty()) return null
+    return NotificationAbout.CookingReminder(day("date") ?: return null, dishes, thaw)
 }

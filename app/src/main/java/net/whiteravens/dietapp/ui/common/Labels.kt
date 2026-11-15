@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.domain.ThawAhead
 
 /**
  * Wire-code → localized-label mapping, mirroring the web's `enums.*` message
@@ -439,7 +440,10 @@ fun notificationText(resources: Resources, about: NotificationAbout): String = w
         about.name,
     )
     is NotificationAbout.WaterReminder -> resources.getString(R.string.notifications_water_reminder, liters(resources, about.ml), liters(resources, about.target))
-    is NotificationAbout.CookingReminder -> resources.getString(R.string.notifications_cooking_reminder, cookedAhead(resources, about))
+    is NotificationAbout.CookingReminder -> listOfNotNull(
+        about.dishes.takeIf { it.isNotEmpty() }?.let { resources.getString(R.string.notifications_cooking_reminder, cookedAhead(resources, about)) },
+        about.thaw.takeIf { it.isNotEmpty() }?.let { resources.getString(R.string.notifications_thaw_reminder, thawed(resources, it)) },
+    ).joinToString(" ")
     is NotificationAbout.Other -> resources.getString(R.string.notifications_unknown)
 }
 
@@ -455,6 +459,16 @@ private fun cookedAhead(resources: Resources, about: NotificationAbout.CookingRe
     return about.dishes.groupBy { dish -> dish.alsoMealType.takeIf { dish.alsoDate == about.date } }.map { (meal, cooked) ->
         resources.getString(R.string.notifications_cooking_group, list.format(cooked.map { it.dish }), cover(resources, meal))
     }.joinToString("; ")
+}
+
+/** What a reminder says to take out of the freezer: each food and its amount, with the meal where it is the profile's own. */
+private fun thawed(resources: Resources, thaw: List<ThawAhead>): String {
+    val number = NumberFormat.getNumberInstance(resources.configuration.locales[0]).apply { isGroupingUsed = false }
+    return thaw.joinToString("; ") { taken ->
+        val amount = resources.getString(if (taken.unit == "ml") R.string.amount_ml else R.string.amount_g, number.format(taken.amount))
+        if (taken.mealType == null) resources.getString(R.string.notifications_thaw_item, taken.name, amount)
+        else resources.getString(R.string.notifications_thaw_item_meal, taken.name, amount, cover(resources, taken.mealType))
+    }
 }
 
 /** What else a dish cooked ahead covers: the day after (null), or a meal of its day. */

@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import android.icu.text.ListFormatter
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -150,6 +151,7 @@ import net.whiteravens.dietapp.ui.components.DOT
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.domain.FrozenRest
 
 /**
  * One plan: what it is and what a day of it holds on average, its days, and the selected day's
@@ -534,6 +536,7 @@ fun PlanDetailScreen(
                     }
                     // By the phone's date.
                     val todayAt = plan.days.indexOfFirst { it.date == LocalDate.now().toString() }
+                    val thawing = thawsByDay(plan, LocalDate.now().toString())
                     LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         itemsIndexed(plan.days, key = { _, day -> day.id }) { index, day ->
                             FilterChip(
@@ -547,6 +550,14 @@ fun PlanDetailScreen(
                                                 stringResource(R.string.plans_today),
                                                 container = MaterialTheme.colorScheme.primary,
                                                 content = MaterialTheme.colorScheme.onPrimary,
+                                            )
+                                        }
+                                        // What has to come out of the freezer that day is not to wait for the day to be chosen.
+                                        if (thawing[day.date]?.any == true) {
+                                            LabelChip(
+                                                stringResource(R.string.plans_thaw_chip),
+                                                container = MaterialTheme.colorScheme.secondaryContainer,
+                                                content = MaterialTheme.colorScheme.onSecondaryContainer,
                                             )
                                         }
                                     }
@@ -566,6 +577,8 @@ fun PlanDetailScreen(
                 }
                 // Another day from today on can take a part of what this one is off its target by.
                 val spreadable = plan.days.any { it.id != day.id && it.date >= today && !it.skipped }
+                val (frozenAt, frozenOfTheDay) = frozenOfDay(plan, day)
+                val keepFrozen = viewModel::keepFrozen.takeUnless { readOnly || busy }
                 item(key = "summary-${day.id}") {
                     DaySummary(
                         day,
@@ -586,6 +599,9 @@ fun PlanDetailScreen(
                             readOnly || busy || day.date < today || day.meals.none { meal -> !meal.eaten && meal.recipeId != null && !meal.custom }
                         },
                         resizeLeft = state.resizeLeft?.takeIf { it.first == day.date }?.second,
+                        thaws = thawsByDay(plan, today)[day.date],
+                        frozen = frozenOfTheDay,
+                        onKeepFrozen = keepFrozen,
                     )
                 }
                 val written = day.diary?.items.orEmpty()
@@ -627,6 +643,8 @@ fun PlanDetailScreen(
                             onOpen = { openMealId = meal.id },
                             onLeftover = { viewModel.openLeftover(meal, day.date) },
                             onUndoLeftover = { viewModel.askUndoLeftover(meal) },
+                            frozen = frozenAt[meal.id].orEmpty(),
+                            onKeepFrozen = keepFrozen,
                         )
                     }
                     // What the diary holds for this meal of the day follows its last meal of that kind.
@@ -827,12 +845,34 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
         }
         if (open) {
             Column(Modifier.padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                if (packs.open.isEmpty()) Fact(stringResource(R.string.plans_packs_all_finished))
+                if (packs.open.isEmpty() && packs.frozen.isEmpty()) Fact(stringResource(R.string.plans_packs_all_finished))
                 packs.open.forEach { pack ->
                     val left = amountLabel(pack.left.toDouble(), pack.unit)
                     val size = amountLabel(pack.packSize, pack.unit)
                     if (pack.wasted) Fact(stringResource(R.string.plans_packs_left_much, pack.name, left, size), color = MaterialTheme.colorScheme.tertiary)
                     else Fact(stringResource(R.string.plans_packs_left, pack.name, left, size))
+                }
+                if (packs.frozen.isNotEmpty()) {
+                    Fact(
+                        stringResource(
+                            R.string.plans_packs_into_freezer,
+                            packs.frozen.map { rest ->
+                                stringResource(R.string.plans_packs_into_freezer_item, rest.name, amountLabel(rest.amount.toDouble(), rest.unit), weekdayShort(rest.date))
+                            }.joinToString("; "),
+                        ),
+                    )
+                }
+                if (packs.fromFreezer.isNotEmpty()) {
+                    Fact(
+                        stringResource(
+                            R.string.plans_packs_from_freezer,
+                            packs.fromFreezer.map { held ->
+                                val whole = amountLabel(held.amount.toDouble(), held.unit)
+                                if (held.eaten < held.amount) stringResource(R.string.plans_packs_from_freezer_item_left, held.name, whole, amountLabel(held.eaten.toDouble(), held.unit))
+                                else stringResource(R.string.plans_thaw_item, held.name, whole)
+                            }.joinToString("; "),
+                        ),
+                    )
                 }
                 Fact(stringResource(R.string.plans_packs_explain))
                 useUp?.invoke()
@@ -940,6 +980,11 @@ private fun DaySummary(
     onDiary: (() -> Unit)?,
     onResize: (() -> Unit)?,
     resizeLeft: Double?,
+    /** What the day says to take out of the freezer. */
+    thaws: DayThaws? = null,
+    /** The rests frozen that day of a meal of the other plan of the kitchen. */
+    frozen: List<FrozenRest> = emptyList(),
+    onKeepFrozen: ((FrozenRest) -> Unit)? = null,
 ) {
     AppCard {
         val kind = day.settings?.dayType
@@ -991,6 +1036,13 @@ private fun DaySummary(
             Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
         }
         if (over) Fact(stringResource(R.string.plans_day_is_over), Modifier.padding(top = 4.dp))
+        thaws?.forToday?.takeIf { it.isNotEmpty() }?.let { lines ->
+            Fact(stringResource(R.string.plans_thaw_today, thawItems(lines)), Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurface)
+        }
+        thaws?.forTomorrow?.takeIf { it.isNotEmpty() }?.let { lines ->
+            Fact(stringResource(R.string.plans_thaw_tomorrow, thawItems(lines)), Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.onSurface)
+        }
+        frozen.forEach { rest -> FreezeLine(rest, onKeepFrozen) }
         // What the diary adds to the day is counted in the figures above.
         day.diary?.let { diary ->
             Text(
@@ -1136,6 +1188,9 @@ private fun MealCard(
     onSetApart: (Boolean) -> Unit = {},
     onLeftover: () -> Unit = {},
     onUndoLeftover: () -> Unit = {},
+    /** The rests of meat or fish of packs this meal opens, which go in the freezer. */
+    frozen: List<FrozenRest> = emptyList(),
+    onKeepFrozen: ((FrozenRest) -> Unit)? = null,
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
     AppCard(onClick = onOpen) {
@@ -1184,6 +1239,7 @@ private fun MealCard(
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 leftoverHint(meal)?.let { Hint(it) }
+                frozen.forEach { rest -> FreezeLine(rest, onKeepFrozen) }
                 // What is put on this person's plate beside the dish both eat: the day counts it, the dish's figures do not.
                 meal.topping?.let {
                     Text(
@@ -2022,3 +2078,39 @@ private fun toppingWords(@StringRes words: Int, topping: MealTopping): String = 
     amountLabel(topping.line.quantity, topping.line.unit, topping.line.grams),
     topping.nutrition.calories.roundToInt(),
 )
+
+/** What a list of meals takes out of the freezer: each food and its amount, with the meal where it is this plan's. */
+@Composable
+private fun thawItems(lines: List<ThawLine>): String = lines.map { line ->
+    val amount = amountLabel(line.amount.toDouble(), line.unit)
+    val slot = line.slot
+    if (slot == null) stringResource(R.string.plans_thaw_item, line.name, amount)
+    else stringResource(R.string.plans_thaw_item_meal, line.name, amount, mealTypeLabel(slot).lowercase(LocalConfiguration.current.locales[0]))
+}.joinToString("; ")
+
+/**
+ * A rest of meat or fish the plan freezes, said where it goes in: in the portions the plan takes later, each with its
+ * day, and the one for later, frozen apart; with "Dodaj do spiżarni" for that one, or that the pantry has it.
+ */
+@Composable
+internal fun FreezeLine(rest: FrozenRest, onKeep: ((FrozenRest) -> Unit)?) {
+    val left = amountLabel(rest.left.toDouble(), rest.unit)
+    val portions = rest.thawed.map { taken ->
+        stringResource(R.string.plans_freeze_portion_on, amountLabel(taken.amount.toDouble(), rest.unit), weekdayShort(taken.date))
+    } + listOfNotNull(stringResource(R.string.plans_freeze_portion_later, left).takeIf { rest.left > 0 })
+    val said = if (portions.size == 1) stringResource(R.string.plans_freeze_rest, rest.name, portions.single())
+    else stringResource(R.string.plans_freeze_portions, rest.name, ListFormatter.getInstance(LocalConfiguration.current.locales[0]).format(portions))
+    Hint(said, MaterialTheme.colorScheme.onSurface)
+    if (rest.left > 0) {
+        if (rest.inPantry) {
+            Hint(stringResource(R.string.plans_freeze_in_pantry))
+        } else {
+            val named = stringResource(R.string.plans_freeze_keep_for, rest.name, left)
+            TextButton(
+                onClick = { onKeep?.invoke(rest) },
+                enabled = onKeep != null,
+                modifier = Modifier.semantics { contentDescription = named },
+            ) { Text(stringResource(R.string.plans_freeze_keep)) }
+        }
+    }
+}

@@ -442,6 +442,35 @@ object Instance {
         return null
     }
 
+    /** A rest of meat or fish a plan freezes: its food, the day it goes in, and what the plan leaves of it for the pantry. */
+    data class FrozenOf(val ingredientId: String, val name: String, val date: String, val left: Int)
+
+    /**
+     * A plan of a week from today for [profileId] that wastes nothing, made again until it freezes a rest it leaves
+     * something of for the pantry, eight times at most: the plan's id and that rest, null where no draw gave one.
+     */
+    fun planThatFreezes(account: Account, profileId: String): Pair<String, FrozenOf?> {
+        val planId = call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", profileId).put("startDate", LocalDate.now().toString()).put("durationDays", 7)
+                .put("lessWaste", true).put("noWaste", true),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+        val frozenIn = {
+            val frozen = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("packs").getJSONArray("frozen")
+            (0 until frozen.length()).map(frozen::getJSONObject).firstOrNull { it.getInt("left") > 0 }?.let {
+                FrozenOf(it.getString("ingredientId"), it.getString("name"), it.getString("date"), it.getInt("left"))
+            }
+        }
+        repeat(8) {
+            frozenIn()?.let { return planId to it }
+            call("POST", "meal-plans/$planId/regenerate", JSONObject(), token = account.accessToken, expect = 201)
+        }
+        return planId to frozenIn()
+    }
+
     /** A meal of a plan with a topping on its plate: its id, its title and the topping's food. */
     data class Topped(val mealId: String, val title: String, val topping: String)
 
@@ -688,6 +717,15 @@ object Instance {
     fun diaryEntries(account: Account, profileId: String, date: LocalDate = LocalDate.now()): List<String> {
         val entries = call("GET", "diary/day?profileId=$profileId&date=$date", token = account.accessToken).getJSONArray("entries")
         return (0 until entries.length()).map { entries.getJSONObject(it).getString("name") }
+    }
+
+    /** What a profile's pantry holds frozen, by the ingredient of each frozen row: its quantity and its day. */
+    fun frozenStock(account: Account, profileId: String): Map<String, Pair<Double, String?>> {
+        val rows = JSONArray(send("GET", "inventory?profileId=$profileId", null, account.accessToken, 200, null))
+        return (0 until rows.length()).map(rows::getJSONObject).filter { it.optBoolean("frozen") }.associate { row ->
+            row.getJSONObject("ingredient").getString("id") to
+                (row.getDouble("quantity") to if (row.isNull("bestBefore")) null else row.getString("bestBefore"))
+        }
     }
 
     /** A profile's pantry, by the ingredient of each row: its quantity in the row's unit, the unit, and its day or null. */

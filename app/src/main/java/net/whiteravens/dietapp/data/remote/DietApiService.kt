@@ -424,6 +424,10 @@ interface DietApiService {
     @POST("meal-plans/{id}/retarget")
     suspend fun retarget(@Path("id") id: String, @Body body: RetargetRequestDto): MealPlanDto
 
+    /** "Dodaj do spiżarni": what is left of a rest the plan freezes goes into the pantry as frozen, once. */
+    @POST("meal-plans/{id}/frozen")
+    suspend fun keepFrozen(@Path("id") id: String, @Body body: KeepFrozenRequest): MealPlanDto
+
     /** Takes a meal off its day; the day is balanced again without it. [forAll], of a shared meal, off the other person's day too. */
     @DELETE("meal-plans/{id}/meals/{mealId}")
     suspend fun removeMeal(

@@ -32,6 +32,8 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.serialization.json.Json
+import net.whiteravens.dietapp.domain.ThawAhead
 
 /**
  * The account's notifications read, one marked read, without a network as well, and all at once,
@@ -199,6 +201,28 @@ class NotificationRepositoryTest {
         )
         // A payload this version cannot read leaves the kind unknown rather than half said.
         assertEquals(NotificationAbout.Other("water_reminder"), NotificationDto("n", adam, type = "water_reminder", createdAt = "2026-11-07T22:07:33.348Z").toDomain().about)
+    }
+
+    @Test
+    fun `a reminder says what tomorrow's meals take out of the freezer, with no dish cooked ahead, and one that says nothing is no reminder`() {
+        val adam = "019b678b-524f-4ef5-a25f-d7b49e27857b"
+        val thaw = """[
+            {"planId":"p","plannedMealId":"m","mealType":"lunch","name":"Chicken breast","amount":150,"unit":"g"},
+            {"planId":"p","plannedMealId":null,"mealType":null,"name":"Salmon","amount":120,"unit":"g"}
+        ]"""
+        val reminder = { payload: String ->
+            NotificationDto("n", adam, type = "cooking_reminder", payload = Json.parseToJsonElement(payload), createdAt = "2026-11-10T18:05:00.000Z").toDomain().about
+        }
+
+        assertEquals(
+            NotificationAbout.CookingReminder(
+                LocalDate.parse("2026-11-11"),
+                emptyList(),
+                listOf(ThawAhead("Chicken breast", 150, "g", "lunch"), ThawAhead("Salmon", 120, "g", null)),
+            ),
+            reminder("""{"date":"2026-11-11","dishes":[],"thaw":$thaw}"""),
+        )
+        assertEquals(NotificationAbout.Other("cooking_reminder"), reminder("""{"date":"2026-11-11","dishes":[],"thaw":[]}"""))
     }
 
     @Test

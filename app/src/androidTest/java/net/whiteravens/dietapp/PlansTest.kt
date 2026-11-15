@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
@@ -34,6 +35,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performFirstLinkClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
@@ -291,6 +293,61 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodes(restLine and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty() }
         screen.onAllNodes(restLine and hasAnyAncestor(isDialog()))[0].performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("plans-the-rest-of-a-pack")
+    }
+
+    @Test
+    fun aPlanThatWastesNothingSaysToFreezeARestAndGivesThePantryWhatItLeavesOnce() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, dietType = "low_carb", mealCount = 3)
+        val (_, found) = Instance.planThatFreezes(account, profileId)
+        val rest = checkNotNull(found) { "eight draws froze no rest of meat or fish that leaves something for the pantry" }
+        screen.startSignedIn(account)
+
+        // The day the rest goes in the freezer, chosen in the calendar of plans: the plan opens at it.
+        screen.openTab(text(R.string.tab_meal_plans))
+        screen.waitForText(text(R.string.plans_calendar_title))
+        val day = LocalDate.parse(rest.date)
+        if (YearMonth.from(day) != YearMonth.now()) {
+            screen.onNode(hasContentDescription(text(R.string.plans_calendar_next))).performScrollTo().performClick()
+        }
+        val free = text(R.string.plans_calendar_day_free, spoken(day))
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(dayCell(day)).fetchSemanticsNodes().any { it.config[SemanticsProperties.ContentDescription].single() != free }
+        }
+        screen.onNode(dayCell(day)).performScrollTo().performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(rest.date)) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
+
+        // With the meal that opens the pack: freeze its rest at once, in the portions the plan takes.
+        // As the screen shows them: in Polish the food's words of one letter are held to the next ("Udo z kurczaka").
+        val freeze = shown(text(R.string.plans_freeze_rest, "\u0000", "\u0000").substringBefore(':'))
+        val food = shown(rest.name)
+        val line = SemanticsMatcher("the line that says what to freeze") { node ->
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.startsWith(freeze) && food in it.text }
+        }
+        // The meal may lie below the screen: reached by scrolling, not waited for.
+        screen.scrollTo(line)
+        screen.onAllNodes(line)[0].performScrollTo().assertIsDisplayed()
+        screen.keepScreenshot("plans-freeze-a-rest")
+
+        // "Dodaj do spiżarni" gives the pantry what the plan leaves of it, frozen, dated a month on, and only once.
+        val keep = hasContentDescription(text(R.string.plans_freeze_keep_for, rest.name, "\u0000").substringBefore("\u0000"), substring = true)
+        screen.onNode(keep).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.frozenStock(account, profileId)[rest.ingredientId]?.first == rest.left.toDouble() }
+        assertEquals(day.plusDays(30).toString(), Instance.frozenStock(account, profileId)[rest.ingredientId]?.second)
+        screen.waitForText(text(R.string.plans_freeze_in_pantry))
+        assertTrue(screen.onAllNodes(keep).fetchSemanticsNodes().isEmpty())
+        screen.keepScreenshot("plans-freeze-given-to-the-pantry")
+
+        // In the pantry it stands as frozen, apart from anything fresh of the food: reached from the calendar's tabs, by
+        // the way back at the top of the plan, which the meals have scrolled out of view.
+        screen.onAllNodes(hasScrollToNodeAction())[0].performScrollToIndex(0)
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.pantry_title)).performClick()
+        screen.scrollToText(text(R.string.pantry_frozen))
+        screen.onNodeWithContentDescription(text(R.string.pantry_remove_of, text(R.string.pantry_frozen_name, rest.name))).assertExists()
+        screen.keepScreenshot("pantry-a-frozen-row")
     }
 
     @Test

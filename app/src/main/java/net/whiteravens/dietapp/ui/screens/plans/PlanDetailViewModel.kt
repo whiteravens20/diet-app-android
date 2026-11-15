@@ -49,6 +49,7 @@ import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
 import javax.inject.Inject
+import net.whiteravens.dietapp.domain.FrozenRest
 
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
@@ -398,6 +399,23 @@ class PlanDetailViewModel @Inject constructor(
             attempt { plans.setApart(planId, sharedMealId, apart) }
                 .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
                 .onFailure { e -> _state.update { it.copy(changing = false, error = e) } }
+        }
+    }
+
+    /**
+     * "Dodaj do spiżarni" of [rest]: what the plan leaves of it goes into the profile's pantry as frozen, once. A rest
+     * the plan no longer freezes, or eats whole, says so and the plan is read again.
+     */
+    fun keepFrozen(rest: FrozenRest) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.keepFrozen(planId, rest.ingredientId, rest.date) }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged() || (e is ApiException && e.code == "FROZEN_REST_GONE")) reload()
+                }
         }
     }
 

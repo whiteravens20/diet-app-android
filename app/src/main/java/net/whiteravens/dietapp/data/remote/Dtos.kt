@@ -1484,8 +1484,57 @@ data class PlanOpenPackDto(
     val wasted: Boolean,
 )
 
+/** What a meal takes out of the freezer, on [date]: taken out the day before, or that day where it is the plan's first. */
 @Serializable
-data class PlanPacksDto(val bought: Double, val used: Double, val open: List<PlanOpenPackDto>)
+data class PlanThawDto(val date: String, val mealId: String? = null, val amount: Int)
+
+/**
+ * The rest of a pack of meat or fish a plan that wastes nothing puts in the freezer on [date], as the meal [mealId]
+ * opens it, in portions frozen apart: one for each later day that takes from it ([thawed]), and one of what is left
+ * once the plan is over ([left]), which the pantry may be given ([inPantry] once it was).
+ */
+@Serializable
+data class PlanFrozenRestDto(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`. */
+    val unit: String,
+    val date: String,
+    val mealId: String? = null,
+    val amount: Int,
+    val thawed: List<PlanThawDto> = emptyList(),
+    val left: Int,
+    val inPantry: Boolean = false,
+)
+
+/**
+ * What the pantry held in the freezer of an ingredient when the plan was made, as one portion: out whole the day
+ * before [date], for the meal [mealId], and eaten while it keeps thawed ([eaten] of [amount]).
+ */
+@Serializable
+data class PlanFreezerStockDto(
+    val ingredientId: String,
+    val name: String,
+    /** `g` | `ml`. */
+    val unit: String,
+    val date: String,
+    val mealId: String? = null,
+    val amount: Int,
+    val eaten: Int,
+)
+
+@Serializable
+data class PlanPacksDto(
+    val bought: Double,
+    val used: Double,
+    val open: List<PlanOpenPackDto>,
+    val frozen: List<PlanFrozenRestDto> = emptyList(),
+    val fromFreezer: List<PlanFreezerStockDto> = emptyList(),
+)
+
+/** "Dodaj do spiżarni" of the rest the plan freezes of [ingredientId] on [date]: what is left of it goes into the pantry as frozen, once. */
+@Serializable
+data class KeepFrozenRequest(val ingredientId: String, val date: String)
 
 /** What a plan was asked for when it was made. */
 @Serializable

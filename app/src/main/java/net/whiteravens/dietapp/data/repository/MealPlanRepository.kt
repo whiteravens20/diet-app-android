@@ -79,6 +79,7 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import net.whiteravens.dietapp.data.remote.KeepFrozenRequest
 
 /**
  * Offline-first meal-plan access (docs/sync-strategy.md). Reads serve the Room
@@ -585,6 +586,16 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun retarget(planId: String, revision: Int): MealPlan {
         val plan = apiCall(json) { api.retarget(planId, RetargetRequestDto(revision)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
+    /**
+     * "Dodaj do spiżarni" of the rest [planId] freezes of [ingredientId] on [date]: what the plan leaves of it goes into
+     * the profile's pantry as frozen, once; asked again, the plan comes back as it is.
+     */
+    suspend fun keepFrozen(planId: String, ingredientId: String, date: String): MealPlan {
+        val plan = apiCall(json) { api.keepFrozen(planId, KeepFrozenRequest(ingredientId, date)) }
         mirror(plan)
         return plan.toDomain()
     }

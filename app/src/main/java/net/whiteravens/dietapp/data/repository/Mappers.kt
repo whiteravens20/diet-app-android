@@ -87,11 +87,15 @@ import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.data.remote.HouseholdListDto
+import net.whiteravens.dietapp.data.remote.PlanThawDto
+import net.whiteravens.dietapp.domain.FreezerStock
+import net.whiteravens.dietapp.domain.FrozenRest
 import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.HouseholdOf
 import net.whiteravens.dietapp.domain.HouseholdPart
 import net.whiteravens.dietapp.domain.ItemShare
 import net.whiteravens.dietapp.domain.LineAmount
+import net.whiteravens.dietapp.domain.Thaw
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
 
@@ -420,6 +424,20 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
         bought = packs.bought,
         used = packs.used,
         open = packs.open.map { OpenPack(it.ingredientId, it.name, it.unit, it.packSize, it.packs, it.left, it.wasted) },
+        frozen = packs.frozen.map { rest ->
+            FrozenRest(
+                rest.ingredientId,
+                rest.name,
+                rest.unit,
+                rest.date,
+                rest.mealId,
+                rest.amount,
+                rest.thawed.map { it.toDomain() },
+                rest.left,
+                rest.inPantry,
+            )
+        },
+        fromFreezer = packs.fromFreezer.map { held -> FreezerStock(held.ingredientId, held.name, held.unit, held.date, held.mealId, held.amount, held.eaten) },
     ),
     byModel = generationMode == "ai_assisted",
     mayGiveWay = options.allowRelaxations,
@@ -556,3 +574,5 @@ fun HouseholdListDto.toDomain(syncedAt: Long? = null) = HouseholdList(
     stale = stale,
     syncedAt = syncedAt,
 )
+
+private fun PlanThawDto.toDomain() = Thaw(date, mealId, amount)
