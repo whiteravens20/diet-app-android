@@ -1733,7 +1733,7 @@
     <string name="about_privacy_permissions">Aplikacja ma dostęp do internetu, aparatu (skaner odczytuje kod na telefonie), powiadomień, instalowania własnych aktualizacji, sieci lokalnej (serwer w\u00A0domu) i\u00A0odcisku palca (opcjonalne odblokowanie).</string>
     <string name="about_privacy_none">Nie korzysta z\u00A0usług Google Play ani z\u00A0analityki, a\u00A0nic z\u00A0niej nie trafia do kopii zapasowej Androida.</string>
     <string name="about_privacy_session">Sesja jest zapieczętowana kluczem z\u00A0magazynu kluczy telefonu. Wylogowanie usuwa ją razem z\u00A0tym, co aplikacja zapamiętała o\u00A0koncie.</string>
-    <string name="about_privacy_updates">O\u00A0nową wersję pyta GitHub i\u00A0nie wysyła przy tym nic o\u00A0koncie; można to wyłączyć w\u00A0ustawieniach konta.</string>
+    <string name="about_privacy_updates">O\u00A0nową wersję pyta GitHuba i\u00A0nie wysyła przy tym nic o\u00A0koncie; można to wyłączyć w\u00A0ustawieniach konta.</string>
     <string name="about_privacy_unlock">Odblokowanie odciskiem palca w\u00A0ustawieniach konta ukrywa aplikację w\u00A0ekranie ostatnich aplikacji.</string>
     <string name="about_privacy_page">Prywatność tej instancji</string>
     <string name="about_legal">Informacje prawne</string>
