@@ -109,11 +109,17 @@ fun ComposeTestRule.scrollTo(sought: SemanticsMatcher, timeoutMillis: Long = 20_
  * Puts the keyboard away, as a person does before reaching for what lies under it, and waits until
  * the window in front, the app's or a dialog's, no longer has it. An open keyboard shortens the
  * screen, and its height can change a moment after a field is chosen, which would move what was
- * scrolled to between finding it and tapping it.
+ * scrolled to between finding it and tapping it. The keyboard is put away again as often as it comes
+ * back: a field that holds the focus when the app returns from a stop asks for it once more, on
+ * Android 17 after the first time it was put away.
  */
 fun ComposeTestRule.putKeyboardAway() {
     Espresso.closeSoftKeyboard()
-    waitUntil(5_000) { !keyboardOpen() }
+    waitUntil(10_000) {
+        val open = keyboardOpen()
+        if (open) Espresso.closeSoftKeyboard()
+        !open
+    }
 }
 
 /** Whether the keyboard is over the window in front. */
