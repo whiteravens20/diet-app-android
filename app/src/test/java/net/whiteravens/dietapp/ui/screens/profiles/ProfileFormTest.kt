@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.testing.refusal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -51,6 +52,19 @@ class ProfileFormTest {
         ),
         riskAcknowledged = riskAcknowledged,
     )
+
+    @Test
+    fun `a figure that may be left empty changes its part only when its value changes, however the value was boxed`() {
+        // Each number read here is a box of its own, as a number the form reads and one the API answered are: a
+        // comparison of the boxes would find a change in every one of them.
+        val before = kept().figures.copy(targetWeightKg = "72.5".toDouble(), manualCalorieTarget = "2100".toInt(), waterTargetMl = "1500".toInt())
+        val after = before.copy(targetWeightKg = "72.5".toDouble(), manualCalorieTarget = "2100".toInt(), waterTargetMl = "1500".toInt())
+        assertNotSame(before.targetWeightKg, after.targetWeightKg)
+        assertNotSame(before.manualCalorieTarget, after.manualCalorieTarget)
+
+        assertEquals(emptyList<Set<String>>(), ProfileFormViewModel.partsChanged(before, after))
+        assertEquals(listOf(setOf("targetWeightKg")), ProfileFormViewModel.partsChanged(before, after.copy(targetWeightKg = 70.0)))
+    }
 
     @Test
     fun `the limits from labels start turned off at the values they start from, and a kept profile's are those it set`() {
