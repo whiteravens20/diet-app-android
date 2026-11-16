@@ -4,6 +4,7 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isPopup
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -126,6 +128,45 @@ class AiTest {
         screen.onNode(hasText(text(R.string.account_ai_remove)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi { Instance.aiProviders(account).map { it.getString("provider") } == listOf("ollama") }
         screen.waitUntil(20_000) { screen.onAllNodesWithText("OpenAI${HELD_DOT}gpt-4o-mini").fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun anOpenRouterKeyIsSavedWithTheEndpointsChosenWhichItsRowNamesAndItsFormStartsFrom() {
+        val account = Instance.newAccount()
+        screen.startSignedIn(account)
+        screen.openAccountSettings(account)
+        show(text(R.string.account_ai_providers_none))
+
+        // OpenRouter alone has the choice of its endpoints, which starts at no training on the data.
+        screen.onNodeWithText(text(R.string.account_ai_add)).performScrollTo().performClick()
+        assertTrue(screen.onAllNodesWithText(text(R.string.account_ai_data_policy)).fetchSemanticsNodes().isEmpty())
+        screen.onNode(hasText(text(R.string.account_ai_provider)) and hasText("OpenAI")).performScrollTo().performClick()
+        pick("OpenRouter")
+        show(text(R.string.account_ai_data_policy))
+        screen.onNode(hasText(text(R.string.account_ai_data_policy_no_training)) and isSelectable()).assertIsSelected()
+        screen.onNodeWithText(text(R.string.account_ai_api_key)).performScrollTo().performTextInput("sk-or-screens-not-a-key-${UUID.randomUUID()}")
+        screen.onNodeWithText(text(R.string.account_ai_model)).performScrollTo().performTextInput("openai/gpt-6-luna")
+        screen.putKeyboardAway()
+        val noRetention = hasText(text(R.string.account_ai_data_policy_no_retention)) and isSelectable()
+        screen.onNode(noRetention).performScrollTo().performClick()
+        screen.onNode(noRetention).assertIsSelected()
+        screen.onNodeWithText(text(R.string.account_ai_data_policy_refused)).performScrollTo()
+        screen.keepScreenshot("ai-provider-data-policy")
+
+        screen.onNodeWithText(text(R.string.account_ai_save)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.aiProviders(account).size == 1 }
+        assertEquals("no_retention", Instance.aiProviders(account).single().getString("dataPolicy"))
+        show("OpenRouter${HELD_DOT}openai/gpt-6-luna")
+        show(text(R.string.account_ai_data_policy_no_retention))
+        screen.keepScreenshot("ai-provider-data-policy-saved")
+
+        // The form of the key starts from the choice it has, so that saving it again keeps that.
+        screen.onNodeWithText(text(R.string.account_ai_add)).performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.account_ai_provider)) and hasText("OpenAI")).performScrollTo().performClick()
+        pick("OpenRouter")
+        show(text(R.string.account_ai_data_policy))
+        screen.onNode(noRetention).performScrollTo().assertIsSelected()
+        screen.onNode(hasText(text(R.string.common_cancel)) and hasClickAction()).performScrollTo().performClick()
     }
 
     @Test

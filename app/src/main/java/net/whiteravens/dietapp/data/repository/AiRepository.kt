@@ -37,7 +37,9 @@ class AiRepository @Inject constructor(
     /** Saves the account's configuration of the provider [setup] names: made the first time, the one it has replaced afterwards. */
     suspend fun save(setup: ProviderSetup): AiProviderConfig =
         apiCall(json) {
-            api.saveAiProvider(AiProviderConfigRequest(setup.provider, setup.model, setup.apiKey, setup.baseUrl, setup.priority, enabled = true))
+            api.saveAiProvider(
+                AiProviderConfigRequest(setup.provider, setup.model, setup.apiKey, setup.baseUrl, setup.priority, enabled = true, dataPolicy = setup.dataPolicy),
+            )
         }.toDomain()
 
     /** Removes the provider [id] and its key. Where it was the account's last, the API gives the account the instance's provider in the place of its own. */
@@ -71,4 +73,5 @@ private fun AiProviderConfigDto.toDomain() = AiProviderConfig(
     hasKey = hasKey,
     keyUnreadable = keyUnreadable,
     baseUrl = baseUrl,
+    dataPolicy = dataPolicy,
 )

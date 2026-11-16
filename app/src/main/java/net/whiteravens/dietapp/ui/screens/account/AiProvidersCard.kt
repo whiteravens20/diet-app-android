@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.account
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,11 +11,14 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
@@ -32,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.AiDataPolicies
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -135,14 +141,15 @@ internal class AiProviderActions(
     val cancel: () -> Unit,
     val edit: ((ProviderForm) -> ProviderForm) -> Unit,
     val chooseModel: (String) -> Unit,
+    val choosePolicy: (String) -> Unit,
     val test: () -> Unit,
     val save: () -> Unit,
     val remove: (String) -> Unit,
 )
 
 /**
- * One provider: its name and model, the address of an Ollama server, whether its key is kept or can
- * no longer be read, and its removal, which says whose it is.
+ * One provider: its name and model, the address of an Ollama server, the choice of OpenRouter's
+ * endpoints, whether its key is kept or can no longer be read, and its removal, which says whose it is.
  */
 @Composable
 private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onRemove: () -> Unit) {
@@ -163,6 +170,9 @@ private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onRemove: 
         provider.baseUrl?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        provider.dataPolicy?.let(POLICY_TEXTS::get)?.let { (label, _) ->
+            Text(stringResource(label), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Text(
             stringResource(
                 when {
@@ -180,7 +190,8 @@ private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onRemove: 
 /**
  * The form of a provider, as the web's is: the warning that the model chosen decides the quality,
  * the provider, its model (one of those a test listed, once one has), its key, shown as dots, or its
- * Ollama server's address, and its place in the order; saving, testing and leaving it.
+ * Ollama server's address, OpenRouter's choice of endpoints, and its place in the order; saving,
+ * testing and leaving it.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -256,6 +267,7 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
                 sending = state.saving,
             )
         }
+        if (form.openRouter) DataPolicyChoice(form.dataPolicy, actions.choosePolicy)
         FormField(
             value = form.priority,
             onValueChange = { typed -> actions.edit { it.copy(priority = typed) } },
@@ -288,6 +300,58 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
         (state.testError ?: state.saveError)?.let {
             Text(errorMessage(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
+    }
+}
+
+/**
+ * Which of OpenRouter's endpoints may serve the account's requests, as the web's form offers it:
+ * each choice with what it means, and what happens to a request no endpoint of the model serves.
+ */
+@Composable
+private fun DataPolicyChoice(chosen: String, onChoose: (String) -> Unit) {
+    Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.account_ai_data_policy), style = MaterialTheme.typography.titleSmall)
+        POLICY_TEXTS.forEach { (policy, texts) ->
+            val (label, hint) = texts
+            val selected = policy == chosen
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(selected = selected, role = Role.RadioButton, onClick = { onChoose(policy) }),
+            ) {
+                Row(Modifier.padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = selected, onClick = null)
+                    Column(Modifier.padding(start = 8.dp)) {
+                        Text(stringResource(label), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        Text(
+                            stringResource(hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+        Text(
+            stringResource(R.string.account_ai_data_policy_refused),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * Each choice of OpenRouter's endpoints, in the order of [AiDataPolicies.ALL], by its name and what
+ * it means. A choice this version does not know is named nowhere, and the form keeps it as it is.
+ */
+private val POLICY_TEXTS: Map<String, Pair<Int, Int>> = AiDataPolicies.ALL.associateWith { policy ->
+    when (policy) {
+        AiDataPolicies.NO_TRAINING -> R.string.account_ai_data_policy_no_training to R.string.account_ai_data_policy_no_training_hint
+        AiDataPolicies.NO_RETENTION -> R.string.account_ai_data_policy_no_retention to R.string.account_ai_data_policy_no_retention_hint
+        else -> R.string.account_ai_data_policy_any to R.string.account_ai_data_policy_any_hint
     }
 }
 

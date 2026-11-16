@@ -991,6 +991,14 @@
     <string name="account_ai_ollama_url_invalid">Enter a valid URL, e.g. http://localhost:11434</string>
     <string name="account_ai_priority">Priority</string>
     <string name="account_ai_priority_hint">Lower runs first in the failover chain.</string>
+    <string name="account_ai_data_policy">Which providers OpenRouter may use</string>
+    <string name="account_ai_data_policy_no_training">No training on the data</string>
+    <string name="account_ai_data_policy_no_training_hint">Only providers that do not train models on the requests. They may keep them.</string>
+    <string name="account_ai_data_policy_no_retention">No keeping of the data</string>
+    <string name="account_ai_data_policy_no_retention_hint">Only providers that do not keep the requests. Your OpenRouter account\'s settings can let in those that keep them only to detect abuse.</string>
+    <string name="account_ai_data_policy_any">No limit set by the app</string>
+    <string name="account_ai_data_policy_any_hint">Any provider your OpenRouter account\'s settings allow, including one that trains models on the requests.</string>
+    <string name="account_ai_data_policy_refused">When no provider of the model meets the choice, OpenRouter refuses the request and the built-in engine answers.</string>
     <string name="account_ai_save">Save provider</string>
     <string name="account_ai_saving">Saving…</string>
     <string name="account_ai_test">Test connection</string>

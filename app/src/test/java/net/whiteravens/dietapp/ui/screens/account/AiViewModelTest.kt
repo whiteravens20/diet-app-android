@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.AdminAccess
+import net.whiteravens.dietapp.domain.AiDataPolicies
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
@@ -184,6 +185,54 @@ class AiViewModelTest {
 
         assertNull(model.state.value.tested)
         assertFalse(model.state.value.testing)
+    }
+
+    @Test
+    fun `an OpenRouter key is saved with the choice of endpoints made, no training on the data until another is, and another provider with none`() = runTest {
+        coEvery { ai.providers() } returns emptyList()
+        coEvery { ai.save(any()) } returns openai
+        val model = AiViewModel(ai, users)
+
+        model.open()
+        model.edit { it.copy(provider = "openrouter", model = "some/model", apiKey = "sk-or") }
+        assertEquals(AiDataPolicies.NO_TRAINING, model.state.value.form?.dataPolicy)
+        model.choosePolicy(AiDataPolicies.NO_RETENTION)
+        model.save()
+        model.open()
+        model.edit { it.copy(model = "gpt-4o-mini", apiKey = "sk-openai") }
+        model.save()
+
+        coVerify { ai.save(ProviderSetup("openrouter", "some/model", "sk-or", null, 0, AiDataPolicies.NO_RETENTION)) }
+        coVerify { ai.save(ProviderSetup("openai", "gpt-4o-mini", "sk-openai", null, 0, null)) }
+    }
+
+    @Test
+    fun `the form starts from the choice of the account's OpenRouter key, so that saving it again keeps it`() = runTest {
+        val openRouter = AiProviderConfig("or-id", "openrouter", "some/model", 2, true, hasKey = true, keyUnreadable = false, baseUrl = null, dataPolicy = AiDataPolicies.ANY)
+        coEvery { ai.providers() } returns listOf(openRouter)
+        val model = AiViewModel(ai, users)
+
+        model.open()
+
+        assertEquals(AiDataPolicies.ANY, model.state.value.form?.dataPolicy)
+    }
+
+    @Test
+    fun `a choice of endpoints leaves the models a test listed, even one made while the test runs`() = runTest {
+        val answer = CompletableDeferred<ConnectionTest>()
+        coEvery { ai.providers() } returns emptyList()
+        coEvery { ai.test(any()) } coAnswers { answer.await() }
+        val model = AiViewModel(ai, users)
+        model.open()
+        model.edit { it.copy(provider = "openrouter", apiKey = "sk-or") }
+
+        model.test()
+        model.choosePolicy(AiDataPolicies.ANY)
+        answer.complete(listed)
+
+        assertEquals(listed, model.state.value.tested)
+        model.choosePolicy(AiDataPolicies.NO_RETENTION)
+        assertEquals(listed, model.state.value.tested)
     }
 
     @Test

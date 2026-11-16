@@ -1067,6 +1067,14 @@
     <string name="account_ai_ollama_url_invalid">Podaj poprawny adres URL, np. http://localhost:11434</string>
     <string name="account_ai_priority">Priorytet</string>
     <string name="account_ai_priority_hint">Dostawca z niższą liczbą jest pytany pierwszy; następny dopiero wtedy, gdy ten zawiedzie.</string>
+    <string name="account_ai_data_policy">Których dostawców OpenRouter może użyć</string>
+    <string name="account_ai_data_policy_no_training">Bez trenowania na danych</string>
+    <string name="account_ai_data_policy_no_training_hint">Tylko dostawcy, którzy nie trenują modeli na zapytaniach. Mogą je przechowywać.</string>
+    <string name="account_ai_data_policy_no_retention">Bez przechowywania danych</string>
+    <string name="account_ai_data_policy_no_retention_hint">Tylko dostawcy, którzy nie przechowują zapytań. Ustawienia konta OpenRouter mogą dopuścić tych, którzy trzymają je wyłącznie po to, by wykrywać nadużycia.</string>
+    <string name="account_ai_data_policy_any">Bez ograniczeń aplikacji</string>
+    <string name="account_ai_data_policy_any_hint">Każdy dostawca, na którego pozwalają ustawienia konta OpenRouter, także taki, który trenuje modele na zapytaniach.</string>
+    <string name="account_ai_data_policy_refused">Gdy żaden dostawca modelu nie spełnia wyboru, OpenRouter odmawia i odpowiada wbudowany silnik.</string>
     <string name="account_ai_save">Zapisz dostawcę</string>
     <string name="account_ai_saving">Zapisywanie…</string>
     <string name="account_ai_test">Sprawdź połączenie</string>

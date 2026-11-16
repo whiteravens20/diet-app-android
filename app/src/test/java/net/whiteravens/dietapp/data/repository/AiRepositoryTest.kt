@@ -10,6 +10,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.AdminAccess
+import net.whiteravens.dietapp.domain.AiDataPolicies
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.ConnectionTest
@@ -155,6 +156,26 @@ class AiRepositoryTest {
         // The account has one configuration of each provider: saving another changes that one.
         assertEquals(saved.id, replaced.id)
         assertEquals(openai, replaced)
+    }
+
+    @Test
+    fun `an OpenRouter key is saved with the choice of its endpoints, read back as the API keeps it, and a provider an instance names none for has none`() {
+        server.enqueue(answer(200, "ai-provider-openrouter-saved"))
+        server.enqueue(answer(200, "ai-providers"))
+        val ai = repository()
+
+        val saved = runBlocking { ai.save(ProviderSetup("openrouter", "openai/gpt-6-luna", "sk-or-typed", null, 0, AiDataPolicies.NO_RETENTION)) }
+        val listed = runBlocking { ai.providers() }
+
+        assertEquals(
+            json.parseToJsonElement(
+                """{"provider":"openrouter","model":"openai/gpt-6-luna","apiKey":"sk-or-typed","priority":0,"enabled":true,"dataPolicy":"no_retention"}""",
+            ),
+            sent(server.takeRequest()),
+        )
+        assertEquals(AiDataPolicies.NO_RETENTION, saved.dataPolicy)
+        // An answer without the field, as an instance from before the choice gives it, names none.
+        assertEquals(listOf(null, null), listed.map { it.dataPolicy })
     }
 
     @Test

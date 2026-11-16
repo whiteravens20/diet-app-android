@@ -239,6 +239,7 @@ fun AccountScreen(
                             cancel = ai::cancel,
                             edit = ai::edit,
                             chooseModel = ai::chooseModel,
+                            choosePolicy = ai::choosePolicy,
                             test = ai::test,
                             save = ai::save,
                             remove = ai::remove,

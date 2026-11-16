@@ -363,6 +363,8 @@ data class AiProviderConfigDto(
     val hasKey: Boolean,
     val keyUnreadable: Boolean,
     val baseUrl: String?,
+    /** `no_training` | `no_retention` | `any`: which of OpenRouter's endpoints may serve it; null for another provider, and absent before the instance had the choice. */
+    val dataPolicy: String? = null,
 )
 
 /**
@@ -378,6 +380,8 @@ data class AiProviderConfigRequest(
     val baseUrl: String? = null,
     val priority: Int,
     val enabled: Boolean,
+    /** Which of OpenRouter's endpoints may serve its requests, OpenRouter alone; left out, a saved configuration keeps its own. */
+    val dataPolicy: String? = null,
 )
 
 /** POST `/ai/test`: a provider's key, or an Ollama server's address, tried and not kept; [model] for a provider that lists none. */

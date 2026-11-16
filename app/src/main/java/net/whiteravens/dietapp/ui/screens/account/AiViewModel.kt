@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
+import net.whiteravens.dietapp.domain.AiDataPolicies
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.domain.AiStatus
@@ -126,8 +127,20 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
         }
     }
 
-    /** Opens the form for a provider to be set up. */
-    fun open() = _state.update { it.copy(form = ProviderForm(), saveError = null, tested = null, testError = null, refused = emptyMap()) }
+    /**
+     * Opens the form for a provider to be set up, with the choice of OpenRouter's endpoints the
+     * account's OpenRouter configuration has, so that saving it again does not change that choice.
+     */
+    fun open() = _state.update { state ->
+        val chosen = state.providers.orEmpty().firstOrNull { it.provider == "openrouter" }?.dataPolicy
+        state.copy(
+            form = ProviderForm(dataPolicy = chosen ?: AiDataPolicies.NO_TRAINING),
+            saveError = null,
+            tested = null,
+            testError = null,
+            refused = emptyMap(),
+        )
+    }
 
     /** Closes the form, and what was typed in it goes. */
     fun cancel() = _state.update { it.copy(form = null, saveError = null, tested = null, testError = null, refused = emptyMap()) }
@@ -139,6 +152,9 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
     /** Takes one of the models the provider listed when its connection was tested. */
     fun chooseModel(model: String) = _state.update { state -> state.form?.let { state.copy(form = it.copy(model = model)) } ?: state }
 
+    /** Takes a choice of OpenRouter's endpoints, which a test of the connection does not ask about, so its answer stays. */
+    fun choosePolicy(policy: String) = _state.update { state -> state.form?.let { state.copy(form = it.copy(dataPolicy = policy)) } ?: state }
+
     /** Asks the provider whether it answers to what the form holds, and which models it has. */
     fun test() {
         val state = _state.value
@@ -147,10 +163,11 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
         _state.update { it.copy(testing = true, tested = null, testError = null) }
         viewModelScope.launch {
             val answered = attempt { ai.test(form.asked()) }
-            // An answer about what the form held before it was changed says nothing of what it holds.
+            // An answer about what the form held before it was changed says nothing of what it holds;
+            // the choice of OpenRouter's endpoints is no part of what a test asks.
             _state.update {
                 val refused = (answered.exceptionOrNull() as? ApiException)?.fieldRefusals.orEmpty()
-                if (it.form != form) {
+                if (it.form?.copy(dataPolicy = form.dataPolicy) != form) {
                     it.copy(testing = false)
                 } else {
                     it.copy(testing = false, tested = answered.getOrNull(), testError = answered.exceptionOrNull().takeIf { refused.isEmpty() }, refused = refused)
@@ -210,7 +227,8 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
 
 /**
  * A provider of the account's own as its form holds it: which, the model to ask, its key or its
- * Ollama server's address, and its place in the order providers are asked in, as typed.
+ * Ollama server's address, its place in the order providers are asked in, as typed, and which of
+ * OpenRouter's endpoints may serve its requests.
  */
 data class ProviderForm(
     val provider: String = PROVIDERS.first(),
@@ -218,10 +236,15 @@ data class ProviderForm(
     val apiKey: String = "",
     val baseUrl: String = "",
     val priority: String = "0",
+    val dataPolicy: String = AiDataPolicies.NO_TRAINING,
 ) {
     /** Ollama is reached at an address and takes no key; every other provider takes a key. */
     val ollama: Boolean
         get() = provider == "ollama"
+
+    /** OpenRouter alone has the choice of its endpoints. */
+    val openRouter: Boolean
+        get() = provider == "openrouter"
 
     /** The place in the order as typed, a whole number; null for anything else. What the API takes of it is its to say. */
     val place: Int?
@@ -246,6 +269,7 @@ data class ProviderForm(
         apiKey = apiKey.trim().takeUnless { ollama },
         baseUrl = baseUrl.trim().takeIf { ollama },
         priority = place ?: 0,
+        dataPolicy = dataPolicy.takeIf { openRouter },
     )
 
     companion object {
