@@ -99,6 +99,7 @@ import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.PlanWeek
@@ -846,22 +847,8 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
         if (open) {
             Column(Modifier.padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 if (packs.open.isEmpty() && packs.frozen.isEmpty()) Fact(stringResource(R.string.plans_packs_all_finished))
-                packs.open.forEach { pack ->
-                    val left = amountLabel(pack.left.toDouble(), pack.unit)
-                    val size = amountLabel(pack.packSize, pack.unit)
-                    if (pack.wasted) Fact(stringResource(R.string.plans_packs_left_much, pack.name, left, size), color = MaterialTheme.colorScheme.tertiary)
-                    else Fact(stringResource(R.string.plans_packs_left, pack.name, left, size))
-                }
-                if (packs.frozen.isNotEmpty()) {
-                    Fact(
-                        stringResource(
-                            R.string.plans_packs_into_freezer,
-                            packs.frozen.map { rest ->
-                                stringResource(R.string.plans_packs_into_freezer_item, rest.name, amountLabel(rest.amount.toDouble(), rest.unit), weekdayShort(rest.date))
-                            }.joinToString("; "),
-                        ),
-                    )
-                }
+                foodsLeft(packs.open).forEach { food -> FoodLeftLine(food) }
+                if (packs.frozen.isNotEmpty()) IntoFreezerLine(packs.frozen)
                 if (packs.fromFreezer.isNotEmpty()) {
                     Fact(
                         stringResource(
@@ -2088,6 +2075,47 @@ private fun thawItems(lines: List<ThawLine>): String = lines.map { line ->
     if (slot == null) stringResource(R.string.plans_thaw_item, line.name, amount)
     else stringResource(R.string.plans_thaw_item_meal, line.name, amount, mealTypeLabel(slot).lowercase(LocalConfiguration.current.locales[0]))
 }.joinToString("; ")
+
+/** What the menu leaves of one food's packs it does not finish: the rests of its [packs] added up, and how many of them leave more than a fifth. */
+internal data class FoodLeft(val name: String, val unit: String, val packSize: Double, val left: Int, val packs: Int, val much: Int)
+
+/** The packs left of each food, in the order the server gives them: one line a food, its rests added up, as the web's page says them. */
+internal fun foodsLeft(open: List<OpenPack>): List<FoodLeft> =
+    open.groupBy { it.ingredientId }.values.map { packs ->
+        val first = packs.first()
+        FoodLeft(first.name, first.unit, first.packSize, packs.sumOf { it.left }, packs.size, packs.count { it.wasted })
+    }
+
+/**
+ * One food's line of the packs left: its one pack as it is, or its packs added up and of how many of them more than a
+ * fifth is left; marked where any is.
+ */
+@Composable
+internal fun FoodLeftLine(food: FoodLeft) {
+    val left = amountLabel(food.left.toDouble(), food.unit)
+    val size = amountLabel(food.packSize, food.unit)
+    val packs = formatNumber(food.packs)
+    val text = when {
+        food.packs == 1 -> stringResource(if (food.much > 0) R.string.plans_packs_left_much else R.string.plans_packs_left, food.name, left, size)
+        food.much == 0 -> stringResource(R.string.plans_packs_left_total, food.name, left, packs, size)
+        food.much == food.packs -> stringResource(R.string.plans_packs_left_total_all_much, food.name, left, packs, size)
+        else -> pluralStringResource(R.plurals.plans_packs_left_total_much, food.much, food.name, left, packs, size, formatNumber(food.much))
+    }
+    if (food.much > 0) Fact(text, color = MaterialTheme.colorScheme.tertiary) else Fact(text)
+}
+
+/** What the plan puts in the freezer, one item a food: each of its rests with the day it goes in, as the web's page says it. */
+@Composable
+internal fun IntoFreezerLine(frozen: List<FrozenRest>) {
+    val join = ListFormatter.getInstance(LocalConfiguration.current.locales[0])
+    val items = frozen.groupBy { it.ingredientId }.values.map { rests ->
+        val said = rests.map { rest ->
+            stringResource(R.string.plans_packs_into_freezer_rest, amountLabel(rest.amount.toDouble(), rest.unit), weekdayShort(rest.date))
+        }
+        stringResource(R.string.plans_packs_into_freezer_item, rests.first().name, join.format(said))
+    }
+    Fact(stringResource(R.string.plans_packs_into_freezer, items.joinToString("; ")))
+}
 
 /**
  * A rest of meat or fish the plan freezes, said where it goes in: in the portions the plan takes later, each with its

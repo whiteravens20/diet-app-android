@@ -290,6 +290,12 @@
     <string name="plans_rest_of_pack">including %1$s left of a pack</string>
     <string name="plans_packs_left">%1$s: %2$s left of a pack of %3$s</string>
     <string name="plans_packs_left_much">%1$s: %2$s left of a pack of %3$s, more than a fifth of it</string>
+    <string name="plans_packs_left_total">%1$s: %2$s left in total of %3$s packs of %4$s</string>
+    <string name="plans_packs_left_total_all_much">%1$s: %2$s left in total of %3$s packs of %4$s, more than a fifth of each</string>
+    <plurals name="plans_packs_left_total_much">
+        <item quantity="one">%1$s: %2$s left in total of %3$s packs of %4$s, more than a fifth of one of them</item>
+        <item quantity="other">%1$s: %2$s left in total of %3$s packs of %4$s, more than a fifth of %5$s of them</item>
+    </plurals>
     <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>
     <string name="plans_packs_explain">Counted from the menu alone; what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
     <string name="plans_packs_explain_freezer">Counted from the menu; what was in the freezer when the plan was made goes first, and the rest of what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
@@ -306,7 +312,8 @@
     <string name="plans_thaw_item_meal">%1$s, a portion of %2$s (%3$s)</string>
     <string name="plans_thaw_chip">Thawing</string>
     <string name="plans_packs_into_freezer">Into the freezer: %1$s.</string>
-    <string name="plans_packs_into_freezer_item">%1$s, %2$s (%3$s)</string>
+    <string name="plans_packs_into_freezer_item">%1$s, %2$s</string>
+    <string name="plans_packs_into_freezer_rest">%1$s (%2$s)</string>
     <string name="plans_packs_from_freezer">From the freezer, of what it held when the plan was made: %1$s.</string>
     <string name="plans_packs_from_freezer_item_left">%1$s, a portion of %2$s, of which the plan eats %3$s</string>
     <string name="plans_use_up_ask">What would use them up?</string>

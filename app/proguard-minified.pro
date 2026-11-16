@@ -44,7 +44,8 @@
 -keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
--keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.FoodLeft { *; }
 -keep class net.whiteravens.dietapp.domain.FrozenRest { *; }
 -keep class net.whiteravens.dietapp.domain.Thaw { *; }
 -keep class net.whiteravens.dietapp.ui.theme.ThemeKt { *** DietAppTheme(...); }

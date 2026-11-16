@@ -310,6 +310,14 @@
     <string name="plans_rest_of_pack">w tym %1$s reszty opakowania</string>
     <string name="plans_packs_left">%1$s: zostaje %2$s z opakowania %3$s</string>
     <string name="plans_packs_left_much">%1$s: zostaje %2$s z opakowania %3$s, ponad jedna piąta</string>
+    <string name="plans_packs_left_total">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s</string>
+    <string name="plans_packs_left_total_all_much">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z każdego ponad jedna piąta</string>
+    <plurals name="plans_packs_left_total_much">
+        <item quantity="one">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z jednego ponad jedna piąta</item>
+        <item quantity="few">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z %5$s ponad jedna piąta</item>
+        <item quantity="many">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z %5$s ponad jedna piąta</item>
+        <item quantity="other">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z %5$s ponad jedna piąta</item>
+    </plurals>
     <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>
     <string name="plans_packs_explain">Policzone z samego jadłospisu; to, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>
     <string name="plans_packs_explain_freezer">Policzone z jadłospisu; to, co było w zamrażarce, gdy plan powstał, idzie najpierw, a resztę tego, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>
@@ -326,7 +334,8 @@
     <string name="plans_thaw_item_meal">%1$s, porcja %2$s (%3$s)</string>
     <string name="plans_thaw_chip">Rozmrażanie</string>
     <string name="plans_packs_into_freezer">Do zamrażarki: %1$s.</string>
-    <string name="plans_packs_into_freezer_item">%1$s, %2$s (%3$s)</string>
+    <string name="plans_packs_into_freezer_item">%1$s, %2$s</string>
+    <string name="plans_packs_into_freezer_rest">%1$s (%2$s)</string>
     <string name="plans_packs_from_freezer">Z zamrażarki, z tego, co w niej było, gdy plan powstał: %1$s.</string>
     <string name="plans_packs_from_freezer_item_left">%1$s, porcja %2$s, z niej plan zje %3$s</string>
     <string name="plans_use_up_ask">Co by je zużyło?</string>
