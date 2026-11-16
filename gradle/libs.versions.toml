@@ -7,6 +7,8 @@ kotlin = "2.4.21"
 ksp = "2.3.13"
 coreKtx = "1.19.1"
 lifecycle = "2.11.0"
+# A beta, the project's first: its launcher takes a plain ComponentActivity; the stable 1.1.0 of 2021 needs a FragmentActivity.
+biometric = "1.4.0-beta01"
 activityCompose = "1.13.0"
 composeBom = "2026.09.00"
 hilt = "2.60.1"
@@ -40,6 +42,7 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx"
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { module = "androidx.compose.ui:ui" }
