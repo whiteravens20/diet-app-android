@@ -1748,6 +1748,8 @@
     <string name="unlock_title">Odblokowanie odciskiem palca</string>
     <string name="unlock_about">Aplikacja prosi o\u00A0odcisk palca przy uruchomieniu i\u00A0po powrocie, jeśli była w\u00A0tle co najmniej 30\u00A0minut; od Androida 11\u00A0działa też blokada ekranu telefonu. Powiadomienia przychodzą jak zwykle. Gdy w\u00A0telefonie zmienią się odciski palców, aplikacja wyloguje się i\u00A0poprosi o\u00A0hasło konta.</string>
     <string name="unlock_switch">Pytaj o\u00A0odcisk palca</string>
+    <string name="unlock_recents">Ekran ostatnich aplikacji nie pokazuje wtedy jej treści.</string>
+    <string name="unlock_recents_secure">Ekran ostatnich aplikacji nie pokazuje wtedy jej treści, a\u00A0zrzuty ekranu aplikacji są zablokowane.</string>
     <string name="unlock_turn_on_failed">Nie udało się włączyć odblokowania.</string>
     <string name="unlock_prompt_title">Odblokuj Diet App</string>
     <string name="unlock_turn_on_title">Włącz odblokowanie odciskiem</string>
@@ -1759,6 +1761,7 @@
     <string name="unlock_button">Odblokuj</string>
     <string name="unlock_cannot_ask">Ten telefon nie może teraz zapytać o\u00A0odcisk palca ani o\u00A0blokadę ekranu. Wyloguj się, a\u00A0potem zaloguj hasłem konta.</string>
     <string name="unlock_voided">Od włączenia odblokowania zmieniły się odciski palców w\u00A0telefonie, więc sesja na tym telefonie się zakończyła. Zaloguj się hasłem konta.</string>
+    <string name="phone_notifications_hidden">Nowe powiadomienie</string>
     <string name="phone_notifications_title">Powiadomienia w telefonie</string>
     <string name="phone_notifications_about">Gdy są włączone, aplikacja pyta serwer o nowe mniej więcej co 15 minut, a gdy telefon leży nieużywany, Android może to odłożyć nawet o kilka godzin. Dotknięcie otwiera listę.</string>
     <string name="phone_notifications_show">Pokazuj je w telefonie</string>

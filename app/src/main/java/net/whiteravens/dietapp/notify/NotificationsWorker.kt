@@ -12,6 +12,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.config.UnlockStore
 import net.whiteravens.dietapp.data.notify.NewNotifications
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsStore
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -34,6 +35,8 @@ class NotificationsWorker(context: Context, params: WorkerParameters) : Coroutin
         fun newNotifications(): NewNotifications
 
         fun users(): UserRepository
+
+        fun unlockSetting(): UnlockStore
     }
 
     override suspend fun doWork(): Result {
@@ -55,7 +58,8 @@ class NotificationsWorker(context: Context, params: WorkerParameters) : Coroutin
         } catch (e: Exception) {
             emptyMap()
         }
-        PhoneNotifier.show(applicationContext, fresh, names)
+        // The setting alone, never the gate: what runs in the background goes on while the screens are locked.
+        PhoneNotifier.show(applicationContext, fresh, names, private = parts.unlockSetting().on.first())
         return Result.success()
     }
 }

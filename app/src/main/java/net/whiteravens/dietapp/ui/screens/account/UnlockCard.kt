@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.account
 
+import android.os.Build
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,7 @@ internal fun UnlockCard(viewModel: UnlockViewModel) {
         )
         CheckRow(
             label = stringResource(R.string.unlock_switch),
+            hint = stringResource(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) R.string.unlock_recents else R.string.unlock_recents_secure),
             checked = on == true,
             enabled = on != null && !busy,
             onChange = { wanted -> if (wanted) viewModel.turnOn() else viewModel.turnOff() },

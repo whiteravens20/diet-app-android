@@ -142,7 +142,7 @@ class PhoneNotificationsTest {
         screen.startSignedIn(account)
         val today = LocalDate.now()
         val reminder = AccountNotification(UUID.randomUUID().toString(), profileId, NotificationAbout.WaterReminder(today, 0, 2000), Instant.now())
-        PhoneNotifier.show(context, listOf(reminder), mapOf(profileId to "Ala"))
+        PhoneNotifier.show(context, listOf(reminder), mapOf(profileId to "Ala"), private = false)
 
         // The reminder carries the amounts of the water card.
         val said = text(R.string.notifications_water_reminder, "0\u00A0${text(R.string.unit_liter)}", "2\u00A0${text(R.string.unit_liter)}").replace('\u00A0', ' ')
@@ -160,5 +160,29 @@ class PhoneNotificationsTest {
         val added = text(R.string.notifications_water_added, "330\u00A0${text(R.string.unit_ml)}", "Ala").replace('\u00A0', ' ')
         screen.waitUntil(10_000) { added in shownTexts() }
         screen.waitUntil(15_000) { added !in shownTexts() }
+    }
+
+    @Test
+    fun whileTheUnlockIsOnANotificationIsPrivateAndItsPublicLineSaysOnlyThatThereIsOne() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(context.packageName, Manifest.permission.POST_NOTIFICATIONS)
+        }
+        val manager = context.getSystemService(NotificationManager::class.java)
+        fun posted(name: String) = manager.activeNotifications.firstOrNull { it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == name }
+        val reminder = { id: String -> AccountNotification(id, id, NotificationAbout.WaterReminder(LocalDate.now(), 0, 2000), Instant.now()) }
+
+        // On: private, and a locked phone that hides sensitive content reads the application's name and one line.
+        PhoneNotifier.show(context, listOf(reminder("unlock-on")), mapOf("unlock-on" to "Hidden"), private = true)
+        screen.waitUntil(10_000) { posted("Hidden") != null }
+        val hidden = posted("Hidden")!!.notification
+        assertEquals(Notification.VISIBILITY_PRIVATE, hidden.visibility)
+        assertEquals(text(R.string.app_name), hidden.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        assertEquals(text(R.string.phone_notifications_hidden), hidden.publicVersion.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+
+        // Off: as before, no public line of its own.
+        PhoneNotifier.show(context, listOf(reminder("unlock-off")), mapOf("unlock-off" to "Shown"), private = false)
+        screen.waitUntil(10_000) { posted("Shown") != null }
+        assertEquals(null, posted("Shown")!!.notification.publicVersion)
+        manager.cancelAll()
     }
 }

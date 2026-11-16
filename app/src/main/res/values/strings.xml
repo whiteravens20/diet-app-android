@@ -1621,10 +1621,12 @@
     <string name="notifications_empty">Nothing new.</string>
     <string name="notifications_dismiss">Dismiss</string>
     <string name="notifications_read_all">Mark all read</string>
-    <!-- The unlock by a fingerprint: the account's setting, the prompt and the locked screen. -->
+    <!-- The unlock by a fingerprint: the account's setting, the prompt, the locked screen, and a notification's public line. -->
     <string name="unlock_title">Unlock with a fingerprint</string>
     <string name="unlock_about">The app asks for a fingerprint when it starts, and when it comes back after at least 30\u00A0minutes in the background; from Android 11\u00A0the phone\'s screen lock works too. Notifications come as before. If the phone\'s fingerprints change, the app signs out and asks for the account\'s password.</string>
     <string name="unlock_switch">Ask for a fingerprint</string>
+    <string name="unlock_recents">The recent apps screen then shows nothing of the app.</string>
+    <string name="unlock_recents_secure">The recent apps screen then shows nothing of the app, and screenshots of the app are blocked.</string>
     <string name="unlock_turn_on_failed">The unlock was not turned on.</string>
     <string name="unlock_prompt_title">Unlock Diet App</string>
     <string name="unlock_turn_on_title">Turn on the fingerprint unlock</string>
@@ -1636,6 +1638,7 @@
     <string name="unlock_button">Unlock</string>
     <string name="unlock_cannot_ask">This phone cannot ask for a fingerprint or its screen lock now. Sign out, then sign in with the account\'s password.</string>
     <string name="unlock_voided">The phone\'s fingerprints changed since the unlock was turned on, so the session on this phone has ended. Sign in with the account\'s password.</string>
+    <string name="phone_notifications_hidden">A new notification</string>
     <string name="phone_notifications_title">Notifications on the phone</string>
     <string name="phone_notifications_about">When they are on, the app asks the server for new ones about every 15 minutes; on a phone at rest Android may put that off for hours. A tap opens the list.</string>
     <string name="phone_notifications_show">Show them on the phone</string>

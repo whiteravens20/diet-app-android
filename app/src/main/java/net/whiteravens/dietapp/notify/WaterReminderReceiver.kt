@@ -10,7 +10,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import net.whiteravens.dietapp.data.config.UnlockStore
 import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.di.ApplicationScope
@@ -33,6 +35,8 @@ class WaterReminderReceiver : BroadcastReceiver() {
 
         @ApplicationScope
         fun application(): CoroutineScope
+
+        fun unlockSetting(): UnlockStore
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -43,11 +47,13 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val pending = goAsync()
         parts.application().launch {
             try {
+                // The setting alone, never the gate: a press of the water button goes on while the screens are locked.
+                val private = parts.unlockSetting().on.first()
                 if (attempt { parts.water().add(press.reminder.profileId, press.reminder.day, press.ml) }.isSuccess) {
                     attempt { parts.notifications().read(press.reminder.notificationId) }
-                    PhoneNotifier.waterAdded(app, press)
+                    PhoneNotifier.waterAdded(app, press, private)
                 } else {
-                    PhoneNotifier.waterNotAdded(app, press)
+                    PhoneNotifier.waterNotAdded(app, press, private)
                 }
             } finally {
                 pending.finish()

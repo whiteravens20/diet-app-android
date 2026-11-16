@@ -3,7 +3,9 @@
 package net.whiteravens.dietapp
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -87,6 +89,9 @@ class MainActivity : ComponentActivity() {
         // The phone's notifications, where they are on, keep the schedule this version asks for.
         lifecycleScope.launch { phoneNotifications.keepScheduled() }
         unlock.attach(authentication)
+        // While the unlock is on, the recents show nothing of the application: from Android 13 without refusing
+        // screenshots, below by a secure window, which refuses them (his answer).
+        lifecycleScope.launch { unlock.on.collect(::hiddenFromTheRecents) }
         setContent {
             // Drawn once the colour scheme is read, so that no frame shows another scheme first.
             val palette by appearance.palette.collectAsStateWithLifecycle<Palette?>(initialValue = null)
@@ -149,5 +154,15 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         unlock.detach(authentication)
         super.onDestroy()
+    }
+
+    private fun hiddenFromTheRecents(hidden: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            setRecentsScreenshotEnabled(!hidden)
+        } else if (hidden) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 }

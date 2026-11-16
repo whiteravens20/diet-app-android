@@ -80,8 +80,11 @@ object PhoneNotifier {
         .putExtra(EXTRA_NOTIFICATION, notificationId)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
-    /** Shows [fresh], each as the profile it is for ([names], by id) and what it says. */
-    fun show(context: Context, fresh: List<AccountNotification>, names: Map<String, String>) {
+    /**
+     * Shows [fresh], each as the profile it is for ([names], by id) and what it says; [private] while the unlock is on,
+     * so that a locked phone that hides sensitive content shows only that there is one.
+     */
+    fun show(context: Context, fresh: List<AccountNotification>, names: Map<String, String>, private: Boolean) {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -97,28 +100,28 @@ object PhoneNotifier {
             val name = names[notification.profileId]
             val about = notification.about
             val shown = if (about is NotificationAbout.WaterReminder) {
-                waterReminder(context, WaterReminderShown(notification.id, key, notification.profileId, name, about.day, notification.createdAt.toEpochMilli()), text)
+                waterReminder(context, WaterReminderShown(notification.id, key, notification.profileId, name, about.day, notification.createdAt.toEpochMilli()), text, private)
             } else {
-                shownAs(context, name, text, notification.createdAt.toEpochMilli(), tap).build()
+                shownAs(context, name, text, notification.createdAt.toEpochMilli(), tap, private).build()
             }
             manager.notify(key, shown)
         }
     }
 
     /** The water [press] added, said for a moment before the reminder goes. */
-    fun waterAdded(context: Context, press: WaterPress) {
+    fun waterAdded(context: Context, press: WaterPress, private: Boolean) {
         val reminder = press.reminder
         val amount = "${press.ml}\u00A0${context.getString(R.string.unit_ml)}"
         val text = context.getString(R.string.notifications_water_added, amount, reminder.name ?: context.getString(R.string.app_name))
-        val said = shownAs(context, reminder.name, text, reminder.at, openWater(context, reminder))
+        val said = shownAs(context, reminder.name, text, reminder.at, openWater(context, reminder), private)
             .setTimeoutAfter(ADDED_SHOWN_MS)
             .build()
         post(context, reminder.key, said)
     }
 
     /** A press the server refused: said, with the amounts kept to press again. */
-    fun waterNotAdded(context: Context, press: WaterPress) =
-        post(context, press.reminder.key, waterReminder(context, press.reminder, context.getString(R.string.water_add_failed)))
+    fun waterNotAdded(context: Context, press: WaterPress, private: Boolean) =
+        post(context, press.reminder.key, waterReminder(context, press.reminder, context.getString(R.string.water_add_failed), private))
 
     /** Shows [shown] in the place of the notification [key], where the phone still lets the application show notifications. */
     private fun post(context: Context, key: Int, shown: Notification) {
@@ -132,8 +135,8 @@ object PhoneNotifier {
     }
 
     /** A reminder of water saying [text], with an amount of the water card on each of its buttons. */
-    private fun waterReminder(context: Context, reminder: WaterReminderShown, text: String): Notification =
-        shownAs(context, reminder.name, text, reminder.at, openWater(context, reminder)).apply {
+    private fun waterReminder(context: Context, reminder: WaterReminderShown, text: String, private: Boolean): Notification =
+        shownAs(context, reminder.name, text, reminder.at, openWater(context, reminder), private).apply {
             WATER_AMOUNTS_ML.forEach { ml ->
                 val press = PendingIntent.getBroadcast(context, reminder.key, reminder.press(ml).intent(context), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 addAction(0, context.getString(R.string.water_add_ml, ml), press)
@@ -150,8 +153,10 @@ object PhoneNotifier {
     /**
      * A notification of the profile [name] (the application's where it is not known) saying [text], made [at], opening
      * [opens]. The shade lays its words out as a screen does: in Polish its words of one letter are held to the next.
+     * [private]: a locked phone that hides sensitive content shows only [publicLine]; one set to show everything shows
+     * it all, whatever the application asks (Android's SystemUI, `needsRedaction`).
      */
-    private fun shownAs(context: Context, name: String?, text: String, at: Long, opens: PendingIntent): NotificationCompat.Builder {
+    private fun shownAs(context: Context, name: String?, text: String, at: Long, opens: PendingIntent, private: Boolean): NotificationCompat.Builder {
         val locale = context.resources.configuration.locales[0]
         val said = holdLetters(text, locale)
         return NotificationCompat.Builder(context, CHANNEL)
@@ -165,7 +170,20 @@ object PhoneNotifier {
             .setAutoCancel(true)
             // What a press of an amount says in its place comes quietly.
             .setOnlyAlertOnce(true)
+            .apply {
+                if (private) {
+                    setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                    setPublicVersion(publicLine(context))
+                }
+            }
     }
+
+    /** What a locked phone that hides sensitive content shows of a notification while the unlock is on: that there is one. */
+    private fun publicLine(context: Context): Notification = NotificationCompat.Builder(context, CHANNEL)
+        .setSmallIcon(R.drawable.ic_notification)
+        .setContentTitle(context.getString(R.string.app_name))
+        .setContentText(context.getString(R.string.phone_notifications_hidden))
+        .build()
 }
 
 /** A reminder of water as the phone shows it under [key]: the reminder [notificationId], the profile it is for and its [day], made [at]. */
