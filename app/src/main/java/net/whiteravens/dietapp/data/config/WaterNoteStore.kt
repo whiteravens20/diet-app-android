@@ -32,6 +32,11 @@ class WaterNoteStore internal constructor(private val store: DataStore<Preferenc
         store.edit { it[CLOSED] = true }
     }
 
+    /** The end of the account's session on this phone: the next account is shown the note again. */
+    suspend fun forget() {
+        store.edit { it.remove(CLOSED) }
+    }
+
     private companion object {
         val CLOSED = booleanPreferencesKey("closed")
     }

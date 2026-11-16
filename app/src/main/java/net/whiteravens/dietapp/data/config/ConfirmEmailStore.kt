@@ -45,6 +45,14 @@ class ConfirmEmailStore internal constructor(private val store: DataStore<Prefer
         }
     }
 
+    /** The end of the account's session on this phone: nothing of it is kept, and the next account starts afresh. */
+    suspend fun forget() {
+        store.edit {
+            it.remove(ACCOUNT)
+            it.remove(UNTIL)
+        }
+    }
+
     companion object {
         /** How long "Not now" puts the notice aside. */
         val PUT_ASIDE_FOR: Duration = Duration.ofDays(30)

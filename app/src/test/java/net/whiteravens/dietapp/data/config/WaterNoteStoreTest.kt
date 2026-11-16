@@ -47,4 +47,14 @@ class WaterNoteStoreTest {
         scopes.single().coroutineContext[Job]!!.cancelAndJoin()
         assertTrue(store().closed.first())
     }
+
+    @Test
+    fun `the note is shown again once the session that closed it has ended`() = runBlocking {
+        val store = store()
+        store.close()
+
+        store.forget()
+
+        assertFalse(store.closed.first())
+    }
 }
