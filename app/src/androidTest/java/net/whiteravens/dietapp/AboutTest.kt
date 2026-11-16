@@ -71,6 +71,14 @@ class AboutTest {
             screen.onNodeWithText(text(R.string.about_terms)).performScrollTo().performClick()
         }
 
+        // What the phone keeps and sends out, and the instance's page of it, open to anyone as the terms are.
+        screen.onNodeWithText(text(R.string.about_privacy_page)).performScrollTo()
+        screen.onNodeWithText(text(R.string.about_privacy_session)).assertExists()
+        screen.keepScreenshot("about-privacy")
+        opensTheBrowserAt("${webApp}privacy") {
+            screen.onNodeWithText(text(R.string.about_privacy_page)).performScrollTo().performClick()
+        }
+
         // The libraries the application ships, with their licences, as the build listed them.
         screen.onNodeWithText(text(R.string.about_libraries)).performScrollTo().performClick()
         screen.waitForText("AboutLibraries Core Library")

@@ -1599,6 +1599,13 @@
     <string name="about_app">This application</string>
     <string name="about_app_version">Version</string>
     <string name="about_api_checked">Checked against the API %1$s.</string>
+    <string name="about_privacy">Privacy on this phone</string>
+    <string name="about_privacy_permissions">The app may use the internet, the camera (the scanner reads a code on the phone), notifications, installing its own updates, the local network (a server at home) and the fingerprint (the optional unlock).</string>
+    <string name="about_privacy_none">It uses no Google Play services and no analytics, and nothing of it goes into Android\'s backup.</string>
+    <string name="about_privacy_session">The session is sealed by a key of the phone\'s keystore. Signing out removes it with what the app kept of the account.</string>
+    <string name="about_privacy_updates">It asks GitHub for a newer version and sends nothing of the account with it; this can be turned off in the account settings.</string>
+    <string name="about_privacy_unlock">The fingerprint unlock in the account settings hides the app on the recent apps screen.</string>
+    <string name="about_privacy_page">This instance\'s privacy</string>
     <string name="about_legal">Legal notices</string>
     <!-- The copyright line as NOTICE writes it. -->
     <string name="about_notice">This application is %1$s. Its original source code is at:</string>

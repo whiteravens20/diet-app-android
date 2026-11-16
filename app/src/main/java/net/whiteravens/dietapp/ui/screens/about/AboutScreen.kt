@@ -124,6 +124,19 @@ fun AboutScreen(
                 if (update.hasChannel) NewerBuild(update)
             }
 
+            // What the phone keeps and what it sends out; the instance's own page says the rest, open to anyone.
+            AppCard {
+                Title(stringResource(R.string.about_privacy))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Said(stringResource(R.string.about_privacy_permissions))
+                    Said(stringResource(R.string.about_privacy_none))
+                    Said(stringResource(R.string.about_privacy_session))
+                    Said(stringResource(R.string.about_privacy_updates))
+                    Said(stringResource(R.string.about_privacy_unlock))
+                }
+                TextButton(onClick = { web.openPublic("privacy") }) { Text(stringResource(R.string.about_privacy_page)) }
+            }
+
             AppCard {
                 Title(stringResource(R.string.about_legal))
                 val links = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
