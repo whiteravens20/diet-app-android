@@ -72,6 +72,7 @@ fun AccountScreen(
     phoneNotifications: PhoneNotificationsViewModel = hiltViewModel(),
     appearance: AppearanceViewModel = hiltViewModel(),
     update: UpdateViewModel = hiltViewModel(),
+    unlock: UnlockViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val twoStep by secondFactor.state.collectAsStateWithLifecycle()
@@ -225,6 +226,8 @@ fun AccountScreen(
                     if (update.hasChannel) UpdatesCard(update)
 
                     PhoneNotificationsCard(phoneNotifications)
+
+                    UnlockCard(unlock)
 
                     AiModeCard(aiState, operatorContact, onChoose = ai::chooseMode, onRetry = ai::load)
 

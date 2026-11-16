@@ -13,8 +13,10 @@ import net.whiteravens.dietapp.data.auth.PendingRevocation
 import net.whiteravens.dietapp.data.auth.Session
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.auth.UnlockDevice
 import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.config.ConfirmEmailStore
+import net.whiteravens.dietapp.data.config.UnlockStore
 import net.whiteravens.dietapp.data.config.WaterNoteStore
 import net.whiteravens.dietapp.data.config.WateredStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
@@ -142,7 +144,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `the end of a session takes the phone's notifications, the account's colours, the icon's shortcuts and the notices put aside away and clears the cached copies, before the tokens`() {
+    fun `the end of a session takes the phone's notifications, the account's colours, the icon's shortcuts and the notices put aside away and clears the cached copies, before the tokens, and the unlock after them`() {
         val cache = mockk<CacheDatabase>(relaxed = true)
         val tokens = mockk<TokenStore>(relaxed = true)
         val phoneNotifications = mockk<PhoneNotificationsSwitch>(relaxed = true)
@@ -151,8 +153,12 @@ class AuthRepositoryTest {
         val shortcuts = mockk<WaterShortcuts>(relaxed = true)
         val confirmEmail = mockk<ConfirmEmailStore>(relaxed = true)
         val waterNote = mockk<WaterNoteStore>(relaxed = true)
+        val unlock = mockk<UnlockStore>(relaxed = true)
+        val unlockDevice = mockk<UnlockDevice>(relaxed = true)
 
-        runBlocking { SessionEnd(tokens, cache, phoneNotifications, appearance, watered, shortcuts, confirmEmail, waterNote).end() }
+        runBlocking {
+            SessionEnd(tokens, cache, phoneNotifications, appearance, watered, shortcuts, confirmEmail, waterNote, unlock, unlockDevice).end()
+        }
 
         coVerifyOrder {
             phoneNotifications.forget()
@@ -163,6 +169,8 @@ class AuthRepositoryTest {
             waterNote.forget()
             cache.clearAllTables()
             tokens.clear()
+            unlock.forget()
+            unlockDevice.deleteKey()
         }
     }
 

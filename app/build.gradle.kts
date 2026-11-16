@@ -101,6 +101,10 @@ android {
             buildConfigField("String", "UPDATES_FROM", "\"\"")
         }
     }
+    // A stand-in for the phone's biometrics, which the screens' tests of the unlock set: in the builds they run on
+    // alone. The release has its own `UnlockStandIn` (src/release/java), which does nothing.
+    sourceSets.getByName("debug").kotlin.srcDir("src/standIn/java")
+    sourceSets.getByName("minified").kotlin.srcDir("src/standIn/java")
     // `-Pedge` makes the release build Diet App Edge, the build the testers try: an application of
     // its own beside the release, named so on the phone and signed with the edge key, which the
     // workflow gives the build in EDGE_KEYSTORE and EDGE_KEYSTORE_PASSWORD (.github/workflows/edge-apk.yml).

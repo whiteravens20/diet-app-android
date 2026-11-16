@@ -13,24 +13,28 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import net.whiteravens.dietapp.data.auth.TokenStore
+import net.whiteravens.dietapp.data.config.UnlockStore
 import net.whiteravens.dietapp.data.config.WateredStore
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.notify.WaterShortcuts
 import net.whiteravens.dietapp.ui.common.attempt
+import net.whiteravens.dietapp.ui.unlock.Unlock
 import java.time.LocalDate
 
 /**
  * A shortcut of the application's icon, without a screen of its own: its amount goes to today of
  * the profile watered last on this phone, or of the account's first profile, among those that track
  * water, through the queue of changes without a network, and a short message says so ("Added 330 ml
- * · Adam"). Signed out, before any profile was read on this phone, or where no profile tracks water,
- * the application opens instead.
+ * · Adam"). Signed out, before any profile was read on this phone, where no profile tracks water, or
+ * while the unlock would not let the application through now (the message names a profile), the
+ * application opens instead.
  */
 class WaterShortcutActivity : ComponentActivity() {
     /** What a shortcut takes from the application's graph. */
@@ -49,6 +53,10 @@ class WaterShortcutActivity : ComponentActivity() {
 
         @ApplicationScope
         fun application(): CoroutineScope
+
+        fun unlockSetting(): UnlockStore
+
+        fun unlock(): Unlock
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,8 +65,9 @@ class WaterShortcutActivity : ComponentActivity() {
         val app = applicationContext
         val parts = EntryPointAccessors.fromApplication(app, Parts::class.java)
         // Read at once, from what the phone keeps: the application can be opened only while this is in front.
+        val locked = runBlocking(Dispatchers.IO) { parts.unlockSetting().on.first() } && !parts.unlock().lets()
         val profile = runBlocking(Dispatchers.IO) {
-            if (ml <= 0 || parts.tokens().current() == null) {
+            if (ml <= 0 || locked || parts.tokens().current() == null) {
                 null
             } else {
                 parts.users().keptProfiles()?.let { kept -> parts.watered().profileOf(kept.profiles.filter { it.waterTracking }) }

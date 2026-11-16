@@ -61,3 +61,6 @@
 -keep class okhttp3.** { *; }
 -keep class okio.** { *; }
 -keep class org.jspecify.** { *; }
+-keep class net.whiteravens.dietapp.data.auth.UnlockStandIn { *; }
+-keep class net.whiteravens.dietapp.data.auth.StandInPhone { *; }
+-keep class net.whiteravens.dietapp.data.auth.UnlockDevice { *; }

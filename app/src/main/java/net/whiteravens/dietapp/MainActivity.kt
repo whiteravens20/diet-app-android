@@ -7,8 +7,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.biometric.registerForAuthenticationResult
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -31,6 +33,9 @@ import net.whiteravens.dietapp.ui.common.Returns
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.DietAppRoot
 import net.whiteravens.dietapp.ui.theme.DietAppTheme
+import net.whiteravens.dietapp.ui.unlock.Gate
+import net.whiteravens.dietapp.ui.unlock.LockedScreen
+import net.whiteravens.dietapp.ui.unlock.Unlock
 import javax.inject.Inject
 
 /** Single-activity host; all navigation is Compose-based (ui/navigation). */
@@ -58,6 +63,12 @@ class MainActivity : ComponentActivity() {
     @ApplicationScope
     lateinit var application: CoroutineScope
 
+    @Inject
+    lateinit var unlock: Unlock
+
+    /** The one prompt of the unlock, for its gate and its setting: registered as the activity is made, as it must be. */
+    private val authentication = registerForAuthenticationResult { result -> unlock.answered(result) }
+
     /** A tap on a phone's notification asked for the list of notifications, not opened yet. */
     private var openNotifications by mutableStateOf(false)
 
@@ -75,18 +86,26 @@ class MainActivity : ComponentActivity() {
         }
         // The phone's notifications, where they are on, keep the schedule this version asks for.
         lifecycleScope.launch { phoneNotifications.keepScheduled() }
+        unlock.attach(authentication)
         setContent {
             // Drawn once the colour scheme is read, so that no frame shows another scheme first.
             val palette by appearance.palette.collectAsStateWithLifecycle<Palette?>(initialValue = null)
             palette?.let { scheme ->
                 DietAppTheme(palette = scheme) {
                     Surface(Modifier.fillMaxSize()) {
-                        DietAppRoot(
-                            openNotifications = openNotifications,
-                            onNotificationsOpened = { openNotifications = false },
-                            openWaterOf = openWaterOf,
-                            onWaterOpened = { openWaterOf = null },
-                        )
+                        // Nothing of the account is composed until the gate opens: its screens and what they read wait.
+                        val gate by unlock.state.collectAsStateWithLifecycle()
+                        LaunchedEffect(gate) { if ((gate as? Gate.Locked)?.askNow == true) unlock.askForTheGate() }
+                        when (gate) {
+                            Gate.Open -> DietAppRoot(
+                                openNotifications = openNotifications,
+                                onNotificationsOpened = { openNotifications = false },
+                                openWaterOf = openWaterOf,
+                                onWaterOpened = { openWaterOf = null },
+                            )
+                            Gate.Reading -> Unit
+                            else -> LockedScreen(gate, onUnlock = unlock::askAgain, onSignOut = unlock::leave, onVoidedSeen = unlock::voidedSeen)
+                        }
                     }
                 }
             }
@@ -112,6 +131,7 @@ class MainActivity : ComponentActivity() {
     // Counted before the screens resume, so that they know the application came back to the front.
     override fun onStart() {
         super.onStart()
+        unlock.cameBack()
         Returns.started()
         lifecycleScope.launch { phoneNotifications.readNow() }
         // The changes made on the phone that wait go as soon as there is a network.
@@ -122,6 +142,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         Returns.stopped()
+        unlock.wentAway()
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        unlock.detach(authentication)
+        super.onDestroy()
     }
 }

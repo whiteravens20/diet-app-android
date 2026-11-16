@@ -16,8 +16,10 @@ import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.data.auth.AuthInterceptor
 import net.whiteravens.dietapp.data.auth.KeystoreSealer
+import net.whiteravens.dietapp.data.auth.PhoneUnlockDevice
 import net.whiteravens.dietapp.data.auth.Sealer
 import net.whiteravens.dietapp.data.auth.TokenAuthenticator
+import net.whiteravens.dietapp.data.auth.UnlockDevice
 import net.whiteravens.dietapp.data.config.LocalNetworkAccess
 import net.whiteravens.dietapp.data.config.PhoneLocalNetworkAccess
 import net.whiteravens.dietapp.data.local.CacheDatabase
@@ -176,6 +178,10 @@ object AppModule {
     /** The tokens are kept sealed under a key of the device's keystore. */
     @Provides
     fun sealer(keystore: KeystoreSealer): Sealer = keystore
+
+    /** What the unlock asks of the phone: its biometrics and the key that watches them. */
+    @Provides
+    fun unlockDevice(phone: PhoneUnlockDevice): UnlockDevice = phone
 
     @Provides
     @Singleton
