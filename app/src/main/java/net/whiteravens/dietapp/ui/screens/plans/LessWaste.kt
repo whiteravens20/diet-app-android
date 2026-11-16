@@ -69,6 +69,7 @@ internal fun WasteLevelChoice(
                         formatNumber(it.fewerRecipes),
                     )
                 } ?: stringResource(R.string.plans_less_waste_hint_custom),
+                stringResource(R.string.plans_less_waste_freezer),
                 rules?.let { stringResource(R.string.plans_less_waste_rests, formatNumber(it.restsLess)) },
                 stringResource(R.string.plans_less_waste_limits),
             ),

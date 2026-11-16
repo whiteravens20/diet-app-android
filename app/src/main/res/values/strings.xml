@@ -1423,6 +1423,7 @@
     <string name="plans_less_waste">Waste less</string>
     <string name="plans_less_waste_hint">The plan leans harder on what the pantry holds and finishes opened packs that spoil soon: on this diet it typically uses about %1$s%% of the pantry instead of %2$s%%, and about %3$s%% of such packs instead of %4$s%%. In return a week has about %5$s%% fewer different recipes, and its days stray further from the macro split.</string>
     <string name="plans_less_waste_hint_custom">The plan leans harder on what the pantry holds and finishes opened packs that spoil soon. In return a week has fewer different recipes, and its days stray further from the macro split.</string>
+    <string name="plans_less_waste_freezer">Meat and fish it does not eat fresh it has you freeze on the day the pack is opened: none of it goes in the bin.</string>
     <string name="plans_less_waste_limits">The avoid list, allergens and the plan\'s limits work as always; a strict cap on repeats leaves it less room.</string>
     <string name="plans_waste_level">Food waste</string>
     <string name="plans_waste_usual">Usual plan</string>

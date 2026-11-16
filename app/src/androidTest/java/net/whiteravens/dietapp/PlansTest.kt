@@ -219,6 +219,8 @@ class PlansTest {
         // What it costs, in the instance's figures for the profile's diet, the balanced one.
         val less = Instance.wasteFigures("lessWaste", "balanced")
         screen.onNode(lessWaste and hasText(text(R.string.plans_less_waste_hint, *less.toTypedArray()), substring = true)).assertExists()
+        // It freezes the meat and fish it does not eat fresh, as a plan that wastes nothing does.
+        screen.onNode(lessWaste and hasText(text(R.string.plans_less_waste_freezer), substring = true)).assertExists()
         screen.keepScreenshot("plans-a-plan-that-wastes-less-asked-for")
         // A plan that wastes nothing: its figures, and what it loosens of a new profile's limits on repeats, 2 days and 3 times.
         screen.onNode(noWaste).performScrollTo().performClick()
