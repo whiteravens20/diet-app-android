@@ -1618,6 +1618,7 @@
     <string name="plans_fate_stays_own">stays: it is your own meal</string>
     <string name="plans_fate_stays_leftover">stays: it is a leftover</string>
     <string name="plans_fate_resized">the same dish in a new portion</string>
+    <string name="plans_fate_resized_portion">the same dish: %1$s → %2$s, %3$s → %4$s kcal</string>
     <string name="plans_fate_redrawn_cook_time">a new recipe: this one takes longer than the limit</string>
     <string name="plans_fate_redrawn_use_up">a new recipe that uses up what is about to expire</string>
     <string name="plans_fate_removed_fewer">goes: the day has fewer meals</string>

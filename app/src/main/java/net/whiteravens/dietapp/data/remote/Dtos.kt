@@ -1424,7 +1424,13 @@ data class DayMealFateDto(
     val fate: String,
     /** `eaten` | `own` | `fewer_meals` | `skipped` | `over_cook_time` | `use_up`; null where the day's new target or number of meals says it. */
     val because: String? = null,
+    /** The portion of a `resized` dish, now and after the change; null for every other fate, and where recipes are drawn. */
+    val portion: FatePortionDto? = null,
 )
+
+/** A dish's portion now and after a change of its day: servings of its recipe, and their kcal. */
+@Serializable
+data class FatePortionDto(val servings: NowThenDto, val calories: NowThenDto)
 
 /** A pair of numbers: as a day has it now, and as the change would make it. */
 @Serializable

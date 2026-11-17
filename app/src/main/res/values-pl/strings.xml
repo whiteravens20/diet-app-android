@@ -1738,6 +1738,7 @@
     <string name="plans_fate_stays_own">zostaje, to Twój własny posiłek</string>
     <string name="plans_fate_stays_leftover">zostaje, to resztka</string>
     <string name="plans_fate_resized">to samo danie w nowej porcji</string>
+    <string name="plans_fate_resized_portion">to samo danie: %1$s → %2$s, %3$s → %4$s kcal</string>
     <string name="plans_fate_redrawn_cook_time">nowy przepis: obecny trwa dłużej niż limit</string>
     <string name="plans_fate_redrawn_use_up">nowy przepis, który zużyje żywność z krótką datą</string>
     <string name="plans_fate_removed_fewer">znika: dzień ma mniej posiłków</string>

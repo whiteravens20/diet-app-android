@@ -623,7 +623,10 @@ data class DaySettings(
 )
 
 /** What a change of a day's settings does to one of its meals: [fate] `stays` | `resized` | `redrawn` | `removed`, and [because] where there is more to it than the day's new target. */
-data class MealFate(val mealId: String, val slot: String, val fate: String, val because: String?)
+data class MealFate(val mealId: String, val slot: String, val fate: String, val because: String?, val portion: FatePortion? = null)
+
+/** The portion of a dish a change of its day resizes, now and after the change: servings of its recipe, and their kcal. */
+data class FatePortion(val servingsNow: Double, val servingsThen: Double, val kcalNow: Double, val kcalThen: Double)
 
 /**
  * What a change of a day's settings would do, as the API works it out before anything is written:

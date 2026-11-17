@@ -266,21 +266,36 @@ private fun WeekOutcome(week: DaySettingsWeek, unit: WeightUnit) {
     }
 }
 
-/** What becomes of a meal, in words: its fate, and why where there is more to it than the day's new target. */
+/**
+ * What becomes of a meal, in words: its fate, and why where there is more to it than the day's new target. A dish
+ * the change resizes says its servings and kcal now and after it, where the preview gives them.
+ */
 @Composable
-private fun fateText(meal: MealFate): String = stringResource(
-    when (meal.fate) {
-        "stays" -> when (meal.because) {
-            "eaten" -> R.string.plans_fate_stays_eaten
-            "own" -> R.string.plans_fate_stays_own
-            "leftover" -> R.string.plans_fate_stays_leftover
-            else -> R.string.plans_fate_stays
-        }
-        "resized" -> R.string.plans_fate_resized
-        "redrawn" -> if (meal.because == "use_up") R.string.plans_fate_redrawn_use_up else R.string.plans_fate_redrawn_cook_time
-        else -> if (meal.because == "skipped") R.string.plans_fate_removed_skipped else R.string.plans_fate_removed_fewer
-    },
-)
+private fun fateText(meal: MealFate): String {
+    val portion = meal.portion
+    if (meal.fate == "resized" && portion != null) {
+        return stringResource(
+            R.string.plans_fate_resized_portion,
+            formatNumber(portion.servingsNow, fractionDigits = 2),
+            servingsWord(portion.servingsThen, fractionDigits = 2),
+            formatNumber(portion.kcalNow.roundToInt()),
+            formatNumber(portion.kcalThen.roundToInt()),
+        )
+    }
+    return stringResource(
+        when (meal.fate) {
+            "stays" -> when (meal.because) {
+                "eaten" -> R.string.plans_fate_stays_eaten
+                "own" -> R.string.plans_fate_stays_own
+                "leftover" -> R.string.plans_fate_stays_leftover
+                else -> R.string.plans_fate_stays
+            }
+            "resized" -> R.string.plans_fate_resized
+            "redrawn" -> if (meal.because == "use_up") R.string.plans_fate_redrawn_use_up else R.string.plans_fate_redrawn_cook_time
+            else -> if (meal.because == "skipped") R.string.plans_fate_removed_skipped else R.string.plans_fate_removed_fewer
+        },
+    )
+}
 
 /** The kind of a day as the window names it: `normal` | `training` | `rest` | `skip`. */
 @Composable

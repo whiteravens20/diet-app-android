@@ -29,6 +29,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.DaySettings
+import net.whiteravens.dietapp.domain.FatePortion
 import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanAsk
@@ -447,6 +448,21 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a dish a day's change resizes says its servings and kcal now and after it`() {
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(DAY_SETTINGS_RESIZED))
+
+        val preview = runBlocking { repository(Cache()).previewDaySettings("plan-1", "day-1", DaySettings(dayType = "training", mealCount = 3)) }
+
+        assertEquals(
+            listOf(
+                MealFate("meal-1", "breakfast", "stays", "eaten"),
+                MealFate("meal-2", "dinner", "resized", null, FatePortion(1.71, 2.72, 708.0, 1127.0)),
+            ),
+            preview.meals,
+        )
+    }
+
+    @Test
     fun `a running plan whose profile's target moved says both, and takes the profile's from today on the plan at its revision`() {
         server.enqueue(answer("meal-plan-target-moved"))
         server.enqueue(answer("meal-plan-retargeted"))
@@ -762,6 +778,14 @@ class MealPlanRepositoryTest {
             """"targetMacros":{"now":{"protein":125,"fat":67,"carbs":225},"then":{"protein":144,"fat":77,"carbs":259}},"belowSafetyFloor":false,""" +
             """"meals":[{"mealId":"meal-1","mealType":"lunch","fate":"redrawn","because":"over_cook_time"}],"added":["snack"],""" +
             """"dayCalories":null,"fits":null,"listOutOfDate":false,"unchanged":false}"""
+
+        /** A training day after breakfast was eaten, as POST `.../settings/preview` answers it: the dinner grows. */
+        const val DAY_SETTINGS_RESIZED = """{"revision":7,"date":"2026-10-26","calorieTarget":{"now":2820,"then":3240},""" +
+            """"targetMacros":{"now":{"protein":154,"fat":104,"carbs":318},"then":{"protein":176,"fat":120,"carbs":365}},"belowSafetyFloor":false,""" +
+            """"meals":[{"mealId":"meal-1","mealType":"breakfast","fate":"stays","because":"eaten","portion":null},""" +
+            """{"mealId":"meal-2","mealType":"dinner","fate":"resized","because":null,""" +
+            """"portion":{"servings":{"now":1.71,"then":2.72},"calories":{"now":708,"then":1127}}}],"added":[],""" +
+            """"dayCalories":3240,"fits":true,"short":null,"listOutOfDate":false,"unchanged":false}"""
     }
 
     @Test

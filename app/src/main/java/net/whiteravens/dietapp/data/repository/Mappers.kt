@@ -37,6 +37,7 @@ import net.whiteravens.dietapp.domain.BuyLater
 import net.whiteravens.dietapp.domain.CookedPlace
 import net.whiteravens.dietapp.domain.CookingChange
 import net.whiteravens.dietapp.domain.DaySettingsWeek
+import net.whiteravens.dietapp.domain.FatePortion
 import net.whiteravens.dietapp.domain.LeftoverOf
 import net.whiteravens.dietapp.domain.LeftoverOffer
 import net.whiteravens.dietapp.domain.LeftoverOther
@@ -371,7 +372,10 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
     targetThen = calorieTarget.then,
     macrosThen = targetMacros.then.toDomain(),
     belowSafetyFloor = belowSafetyFloor,
-    meals = meals.map { MealFate(it.mealId, it.mealType, it.fate, it.because) },
+    meals = meals.map { fate ->
+        val portion = fate.portion?.let { FatePortion(it.servings.now, it.servings.then, it.calories.now, it.calories.then) }
+        MealFate(fate.mealId, fate.mealType, fate.fate, fate.because, portion)
+    },
     added = added,
     dayCalories = dayCalories,
     fits = fits,
