@@ -1946,10 +1946,16 @@ private fun PlateRowLine(name: String, mine: String, theirs: String, head: Boole
     }
 }
 
-/** How far the amounts of a pot both people cook are from those of its recipe as written, and whose portions it holds. */
+/**
+ * Whether a meal holds as many servings as its recipe makes: the notes then say the number once, not the same
+ * number twice. Servings are whole quarters, so the two are compared as they are.
+ */
+internal fun sameServings(recipeServings: Int, servings: Double): Boolean = servings == recipeServings.toDouble()
+
+/** What the amounts of a pot both people cook are for, whose portions it holds, and what its recipe as written makes. */
 @Composable
 private fun potNote(recipeServings: Int, servings: Double, pot: PotPortions): String = stringResource(
-    R.string.plans_portion_pot,
+    if (sameServings(recipeServings, servings)) R.string.plans_portion_pot_same else R.string.plans_portion_pot,
     pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
     servingsWord(servings),
     formatNumber(pot.mine, fractionDigits = 1),
@@ -1957,13 +1963,18 @@ private fun potNote(recipeServings: Int, servings: Double, pot: PotPortions): St
     formatNumber(pot.theirs, fractionDigits = 1),
 )
 
-/** How far the amounts of a meal are from those of its recipe as written. */
+/** What the amounts of a meal are for, and what its recipe as written makes: once, where the two are the same. */
 @Composable
-private fun portionNote(recipeServings: Int, servings: Double, whole: Boolean): String = stringResource(
-    if (whole) R.string.plans_portion_whole else R.string.plans_portion_meal,
-    pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
-    servingsWord(servings),
-)
+private fun portionNote(recipeServings: Int, servings: Double, whole: Boolean): String =
+    if (sameServings(recipeServings, servings)) {
+        stringResource(if (whole) R.string.plans_portion_whole_same else R.string.plans_portion_meal_same, servingsWord(servings))
+    } else {
+        stringResource(
+            if (whole) R.string.plans_portion_whole else R.string.plans_portion_meal,
+            pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
+            servingsWord(servings),
+        )
+    }
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
 @Composable

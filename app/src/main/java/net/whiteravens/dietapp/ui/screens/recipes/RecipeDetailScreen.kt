@@ -51,6 +51,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.Text
+import net.whiteravens.dietapp.ui.screens.plans.sameServings
 import net.whiteravens.dietapp.ui.screens.plans.servingsWord
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.Recipe
@@ -157,12 +158,17 @@ fun RecipeDetailScreen(
             // The amounts below are those of the recipe as written: what the meal takes is another number.
             if (portion != null) {
                 item {
+                    val ofTheRecipe = pluralStringResource(R.plurals.plans_portion_recipe, recipe.servings, recipe.servings)
                     Text(
-                        stringResource(
-                            if (whole) R.string.recipe_portion_whole else R.string.recipe_portion_meal,
-                            pluralStringResource(R.plurals.plans_portion_recipe, recipe.servings, recipe.servings),
-                            servingsWord(portion),
-                        ),
+                        if (sameServings(recipe.servings, portion)) {
+                            stringResource(if (whole) R.string.recipe_portion_whole_same else R.string.recipe_portion_meal_same, ofTheRecipe)
+                        } else {
+                            stringResource(
+                                if (whole) R.string.recipe_portion_whole else R.string.recipe_portion_meal,
+                                ofTheRecipe,
+                                servingsWord(portion),
+                            )
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

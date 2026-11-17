@@ -509,7 +509,8 @@ class PlansTest {
 
         // Its window gives what the whole pot takes, for both portions, and the pot is split into the portions of both, each by name.
         screen.onAllNodesWithText(shown(shared.title))[0].performScrollTo().performClick()
-        val pot = text(R.string.plans_portion_pot, "\u0000", "\u0000", "\u0000", "\u0000", "\u0000").split("\u0000")[1].trim(' ', '.', ',', '\u00A0')
+        // The sentence's opening, before the first number: the same whether the recipe makes as many servings or not.
+        val pot = text(R.string.plans_portion_pot, "\u0000", "\u0000", "\u0000", "\u0000", "\u0000").split("\u0000")[0].trim(' ', '.', ',', '\u00A0')
         screen.waitForText(pot, substring = true)
         screen.onNode(hasText(pot, substring = true) and inAWindow).performScrollTo()
         screen.keepScreenshot("plans-a-pot")
