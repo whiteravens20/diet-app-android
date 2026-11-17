@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.plans
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -32,18 +33,28 @@ import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal.TooBig
 import net.whiteravens.dietapp.domain.FieldRefusal.TooSmall
 import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.PlanAsk
+import net.whiteravens.dietapp.domain.ProfileFigures
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.RelaxedMeal
 import net.whiteravens.dietapp.testing.fixture
+import net.whiteravens.dietapp.ui.screens.profiles.OwnFault
+import net.whiteravens.dietapp.ui.screens.profiles.OwnTargetsTyped
+import net.whiteravens.dietapp.ui.screens.profiles.OwnWay
+import net.whiteravens.dietapp.ui.screens.profiles.SplitTyped
 import net.whiteravens.dietapp.testing.refusal
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -180,6 +191,80 @@ class NewPlanViewModelTest {
 
         assertSame(refusal, model.state.value.error)
         assertNull(model.state.value.inTheWay)
+    }
+
+    /** What the targets kept in the profile were sent with, and by which parts. */
+    private val keptFigures = mutableListOf<ProfileFigures>()
+    private val keptParts = mutableListOf<Set<String>>()
+
+    /** The API keeps the targets it is sent, and answers the profile with them. */
+    private fun keepsTargets() {
+        coEvery { profiles.change(profile.id, capture(keptFigures), capture(keptParts), any()) } answers {
+            profile.copy(figures = keptFigures.last())
+        }
+    }
+
+    @Test
+    fun `the custom diet for a profile without targets asks for them, keeps them in the profile, and then makes the plan to them`() {
+        keepsTargets()
+        coEvery { plans.generate(capture(asked)) } returns made
+        val model = model()
+
+        model.edit { it.copy(dietType = "custom") }
+        assertTrue(model.state.value.asksTargets)
+        model.edit { it.copy(own = it.own.copy(percent = SplitTyped("30", "30", "40"))) }
+        model.generate()
+
+        assertEquals(MacroSplit(30, 30, 40), keptFigures.single().customMacroSplit)
+        assertNull(keptFigures.single().customProteinPerKg)
+        // A split sent alone is the split's way: protein per kilogram is not named.
+        assertEquals(setOf("customMacroSplit"), keptParts.single())
+        coVerifyOrder {
+            profiles.change(profile.id, any(), any(), any())
+            plans.generate(any())
+        }
+        assertEquals("custom", asked.single().dietType)
+        assertEquals(made.id, model.state.value.made)
+        // The profile has its targets now, and the form does not ask for them again.
+        assertFalse(model.state.value.asksTargets)
+    }
+
+    @Test
+    fun `protein per kilogram held at the profile's target is neither kept nor planned to, and one that fits is kept with its fat`() {
+        keepsTargets()
+        coEvery { plans.generate(capture(asked)) } returns made
+        val model = model()
+
+        // 3 g a kilogram of 66 kg is 792 kcal: 49 % of the profile's 1603, past the 45 % of protein.
+        model.edit { it.copy(dietType = "custom", own = OwnTargetsTyped(way = OwnWay.PER_KG, perKg = "3")) }
+        model.generate()
+
+        assertEquals(OwnFault.PER_KG, model.state.value.ownFault)
+        coVerify(exactly = 0) { profiles.change(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { plans.generate(any()) }
+
+        model.edit { it.copy(own = it.own.copy(perKg = "1,6")) }
+        model.generate()
+
+        assertEquals(1.6, keptFigures.single().customProteinPerKg!!, 0.0)
+        assertEquals(30, keptFigures.single().customMacroSplit!!.fat)
+        assertEquals(setOf("customMacroSplit", "customProteinPerKg"), keptParts.single())
+        assertEquals(made.id, model.state.value.made)
+    }
+
+    @Test
+    fun `no plan is made when the targets could not be kept, and the form says so until they change`() {
+        coEvery { profiles.change(profile.id, any(), any(), any()) } throws IOException("down")
+        val model = model()
+
+        model.edit { it.copy(dietType = "custom") }
+        model.generate()
+
+        assertNotNull(model.state.value.targetsFailed)
+        assertFalse(model.state.value.generating)
+        coVerify(exactly = 0) { plans.generate(any()) }
+        model.edit { it.copy(own = it.own.copy(percent = SplitTyped("30", "30", "40"))) }
+        assertNull(model.state.value.targetsFailed)
     }
 
     @Test

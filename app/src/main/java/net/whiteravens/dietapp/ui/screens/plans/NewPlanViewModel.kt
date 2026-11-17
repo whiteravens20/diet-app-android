@@ -21,6 +21,7 @@ import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.domain.FavoriteSet
+import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.inGiveWayOrder
@@ -28,6 +29,9 @@ import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.ui.common.attempt
+import net.whiteravens.dietapp.ui.screens.profiles.OwnFault
+import net.whiteravens.dietapp.ui.screens.profiles.OwnTargetsTyped
+import net.whiteravens.dietapp.ui.screens.profiles.ProfileField
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -74,10 +78,21 @@ class NewPlanViewModel @Inject constructor(
         val overlaps: Boolean = false,
         /** The account's other profiles, by id and name: whom a plan can be made together with. */
         val others: List<Pair<String, String>> = emptyList(),
+        /** The fields of the custom diet's targets the API refused when they were to be kept, until each is changed. */
+        val ownRefusals: Map<ProfileField, FieldRefusal> = emptyMap(),
+        /** The custom diet's targets could not be kept in the profile, so no plan was made. */
+        val targetsFailed: Throwable? = null,
     ) {
         /** The diet and the number of meals the plan is made for: the form's, or the profile's. */
         val planDiet: String get() = form.dietType ?: profile?.figures?.dietType ?: "balanced"
         val planMealCount: Int get() = form.mealCount ?: profile?.figures?.mealCount ?: 3
+
+        /** The plan is made to the custom diet and the profile has no targets for it: the form asks for them. */
+        val asksTargets: Boolean get() = form.dietType == "custom" && profile != null && profile.figures.customMacroSplit == null
+
+        /** What is wrong with the targets asked for, once making the plan was refused for it, at the profile's own target and weight. */
+        val ownFault: OwnFault?
+            get() = if (showProblems && asksTargets) form.own.fault(profileTarget, profile?.figures?.weightKg) else null
     }
 
     private val profileId: String = checkNotNull(savedStateHandle[PROFILE_ID]) { "A new plan is made for a profile" }
@@ -131,7 +146,15 @@ class NewPlanViewModel @Inject constructor(
         val before = _state.value.form.dates
         _state.update {
             val now = change(it.form)
-            it.copy(form = now, error = null, refusals = it.refusals.after(it.form, now))
+            // The targets' refusal is said until they are changed.
+            val ownChanged = now.own != it.form.own
+            it.copy(
+                form = now,
+                error = null,
+                refusals = it.refusals.after(it.form, now),
+                ownRefusals = if (ownChanged) emptyMap() else it.ownRefusals,
+                targetsFailed = if (ownChanged) null else it.targetsFailed,
+            )
         }
         if (_state.value.form.dates != before) askOverlap(pause = true)
     }
@@ -155,8 +178,15 @@ class NewPlanViewModel @Inject constructor(
 
     fun generate() {
         val current = _state.value
-        if (current.generating || current.profile == null) return
-        _state.update { it.copy(generating = true, error = null, inTheWay = null) }
+        val profile = current.profile
+        if (current.generating || profile == null) return
+        val own = current.form.own
+        // Targets the form says are wrong are not kept, and no plan is made to them.
+        if (current.asksTargets && (own.notNumbers.isNotEmpty() || own.fault(current.profileTarget, profile.figures.weightKg) != null)) {
+            _state.update { it.copy(showProblems = true) }
+            return
+        }
+        _state.update { it.copy(generating = true, error = null, inTheWay = null, targetsFailed = null) }
         viewModelScope.launch {
             // The meals of a day are the instance's to say: read where they have not been yet.
             if (server.rules.value == null) server.refresh()
@@ -165,8 +195,29 @@ class NewPlanViewModel @Inject constructor(
                 _state.update { it.copy(generating = false, showProblems = true) }
                 return@launch
             }
+            if (current.asksTargets && !keepTargets(profile, own)) return@launch
             send(ask)
         }
+    }
+
+    /**
+     * Keeps the custom diet's targets the form asked for in the profile, as its own form keeps them, before a plan is
+     * made to them: protein per kilogram only where it is the way, so that a split named alone is the split's. What
+     * the API refuses is said at its field, and nothing more is done.
+     */
+    private suspend fun keepTargets(profile: ProfileDetails, own: OwnTargetsTyped): Boolean {
+        val perKg = own.perKgValue()
+        val parts = if (perKg != null) setOf("customMacroSplit", "customProteinPerKg") else setOf("customMacroSplit")
+        val figures = profile.figures.copy(customMacroSplit = own.split(), customProteinPerKg = perKg)
+        return attempt { profiles.change(profileId, figures, parts) }
+            .onSuccess { kept -> _state.update { it.copy(profile = kept) } }
+            .onFailure { e ->
+                val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                    .mapNotNull { (path, refusal) -> ProfileField.entries.firstOrNull { it.path == path }?.let { it to refusal } }
+                    .toMap()
+                _state.update { it.copy(generating = false, ownRefusals = refused, targetsFailed = e) }
+            }
+            .isSuccess
     }
 
     /** Asks for the same plan again, letting the limits that stood in the way give way too. */

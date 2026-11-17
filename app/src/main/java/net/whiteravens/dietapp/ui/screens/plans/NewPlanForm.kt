@@ -7,6 +7,7 @@ import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.WasteLevel
+import net.whiteravens.dietapp.ui.screens.profiles.OwnTargetsTyped
 import java.time.LocalDate
 
 /** What the form offers and begins with. */
@@ -97,6 +98,8 @@ data class NewPlanForm(
     val days: Map<LocalDate, DayDraft> = emptyMap(),
     /** Another profile of the account the plan is made together with; such a plan is made without settings of its days. */
     val withProfileId: String? = null,
+    /** The custom diet's targets, asked for where the plan is made to the custom diet and the profile has none. */
+    val own: OwnTargetsTyped = OwnTargetsTyped(),
 ) {
     /** The plan's days, as many as the duration says, while that is a number of days the form draws. */
     val dates: List<LocalDate>

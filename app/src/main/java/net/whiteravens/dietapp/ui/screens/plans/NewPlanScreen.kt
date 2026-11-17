@@ -56,6 +56,8 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
+import net.whiteravens.dietapp.ui.screens.profiles.OwnFault
+import net.whiteravens.dietapp.ui.screens.profiles.OwnTargetsFields
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
 import net.whiteravens.dietapp.ui.screens.profiles.SupplyNote
 import java.time.LocalDate
@@ -130,14 +132,17 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                         }
 
                         val custom = profile.figures.customMacroSplit
+                        val perKg = profile.figures.customProteinPerKg
                         ChoiceField(
                             label = stringResource(R.string.plans_diet),
-                            // The custom diet is the profile's own split: there is one to plan to, or the diet is not on offer.
-                            options = listOf<String?>(null) + ProfileChoices.DIETS.filter { it != "custom" || custom != null },
+                            // The custom diet is named by the targets the profile keeps for it; without them the form asks for them.
+                            options = listOf<String?>(null) + ProfileChoices.DIETS,
                             selected = form.dietType,
                             optionLabel = { diet ->
                                 when {
                                     diet == null -> stringResource(R.string.plans_as_in_profile, dietTypeLabel(profile.figures.dietType))
+                                    diet == "custom" && custom != null && perKg != null ->
+                                        stringResource(R.string.plans_diet_custom_per_kg, formatNumber(perKg, 1), custom.fat)
                                     diet == "custom" && custom != null -> stringResource(R.string.plans_diet_custom, custom.protein.toString(), custom.fat.toString(), custom.carbs.toString())
                                     else -> when (rules?.supplyOf(diet, state.planMealCount)?.level) {
                                         SupplyLevel.NONE -> stringResource(R.string.catalogue_diet_none, dietTypeLabel(diet))
@@ -166,11 +171,35 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             problem = numberProblem(PlanField.CALORIE_TARGET in problems, refusals.plan[PlanField.CALORIE_TARGET]),
                         )
                         Text(
-                            stringResource(R.string.plans_choices_hint) +
+                            stringResource(if (state.asksTargets) R.string.plans_choices_hint_own_targets else R.string.plans_choices_hint) +
                                 (state.profileTarget?.let { " " + stringResource(R.string.plans_calorie_target_hint, formatNumber(it)) } ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        if (state.asksTargets) {
+                            // The targets are the profile's, so they are worked out at the profile's own target, as its form works them out.
+                            OwnTargetsFields(
+                                own = form.own,
+                                target = state.profileTarget,
+                                weightKg = profile.figures.weightKg,
+                                notNumbers = if (state.showProblems) form.own.notNumbers else emptySet(),
+                                refusals = state.ownRefusals,
+                                onEdit = { change -> viewModel.edit { it.copy(own = change(it.own)) } },
+                                note = stringResource(R.string.plans_own_targets_saved),
+                            )
+                            state.ownFault?.let { fault ->
+                                ErrorBanner(
+                                    stringResource(
+                                        when (fault) {
+                                            OwnFault.SUM -> R.string.refusal_split_sum
+                                            OwnFault.LIMITS -> R.string.refusal_split_limits
+                                            OwnFault.PER_KG -> R.string.refusal_per_kg
+                                        },
+                                    ),
+                                )
+                            }
+                            state.targetsFailed?.let { ErrorBanner(stringResource(R.string.plans_save_targets_failed)) }
+                        }
 
                         Text(stringResource(R.string.plans_apply_prefs), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
                         Text(

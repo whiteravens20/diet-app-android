@@ -45,6 +45,8 @@ internal fun OwnTargetsFields(
     notNumbers: Set<ProfileField>,
     refusals: Map<ProfileField, FieldRefusal>,
     onEdit: ((OwnTargetsTyped) -> OwnTargetsTyped) -> Unit,
+    /** What the form that shows the targets says of them besides, under their hint. */
+    note: String? = null,
 ) {
     val marks = OwnMarks(notNumbers, refusals)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -54,6 +56,7 @@ internal fun OwnTargetsFields(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        note?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         Text(stringResource(R.string.profile_custom_way), style = MaterialTheme.typography.labelLarge)
         val ways = OwnWay.entries
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
