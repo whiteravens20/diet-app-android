@@ -12,6 +12,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -122,7 +123,8 @@ private fun PercentFields(
     marks: OwnMarks,
     onEdit: ((OwnTargetsTyped) -> OwnTargetsTyped) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Fields line up at their frames where a label takes two lines.
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
         FormField(own.percent.protein, { typed -> onEdit { it.copy(percent = it.percent.copy(protein = typed)) } }, stringResource(R.string.profile_split_protein), Modifier.weight(1f), problem = marks.of(ProfileField.SPLIT_PROTEIN))
         FormField(own.percent.fat, { typed -> onEdit { it.copy(percent = it.percent.copy(fat = typed)) } }, stringResource(R.string.profile_split_fat), Modifier.weight(1f), problem = marks.of(ProfileField.SPLIT_FAT))
         FormField(own.percent.carbs, { typed -> onEdit { it.copy(percent = it.percent.copy(carbs = typed)) } }, stringResource(R.string.profile_split_carbs), Modifier.weight(1f), problem = marks.of(ProfileField.SPLIT_CARBS))
@@ -142,7 +144,8 @@ private fun GramsFields(
     marks: OwnMarks,
     onEdit: ((OwnTargetsTyped) -> OwnTargetsTyped) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Fields line up at their frames where a label takes two lines.
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
         FormField(own.grams.protein, { typed -> onEdit { it.copy(grams = it.grams.copy(protein = typed)) } }, stringResource(R.string.profile_split_grams_protein), Modifier.weight(1f), problem = marks.of(ProfileField.GRAMS_PROTEIN), keyboardType = KeyboardType.Decimal)
         FormField(own.grams.fat, { typed -> onEdit { it.copy(grams = it.grams.copy(fat = typed)) } }, stringResource(R.string.profile_split_grams_fat), Modifier.weight(1f), problem = marks.of(ProfileField.GRAMS_FAT), keyboardType = KeyboardType.Decimal)
         FormField(own.grams.carbs, { typed -> onEdit { it.copy(grams = it.grams.copy(carbs = typed)) } }, stringResource(R.string.profile_split_grams_carbs), Modifier.weight(1f), problem = marks.of(ProfileField.GRAMS_CARBS), keyboardType = KeyboardType.Decimal)
@@ -188,7 +191,8 @@ private fun PerKgFields(
     marks: OwnMarks,
     onEdit: ((OwnTargetsTyped) -> OwnTargetsTyped) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Fields line up at their frames where a label takes two lines.
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
         FormField(
             own.perKg,
             { typed -> onEdit { it.copy(perKg = typed) } },
