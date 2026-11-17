@@ -56,9 +56,14 @@ import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-/** A text of the app's, in the language the device runs in, with [args] put in. */
-fun text(@StringRes id: Int, vararg args: Any): String =
-    InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
+/**
+ * A text of the app's, in the language the device runs in, with [args] put in. Without arguments it is read as the
+ * app's screens read it, not formatted: a "%" of "Fat (%)" stays as it is shown.
+ */
+fun text(@StringRes id: Int, vararg args: Any): String {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    return if (args.isEmpty()) context.getString(id) else context.getString(id, *args)
+}
 
 /** [items] joined as the app joins a list of them, in the language the device runs in: "Ala and Ola", "Ala i Ola". */
 fun joined(vararg items: String): String =
