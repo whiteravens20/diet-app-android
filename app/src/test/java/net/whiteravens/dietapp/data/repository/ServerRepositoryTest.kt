@@ -17,6 +17,7 @@ import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.LessWasteEffect
 import net.whiteravens.dietapp.domain.ServerProbe
 import net.whiteravens.dietapp.domain.ServerVersion
+import net.whiteravens.dietapp.domain.OperatorAiTerms
 import net.whiteravens.dietapp.domain.Supply
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.WasteRules
@@ -178,6 +179,22 @@ class ServerRepositoryTest {
         runBlocking { repository.refresh() }
 
         assertEquals("operator@example.test", repository.rules.value?.operatorContact)
+    }
+
+    @Test
+    fun `the terms of the instance's own AI are kept as it says them, and there are none where it offers none`() {
+        val captured = json.parseToJsonElement(fixture("config")).jsonObject
+        val terms = json.parseToJsonElement("""{"dataPolicy":"no_training","access":"approved","monthlyLimit":40,"instanceMonthlyLimit":1000}""")
+        val ai = JsonObject(mapOf("ollamaUserPolicy" to JsonPrimitive("allowlist"), "operator" to terms))
+        server.enqueue(answer(fixture("config")))
+        server.enqueue(answer(JsonObject(captured + ("ai" to ai)).toString()))
+        val repository = repository()
+
+        runBlocking { repository.refresh() }
+        assertEquals(null, repository.rules.value?.operatorAi)
+        runBlocking { repository.refresh() }
+
+        assertEquals(OperatorAiTerms("no_training", "approved", 40, 1000), repository.rules.value?.operatorAi)
     }
 
     @Test

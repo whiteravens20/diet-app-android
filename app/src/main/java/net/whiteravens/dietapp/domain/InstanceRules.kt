@@ -34,6 +34,8 @@ data class InstanceRules(
     val noWaste: Map<String, LessWasteEffect> = emptyMap(),
     /** How the two levels of a plan that wastes less plan; null until the instance says. */
     val waste: WasteRules? = null,
+    /** The terms of the instance's own AI; null where it offers none, or does not say. */
+    val operatorAi: OperatorAiTerms? = null,
 ) {
     /** How well the catalogue serves [diet] at [mealCount] meals a day; null where the API does not say. */
     fun supplyOf(diet: String, mealCount: Int): Supply? = catalogueSupply[diet]?.get(mealCount)
@@ -43,6 +45,14 @@ data class InstanceRules(
         const val DEFAULT_MAX_PROFILES = 2
     }
 }
+
+/**
+ * The terms of the instance's own AI as they apply: which of OpenRouter's endpoints its requests may
+ * reach ([dataPolicy], null for another provider), which accounts may use it ([access]: `everyone`,
+ * `confirmed` or `approved`), and how many requests an account, and all of them together, may make
+ * in a month.
+ */
+data class OperatorAiTerms(val dataPolicy: String?, val access: String, val monthlyLimit: Int, val instanceMonthlyLimit: Int)
 
 /**
  * How well the catalogue serves a diet at a number of meals a day: [recipes] for the meal it has the

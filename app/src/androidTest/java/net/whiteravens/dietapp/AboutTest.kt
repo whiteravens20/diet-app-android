@@ -12,6 +12,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensTheBrowserAt
+import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.webApp
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
@@ -28,7 +29,7 @@ import org.junit.runner.RunWith
 
 /**
  * What the application says of the instance and of itself under "More": the server's version and
- * what it allows, the instance's terms in the web application, the application's version, the
+ * what it allows, the terms of its own AI, the instance's terms in the web application, the application's version, the
  * legal notices with the attribution the licence's additional term asks for (the address of the
  * original source on a line of its own, and White Ravens leading to its home page), and the
  * libraries it ships with their licences.
@@ -47,6 +48,15 @@ class AboutTest {
         screen.onNodeWithText(text(R.string.about_title)).performClick()
         screen.waitForText(text(R.string.about_server_version))
         screen.waitForText(text(R.string.about_max_profiles))
+        // The terms of the instance's own AI, as the instance the journeys run against has it:
+        // Ollama, for every account, 40 requests an account and 1000 for all of them a month.
+        screen.onNodeWithText(text(R.string.about_ai)).performScrollTo()
+        screen.onNodeWithText(text(R.string.about_ai_access_everyone)).assertExists()
+        screen.onNodeWithText(plural(R.plurals.about_ai_limits, 40, 40, 1000)).assertExists()
+        // Ollama has no choice of the endpoints its requests may reach, and nothing is said of one.
+        listOf(R.string.about_ai_policy_no_training, R.string.about_ai_policy_no_retention, R.string.about_ai_policy_any)
+            .forEach { screen.onNodeWithText(text(it)).assertDoesNotExist() }
+        screen.keepScreenshot("about-the-instance")
         screen.onNodeWithText(BuildConfig.VERSION_NAME).performScrollTo()
         screen.onNodeWithText(text(R.string.about_notice, ATTRIBUTION)).performScrollTo()
         screen.onNodeWithText(ATTRIBUTION_URL).performScrollTo()

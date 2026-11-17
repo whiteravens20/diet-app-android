@@ -38,6 +38,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.BuildConfig
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.OperatorAiTerms
 import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION
 import net.whiteravens.dietapp.ui.common.ATTRIBUTION_URL
@@ -103,6 +104,7 @@ fun AboutScreen(
                     r.maxRepeatsPerRecipe?.let { most ->
                         Fact(stringResource(R.string.about_max_repeats), pluralStringResource(R.plurals.about_max_repeats_times, most, most))
                     }
+                    r.operatorAi?.let { terms -> OperatorAi(terms) }
                 }
                 Said(stringResource(R.string.about_operator), Modifier.padding(top = 12.dp))
                 val contact = rules?.operatorContact
@@ -185,6 +187,33 @@ private fun NewerBuild(update: UpdateViewModel) {
         Modifier.padding(top = 8.dp),
     )
     if (on) TextButton(onClick = update::askNow, enabled = !asking) { Text(stringResource(R.string.about_update_check)) }
+}
+
+/** The text of each group of accounts the instance's AI may be for (`OperatorAiAccess`). */
+internal val AI_ACCESS_TEXTS: Map<String, Int> = mapOf(
+    "everyone" to R.string.about_ai_access_everyone,
+    "confirmed" to R.string.about_ai_access_confirmed,
+    "approved" to R.string.about_ai_access_approved,
+)
+
+/** The text of each choice of the endpoints the instance's AI may send its requests to (`AiDataPolicy`). */
+internal val AI_POLICY_TEXTS: Map<String, Int> = mapOf(
+    "no_training" to R.string.about_ai_policy_no_training,
+    "no_retention" to R.string.about_ai_policy_no_retention,
+    "any" to R.string.about_ai_policy_any,
+)
+
+/**
+ * The terms of the instance's own AI, as the web's settings say them: whom it is for, how much it
+ * may be asked and where its requests go. A group or a choice this version does not know is left
+ * unsaid; a provider with no choice of endpoints has no line for it.
+ */
+@Composable
+private fun OperatorAi(terms: OperatorAiTerms) {
+    Text(stringResource(R.string.about_ai), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp))
+    AI_ACCESS_TEXTS[terms.access]?.let { Said(stringResource(it)) }
+    Said(pluralStringResource(R.plurals.about_ai_limits, terms.monthlyLimit, terms.monthlyLimit, terms.instanceMonthlyLimit))
+    terms.dataPolicy?.let { policy -> AI_POLICY_TEXTS[policy]?.let { Said(stringResource(it)) } }
 }
 
 @Composable

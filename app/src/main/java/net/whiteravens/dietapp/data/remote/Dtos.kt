@@ -61,6 +61,24 @@ data class PublicConfigDto(
     val catalogue: CatalogueConfigDto = CatalogueConfigDto(),
     val plans: PlansConfigDto = PlansConfigDto(),
     val products: ProductsConfigDto = ProductsConfigDto(),
+    val ai: AiConfigDto = AiConfigDto(),
+)
+
+/** What the instance says of AI: the terms of its own, where it offers one; an instance that says nothing of them names none. */
+@Serializable
+data class AiConfigDto(val operator: OperatorAiTermsDto? = null)
+
+/**
+ * The terms of the instance's own AI as they apply: which of OpenRouter's endpoints its requests
+ * may reach (null for another provider, which has no such choice), which accounts may use it, and
+ * how many requests an account, and all of them together, may make in a month.
+ */
+@Serializable
+data class OperatorAiTermsDto(
+    val dataPolicy: String? = null,
+    val access: String,
+    val monthlyLimit: Int,
+    val instanceMonthlyLimit: Int,
 )
 
 /**

@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.LessWasteEffectDto
 import net.whiteravens.dietapp.data.remote.ServerAddress
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.LessWasteEffect
+import net.whiteravens.dietapp.domain.OperatorAiTerms
 import net.whiteravens.dietapp.domain.Supply
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.WasteRules
@@ -124,6 +125,7 @@ class ServerRepository @Inject constructor(private val api: AuthApiService, priv
                 },
                 operatorContact = config.instance.operatorContact,
                 supportUrl = config.instance.supportUrl,
+                operatorAi = config.ai.operator?.let { OperatorAiTerms(it.dataPolicy, it.access, it.monthlyLimit, it.instanceMonthlyLimit) },
                 productsOffered = config.products.offered,
                 productLookups = config.products.lookups,
                 catalogueSupply = config.catalogue.supply.mapValues { (_, byCount) ->
