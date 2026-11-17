@@ -90,6 +90,8 @@ data class PerKgSplit(
     val split: MacroSplit,
     /** Grams of protein a day, as the weight gives them before any limit. */
     val protein: Double,
+    /** Grams of protein a day once a limit holds them. */
+    val keptGrams: Double,
     /** Protein's share went past a limit, its own or carbohydrate's, and is held there. */
     val held: Boolean,
     /** The grams a kilogram that keep every share inside its limits here, to a tenth inward; null where none do. */
@@ -110,6 +112,7 @@ fun perKgSplit(perKg: Double, fatPercent: Int, weightKg: Double, target: Int): P
     return PerKgSplit(
         split = wholePercent(kept, fat, 1 - kept - fat),
         protein = protein,
+        keptGrams = kept * target / KCAL_PROTEIN,
         held = kotlin.math.abs(kept - asked) > 1e-9,
         fits = proteinPerKgThatFits(fat, target, weightKg),
     )

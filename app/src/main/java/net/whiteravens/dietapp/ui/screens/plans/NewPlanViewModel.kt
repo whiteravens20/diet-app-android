@@ -24,7 +24,9 @@ import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.MarkedRecipe
+import net.whiteravens.dietapp.domain.PerKgSplit
 import net.whiteravens.dietapp.domain.inGiveWayOrder
+import net.whiteravens.dietapp.domain.perKgSplit
 import net.whiteravens.dietapp.domain.PlanAsk
 import net.whiteravens.dietapp.domain.ProfileDetails
 import net.whiteravens.dietapp.domain.RelaxationNeeded
@@ -89,6 +91,30 @@ class NewPlanViewModel @Inject constructor(
 
         /** The plan is made to the custom diet and the profile has no targets for it: the form asks for them. */
         val asksTargets: Boolean get() = form.dietType == "custom" && profile != null && profile.figures.customMacroSplit == null
+
+        /** A calorie target of the plan's own, where the form holds one a plan may be made to. */
+        val planTarget: Int?
+            get() = form.calorieTarget.trim().toIntOrNull()?.takeIf { it in PlanChoices.CALORIE_TARGETS }
+
+        /**
+         * Protein per kilogram of the custom diet held at a limit at the plan's own target: the profile's, or the one
+         * the form asks for while it fits the profile's target. The plan holds it there, and the form says so.
+         */
+        val heldAtPlan: PerKgSplit?
+            get() {
+                val target = planTarget ?: return null
+                val figures = profile?.figures ?: return null
+                if (planDiet != "custom") return null
+                val at = if (asksTargets) {
+                    if (form.own.fault(profileTarget, figures.weightKg) != null) return null
+                    form.own.perKgAt(target, figures.weightKg)
+                } else {
+                    val perKg = figures.customProteinPerKg ?: return null
+                    val split = figures.customMacroSplit ?: return null
+                    perKgSplit(perKg, split.fat, figures.weightKg, target)
+                }
+                return at?.takeIf { it.held }
+            }
 
         /** What is wrong with the targets asked for, once making the plan was refused for it, at the profile's own target and weight. */
         val ownFault: OwnFault?

@@ -18,6 +18,9 @@ object PlanChoices {
     /** The kinds of a day: a rest day aims at fewer calories, a training day at more, a skipped day is left empty. */
     val DAY_KINDS = listOf("normal", "rest", "training", "skip")
 
+    /** The least and the most daily calorie target a plan may be made to, as the API takes it. */
+    val CALORIE_TARGETS = 800..6000
+
     /**
      * The most days the form draws a day's options for. It holds no plan to a length, which is the
      * API's to say; it keeps a number typed by mistake from drawing that many days.

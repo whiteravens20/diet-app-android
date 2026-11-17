@@ -1548,6 +1548,7 @@
     <string name="plans_diet_custom_per_kg">Własna (%1$s\u00A0g białka na kg, %2$d%% tłuszczu)</string>
     <string name="plans_choices_hint_own_targets">Dieta, liczba posiłków i\u00A0cel kalorii dotyczą tylko tego planu.</string>
     <string name="plans_own_targets_saved">Te cele zostaną zapisane w\u00A0profilu razem z\u00A0planem; dieta profilu się nie zmieni.</string>
+    <string name="plans_per_kg_held_at_plan">Przy celu tego planu, %1$s\u00A0kcal, %2$s\u00A0g białka na kg wychodzi poza granice podziału: plan trzyma białko na granicy, %3$s\u00A0g dziennie.</string>
     <string name="plans_save_targets_failed">Nie udało się zapisać celów diety własnej w\u00A0profilu, więc plan nie został wygenerowany.</string>
     <string name="plans_calorie_target_hint">Puste: cel z profilu, %1$s kcal dziennie.</string>
     <string name="plans_apply_prefs">Zastosuj preferencje</string>

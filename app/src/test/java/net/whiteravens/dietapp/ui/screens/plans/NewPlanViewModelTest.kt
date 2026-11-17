@@ -268,6 +268,34 @@ class NewPlanViewModelTest {
     }
 
     @Test
+    fun `a target of the plan's own that holds the profile's protein per kilogram at a limit is said, and one it fits is not`() {
+        coEvery { profiles.profile(profile.id) } returns
+            profile.copy(figures = profile.figures.copy(customMacroSplit = MacroSplit(35, 30, 35), customProteinPerKg = 3.0))
+        val model = model()
+
+        // 3 g a kilogram of 66 kg is 792 kcal: 32 % of 2500, and 53 % of 1500, held at 45 %, 169 g.
+        model.edit { it.copy(dietType = "custom", calorieTarget = "2500") }
+        assertNull(model.state.value.heldAtPlan)
+        model.edit { it.copy(calorieTarget = "1500") }
+        assertEquals(169, model.state.value.heldAtPlan!!.keptGrams.roundToInt())
+        // Another diet holds nothing, and a target no plan may have is not judged.
+        model.edit { it.copy(dietType = null) }
+        assertNull(model.state.value.heldAtPlan)
+        model.edit { it.copy(dietType = "custom", calorieTarget = "150") }
+        assertNull(model.state.value.heldAtPlan)
+    }
+
+    @Test
+    fun `protein per kilogram the form asks for that fits the profile's target is said held at the plan's own`() {
+        val model = model()
+
+        // 2.5 g a kilogram of 66 kg is 660 kcal: 41 % of the profile's 1603, and 55 % of 1200, held at 45 %, 135 g.
+        model.edit { it.copy(dietType = "custom", own = OwnTargetsTyped(way = OwnWay.PER_KG, perKg = "2,5"), calorieTarget = "1200") }
+
+        assertEquals(135, model.state.value.heldAtPlan!!.keptGrams.roundToInt())
+    }
+
+    @Test
     fun `a plan begun from a day of the calendar starts on that day`() {
         val day = LocalDate.of(2026, 11, 2)
         val model = NewPlanViewModel(

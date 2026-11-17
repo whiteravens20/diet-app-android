@@ -61,6 +61,7 @@ import net.whiteravens.dietapp.ui.screens.profiles.OwnTargetsFields
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices
 import net.whiteravens.dietapp.ui.screens.profiles.SupplyNote
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 /**
  * A new plan for a profile: from a day, for some days, with what it is made for where that differs
@@ -176,6 +177,17 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        state.heldAtPlan?.let { at ->
+                            Hint(
+                                stringResource(
+                                    R.string.plans_per_kg_held_at_plan,
+                                    formatNumber(state.planTarget!!),
+                                    formatNumber(at.protein / (profile.figures.weightKg), 1),
+                                    formatNumber(at.keptGrams.roundToInt()),
+                                ),
+                                MaterialTheme.colorScheme.tertiary,
+                            )
+                        }
                         if (state.asksTargets) {
                             // The targets are the profile's, so they are worked out at the profile's own target, as its form works them out.
                             OwnTargetsFields(

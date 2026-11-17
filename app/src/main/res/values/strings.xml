@@ -1440,6 +1440,7 @@
     <string name="plans_diet_custom_per_kg">Custom (%1$s\u00A0g of protein per kg, %2$d%% fat)</string>
     <string name="plans_choices_hint_own_targets">Diet, meals a day and calorie target hold for this plan only.</string>
     <string name="plans_own_targets_saved">These targets are saved in the profile with the plan; the profile\'s diet stays as it is.</string>
+    <string name="plans_per_kg_held_at_plan">At this plan\'s target of %1$s\u00A0kcal, %2$s\u00A0g of protein per kg goes past the limits of a split: the plan holds protein at the limit, %3$s\u00A0g a day.</string>
     <string name="plans_save_targets_failed">Could not save the custom diet\'s targets in the profile, so the plan was not generated.</string>
     <string name="plans_calorie_target_hint">Empty: the profile’s target, %1$s kcal a day.</string>
     <string name="plans_apply_prefs">Apply preferences</string>
