@@ -98,6 +98,7 @@ enum class ProfileField(val path: String) {
     SPLIT_PROTEIN("customMacroSplit.protein"),
     SPLIT_FAT("customMacroSplit.fat"),
     SPLIT_CARBS("customMacroSplit.carbs"),
+    PER_KG("customProteinPerKg"),
     CONSECUTIVE_DAYS("preferences.maxConsecutiveDaysSameMeal"),
     TIMES_PER_WEEK("preferences.maxTimesPerWeekSameMeal"),
     KIND_PER_DAY("preferences.maxMealsPerDaySameKind"),
@@ -111,7 +112,10 @@ enum class ProfileField(val path: String) {
 
     companion object {
         /** The fields a calorie target is worked out from, which the calorie preview is asked with. */
-        val QUESTION = setOf(AGE, HEIGHT, WEIGHT, OWN_TARGET, SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS)
+        val QUESTION = setOf(AGE, HEIGHT, WEIGHT, OWN_TARGET, SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS, PER_KG)
+
+        /** The fields of the custom diet's targets, whichever way they are typed in. */
+        val OWN = setOf(SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS, PER_KG)
     }
 }
 
@@ -219,8 +223,8 @@ data class KindLimitTyped(val kind: String, val perDay: String = "", val perWeek
  * A kept profile's form remembers what the profile had where the form shows it rounded or not at
  * all: its weights, which a field shows to one decimal in the account's unit and gives back
  * exactly while it still shows that, so that a weight that went through pounds and back does not
- * move by a hair with every save; and its split, which a profile on another diet keeps for when it
- * goes back.
+ * move by a hair with every save; and its custom diet's targets, which a profile on another diet keeps for
+ * when it goes back.
  *
  * Its numbers are numbers; what the API takes of them, and of the name, is the API's to say.
  */
@@ -236,7 +240,8 @@ data class ProfileForm(
     val ownTarget: String = "",
     val dietType: String = "balanced",
     val mealCount: Int = 3,
-    val split: SplitTyped = SplitTyped.of(ProfileChoices.FIRST_SPLIT),
+    /** The custom diet's targets, shown while the diet is the custom one. */
+    val own: OwnTargetsTyped = OwnTargetsTyped(),
     val allergens: Set<String> = emptySet(),
     val weightReminderCadence: String = "weekly",
     /** The water a day in ml as typed; a new profile starts at the API's 2 l, and an empty one has no target. */
@@ -252,6 +257,7 @@ data class ProfileForm(
     val keptWeightKg: Double? = null,
     val keptTargetWeightKg: Double? = null,
     val keptSplit: MacroSplit? = null,
+    val keptPerKg: Double? = null,
     /** The target and the reminder to drink the profile had, which it keeps while water is not tracked; a new one's as it starts. */
     val keptWaterTargetMl: Int? = DEFAULT_WATER_TARGET_ML,
     val keptWaterReminders: Boolean = false,
@@ -270,6 +276,9 @@ data class ProfileForm(
         LabelLimit.entries.forEach { limit -> labels.getValue(limit).let { if (it.on && it.grams.number() == null) add(limit.field) } }
     }
 
+    /** The body's weight the form holds, in kilograms; null while it holds no number. */
+    fun bodyWeightKg(unit: WeightUnit): Double? = weightKg(weight, keptWeightKg, unit)
+
     /** The kinds of protein whose row holds what is no whole number, with the parts that do. */
     fun kindProblems(): Map<String, Set<KindPart>> =
         limits.kindLimits.associate { it.kind to it.notWhole }.filterValues { it.isNotEmpty() }
@@ -280,7 +289,7 @@ data class ProfileForm(
         if (height.number() == null) add(ProfileField.HEIGHT)
         if (weightKg(weight, keptWeightKg, unit) == null) add(ProfileField.WEIGHT)
         if (!ownTarget.emptyOrWhole()) add(ProfileField.OWN_TARGET)
-        if (dietType == "custom") addAll(split.notWhole)
+        if (dietType == "custom") addAll(own.notNumbers)
     }
 
     /**
@@ -298,10 +307,11 @@ data class ProfileForm(
             weightKg = weightKg(weight, keptWeightKg, unit)!!,
             activityLevel = activityLevel,
             dietType = dietType,
-            customMacroSplit = if (dietType == "custom") split.split() else null,
+            customMacroSplit = if (dietType == "custom") own.split() else null,
             weeklyLossTarget = weeklyLossTarget,
             manualCalorieTarget = ownTarget.trim().toIntOrNull(),
             acknowledgeRisk = acknowledgeRisk && riskShown,
+            customProteinPerKg = if (dietType == "custom") own.perKgValue() else null,
         )
     }
 
@@ -327,9 +337,10 @@ data class ProfileForm(
             waterTracking = waterTracking,
             cookingReminders = cookingReminders,
             waterReminders = if (waterTracking) waterReminders else keptWaterReminders,
-            // The custom diet's split as the form shows it; on another diet the profile keeps the one it has.
+            // The custom diet's targets as the form shows them; on another diet the profile keeps the ones it has.
             customMacroSplit = if (dietType == "custom") asked.customMacroSplit else keptSplit,
             allergens = ProfileChoices.ALLERGENS.filter { it in allergens },
+            customProteinPerKg = if (dietType == "custom") asked.customProteinPerKg else keptPerKg,
         )
     }
 
@@ -356,12 +367,20 @@ data class ProfileForm(
     /**
      * The figures of [kept] with every field of the form put in where it holds what may be kept, for a form that keeps
      * each change as it is made: what differs is what is sent. A field that holds no number where one is needed, one
-     * the API refused as it is ([refused]), and a split of the custom diet that does not add up to a hundred stay as
-     * [kept] has them; [notKept] names them.
+     * the API refused as it is ([refused]), and custom diet's targets that are wrong at [target] kcal (`OwnFault`) stay
+     * as [kept] has them; [notKept] names them.
      */
-    fun keepable(kept: ProfileFigures, unit: WeightUnit, refused: Set<ProfileField> = emptySet()): ProfileFigures {
+    fun keepable(kept: ProfileFigures, unit: WeightUnit, refused: Set<ProfileField> = emptySet(), target: Int? = null): ProfileFigures {
         fun <T> held(field: ProfileField, typed: T?, keptValue: T): T = if (field in refused || typed == null) keptValue else typed
-        val split = split.split()?.takeIf { dietType == "custom" && it.protein + it.fat + it.carbs == 100 && ProfileField.SPLIT !in refused }
+        val ownTyped = dietType == "custom" && own.notNumbers.isEmpty() && refused.none { it in ProfileField.OWN } &&
+            own.fault(target, weightKg(weight, keptWeightKg, unit)) == null
+        val perKg = own.perKgValue()
+        // Protein per kilogram with the fat the profile has is what it keeps, whatever its split comes to at today's weight.
+        val split = when {
+            !ownTyped -> null
+            perKg != null && perKg == kept.customProteinPerKg && own.split()?.fat == kept.customMacroSplit?.fat -> kept.customMacroSplit
+            else -> own.split()
+        }
         // The custom diet comes with a split: the one it holds, or the one the profile keeps; with neither, the diet the profile has.
         val diet = if (dietType == "custom" && split == null && kept.customMacroSplit == null) kept.dietType else dietType
         return kept.copy(
@@ -395,6 +414,7 @@ data class ProfileForm(
             cookingReminders = cookingReminders,
             waterReminders = if (waterTracking) waterReminders else kept.waterReminders,
             customMacroSplit = if (diet == "custom") split ?: kept.customMacroSplit else kept.customMacroSplit,
+            customProteinPerKg = if (diet == "custom" && split != null) perKg else kept.customProteinPerKg,
         )
     }
 
@@ -431,11 +451,20 @@ data class ProfileForm(
             if (grams == null) held else held.with(limit, grams)
         }
 
-    /** The fields that hold what cannot be kept as it is: no number where one is needed, no name, a split that does not add up. */
-    fun notKept(unit: WeightUnit): Set<ProfileField> = buildSet {
+    /**
+     * The fields that hold what cannot be kept as it is: no number where one is needed, no name, custom diet's targets
+     * that are wrong at [target] kcal: a split that does not add up, protein held at a limit.
+     */
+    fun notKept(unit: WeightUnit, target: Int? = null): Set<ProfileField> = buildSet {
         addAll(problems(unit))
         if (name.isBlank()) add(ProfileField.NAME)
-        if (dietType == "custom" && split.notWhole.isEmpty() && split.sum != 100) add(ProfileField.SPLIT)
+        if (dietType == "custom") {
+            when (own.fault(target, weightKg(weight, keptWeightKg, unit))) {
+                OwnFault.SUM -> add(ProfileField.SPLIT)
+                OwnFault.PER_KG -> add(ProfileField.PER_KG)
+                null -> Unit
+            }
+        }
     }
 
     /**
@@ -447,6 +476,7 @@ data class ProfileForm(
             activityLevel != after.activityLevel ||
             weeklyLossTarget != after.weeklyLossTarget ||
             dietType != after.dietType ||
+            own.way != after.own.way ||
             mealCount != after.mealCount ||
             weightReminderCadence != after.weightReminderCadence ||
             waterTracking != after.waterTracking ||
@@ -464,6 +494,7 @@ data class ProfileForm(
         keptWeightKg = kept.figures.weightKg,
         keptTargetWeightKg = kept.figures.targetWeightKg,
         keptSplit = kept.figures.customMacroSplit,
+        keptPerKg = kept.figures.customProteinPerKg,
         keptWaterTargetMl = kept.figures.waterTargetMl,
         keptWaterReminders = kept.figures.waterReminders,
     )
@@ -477,10 +508,12 @@ data class ProfileForm(
         ProfileField.TARGET_WEIGHT -> targetWeight
         ProfileField.WATER_TARGET -> waterTarget
         ProfileField.OWN_TARGET -> ownTarget
-        ProfileField.SPLIT -> dietType to split
-        ProfileField.SPLIT_PROTEIN -> split.protein
-        ProfileField.SPLIT_FAT -> split.fat
-        ProfileField.SPLIT_CARBS -> split.carbs
+        ProfileField.SPLIT -> dietType to own
+        ProfileField.SPLIT_PROTEIN -> own.percent.protein
+        // Fat is typed in the way the targets are set in: with the other two shares, or with protein per kilogram.
+        ProfileField.SPLIT_FAT -> own.way to if (own.way == OwnWay.PER_KG) own.perKgFat else own.percent.fat
+        ProfileField.SPLIT_CARBS -> own.percent.carbs
+        ProfileField.PER_KG -> own.perKg
         ProfileField.CONSECUTIVE_DAYS -> limits.consecutiveDays
         ProfileField.TIMES_PER_WEEK -> limits.timesPerWeek
         ProfileField.KIND_PER_DAY -> limits.kindPerDay
@@ -506,7 +539,7 @@ data class ProfileForm(
                 ownTarget = figures.manualCalorieTarget?.toString().orEmpty(),
                 dietType = figures.dietType,
                 mealCount = figures.mealCount,
-                split = SplitTyped.of(figures.customMacroSplit ?: ProfileChoices.FIRST_SPLIT),
+                own = OwnTargetsTyped.of(figures.customMacroSplit, figures.customProteinPerKg),
                 allergens = figures.allergens.toSet(),
                 weightReminderCadence = figures.weightReminderCadence,
                 waterTarget = figures.waterTargetMl?.toString().orEmpty(),
@@ -519,6 +552,7 @@ data class ProfileForm(
                 keptWeightKg = figures.weightKg,
                 keptTargetWeightKg = figures.targetWeightKg,
                 keptSplit = figures.customMacroSplit,
+                keptPerKg = figures.customProteinPerKg,
                 keptWaterTargetMl = figures.waterTargetMl,
                 keptWaterReminders = figures.waterReminders,
             )
@@ -585,9 +619,9 @@ private fun weightKg(typed: String, kept: Double?, unit: WeightUnit): Double? {
 }
 
 /** A number as it is typed, with a decimal comma as well as a point. */
-private fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
+internal fun String.number(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
 
 /** Whether the field is empty or holds a whole number. */
 private fun String.emptyOrWhole(): Boolean = isBlank() || trim().toIntOrNull() != null
 
-private fun Double.plain(): String = if (this % 1.0 == 0.0) roundToInt().toString() else toString()
+internal fun Double.plain(): String = if (this % 1.0 == 0.0) roundToInt().toString() else toString()

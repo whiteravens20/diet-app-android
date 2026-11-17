@@ -211,6 +211,11 @@ data class ProfileFigures(
     /** The split of energy on the `custom` diet, in per cent; null on another. */
     val customMacroSplit: MacroSplit?,
     val allergens: List<String>,
+    /**
+     * The custom diet's protein in grams a kilogram of the weight, the split then giving fat its share and
+     * carbohydrate the rest; null where the split is the way.
+     */
+    val customProteinPerKg: Double? = null,
 )
 
 data class MacroSplit(val protein: Int, val fat: Int, val carbs: Int)
@@ -307,6 +312,7 @@ data class CalorieQuestion(
     val weeklyLossTarget: String?,
     val manualCalorieTarget: Int?,
     val acknowledgeRisk: Boolean,
+    val customProteinPerKg: Double? = null,
 )
 
 /** What figures come to: their calculation, and the same body at each pace of loss, slowest first. */
@@ -351,6 +357,8 @@ data class CalorieTarget(
     val goalHeld: Boolean,
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
+    /** The custom diet's protein per kilogram went past a limit of a split at this weight and target, and is held there. */
+    val customSplitHeld: Boolean = false,
 ) {
     /**
      * Why the loss this target was asked for is a risk, of the API's warnings: under 18, underweight,

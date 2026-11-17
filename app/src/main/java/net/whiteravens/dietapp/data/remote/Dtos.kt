@@ -505,6 +505,8 @@ data class CalorieCalculationDto(
     val goalHeld: Boolean,
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
+    /** The custom diet's protein per kilogram went past a limit of a split at this weight and target, and is held there. */
+    val customSplitHeld: Boolean = false,
 )
 
 /** A figure of fibre, sugars, salt or saturated fat, in grams: [atLeast] where a part of what it sums gives none. */
@@ -618,6 +620,8 @@ data class ProfileDto(
     val waterReminders: Boolean = false,
     /** The split of energy on the `custom` diet; null on another diet that kept none. */
     val customMacroSplit: MacroSplitDto? = null,
+    /** The custom diet's protein in grams a kilogram of the weight; null where the split is the way. */
+    val customProteinPerKg: Double? = null,
     val preferences: ProfilePreferencesDto = ProfilePreferencesDto(),
     /** When the profile said it understands the risk of a target held at maintenance, or null. */
     val riskAcknowledgedAt: String? = null,
@@ -655,6 +659,8 @@ data class NewProfileDto(
     val cookingReminders: Boolean,
     val waterReminders: Boolean,
     val customMacroSplit: MacroSplitDto?,
+    /** Sent only where protein is per kilogram: an API that came before it refuses no profile that leaves it out. */
+    val customProteinPerKg: Double? = null,
     val acknowledgeRisk: Boolean? = null,
     val preferences: NewProfilePreferencesDto,
 )
@@ -714,6 +720,7 @@ data class ProfilePatchDto(
     val weeklyLossTarget: JsonElement? = null,
     val manualCalorieTarget: JsonElement? = null,
     val customMacroSplit: JsonElement? = null,
+    val customProteinPerKg: JsonElement? = null,
     val mealCount: JsonElement? = null,
     val weightReminderCadence: JsonElement? = null,
     val cookingReminders: JsonElement? = null,
@@ -737,6 +744,8 @@ data class CaloriePreviewRequestDto(
     val weeklyLossTarget: String?,
     val manualCalorieTarget: Int?,
     val acknowledgeRisk: Boolean,
+    /** Sent only where protein is per kilogram. */
+    val customProteinPerKg: Double? = null,
 )
 
 /** The calculation for the typed figures, and the same body at each pace of loss, slowest first. */

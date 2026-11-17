@@ -262,7 +262,7 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
 
                 else -> {
                     Lead(R.string.profile_wizard_food_lead)
-                    DietFields(form, marks, rules, viewModel::edit)
+                    DietFields(form, marks, rules, viewModel::edit, target = state.ownTarget, weightKg = form.bodyWeightKg(state.unit))
                     AllergenChoice(
                         selected = form.allergens,
                         onChange = { chosen -> viewModel.edit { it.copy(allergens = chosen.toSet()) } },

@@ -461,7 +461,16 @@ internal fun RiskBox(reasons: List<String>, acknowledged: Boolean, onAcknowledge
  * energy comes from protein, fat and carbohydrate.
  */
 @Composable
-internal fun DietFields(form: ProfileForm, marks: ProfileMarks, rules: InstanceRules?, onEdit: FormEdit, meals: Boolean = true) {
+internal fun DietFields(
+    form: ProfileForm,
+    marks: ProfileMarks,
+    rules: InstanceRules?,
+    onEdit: FormEdit,
+    meals: Boolean = true,
+    /** The day's calorie target the form's figures come to, and the weight they hold: what the custom diet's grams are worked out at. */
+    target: Int? = null,
+    weightKg: Double? = null,
+) {
     ChoiceField(
         label = stringResource(R.string.profile_diet_type),
         options = ProfileChoices.DIETS,
@@ -492,7 +501,16 @@ internal fun DietFields(form: ProfileForm, marks: ProfileMarks, rules: InstanceR
             SupplyNote(rules, form.dietType, form.mealCount)
         }
     }
-    if (form.dietType == "custom") SplitFields(form, marks, onEdit)
+    if (form.dietType == "custom") {
+        OwnTargetsFields(
+            own = form.own,
+            target = target,
+            weightKg = weightKg,
+            notNumbers = marks.notNumbers,
+            refusals = marks.refusals.fields,
+            onEdit = { change -> onEdit { it.copy(own = change(it.own)) } },
+        )
+    }
 }
 
 /**
@@ -511,54 +529,6 @@ internal fun SupplyNote(rules: InstanceRules?, diet: String, mealCount: Int) {
         SupplyLevel.THIN -> pluralStringResource(R.plurals.catalogue_thin, found.recipes, found.recipes, name, mealCount)
     }
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
-}
-
-/** The three shares of the custom diet, and what they add up to, said while they are typed, with the API's refusal of the three together. */
-@Composable
-private fun SplitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
-    val split = form.split
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.profile_custom_split), style = MaterialTheme.typography.titleSmall)
-        Text(
-            stringResource(R.string.profile_custom_split_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShareField(split.protein, R.string.profile_split_protein, marks.of(ProfileField.SPLIT_PROTEIN), Modifier.weight(1f)) { typed ->
-                onEdit { it.copy(split = it.split.copy(protein = typed)) }
-            }
-            ShareField(split.fat, R.string.profile_split_fat, marks.of(ProfileField.SPLIT_FAT), Modifier.weight(1f)) { typed ->
-                onEdit { it.copy(split = it.split.copy(fat = typed)) }
-            }
-            ShareField(split.carbs, R.string.profile_split_carbs, marks.of(ProfileField.SPLIT_CARBS), Modifier.weight(1f)) { typed ->
-                onEdit { it.copy(split = it.split.copy(carbs = typed)) }
-            }
-        }
-        Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
-            Text(stringResource(R.string.profile_split_sum, split.sum), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            // Refused as a whole, the three are said to have to add up to a hundred.
-            marks.refusals.fields[ProfileField.SPLIT]?.let { refused ->
-                Text(
-                    refusalText(refused, other = stringResource(R.string.refusal_split_sum)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
-            }
-        }
-    }
-}
-
-/** One share of the custom diet's split, with what is wrong with it. */
-@Composable
-private fun ShareField(value: String, label: Int, problem: String?, modifier: Modifier, onValueChange: (String) -> Unit) {
-    FormField(
-        value = value,
-        onValueChange = onValueChange,
-        label = stringResource(label),
-        problem = problem,
-        modifier = modifier,
-    )
 }
 
 /**
@@ -895,6 +865,13 @@ internal fun CaloriePreviewCard(
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    if (c.customSplitHeld) {
+                        Text(
+                            stringResource(R.string.calorie_preview_split_held),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
                     val notes = c.notes(risk = false)
                     if (notes.isNotEmpty()) {
                         WarningBox {

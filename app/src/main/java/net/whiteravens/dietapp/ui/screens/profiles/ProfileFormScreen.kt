@@ -124,7 +124,7 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
                             ReminderField(form, viewModel::edit)
                             ReminderChoices(form, viewModel::edit)
                             FormSection(stringResource(R.string.profile_section_food))
-                            DietFields(form, marks, rules, viewModel::edit)
+                            DietFields(form, marks, rules, viewModel::edit, target = state.ownTarget, weightKg = form.bodyWeightKg(state.unit))
                             FormSection(stringResource(R.string.profile_section_variety))
                             LimitFields(form, marks, viewModel::edit)
                             FormSection(stringResource(R.string.profile_label_limits))

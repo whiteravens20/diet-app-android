@@ -34,6 +34,7 @@ import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 /**
  * A profile's form: a new profile, one kept ([PROFILE_ID] in the route), or the first profile of an
@@ -109,6 +110,10 @@ class ProfileFormViewModel @Inject constructor(
         /** The API refused the figures as they are: the fields say why. */
         val previewRefused: Boolean
             get() = question != null && question == refusedQuestion
+
+        /** The day's target the custom diet's grams are worked out at: the last the API said, while new figures are asked about. */
+        val ownTarget: Int?
+            get() = answer?.calculation?.dailyTarget?.roundToInt()
 
         /** There are figures to work out, and no answer to show yet. */
         val waiting: Boolean
@@ -216,14 +221,16 @@ class ProfileFormViewModel @Inject constructor(
         val details = kept ?: return
         val now = _state.value
         val refused = now.refusals.fields.keys
-        val figures = now.form.keepable(details.figures, now.unit, refused)
+        // Protein per kilogram is judged at the target of the figures as they are, once the API has said it.
+        val target = now.preview?.calculation?.dailyTarget?.roundToInt()
+        val figures = now.form.keepable(details.figures, now.unit, refused, target)
         val limits = now.form.keepableLimits(details.preferences.limits, refused)
         val labels = now.form.keepableLabels(details.preferences.labelLimits, refused)
         // Said only where the form shows the risk, and only when it changes.
         val risk = now.form.acknowledgeRisk.takeIf { now.risks.isNotEmpty() && it != details.riskAcknowledged }
         val own = partsChanged(details.figures, figures)
         val preferences = limitPartsChanged(details.preferences.limits, limits, details.preferences.labelLimits, labels)
-        val held = now.form.notKept(now.unit).isNotEmpty() || now.form.kindProblems().isNotEmpty()
+        val held = now.form.notKept(now.unit, target).isNotEmpty() || now.form.kindProblems().isNotEmpty()
         if (own.isEmpty() && preferences.isEmpty() && risk == null) {
             // Nothing differs from the profile: what the form holds is kept, a value put back as it was among it.
             _state.update {
@@ -477,7 +484,13 @@ class ProfileFormViewModel @Inject constructor(
             "targetWeightKg" to setOf(ProfileField.TARGET_WEIGHT),
             "waterTargetMl" to setOf(ProfileField.WATER_TARGET),
             "manualCalorieTarget" to setOf(ProfileField.OWN_TARGET),
-            "customMacroSplit" to setOf(ProfileField.SPLIT, ProfileField.SPLIT_PROTEIN, ProfileField.SPLIT_FAT, ProfileField.SPLIT_CARBS),
+            "customMacroSplit" to setOf(
+                ProfileField.SPLIT,
+                ProfileField.SPLIT_PROTEIN,
+                ProfileField.SPLIT_FAT,
+                ProfileField.SPLIT_CARBS,
+            ),
+            "customProteinPerKg" to setOf(ProfileField.PER_KG),
             "maxConsecutiveDaysSameMeal" to setOf(ProfileField.CONSECUTIVE_DAYS),
             "maxTimesPerWeekSameMeal" to setOf(ProfileField.TIMES_PER_WEEK),
             "maxMealsPerDaySameKind" to setOf(ProfileField.KIND_PER_DAY),
@@ -486,7 +499,11 @@ class ProfileFormViewModel @Inject constructor(
             "labelLimits" to setOf(ProfileField.LABEL_SALT, ProfileField.LABEL_FIBER, ProfileField.LABEL_SATURATED_FAT, ProfileField.LABEL_SUGARS),
         )
 
-        /** The parts of a profile [after] has otherwise than [before], each to be sent alone: the custom diet with its split. */
+        /**
+         * The parts of a profile [after] has otherwise than [before], each to be sent alone: the custom diet with its
+         * targets. Protein per kilogram goes with the split where either has it, so that an API that came before it
+         * is never sent it, and a split named alone is the split's way.
+         */
         internal fun partsChanged(before: ProfileFigures, after: ProfileFigures): List<Set<String>> = buildList {
             fun part(name: String, changed: Boolean) {
                 if (changed) add(setOf(name))
@@ -499,8 +516,14 @@ class ProfileFormViewModel @Inject constructor(
             part("targetWeightKg", before.targetWeightKg != after.targetWeightKg)
             part("activityLevel", before.activityLevel != after.activityLevel)
             val toCustom = before.dietType != after.dietType && after.dietType == "custom"
-            if (toCustom) add(setOf("dietType", "customMacroSplit")) else part("dietType", before.dietType != after.dietType)
-            part("customMacroSplit", !toCustom && before.customMacroSplit != after.customMacroSplit)
+            val targets = if (before.customProteinPerKg != null || after.customProteinPerKg != null) {
+                setOf("customMacroSplit", "customProteinPerKg")
+            } else {
+                setOf("customMacroSplit")
+            }
+            if (toCustom) add(setOf("dietType") + targets) else part("dietType", before.dietType != after.dietType)
+            val targetsChanged = before.customMacroSplit != after.customMacroSplit || before.customProteinPerKg != after.customProteinPerKg
+            if (!toCustom && targetsChanged) add(targets)
             part("weeklyLossTarget", before.weeklyLossTarget != after.weeklyLossTarget)
             part("manualCalorieTarget", before.manualCalorieTarget != after.manualCalorieTarget)
             part("mealCount", before.mealCount != after.mealCount)
@@ -533,7 +556,7 @@ class ProfileFormViewModel @Inject constructor(
         val STEPS: List<Set<ProfileField>> = listOf(
             setOf(ProfileField.NAME, ProfileField.AGE, ProfileField.HEIGHT, ProfileField.WEIGHT),
             setOf(ProfileField.TARGET_WEIGHT, ProfileField.OWN_TARGET),
-            setOf(ProfileField.SPLIT, ProfileField.SPLIT_PROTEIN, ProfileField.SPLIT_FAT, ProfileField.SPLIT_CARBS),
+            ProfileField.OWN,
         )
     }
 }

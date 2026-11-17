@@ -77,6 +77,7 @@ class ProfileRepository @Inject constructor(
                     cookingReminders = figures.cookingReminders,
                     waterReminders = figures.waterReminders,
                     customMacroSplit = figures.customMacroSplit?.toDto(),
+                    customProteinPerKg = figures.customProteinPerKg,
                     acknowledgeRisk = acknowledgeRisk,
                     preferences = NewProfilePreferencesDto(
                         allergens = figures.allergens,
@@ -121,6 +122,7 @@ class ProfileRepository @Inject constructor(
                     weeklyLossTarget = part("weeklyLossTarget", figures.weeklyLossTarget) { JsonPrimitive(it) },
                     manualCalorieTarget = part("manualCalorieTarget", figures.manualCalorieTarget) { JsonPrimitive(it) },
                     customMacroSplit = part("customMacroSplit", figures.customMacroSplit) { json.encodeToJsonElement(it.toDto()) },
+                    customProteinPerKg = part("customProteinPerKg", figures.customProteinPerKg) { JsonPrimitive(it) },
                     mealCount = part("mealCount", figures.mealCount) { JsonPrimitive(it) },
                     weightReminderCadence = part("weightReminderCadence", figures.weightReminderCadence) { JsonPrimitive(it) },
                     cookingReminders = part("cookingReminders", figures.cookingReminders) { JsonPrimitive(it) },
@@ -183,6 +185,7 @@ class ProfileRepository @Inject constructor(
                     weeklyLossTarget = question.weeklyLossTarget,
                     manualCalorieTarget = question.manualCalorieTarget,
                     acknowledgeRisk = question.acknowledgeRisk,
+                    customProteinPerKg = question.customProteinPerKg,
                 ),
             )
         }.let { answer -> CaloriePreview(answer.calculation.toDomain(), answer.paces.map { it.toDomain() }) }
@@ -222,6 +225,7 @@ fun ProfileDto.toDetails() = ProfileDetails(
         waterReminders = waterReminders,
         customMacroSplit = customMacroSplit?.let { MacroSplit(it.protein, it.fat, it.carbs) },
         allergens = preferences.allergens,
+        customProteinPerKg = customProteinPerKg,
     ),
     preferences = ProfilePreferences(
         favoriteIngredientIds = preferences.favoriteIngredientIds,

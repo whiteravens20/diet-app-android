@@ -150,6 +150,7 @@ fun CalorieCalculationDto.toDomain() = CalorieTarget(
     maintenanceUnderFloor = maintenanceUnderFloor,
     goalHeld = goalHeld,
     warnings = warnings,
+    customSplitHeld = customSplitHeld,
 )
 
 fun RecipeIngredientDto.toDomain() = RecipeIngredient(

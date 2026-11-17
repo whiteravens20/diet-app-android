@@ -30,6 +30,7 @@ class ProfileFormTest {
         targetWeightKg: Double? = 60.0,
         dietType: String = "balanced",
         split: MacroSplit? = null,
+        perKg: Double? = null,
         limits: PlanLimits = ProfileChoices.FIRST_LIMITS,
         labelLimits: LabelLimits = LabelLimits(),
         riskAcknowledged: Boolean = false,
@@ -42,6 +43,7 @@ class ProfileFormTest {
             activityLevel = "light", dietType = dietType, weeklyLossTarget = "0.5", manualCalorieTarget = null,
             mealCount = 4, weightReminderCadence = "daily", waterTargetMl = waterTargetMl, waterTracking = waterTracking,
             cookingReminders = false, waterReminders = true, customMacroSplit = split, allergens = listOf("gluten"),
+            customProteinPerKg = perKg,
         ),
         preferences = ProfilePreferences(
             favoriteIngredientIds = emptyList(), excludedIngredientIds = emptyList(), dislikedIngredientIds = emptyList(),
@@ -120,9 +122,9 @@ class ProfileFormTest {
         assertEquals(5, pastTheBounds.question(WeightUnit.KG)!!.age)
         assertEquals(500.0, pastTheBounds.figures(WeightUnit.KG)!!.targetWeightKg!!, 0.0)
         // The custom diet's shares are whole numbers; whether they add up to a hundred is the API's to say.
-        val split = filled.copy(dietType = "custom", split = SplitTyped("30", "30", "30"))
+        val split = filled.copy(dietType = "custom", own = OwnTargetsTyped(percent = SplitTyped("30", "30", "30")))
         assertEquals(MacroSplit(30, 30, 30), split.question(WeightUnit.KG)!!.customMacroSplit)
-        assertEquals(setOf(ProfileField.SPLIT_FAT), split.copy(split = SplitTyped("30", "x", "40")).problems(WeightUnit.KG))
+        assertEquals(setOf(ProfileField.SPLIT_FAT), split.copy(own = OwnTargetsTyped(percent = SplitTyped("30", "x", "40"))).problems(WeightUnit.KG))
     }
 
     @Test
@@ -182,8 +184,8 @@ class ProfileFormTest {
     fun `the calorie preview's refusal names the fields a target is worked out from, and the split as a whole where its shares do not add up`() {
         val figures = filled.copy(age = "5", height = "300", weight = "10", ownTarget = "100")
         val preview = ProfileRefusals.of(refusal("calorie-preview-refused").fieldRefusals, figures)
-        val shares = ProfileRefusals.of(refusal("calorie-preview-split-refused").fieldRefusals, filled.copy(dietType = "custom", split = SplitTyped("5", "80", "15")))
-        val sum = ProfileRefusals.of(refusal("calorie-preview-split-sum-refused").fieldRefusals, filled.copy(dietType = "custom", split = SplitTyped("30", "30", "30")))
+        val shares = ProfileRefusals.of(refusal("calorie-preview-split-refused").fieldRefusals, filled.copy(dietType = "custom", own = OwnTargetsTyped(percent = SplitTyped("5", "80", "15"))))
+        val sum = ProfileRefusals.of(refusal("calorie-preview-split-sum-refused").fieldRefusals, filled.copy(dietType = "custom", own = OwnTargetsTyped(percent = SplitTyped("30", "30", "30"))))
 
         assertEquals(setOf(ProfileField.AGE, ProfileField.HEIGHT, ProfileField.WEIGHT, ProfileField.OWN_TARGET), preview.fields.keys)
         assertEquals(FieldRefusal.TooSmall(30.0, inclusive = true), preview.fields[ProfileField.WEIGHT])
@@ -225,12 +227,92 @@ class ProfileFormTest {
     fun `a custom diet's shares are whole numbers sent with that diet alone, and what the API takes of them is its to say`() {
         val custom = filled.copy(dietType = "custom")
 
-        assertEquals(setOf(ProfileField.SPLIT_PROTEIN), custom.copy(split = SplitTyped("", "30", "45")).problems(WeightUnit.KG))
+        assertEquals(setOf(ProfileField.SPLIT_PROTEIN), custom.copy(own = OwnTargetsTyped(percent = SplitTyped("", "30", "45"))).problems(WeightUnit.KG))
         assertEquals(MacroSplit(25, 30, 45), custom.figures(WeightUnit.KG)!!.customMacroSplit)
         // Shares past their bounds, or that add up to less than a hundred, are sent for the API to refuse.
-        assertEquals(MacroSplit(50, 25, 25), custom.copy(split = SplitTyped("50", "25", "25")).figures(WeightUnit.KG)!!.customMacroSplit)
-        assertEquals(MacroSplit(30, 30, 30), custom.copy(split = SplitTyped("30", "30", "30")).figures(WeightUnit.KG)!!.customMacroSplit)
-        assertNull(filled.copy(split = SplitTyped("30", "30", "30")).figures(WeightUnit.KG)!!.customMacroSplit)
+        assertEquals(MacroSplit(50, 25, 25), custom.copy(own = OwnTargetsTyped(percent = SplitTyped("50", "25", "25"))).figures(WeightUnit.KG)!!.customMacroSplit)
+        assertEquals(MacroSplit(30, 30, 30), custom.copy(own = OwnTargetsTyped(percent = SplitTyped("30", "30", "30"))).figures(WeightUnit.KG)!!.customMacroSplit)
+        assertNull(filled.copy(own = OwnTargetsTyped(percent = SplitTyped("30", "30", "30"))).figures(WeightUnit.KG)!!.customMacroSplit)
+    }
+
+    @Test
+    fun `protein per kilogram is sent with a split around fat's share, which the API takes for fat alone`() {
+        val custom = filled.copy(dietType = "custom", own = OwnTargetsTyped(way = OwnWay.PER_KG, perKg = "1,8", perKgFat = "35"))
+
+        val asked = custom.question(WeightUnit.KG)!!
+        assertEquals(1.8, asked.customProteinPerKg!!, 0.0)
+        assertEquals(MacroSplit(25, 35, 40), asked.customMacroSplit)
+        assertEquals(1.8, custom.figures(WeightUnit.KG)!!.customProteinPerKg!!, 0.0)
+        // A fat that leaves protein no room is sent for the API to refuse, and the form does not fail on it.
+        assertEquals(90, custom.copy(own = custom.own.copy(perKgFat = "90")).question(WeightUnit.KG)!!.customMacroSplit!!.fat)
+        assertEquals(setOf(ProfileField.PER_KG), custom.copy(own = custom.own.copy(perKg = "dużo")).problems(WeightUnit.KG))
+        // The split's way sends no protein per kilogram, and another diet sends none of the targets.
+        assertNull(custom.copy(own = custom.own.copy(way = OwnWay.SPLIT)).question(WeightUnit.KG)!!.customProteinPerKg)
+        assertNull(custom.copy(dietType = "balanced").question(WeightUnit.KG)!!.customProteinPerKg)
+    }
+
+    @Test
+    fun `protein per kilogram begins with the fat of the split as it is typed`() {
+        val typed = OwnTargetsTyped(percent = SplitTyped("30", "35", "35"))
+
+        assertEquals("35", typed.inWay(OwnWay.PER_KG).perKgFat)
+        // A split still being typed leaves the fat as it was.
+        assertEquals("30", OwnTargetsTyped(percent = SplitTyped("30", "", "35")).inWay(OwnWay.PER_KG).perKgFat)
+        assertEquals(OwnWay.SPLIT, typed.inWay(OwnWay.PER_KG).inWay(OwnWay.SPLIT).way)
+    }
+
+    @Test
+    fun `a kept profile's protein per kilogram stays as it is while neither it nor the fat changes, whatever its split comes to`() {
+        // At 64.35 kg the API says the split comes to 21, 30 and 49 %: the form, which holds 21 and the fat, changes nothing.
+        val details = kept(dietType = "custom", split = MacroSplit(21, 30, 49), perKg = 1.6)
+        val form = ProfileForm.of(details, WeightUnit.KG)
+        assertEquals(OwnWay.PER_KG, form.own.way)
+        assertEquals(details.figures, form.keepable(details.figures, WeightUnit.KG, target = 2000))
+        // The split the API answers moves with the weight; the profile's targets do not.
+        val heavier = details.figures.copy(customMacroSplit = MacroSplit(24, 30, 46))
+        assertEquals(heavier, form.keepable(heavier, WeightUnit.KG, target = 2000))
+
+        val more = form.copy(own = form.own.copy(perKg = "2")).keepable(details.figures, WeightUnit.KG, target = 2000)
+        assertEquals(2.0, more.customProteinPerKg!!, 0.0)
+        assertEquals(30, more.customMacroSplit!!.fat)
+    }
+
+    @Test
+    fun `targets wrong at the target are not kept, and the form names the field`() {
+        val details = kept(dietType = "custom", split = MacroSplit(25, 30, 45))
+        val form = ProfileForm.of(details, WeightUnit.KG)
+
+        // 3 g a kilogram of 64.35 kg is 772 kcal: 51 % of 1500, past the 45 % of protein.
+        val held = form.copy(own = form.own.copy(way = OwnWay.PER_KG, perKg = "3"))
+        assertEquals(setOf(ProfileField.PER_KG), held.notKept(WeightUnit.KG, target = 1500))
+        assertEquals(details.figures, held.keepable(details.figures, WeightUnit.KG, target = 1500))
+        // Without a target the form cannot say, and sends it for the API to judge.
+        assertEquals(3.0, held.keepable(details.figures, WeightUnit.KG).customProteinPerKg!!, 0.0)
+        assertEquals(emptySet<ProfileField>(), held.notKept(WeightUnit.KG, target = 2600))
+
+        val sum = form.copy(own = form.own.copy(percent = SplitTyped("30", "30", "30")))
+        assertEquals(setOf(ProfileField.SPLIT), sum.notKept(WeightUnit.KG))
+    }
+
+    @Test
+    fun `protein per kilogram goes with the split where either has it, so that a split sent alone is the split's way`() {
+        val split = kept(dietType = "custom", split = MacroSplit(25, 30, 45)).figures
+        val perKg = split.copy(customProteinPerKg = 1.6)
+
+        assertEquals(listOf(setOf("customMacroSplit")), ProfileFormViewModel.partsChanged(split, split.copy(customMacroSplit = MacroSplit(30, 30, 40))))
+        assertEquals(listOf(setOf("customMacroSplit", "customProteinPerKg")), ProfileFormViewModel.partsChanged(split, perKg))
+        assertEquals(listOf(setOf("customMacroSplit", "customProteinPerKg")), ProfileFormViewModel.partsChanged(perKg, split))
+        // Back to the custom diet with the targets it kept.
+        assertEquals(
+            listOf(setOf("dietType", "customMacroSplit", "customProteinPerKg")),
+            ProfileFormViewModel.partsChanged(perKg.copy(dietType = "balanced"), perKg),
+        )
+        assertEquals(listOf(setOf("dietType", "customMacroSplit")), ProfileFormViewModel.partsChanged(split.copy(dietType = "balanced"), split))
+    }
+
+    @Test
+    fun `the way the targets are set is kept the moment it is chosen`() {
+        assertTrue(filled.choseOtherwise(filled.copy(own = filled.own.copy(way = OwnWay.PER_KG))))
     }
 
     @Test
@@ -245,7 +327,7 @@ class ProfileFormTest {
 
         assertEquals(MacroSplit(40, 30, 30), form.figures(WeightUnit.KG)!!.customMacroSplit)
         assertNull(form.question(WeightUnit.KG)!!.customMacroSplit)
-        assertEquals(SplitTyped("40", "30", "30"), form.split)
+        assertEquals(SplitTyped("40", "30", "30"), form.own.percent)
     }
 
     @Test
