@@ -12085,6 +12085,8 @@
           "not_permitted",
           "no_provider",
           "all_providers_failed",
+          "data_policy_refused",
+          "instance_data_policy_refused",
           "provider_timeout",
           "key_unreadable",
           "invalid_output"
@@ -18638,6 +18640,39 @@
         ],
         "additionalProperties": false
       },
+      "OperatorAiTerms": {
+        "type": "object",
+        "properties": {
+          "dataPolicy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiDataPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "access": {
+            "$ref": "#/components/schemas/OperatorAiAccess"
+          },
+          "monthlyLimit": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "instanceMonthlyLimit": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "dataPolicy",
+          "access",
+          "monthlyLimit",
+          "instanceMonthlyLimit"
+        ],
+        "additionalProperties": false
+      },
       "OwnProduct": {
         "type": "object",
         "properties": {
@@ -22231,10 +22266,21 @@
             "properties": {
               "ollamaUserPolicy": {
                 "$ref": "#/components/schemas/OllamaUserPolicy"
+              },
+              "operator": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/OperatorAiTerms"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
-              "ollamaUserPolicy"
+              "ollamaUserPolicy",
+              "operator"
             ],
             "additionalProperties": false
           },
