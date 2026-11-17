@@ -147,6 +147,11 @@ object Instance {
     /** A profile of [account], as the API keeps it. */
     fun profile(account: Account, profileId: String): JSONObject = call("GET", "profiles/$profileId", token = account.accessToken)
 
+    /** Changes the parts of a profile [parts] names, as the profile's form keeps a change. */
+    fun changeProfile(account: Account, profileId: String, parts: JSONObject) {
+        call("PATCH", "profiles/$profileId", parts, token = account.accessToken)
+    }
+
     /** The account's way of using a model: `none` where it has none to ask. */
     fun aiMode(account: Account): String = call("GET", "users/me", token = account.accessToken).getString("aiMode")
 
