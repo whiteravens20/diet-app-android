@@ -359,6 +359,14 @@ private fun ProfileSummary(
                             target.targetMacros.carbs,
                         ),
                     )
+                    // Protein per kilogram past a limit at the weight and the target of today: the split holds it there.
+                    if (target.customSplitHeld) {
+                        Text(
+                            stringResource(R.string.calorie_preview_split_held),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
                 }
             }
         }
