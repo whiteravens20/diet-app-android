@@ -553,7 +553,8 @@ class MealPlanRepository @Inject constructor(
      * Changes the settings of a day, on the plan at the preview's [revision]; the plan is kept for
      * offline use. A plan changed since is refused with `PLAN_CHANGED`, a day before today with
      * `DAY_IN_THE_PAST`, and a day that cannot be filled inside the plan's limits with
-     * `PLAN_NEEDS_RELAXATION`, which [allowRelaxations] answers.
+     * `PLAN_NEEDS_RELAXATION`, which [allowRelaxations] answers. With [spreadShort], what the day falls short of goes to
+     * the next days of the plan.
      */
     suspend fun applyDaySettings(
         planId: String,
@@ -563,8 +564,9 @@ class MealPlanRepository @Inject constructor(
         allowRelaxations: List<String>? = null,
         together: Boolean = false,
         evenWeek: Boolean = false,
+        spreadShort: Boolean = false,
     ): MealPlan {
-        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations, together, evenWeek)) }
+        val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations, together, evenWeek, spreadShort)) }
         mirror(plan)
         return plan.toDomain()
     }

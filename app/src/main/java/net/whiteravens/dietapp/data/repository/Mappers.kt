@@ -37,6 +37,7 @@ import net.whiteravens.dietapp.domain.BuyLater
 import net.whiteravens.dietapp.domain.CookedPlace
 import net.whiteravens.dietapp.domain.CookingChange
 import net.whiteravens.dietapp.domain.DaySettingsWeek
+import net.whiteravens.dietapp.domain.DayShort
 import net.whiteravens.dietapp.domain.FatePortion
 import net.whiteravens.dietapp.domain.LeftoverOf
 import net.whiteravens.dietapp.domain.LeftoverOffer
@@ -382,6 +383,7 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
     listOutOfDate = listOutOfDate,
     unchanged = unchanged,
     cooking = cooking?.toDomain(),
+    short = short?.let { DayShort(it.kcal, it.spread.days, it.spread.takes, it.spread.left, it.spread.listOutOfDate) },
     week = week?.let {
         DaySettingsWeek(
             target = it.target,
@@ -400,7 +402,13 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
 )
 
 /** The settings as a request carries them; the revision, the limits that may give way and the evening of the week go with a change only. */
-fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = null, together: Boolean = false, evenWeek: Boolean = false) = DaySettingsDto(
+fun DaySettings.toDto(
+    revision: Int? = null,
+    allowRelaxations: List<String>? = null,
+    together: Boolean = false,
+    evenWeek: Boolean = false,
+    spreadShort: Boolean = false,
+) = DaySettingsDto(
     dayType = dayType,
     skip = skip,
     mealCount = mealCount,
@@ -411,6 +419,7 @@ fun DaySettings.toDto(revision: Int? = null, allowRelaxations: List<String>? = n
     allowRelaxations = allowRelaxations,
     together = together,
     evenWeek = evenWeek,
+    spreadShort = spreadShort,
 )
 
 fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(

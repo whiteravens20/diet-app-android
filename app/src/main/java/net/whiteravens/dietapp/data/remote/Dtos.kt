@@ -1376,6 +1376,8 @@ data class DaySettingsDto(
     val together: Boolean = false,
     /** The week of the day is evened out with the change: its days from today on get the targets that bring its average back. */
     val evenWeek: Boolean = false,
+    /** What the day falls short of its new target by goes to the next days of the plan, each inside its window (`DayShortDto`). */
+    val spreadShort: Boolean = false,
 )
 
 /** POST `/meal-plans/:id/weeks/even`: the week of a plan that [date] is in, evened out on the plan at [revision]. */
@@ -1432,6 +1434,14 @@ data class DayMealFateDto(
 @Serializable
 data class FatePortionDto(val servings: NowThenDto, val calories: NowThenDto)
 
+/** What a day falls short of its new target by, in kcal, and what spreading it over the next days of the plan does. */
+@Serializable
+data class DayShortDto(val kcal: Double, val spread: DayShortSpreadDto)
+
+/** How many days take part in a spread, the kcal they take inside their windows, what is left, and whether a shopping list covers one of them. */
+@Serializable
+data class DayShortSpreadDto(val days: Int, val takes: Double, val left: Double, val listOutOfDate: Boolean)
+
 /** A pair of numbers: as a day has it now, and as the change would make it. */
 @Serializable
 data class NowThenDto(val now: Double, val then: Double)
@@ -1453,6 +1463,8 @@ data class DaySettingsPreviewDto(
     /** What the day would hold where no recipe is drawn; null where recipes are. */
     val dayCalories: Double? = null,
     val fits: Boolean? = null,
+    /** What the day falls short of its new target by where its dishes cannot grow enough; null where it is not short or recipes are drawn. */
+    val short: DayShortDto? = null,
     val listOutOfDate: Boolean,
     val unchanged: Boolean,
     val cooking: CookingChangeDto? = null,

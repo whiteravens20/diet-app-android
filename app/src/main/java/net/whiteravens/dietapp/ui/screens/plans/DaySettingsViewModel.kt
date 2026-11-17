@@ -65,6 +65,8 @@ class DaySettingsViewModel @Inject constructor(
         val current: Boolean = false,
         /** What is drawn is kept to this day, whatever else of its cookings there is. */
         val only: Boolean = false,
+        /** What the day falls short of goes to the next days of the plan, where the preview offers it. */
+        val spread: Boolean = true,
         /** Why the preview could not be had, where it was not for the fields the API refused. */
         val previewError: Throwable? = null,
         /** The fields the API refused, by the path it names them by (`calorieTarget`, `cookTimeBudgetMinutes`). */
@@ -143,6 +145,11 @@ class DaySettingsViewModel @Inject constructor(
         _state.update { it.copy(only = on) }
     }
 
+    /** Spreads what the day falls short of over the next days of the plan, or keeps them as they are. */
+    fun setSpread(on: Boolean) {
+        _state.update { it.copy(spread = on) }
+    }
+
     /** Saves the settings on the plan as the preview had it; with [evenWeek], the week of the day is evened out with them. */
     fun save(evenWeek: Boolean = false) {
         _state.update { it.copy(evenWeek = evenWeek) }
@@ -212,6 +219,7 @@ class DaySettingsViewModel @Inject constructor(
                     allowRelaxations,
                     together = !current.only && preview.cooking?.changes?.isNotEmpty() == true,
                     evenWeek = current.evenWeek,
+                    spreadShort = current.spread && (preview.short?.days ?: 0) > 0,
                 )
             }
                 .onSuccess { plan -> _state.update { it.copy(saving = false, saved = plan) } }

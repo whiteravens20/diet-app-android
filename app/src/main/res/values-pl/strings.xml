@@ -1706,6 +1706,16 @@
     <string name="plans_settings_drawn_note">Przepisy nowych posiłków zostaną dobrane przy zapisie, w granicach limitów planu; porcje pozostałych dopasują się do celu dnia.</string>
     <string name="plans_settings_day_calories">Dzień będzie miał około %1$s kcal.</string>
     <string name="plans_settings_day_calories_off">Dzień będzie miał około %1$s kcal: ponad jedną dziesiątą od celu, bo porcje nie wystarczą. Różnicę możesz potem rozłożyć na resztę planu.</string>
+    <string name="plans_settings_day_short">Dzień będzie miał około %1$s kcal: do celu zabraknie %2$s kcal, bo pozostałe dania mają już największe porcje, na jakie pozwala plan.</string>
+    <string name="plans_settings_short_last_day">To ostatni dzień planu: brakujących %1$s kcal nie ma na co rozłożyć.</string>
+    <string name="plans_settings_spread_short">Rozłóż brakujące %1$s kcal na kolejne dni planu</string>
+    <plurals name="plans_settings_spread_short_takes">
+        <item quantity="one">Następny dzień przyjmie %2$s kcal, każdy w swoich granicach.</item>
+        <item quantity="few">Kolejne %1$d dni przyjmą %2$s kcal, każdy w swoich granicach.</item>
+        <item quantity="many">Kolejne %1$d dni przyjmą %2$s kcal, każdy w swoich granicach.</item>
+        <item quantity="other">Kolejne %1$d dnia przyjmą %2$s kcal, każdy w swoich granicach.</item>
+    </plurals>
+    <string name="plans_settings_spread_short_left">Pozostałe %1$s kcal zostaną bez pokrycia.</string>
     <string name="plans_settings_list_out_of_date">Lista zakupów obejmująca ten dzień będzie do odświeżenia.</string>
     <string name="plans_list_out_of_date_days">Lista zakupów obejmująca te dni będzie do odświeżenia.</string>
     <string name="plans_settings_other_days">Inne dni planu się nie zmieniają.</string>

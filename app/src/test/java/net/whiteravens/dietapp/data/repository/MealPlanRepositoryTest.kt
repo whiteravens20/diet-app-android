@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -29,6 +30,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DayAsk
 import net.whiteravens.dietapp.domain.DaySettings
+import net.whiteravens.dietapp.domain.DayShort
 import net.whiteravens.dietapp.domain.FatePortion
 import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.Nutrition
@@ -463,6 +465,22 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `what a day falls short of is read with its spread, and a change that spreads it says so`() {
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(DAY_SETTINGS_SHORT))
+        server.enqueue(answer("meal-plan"))
+        val plans = repository(Cache())
+        val settings = DaySettings(calorieTarget = 4320, mealCount = 3)
+
+        val preview = runBlocking { plans.previewDaySettings("plan-1", "day-1", settings) }
+        runBlocking { plans.applyDaySettings("plan-1", "day-1", settings, preview.revision, spreadShort = true) }
+
+        assertEquals(DayShort(kcal = 1030.0, days = 3, takes = 845.0, left = 185.0, listOutOfDate = true), preview.short)
+        server.takeRequest()
+        val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertTrue(body.getValue("spreadShort").jsonPrimitive.boolean)
+    }
+
+    @Test
     fun `a running plan whose profile's target moved says both, and takes the profile's from today on the plan at its revision`() {
         server.enqueue(answer("meal-plan-target-moved"))
         server.enqueue(answer("meal-plan-retargeted"))
@@ -786,6 +804,14 @@ class MealPlanRepositoryTest {
             """{"mealId":"meal-2","mealType":"dinner","fate":"resized","because":null,""" +
             """"portion":{"servings":{"now":1.71,"then":2.72},"calories":{"now":708,"then":1127}}}],"added":[],""" +
             """"dayCalories":3240,"fits":true,"short":null,"listOutOfDate":false,"unchanged":false}"""
+
+        /** A target of the day's own far past what its dinner can take, as POST `.../settings/preview` answers it. */
+        const val DAY_SETTINGS_SHORT = """{"revision":7,"date":"2026-10-26","calorieTarget":{"now":2820,"then":4320},""" +
+            """"targetMacros":{"now":{"protein":154,"fat":104,"carbs":318},"then":{"protein":270,"fat":144,"carbs":486}},"belowSafetyFloor":false,""" +
+            """"meals":[{"mealId":"meal-2","mealType":"dinner","fate":"resized","because":null,""" +
+            """"portion":{"servings":{"now":2,"then":3},"calories":{"now":978,"then":1467}}}],"added":[],""" +
+            """"dayCalories":3290,"fits":false,"short":{"kcal":1030,"spread":{"days":3,"takes":845,"left":185,"listOutOfDate":true}},""" +
+            """"listOutOfDate":false,"unchanged":false}"""
     }
 
     @Test

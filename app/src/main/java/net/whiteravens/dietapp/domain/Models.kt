@@ -649,7 +649,16 @@ data class DaySettingsPreview(
     val cooking: CookingChange? = null,
     /** The week of the day; null where no day of it shares it. */
     val week: DaySettingsWeek? = null,
+    /** What the day falls short of its new target by, where its dishes cannot grow enough; null where it is not short. */
+    val short: DayShort? = null,
 )
+
+/**
+ * What a day falls short of its new target by, in kcal, and what spreading it over the next days of the plan does:
+ * how many days take part, what they take inside their windows, what is left, and whether a shopping list covers one
+ * of them. On the plan's last day no day takes part.
+ */
+data class DayShort(val kcal: Double, val days: Int, val takes: Double, val left: Double, val listOutOfDate: Boolean)
 
 /**
  * The week of the day a change of settings is for: what its days aim at on average now, with the change

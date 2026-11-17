@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.DaySettings
 import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.DaySettingsWeek
+import net.whiteravens.dietapp.domain.DayShort
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.MealPlan
@@ -149,6 +150,35 @@ class DaySettingsViewModelTest {
 
         coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, false) }
         assertSame(alone, second.state.value.saved)
+    }
+
+    @Test
+    fun `what the day falls short of is spread over the next days unless the box is unticked, and never where no day takes it`() = runTest(main) {
+        val short = more.copy(fits = false, short = DayShort(kcal = 600.0, days = 3, takes = 540.0, left = 60.0, listOutOfDate = false))
+        coEvery { plans.previewDaySettings("plan", "day", training) } returns short
+        coEvery { plans.applyDaySettings("plan", "day", training, 7, null, false, false, any()) } returns mockk()
+        fun ask(tick: Boolean) {
+            val window = opened()
+            runCurrent()
+            window.setKind("training")
+            advanceTimeBy(DaySettingsViewModel.PAUSE_MILLIS * 2)
+            runCurrent()
+            assertTrue(window.state.value.spread)
+            if (!tick) window.setSpread(false)
+            window.save()
+            runCurrent()
+        }
+
+        ask(true)
+        coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, false, true) }
+        ask(false)
+        coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, false, false) }
+
+        // The plan's last day: no day takes part, so nothing is asked to be spread, ticked or not.
+        coEvery { plans.previewDaySettings("plan", "day", training) } returns short.copy(short = short.short!!.copy(days = 0, takes = 0.0, left = 600.0))
+        ask(true)
+        coVerify(exactly = 2) { plans.applyDaySettings("plan", "day", training, 7, null, false, false, false) }
+        coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, false, true) }
     }
 
     @Test

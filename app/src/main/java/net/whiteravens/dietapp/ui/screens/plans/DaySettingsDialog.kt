@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DaySettingsPreview
 import net.whiteravens.dietapp.domain.DaySettingsWeek
+import net.whiteravens.dietapp.domain.DayShort
 import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
@@ -140,8 +141,10 @@ fun DaySettingsDialog(
                         preview == null && state.previewError != null -> ErrorBanner(errorMessage(state.previewError!!))
                         preview == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
                         else -> Column(Modifier.alpha(if (state.current) 1f else 0.6f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Outcome(preview, skipped, state.week?.takeIf { it.uneven }, state.unit)
+                            val spreading = state.spread && (preview.short?.days ?: 0) > 0
+                            Outcome(preview, skipped, state.week?.takeIf { it.uneven }, state.unit, spreading)
                             if (!preview.unchanged) CookingNote(preview.cooking, state.only, onOnly = viewModel::setOnly)
+                            preview.short?.takeIf { it.days > 0 }?.let { short -> SpreadBox(short, state.spread, onSpread = viewModel::setSpread) }
                         }
                     }
                 }
@@ -189,9 +192,12 @@ fun DaySettingsDialog(
     }
 }
 
-/** What a change of a day's settings would do, line by line; [weekOff], the day's week where it stands off the plan's target. */
+/**
+ * What a change of a day's settings would do, line by line; [weekOff], the day's week where it stands off the plan's
+ * target; [spreading], the next days take what the day falls short of, so that the line that they stay is left out.
+ */
 @Composable
-private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: PlanWeek?, unit: WeightUnit) {
+private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: PlanWeek?, unit: WeightUnit, spreading: Boolean) {
     if (preview.unchanged) {
         Note(stringResource(R.string.plans_settings_unchanged))
         val average = weekOff?.average
@@ -226,14 +232,36 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: Plan
     }
     if (preview.added.isNotEmpty() || preview.meals.any { it.fate == "redrawn" }) Note(stringResource(R.string.plans_settings_drawn_note))
     val kcal = preview.dayCalories
+    val short = preview.short
     if (kcal != null && !skipped) {
         val shown = formatNumber(kcal.roundToInt())
-        if (preview.fits == true) Note(stringResource(R.string.plans_settings_day_calories, shown))
-        else Note(stringResource(R.string.plans_settings_day_calories_off, shown), MaterialTheme.colorScheme.tertiary)
+        when {
+            short != null -> Note(stringResource(R.string.plans_settings_day_short, shown, formatNumber(short.kcal.roundToInt())), MaterialTheme.colorScheme.tertiary)
+            preview.fits == true -> Note(stringResource(R.string.plans_settings_day_calories, shown))
+            else -> Note(stringResource(R.string.plans_settings_day_calories_off, shown), MaterialTheme.colorScheme.tertiary)
+        }
     }
+    if (short != null && short.days == 0) Note(stringResource(R.string.plans_settings_short_last_day, formatNumber(short.kcal.roundToInt())))
     if (preview.listOutOfDate) Note(stringResource(R.string.plans_settings_list_out_of_date))
     preview.week?.let { WeekOutcome(it, unit) }
-    if (preview.week?.unevenAlone != true) Note(stringResource(R.string.plans_settings_other_days))
+    if (preview.week?.unevenAlone != true && !spreading) Note(stringResource(R.string.plans_settings_other_days))
+}
+
+/**
+ * The choice to spread what the day falls short of over the next days of the plan: how many take part and what they
+ * take, what is left, and, while it is chosen, the shopping list it puts out of date.
+ */
+@Composable
+private fun SpreadBox(short: DayShort, spread: Boolean, onSpread: (Boolean) -> Unit) {
+    val takes = pluralStringResource(R.plurals.plans_settings_spread_short_takes, short.days, short.days, formatNumber(short.takes.roundToInt()))
+    val left = if (short.left > 0.0) stringResource(R.string.plans_settings_spread_short_left, formatNumber(short.left.roundToInt())) else null
+    val list = if (spread && short.listOutOfDate) stringResource(R.string.plans_list_out_of_date_days) else null
+    CheckRow(
+        label = stringResource(R.string.plans_settings_spread_short, formatNumber(short.kcal.roundToInt())),
+        hint = listOfNotNull(takes, left, list).joinToString(" "),
+        checked = spread,
+        onChange = onSpread,
+    )
 }
 
 /** What the change does to the week of the day: its average against the plan's target and the pace that comes to, and what evening the week out would do. */

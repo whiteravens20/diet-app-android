@@ -1588,6 +1588,14 @@
     <string name="plans_settings_drawn_note">The recipes of the new meals are chosen when this is saved, inside the plan\'s limits; the portions of the others adjust to the day\'s target.</string>
     <string name="plans_settings_day_calories">The day will hold about %1$s kcal.</string>
     <string name="plans_settings_day_calories_off">The day will hold about %1$s kcal: more than a tenth off its target, since the portions are not enough. The difference can then be spread over the rest of the plan.</string>
+    <string name="plans_settings_day_short">The day will hold about %1$s kcal: %2$s kcal short of its target, as the dishes left are already at the largest portions the plan allows.</string>
+    <string name="plans_settings_short_last_day">This is the plan\'s last day: the missing %1$s kcal have no day to go to.</string>
+    <string name="plans_settings_spread_short">Spread the missing %1$s kcal over the next days of the plan</string>
+    <plurals name="plans_settings_spread_short_takes">
+        <item quantity="one">The next day takes %2$s kcal, each inside its limits.</item>
+        <item quantity="other">The next %1$d days take %2$s kcal, each inside its limits.</item>
+    </plurals>
+    <string name="plans_settings_spread_short_left">The other %1$s kcal stay uncovered.</string>
     <string name="plans_settings_list_out_of_date">The shopping list that covers this day will need to be made again.</string>
     <string name="plans_list_out_of_date_days">The shopping list that covers these days will need to be made again.</string>
     <string name="plans_settings_other_days">The plan\'s other days stay as they are.</string>
