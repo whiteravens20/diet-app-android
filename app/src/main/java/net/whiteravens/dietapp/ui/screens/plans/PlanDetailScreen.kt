@@ -153,6 +153,8 @@ import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import net.whiteravens.dietapp.domain.FrozenRest
+import kotlin.math.pow
+import kotlin.math.roundToLong
 
 /**
  * One plan: what it is and what a day of it holds on average, its days, and the selected day's
@@ -1947,15 +1949,19 @@ private fun PlateRowLine(name: String, mine: String, theirs: String, head: Boole
 }
 
 /**
- * Whether a meal holds as many servings as its recipe makes: the notes then say the number once, not the same
- * number twice. Servings are whole quarters, so the two are compared as they are.
+ * Whether a meal holds as many servings as its recipe makes, as the note shows them: to [fractionDigits] decimals.
+ * The note then says the number once, not the same number twice; 1.04 servings is shown as 1, the same as a recipe
+ * of one serving.
  */
-internal fun sameServings(recipeServings: Int, servings: Double): Boolean = servings == recipeServings.toDouble()
+internal fun sameServings(recipeServings: Int, servings: Double, fractionDigits: Int = 1): Boolean {
+    val scale = 10.0.pow(fractionDigits)
+    return (servings * scale).roundToLong() == recipeServings * scale.roundToLong()
+}
 
 /** What the amounts of a pot both people cook are for, whose portions it holds, and what its recipe as written makes. */
 @Composable
 private fun potNote(recipeServings: Int, servings: Double, pot: PotPortions): String = stringResource(
-    if (sameServings(recipeServings, servings)) R.string.plans_portion_pot_same else R.string.plans_portion_pot,
+    if (sameServings(recipeServings, servings, fractionDigits = 2)) R.string.plans_portion_pot_same else R.string.plans_portion_pot,
     pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
     // The whole and its two parts to the hundredth, as the API gives them: rounded to a tenth each, 1.95 and 1.95
     // were said as 2 and 2 of a pot of 3.9.
