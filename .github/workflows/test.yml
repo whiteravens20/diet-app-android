@@ -107,7 +107,9 @@ jobs:
     needs: dry-run
     if: ${{ !cancelled() && needs.dry-run.outputs.screens != 'passed' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The build, then three parts, each on an emulator booted for it: on a slow runner the
+    # release build's job ran past 45 minutes.
+    timeout-minutes: 60
     # What the entry of the matrix says, as the scripts below read it: variables, never
     # pasted into a script.
     env:
