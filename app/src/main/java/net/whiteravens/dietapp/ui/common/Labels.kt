@@ -407,20 +407,24 @@ fun emphasized(line: String, value: String): AnnotatedString {
     }
 }
 
+/** The text of each reason the API gives for the engine standing in where a model was asked (`AiFallbackReason`). */
+internal val FALLBACK_TEXTS: Map<String, Int> = mapOf(
+    "quota_exhausted" to R.string.ai_fallback_quota_exhausted,
+    "instance_quota_exhausted" to R.string.ai_fallback_instance_quota_exhausted,
+    "new_accounts_quota_exhausted" to R.string.ai_fallback_new_accounts_quota_exhausted,
+    "not_permitted" to R.string.ai_fallback_not_permitted,
+    "no_provider" to R.string.ai_fallback_no_provider,
+    "all_providers_failed" to R.string.ai_fallback_all_providers_failed,
+    "data_policy_refused" to R.string.ai_fallback_data_policy_refused,
+    "instance_data_policy_refused" to R.string.ai_fallback_instance_data_policy_refused,
+    "provider_timeout" to R.string.ai_fallback_provider_timeout,
+    "key_unreadable" to R.string.ai_fallback_key_unreadable,
+    "invalid_output" to R.string.ai_fallback_invalid_output,
+)
+
 /** Why the engine stood in where a model was asked; null for a reason this version does not know. */
 @Composable
-fun fallbackText(reason: String): String? = when (reason) {
-    "quota_exhausted" -> stringResource(R.string.ai_fallback_quota_exhausted)
-    "instance_quota_exhausted" -> stringResource(R.string.ai_fallback_instance_quota_exhausted)
-    "new_accounts_quota_exhausted" -> stringResource(R.string.ai_fallback_new_accounts_quota_exhausted)
-    "not_permitted" -> stringResource(R.string.ai_fallback_not_permitted)
-    "no_provider" -> stringResource(R.string.ai_fallback_no_provider)
-    "all_providers_failed" -> stringResource(R.string.ai_fallback_all_providers_failed)
-    "provider_timeout" -> stringResource(R.string.ai_fallback_provider_timeout)
-    "key_unreadable" -> stringResource(R.string.ai_fallback_key_unreadable)
-    "invalid_output" -> stringResource(R.string.ai_fallback_invalid_output)
-    else -> null
-}
+fun fallbackText(reason: String): String? = FALLBACK_TEXTS[reason]?.let { stringResource(it) }
 
 /** What a notification says, in the words of the web application. */
 @Composable

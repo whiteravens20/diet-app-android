@@ -374,6 +374,8 @@
     <string name="ai_fallback_not_permitted">The instance\'s AI is not open to your account — falling back to the rule-based engine.</string>
     <string name="ai_fallback_no_provider">No AI provider is configured for your account — falling back to the rule-based engine.</string>
     <string name="ai_fallback_all_providers_failed">AI provider didn\'t respond — falling back to the rule-based engine.</string>
+    <string name="ai_fallback_data_policy_refused">OpenRouter refused: no provider of this model meets your choice of providers or the privacy settings of your OpenRouter account. You can change the choice or the model in Account settings, on the AI providers card. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_instance_data_policy_refused">OpenRouter refused: no provider of this instance\'s model meets the choice of providers its operator set. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_provider_timeout">AI provider was too slow — try a smaller model or a cloud provider. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_key_unreadable">Your saved AI key can no longer be read — enter it again in Settings. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_invalid_output">The AI\'s answer could not be used — the rule-based engine picked instead.</string>
