@@ -99,6 +99,11 @@ enum class ProfileField(val path: String) {
     SPLIT_FAT("customMacroSplit.fat"),
     SPLIT_CARBS("customMacroSplit.carbs"),
     PER_KG("customProteinPerKg"),
+
+    /** The grams a split is typed in: the form's own, which the API never sees. */
+    GRAMS_PROTEIN("grams.protein"),
+    GRAMS_FAT("grams.fat"),
+    GRAMS_CARBS("grams.carbs"),
     CONSECUTIVE_DAYS("preferences.maxConsecutiveDaysSameMeal"),
     TIMES_PER_WEEK("preferences.maxTimesPerWeekSameMeal"),
     KIND_PER_DAY("preferences.maxMealsPerDaySameKind"),
@@ -115,7 +120,7 @@ enum class ProfileField(val path: String) {
         val QUESTION = setOf(AGE, HEIGHT, WEIGHT, OWN_TARGET, SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS, PER_KG)
 
         /** The fields of the custom diet's targets, whichever way they are typed in. */
-        val OWN = setOf(SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS, PER_KG)
+        val OWN = setOf(SPLIT, SPLIT_PROTEIN, SPLIT_FAT, SPLIT_CARBS, PER_KG, GRAMS_PROTEIN, GRAMS_FAT, GRAMS_CARBS)
     }
 }
 
@@ -453,14 +458,14 @@ data class ProfileForm(
 
     /**
      * The fields that hold what cannot be kept as it is: no number where one is needed, no name, custom diet's targets
-     * that are wrong at [target] kcal: a split that does not add up, protein held at a limit.
+     * that are wrong at [target] kcal: a split that does not add up or goes past a limit, protein held at one.
      */
     fun notKept(unit: WeightUnit, target: Int? = null): Set<ProfileField> = buildSet {
         addAll(problems(unit))
         if (name.isBlank()) add(ProfileField.NAME)
         if (dietType == "custom") {
             when (own.fault(target, weightKg(weight, keptWeightKg, unit))) {
-                OwnFault.SUM -> add(ProfileField.SPLIT)
+                OwnFault.SUM, OwnFault.LIMITS -> add(ProfileField.SPLIT)
                 OwnFault.PER_KG -> add(ProfileField.PER_KG)
                 null -> Unit
             }
@@ -514,6 +519,9 @@ data class ProfileForm(
         ProfileField.SPLIT_FAT -> own.way to if (own.way == OwnWay.PER_KG) own.perKgFat else own.percent.fat
         ProfileField.SPLIT_CARBS -> own.percent.carbs
         ProfileField.PER_KG -> own.perKg
+        ProfileField.GRAMS_PROTEIN -> own.grams.protein
+        ProfileField.GRAMS_FAT -> own.grams.fat
+        ProfileField.GRAMS_CARBS -> own.grams.carbs
         ProfileField.CONSECUTIVE_DAYS -> limits.consecutiveDays
         ProfileField.TIMES_PER_WEEK -> limits.timesPerWeek
         ProfileField.KIND_PER_DAY -> limits.kindPerDay

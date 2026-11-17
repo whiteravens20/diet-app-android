@@ -4,10 +4,12 @@ package net.whiteravens.dietapp.domain
 
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.roundToInt
 
 /*
- * The custom diet's protein per kilogram, worked out on the phone as the API works it out: the grams of the weight,
- * fat's share and carbohydrate the rest, every share inside the limits of a split.
+ * The custom diet's two ways, worked out on the phone as the API works them out: a split typed in grams kept as the
+ * shares of their energy, and protein per kilogram of the weight with fat's share and carbohydrate the rest, every
+ * share inside the limits of a split.
  */
 
 /** The least and the most share of a day's energy, in per cent, that the custom diet's split may give each part. */
@@ -28,6 +30,9 @@ private const val KCAL_PROTEIN = 4.0
 private const val KCAL_FAT = 9.0
 private const val KCAL_CARBS = 4.0
 
+/** Grams of protein, fat and carbohydrate. */
+data class MacroGrams(val protein: Int, val fat: Int, val carbs: Int)
+
 /** Shares of one as whole per cent that add up to a hundred, each rounded the way that misses its share least. */
 fun wholePercent(protein: Double, fat: Double, carbs: Double): MacroSplit {
     val exact = listOf(protein * 100, fat * 100, carbs * 100)
@@ -36,6 +41,27 @@ fun wholePercent(protein: Double, fat: Double, carbs: Double): MacroSplit {
     exact.indices.sortedByDescending { exact[it] - floor(exact[it]) }.take(left.coerceAtLeast(0)).forEach { whole[it] += 1 }
     return MacroSplit(protein = whole[0], fat = whole[1], carbs = whole[2])
 }
+
+/** Whether every share of a split in whole per cent is inside the limits a split keeps. */
+fun insideLimits(split: MacroSplit): Boolean =
+    split.protein in SplitLimits.PROTEIN && split.fat in SplitLimits.FAT && split.carbs in SplitLimits.CARBS
+
+/** The energy of grams, in kcal. */
+fun kcalOfGrams(protein: Double, fat: Double, carbs: Double): Double = protein * KCAL_PROTEIN + fat * KCAL_FAT + carbs * KCAL_CARBS
+
+/** Grams as the split of their energy, in whole per cent; null for grams that hold none. */
+fun splitOfGrams(protein: Double, fat: Double, carbs: Double): MacroSplit? {
+    val kcal = kcalOfGrams(protein, fat, carbs)
+    if (!(kcal > 0)) return null
+    return wholePercent(protein * KCAL_PROTEIN / kcal, fat * KCAL_FAT / kcal, carbs * KCAL_CARBS / kcal)
+}
+
+/** What a split in per cent comes to in whole grams at [calories]. */
+fun gramsAt(split: MacroSplit, calories: Int): MacroGrams = MacroGrams(
+    protein = (calories * split.protein / 100.0 / KCAL_PROTEIN).roundToInt(),
+    fat = (calories * split.fat / 100.0 / KCAL_FAT).roundToInt(),
+    carbs = (calories * split.carbs / 100.0 / KCAL_CARBS).roundToInt(),
+)
 
 /**
  * The least and the most share of a day's energy, of one, that protein of the custom diet may have while fat keeps

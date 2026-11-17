@@ -21,6 +21,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.FieldRefusal
+import net.whiteravens.dietapp.domain.SplitLimits
+import net.whiteravens.dietapp.domain.gramsAt
+import net.whiteravens.dietapp.domain.insideLimits
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.refusalText
@@ -29,7 +32,7 @@ import kotlin.math.roundToInt
 
 /**
  * The custom diet's targets, as the profile's form and the form of a plan ask for them: the way they are set, the
- * split in per cent, or protein per kilogram with fat's share, and what they come to at [target] kcal and
+ * split in per cent or in grams, or protein per kilogram with fat's share, and what they come to at [target] kcal and
  * [weightKg], said while they are typed. A field says what is wrong with it: no number ([notNumbers]), or the API's
  * refusal ([refusals]); the split's refusal as a whole is said under the split.
  */
@@ -66,7 +69,23 @@ internal fun OwnTargetsFields(
         }
         when (own.way) {
             OwnWay.SPLIT -> {
-                PercentFields(own, marks, onEdit)
+                Text(stringResource(R.string.profile_custom_unit), style = MaterialTheme.typography.labelLarge)
+                val units = SplitUnit.entries
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    units.forEachIndexed { index, unit ->
+                        SegmentedButton(
+                            selected = own.unit == unit,
+                            onClick = { onEdit { it.inUnit(unit, target) } },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = units.size),
+                        ) {
+                            Text(stringResource(if (unit == SplitUnit.PERCENT) R.string.profile_custom_unit_percent else R.string.profile_custom_unit_grams))
+                        }
+                    }
+                }
+                when (own.unit) {
+                    SplitUnit.PERCENT -> PercentFields(own, marks, onEdit)
+                    SplitUnit.GRAMS -> GramsFields(own, target, marks, onEdit)
+                }
                 // Refused as a whole, the split is said to have to add up to a hundred.
                 refusals[ProfileField.SPLIT]?.let { refused ->
                     Text(
@@ -84,12 +103,15 @@ internal fun OwnTargetsFields(
 /** What the fields of the targets say is wrong with them: no number, or the API's refusal. */
 private class OwnMarks(val notNumbers: Set<ProfileField>, val refusals: Map<ProfileField, FieldRefusal>)
 
-/** What [field] says is wrong with it; a refusal of no bound says [other]. Protein per kilogram takes fractions. */
+/** What [field] says is wrong with it; a refusal of no bound says [other]. Protein per kilogram and grams take fractions. */
 @Composable
 private fun OwnMarks.of(field: ProfileField, other: String = stringResource(R.string.refusal_other)): String? = when {
-    field in notNumbers -> numberProblem(true, null, whole = field != ProfileField.PER_KG)
+    field in notNumbers -> numberProblem(true, null, whole = field != ProfileField.PER_KG && field !in GRAMS)
     else -> refusals[field]?.let { refusalText(it, other = other) }
 }
+
+/** The fields of the grams. */
+private val GRAMS = setOf(ProfileField.GRAMS_PROTEIN, ProfileField.GRAMS_FAT, ProfileField.GRAMS_CARBS)
 
 @Composable
 private fun PercentFields(
@@ -108,6 +130,51 @@ private fun PercentFields(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     )
+}
+
+@Composable
+private fun GramsFields(
+    own: OwnTargetsTyped,
+    target: Int?,
+    marks: OwnMarks,
+    onEdit: ((OwnTargetsTyped) -> OwnTargetsTyped) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FormField(own.grams.protein, { typed -> onEdit { it.copy(grams = it.grams.copy(protein = typed)) } }, stringResource(R.string.profile_split_grams_protein), Modifier.weight(1f), problem = marks.of(ProfileField.GRAMS_PROTEIN), keyboardType = KeyboardType.Decimal)
+        FormField(own.grams.fat, { typed -> onEdit { it.copy(grams = it.grams.copy(fat = typed)) } }, stringResource(R.string.profile_split_grams_fat), Modifier.weight(1f), problem = marks.of(ProfileField.GRAMS_FAT), keyboardType = KeyboardType.Decimal)
+        FormField(own.grams.carbs, { typed -> onEdit { it.copy(grams = it.grams.copy(carbs = typed)) } }, stringResource(R.string.profile_split_grams_carbs), Modifier.weight(1f), problem = marks.of(ProfileField.GRAMS_CARBS), keyboardType = KeyboardType.Decimal)
+    }
+    val shares = own.ofGrams()
+    val kcal = own.kcalOfGrams()
+    if (shares != null && kcal != null) {
+        Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+            Text(
+                stringResource(R.string.profile_grams_shares, formatNumber(kcal.roundToInt()), shares.protein, shares.fat, shares.carbs),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            when {
+                !insideLimits(shares) -> Text(
+                    stringResource(
+                        R.string.profile_split_out_of_limits,
+                        SplitLimits.PROTEIN.first, SplitLimits.PROTEIN.last,
+                        SplitLimits.FAT.first, SplitLimits.FAT.last,
+                        SplitLimits.CARBS.first, SplitLimits.CARBS.last,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+                target != null && target > 0 -> {
+                    val at = gramsAt(shares, target)
+                    Text(
+                        stringResource(R.string.profile_grams_at_target, formatNumber(target), formatNumber(at.protein), formatNumber(at.fat), formatNumber(at.carbs)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

@@ -252,10 +252,11 @@ class ProfileFormTest {
     }
 
     @Test
-    fun `protein per kilogram begins with the fat of the split as it is typed`() {
+    fun `protein per kilogram begins with the fat of the split as it is typed, in per cent or in grams`() {
         val typed = OwnTargetsTyped(percent = SplitTyped("30", "35", "35"))
 
         assertEquals("35", typed.inWay(OwnWay.PER_KG).perKgFat)
+        assertEquals("29", typed.copy(unit = SplitUnit.GRAMS, grams = SplitTyped("150", "74", "249")).inWay(OwnWay.PER_KG).perKgFat)
         // A split still being typed leaves the fat as it was.
         assertEquals("30", OwnTargetsTyped(percent = SplitTyped("30", "", "35")).inWay(OwnWay.PER_KG).perKgFat)
         assertEquals(OwnWay.SPLIT, typed.inWay(OwnWay.PER_KG).inWay(OwnWay.SPLIT).way)
@@ -290,8 +291,28 @@ class ProfileFormTest {
         assertEquals(3.0, held.keepable(details.figures, WeightUnit.KG).customProteinPerKg!!, 0.0)
         assertEquals(emptySet<ProfileField>(), held.notKept(WeightUnit.KG, target = 2600))
 
+        val grams = form.copy(own = form.own.copy(unit = SplitUnit.GRAMS, grams = SplitTyped("30", "74", "249")))
+        assertEquals(setOf(ProfileField.SPLIT), grams.notKept(WeightUnit.KG, target = 2000))
+        assertEquals(details.figures, grams.keepable(details.figures, WeightUnit.KG, target = 2000))
         val sum = form.copy(own = form.own.copy(percent = SplitTyped("30", "30", "30")))
         assertEquals(setOf(ProfileField.SPLIT), sum.notKept(WeightUnit.KG))
+    }
+
+    @Test
+    fun `grams begin at what the split comes to at the target, are kept as the shares of their energy, and go back as them`() {
+        val form = filled.copy(dietType = "custom")
+
+        val grams = form.own.inUnit(SplitUnit.GRAMS, 2209)
+        assertEquals(SplitTyped("138", "74", "249"), grams.grams)
+        val typed = grams.copy(grams = SplitTyped("150", "74", "249"))
+        assertEquals(MacroSplit(27, 29, 44), form.copy(own = typed).figures(WeightUnit.KG)!!.customMacroSplit)
+        assertEquals(SplitTyped("27", "29", "44"), typed.inUnit(SplitUnit.PERCENT, 2209).percent)
+        // Grams past a limit leave the shares in per cent as they were.
+        val past = grams.copy(grams = SplitTyped("30", "74", "249"))
+        assertEquals(OwnFault.LIMITS, past.fault(2209, 64.5))
+        assertEquals(form.own.percent, past.inUnit(SplitUnit.PERCENT, 2209).percent)
+        // Without a target the grams are left to be typed.
+        assertEquals(SplitTyped("", "", ""), form.own.inUnit(SplitUnit.GRAMS, null).grams)
     }
 
     @Test
@@ -311,8 +332,9 @@ class ProfileFormTest {
     }
 
     @Test
-    fun `the way the targets are set is kept the moment it is chosen`() {
+    fun `the way the targets are set is kept the moment it is chosen, and the unit they are typed in is not`() {
         assertTrue(filled.choseOtherwise(filled.copy(own = filled.own.copy(way = OwnWay.PER_KG))))
+        assertFalse(filled.choseOtherwise(filled.copy(own = filled.own.inUnit(SplitUnit.GRAMS, 2000))))
     }
 
     @Test
