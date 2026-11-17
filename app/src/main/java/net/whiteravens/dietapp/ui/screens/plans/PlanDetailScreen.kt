@@ -1895,14 +1895,14 @@ private fun Figure(value: String, label: String) {
     }
 }
 
-/** How many servings a meal is, in the forms the languages give whole numbers and fractions. */
+/** How many servings a meal is, in the forms the languages give whole numbers and fractions, to [fractionDigits] decimals at most. */
 @Composable
-internal fun servingsWord(servings: Double): String =
+internal fun servingsWord(servings: Double, fractionDigits: Int = 1): String =
     if (servings % 1.0 == 0.0) {
         pluralStringResource(R.plurals.plans_offer_servings, servings.toInt(), formatNumber(servings))
     } else {
         // A count with a fraction takes the form the languages give fractions.
-        stringResource(R.string.plans_offer_servings_fraction, formatNumber(servings, fractionDigits = 1))
+        stringResource(R.string.plans_offer_servings_fraction, formatNumber(servings, fractionDigits = fractionDigits))
     }
 
 /**
@@ -1957,10 +1957,12 @@ internal fun sameServings(recipeServings: Int, servings: Double): Boolean = serv
 private fun potNote(recipeServings: Int, servings: Double, pot: PotPortions): String = stringResource(
     if (sameServings(recipeServings, servings)) R.string.plans_portion_pot_same else R.string.plans_portion_pot,
     pluralStringResource(R.plurals.plans_portion_recipe, recipeServings, recipeServings),
-    servingsWord(servings),
-    formatNumber(pot.mine, fractionDigits = 1),
+    // The whole and its two parts to the hundredth, as the API gives them: rounded to a tenth each, 1.95 and 1.95
+    // were said as 2 and 2 of a pot of 3.9.
+    servingsWord(servings, fractionDigits = 2),
+    formatNumber(pot.mine, fractionDigits = 2),
     pot.name,
-    formatNumber(pot.theirs, fractionDigits = 1),
+    formatNumber(pot.theirs, fractionDigits = 2),
 )
 
 /** What the amounts of a meal are for, and what its recipe as written makes: once, where the two are the same. */
