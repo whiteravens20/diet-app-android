@@ -75,14 +75,14 @@ class ProductsTest {
         screen.waitForText(text(R.string.products_send_needs))
         screen.keepScreenshot("products-a-product")
 
-        screen.onNode(hasText(text(R.string.products_edit)) and hasClickAction()).performClick()
+        screen.onNode(hasText(text(R.string.products_edit)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForText(text(R.string.products_edit_title))
         type(R.string.products_brand, "Babcia")
         save()
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(text(R.string.products_edit_title))).fetchSemanticsNodes().isEmpty() }
         screen.waitForText("Babcia")
 
-        screen.onNode(hasText(text(R.string.products_remove)) and hasClickAction()).performClick()
+        screen.onNode(hasText(text(R.string.products_remove)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForText(text(R.string.products_remove_note))
         screen.keepScreenshot("products-a-word-before-removing")
         // The word that answers the question stands under the button that asked it.

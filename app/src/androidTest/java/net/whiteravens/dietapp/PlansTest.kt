@@ -155,7 +155,8 @@ class PlansTest {
         // one offer is put away for another, which is taken.
         val before = Instance.firstDayRecipes(account, planId)
         val change = text(R.string.plans_action_for, text(R.string.plans_change_meal), Instance.firstMeal(account, planId).first)
-        screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(change).fetchSemanticsNodes().isNotEmpty() }
+        // Under the day's card, below the screen's edge at a large font: scrolled to, not waited for where it is.
+        screen.scrollTo(hasContentDescription(change))
         screen.onAllNodesWithContentDescription(change)[0].performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_tooltip_swap_by_fav))
         screen.keepScreenshot("plans-the-ways-to-change-a-meal")
@@ -371,7 +372,8 @@ class PlansTest {
         val title = Instance.mealToCook(account, planId)
         val before = Instance.dayRecipes(account, planId, 0)
         val change = text(R.string.plans_action_for, text(R.string.plans_change_meal), title)
-        screen.waitUntil(20_000) { screen.onAllNodesWithContentDescription(change).fetchSemanticsNodes().isNotEmpty() }
+        // Under the day's card, below the screen's edge at a large font: scrolled to, not waited for where it is.
+        screen.scrollTo(hasContentDescription(change))
         screen.onAllNodesWithContentDescription(change)[0].performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.plans_swap)).performClick()
         screen.waitForEnabled(text(R.string.plans_offer_take))
@@ -496,7 +498,7 @@ class PlansTest {
 
         // Taking it off its day asks whether off both days or off this one alone.
         screen.onAllNodes(change)[0].performScrollTo().performClick()
-        screen.onNodeWithText(text(R.string.plans_remove)).performClick()
+        screen.onNodeWithText(text(R.string.plans_remove)).performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_remove_for_all))
         screen.keepScreenshot("plans-a-shared-removal")
         screen.onNode(hasText(text(R.string.common_cancel)) and inAWindow).performClick()
@@ -807,7 +809,7 @@ class PlansTest {
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), title))
         screen.scrollTo(change)
         screen.onAllNodes(change)[0].performClick()
-        screen.onNodeWithText(text(R.string.plans_remove)).performClick()
+        screen.onNodeWithText(text(R.string.plans_remove)).performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_remove_note))
         screen.keepScreenshot("plans-a-meal-taken-off-its-day")
         screen.onNode(hasText(text(R.string.plans_remove_confirm)) and hasAnyAncestor(isDialog())).performClick()
@@ -890,7 +892,7 @@ class PlansTest {
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), title))
         screen.scrollTo(change)
         screen.onAllNodes(change)[0].performClick()
-        screen.onNodeWithText(text(R.string.plans_remove)).performClick()
+        screen.onNodeWithText(text(R.string.plans_remove)).performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_settings_list_out_of_date))
         screen.keepScreenshot("plans-a-meal-taken-off-a-listed-day")
         screen.onNode(hasText(text(R.string.common_cancel)) and hasAnyAncestor(isDialog())).performClick()

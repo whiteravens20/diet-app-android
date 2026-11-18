@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
+import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
@@ -206,6 +207,8 @@ class ShoppingTest {
         list.performScrollToNode(hasText(text(R.string.shopping_find_entry)))
         screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextInput(other)
         screen.putKeyboardAway()
+        // Under the field and its note, below the screen's edge at a large font.
+        screen.scrollTo(hasText(other) and isToggleable())
         screen.waitUntil(20_000) {
             val shown = screen.onAllNodes(isToggleable()).fetchSemanticsNodes()
             shown.isNotEmpty() && shown.all { node -> node.config[SemanticsProperties.Text].any { other.lowercase() in it.text.lowercase() } }
