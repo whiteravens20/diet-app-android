@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import net.whiteravens.dietapp.R
@@ -239,7 +240,7 @@ private fun labelOf(label: (@Composable () -> Unit)?, optional: Boolean): (@Comp
         {
             if (optional) {
                 // The word goes under the label where the label needs the line to itself, as with a large font.
-                NameAndTrail(Modifier.fillMaxWidth(), alignment = Alignment.Bottom, name = content) {
+                NameAndTrail(Modifier.fillMaxWidth(), gap = 0.dp, alignment = Alignment.Bottom, name = content) {
                     // Heard once, as the state of the field.
                     Text(
                         stringResource(R.string.common_optional),

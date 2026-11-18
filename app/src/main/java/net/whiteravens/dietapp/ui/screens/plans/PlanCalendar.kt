@@ -96,6 +96,7 @@ internal fun PlanCalendar(
         // The month's name keeps its line where the buttons beside it leave it too little, as with a large font.
         NameAndTrail(
             Modifier.padding(top = 8.dp),
+            gap = 0.dp,
             name = {
                 Text(
                     calendar.month.format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)),

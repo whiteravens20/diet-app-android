@@ -27,7 +27,7 @@ fun StatCard(
 ) {
     AppCard(modifier = modifier) {
         // The icon goes under what it marks where the label needs the line, as with a large font: no word breaks.
-        NameAndTrail(alignment = Alignment.Top, name = {
+        NameAndTrail(gap = 0.dp, alignment = Alignment.Top, name = {
             Column {
                 Text(
                     label,
