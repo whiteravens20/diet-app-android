@@ -14,6 +14,8 @@
     <string name="common_retry">Spróbuj ponownie</string>
     <string name="pull_to_read">Odśwież</string>
     <string name="common_optional">opcjonalnie</string>
+    <string name="common_undo">Cofnij</string>
+    <string name="removed_named">Usunięto: %1$s.</string>
     <string name="common_cancel">Anuluj</string>
     <string name="common_back">Wstecz</string>
     <string name="common_save">Zapisz</string>

@@ -5,12 +5,14 @@ package net.whiteravens.dietapp.ui.screens.pantry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -20,6 +22,7 @@ import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.data.sync.Waiting
+import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.Profile
@@ -27,6 +30,7 @@ import net.whiteravens.dietapp.domain.StockableIngredient
 import net.whiteravens.dietapp.domain.frozenUntil
 import net.whiteravens.dietapp.domain.portionCount
 import net.whiteravens.dietapp.domain.portionsOf
+import net.whiteravens.dietapp.ui.common.LaterRemoval
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
@@ -47,6 +51,7 @@ class PantryViewModel @Inject constructor(
     private val pantry: PantryRepository,
     private val users: UserRepository,
     private val queue: ChangeQueue,
+    @ApplicationScope private val application: CoroutineScope,
 ) : ViewModel() {
 
     /** What could not be done: something put in, a row changed, a row taken out, a row put into the freezer. */
@@ -359,12 +364,43 @@ class PantryViewModel @Inject constructor(
         }
     }
 
+    /** A row is cheap to put in again: it goes at once, and is taken out once the moments to take it back are over. */
+    private val later = LaterRemoval<PantryRow>(viewModelScope) { row ->
+        // Sent once nothing else is being changed: a removal is never dropped for another change under way.
+        viewModelScope.launch {
+            _state.first { !it.busy }
+            removeNow(row)
+        }
+    }
+
+    /** The row removed a moment ago, which can still be taken back: not shown. */
+    val removedLater: StateFlow<PantryRow?> = later.waiting
+
+    /**
+     * Takes [row] out; with [after], as the screen asks, it is first held that long to be taken back
+     * ([keepRemoved]). The screen passes the moments; nothing else waits.
+     */
+    fun remove(row: PantryRow, after: Long = 0) = later.remove(row, after)
+
+    /** Takes the removal back: the row stays, and nothing is sent. */
+    fun keepRemoved() = later.undo()
+
+    override fun onCleared() {
+        // A removal still waiting is not taken back by leaving the screen: it is sent from the application's scope.
+        val row = later.take() ?: return
+        val profileId = _state.value.profileId ?: return
+        val waiting = _state.value.waitingAdditions[row.id]
+        application.launch {
+            if (waiting != null) queue.withdraw(waiting) else runCatching { pantry.remove(profileId, row.id) }
+        }
+    }
+
     /**
      * Takes [row] out of the pantry; the pantry is read again either way, as a row taken out elsewhere
      * is gone too. Something put in that waits to be sent is taken out of the queue instead, unless it
      * was sent meanwhile: then the pantry is read again, with it in.
      */
-    fun remove(row: PantryRow) {
+    private fun removeNow(row: PantryRow) {
         val profileId = _state.value.profileId ?: return
         if (_state.value.busy) return
         _state.update { it.copy(changing = row.id, failed = null) }

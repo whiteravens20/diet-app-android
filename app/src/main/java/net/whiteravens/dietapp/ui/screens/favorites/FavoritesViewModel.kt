@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.favorites
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,9 +26,11 @@ import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.data.sync.Waiting
+import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.ui.common.LaterRemoval
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
@@ -45,6 +49,7 @@ class FavoritesViewModel @Inject constructor(
     private val favorites: FavoriteRepository,
     private val users: UserRepository,
     private val queue: ChangeQueue,
+    @ApplicationScope private val application: CoroutineScope,
 ) : ViewModel() {
 
     /** What a mark is changed to: how the recipe is marked, the tags it has, or both. */
@@ -205,8 +210,36 @@ class FavoritesViewModel @Inject constructor(
 
     fun removeTag(item: MarkedRecipe, tag: String) = change(item, Change(tags = _state.value.shown(item).tags - tag))
 
+    /** A mark is cheap to make again: it goes at once, and is taken off once the moments to take it back are over. */
+    private val later = LaterRemoval<MarkedRecipe>(viewModelScope) { item ->
+        // Sent once nothing else is being changed: a removal is never dropped for another change under way.
+        viewModelScope.launch {
+            _state.first { !it.busy }
+            removeNow(item)
+        }
+    }
+
+    /** The mark taken off a moment ago, which can still be taken back: not shown. */
+    val removedLater: StateFlow<MarkedRecipe?> = later.waiting
+
+    /**
+     * Takes [item] out; with [after], as the screen asks, it is first held that long to be taken back
+     * ([keepRemoved]). The screen passes the moments; nothing else waits.
+     */
+    fun remove(item: MarkedRecipe, after: Long = 0) = later.remove(item, after)
+
+    /** Takes the removal back: the mark stays, and nothing is sent. */
+    fun keepRemoved() = later.undo()
+
+    override fun onCleared() {
+        // A removal still waiting is not taken back by leaving the screen: it is sent from the application's scope.
+        val item = later.take() ?: return
+        val profileId = _state.value.profileId ?: return
+        application.launch { runCatching { favorites.unmark(profileId, item.recipeId) } }
+    }
+
     /** Takes the mark off [item]; the list is read again either way, as a mark taken off elsewhere is gone too. */
-    fun remove(item: MarkedRecipe) {
+    private fun removeNow(item: MarkedRecipe) {
         val profileId = _state.value.profileId ?: return
         if (_state.value.busy) return
         _state.update { it.copy(removing = item.recipeId, failed = null) }

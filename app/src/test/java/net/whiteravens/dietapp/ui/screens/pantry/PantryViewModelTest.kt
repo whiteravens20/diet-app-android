@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.pantry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -40,6 +41,9 @@ import java.time.LocalDate
 class PantryViewModelTest {
     private val main = StandardTestDispatcher()
 
+    /** The application's scope, which outlives a screen: where a removal still held when the model is cleared is sent. */
+    private val application = CoroutineScope(main)
+
     @Before
     fun mainThread() = Dispatchers.setMain(main)
 
@@ -72,7 +76,7 @@ class PantryViewModelTest {
     @Test
     fun `the first profile's pantry is read, and its rows put under their categories where the first of each comes`() = runTest(main) {
         val pantry = pantry(garlic, egg, oats, milk)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         assertEquals("ada", model.state.value.profileId)
@@ -90,7 +94,7 @@ class PantryViewModelTest {
     fun `the catalogue is searched once two letters are typed and typing pauses, and what the pantry holds already is not offered`() = runTest(main) {
         val pantry = pantry(egg)
         coEvery { pantry.ingredients("eg") } returns listOf(eggs, eggplant)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.search("e")
@@ -113,7 +117,7 @@ class PantryViewModelTest {
         val chicken = StockableIngredient("chicken", "Chicken breast", "meat", listOf("g"), "g", "piece")
         val pantry = pantry(frozen, bacon)
         coEvery { pantry.ingredients("ch") } returns listOf(chicken)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.search("ch")
@@ -122,14 +126,14 @@ class PantryViewModelTest {
 
         assertEquals(listOf("meat" to listOf(bacon, frozen)), model.state.value.groups)
         assertEquals(listOf(chicken), model.state.value.offered)
-        val both = PantryViewModel(pantry(frozen, fresh, bacon), users, queue)
+        val both = PantryViewModel(pantry(frozen, fresh, bacon), users, queue, application)
         runCurrent()
         assertEquals(listOf("meat" to listOf(bacon, fresh, frozen)), both.state.value.groups)
     }
 
     @Test
     fun `the freezer's box dates what goes in 30 days on where no day is chosen, keeps a day chosen, and takes away the day it wrote`() = runTest(main) {
-        val model = PantryViewModel(pantry(), users, queue)
+        val model = PantryViewModel(pantry(), users, queue, application)
         runCurrent()
         val today = LocalDate.parse("2026-11-18")
         val form = { model.state.value.form }
@@ -162,7 +166,7 @@ class PantryViewModelTest {
         coEvery { pantry.ingredients("eg") } returns listOf(eggs, eggplant)
         coEvery { pantry.ingredients("ch") } returns listOf(chicken)
         coEvery { pantry.add("ada", eggs, 6.0, "piece", LocalDate.parse("2026-12-18"), true, 4) } returns Submitted.Sent(frozenEgg)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.freezeIt(true, LocalDate.parse("2026-11-18"))
@@ -197,7 +201,7 @@ class PantryViewModelTest {
         val pantry = pantry()
         coEvery { pantry.ingredients("eg") } returns listOf(eggs)
         coEvery { pantry.add("ada", eggs, 6.0, "piece", null, false, 1) } returns Submitted.Sent(egg)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.freezeIt(true, LocalDate.parse("2026-11-18"))
@@ -221,7 +225,7 @@ class PantryViewModelTest {
         val second = first.copy(id = "milk-2")
         val pantry = pantry(milk, egg)
         coEvery { pantry.freeze("ada", "milk-row", 2, today) } returns Submitted.Sent(listOf(egg, first, second))
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.openFreeze(milk)
@@ -244,7 +248,7 @@ class PantryViewModelTest {
     fun `a window asking for portions of less than one of the unit sends nothing, and a refusal is said in it while it is open`() = runTest(main) {
         val pantry = pantry(egg)
         coEvery { pantry.freeze("ada", "egg-row", 3, any()) } throws refused("PORTIONS_TOO_MANY")
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.openFreeze(egg)
@@ -272,7 +276,7 @@ class PantryViewModelTest {
             kotlinx.coroutines.delay(1_000)
             throw refused("NOT_FOUND")
         }
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.openFreeze(milk)
@@ -292,7 +296,7 @@ class PantryViewModelTest {
         coEvery { pantry.freeze("ada", "milk-row", 2, LocalDate.parse("2026-11-18")) } coAnswers {
             queue.submit(QueuedChange.PantryFrozen("ada", "milk-row", "key", "2026-12-18", 2), offline)
         }
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.openFreeze(milk)
@@ -312,7 +316,7 @@ class PantryViewModelTest {
         val later = PantryRow("chicken-later", "chicken", "Chicken breast", "meat", 300.0, "g", LocalDate.parse("2027-01-10"), frozen = true)
         val sooner = later.copy(id = "chicken-sooner", shown = 286.0, bestBefore = LocalDate.parse("2026-12-14"))
         val fish = PantryRow("fish-frozen", "fish", "Cod", "meat", 200.0, "g", LocalDate.parse("2026-12-20"), frozen = true)
-        val model = PantryViewModel(pantry(later, fish, fresh, sooner), users, queue)
+        val model = PantryViewModel(pantry(later, fish, fresh, sooner), users, queue, application)
         runCurrent()
 
         assertEquals(listOf("meat" to listOf(fresh, sooner, later, fish)), model.state.value.groups)
@@ -322,7 +326,7 @@ class PantryViewModelTest {
 
     @Test
     fun `an ingredient picked is put in in the unit it is counted in at first, the search emptied`() = runTest(main) {
-        val model = PantryViewModel(pantry(), users, queue)
+        val model = PantryViewModel(pantry(), users, queue, application)
         runCurrent()
         model.chooseUnit("ml")
 
@@ -335,7 +339,7 @@ class PantryViewModelTest {
 
     @Test
     fun `an amount is typed with a comma or a point, and nothing else is taken, nor a number under nothing`() = runTest(main) {
-        val model = PantryViewModel(pantry(), users, queue)
+        val model = PantryViewModel(pantry(), users, queue, application)
         runCurrent()
 
         model.typeQuantity("1,5")
@@ -355,7 +359,7 @@ class PantryViewModelTest {
     fun `what the form holds is put in for the profile shown, the row it is kept in shown, the form emptied and the pantry read again`() = runTest(main) {
         val pantry = pantry()
         coEvery { pantry.add("ada", eggs, 6.5, "piece", LocalDate.parse("2026-10-22")) } returns Submitted.Sent(egg)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
         model.pick(eggs)
         model.typeQuantity("6,5")
@@ -377,7 +381,7 @@ class PantryViewModelTest {
     fun `something refused stays in the form to be put right, and the refusal is said with what could not be done`() = runTest(main) {
         val pantry = pantry()
         coEvery { pantry.add(any(), any(), any(), any(), any()) } throws refused("QUANTITY_TOO_LARGE")
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
         model.pick(eggs)
         model.typeQuantity("2000")
@@ -410,7 +414,7 @@ class PantryViewModelTest {
         val halved = egg.copy(shown = 3.0, bestBefore = null)
         coEvery { pantry.change("ada", "egg-row", PantryChange(quantity = 3.0, newDay = true, bestBefore = null)) } returns Submitted.Sent(halved)
         coEvery { pantry.change("ada", "garlic-row", PantryChange(quantity = 2000.0)) } throws refused("QUANTITY_TOO_LARGE")
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.change(egg, PantryChange(quantity = 3.0, newDay = true, bestBefore = null))
@@ -431,7 +435,7 @@ class PantryViewModelTest {
         val pantry = pantry(garlic, egg)
         coEvery { pantry.remove("ada", "egg-row") } returns Submitted.Sent(Unit)
         coEvery { pantry.remove("ada", "garlic-row") } throws ApiException(404, "INVENTORY_ITEM_NOT_FOUND", "")
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.remove(egg)
@@ -449,7 +453,7 @@ class PantryViewModelTest {
     fun `nothing is put in while something is on its way`() = runTest(main) {
         val pantry = pantry(egg)
         coEvery { pantry.change(any(), any(), any()) } returns Submitted.Sent(egg)
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
         model.pick(eggplant)
         model.typeQuantity("300")
@@ -471,7 +475,7 @@ class PantryViewModelTest {
             queue.submit(QueuedChange.PantryChanged("ada", "egg-row", quantity = 4.0), offline)
         }
         coEvery { pantry.remove("ada", "garlic-row") } coAnswers { queue.submit(QueuedChange.PantryRemoved("ada", "garlic-row"), offline) }
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
 
         model.pick(eggplant)
@@ -502,7 +506,7 @@ class PantryViewModelTest {
         coEvery { pantry.change("ada", "egg-row", PantryChange(quantity = 4.0)) } coAnswers {
             queue.submit(QueuedChange.PantryChanged("ada", "egg-row", quantity = 4.0), offline)
         }
-        val model = PantryViewModel(pantry, users, queue)
+        val model = PantryViewModel(pantry, users, queue, application)
         runCurrent()
         model.pick(eggplant)
         model.typeQuantity("300")
@@ -546,5 +550,54 @@ class PantryViewModelTest {
         assertEquals(garlic.copy(shown = 2.0, shownGrams = null), shown[0])
         // A new day alone leaves the amount, and what it weighs, as the server said.
         assertEquals(egg.copy(bestBefore = LocalDate.parse("2026-11-20")), shown[1])
+    }
+
+    // ── A row taken out, held to be taken back ──────────────────────────
+
+    @Test
+    fun `a row taken out is gone at once and sent once the moments to take it back are over`() = runTest(main) {
+        val pantry = pantry(garlic, egg)
+        coEvery { pantry.remove("ada", "egg-row") } returns Submitted.Sent(Unit)
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+
+        model.remove(egg, after = 6_000)
+        runCurrent()
+
+        assertEquals("egg-row", model.removedLater.value?.id)
+        coVerify(exactly = 0) { pantry.remove(any(), any()) }
+        advanceTimeBy(6_000)
+        runCurrent()
+        coVerify(exactly = 1) { pantry.remove("ada", "egg-row") }
+        assertNull(model.removedLater.value)
+    }
+
+    @Test
+    fun `a row taken out and taken back is never sent`() = runTest(main) {
+        val pantry = pantry(garlic, egg)
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+
+        model.remove(egg, after = 6_000)
+        model.keepRemoved()
+        advanceTimeBy(12_000)
+        runCurrent()
+
+        assertNull(model.removedLater.value)
+        coVerify(exactly = 0) { pantry.remove(any(), any()) }
+    }
+
+    @Test
+    fun `a row still held when the screen is closed is sent all the same`() = runTest(main) {
+        val pantry = pantry(garlic, egg)
+        coEvery { pantry.remove("ada", "egg-row") } returns Submitted.Sent(Unit)
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+
+        model.remove(egg, after = 6_000)
+        model.javaClass.getDeclaredMethod("onCleared").apply { isAccessible = true }.invoke(model)
+        runCurrent()
+
+        coVerify(exactly = 1) { pantry.remove("ada", "egg-row") }
     }
 }

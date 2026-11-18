@@ -17,6 +17,8 @@
     <string name="common_retry">Try again</string>
     <string name="pull_to_read">Refresh</string>
     <string name="common_optional">optional</string>
+    <string name="common_undo">Undo</string>
+    <string name="removed_named">Removed: %1$s.</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_back">Back</string>
     <string name="common_save">Save</string>

@@ -76,10 +76,12 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
+import net.whiteravens.dietapp.ui.components.RemovedBar
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.WaitingMark
+import net.whiteravens.dietapp.ui.components.undoForMillis
 import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
 import net.whiteravens.dietapp.ui.screens.products.OwnProductDialog
 import net.whiteravens.dietapp.ui.components.DOT
@@ -106,6 +108,8 @@ fun DiaryScreen(
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val removed by viewModel.removedLater.collectAsStateWithLifecycle()
+    val undoFor = undoForMillis()
     // Read again on being shown again: a plan's page and a recipe change what a day shows.
     WhenShownAgain(viewModel::shownAgain)
 
@@ -215,7 +219,7 @@ fun DiaryScreen(
                                 }
                             }
 
-                            else -> day(state, viewModel, onOpenPlan, onEditProfile)
+                            else -> day(state, viewModel, onOpenPlan, onEditProfile, removed?.id) { viewModel.remove(it, undoFor) }
                         }
                     }
                 }
@@ -233,6 +237,9 @@ fun DiaryScreen(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
+        removed?.let { entry ->
+            RemovedBar(entry.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+        }
     }
 }
 
@@ -242,6 +249,8 @@ private fun LazyListScope.day(
     viewModel: DiaryViewModel,
     onOpenPlan: (planId: String, day: String) -> Unit,
     onEditProfile: (profileId: String) -> Unit,
+    hiding: String?,
+    onRemove: (DiaryEntry) -> Unit,
 ) {
     item(key = "summary") {
         val day = state.day
@@ -284,12 +293,13 @@ private fun LazyListScope.day(
         MealSection(
             slot = slot,
             meals = state.planMeals.filter { it.slot == slot },
-            entries = state.entries.filter { it.slot == slot },
+            // The entry removed a moment ago is not shown while it can be taken back.
+            entries = state.entries.filter { it.slot == slot && it.id != hiding },
             state = state,
             onAdd = { viewModel.openWindow(slot) },
             onEaten = viewModel::setEaten,
             onEdit = viewModel::openEdit,
-            onRemove = viewModel::remove,
+            onRemove = onRemove,
         )
     }
     if (!state.ahead && !state.tooOld) {

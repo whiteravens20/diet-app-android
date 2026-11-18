@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.pantry
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -75,10 +76,12 @@ import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
+import net.whiteravens.dietapp.ui.components.RemovedBar
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.WaitingMark
+import net.whiteravens.dietapp.ui.components.undoForMillis
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import java.text.NumberFormat
@@ -100,117 +103,128 @@ fun PantryScreen(
     viewModel: PantryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val removed by viewModel.removedLater.collectAsStateWithLifecycle()
+    val undoFor = undoForMillis()
+    // The row removed a moment ago is not shown while it can be taken back.
+    val groups = state.groups.mapNotNull { (category, rows) ->
+        rows.filter { it.id != removed?.id }.takeIf { it.isNotEmpty() }?.let { category to it }
+    }
     // Read again on being shown again: a shopping list ticked in the meantime changes the pantry too.
     WhenShownAgain(viewModel::shownAgain)
 
-    PullToRead(state.pulled, viewModel::pull) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                ScreenHeader(
-                    title = stringResource(R.string.pantry_title),
-                    subtitle = stringResource(R.string.pantry_subhead),
-                    onBack = onBack,
-                )
-            }
-            state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
-
-            when {
-                state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
-
-                state.profilesError != null -> item {
-                    Column {
-                        ErrorBanner(errorMessage(state.profilesError!!))
-                        Button(onClick = viewModel::loadProfiles, modifier = Modifier.padding(top = 12.dp)) {
-                            Text(stringResource(R.string.common_retry))
-                        }
-                    }
-                }
-
-                state.profiles.isEmpty() -> item {
-                    EmptyState(
-                        icon = AppIcons.Inventory,
-                        title = stringResource(R.string.pantry_no_profile),
-                        description = stringResource(R.string.pantry_no_profile_body),
-                        cta = { Button(onClick = onProfiles) { Text(stringResource(R.string.pantry_no_profile_cta)) } },
+    Box(Modifier.fillMaxSize()) {
+        PullToRead(state.pulled, viewModel::pull) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    ScreenHeader(
+                        title = stringResource(R.string.pantry_title),
+                        subtitle = stringResource(R.string.pantry_subhead),
+                        onBack = onBack,
                     )
                 }
+                state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
 
-                else -> {
-                    // The profiles to choose among, only where there are two or more.
-                    if (state.profiles.size > 1) {
-                        item {
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                state.profiles.forEach { profile ->
-                                    FilterChip(
-                                        selected = profile.id == state.profileId,
-                                        onClick = { viewModel.pickProfile(profile.id) },
-                                        enabled = !state.busy,
-                                        label = { Text(profile.name) },
-                                    )
-                                }
+                when {
+                    state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
+
+                    state.profilesError != null -> item {
+                        Column {
+                            ErrorBanner(errorMessage(state.profilesError!!))
+                            Button(onClick = viewModel::loadProfiles, modifier = Modifier.padding(top = 12.dp)) {
+                                Text(stringResource(R.string.common_retry))
                             }
                         }
                     }
-                    state.failed?.let { (what, error) ->
-                        item {
-                            val lead = stringResource(
-                                when (what) {
-                                    PantryViewModel.Failure.ADD -> R.string.pantry_err_add
-                                    PantryViewModel.Failure.CHANGE -> R.string.pantry_err_change
-                                    PantryViewModel.Failure.REMOVE -> R.string.pantry_err_remove
-                                    PantryViewModel.Failure.FREEZE -> R.string.pantry_err_freeze
-                                },
-                            )
-                            ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                        }
+
+                    state.profiles.isEmpty() -> item {
+                        EmptyState(
+                            icon = AppIcons.Inventory,
+                            title = stringResource(R.string.pantry_no_profile),
+                            description = stringResource(R.string.pantry_no_profile_body),
+                            cta = { Button(onClick = onProfiles) { Text(stringResource(R.string.pantry_no_profile_cta)) } },
+                        )
                     }
-                    item { AddCard(state, viewModel) }
 
-                    when {
-                        state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
-
-                        state.error != null -> item {
-                            Column {
-                                ErrorBanner(errorMessage(state.error!!))
-                                Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
-                                    Text(stringResource(R.string.common_retry))
+                    else -> {
+                        // The profiles to choose among, only where there are two or more.
+                        if (state.profiles.size > 1) {
+                            item {
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    state.profiles.forEach { profile ->
+                                        FilterChip(
+                                            selected = profile.id == state.profileId,
+                                            onClick = { viewModel.pickProfile(profile.id) },
+                                            enabled = !state.busy,
+                                            label = { Text(profile.name) },
+                                        )
+                                    }
                                 }
                             }
                         }
-
-                        state.shownRows.isEmpty() -> item {
-                            EmptyState(
-                                icon = AppIcons.Inventory,
-                                title = stringResource(R.string.pantry_empty_title),
-                                description = stringResource(R.string.pantry_empty_body),
-                            )
+                        state.failed?.let { (what, error) ->
+                            item {
+                                val lead = stringResource(
+                                    when (what) {
+                                        PantryViewModel.Failure.ADD -> R.string.pantry_err_add
+                                        PantryViewModel.Failure.CHANGE -> R.string.pantry_err_change
+                                        PantryViewModel.Failure.REMOVE -> R.string.pantry_err_remove
+                                        PantryViewModel.Failure.FREEZE -> R.string.pantry_err_freeze
+                                    },
+                                )
+                                ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                            }
                         }
+                        item { AddCard(state, viewModel) }
 
-                        else -> items(state.groups, key = { (category, _) -> "group-$category" }) { (category, rows) ->
-                            AppCard {
-                                Text(categoryLabel(category), style = MaterialTheme.typography.titleMedium)
-                                rows.forEachIndexed { index, row ->
-                                    if (index > 0) HorizontalDivider()
-                                    RowItem(
-                                        row = row,
-                                        number = state.packageNumbers[row.id],
-                                        waiting = row.id in state.waitingRows,
-                                        added = row.id in state.waitingAdditions,
-                                        enabled = !state.busy,
-                                        onChange = { viewModel.change(row, it) },
-                                        onRemove = { viewModel.remove(row) },
-                                        onFreeze = { viewModel.openFreeze(row) },
-                                    )
+                        when {
+                            state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
+
+                            state.error != null -> item {
+                                Column {
+                                    ErrorBanner(errorMessage(state.error!!))
+                                    Button(onClick = viewModel::retry, modifier = Modifier.padding(top = 12.dp)) {
+                                        Text(stringResource(R.string.common_retry))
+                                    }
+                                }
+                            }
+
+                            groups.isEmpty() -> item {
+                                EmptyState(
+                                    icon = AppIcons.Inventory,
+                                    title = stringResource(R.string.pantry_empty_title),
+                                    description = stringResource(R.string.pantry_empty_body),
+                                )
+                            }
+
+                            else -> items(groups, key = { (category, _) -> "group-$category" }) { (category, rows) ->
+                                AppCard {
+                                    Text(categoryLabel(category), style = MaterialTheme.typography.titleMedium)
+                                    rows.forEachIndexed { index, row ->
+                                        if (index > 0) HorizontalDivider()
+                                        RowItem(
+                                            row = row,
+                                            number = state.packageNumbers[row.id],
+                                            waiting = row.id in state.waitingRows,
+                                            added = row.id in state.waitingAdditions,
+                                            enabled = !state.busy,
+                                            onChange = { viewModel.change(row, it) },
+                                            onRemove = { viewModel.remove(row, undoFor) },
+                                            onFreeze = { viewModel.openFreeze(row) },
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+        removed?.let { row ->
+            RemovedBar(row.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
     if (state.freezing != null) FreezeDialog(state, viewModel)

@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -33,8 +34,13 @@ import java.io.IOException
 /** A profile's marked recipes as the screen keeps them: narrowed, in order, and each mark changed or taken off where it is shown. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavoritesViewModelTest {
+    private val main = UnconfinedTestDispatcher()
+
+    /** The application's scope, which outlives a screen: where a removal still held when the model is cleared is sent. */
+    private val application = CoroutineScope(main)
+
     @Before
-    fun mainThread() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    fun mainThread() = Dispatchers.setMain(main)
 
     @After
     fun reset() = Dispatchers.resetMain()
@@ -59,7 +65,7 @@ class FavoritesViewModelTest {
     fun `the first profile's marks are read, and where a filter leaves some out, every mark too for the tags to choose from`() {
         val favorites = favorites(oats, soup)
         coEvery { favorites.marked("ada", FavoriteFilter(sentiment = "often")) } returns listOf(soup)
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
 
         model.narrow(FavoriteFilter(sentiment = "often"))
 
@@ -72,7 +78,7 @@ class FavoritesViewModelTest {
     @Test
     fun `another profile shows its own marks, and a tag of the first narrows nothing there`() {
         val favorites = favorites(oats, soup)
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
         model.narrow(FavoriteFilter(tag = "quick", sort = "title"))
 
         model.pickProfile("bo")
@@ -90,7 +96,7 @@ class FavoritesViewModelTest {
             sent.await()
             Submitted.Sent(Unit)
         }
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
 
         model.setSentiment(oats, "avoid")
 
@@ -106,7 +112,7 @@ class FavoritesViewModelTest {
         val favorites = favorites(oats, soup)
         val refused = ApiException(404, "RECIPE_NOT_FOUND", "Recipe not found.")
         coEvery { favorites.mark(any(), any(), any(), any()) } throws refused
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
 
         model.setSentiment(oats, "often")
 
@@ -120,7 +126,7 @@ class FavoritesViewModelTest {
         val favorites = favorites(oats, soup)
         coEvery { favorites.mark(any(), any(), any(), any()) } returns Submitted.Sent(Unit)
         val full = oats.copy(tags = (1..FavoriteFilter.MOST_TAGS).map { "t$it" })
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
 
         model.addTag(oats, " quick ")
         model.addTag(oats, "   ")
@@ -137,7 +143,7 @@ class FavoritesViewModelTest {
     fun `a mark taken off leaves the list, and one the API no longer has is said and the list read again`() {
         val favorites = favorites(oats, soup)
         coEvery { favorites.unmark("ada", "soup") } returns Submitted.Sent(Unit)
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
         coEvery { favorites.marked("ada", FavoriteFilter()) } returns listOf(oats)
 
         model.remove(soup)
@@ -162,7 +168,7 @@ class FavoritesViewModelTest {
             queue.submit(QueuedChange.Marked("ada", "oats", "avoid", listOf("quick", "cheap")), offline)
         }
         coEvery { favorites.unmark("ada", "soup") } coAnswers { queue.submit(QueuedChange.Unmarked("ada", "soup"), offline) }
-        val model = FavoritesViewModel(favorites, users, queue)
+        val model = FavoritesViewModel(favorites, users, queue, application)
 
         model.setSentiment(oats, "avoid")
         model.remove(soup)
@@ -181,5 +187,50 @@ class FavoritesViewModelTest {
         assertEquals(listOf(oats.copy(sentiment = "avoid")), model.state.value.shownItems)
         assertEquals(emptySet<String>(), model.state.value.waitingRecipes)
         assertFalse(model.state.value.offline)
+    }
+
+    // ── A mark taken off, held to be taken back ─────────────────────────
+
+    @Test
+    fun `a mark taken off is gone at once and sent once the moments to take it back are over`() {
+        val favorites = favorites(oats, soup)
+        coEvery { favorites.unmark("ada", "soup") } returns Submitted.Sent(Unit)
+        val model = FavoritesViewModel(favorites, users, queue, application)
+
+        model.remove(soup, after = 6_000)
+
+        assertEquals("soup", model.removedLater.value?.recipeId)
+        coVerify(exactly = 0) { favorites.unmark(any(), any()) }
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+        coVerify(exactly = 1) { favorites.unmark("ada", "soup") }
+        assertNull(model.removedLater.value)
+    }
+
+    @Test
+    fun `a mark taken off and taken back is never sent`() {
+        val favorites = favorites(oats, soup)
+        val model = FavoritesViewModel(favorites, users, queue, application)
+
+        model.remove(soup, after = 6_000)
+        model.keepRemoved()
+        main.scheduler.advanceTimeBy(12_000)
+        main.scheduler.runCurrent()
+
+        assertNull(model.removedLater.value)
+        coVerify(exactly = 0) { favorites.unmark(any(), any()) }
+    }
+
+    @Test
+    fun `a mark still held when the screen is closed is sent all the same`() {
+        val favorites = favorites(oats, soup)
+        coEvery { favorites.unmark("ada", "soup") } returns Submitted.Sent(Unit)
+        val model = FavoritesViewModel(favorites, users, queue, application)
+
+        model.remove(soup, after = 6_000)
+        model.javaClass.getDeclaredMethod("onCleared").apply { isAccessible = true }.invoke(model)
+        main.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { favorites.unmark("ada", "soup") }
     }
 }

@@ -7,6 +7,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,6 +80,9 @@ class DiaryViewModelTest {
 
     private val main = UnconfinedTestDispatcher()
 
+    /** The application's scope, which outlives a screen: where a removal still held when the model is cleared is sent. */
+    private val application = CoroutineScope(main)
+
     @Before
     fun mainThread() = Dispatchers.setMain(main)
 
@@ -112,6 +116,7 @@ class DiaryViewModelTest {
         recipes,
         queue,
         server,
+        application,
     )
 
     private val server = mockk<ServerRepository>().also {
@@ -216,7 +221,7 @@ class DiaryViewModelTest {
         val handle = SavedStateHandle(mapOf("profileId" to "a", "adding" to true))
         val before = mealAt(LocalTime.now())
 
-        val model = DiaryViewModel(handle, diary, users, plans, recipes, queue, server)
+        val model = DiaryViewModel(handle, diary, users, plans, recipes, queue, server, application)
 
         assertTrue(model.state.value.form?.slot == before || model.state.value.form?.slot == mealAt(LocalTime.now()))
         assertEquals(false, handle.get<Boolean>("adding"))
@@ -399,7 +404,7 @@ class DiaryViewModelTest {
             diaryQueue.submit(change) { throw offline }
         }
         coEvery { diary.day("a", today) } returns day(eaten = 100.0)
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
         model.openWindow("dinner")
         model.typeOwnMeal()
 
@@ -422,7 +427,7 @@ class DiaryViewModelTest {
     fun `once what waits is sent, the screen is no longer offline, and the day is read as the server has it`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
         assertTrue(model.state.value.offline)
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("kept", slot = "dinner", name = "Soup")), eaten = 300.0)
@@ -645,7 +650,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.change("a", "e", null, 2.0, null) } coAnswers { diaryQueue.submit(QueuedChange.DiaryChanged("a", "e", null, 2.0, null)) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
 
         model.openEdit(entry("e"))
         model.typeEdit { it.copy(servings = "2") }
@@ -661,7 +666,7 @@ class DiaryViewModelTest {
     @Test
     fun `an entry that waits to be written is changed once the server has it`() {
         val diaryQueue = changeQueue()
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.openEdit(model.state.value.entries.single())
@@ -673,7 +678,7 @@ class DiaryViewModelTest {
     fun `an entry that waits to be written is taken out of the queue, unsent, and nothing is read for it`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.remove(model.state.value.entries.single())
@@ -688,7 +693,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.remove("a", "e") } coAnswers { diaryQueue.submit(QueuedChange.DiaryRemoved("a", "e")) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
 
         model.remove(entry("e"))
 
@@ -833,7 +838,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(plan = plan(meal("m")), eaten = 0.0)
         coEvery { plans.setEaten("p", "m", true) } coAnswers { diaryQueue.submit(QueuedChange.Eaten("p", "m", true)) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
 
         model.setEaten(meal("m"))
 
@@ -942,7 +947,7 @@ class DiaryViewModelTest {
     @Test
     fun `a profile's changes that wait are shown over its own diary alone`() {
         val diaryQueue = changeQueue()
-        val model = DiaryViewModel(SavedStateHandle(mapOf("profileId" to "b")), diary, users, plans, recipes, diaryQueue, server)
+        val model = DiaryViewModel(SavedStateHandle(mapOf("profileId" to "b")), diary, users, plans, recipes, diaryQueue, server, application)
 
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Ala's", calories = 1.0, key = "k")) { throw offline } }
 
@@ -1071,11 +1076,54 @@ class DiaryViewModelTest {
             recipes,
             queue,
             server,
+            application,
         )
         assertTrue(model.state.value.scanning)
         assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
         model.closeScanner()
         assertFalse(model.state.value.scanning)
         assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
+    }
+
+    // ── An entry taken out, held to be taken back ───────────────────────
+
+    @Test
+    fun `an entry taken out is gone at once and sent once the moments to take it back are over`() {
+        coEvery { diary.remove("a", "e") } returns Submitted.Sent(Unit)
+        val model = model()
+
+        model.remove(entry("e"), after = 6_000)
+
+        assertEquals("e", model.removedLater.value?.id)
+        coVerify(exactly = 0) { diary.remove(any(), any()) }
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+        coVerify(exactly = 1) { diary.remove("a", "e") }
+        assertNull(model.removedLater.value)
+    }
+
+    @Test
+    fun `an entry taken out and taken back is never sent`() {
+        val model = model()
+
+        model.remove(entry("e"), after = 6_000)
+        model.keepRemoved()
+        main.scheduler.advanceTimeBy(12_000)
+        main.scheduler.runCurrent()
+
+        assertNull(model.removedLater.value)
+        coVerify(exactly = 0) { diary.remove(any(), any()) }
+    }
+
+    @Test
+    fun `an entry still held when the screen is closed is sent all the same`() {
+        coEvery { diary.remove("a", "e") } returns Submitted.Sent(Unit)
+        val model = model()
+
+        model.remove(entry("e"), after = 6_000)
+        model.javaClass.getDeclaredMethod("onCleared").apply { isAccessible = true }.invoke(model)
+        main.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { diary.remove("a", "e") }
     }
 }
