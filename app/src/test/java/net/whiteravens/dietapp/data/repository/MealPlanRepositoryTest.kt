@@ -481,6 +481,16 @@ class MealPlanRepositoryTest {
     }
 
     @Test
+    fun `a day whose next days take none of what it falls short of says why`() {
+        val full = DAY_SETTINGS_SHORT.replace(""""spread":{"days":3,"takes":845,"left":185,"listOutOfDate":true}""", """"spread":{"days":0,"takes":0,"left":1030,"listOutOfDate":false,"none":"full"}""")
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(full))
+
+        val preview = runBlocking { repository(Cache()).previewDaySettings("plan-1", "day-1", DaySettings(calorieTarget = 4320, mealCount = 3)) }
+
+        assertEquals(DayShort(kcal = 1030.0, days = 0, takes = 0.0, left = 1030.0, listOutOfDate = false, none = "full"), preview.short)
+    }
+
+    @Test
     fun `a running plan whose profile's target moved says both, and takes the profile's from today on the plan at its revision`() {
         server.enqueue(answer("meal-plan-target-moved"))
         server.enqueue(answer("meal-plan-retargeted"))

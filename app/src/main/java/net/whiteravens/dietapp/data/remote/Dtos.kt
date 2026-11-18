@@ -1438,9 +1438,12 @@ data class FatePortionDto(val servings: NowThenDto, val calories: NowThenDto)
 @Serializable
 data class DayShortDto(val kcal: Double, val spread: DayShortSpreadDto)
 
-/** How many days take part in a spread, the kcal they take inside their windows, what is left, and whether a shopping list covers one of them. */
+/**
+ * How many days take part in a spread, the kcal they take inside their windows, what is left, whether a shopping list
+ * covers one of them, and, where none takes part, why: `last_day` | `skipped` | `full`.
+ */
 @Serializable
-data class DayShortSpreadDto(val days: Int, val takes: Double, val left: Double, val listOutOfDate: Boolean)
+data class DayShortSpreadDto(val days: Int, val takes: Double, val left: Double, val listOutOfDate: Boolean, val none: String? = null)
 
 /** A pair of numbers: as a day has it now, and as the change would make it. */
 @Serializable

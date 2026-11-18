@@ -655,10 +655,11 @@ data class DaySettingsPreview(
 
 /**
  * What a day falls short of its new target by, in kcal, and what spreading it over the next days of the plan does:
- * how many days take part, what they take inside their windows, what is left, and whether a shopping list covers one
- * of them. On the plan's last day no day takes part.
+ * how many days take part, what they take inside their windows, what is left, whether a shopping list covers one of
+ * them, and, where none takes part, why ([none]): `last_day` (the plan ends with this day), `skipped` (its days after
+ * it are all skipped) or `full` (they are at the top of their windows already).
  */
-data class DayShort(val kcal: Double, val days: Int, val takes: Double, val left: Double, val listOutOfDate: Boolean)
+data class DayShort(val kcal: Double, val days: Int, val takes: Double, val left: Double, val listOutOfDate: Boolean, val none: String? = null)
 
 /**
  * The week of the day a change of settings is for: what its days aim at on average now, with the change

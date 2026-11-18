@@ -383,7 +383,7 @@ fun DaySettingsPreviewDto.toDomain() = DaySettingsPreview(
     listOutOfDate = listOutOfDate,
     unchanged = unchanged,
     cooking = cooking?.toDomain(),
-    short = short?.let { DayShort(it.kcal, it.spread.days, it.spread.takes, it.spread.left, it.spread.listOutOfDate) },
+    short = short?.let { DayShort(it.kcal, it.spread.days, it.spread.takes, it.spread.left, it.spread.listOutOfDate, it.spread.none) },
     week = week?.let {
         DaySettingsWeek(
             target = it.target,

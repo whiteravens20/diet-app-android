@@ -241,7 +241,15 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: Plan
             else -> Note(stringResource(R.string.plans_settings_day_calories_off, shown), MaterialTheme.colorScheme.tertiary)
         }
     }
-    if (short != null && short.days == 0) Note(stringResource(R.string.plans_settings_short_last_day, formatNumber(short.kcal.roundToInt())))
+    // Why no day takes what the day falls short of, where none does.
+    short?.none?.let { none ->
+        val why = when (none) {
+            "skipped" -> R.string.plans_settings_short_skipped_after
+            "full" -> R.string.plans_settings_short_full
+            else -> R.string.plans_settings_short_last_day
+        }
+        Note(stringResource(why, formatNumber(short.kcal.roundToInt())))
+    }
     if (preview.listOutOfDate) Note(stringResource(R.string.plans_settings_list_out_of_date))
     preview.week?.let { WeekOutcome(it, unit) }
     if (preview.week?.unevenAlone != true && !spreading) Note(stringResource(R.string.plans_settings_other_days))

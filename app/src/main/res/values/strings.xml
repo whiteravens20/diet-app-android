@@ -1587,9 +1587,11 @@
     <string name="plans_settings_added">Added: %1$s.</string>
     <string name="plans_settings_drawn_note">The recipes of the new meals are chosen when this is saved, inside the plan\'s limits; the portions of the others adjust to the day\'s target.</string>
     <string name="plans_settings_day_calories">The day will hold about %1$s kcal.</string>
-    <string name="plans_settings_day_calories_off">The day will hold about %1$s kcal: more than a tenth off its target, since the portions are not enough. The difference can then be spread over the rest of the plan.</string>
-    <string name="plans_settings_day_short">The day will hold about %1$s kcal: %2$s kcal short of its target, as the dishes left are already at the largest portions the plan allows.</string>
+    <string name="plans_settings_day_calories_off">The day will hold about %1$s kcal: more than a tenth off its target.</string>
+    <string name="plans_settings_day_short">The day will hold about %1$s kcal: %2$s kcal short of its target, as no dish of the day can grow any further.</string>
     <string name="plans_settings_short_last_day">This is the plan\'s last day: the missing %1$s kcal have no day to go to.</string>
+    <string name="plans_settings_short_skipped_after">The plan\'s days after this one are skipped: the missing %1$s kcal have no day to go to.</string>
+    <string name="plans_settings_short_full">The next days of the plan take no more inside their limits: the missing %1$s kcal have no day to go to.</string>
     <string name="plans_settings_spread_short">Spread the missing %1$s kcal over the next days of the plan</string>
     <plurals name="plans_settings_spread_short_takes">
         <item quantity="one">The next day takes %2$s kcal, each inside its limits.</item>
