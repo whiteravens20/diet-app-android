@@ -212,6 +212,7 @@ class ShoppingTest {
         }
         screen.onNode(hasText(other) and isToggleable()).assertExists()
         screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextReplacement("")
+        screen.putKeyboardAway()
 
         // What the list could do without is what the API finds for it, and each leads to the plan.
         val proposals = Instance.listProposals(account, Instance.shoppingListIds(account, planId).first())

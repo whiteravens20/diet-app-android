@@ -19,6 +19,7 @@ import androidx.test.espresso.ViewAction
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.shownAddress
@@ -90,6 +91,7 @@ class AntiAbuseCheckTest {
         screen.onNodeWithText(button).performClick()
         screen.onNode(hasSetTextAction() and hasText(shownAddress))
             .performTextReplacement(server.url("/api/").toString())
+        screen.awaitTheKeyboard()
         screen.onNodeWithText(text(R.string.common_save)).performClick()
         screen.waitForText(text(R.string.server_other_version, VERSION, BuildConfig.API_VERSION))
 

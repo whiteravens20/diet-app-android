@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.icu.text.ListFormatter
 import android.os.Bundle
 import android.os.Parcel
+import android.os.SystemClock
+import android.util.Log
 import android.view.Choreographer
 import android.view.View
 import android.view.inspector.WindowInspector
@@ -127,6 +129,52 @@ fun ComposeTestRule.putKeyboardAway() {
     }
 }
 
+/**
+ * Waits for the keyboard that typing has just called to be over the window in front and to keep one height for
+ * [KEYBOARD_SETTLE_MILLIS], before anything there is pressed. On the Android 17 image its insets reach the window up
+ * to a second and a half after the keyboard starts (a second for 99 in 100), and its height changes when a field of
+ * another kind takes the focus: the window shortens at that moment, and a press worked out before it lands where the
+ * button no longer is, so nothing is pressed. Where no keyboard comes, the test goes on after
+ * [KEYBOARD_COMES_MILLIS]. What it waited for is written to the log under the tag `Keyboard`.
+ */
+fun ComposeTestRule.awaitTheKeyboard() {
+    val start = SystemClock.uptimeMillis()
+    val came = try {
+        waitUntil(KEYBOARD_COMES_MILLIS) { keyboardOpen() }
+        true
+    } catch (e: ComposeTimeoutException) {
+        false
+    }
+    val cameAfter = SystemClock.uptimeMillis() - start
+    var height = keyboardHeight()
+    var since = SystemClock.uptimeMillis()
+    if (came) {
+        waitUntil(10_000) {
+            val now = keyboardHeight()
+            val clock = SystemClock.uptimeMillis()
+            if (now != height) {
+                height = now
+                since = clock
+            }
+            clock - since >= KEYBOARD_SETTLE_MILLIS
+        }
+    }
+    waitForIdle()
+    Log.i(
+        "Keyboard",
+        if (came) "came after $cameAfter ms, $height px from ${since - start} ms" else "none came in $KEYBOARD_COMES_MILLIS ms",
+    )
+}
+
+/** How long a keyboard called by typing is waited for. */
+private const val KEYBOARD_COMES_MILLIS = 5_000L
+
+/**
+ * How long a keyboard keeps one height before it counts as settled: in 315 showings measured on the Android 17 image,
+ * its insets reached the window at most 1.5 s after the keyboard started.
+ */
+private const val KEYBOARD_SETTLE_MILLIS = 1_500L
+
 /** Whether the keyboard is over the window in front. */
 private fun keyboardOpen(): Boolean {
     var open = false
@@ -134,6 +182,15 @@ private fun keyboardOpen(): Boolean {
         open = ViewCompat.getRootWindowInsets(root)?.isVisible(WindowInsetsCompat.Type.ime()) == true
     }
     return open
+}
+
+/** How much of the window in front the keyboard covers, in pixels from the bottom. */
+private fun keyboardHeight(): Int {
+    var height = 0
+    Espresso.onView(isRoot()).check { root, _ ->
+        height = ViewCompat.getRootWindowInsets(root)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+    }
+    return height
 }
 
 /** [scrollTo] what shows [sought], or a text holding it where [substring], looked for as the screen shows it ([shown]). */

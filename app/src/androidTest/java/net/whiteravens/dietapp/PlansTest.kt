@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
@@ -434,6 +435,7 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.split_open)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
         screen.waitForText(text(R.string.split_plan_intro_parts))
         screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction()).performTextInput("2660")
+        screen.awaitTheKeyboard()
         screen.onNodeWithText(text(R.string.split_in_pot)).performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.split_empty_pot)) and hasSetTextAction()).performScrollTo().performTextInput("1410")
         val split = inFront(hasText(text(R.string.split_plan_intro_parts)))

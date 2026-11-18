@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.shownAddress
 import net.whiteravens.dietapp.testing.text
@@ -46,6 +47,7 @@ class ServerVersionTest {
         screen.waitForText(button)
         screen.onNodeWithText(button).performClick()
         screen.onNode(hasSetTextAction() and hasText(shownAddress)).performTextReplacement(address)
+        screen.awaitTheKeyboard()
         screen.onNodeWithText(text(R.string.common_save)).performClick()
     }
 

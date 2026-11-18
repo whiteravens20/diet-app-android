@@ -26,6 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
@@ -438,6 +439,7 @@ class DiaryTest {
         // Changed in its own unit.
         screen.onNodeWithContentDescription(text(R.string.diary_edit_label, "Mleko próbne 3,2%, Próbna Marka")).performClick()
         screen.onNode(hasText("${text(R.string.diary_quantity)} (ml)") and hasSetTextAction()).performTextReplacement("500")
+        screen.awaitTheKeyboard()
         screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
         screen.waitForText(heldTogether(text(R.string.diary_meal_kcal, "300")), substring = true)
     }
@@ -494,6 +496,7 @@ class DiaryTest {
 
         // A slip of the finger is said at once, and asks nobody.
         typeForAProduct("5900512320358")
+        screen.awaitTheKeyboard()
         screen.onNode(inTheWindow(text(R.string.diary_product_check))).performClick()
         screen.waitForText(text(R.string.diary_product_code_bad))
         screen.keepScreenshot("diary-a-code-mistyped")

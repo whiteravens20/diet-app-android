@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.savedStateHolds
 import net.whiteravens.dietapp.testing.text
 import org.junit.Assert.assertFalse
@@ -31,6 +32,7 @@ class SavedStateTest {
         assertTrue("the e-mail is not in the saved state", screen.savedStateHolds(EMAIL))
         assertFalse("the password is in the saved state", screen.savedStateHolds(PASSWORD))
         // Shown by its eye, it is left out all the same: whether it was shown is kept nowhere either.
+        screen.awaitTheKeyboard()
         screen.onNodeWithContentDescription(text(R.string.common_show_password)).performClick()
         assertFalse("the shown password is in the saved state", screen.savedStateHolds(PASSWORD))
     }

@@ -20,6 +20,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
@@ -55,6 +56,7 @@ class FirstStartTest {
             screen.keepScreenshot("first-start-which-server")
             screen.onNodeWithText(text(R.string.server_first_button)).performClick()
             screen.onNode(hasSetTextAction()).performTextInput(BuildConfig.API_BASE_URL)
+            screen.awaitTheKeyboard()
             screen.onNodeWithText(text(R.string.common_save)).performClick()
 
             screen.waitForText(text(R.string.auth_sign_in_title))

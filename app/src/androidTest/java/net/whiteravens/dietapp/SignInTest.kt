@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.awaitTheKeyboard
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.pressToSignIn
 import net.whiteravens.dietapp.testing.putKeyboardAway
@@ -103,6 +104,7 @@ class SignInTest {
         with(screen.density) {
             assertTrue("the eye is a smaller target than a finger", target.width.toDp() >= 48.dp && target.height.toDp() >= 48.dp)
         }
+        screen.awaitTheKeyboard()
         show().performClick()
         field.assertIsFocused()
         assertShown(field, wrong)
