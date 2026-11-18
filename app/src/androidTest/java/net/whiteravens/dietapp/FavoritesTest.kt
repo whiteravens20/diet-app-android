@@ -73,14 +73,14 @@ class FavoritesTest {
         screen.scrollTo(filterAny)
         screen.onNode(filterAny).performScrollTo().performClick()
         pick(often)
-        screen.waitForText(plural(R.plurals.favorites_count, 1, 1))
+        screen.scrollToText(plural(R.plurals.favorites_count, 1, 1))
         screen.scrollToText(second.second)
         assertTrue(screen.onAllNodesWithText(first.second).fetchSemanticsNodes().isEmpty())
         val filterOften = filter and hasText(often)
         screen.scrollTo(filterOften)
         screen.onNode(filterOften).performScrollTo().performClick()
         pick(text(R.string.favorites_any))
-        screen.waitForText(plural(R.plurals.favorites_count, 2, 2))
+        screen.scrollToText(plural(R.plurals.favorites_count, 2, 2))
 
         // The favourite marked to avoid, in the field that names it.
         val firstMark = hasContentDescription(text(R.string.favorites_marked_as, first.second))
@@ -108,7 +108,7 @@ class FavoritesTest {
         screen.onNode(remove).performScrollTo().performClick()
         screen.keepScreenshot("favorites-a-mark-taken-off")
         screen.waitForTheApi(20_000) { first.first !in Instance.marks(account, profileId) }
-        screen.waitForText(plural(R.plurals.favorites_count, 1, 1))
+        screen.scrollToText(plural(R.plurals.favorites_count, 1, 1))
     }
 
     @Test
@@ -136,7 +136,7 @@ class FavoritesTest {
         screen.scrollTo(remove)
         screen.waitUntil(20_000) { screen.onAllNodes(remove and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onNode(remove).performScrollTo().performClick()
-        screen.waitForText(plural(R.plurals.favorites_count, 1, 1))
+        screen.scrollToText(plural(R.plurals.favorites_count, 1, 1))
         screen.scrollTo(firstMark)
         screen.keepScreenshot("favorites-changes-waiting")
         val waiting = hasText(plural(R.plurals.changes_waiting, 2, 2), substring = true)
