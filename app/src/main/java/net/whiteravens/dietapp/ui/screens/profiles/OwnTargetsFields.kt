@@ -222,7 +222,7 @@ private fun PerKgFields(
             }
         } else {
             Text(
-                stringResource(R.string.profile_per_kg_line, formatNumber(at.protein.roundToInt()), at.split.protein, formatNumber(target), at.split.carbs),
+                stringResource(R.string.profile_per_kg_line, formatNumber(at.grams.roundToInt()), at.split.protein, formatNumber(target), at.split.carbs),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

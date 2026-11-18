@@ -109,6 +109,8 @@ class OwnTargetsTest {
         leave(text(R.string.profile_per_kg_protein))
         screen.putKeyboardAway()
         screen.waitForText(startOf(R.string.profile_per_kg_fits), substring = true)
+        // Its line says the grams the limit keeps, 25 % of 2298 kcal, not the 240 g asked for.
+        screen.waitForText(text(R.string.profile_per_kg_line, "144", 25, "2298", 5))
         screen.onNodeWithText(text(R.string.profile_custom_way)).performScrollTo()
         screen.keepScreenshot("own-targets-per-kg-held")
         assertEquals(1.6, Instance.profile(account, profileId).getDouble("customProteinPerKg"), 0.0)

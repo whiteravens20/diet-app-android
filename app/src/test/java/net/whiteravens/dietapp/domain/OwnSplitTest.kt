@@ -47,6 +47,7 @@ class OwnSplitTest {
         val at = perKgSplit(1.6, 30, 80.0, 2400)
         assertEquals(MacroSplit(21, 30, 49), at.split)
         assertEquals(128.0, at.protein, 1e-9)
+        assertEquals(128.0, at.grams, 1e-9)
         assertFalse(at.held)
     }
 
@@ -57,6 +58,9 @@ class OwnSplitTest {
         assertTrue(past.held)
         assertEquals(45, past.split.protein)
         assertEquals(0.8..2.5, past.fits)
+        // The grams said beside the 45 % are those it stands for, 810 kcal of 1800, not the 240 g asked for.
+        assertEquals(240.0, past.protein, 1e-9)
+        assertEquals(202.5, past.grams, 1e-9)
     }
 
     @Test

@@ -96,7 +96,10 @@ data class PerKgSplit(
     val held: Boolean,
     /** The grams a kilogram that keep every share inside its limits here, to a tenth inward; null where none do. */
     val fits: ClosedFloatingPointRange<Double>?,
-)
+) {
+    /** Grams of protein a day that [split]'s share of protein stands for: those the limit keeps where it holds them. */
+    val grams: Double get() = if (held) keptGrams else protein
+}
 
 /**
  * The way of protein per kilogram at [target] kcal and [weightKg]: protein the energy of its grams, fat its
