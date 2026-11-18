@@ -87,6 +87,9 @@ class FavoritesViewModel @Inject constructor(
     ) {
         val busy: Boolean get() = sending != null || removing != null
 
+        /** Nothing is marked at all: the profile's marks were read, unnarrowed, and there are none. The filters ask for nothing then. */
+        val nothingMarked: Boolean get() = readAt != null && !loading && error == null && !filter.narrowed && items.isEmpty()
+
         /** [item] as the screen shows it: as it is kept, with the changes of it that wait to be sent and what is on its way on top. */
         fun shown(item: MarkedRecipe): MarkedRecipe {
             val waited = mine(item.recipeId).fold(item) { shown, change ->

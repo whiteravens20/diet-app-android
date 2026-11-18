@@ -267,4 +267,15 @@ class FavoritesViewModelTest {
         coVerify(exactly = 1) { favorites.unmark("ada", "soup") }
         coVerify(exactly = 0) { favorites.unmark("bo", any()) }
     }
+
+    @Test
+    fun `nothing is marked once the marks are read and none is there, unnarrowed, and the filters ask for nothing then`() {
+        val model = FavoritesViewModel(favorites(), users, queue, application)
+        assertTrue(model.state.value.nothingMarked)
+
+        model.narrow(FavoriteFilter(sentiment = "often"))
+        assertFalse(model.state.value.nothingMarked)
+
+        assertFalse(FavoritesViewModel(favorites(oats), users, queue, application).state.value.nothingMarked)
+    }
 }

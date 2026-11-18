@@ -148,21 +148,24 @@ fun FavoritesScreen(
                                 }
                             }
                         }
-                        item {
-                            Filters(
-                                query = query,
-                                onQuery = { viewModel.query.value = it.take(FavoriteFilter.SEARCH_LENGTH) },
-                                filter = state.filter,
-                                tags = state.tags,
-                                onNarrow = viewModel::narrow,
-                            )
-                        }
-                        item {
-                            Text(
-                                stringResource(R.string.favorites_legend),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        // The filters and their legend once there is something to narrow: over nothing marked they ask for nothing.
+                        if (!state.nothingMarked) {
+                            item {
+                                Filters(
+                                    query = query,
+                                    onQuery = { viewModel.query.value = it.take(FavoriteFilter.SEARCH_LENGTH) },
+                                    filter = state.filter,
+                                    tags = state.tags,
+                                    onNarrow = viewModel::narrow,
+                                )
+                            }
+                            item {
+                                Text(
+                                    stringResource(R.string.favorites_legend),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                         state.failed?.let { (what, error) ->
                             item {
