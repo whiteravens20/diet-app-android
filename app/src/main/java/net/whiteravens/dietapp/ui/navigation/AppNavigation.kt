@@ -18,11 +18,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -31,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -311,30 +306,22 @@ private fun MainScaffold(
                         .then(if (onTopLevel) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars)),
                 )
                 if (onTopLevel) {
-                    NavigationBar {
-                        topLevelDestinations.forEach { dest ->
-                            val selected = currentDestination?.hierarchy
-                                ?.any { it.hasRoute(dest.routeClass) } == true
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    navController.navigate(dest.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(dest.icon, contentDescription = null) },
-                                // One line: a second one would lift this item's icon above the others'.
-                                label = { Text(stringResource(dest.label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                                // The chosen tab's label in the primary colour, which is held to AA on the bar; the
-                                // default, the secondary colour, is the web's accent, which is not text.
-                                colors = NavigationBarItemDefaults.colors(selectedTextColor = MaterialTheme.colorScheme.primary),
-                            )
-                        }
-                    }
+                    val tabs = topLevelDestinations.map { Tab(it.icon, stringResource(it.label)) }
+                    TabBar(
+                        tabs,
+                        selected = topLevelDestinations.indexOfFirst { dest ->
+                            currentDestination?.hierarchy?.any { it.hasRoute(dest.routeClass) } == true
+                        },
+                        onPick = { index ->
+                            navController.navigate(topLevelDestinations[index].route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                    )
                 }
             }
         },
