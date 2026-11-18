@@ -80,6 +80,7 @@ import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.NameAndTrail
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.WaitingMark
@@ -576,44 +577,51 @@ internal fun ShoppingItemRow(
                 } else {
                     Checkbox(checked = item.checked, onCheckedChange = null, enabled = !readOnly, modifier = Modifier.size(48.dp))
                 }
-                Column(Modifier.weight(1f).padding(start = 4.dp)) {
-                    Text(
-                        item.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textDecoration = if (item.checked) TextDecoration.LineThrough else null,
-                        color = if (item.checked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (homeNow > 0 || boughtNow > 0) {
-                        Text(
-                            listOfNotNull(
-                                held("${stringResource(R.string.shopping_at_home)} ${amountLabel(homeNow, item.displayUnit)}").takeIf { homeNow > 0 },
-                                held("${stringResource(R.string.shopping_bought)} ${amountLabel(boughtNow, item.displayUnit)}").takeIf { boughtNow > 0 },
-                            ).joinToString(DOT),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    item.pantryBestBefore?.takeIf { item.atHome > 0 }?.let { day ->
-                        LabelChip(stringResource(R.string.shopping_best_before, formatDate(day)), modifier = Modifier.padding(top = 2.dp))
-                    }
-                    // On a household list, what each profile's plan needs of the row.
-                    if (item.shares.isNotEmpty()) {
-                        Text(sharesLine(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    // Fresh meat or fish for a later day: which of its packs to buy later, and from when.
-                    laterLines(item).forEach { later ->
-                        Text(later, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
-                }
-                Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {
-                    Text(amountLabel(remaining, item.displayUnit, item.gramsOf(remaining)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (homeNow > 0 || boughtNow > 0) {
-                        Text(
-                            stringResource(R.string.shopping_of_total, amountLabel(item.totalQuantity, item.displayUnit)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                // The amount goes under the name where the name needs the line, as with a large font.
+                NameAndTrail(
+                    Modifier.weight(1f).padding(start = 4.dp),
+                    name = {
+                        Column {
+                            Text(
+                                item.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textDecoration = if (item.checked) TextDecoration.LineThrough else null,
+                                color = if (item.checked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                            )
+                            if (homeNow > 0 || boughtNow > 0) {
+                                Text(
+                                    listOfNotNull(
+                                        held("${stringResource(R.string.shopping_at_home)} ${amountLabel(homeNow, item.displayUnit)}").takeIf { homeNow > 0 },
+                                        held("${stringResource(R.string.shopping_bought)} ${amountLabel(boughtNow, item.displayUnit)}").takeIf { boughtNow > 0 },
+                                    ).joinToString(DOT),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            item.pantryBestBefore?.takeIf { item.atHome > 0 }?.let { day ->
+                                LabelChip(stringResource(R.string.shopping_best_before, formatDate(day)), modifier = Modifier.padding(top = 2.dp))
+                            }
+                            // On a household list, what each profile's plan needs of the row.
+                            if (item.shares.isNotEmpty()) {
+                                Text(sharesLine(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            // Fresh meat or fish for a later day: which of its packs to buy later, and from when.
+                            laterLines(item).forEach { later ->
+                                Text(later, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
+                        }
+                    },
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(amountLabel(remaining, item.displayUnit, item.gramsOf(remaining)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (homeNow > 0 || boughtNow > 0) {
+                            Text(
+                                stringResource(R.string.shopping_of_total, amountLabel(item.totalQuantity, item.displayUnit)),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

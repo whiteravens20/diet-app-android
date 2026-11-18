@@ -64,6 +64,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import kotlin.math.roundToInt
+import net.whiteravens.dietapp.ui.components.NameAndTrail
 import net.whiteravens.dietapp.ui.components.Text
 
 private val GAP = 3.dp
@@ -92,23 +93,30 @@ internal fun PlanCalendar(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-            Text(
-                calendar.month.format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)),
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.weight(1f).semantics {
-                    heading()
-                    liveRegion = LiveRegionMode.Polite
-                },
-            )
-            IconButton(onClick = { onLeaf(-1) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.plans_calendar_previous))
-            }
-            TextButton(onClick = onThisMonth, enabled = calendar.month != YearMonth.from(today)) {
-                Text(stringResource(R.string.plans_calendar_this_month))
-            }
-            IconButton(onClick = { onLeaf(1) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.plans_calendar_next))
+        // The month's name keeps its line where the buttons beside it leave it too little, as with a large font.
+        NameAndTrail(
+            Modifier.padding(top = 8.dp),
+            name = {
+                Text(
+                    calendar.month.format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.semantics {
+                        heading()
+                        liveRegion = LiveRegionMode.Polite
+                    },
+                )
+            },
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onLeaf(-1) }) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.plans_calendar_previous))
+                }
+                TextButton(onClick = onThisMonth, enabled = calendar.month != YearMonth.from(today)) {
+                    Text(stringResource(R.string.plans_calendar_this_month))
+                }
+                IconButton(onClick = { onLeaf(1) }) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.plans_calendar_next))
+                }
             }
         }
         // The month before stays drawn while the next is on its way, with a line that says it is coming.

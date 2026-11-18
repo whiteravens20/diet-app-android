@@ -2,8 +2,6 @@
 
 package net.whiteravens.dietapp.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
@@ -240,8 +238,8 @@ private fun labelOf(label: (@Composable () -> Unit)?, optional: Boolean): (@Comp
     label?.let { content ->
         {
             if (optional) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                    Row(Modifier.weight(1f)) { content() }
+                // The word goes under the label where the label needs the line to itself, as with a large font.
+                NameAndTrail(Modifier.fillMaxWidth(), alignment = Alignment.Bottom, name = content) {
                     // Heard once, as the state of the field.
                     Text(
                         stringResource(R.string.common_optional),

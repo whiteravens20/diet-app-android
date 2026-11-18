@@ -3,14 +3,13 @@
 package net.whiteravens.dietapp.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -27,8 +26,9 @@ fun StatCard(
     hint: String? = null,
 ) {
     AppCard(modifier = modifier) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            Column(Modifier.weight(1f)) {
+        // The icon goes under what it marks where the label needs the line, as with a large font: no word breaks.
+        NameAndTrail(alignment = Alignment.Top, name = {
+            Column {
                 Text(
                     label,
                     style = MaterialTheme.typography.bodySmall,
@@ -48,6 +48,7 @@ fun StatCard(
                     )
                 }
             }
+        }) {
             Icon(
                 icon,
                 contentDescription = null,

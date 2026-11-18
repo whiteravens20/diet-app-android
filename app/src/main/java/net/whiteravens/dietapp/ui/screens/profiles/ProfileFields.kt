@@ -808,7 +808,8 @@ internal fun CaloriePreviewCard(
             val c = preview?.calculation
             when {
                 c != null && withoutTarget -> Column(Modifier.alpha(if (behind) 0.6f else 1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    // A figure that does not fit beside the other goes under it, as with a large font: no word breaks.
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Column {
                             Text(
                                 stringResource(R.string.calorie_preview_maintenance),
@@ -842,7 +843,7 @@ internal fun CaloriePreviewCard(
                         )
                         Text(kcal(c.dailyTarget), style = MaterialTheme.typography.headlineSmall)
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Figure(stringResource(R.string.calorie_preview_maintenance), kcal(c.maintenance))
                         Figure(stringResource(R.string.calorie_preview_at_rest), kcal(c.bmr))
                     }
