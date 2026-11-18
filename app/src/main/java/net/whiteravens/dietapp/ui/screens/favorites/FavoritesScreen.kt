@@ -88,9 +88,10 @@ fun FavoritesScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val removed by viewModel.removedLater.collectAsStateWithLifecycle()
+    val hidden by viewModel.hidden.collectAsStateWithLifecycle()
     val undoFor = undoForMillis()
-    // The mark taken off a moment ago is not shown while it can be taken back.
-    val shown = state.shownItems.filter { it.recipeId != removed?.recipeId }
+    // A mark taken off is not shown while it can be taken back, nor until the server has its removal.
+    val shown = state.shownItems.filter { it.recipeId !in hidden }
     // Read again on being shown again: a recipe opened from the list may have been marked otherwise in its view.
     WhenShownAgain(viewModel::shownAgain)
 
@@ -225,8 +226,8 @@ fun FavoritesScreen(
                 }
             }
         }
-        removed?.let { kept ->
-            RemovedBar(kept.title, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+        removed?.let { removal ->
+            RemovedBar(removal.item.title, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
 }

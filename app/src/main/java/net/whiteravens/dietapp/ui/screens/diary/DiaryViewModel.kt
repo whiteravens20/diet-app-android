@@ -611,44 +611,49 @@ class DiaryViewModel @Inject constructor(
 
     // ── What is done on the day itself ──────────────────────────────────────
 
+    /** A removal as it was made: of [entry], from the diary of [profileId], whichever profile is chosen when it is sent. */
+    data class Removal(val profileId: String, val entry: DiaryEntry)
+
     /** An entry is cheap to write again: it goes at once, and is taken out once the moments to take it back are over. */
-    private val later = LaterRemoval<DiaryEntry>(viewModelScope) { entry ->
-        // Sent once nothing else is being changed: a removal is never dropped for another change under way.
-        viewModelScope.launch {
-            _state.first { !it.changing }
-            removeNow(entry)
-        }
+    private val later = LaterRemoval<Removal>(viewModelScope, idOf = { it.entry.id }) { removal ->
+        // Once nothing else is being changed, and done before the next: a removal is never dropped for another change.
+        _state.first { !it.changing }
+        removeNow(removal)
+        _state.first { !it.changing }
     }
 
-    /** The entry removed a moment ago, which can still be taken back: not shown. */
-    val removedLater: StateFlow<DiaryEntry?> = later.waiting
+    /** The entry removed a moment ago, which can still be taken back. */
+    val removedLater: StateFlow<Removal?> = later.waiting
+
+    /** The entries out of sight: removed a moment ago, or sent and not answered yet. */
+    val hidden: StateFlow<Set<Any>> = later.hidden
 
     /**
      * Takes [entry] out; with [after], as the screen asks, it is first held that long to be taken back
-     * ([keepRemoved]). The screen passes the moments; nothing else waits.
+     * ([keepRemoved]). The screen passes the moments; nothing else waits. One that waits to be written
+     * leaves the queue at once: held, it could be sent meanwhile, and come back.
      */
-    fun remove(entry: DiaryEntry, after: Long = 0) = later.remove(entry, after)
+    fun remove(entry: DiaryEntry, after: Long = 0) {
+        val removal = Removal(_state.value.profileId ?: return, entry)
+        if (entry.id in _state.value.waitingAdditions) later.removeAtOnce(removal) else later.remove(removal, after)
+    }
 
     /** Takes the removal back: the entry stays, and nothing is sent. */
     fun keepRemoved() = later.undo()
 
     override fun onCleared() {
         // A removal still waiting is not taken back by leaving the screen: it is sent from the application's scope.
-        val entry = later.take() ?: return
-        val profileId = _state.value.profileId ?: return
-        val waiting = _state.value.waitingAdditions[entry.id]
-        application.launch {
-            if (waiting != null) queue.withdraw(waiting) else runCatching { diary.remove(profileId, entry.id) }
-        }
+        val removal = later.take() ?: return
+        application.launch { runCatching { diary.remove(removal.profileId, removal.entry.id) } }
     }
 
     /**
-     * Takes [entry] out of the diary. One that waits to be written is taken out of the queue instead,
-     * unless it was sent meanwhile: then the day is read again, with it there.
+     * Takes the entry of [removal] out of the diary. One that waits to be written is taken out of the queue
+     * instead, unless it was sent meanwhile: then the day is read again, with it there.
      */
-    private fun removeNow(entry: DiaryEntry) {
+    private fun removeNow(removal: Removal) {
+        val (profileId, entry) = removal
         val current = _state.value
-        val profileId = current.profileId ?: return
         if (current.changing) return
         _state.update { it.copy(changing = true, failed = null, copied = null, resizeLeft = null) }
         val waiting = current.waitingAdditions[entry.id]
@@ -667,7 +672,14 @@ class DiaryViewModel @Inject constructor(
         viewModelScope.launch {
             attempt { diary.remove(profileId, entry.id) }
                 .onSuccess { submitted ->
-                    _state.update { it.copy(changing = false, offline = it.offline || (submitted as? Submitted.Kept)?.offline == true) }
+                    _state.update {
+                        it.copy(
+                            changing = false,
+                            offline = it.offline || (submitted as? Submitted.Kept)?.offline == true,
+                            // Gone from the day as soon as the server has it, before the day is read again.
+                            day = if (submitted is Submitted.Sent) it.day?.let { day -> day.copy(entries = day.entries.filterNot { e -> e.id == entry.id }) } else it.day,
+                        )
+                    }
                     if (submitted is Submitted.Sent) read(showLoading = false)
                 }
                 .onFailure { e ->

@@ -199,7 +199,7 @@ class FavoritesViewModelTest {
 
         model.remove(soup, after = 6_000)
 
-        assertEquals("soup", model.removedLater.value?.recipeId)
+        assertEquals("soup", model.removedLater.value?.item?.recipeId)
         coVerify(exactly = 0) { favorites.unmark(any(), any()) }
         main.scheduler.advanceTimeBy(6_000)
         main.scheduler.runCurrent()
@@ -232,5 +232,39 @@ class FavoritesViewModelTest {
         main.scheduler.runCurrent()
 
         coVerify(exactly = 1) { favorites.unmark("ada", "soup") }
+    }
+
+    @Test
+    fun `marks taken off one after another while the first is answered are all sent, in turn`() {
+        val favorites = favorites(oats, soup)
+        val answer = CompletableDeferred<Unit>()
+        coEvery { favorites.unmark("ada", any()) } coAnswers { answer.await(); Submitted.Sent(Unit) }
+        val model = FavoritesViewModel(favorites, users, queue, application)
+
+        model.remove(oats, after = 6_000)
+        model.remove(soup, after = 6_000)
+        model.remove(oats.copy(recipeId = "rice", title = "Rice"), after = 6_000)
+        coVerify(exactly = 1) { favorites.unmark("ada", "oats") }
+        coVerify(exactly = 0) { favorites.unmark("ada", "soup") }
+        answer.complete(Unit)
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        listOf("oats", "soup", "rice").forEach { coVerify(exactly = 1) { favorites.unmark("ada", it) } }
+    }
+
+    @Test
+    fun `a mark goes from the profile it was taken off for, whichever is chosen when it is sent`() {
+        val favorites = favorites(oats, soup)
+        coEvery { favorites.unmark("ada", "soup") } returns Submitted.Sent(Unit)
+        val model = FavoritesViewModel(favorites, users, queue, application)
+
+        model.remove(soup, after = 6_000)
+        model.pickProfile("bo")
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { favorites.unmark("ada", "soup") }
+        coVerify(exactly = 0) { favorites.unmark("bo", any()) }
     }
 }

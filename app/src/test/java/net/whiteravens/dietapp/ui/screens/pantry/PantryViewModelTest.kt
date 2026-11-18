@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.ui.screens.pantry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -564,7 +565,7 @@ class PantryViewModelTest {
         model.remove(egg, after = 6_000)
         runCurrent()
 
-        assertEquals("egg-row", model.removedLater.value?.id)
+        assertEquals("egg-row", model.removedLater.value?.row?.id)
         coVerify(exactly = 0) { pantry.remove(any(), any()) }
         advanceTimeBy(6_000)
         runCurrent()
@@ -599,5 +600,61 @@ class PantryViewModelTest {
         runCurrent()
 
         coVerify(exactly = 1) { pantry.remove("ada", "egg-row") }
+    }
+
+    @Test
+    fun `something put in that waits leaves the queue at once, with nothing held to take back`() = runTest(main) {
+        val pantry = pantry(egg)
+        coEvery { pantry.add("ada", eggplant, 300.0, "g", null) } coAnswers {
+            queue.submit(QueuedChange.PantryAdded("ada", "eggplant", "Eggplant", "vegetables", 300.0, "g", null, "key"), offline)
+        }
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+        model.pick(eggplant)
+        model.typeQuantity("300")
+        model.add()
+        runCurrent()
+
+        model.remove(model.state.value.shownRows.single { it.id == "key" }, after = 6_000)
+        runCurrent()
+
+        // Held, it could be sent meanwhile, once the network is back, and stay after its removal.
+        assertNull(model.removedLater.value)
+        assertEquals(listOf(egg), model.state.value.shownRows)
+        assertTrue(queue.waiting.first().isEmpty())
+    }
+
+    @Test
+    fun `rows taken out one after another while the first is answered are all sent, in turn`() = runTest(main) {
+        val pantry = pantry(garlic, egg, oats, milk)
+        val answer = CompletableDeferred<Unit>()
+        coEvery { pantry.remove("ada", any()) } coAnswers { answer.await(); Submitted.Sent(Unit) }
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+
+        listOf(garlic, egg, oats, milk).forEach { model.remove(it, after = 6_000); runCurrent() }
+        coVerify(exactly = 1) { pantry.remove("ada", "garlic-row") }
+        coVerify(exactly = 0) { pantry.remove("ada", "egg-row") }
+        answer.complete(Unit)
+        advanceTimeBy(6_000)
+        runCurrent()
+
+        listOf(garlic, egg, oats, milk).forEach { row -> coVerify(exactly = 1) { pantry.remove("ada", row.id) } }
+    }
+
+    @Test
+    fun `a row goes from the pantry of the profile it was taken out of, whichever is chosen when it is sent`() = runTest(main) {
+        val pantry = pantry(egg)
+        coEvery { pantry.remove("ada", "egg-row") } returns Submitted.Sent(Unit)
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+
+        model.remove(egg, after = 6_000)
+        model.pickProfile("bo")
+        advanceTimeBy(6_000)
+        runCurrent()
+
+        coVerify(exactly = 1) { pantry.remove("ada", "egg-row") }
+        coVerify(exactly = 0) { pantry.remove("bo", any()) }
     }
 }

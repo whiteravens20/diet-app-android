@@ -109,6 +109,7 @@ fun DiaryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val removed by viewModel.removedLater.collectAsStateWithLifecycle()
+    val hidden by viewModel.hidden.collectAsStateWithLifecycle()
     val undoFor = undoForMillis()
     // Read again on being shown again: a plan's page and a recipe change what a day shows.
     WhenShownAgain(viewModel::shownAgain)
@@ -219,7 +220,7 @@ fun DiaryScreen(
                                 }
                             }
 
-                            else -> day(state, viewModel, onOpenPlan, onEditProfile, removed?.id) { viewModel.remove(it, undoFor) }
+                            else -> day(state, viewModel, onOpenPlan, onEditProfile, hidden) { viewModel.remove(it, undoFor) }
                         }
                     }
                 }
@@ -237,8 +238,8 @@ fun DiaryScreen(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
-        removed?.let { entry ->
-            RemovedBar(entry.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+        removed?.let { removal ->
+            RemovedBar(removal.entry.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
 }
@@ -249,7 +250,7 @@ private fun LazyListScope.day(
     viewModel: DiaryViewModel,
     onOpenPlan: (planId: String, day: String) -> Unit,
     onEditProfile: (profileId: String) -> Unit,
-    hiding: String?,
+    hidden: Set<Any>,
     onRemove: (DiaryEntry) -> Unit,
 ) {
     item(key = "summary") {
@@ -293,8 +294,8 @@ private fun LazyListScope.day(
         MealSection(
             slot = slot,
             meals = state.planMeals.filter { it.slot == slot },
-            // The entry removed a moment ago is not shown while it can be taken back.
-            entries = state.entries.filter { it.slot == slot && it.id != hiding },
+            // An entry removed is not shown while it can be taken back, nor until the server has its removal.
+            entries = state.entries.filter { it.slot == slot && it.id !in hidden },
             state = state,
             onAdd = { viewModel.openWindow(slot) },
             onEaten = viewModel::setEaten,

@@ -7,6 +7,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1094,7 +1095,7 @@ class DiaryViewModelTest {
 
         model.remove(entry("e"), after = 6_000)
 
-        assertEquals("e", model.removedLater.value?.id)
+        assertEquals("e", model.removedLater.value?.entry?.id)
         coVerify(exactly = 0) { diary.remove(any(), any()) }
         main.scheduler.advanceTimeBy(6_000)
         main.scheduler.runCurrent()
@@ -1125,5 +1126,76 @@ class DiaryViewModelTest {
         main.scheduler.runCurrent()
 
         coVerify(exactly = 1) { diary.remove("a", "e") }
+    }
+
+    @Test
+    fun `an entry that waits to be written leaves the queue at once, with nothing held to take back`() {
+        val diaryQueue = changeQueue()
+        coEvery { diary.day("a", today) } throws offline
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
+
+        model.remove(model.state.value.entries.single(), after = 6_000)
+
+        // Held, it could be sent meanwhile, once the network is back, and stay after its removal.
+        assertNull(model.removedLater.value)
+        assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
+        assertFalse(runBlocking { diaryQueue.anyWaiting() })
+    }
+
+    @Test
+    fun `entries taken out one after another while the first is answered are all sent, in turn`() {
+        val answer = CompletableDeferred<Unit>()
+        coEvery { diary.remove("a", any()) } coAnswers { answer.await(); Submitted.Sent(Unit) }
+        val model = model()
+
+        listOf("e1", "e2", "e3", "e4").forEach { model.remove(entry(it), after = 6_000) }
+        coVerify(exactly = 1) { diary.remove("a", "e1") }
+        coVerify(exactly = 0) { diary.remove("a", "e2") }
+        answer.complete(Unit)
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        listOf("e1", "e2", "e3", "e4").forEach { coVerify(exactly = 1) { diary.remove("a", it) } }
+    }
+
+    @Test
+    fun `an entry sent stays out of sight until the server has its removal, and is not shown again before the day is read`() {
+        val answer = CompletableDeferred<Unit>()
+        val readAgain = CompletableDeferred<Unit>()
+        var reads = 0
+        coEvery { diary.day("a", today) } coAnswers {
+            if (++reads > 1) readAgain.await()
+            day(entries = if (answer.isCompleted) emptyList() else listOf(entry("e")))
+        }
+        coEvery { diary.remove("a", "e") } coAnswers { answer.await(); Submitted.Sent(Unit) }
+        val model = model()
+
+        model.remove(entry("e"), after = 6_000)
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        // The moments to take it back are over, and the server has not answered yet.
+        assertNull(model.removedLater.value)
+        assertTrue("e" in model.hidden.value)
+        answer.complete(Unit)
+        assertTrue(model.hidden.value.isEmpty())
+        assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
+        readAgain.complete(Unit)
+        assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
+    }
+
+    @Test
+    fun `an entry goes from the diary of the profile it was taken out of, whichever is chosen when it is sent`() {
+        coEvery { diary.remove("a", "e") } returns Submitted.Sent(Unit)
+        val model = model()
+
+        model.remove(entry("e"), after = 6_000)
+        model.pickProfile("b")
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { diary.remove("a", "e") }
+        coVerify(exactly = 0) { diary.remove("b", any()) }
     }
 }

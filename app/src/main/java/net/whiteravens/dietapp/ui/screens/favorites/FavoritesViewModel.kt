@@ -210,37 +210,43 @@ class FavoritesViewModel @Inject constructor(
 
     fun removeTag(item: MarkedRecipe, tag: String) = change(item, Change(tags = _state.value.shown(item).tags - tag))
 
+    /** A removal as it was made: of the mark on [item], of the profile [profileId], whichever is chosen when it is sent. */
+    data class Removal(val profileId: String, val item: MarkedRecipe)
+
     /** A mark is cheap to make again: it goes at once, and is taken off once the moments to take it back are over. */
-    private val later = LaterRemoval<MarkedRecipe>(viewModelScope) { item ->
-        // Sent once nothing else is being changed: a removal is never dropped for another change under way.
-        viewModelScope.launch {
-            _state.first { !it.busy }
-            removeNow(item)
-        }
+    private val later = LaterRemoval<Removal>(viewModelScope, idOf = { it.item.recipeId }) { removal ->
+        // Once nothing else is being changed, and done before the next: a removal is never dropped for another change.
+        _state.first { !it.busy }
+        removeNow(removal)
+        _state.first { !it.busy }
     }
 
-    /** The mark taken off a moment ago, which can still be taken back: not shown. */
-    val removedLater: StateFlow<MarkedRecipe?> = later.waiting
+    /** The mark taken off a moment ago, which can still be taken back. */
+    val removedLater: StateFlow<Removal?> = later.waiting
+
+    /** The recipes whose marks are out of sight: taken off a moment ago, or sent and not answered yet. */
+    val hidden: StateFlow<Set<Any>> = later.hidden
 
     /**
      * Takes [item] out; with [after], as the screen asks, it is first held that long to be taken back
      * ([keepRemoved]). The screen passes the moments; nothing else waits.
      */
-    fun remove(item: MarkedRecipe, after: Long = 0) = later.remove(item, after)
+    fun remove(item: MarkedRecipe, after: Long = 0) {
+        later.remove(Removal(_state.value.profileId ?: return, item), after)
+    }
 
     /** Takes the removal back: the mark stays, and nothing is sent. */
     fun keepRemoved() = later.undo()
 
     override fun onCleared() {
         // A removal still waiting is not taken back by leaving the screen: it is sent from the application's scope.
-        val item = later.take() ?: return
-        val profileId = _state.value.profileId ?: return
-        application.launch { runCatching { favorites.unmark(profileId, item.recipeId) } }
+        val removal = later.take() ?: return
+        application.launch { runCatching { favorites.unmark(removal.profileId, removal.item.recipeId) } }
     }
 
-    /** Takes the mark off [item]; the list is read again either way, as a mark taken off elsewhere is gone too. */
-    private fun removeNow(item: MarkedRecipe) {
-        val profileId = _state.value.profileId ?: return
+    /** Takes the mark off the recipe of [removal]; the list is read again either way, as a mark taken off elsewhere is gone too. */
+    private fun removeNow(removal: Removal) {
+        val (profileId, item) = removal
         if (_state.value.busy) return
         _state.update { it.copy(removing = item.recipeId, failed = null) }
         viewModelScope.launch {

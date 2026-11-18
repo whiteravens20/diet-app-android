@@ -104,10 +104,11 @@ fun PantryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val removed by viewModel.removedLater.collectAsStateWithLifecycle()
+    val hidden by viewModel.hidden.collectAsStateWithLifecycle()
     val undoFor = undoForMillis()
-    // The row removed a moment ago is not shown while it can be taken back.
+    // A row removed is not shown while it can be taken back, nor until the server has its removal.
     val groups = state.groups.mapNotNull { (category, rows) ->
-        rows.filter { it.id != removed?.id }.takeIf { it.isNotEmpty() }?.let { category to it }
+        rows.filter { it.id !in hidden }.takeIf { it.isNotEmpty() }?.let { category to it }
     }
     // Read again on being shown again: a shopping list ticked in the meantime changes the pantry too.
     WhenShownAgain(viewModel::shownAgain)
@@ -223,8 +224,8 @@ fun PantryScreen(
                 }
             }
         }
-        removed?.let { row ->
-            RemovedBar(row.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+        removed?.let { removal ->
+            RemovedBar(removal.row.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
     if (state.freezing != null) FreezeDialog(state, viewModel)

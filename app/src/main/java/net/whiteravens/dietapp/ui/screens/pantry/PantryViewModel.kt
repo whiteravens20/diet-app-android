@@ -364,44 +364,49 @@ class PantryViewModel @Inject constructor(
         }
     }
 
+    /** A removal as it was made: of [row], from the pantry of [profileId], whichever profile is chosen when it is sent. */
+    data class Removal(val profileId: String, val row: PantryRow)
+
     /** A row is cheap to put in again: it goes at once, and is taken out once the moments to take it back are over. */
-    private val later = LaterRemoval<PantryRow>(viewModelScope) { row ->
-        // Sent once nothing else is being changed: a removal is never dropped for another change under way.
-        viewModelScope.launch {
-            _state.first { !it.busy }
-            removeNow(row)
-        }
+    private val later = LaterRemoval<Removal>(viewModelScope, idOf = { it.row.id }) { removal ->
+        // Once nothing else is being changed, and done before the next: a removal is never dropped for another change.
+        _state.first { !it.busy }
+        removeNow(removal)
+        _state.first { !it.busy }
     }
 
-    /** The row removed a moment ago, which can still be taken back: not shown. */
-    val removedLater: StateFlow<PantryRow?> = later.waiting
+    /** The row removed a moment ago, which can still be taken back. */
+    val removedLater: StateFlow<Removal?> = later.waiting
+
+    /** The rows out of sight: removed a moment ago, or sent and not answered yet. */
+    val hidden: StateFlow<Set<Any>> = later.hidden
 
     /**
      * Takes [row] out; with [after], as the screen asks, it is first held that long to be taken back
-     * ([keepRemoved]). The screen passes the moments; nothing else waits.
+     * ([keepRemoved]). The screen passes the moments; nothing else waits. Something put in that waits
+     * to be sent leaves the queue at once: held, it could be sent meanwhile, and come back.
      */
-    fun remove(row: PantryRow, after: Long = 0) = later.remove(row, after)
+    fun remove(row: PantryRow, after: Long = 0) {
+        val removal = Removal(_state.value.profileId ?: return, row)
+        if (row.id in _state.value.waitingAdditions) later.removeAtOnce(removal) else later.remove(removal, after)
+    }
 
     /** Takes the removal back: the row stays, and nothing is sent. */
     fun keepRemoved() = later.undo()
 
     override fun onCleared() {
         // A removal still waiting is not taken back by leaving the screen: it is sent from the application's scope.
-        val row = later.take() ?: return
-        val profileId = _state.value.profileId ?: return
-        val waiting = _state.value.waitingAdditions[row.id]
-        application.launch {
-            if (waiting != null) queue.withdraw(waiting) else runCatching { pantry.remove(profileId, row.id) }
-        }
+        val removal = later.take() ?: return
+        application.launch { runCatching { pantry.remove(removal.profileId, removal.row.id) } }
     }
 
     /**
-     * Takes [row] out of the pantry; the pantry is read again either way, as a row taken out elsewhere
-     * is gone too. Something put in that waits to be sent is taken out of the queue instead, unless it
-     * was sent meanwhile: then the pantry is read again, with it in.
+     * Takes the row of [removal] out of the pantry; the pantry is read again either way, as a row taken out
+     * elsewhere is gone too. Something put in that waits to be sent is taken out of the queue instead, unless
+     * it was sent meanwhile: then the pantry is read again, with it in.
      */
-    private fun removeNow(row: PantryRow) {
-        val profileId = _state.value.profileId ?: return
+    private fun removeNow(removal: Removal) {
+        val (profileId, row) = removal
         if (_state.value.busy) return
         _state.update { it.copy(changing = row.id, failed = null) }
         val waiting = _state.value.waitingAdditions[row.id]
