@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Diet App API",
-    "version": "0.301.0",
+    "version": "0.311.0",
     "description": "What the API of Diet App is asked and what it answers. Written by `npm run contract` from the controllers and from the schemas of `@diet-app/shared`; the integration tests hold every answer to the schema its route names here.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -14093,13 +14093,29 @@
                       },
                       "listOutOfDate": {
                         "type": "boolean"
+                      },
+                      "none": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "last_day",
+                              "skipped",
+                              "full"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "required": [
                       "days",
                       "takes",
                       "left",
-                      "listOutOfDate"
+                      "listOutOfDate",
+                      "none"
                     ],
                     "additionalProperties": false
                   }
