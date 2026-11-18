@@ -49,6 +49,9 @@
 -keep class net.whiteravens.dietapp.domain.FrozenRest { *; }
 -keep class net.whiteravens.dietapp.domain.Thaw { *; }
 -keep class net.whiteravens.dietapp.ui.theme.ThemeKt { *** DietAppTheme(...); }
+-keep class net.whiteravens.dietapp.ui.components.NameAndTrailKt { *** NameAndTrail*(...); }
+-keep class net.whiteravens.dietapp.ui.navigation.TabBarKt { *** TabBar*(...); }
+-keep class net.whiteravens.dietapp.ui.navigation.Tab { *; }
 -keep class net.whiteravens.dietapp.domain.Palette { *; }
 
 # The libraries the tests share with the app, whose copy in the app they use: AndroidX (Compose,
