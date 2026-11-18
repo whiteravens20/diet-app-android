@@ -105,6 +105,7 @@ class FavoritesTest {
         screen.scrollTo(remove)
         screen.waitUntil(20_000) { screen.onAllNodes(remove and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onNode(remove).performScrollTo().performClick()
+        screen.keepScreenshot("favorites-a-mark-taken-off")
         screen.waitForTheApi(20_000) { first.first !in Instance.marks(account, profileId) }
         screen.waitForText(plural(R.plurals.favorites_count, 1, 1))
     }

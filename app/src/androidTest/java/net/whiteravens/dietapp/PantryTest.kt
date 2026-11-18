@@ -121,6 +121,7 @@ class PantryTest {
 
         // The egg's row taken out.
         press(hasContentDescription(text(R.string.pantry_remove_of, egg)))
+        screen.keepScreenshot("pantry-a-row-taken-out")
         screen.waitForTheApi { eggId !in Instance.pantry(account, profileId) }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(egg).fetchSemanticsNodes().isEmpty() }
     }

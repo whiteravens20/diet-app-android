@@ -227,6 +227,7 @@ class DiaryTest {
 
         // Taken out, without a question: it is written again as easily.
         screen.onNodeWithContentDescription(text(R.string.diary_remove_label, ingredient)).performScrollTo().performClick()
+        screen.keepScreenshot("diary-an-entry-taken-out")
         screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf(recipe) }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(shown(ingredient)).fetchSemanticsNodes().isEmpty() }
     }
