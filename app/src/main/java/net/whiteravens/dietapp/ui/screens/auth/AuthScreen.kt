@@ -2,9 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.auth
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,7 +30,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -46,7 +42,7 @@ import net.whiteravens.dietapp.domain.ServerVersion
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.components.AntiAbuseCheckDialog
 import net.whiteravens.dietapp.ui.components.AppCard
-import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.AppMark
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.SecondStepCodeField
 import net.whiteravens.dietapp.ui.components.ServerUrlDialog
@@ -108,19 +104,8 @@ fun AuthScreen(serverVersion: ServerVersion, viewModel: AuthViewModel = hiltView
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            Modifier
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(16.dp),
-        ) {
-            Icon(
-                AppIcons.Restaurant,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(28.dp),
-            )
-        }
+        // The product's own mark where it introduces itself, as the launcher shows it.
+        AppMark()
         Text(
             stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineSmall,
