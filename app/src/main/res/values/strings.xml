@@ -188,6 +188,7 @@
     <string name="change_kind_pantry_added">a new pantry item</string>
     <string name="change_kind_pantry_changed">a change of a pantry item</string>
     <string name="change_kind_pantry_removed">a pantry item\'s removal</string>
+    <string name="change_kind_pantry_frozen">a pantry item put in the freezer</string>
     <string name="change_kind_own_meal_added">a custom meal added to a day</string>
     <string name="change_kind_meal_removed">a meal removed from its day</string>
     <string name="change_kind_marked">a recipe\'s mark</string>
@@ -802,6 +803,25 @@
     <string name="pantry_expiring_soon">expiring soon</string>
     <string name="pantry_frozen">frozen</string>
     <string name="pantry_frozen_name">%1$s, frozen</string>
+    <string name="pantry_frozen_box">Frozen</string>
+    <string name="pantry_freeze_of">Freeze %1$s</string>
+    <string name="pantry_frozen_package_name">%1$s, frozen, package %2$d</string>
+    <string name="pantry_freeze">Freeze</string>
+    <string name="pantry_freeze_what">%1$s, %2$s</string>
+    <plurals name="pantry_freeze_intro">
+        <item quantity="one">Each portion goes into the freezer as a package of its own, best eaten within %d day.</item>
+        <item quantity="other">Each portion goes into the freezer as a package of its own, best eaten within %d days.</item>
+    </plurals>
+    <string name="pantry_portions">Portions</string>
+    <plurals name="pantry_portions_each">
+        <item quantity="one">%1$d portion of %2$s</item>
+        <item quantity="other">%1$d portions of %2$s each</item>
+    </plurals>
+    <string name="pantry_portions_list">Portions: %1$s</string>
+    <plurals name="pantry_portions_range">
+        <item quantity="one">From 1 to %1$d portion.</item>
+        <item quantity="other">From 1 to %1$d portions.</item>
+    </plurals>
     <string name="pantry_past_date">past its date</string>
     <string name="pantry_add">Add</string>
     <string name="pantry_change_of">Change %1$s</string>
@@ -809,6 +829,7 @@
     <string name="pantry_err_add">Could not add the item.</string>
     <string name="pantry_err_change">Could not update the item.</string>
     <string name="pantry_err_remove">Could not remove the item.</string>
+    <string name="pantry_err_freeze">Could not freeze the item.</string>
 
     <!-- Weight log -->
     <string name="weight_title">Weight log</string>

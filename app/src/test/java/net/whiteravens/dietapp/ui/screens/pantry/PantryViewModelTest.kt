@@ -128,6 +128,199 @@ class PantryViewModelTest {
     }
 
     @Test
+    fun `the freezer's box dates what goes in 30 days on where no day is chosen, keeps a day chosen, and takes away the day it wrote`() = runTest(main) {
+        val model = PantryViewModel(pantry(), users, queue)
+        runCurrent()
+        val today = LocalDate.parse("2026-11-18")
+        val form = { model.state.value.form }
+
+        model.freezeIt(true, today)
+        assertEquals(true to LocalDate.parse("2026-12-18"), form().frozen to form().bestBefore)
+        model.freezeIt(false, today)
+        assertEquals(false to null, form().frozen to form().bestBefore)
+
+        model.chooseBestBefore(LocalDate.parse("2027-03-01"))
+        model.freezeIt(true, today)
+        assertEquals(LocalDate.parse("2027-03-01"), form().bestBefore)
+        model.freezeIt(false, today)
+        assertEquals(LocalDate.parse("2027-03-01"), form().bestBefore)
+
+        // A day the box wrote and then changed stays when the box is taken away.
+        model.chooseBestBefore(null)
+        model.freezeIt(true, today)
+        model.chooseBestBefore(LocalDate.parse("2026-12-24"))
+        model.freezeIt(false, today)
+        assertEquals(LocalDate.parse("2026-12-24"), form().bestBefore)
+    }
+
+    @Test
+    fun `any food is offered to go into the freezer, one held fresh or frozen too, and goes in in the portions asked`() = runTest(main) {
+        val chicken = StockableIngredient("chicken", "Chicken breast", "meat", listOf("g"), "g", "piece")
+        val frozenChicken = PantryRow("chicken-frozen", "chicken", "Chicken breast", "meat", 286.0, "g", LocalDate.parse("2026-12-14"), frozen = true)
+        val frozenEgg = egg.copy(id = "egg-frozen", shown = 2.0, bestBefore = LocalDate.parse("2026-12-18"), frozen = true)
+        val pantry = pantry(egg, frozenChicken)
+        coEvery { pantry.ingredients("eg") } returns listOf(eggs, eggplant)
+        coEvery { pantry.ingredients("ch") } returns listOf(chicken)
+        coEvery { pantry.add("ada", eggs, 6.0, "piece", LocalDate.parse("2026-12-18"), true, 4) } returns Submitted.Sent(frozenEgg)
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.freezeIt(true, LocalDate.parse("2026-11-18"))
+        model.search("ch")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+        assertEquals(listOf(chicken), model.state.value.offered)
+        model.search("eg")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+        assertEquals(listOf(eggs, eggplant), model.state.value.offered)
+
+        model.pick(eggs)
+        model.typeQuantity("6")
+        assertEquals(listOf(6.0), model.state.value.form.parts)
+        model.typePortions("10")
+        assertNull(model.state.value.form.parts)
+        assertFalse(model.state.value.canAdd)
+        model.typePortions("x")
+        assertEquals("10", model.state.value.form.portions)
+        model.typePortions("4")
+        assertEquals(listOf(2.0, 2.0, 1.0, 1.0), model.state.value.form.parts)
+        model.add()
+        runCurrent()
+
+        coVerify { pantry.add("ada", eggs, 6.0, "piece", LocalDate.parse("2026-12-18"), true, 4) }
+        assertEquals(PantryViewModel.AddForm(), model.state.value.form)
+    }
+
+    @Test
+    fun `what is put in fresh goes in as one row, whatever portions were typed while the box was ticked`() = runTest(main) {
+        val pantry = pantry()
+        coEvery { pantry.ingredients("eg") } returns listOf(eggs)
+        coEvery { pantry.add("ada", eggs, 6.0, "piece", null, false, 1) } returns Submitted.Sent(egg)
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.freezeIt(true, LocalDate.parse("2026-11-18"))
+        model.typePortions("4")
+        model.freezeIt(false, LocalDate.parse("2026-11-18"))
+        model.search("eg")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+        model.pick(eggs)
+        model.typeQuantity("6")
+        model.add()
+        runCurrent()
+
+        coVerify { pantry.add("ada", eggs, 6.0, "piece", null, false, 1) }
+    }
+
+    @Test
+    fun `a fresh row goes into the freezer from its window, in the portions typed, and the pantry is shown as the API answers it`() = runTest(main) {
+        val today = LocalDate.parse("2026-11-18")
+        val first = milk.copy(id = "milk-1", shown = 500.0, bestBefore = LocalDate.parse("2026-12-18"), frozen = true)
+        val second = first.copy(id = "milk-2")
+        val pantry = pantry(milk, egg)
+        coEvery { pantry.freeze("ada", "milk-row", 2, today) } returns Submitted.Sent(listOf(egg, first, second))
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.openFreeze(milk)
+        assertEquals(milk to "1", model.state.value.freezing to model.state.value.freezePortions)
+        assertEquals(listOf(1000.0), model.state.value.freezeParts)
+        model.typeFreezePortions("2")
+        assertEquals(listOf(500.0, 500.0), model.state.value.freezeParts)
+        model.freeze(today)
+        runCurrent()
+
+        assertEquals(listOf(egg, first, second), model.state.value.rows)
+        assertNull(model.state.value.freezing)
+        assertNull(model.state.value.changing)
+        // A package is not put into the freezer again.
+        model.openFreeze(first)
+        assertNull(model.state.value.freezing)
+    }
+
+    @Test
+    fun `a window asking for portions of less than one of the unit sends nothing, and a refusal is said in it while it is open`() = runTest(main) {
+        val pantry = pantry(egg)
+        coEvery { pantry.freeze("ada", "egg-row", 3, any()) } throws refused("PORTIONS_TOO_MANY")
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.openFreeze(egg)
+        model.typeFreezePortions("7")
+        assertNull(model.state.value.freezeParts)
+        model.freeze(LocalDate.parse("2026-11-18"))
+        runCurrent()
+        coVerify(exactly = 0) { pantry.freeze(any(), any(), any(), any()) }
+
+        model.typeFreezePortions("3")
+        model.freeze(LocalDate.parse("2026-11-18"))
+        runCurrent()
+        assertEquals("PORTIONS_TOO_MANY", (model.state.value.freezeFailure as ApiException).code)
+        assertEquals(egg, model.state.value.freezing)
+        assertNull(model.state.value.failed)
+
+        model.closeFreeze()
+        assertEquals(null to null, model.state.value.freezing to model.state.value.freezeFailure)
+    }
+
+    @Test
+    fun `a freezing that fails after its window is closed is said over the pantry`() = runTest(main) {
+        val pantry = pantry(milk)
+        coEvery { pantry.freeze("ada", "milk-row", 1, any()) } coAnswers {
+            kotlinx.coroutines.delay(1_000)
+            throw refused("NOT_FOUND")
+        }
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.openFreeze(milk)
+        model.freeze(LocalDate.parse("2026-11-18"))
+        runCurrent()
+        model.closeFreeze()
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        assertEquals(PantryViewModel.Failure.FREEZE, model.state.value.failed?.first)
+        assertNull(model.state.value.freezeFailure)
+    }
+
+    @Test
+    fun `without a network a row put into the freezer is shown frozen until the day it will have, marked waiting`() = runTest(main) {
+        val pantry = pantry(milk)
+        coEvery { pantry.freeze("ada", "milk-row", 2, LocalDate.parse("2026-11-18")) } coAnswers {
+            queue.submit(QueuedChange.PantryFrozen("ada", "milk-row", "key", "2026-12-18", 2), offline)
+        }
+        val model = PantryViewModel(pantry, users, queue)
+        runCurrent()
+
+        model.openFreeze(milk)
+        model.typeFreezePortions("2")
+        model.freeze(LocalDate.parse("2026-11-18"))
+        runCurrent()
+
+        assertEquals(listOf(milk.copy(bestBefore = LocalDate.parse("2026-12-18"), frozen = true)), model.state.value.shownRows)
+        assertEquals(setOf("milk-row"), model.state.value.waitingRows)
+        assertTrue(model.state.value.offline)
+        assertNull(model.state.value.freezing)
+    }
+
+    @Test
+    fun `a food's packages stand after its fresh row, the one going off first first, each told by its number`() = runTest(main) {
+        val fresh = PantryRow("chicken-fresh", "chicken", "Chicken breast", "meat", 100.0, "g", LocalDate.parse("2026-11-16"))
+        val later = PantryRow("chicken-later", "chicken", "Chicken breast", "meat", 300.0, "g", LocalDate.parse("2027-01-10"), frozen = true)
+        val sooner = later.copy(id = "chicken-sooner", shown = 286.0, bestBefore = LocalDate.parse("2026-12-14"))
+        val fish = PantryRow("fish-frozen", "fish", "Cod", "meat", 200.0, "g", LocalDate.parse("2026-12-20"), frozen = true)
+        val model = PantryViewModel(pantry(later, fish, fresh, sooner), users, queue)
+        runCurrent()
+
+        assertEquals(listOf("meat" to listOf(fresh, sooner, later, fish)), model.state.value.groups)
+        // One package of a food is told by its food alone.
+        assertEquals(mapOf("chicken-sooner" to 1, "chicken-later" to 2), model.state.value.packageNumbers)
+    }
+
+    @Test
     fun `an ingredient picked is put in in the unit it is counted in at first, the search emptied`() = runTest(main) {
         val model = PantryViewModel(pantry(), users, queue)
         runCurrent()

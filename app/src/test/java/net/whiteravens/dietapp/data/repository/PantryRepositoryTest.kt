@@ -6,6 +6,9 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.data.config.ServerConfigStore
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.BaseUrlInterceptor
@@ -45,12 +48,14 @@ class PantryRepositoryTest {
     private val profileId = "0c4b8a1e-5f43-4a52-9a43-3c1b2d0e7f61"
     private val garlic = PantryRow(
         "2823592c-99e3-4fa3-ac3d-e34e12f9f5e4", "2dad81f3-0d9d-44e1-9ef3-d275bc7782ee", "Garlic", "spices", 3.0, "clove", LocalDate.parse("2026-11-17"),
+        unit = "piece",
     )
     private val egg = PantryRow(
         "e96344dd-d122-420f-a6f6-86fde556fb0d", "e8ca52e7-16a4-41fa-b861-966769b3944e", "Large egg", "dairy", 6.0, "piece", LocalDate.parse("2026-11-02"),
     )
     private val oats = PantryRow(
         "db4c9d12-5829-4bbc-88bb-54564b57cc45", "a0fb65dc-13be-471d-a952-7a43a14b19f1", "Rolled oats", "grains", 212.0, "g", LocalDate.parse("2027-05-16"),
+        quantity = 212.4,
     )
     private val milk = PantryRow("bf795e4d-a979-40bd-8844-17c79108810d", "e37a806f-6e15-443b-982b-ee6957bc2729", "Whole milk", "dairy", 1000.0, "ml", null)
 
@@ -89,7 +94,7 @@ class PantryRepositoryTest {
         val asked = server.takeRequest().requestUrl!!
         assertEquals("/api/inventory", asked.encodedPath)
         assertEquals(profileId, asked.queryParameter("profileId"))
-        // The oats are kept to the tenth of a gram and shown to the gram; the garlic is counted in cloves.
+        // The oats are kept to the tenth of a gram and shown to the gram; the garlic is kept in pieces and counted in cloves.
         assertEquals(listOf(egg, milk, oats, garlic), rows)
     }
 
@@ -155,7 +160,7 @@ class PantryRepositoryTest {
         assertEquals(json.parseToJsonElement("""{"quantity":4.5,"bestBefore":null}"""), json.parseToJsonElement(first.body.readUtf8()))
         assertEquals(json.parseToJsonElement("""{"quantity":2.0}"""), sentBody())
         assertEquals(json.parseToJsonElement("""{"bestBefore":"2026-10-30"}"""), sentBody())
-        assertEquals(Submitted.Sent(egg.copy(shown = 4.5, bestBefore = null)), kept)
+        assertEquals(Submitted.Sent(egg.copy(shown = 4.5, quantity = 4.5, bestBefore = null)), kept)
     }
 
     @Test
@@ -169,6 +174,86 @@ class PantryRepositoryTest {
 
         assertEquals(400 to "QUANTITY_TOO_LARGE", tooMuch.statusCode to tooMuch.code)
         assertEquals(400 to "UNIT_NOT_CONVERTIBLE", notThatUnit.statusCode to notThatUnit.code)
+    }
+
+    @Test
+    fun `something put into the freezer says so, and how many portions it is split into, one left out`() {
+        repeat(2) { server.enqueue(answer(201, "pantry-row-added")) }
+        val pantry = repository()
+
+        runBlocking { pantry.add(profileId, milks, 1000.0, "ml", LocalDate.parse("2026-12-18"), frozen = true, portions = 4) }
+        runBlocking { pantry.add(profileId, milks, 500.0, "ml", LocalDate.parse("2026-12-18"), frozen = true) }
+
+        assertEquals(
+            json.parseToJsonElement(
+                """{"profileId":"$profileId","ingredientId":"${milk.ingredientId}","quantity":1000.0,"unit":"ml","bestBefore":"2026-12-18","frozen":true,"portions":4}""",
+            ),
+            sentBody(),
+        )
+        assertEquals(
+            json.parseToJsonElement(
+                """{"profileId":"$profileId","ingredientId":"${milk.ingredientId}","quantity":500.0,"unit":"ml","bestBefore":"2026-12-18","frozen":true}""",
+            ),
+            sentBody(),
+        )
+    }
+
+    @Test
+    fun `something split into portions of less than one of its unit is refused with its code`() {
+        server.enqueue(answer(400, "pantry-portions-too-many"))
+
+        val refused = runCatching {
+            runBlocking { repository().add(profileId, milks, 5.0, "ml", null, frozen = true, portions = 10) }
+        }.exceptionOrNull() as ApiException
+
+        assertEquals(400 to "PORTIONS_TOO_MANY", refused.statusCode to refused.code)
+    }
+
+    @Test
+    fun `a row is put into the freezer by its id under a key of its own, in the portions asked, and the pantry read back as the API answers it`() {
+        server.enqueue(answer(200, "pantry-frozen"))
+        server.enqueue(answer(200, "pantry-frozen"))
+        val pantry = repository()
+
+        val kept = runBlocking { pantry.freeze(profileId, milk.id, 2, LocalDate.parse("2026-11-18")) }
+        runBlocking { pantry.freeze(profileId, milk.id, 1, LocalDate.parse("2026-11-18")) }
+
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/inventory/${milk.id}/freeze", sent.requestUrl!!.encodedPath)
+        UUID.fromString(sent.getHeader("Idempotency-Key"))
+        assertEquals(json.parseToJsonElement("""{"portions":2}"""), json.parseToJsonElement(sent.body.readUtf8()))
+        // Frozen whole: the body asks nothing more.
+        assertEquals(json.parseToJsonElement("{}"), sentBody())
+        val packages = json.parseToJsonElement(fixture("pantry-frozen")).jsonArray.map { it.jsonObject.getValue("id").jsonPrimitive.content }
+        assertEquals(
+            Submitted.Sent(packages.map { id -> milk.copy(id = id, shown = 500.0, quantity = 500.0, bestBefore = LocalDate.parse("2026-12-18"), frozen = true) }),
+            kept,
+        )
+    }
+
+    @Test
+    fun `a freezing whose answer was lost waits with the day it will have, and goes again under its key, done where the row is gone`() {
+        var answering = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (answering) answer(404, "pantry-row-unknown") else MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+        }
+        val queue = changeQueue()
+        val pantry = repository(queue)
+
+        assertEquals(Submitted.Kept(offline = true), runBlocking { pantry.freeze(profileId, milk.id, 2, LocalDate.parse("2026-11-18")) })
+        val waiting = runBlocking { queue.waiting.first() }.single().change as QueuedChange.PantryFrozen
+        assertEquals("2026-12-18" to 2, waiting.bestBefore to waiting.portions)
+        answering = true
+        assertEquals(Drained.EMPTY, runBlocking { queue.drain { pantry.send(it as QueuedChange.PantryFrozen) } })
+
+        val first = server.takeRequest()
+        val again = generateSequence { server.takeRequest(0, TimeUnit.SECONDS) }.last()
+        assertEquals(first.getHeader("Idempotency-Key"), again.getHeader("Idempotency-Key"))
+        assertEquals(first.body.readUtf8(), again.body.readUtf8())
+        assertTrue(runBlocking { queue.waiting.first() }.isEmpty())
+        assertTrue(runBlocking { queue.refused.first() }.isEmpty())
     }
 
     @Test

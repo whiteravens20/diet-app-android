@@ -24,6 +24,9 @@ import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.StockableIngredient
+import net.whiteravens.dietapp.domain.frozenUntil
+import net.whiteravens.dietapp.domain.portionCount
+import net.whiteravens.dietapp.domain.portionsOf
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
@@ -46,10 +49,13 @@ class PantryViewModel @Inject constructor(
     private val queue: ChangeQueue,
 ) : ViewModel() {
 
-    /** What could not be done: something put in, a row changed, a row taken out. */
-    enum class Failure { ADD, CHANGE, REMOVE }
+    /** What could not be done: something put in, a row changed, a row taken out, a row put into the freezer. */
+    enum class Failure { ADD, CHANGE, REMOVE, FREEZE }
 
-    /** What is being put into the pantry: the ingredient looked for and picked, how much of it in which unit, and until when. */
+    /**
+     * What is being put into the pantry: the ingredient looked for and picked, how much of it in which unit, until when,
+     * and whether into the freezer, in how many portions there.
+     */
     data class AddForm(
         val search: String = "",
         val found: List<StockableIngredient> = emptyList(),
@@ -59,9 +65,23 @@ class PantryViewModel @Inject constructor(
         val quantity: String = "",
         val unit: String = "g",
         val bestBefore: LocalDate? = null,
+        val frozen: Boolean = false,
+        /** The day the freezer's box wrote itself, taken away with the box while nobody changed it. */
+        val boxDay: LocalDate? = null,
+        /** How many packages what goes into the freezer is split into, as typed. */
+        val portions: String = "1",
     ) {
         /** The amount typed, where it is more than nothing. */
         val amount: Double? get() = amountOf(quantity)?.takeIf { it > 0 }
+
+        /** How many packages it goes into the freezer in, where the number typed is one the freezer takes; one for what is fresh. */
+        val portionCount: Int? get() = if (frozen) portionCount(portions) else 1
+
+        /** What each package holds, where the amount goes into them in at least one of its unit each; null where it does not. */
+        val parts: List<Double>? get() {
+            val count = portionCount ?: return null
+            return portionsOf(amount ?: return null, unit, count)
+        }
     }
 
     data class UiState(
@@ -88,6 +108,12 @@ class PantryViewModel @Inject constructor(
         val failed: Pair<Failure, Throwable>? = null,
         /** The changes of the pantries that wait to be sent, in the order they were made. */
         val waiting: List<Waiting> = emptyList(),
+        /** The fresh row whose window of freezing is open. */
+        val freezing: PantryRow? = null,
+        /** How many packages it goes into the freezer in, as typed in its window. */
+        val freezePortions: String = "1",
+        /** Why the row of the open window could not be put into the freezer. */
+        val freezeFailure: Throwable? = null,
     ) {
         val busy: Boolean get() = adding || changing != null
 
@@ -99,6 +125,7 @@ class PantryViewModel @Inject constructor(
             when (val change = waiting.change) {
                 is QueuedChange.PantryAdded -> change.key.takeIf { change.profileId == profileId }
                 is QueuedChange.PantryChanged -> change.id.takeIf { change.profileId == profileId }
+                is QueuedChange.PantryFrozen -> change.id.takeIf { change.profileId == profileId }
                 else -> null
             }
         }
@@ -109,21 +136,41 @@ class PantryViewModel @Inject constructor(
 
         /**
          * The rows under their categories, each category where its first row comes, as the web's page groups them, and
-         * by name in each, a food's frozen row right after its fresh one.
+         * by name in each, a food's packages in the freezer right after its fresh row, the one going off first first.
          */
         val groups: List<Pair<String, List<PantryRow>>> get() {
             val byName = Collator.getInstance()
             return shownRows.groupBy { it.category }.toList().map { (category, rows) ->
-                category to rows.sortedWith(compareBy<PantryRow, String>(byName) { it.name }.thenBy { it.frozen })
+                category to rows.sortedWith(
+                    compareBy<PantryRow, String>(byName) { it.name }.thenBy { it.frozen }.thenBy(nullsLast()) { it.bestBefore },
+                )
             }
         }
 
-        /** The ingredients found that the pantry holds nothing fresh of yet, as many as the web's list offers: what is frozen stands apart. */
-        val offered: List<StockableIngredient> get() =
-            form.found.filter { found -> shownRows.none { it.ingredientId == found.id && !it.frozen } }.take(OFFERED)
+        /** The number each package in the freezer is told by, where its food has more than one: in the order they stand. */
+        val packageNumbers: Map<String, Int> get() = groups.flatMap { (_, rows) ->
+            rows.filter { it.frozen }.groupBy { it.ingredientId }.values.filter { it.size > 1 }
+                .flatMap { packages -> packages.mapIndexed { index, row -> row.id to index + 1 } }
+        }.toMap()
 
-        /** Whether what the form holds can be put in. */
-        val canAdd: Boolean get() = form.picked != null && form.amount != null && profileId != null && !busy
+        /**
+         * The ingredients found, as many as the web's list offers: those the pantry holds nothing fresh of yet, and any of
+         * them to go into the freezer, as packages of their own.
+         */
+        val offered: List<StockableIngredient> get() =
+            form.found.filter { found -> form.frozen || shownRows.none { it.ingredientId == found.id && !it.frozen } }.take(OFFERED)
+
+        /** Whether what the form holds can be put in: into the freezer, in packages of at least one of its unit each. */
+        val canAdd: Boolean get() = form.picked != null && form.amount != null && form.parts != null && profileId != null && !busy
+
+        /** How many packages the row of the open window goes into, where the number typed is one the freezer takes. */
+        val freezeCount: Int? get() = portionCount(freezePortions)
+
+        /** What each package of the row of the open window holds; null where a part would hold less than one of its unit. */
+        val freezeParts: List<Double>? get() {
+            val row = freezing ?: return null
+            return portionsOf(row.quantity, row.unit, freezeCount ?: return null)
+        }
     }
 
     private val _state = MutableStateFlow(UiState())
@@ -235,6 +282,27 @@ class PantryViewModel @Inject constructor(
 
     fun chooseBestBefore(day: LocalDate?) = _state.update { it.copy(form = it.form.copy(bestBefore = day)) }
 
+    /**
+     * Into the freezer or not: what goes in is dated as the freezer keeps it from [today], unless a day is chosen
+     * already; the day the box wrote goes with the box while nobody changed it.
+     */
+    fun freezeIt(on: Boolean, today: LocalDate) = _state.update { state ->
+        val form = state.form
+        state.copy(
+            form = when {
+                on && form.bestBefore == null -> frozenUntil(today).let { form.copy(frozen = true, bestBefore = it, boxDay = it) }
+                on -> form.copy(frozen = true)
+                form.boxDay != null && form.bestBefore == form.boxDay -> form.copy(frozen = false, bestBefore = null, boxDay = null)
+                else -> form.copy(frozen = false, boxDay = null)
+            },
+        )
+    }
+
+    /** Takes what is typed as the number of portions where it is digits alone, or nothing yet. */
+    fun typePortions(text: String) {
+        if (text.all(Char::isDigit) && text.length <= 2) _state.update { it.copy(form = it.form.copy(portions = text)) }
+    }
+
     /** Puts what the form holds into the pantry, and empties the form; a refusal leaves it as it is, to be put right. */
     fun add() {
         val current = _state.value
@@ -243,9 +311,10 @@ class PantryViewModel @Inject constructor(
         val form = current.form
         val ingredient = form.picked ?: return
         val amount = form.amount ?: return
+        val portions = form.portionCount ?: return
         _state.update { it.copy(adding = true, failed = null) }
         viewModelScope.launch {
-            attempt { pantry.add(profileId, ingredient, amount, form.unit, form.bestBefore) }
+            attempt { pantry.add(profileId, ingredient, amount, form.unit, form.bestBefore, form.frozen, portions) }
                 .onSuccess { submitted ->
                     _state.update {
                         when (submitted) {
@@ -331,6 +400,53 @@ class PantryViewModel @Inject constructor(
         }
     }
 
+    /** Opens the window that puts the fresh [row] into the freezer, whole to begin with. Something put in that waits to be sent is not frozen until it is. */
+    fun openFreeze(row: PantryRow) {
+        val current = _state.value
+        if (row.frozen || current.busy || row.id in current.waitingAdditions) return
+        _state.update { it.copy(freezing = row, freezePortions = "1", freezeFailure = null) }
+    }
+
+    /** Takes what is typed in the window as its number of portions where it is digits alone, or nothing yet. */
+    fun typeFreezePortions(text: String) {
+        if (text.all(Char::isDigit) && text.length <= 2) _state.update { it.copy(freezePortions = text) }
+    }
+
+    /** Closes the window of freezing; a freezing on its way goes on. */
+    fun closeFreeze() = _state.update { it.copy(freezing = null, freezeFailure = null) }
+
+    /**
+     * Puts the row of the open window into the freezer on [today], in the portions typed there: the pantry is shown as the
+     * API answers it, the row gone and its packages in the freezer. A failure is said in the window while it is open.
+     */
+    fun freeze(today: LocalDate) {
+        val current = _state.value
+        val row = current.freezing ?: return
+        val profileId = current.profileId ?: return
+        val portions = current.freezeCount ?: return
+        if (current.freezeParts == null || current.busy) return
+        _state.update { it.copy(changing = row.id, freezeFailure = null, failed = null) }
+        viewModelScope.launch {
+            attempt { pantry.freeze(profileId, row.id, portions, today) }
+                .onSuccess { submitted ->
+                    _state.update {
+                        when (submitted) {
+                            is Submitted.Sent -> it.copy(changing = null, freezing = null, rows = submitted.answer)
+                            // Kept to be sent: shown frozen as one of the changes waiting.
+                            is Submitted.Kept -> it.copy(changing = null, freezing = null, offline = it.offline || submitted.offline)
+                        }
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        if (it.freezing?.id == row.id) it.copy(changing = null, freezeFailure = e)
+                        else it.copy(changing = null, failed = Failure.FREEZE to e)
+                    }
+                    read(showLoading = false)
+                }
+        }
+    }
+
     /**
      * Reads the profile's pantry. Where [showLoading] is false, what is shown stays until the answer is
      * there, and stays where none comes.
@@ -382,6 +498,7 @@ private fun profileOf(change: QueuedChange): String? = when (change) {
     is QueuedChange.PantryAdded -> change.profileId
     is QueuedChange.PantryChanged -> change.profileId
     is QueuedChange.PantryRemoved -> change.profileId
+    is QueuedChange.PantryFrozen -> change.profileId
     else -> null
 }
 
@@ -401,6 +518,7 @@ internal fun List<PantryRow>.withWaiting(profileId: String?, waiting: List<Queue
                 shown = change.quantity,
                 shownUnit = change.unit,
                 bestBefore = change.bestBefore?.let(LocalDate::parse),
+                frozen = change.frozen,
             )
             is QueuedChange.PantryChanged -> rows.map { row ->
                 if (row.id != change.id) row
@@ -412,6 +530,9 @@ internal fun List<PantryRow>.withWaiting(profileId: String?, waiting: List<Queue
                 )
             }
             is QueuedChange.PantryRemoved -> rows.filterNot { it.id == change.id }
+            is QueuedChange.PantryFrozen -> rows.map { row ->
+                if (row.id != change.id) row else row.copy(frozen = true, bestBefore = LocalDate.parse(change.bestBefore))
+            }
             else -> rows
         }
     }

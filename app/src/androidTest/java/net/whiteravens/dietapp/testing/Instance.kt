@@ -733,6 +733,15 @@ object Instance {
         }
     }
 
+    /** The packages of a profile's freezer, by their ingredient: each one's quantity in its row's unit, and its day or null. */
+    fun frozenPackages(account: Account, profileId: String): Map<String, List<Pair<Double, String?>>> {
+        val rows = JSONArray(send("GET", "inventory?profileId=$profileId", null, account.accessToken, 200, null))
+        return (0 until rows.length()).map(rows::getJSONObject).filter { it.optBoolean("frozen") }.groupBy(
+            { row -> row.getJSONObject("ingredient").getString("id") },
+            { row -> row.getDouble("quantity") to if (row.isNull("bestBefore")) null else row.getString("bestBefore") },
+        )
+    }
+
     /** A profile's pantry, by the ingredient of each row: its quantity in the row's unit, the unit, and its day or null. */
     fun pantry(account: Account, profileId: String): Map<String, Triple<Double, String, String?>> {
         val rows = JSONArray(send("GET", "inventory?profileId=$profileId", null, account.accessToken, 200, null))

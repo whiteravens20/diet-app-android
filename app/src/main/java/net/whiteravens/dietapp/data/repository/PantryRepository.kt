@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.FreezePantryRowRequest
 import net.whiteravens.dietapp.data.remote.IngredientDto
 import net.whiteravens.dietapp.data.remote.InventoryItemDto
 import net.whiteravens.dietapp.data.remote.PatchInventoryItemRequest
@@ -17,6 +18,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.StockableIngredient
+import net.whiteravens.dietapp.domain.frozenUntil
 import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
@@ -43,9 +45,18 @@ class PantryRepository @Inject constructor(
 
     /**
      * Puts [quantity] of [ingredient], in [unit], into [profileId]'s pantry, best before [bestBefore]
-     * where one is given: the row it is kept in, or kept to be sent in its turn.
+     * where one is given, into the freezer where [frozen], split into [portions] packages there: the row
+     * it is kept in (the first package), or kept to be sent in its turn.
      */
-    suspend fun add(profileId: String, ingredient: StockableIngredient, quantity: Double, unit: String, bestBefore: LocalDate?): Submitted<PantryRow> {
+    suspend fun add(
+        profileId: String,
+        ingredient: StockableIngredient,
+        quantity: Double,
+        unit: String,
+        bestBefore: LocalDate?,
+        frozen: Boolean = false,
+        portions: Int = 1,
+    ): Submitted<PantryRow> {
         val queued = QueuedChange.PantryAdded(
             profileId,
             ingredient.id,
@@ -55,13 +66,26 @@ class PantryRepository @Inject constructor(
             unit,
             bestBefore?.toString(),
             UUID.randomUUID().toString(),
+            frozen,
+            portions,
         )
         return queue.submit(queued) { send(queued) }
     }
 
     /** Sends what is put in; answers the row it is kept in. */
     suspend fun send(change: QueuedChange.PantryAdded): PantryRow = apiCall(json) {
-        api.addToPantry(change.key, UpsertInventoryItemRequest(change.profileId, change.ingredientId, change.quantity, change.unit, change.bestBefore))
+        api.addToPantry(
+            change.key,
+            UpsertInventoryItemRequest(
+                change.profileId,
+                change.ingredientId,
+                change.quantity,
+                change.unit,
+                change.bestBefore,
+                change.frozen,
+                change.portions,
+            ),
+        )
     }.toDomain()
 
     /** Changes the row [id] of [profileId] as [change] says, and nothing else of it: the row as it is kept now, or kept to be sent in its turn. */
@@ -87,6 +111,20 @@ class PantryRepository @Inject constructor(
 
     /** Sends a row's taking out. */
     suspend fun send(change: QueuedChange.PantryRemoved) = apiCall(json) { api.removePantryRow(change.id) }
+
+    /**
+     * Puts the fresh row [id] of [profileId]'s pantry into the freezer on [today], split into [portions] packages: the
+     * pantry as it is then, or kept to be sent in its turn, under a key that has the server freeze it once however often
+     * it is sent.
+     */
+    suspend fun freeze(profileId: String, id: String, portions: Int, today: LocalDate): Submitted<List<PantryRow>> {
+        val queued = QueuedChange.PantryFrozen(profileId, id, UUID.randomUUID().toString(), frozenUntil(today).toString(), portions)
+        return queue.submit(queued) { send(queued) }
+    }
+
+    /** Sends a row's freezing; answers the pantry of its profile as it is then. */
+    suspend fun send(change: QueuedChange.PantryFrozen): List<PantryRow> =
+        apiCall(json) { api.freezePantryRow(change.key, change.id, FreezePantryRowRequest(change.portions)) }.map { it.toDomain() }
 }
 
 private fun InventoryItemDto.toDomain() = PantryRow(
@@ -99,6 +137,8 @@ private fun InventoryItemDto.toDomain() = PantryRow(
     bestBefore = bestBefore?.let(LocalDate::parse),
     shownGrams = display.grams,
     frozen = frozen,
+    quantity = quantity,
+    unit = unit,
 )
 
 private fun IngredientDto.toStockable() = StockableIngredient(id, name, category, pantryUnits, pantryUnits.first(), displayUnit ?: "piece")

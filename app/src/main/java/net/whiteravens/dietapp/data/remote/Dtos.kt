@@ -943,11 +943,15 @@ data class IngredientDto(
 data class InventoryItemDto(
     val id: String,
     val ingredient: IngredientDto,
+    /** How much of it the row holds, exactly, in [unit]. */
+    val quantity: Double,
+    /** `g` | `ml` | `piece`. */
+    val unit: String,
     /** The quantity as it is shown: rounded, a piece called what the ingredient calls it. */
     val display: DisplayAmountDto,
     /** The day it is best eaten before (yyyy-MM-dd); null where none is kept. */
     val bestBefore: String? = null,
-    /** In the freezer: a row of its own beside the fresh one of the same ingredient. */
+    /** In the freezer: a package of its own beside what is fresh of the ingredient; a food may have many. */
     val frozen: Boolean = false,
 )
 
@@ -963,7 +967,15 @@ data class UpsertInventoryItemRequest(
     /** `g` | `ml` | `piece`. */
     val unit: String,
     val bestBefore: String? = null,
+    /** Into the freezer, as packages of their own beside what is fresh of the ingredient; left out for what is fresh. */
+    val frozen: Boolean = false,
+    /** How many packages what goes into the freezer is split into; left out for one. */
+    val portions: Int = 1,
 )
+
+/** POST `/inventory/{id}/freeze`: a fresh row put into the freezer, split into [portions] packages; left out for one. */
+@Serializable
+data class FreezePantryRowRequest(val portions: Int = 1)
 
 /**
  * PATCH `/inventory/:id`: what changed of a row, nothing else: its quantity in the row's unit, and

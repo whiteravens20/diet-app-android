@@ -113,6 +113,16 @@ object AppIcons {
         )
     }
 
+    /** `ac_unit` — a snowflake; into the freezer. */
+    val Snowflake: ImageVector by lazy {
+        icon(
+            "Snowflake",
+            "M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9" +
+                "L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2" +
+                "v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z",
+        )
+    }
+
     /** `get_app` — an arrow down onto a line; a new version to get. */
     val Download: ImageVector by lazy {
         icon("Download", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z")

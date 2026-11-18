@@ -330,6 +330,18 @@ interface DietApiService {
     @DELETE("inventory/{id}")
     suspend fun removePantryRow(@Path("id") id: String)
 
+    /**
+     * Puts a fresh row of the pantry into the freezer, whole or split into portions, each a package of its own dated 30
+     * days from the client's day; answers the pantry of the row's profile as it is then. Sent again with the same [key],
+     * it is answered with the pantry as it is now, and nothing is frozen twice.
+     */
+    @POST("inventory/{id}/freeze")
+    suspend fun freezePantryRow(
+        @Header("Idempotency-Key") key: String?,
+        @Path("id") id: String,
+        @Body body: FreezePantryRowRequest,
+    ): List<InventoryItemDto>
+
     // ── Ingredients ─────────────────────────────────────────────────────────
 
     /**

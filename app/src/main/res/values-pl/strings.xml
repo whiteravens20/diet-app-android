@@ -190,6 +190,7 @@
     <string name="change_kind_pantry_added">nowa pozycja spiżarni</string>
     <string name="change_kind_pantry_changed">zmiana pozycji spiżarni</string>
     <string name="change_kind_pantry_removed">usunięcie pozycji spiżarni</string>
+    <string name="change_kind_pantry_frozen">zamrożenie pozycji spiżarni</string>
     <string name="change_kind_own_meal_added">własny posiłek dodany do dnia</string>
     <string name="change_kind_meal_removed">usunięcie posiłku z dnia</string>
     <string name="change_kind_marked">oznaczenie przepisu</string>
@@ -870,6 +871,31 @@
     <string name="pantry_expiring_soon">wkrótce minie termin</string>
     <string name="pantry_frozen">zamrożone</string>
     <string name="pantry_frozen_name">%1$s, zamrożone</string>
+    <string name="pantry_frozen_box">Zamrożone</string>
+    <string name="pantry_freeze_of">Zamroź: %1$s</string>
+    <string name="pantry_frozen_package_name">%1$s, zamrożone, paczka %2$d</string>
+    <string name="pantry_freeze">Zamroź</string>
+    <string name="pantry_freeze_what">%1$s, %2$s</string>
+    <plurals name="pantry_freeze_intro">
+        <item quantity="one">Każda porcja trafi do zamrażarki jako osobna paczka, najlepiej spożyć ją w ciągu %d dnia.</item>
+        <item quantity="few">Każda porcja trafi do zamrażarki jako osobna paczka, najlepiej spożyć ją w ciągu %d dni.</item>
+        <item quantity="many">Każda porcja trafi do zamrażarki jako osobna paczka, najlepiej spożyć ją w ciągu %d dni.</item>
+        <item quantity="other">Każda porcja trafi do zamrażarki jako osobna paczka, najlepiej spożyć ją w ciągu %d dni.</item>
+    </plurals>
+    <string name="pantry_portions">Porcje</string>
+    <plurals name="pantry_portions_each">
+        <item quantity="one">%1$d porcja, w każdej %2$s</item>
+        <item quantity="few">%1$d porcje, w każdej %2$s</item>
+        <item quantity="many">%1$d porcji, w każdej %2$s</item>
+        <item quantity="other">%1$d porcji, w każdej %2$s</item>
+    </plurals>
+    <string name="pantry_portions_list">Porcje: %1$s</string>
+    <plurals name="pantry_portions_range">
+        <item quantity="one">Od 1 do %1$d porcji.</item>
+        <item quantity="few">Od 1 do %1$d porcji.</item>
+        <item quantity="many">Od 1 do %1$d porcji.</item>
+        <item quantity="other">Od 1 do %1$d porcji.</item>
+    </plurals>
     <string name="pantry_past_date">po terminie</string>
     <string name="pantry_add">Dodaj</string>
     <string name="pantry_change_of">Zmień: %1$s</string>
@@ -877,6 +903,7 @@
     <string name="pantry_err_add">Nie udało się dodać pozycji.</string>
     <string name="pantry_err_change">Nie udało się zaktualizować pozycji.</string>
     <string name="pantry_err_remove">Nie udało się usunąć pozycji.</string>
+    <string name="pantry_err_freeze">Nie udało się zamrozić pozycji.</string>
 
     <!-- Weight log -->
     <string name="weight_title">Dziennik wagi</string>

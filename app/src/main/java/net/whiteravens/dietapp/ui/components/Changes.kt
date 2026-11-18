@@ -115,6 +115,7 @@ private fun changeKind(change: QueuedChange?): String = when (change) {
     is QueuedChange.PantryAdded -> stringResource(R.string.change_kind_pantry_added)
     is QueuedChange.PantryChanged -> stringResource(R.string.change_kind_pantry_changed)
     is QueuedChange.PantryRemoved -> stringResource(R.string.change_kind_pantry_removed)
+    is QueuedChange.PantryFrozen -> stringResource(R.string.change_kind_pantry_frozen)
     is QueuedChange.OwnMealAdded -> stringResource(R.string.change_kind_own_meal_added)
     is QueuedChange.MealRemoved -> stringResource(R.string.change_kind_meal_removed)
     is QueuedChange.Marked -> stringResource(R.string.change_kind_marked)

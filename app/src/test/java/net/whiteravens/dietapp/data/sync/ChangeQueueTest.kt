@@ -203,6 +203,18 @@ class ChangeQueueTest {
     }
 
     @Test
+    fun `something put into a pantry that an earlier version kept, with no word of the freezer, is sent as fresh, whole`() = runBlocking {
+        val kept = """{"type":"pantry-added","profileId":"ada","ingredientId":"egg","name":"Large egg","category":"dairy",""" +
+            """"quantity":6.0,"unit":"piece","key":"k1"}"""
+        changes.add(PendingChangeRow(kind = "pantry-added", change = kept, madeAt = 1))
+        val sent = mutableListOf<QueuedChange>()
+
+        assertEquals(Drained.EMPTY, queue.drain { sent += it })
+
+        assertEquals(listOf(QueuedChange.PantryAdded("ada", "egg", "Large egg", "dairy", 6.0, "piece", null, "k1", frozen = false, portions = 1)), sent)
+    }
+
+    @Test
     fun `a change this version cannot read is kept as refused, and the ones after it are sent`() = runBlocking {
         changes.add(PendingChangeRow(kind = "from-a-newer-version", change = """{"type":"from-a-newer-version"}""", madeAt = 1))
         queue.submit(row("bread"), offline)

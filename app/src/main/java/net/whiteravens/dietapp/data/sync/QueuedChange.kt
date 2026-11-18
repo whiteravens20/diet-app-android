@@ -71,8 +71,8 @@ sealed interface QueuedChange {
 
     /**
      * Some of an ingredient put into a profile's pantry, in [unit], best before [bestBefore]
-     * (yyyy-MM-dd) where it has a day; [name] and [category] as the screen shows it until the server
-     * has it.
+     * (yyyy-MM-dd) where it has a day, into the freezer where [frozen], split into [portions] packages
+     * there; [name] and [category] as the screen shows it until the server has it.
      */
     @Serializable
     @SerialName("pantry-added")
@@ -85,6 +85,8 @@ sealed interface QueuedChange {
         val unit: String,
         val bestBefore: String? = null,
         override val key: String,
+        val frozen: Boolean = false,
+        val portions: Int = 1,
     ) : Addition
 
     /** A row of a pantry changed: its amount where [quantity] is given, its day ([bestBefore], or none) where [newDay]. */
@@ -102,6 +104,20 @@ sealed interface QueuedChange {
     @Serializable
     @SerialName("pantry-removed")
     data class PantryRemoved(val profileId: String, val id: String) : DoneWhenGone
+
+    /**
+     * A fresh row of a pantry put into the freezer in [portions] packages, sent with [key] every time so that the server
+     * freezes it once; [bestBefore] (yyyy-MM-dd) is the day the screen shows it with until the server has it.
+     */
+    @Serializable
+    @SerialName("pantry-frozen")
+    data class PantryFrozen(
+        val profileId: String,
+        val id: String,
+        val key: String,
+        val bestBefore: String,
+        val portions: Int = 1,
+    ) : DoneWhenGone
 
     /**
      * A meal of one's own added to the day of [date] (yyyy-MM-dd) of a plan, beside its meals or in

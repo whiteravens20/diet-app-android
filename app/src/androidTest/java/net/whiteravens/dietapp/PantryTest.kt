@@ -3,9 +3,12 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -29,6 +32,7 @@ import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -119,6 +123,59 @@ class PantryTest {
         press(hasContentDescription(text(R.string.pantry_remove_of, egg)))
         screen.waitForTheApi { eggId !in Instance.pantry(account, profileId) }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(egg).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun aFoodIsPutInFrozenInPortionsAndAFreshRowIsPutIntoTheFreezerFromItsWindowEachPackageDatedThirtyDaysOn() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val language = text(R.string.api_language)
+        val (milkId, milk) = Instance.ingredient(account, "Whole milk", language)
+        val (eggId, egg) = Instance.ingredient(account, "Large egg", language)
+        Instance.stock(account, profileId, milkId, 1000.0, "ml", LocalDate.now().plusDays(3))
+        val thirtyDaysOn = LocalDate.now().plusDays(30).toString()
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.pantry_title)).performClick()
+        screen.scrollToText(milk)
+
+        // Six eggs put in with the freezer's box ticked, which dates them 30 days on, in four portions as even as they go.
+        screen.scrollToText(text(R.string.pantry_ingredient))
+        screen.onNodeWithText(text(R.string.pantry_ingredient)).performScrollTo().performTextInput(egg.take(4))
+        screen.putKeyboardAway()
+        val found = hasText(egg) and hasClickAction()
+        screen.scrollTo(found)
+        screen.onNode(found).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.pantry_quantity)).performScrollTo().performTextInput("6")
+        screen.putKeyboardAway()
+        screen.onNodeWithText(text(R.string.pantry_frozen_box)).performScrollTo().performClick()
+        val portions = hasText(text(R.string.pantry_portions)) and hasSetTextAction()
+        screen.onNode(portions).performScrollTo().performTextReplacement("4")
+        screen.putKeyboardAway()
+        // The field and the line under it that says what each package holds.
+        screen.onNode(portions).performScrollTo()
+        screen.keepScreenshot("pantry-put-in-frozen-in-portions")
+        screen.onNodeWithText(text(R.string.pantry_add)).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.frozenPackages(account, profileId)[eggId]?.map { it.first }?.sorted() == listOf(1.0, 1.0, 2.0, 2.0) }
+        assertEquals(setOf(thirtyDaysOn), Instance.frozenPackages(account, profileId).getValue(eggId).map { it.second }.toSet())
+
+        // The milk's fresh row put into the freezer from the window its button opens, in three portions.
+        press(hasContentDescription(text(R.string.pantry_freeze_of, milk)))
+        screen.onNode(hasText(text(R.string.pantry_portions)) and hasSetTextAction() and hasAnyAncestor(isDialog())).performTextReplacement("3")
+        screen.putKeyboardAway()
+        screen.keepScreenshot("pantry-the-freezing-window")
+        screen.onNode(hasText(text(R.string.pantry_freeze)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        screen.waitForTheApi { Instance.frozenPackages(account, profileId)[milkId]?.size == 3 }
+        assertEquals(
+            listOf(333.333333 to thirtyDaysOn, 333.333333 to thirtyDaysOn, 333.333334 to thirtyDaysOn),
+            Instance.frozenPackages(account, profileId).getValue(milkId).sortedBy { it.first },
+        )
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(hasContentDescription(text(R.string.pantry_freeze_of, milk))).fetchSemanticsNodes().isEmpty()
+        }
+        screen.scrollToText(milk)
+        screen.keepScreenshot("pantry-packages")
     }
 
     @Test
