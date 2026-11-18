@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -30,6 +31,7 @@ import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.ui.common.GONE_WITHIN_MILLIS
 import net.whiteravens.dietapp.ui.common.LaterRemoval
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
@@ -222,6 +224,9 @@ class FavoritesViewModel @Inject constructor(
         _state.first { !it.busy }
         removeNow(removal)
         _state.first { !it.busy }
+        // Out of sight until the list no longer shows it, from the server or from the changes waiting, or until a
+        // failure shows it again.
+        withTimeoutOrNull(GONE_WITHIN_MILLIS) { _state.first { s -> s.failed != null || s.shownItems.none { it.recipeId == removal.item.recipeId } } }
     }
 
     /** The mark taken off a moment ago, which can still be taken back. */

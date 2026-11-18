@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
@@ -51,6 +52,7 @@ import net.whiteravens.dietapp.domain.canSearchProducts
 import net.whiteravens.dietapp.domain.looksLikeProductCode
 import net.whiteravens.dietapp.domain.mealAt
 import net.whiteravens.dietapp.domain.productCodeOf
+import net.whiteravens.dietapp.ui.common.GONE_WITHIN_MILLIS
 import net.whiteravens.dietapp.ui.common.LaterRemoval
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
@@ -620,6 +622,9 @@ class DiaryViewModel @Inject constructor(
         _state.first { !it.changing }
         removeNow(removal)
         _state.first { !it.changing }
+        // Out of sight until the day no longer shows it, from the server or from the changes waiting, or until a failure
+        // shows it again.
+        withTimeoutOrNull(GONE_WITHIN_MILLIS) { _state.first { s -> s.failed != null || s.entries.none { it.id == removal.entry.id } } }
     }
 
     /** The entry removed a moment ago, which can still be taken back. */

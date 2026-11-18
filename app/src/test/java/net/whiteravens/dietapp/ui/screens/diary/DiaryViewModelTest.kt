@@ -49,6 +49,7 @@ import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipePage
 import net.whiteravens.dietapp.domain.ScaleChange
 import net.whiteravens.dietapp.domain.mealAt
+import net.whiteravens.dietapp.testing.HeldChanges
 import net.whiteravens.dietapp.testing.changeQueue
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -1197,5 +1198,26 @@ class DiaryViewModelTest {
 
         coVerify(exactly = 1) { diary.remove("a", "e") }
         coVerify(exactly = 0) { diary.remove("b", any()) }
+    }
+
+    @Test
+    fun `an entry taken out without a network stays out of sight until the changes waiting say so`() {
+        val held = HeldChanges()
+        val diaryQueue = changeQueue(held)
+        coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
+        coEvery { diary.remove("a", "e") } coAnswers { diaryQueue.submit(QueuedChange.DiaryRemoved("a", "e")) { throw offline } }
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        held.open.value = false
+
+        model.remove(entry("e"), after = 6_000)
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        // Kept to be sent, and the queue has not said it waits yet: the day still holds it, and it is not shown.
+        assertTrue(model.state.value.entries.any { it.id == "e" })
+        assertTrue("e" in model.hidden.value)
+        held.open.value = true
+        assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
+        assertTrue(model.hidden.value.isEmpty())
     }
 }

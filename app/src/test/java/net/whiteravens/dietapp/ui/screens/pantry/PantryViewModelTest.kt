@@ -25,6 +25,7 @@ import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.StockableIngredient
+import net.whiteravens.dietapp.testing.HeldChanges
 import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import org.junit.After
@@ -656,5 +657,28 @@ class PantryViewModelTest {
 
         coVerify(exactly = 1) { pantry.remove("ada", "egg-row") }
         coVerify(exactly = 0) { pantry.remove("bo", any()) }
+    }
+
+    @Test
+    fun `a row taken out without a network stays out of sight until the changes waiting say so`() = runTest(main) {
+        val held = HeldChanges()
+        val heldQueue = changeQueue(held)
+        val pantry = pantry(garlic, egg)
+        coEvery { pantry.remove("ada", "egg-row") } coAnswers { heldQueue.submit(QueuedChange.PantryRemoved("ada", "egg-row"), offline) }
+        val model = PantryViewModel(pantry, users, heldQueue, application)
+        runCurrent()
+        held.open.value = false
+
+        model.remove(egg, after = 6_000)
+        advanceTimeBy(6_000)
+        runCurrent()
+
+        // Kept to be sent, and the queue has not said it waits yet: the pantry still holds it, and it is not shown.
+        assertTrue(model.state.value.shownRows.any { it.id == "egg-row" })
+        assertTrue("egg-row" in model.hidden.value)
+        held.open.value = true
+        runCurrent()
+        assertEquals(listOf(garlic), model.state.value.shownRows)
+        assertTrue(model.hidden.value.isEmpty())
     }
 }

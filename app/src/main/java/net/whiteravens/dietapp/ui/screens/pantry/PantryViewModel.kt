@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -30,6 +31,7 @@ import net.whiteravens.dietapp.domain.StockableIngredient
 import net.whiteravens.dietapp.domain.frozenUntil
 import net.whiteravens.dietapp.domain.portionCount
 import net.whiteravens.dietapp.domain.portionsOf
+import net.whiteravens.dietapp.ui.common.GONE_WITHIN_MILLIS
 import net.whiteravens.dietapp.ui.common.LaterRemoval
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
@@ -373,6 +375,9 @@ class PantryViewModel @Inject constructor(
         _state.first { !it.busy }
         removeNow(removal)
         _state.first { !it.busy }
+        // Out of sight until the pantry no longer shows it, from the server or from the changes waiting, or until a
+        // failure shows it again.
+        withTimeoutOrNull(GONE_WITHIN_MILLIS) { _state.first { s -> s.failed != null || s.shownRows.none { it.id == removal.row.id } } }
     }
 
     /** The row removed a moment ago, which can still be taken back. */

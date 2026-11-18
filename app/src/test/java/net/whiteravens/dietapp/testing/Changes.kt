@@ -5,6 +5,8 @@ package net.whiteravens.dietapp.testing
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import net.whiteravens.dietapp.data.local.CachedDiaryDay
@@ -50,6 +52,17 @@ class MemoryChanges : PendingChangeDao {
     }
 
     override suspend fun removeAll() = rows.update { emptyList() }
+}
+
+/**
+ * Changes kept as [MemoryChanges] keeps them, whose list of those waiting reaches its readers only while [open]: the
+ * cache's table says so a moment after a change is written, and a test holds that moment.
+ */
+class HeldChanges(private val changes: MemoryChanges = MemoryChanges()) : PendingChangeDao by changes {
+    val open = MutableStateFlow(true)
+
+    override fun waiting(): Flow<List<PendingChangeRow>> =
+        combine(changes.waiting(), open) { rows, opened -> rows.takeIf { opened } }.filterNotNull()
 }
 
 /** What is read for a start without a network, kept in memory as the cache's tables keep it. */

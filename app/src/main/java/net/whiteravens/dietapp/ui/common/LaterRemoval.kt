@@ -15,6 +15,12 @@ import kotlinx.coroutines.launch
 const val UNDO_FOR_MILLIS = 6_000L
 
 /**
+ * How long a removal that is done waits for its screen to stop showing what it removed, as the server or the queue of
+ * changes has it, before it lets it show again: the queue says what waits within a moment.
+ */
+const val GONE_WITHIN_MILLIS = 2_000L
+
+/**
  * A removal of something cheap to make again (an entry of the diary, a row of the pantry, a recipe's mark): gone from
  * the screen at once, and sent only once the moments to take it back are over. Nothing is asked first; a removal
  * taken back was never sent. A second removal sends the first at once, and a screen's model that is cleared sends

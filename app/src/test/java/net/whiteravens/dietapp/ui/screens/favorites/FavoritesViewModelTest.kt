@@ -21,6 +21,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.FavoriteFilter
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Profile
+import net.whiteravens.dietapp.testing.HeldChanges
 import net.whiteravens.dietapp.testing.changeQueue
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -277,5 +278,26 @@ class FavoritesViewModelTest {
         assertFalse(model.state.value.nothingMarked)
 
         assertFalse(FavoritesViewModel(favorites(oats), users, queue, application).state.value.nothingMarked)
+    }
+
+    @Test
+    fun `a mark taken off without a network stays out of sight until the changes waiting say so`() {
+        val held = HeldChanges()
+        val heldQueue = changeQueue(held)
+        val favorites = favorites(oats, soup)
+        coEvery { favorites.unmark("ada", "soup") } coAnswers { heldQueue.submit(QueuedChange.Unmarked("ada", "soup"), offline) }
+        val model = FavoritesViewModel(favorites, users, heldQueue, application)
+        held.open.value = false
+
+        model.remove(soup, after = 6_000)
+        main.scheduler.advanceTimeBy(6_000)
+        main.scheduler.runCurrent()
+
+        // Kept to be sent, and the queue has not said it waits yet: the list still holds it, and it is not shown.
+        assertTrue(model.state.value.shownItems.any { it.recipeId == "soup" })
+        assertTrue("soup" in model.hidden.value)
+        held.open.value = true
+        assertEquals(listOf("oats"), model.state.value.shownItems.map { it.recipeId })
+        assertTrue(model.hidden.value.isEmpty())
     }
 }
