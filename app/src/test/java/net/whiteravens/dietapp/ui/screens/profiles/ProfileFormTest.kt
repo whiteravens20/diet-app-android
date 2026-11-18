@@ -236,6 +236,20 @@ class ProfileFormTest {
     }
 
     @Test
+    fun `protein per kilogram is worked out only from figures inside its fields' bounds, by tenths of a gram`() {
+        val typed = OwnTargetsTyped(way = OwnWay.PER_KG, perKg = "1,6", perKgFat = "30")
+        assertNotNull(typed.perKgAt(2298, 80.0))
+        for (perKg in listOf("0,5", "3,5", "-1", "", "1,65", "x")) {
+            assertFalse(perKg, typed.copy(perKg = perKg).perKgTypedFits())
+            assertNull(perKg, typed.copy(perKg = perKg).perKgAt(2298, 80.0))
+        }
+        for (fat in listOf("0", "95", "", "30,5")) assertNull(fat, typed.copy(perKgFat = fat).perKgAt(2298, 80.0))
+        // A form that has no weight yet waits for it with good figures.
+        assertTrue(typed.perKgTypedFits())
+        assertNull(typed.perKgAt(2298, null))
+    }
+
+    @Test
     fun `protein per kilogram is sent with a split around fat's share, which the API takes for fat alone`() {
         val custom = filled.copy(dietType = "custom", own = OwnTargetsTyped(way = OwnWay.PER_KG, perKg = "1,8", perKgFat = "35"))
 

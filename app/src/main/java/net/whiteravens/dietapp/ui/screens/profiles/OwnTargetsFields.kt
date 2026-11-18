@@ -212,11 +212,14 @@ private fun PerKgFields(
     Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
         val at = own.perKgAt(target, weightKg)
         if (at == null || target == null) {
-            Text(
-                stringResource(R.string.profile_per_kg_waiting),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            // Waited for only while the figures typed are good: a wrong one is said by its field.
+            if (own.perKgTypedFits()) {
+                Text(
+                    stringResource(R.string.profile_per_kg_waiting),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         } else {
             Text(
                 stringResource(R.string.profile_per_kg_line, formatNumber(at.protein.roundToInt()), at.split.protein, formatNumber(target), at.split.carbs),

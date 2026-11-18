@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.ui.screens.profiles
 
+import kotlin.math.abs
+import kotlin.math.roundToLong
 import net.whiteravens.dietapp.domain.MacroSplit
 import net.whiteravens.dietapp.domain.PerKgSplit
 import net.whiteravens.dietapp.domain.ProteinPerKg
@@ -94,12 +96,25 @@ data class OwnTargetsTyped(
             }
         }
 
-    /** What protein per kilogram comes to at [target] kcal and [weightKg]; null for the split's way, and while either is not known. */
+    /**
+     * Whether protein per kilogram and fat's share are typed inside their fields' bounds, protein by tenths of a gram:
+     * only those are worked out, and what is typed past them is said by its field.
+     */
+    fun perKgTypedFits(): Boolean {
+        val perKg = perKg.number() ?: return false
+        val fat = perKgFat.trim().toIntOrNull() ?: return false
+        val tenths = abs(perKg * 10 - (perKg * 10).roundToLong()) < 1e-9
+        return perKg >= ProteinPerKg.LEAST && perKg <= ProteinPerKg.MOST && tenths && fat in SplitLimits.FAT
+    }
+
+    /**
+     * What protein per kilogram comes to at [target] kcal and [weightKg]; null for the split's way, while either is not
+     * known, and while a figure typed is past its field's bounds ([perKgTypedFits]).
+     */
     fun perKgAt(target: Int?, weightKg: Double?): PerKgSplit? {
         if (way != OwnWay.PER_KG || target == null || target <= 0 || weightKg == null || weightKg <= 0) return null
-        val perKg = perKg.number() ?: return null
-        val fat = perKgFat.trim().toIntOrNull() ?: return null
-        return perKgSplit(perKg, fat, weightKg, target)
+        if (!perKgTypedFits()) return null
+        return perKgSplit(perKg.number()!!, perKgFat.trim().toInt(), weightKg, target)
     }
 
     /**
