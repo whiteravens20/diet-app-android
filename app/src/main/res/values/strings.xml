@@ -96,7 +96,7 @@
 
     <!-- Dashboard -->
     <string name="dashboard_welcome">Welcome to Diet App</string>
-    <string name="dashboard_no_profiles">Create your first profile to calculate your calorie target and generate a meal plan.</string>
+    <string name="dashboard_no_profiles">Create your first profile to calculate your calorie target and make a meal plan.</string>
     <plurals name="dashboard_subtitle">
         <item quantity="one">Your calorie target and macro split.</item>
         <item quantity="other">Calorie targets across your %d profiles.</item>
@@ -133,7 +133,7 @@
     <string name="overview_days">Day by day</string>
     <string name="overview_series_planned">Planned</string>
     <string name="overview_series_target">Target</string>
-    <string name="dashboard_generate_plan">Generate meal plan</string>
+    <string name="dashboard_generate_plan">Make a meal plan</string>
     <string name="dashboard_daily_surplus">Daily surplus</string>
     <string name="overview_eaten_hint">%1$s of the %2$s that were due by today.</string>
     <string name="overview_on_diet_hint">%1$s of %2$s fit the diet of the plan (%3$s).</string>
@@ -214,10 +214,10 @@
     <!-- Meal plans -->
     <string name="plans_subtitle">Plans built against each profile’s calorie target.</string>
     <string name="plans_no_profile">No profile yet</string>
-    <string name="plans_no_profile_body">Create a profile first — a meal plan is generated against its calorie target.</string>
-    <string name="plans_generate">Generate a plan</string>
+    <string name="plans_no_profile_body">Create a profile first — a meal plan is made against its calorie target.</string>
+    <string name="plans_generate">Make a plan</string>
     <string name="plans_empty">No plans yet</string>
-    <string name="plans_empty_body">Generate the first meal plan for this profile.</string>
+    <string name="plans_empty_body">Make the first meal plan for this profile.</string>
     <string name="plans_show_more">Show more plans</string>
     <string name="common_clear">Clear</string>
     <string name="plans_for">%1$s\'s plans</string>
@@ -853,7 +853,7 @@
     <!-- Shopping -->
     <string name="shopping_subtitle">Grouped by store section — pantry stock is already deducted.</string>
     <string name="shopping_no_profile">No profile yet</string>
-    <string name="shopping_no_profile_body">Create a profile and generate a meal plan first — a shopping list is built from a plan.</string>
+    <string name="shopping_no_profile_body">Create a profile and make a meal plan first — a shopping list is built from a plan.</string>
     <string name="shopping_no_plans">No plan to shop for yet</string>
     <string name="shopping_no_plans_body">A shopping list is made from a meal plan. Make a plan for this profile first.</string>
     <string name="shopping_no_lists_title">No shopping list for this plan yet</string>
@@ -1447,7 +1447,7 @@
     <string name="cuisine_american">American</string>
     <string name="cuisine_indian">Indian</string>
     <!-- A new plan: its days, its choices, its limits and each day's options, worded as the web application words them. -->
-    <string name="plans_generate_for">Generate a plan for %1$s</string>
+    <string name="plans_generate_for">Make a plan for %1$s</string>
     <string name="plans_start_date">Start date</string>
     <string name="plans_duration_days">Duration (days)</string>
     <string name="plans_meal_prep">Cook ahead</string>
@@ -1462,7 +1462,7 @@
     <string name="plans_choices_hint_own_targets">Diet, meals a day and calorie target hold for this plan only.</string>
     <string name="plans_own_targets_saved">These targets are saved in the profile with the plan; the profile\'s diet stays as it is.</string>
     <string name="plans_per_kg_held_at_plan">At this plan\'s target of %1$s\u00A0kcal, %2$s\u00A0g of protein per kg goes past the limits of a split: the plan holds protein at the limit, %3$s\u00A0g a day.</string>
-    <string name="plans_save_targets_failed">Could not save the custom diet\'s targets in the profile, so the plan was not generated.</string>
+    <string name="plans_save_targets_failed">Could not save the custom diet\'s targets in the profile, so the plan was not made.</string>
     <string name="plans_calorie_target_hint">Empty: the profile’s target, %1$s kcal a day.</string>
     <string name="plans_apply_prefs">Apply preferences</string>
     <string name="plans_apply_prefs_hint">They work independently — tick any of them, or none. Allergens are always honoured.</string>
@@ -1492,8 +1492,8 @@
     <string name="plans_no_waste_loosened">%1$s (your profile: %2$s)</string>
     <string name="plans_no_waste_repeats">The same recipe may come up to %1$s and up to %2$s, even twice in one day.</string>
     <string name="plans_no_waste_kept">The limits on meals with the same kind of protein, allergens, the avoid list and the diet work as always. The rest of an opened pack goes into the meal that finishes it, so a day may get up to %1$s%% of its calorie target extra, and days stray further from the macro split.</string>
-    <string name="plans_generating">Generating…</string>
-    <string name="plans_generate_button">Generate plan</string>
+    <string name="plans_generating">Making the plan…</string>
+    <string name="plans_generate_button">Make a plan</string>
     <plurals name="plans_limits_in_the_way">
         <item quantity="one">This plan cannot be filled inside its limits. One meal would go outside: %2$s.</item>
         <item quantity="other">This plan cannot be filled inside its limits. %1$d meals would go outside: %2$s.</item>

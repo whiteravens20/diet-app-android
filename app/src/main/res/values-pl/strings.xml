@@ -92,7 +92,7 @@
 
     <!-- Dashboard -->
     <string name="dashboard_welcome">Witaj w Diet App</string>
-    <string name="dashboard_no_profiles">Utwórz pierwszy profil, aby wyliczyć cel kaloryczny i wygenerować plan posiłków.</string>
+    <string name="dashboard_no_profiles">Utwórz pierwszy profil, aby wyliczyć cel kaloryczny i ułożyć plan posiłków.</string>
     <plurals name="dashboard_subtitle">
         <item quantity="one">Twój cel kaloryczny i podział makro.</item>
         <item quantity="few">Cele kaloryczne dla %d profili.</item>
@@ -131,7 +131,7 @@
     <string name="overview_days">Dzień po dniu</string>
     <string name="overview_series_planned">Zaplanowane</string>
     <string name="overview_series_target">Cel</string>
-    <string name="dashboard_generate_plan">Wygeneruj plan posiłków</string>
+    <string name="dashboard_generate_plan">Ułóż plan posiłków</string>
     <string name="dashboard_daily_surplus">Dzienna nadwyżka</string>
     <string name="overview_eaten_hint">%1$s z %2$s zaplanowanych do dziś.</string>
     <string name="overview_on_diet_hint">%1$s z %2$s pasuje do diety planu (%3$s).</string>
@@ -221,9 +221,9 @@
     <string name="plans_subtitle">Plany dopasowane do celu kalorycznego każdego profilu.</string>
     <string name="plans_no_profile">Brak profilu</string>
     <string name="plans_no_profile_body">Najpierw utwórz profil — plan posiłków układa się pod jego cel kaloryczny.</string>
-    <string name="plans_generate">Wygeneruj plan</string>
+    <string name="plans_generate">Ułóż plan</string>
     <string name="plans_empty">Brak planów</string>
-    <string name="plans_empty_body">Wygeneruj pierwszy plan posiłków dla tego profilu.</string>
+    <string name="plans_empty_body">Ułóż pierwszy plan posiłków dla tego profilu.</string>
     <string name="plans_show_more">Pokaż więcej planów</string>
     <string name="common_clear">Wyczyść</string>
     <string name="plans_for">Plany: %1$s</string>
@@ -927,7 +927,7 @@
     <!-- Shopping -->
     <string name="shopping_subtitle">Pogrupowane według działów sklepu — zapasy ze spiżarni są już odliczone.</string>
     <string name="shopping_no_profile">Brak profilu</string>
-    <string name="shopping_no_profile_body">Najpierw utwórz profil i wygeneruj plan posiłków — lista zakupów powstaje z planu.</string>
+    <string name="shopping_no_profile_body">Najpierw utwórz profil i ułóż plan posiłków — lista zakupów powstaje z planu.</string>
     <string name="shopping_no_plans">Nie ma jeszcze planu, do którego można zrobić zakupy</string>
     <string name="shopping_no_plans_body">Listę zakupów tworzy się z planu posiłków. Najpierw ułóż plan dla tego profilu.</string>
     <string name="shopping_no_lists_title">Ten plan nie ma jeszcze listy zakupów</string>
@@ -1561,7 +1561,7 @@
     <string name="cuisine_american">Amerykańska</string>
     <string name="cuisine_indian">Indyjska</string>
     <!-- A new plan: its days, its choices, its limits and each day's options, worded as the web application words them. -->
-    <string name="plans_generate_for">Wygeneruj plan: %1$s</string>
+    <string name="plans_generate_for">Ułóż plan: %1$s</string>
     <string name="plans_start_date">Data początkowa</string>
     <string name="plans_duration_days">Długość (dni)</string>
     <string name="plans_meal_prep">Gotowanie na zapas</string>
@@ -1576,7 +1576,7 @@
     <string name="plans_choices_hint_own_targets">Dieta, liczba posiłków i\u00A0cel kalorii dotyczą tylko tego planu.</string>
     <string name="plans_own_targets_saved">Te cele zostaną zapisane w\u00A0profilu razem z\u00A0planem; dieta profilu się nie zmieni.</string>
     <string name="plans_per_kg_held_at_plan">Przy celu tego planu, %1$s\u00A0kcal, %2$s\u00A0g białka na kg wychodzi poza granice podziału: plan trzyma białko na granicy, %3$s\u00A0g dziennie.</string>
-    <string name="plans_save_targets_failed">Nie udało się zapisać celów diety własnej w\u00A0profilu, więc plan nie został wygenerowany.</string>
+    <string name="plans_save_targets_failed">Nie udało się zapisać celów diety własnej w\u00A0profilu, więc plan nie został ułożony.</string>
     <string name="plans_calorie_target_hint">Puste: cel z profilu, %1$s kcal dziennie.</string>
     <string name="plans_apply_prefs">Zastosuj preferencje</string>
     <string name="plans_apply_prefs_hint">Działają niezależnie: możesz zaznaczyć dowolne z nich albo żadnej. Alergeny zawsze są pomijane.</string>
@@ -1610,8 +1610,8 @@
     <string name="plans_no_waste_loosened">%1$s (w profilu: %2$s)</string>
     <string name="plans_no_waste_repeats">Ten sam przepis może się pojawić do %1$s i do %2$s, także dwa razy jednego dnia.</string>
     <string name="plans_no_waste_kept">Limity posiłków z tym samym rodzajem białka, alergeny, lista unikanych i dieta działają jak zawsze. Resztę otwartego opakowania dokłada do posiłku, który je kończy, więc dzień może dostać dodatkowo do %1$s%% swojego celu kalorii, a dni bardziej odbiegają od podziału makroskładników.</string>
-    <string name="plans_generating">Generowanie…</string>
-    <string name="plans_generate_button">Wygeneruj plan</string>
+    <string name="plans_generating">Układam plan…</string>
+    <string name="plans_generate_button">Ułóż plan</string>
     <plurals name="plans_limits_in_the_way">
         <item quantity="one">Tego planu nie da się ułożyć w jego limitach. Jeden posiłek wyszedłby poza limit: %2$s.</item>
         <item quantity="few">Tego planu nie da się ułożyć w jego limitach. %1$d posiłki wyszłyby poza limit: %2$s.</item>
