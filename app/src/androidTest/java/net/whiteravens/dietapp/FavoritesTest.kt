@@ -59,7 +59,8 @@ class FavoritesTest {
 
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.favorites_title)).performClick()
-        screen.waitForText(plural(R.plurals.favorites_count, 2, 2))
+        // Under the filters, below the screen's edge at a large font.
+        screen.scrollToText(plural(R.plurals.favorites_count, 2, 2))
         screen.scrollToText(first.second)
         screen.keepScreenshot("favorites-the-list")
 
@@ -120,7 +121,8 @@ class FavoritesTest {
         screen.signIn(account)
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.favorites_title)).performClick()
-        screen.waitForText(plural(R.plurals.favorites_count, 2, 2))
+        // Under the filters, below the screen's edge at a large font.
+        screen.scrollToText(plural(R.plurals.favorites_count, 2, 2))
 
         // Without a network the first is marked to avoid all the same, and says that the change waits
         // to be sent; the second's mark taken off leaves the list.

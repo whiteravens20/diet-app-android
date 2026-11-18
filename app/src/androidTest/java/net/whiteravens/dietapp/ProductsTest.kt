@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.putKeyboardAway
+import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -86,8 +87,9 @@ class ProductsTest {
         screen.waitForText(text(R.string.products_remove_note))
         screen.keepScreenshot("products-a-word-before-removing")
         // The word that answers the question stands under the button that asked it.
-        screen.onAllNodes(hasText(text(R.string.products_remove_confirm)) and hasClickAction()).onLast().performClick()
-        screen.waitForText(text(R.string.products_empty_title))
+        screen.onAllNodes(hasText(text(R.string.products_remove_confirm)) and hasClickAction()).onLast().performScrollTo().performClick()
+        // Under the page's head, below the screen's edge at a large font.
+        screen.scrollToText(text(R.string.products_empty_title))
     }
 
     @Test
