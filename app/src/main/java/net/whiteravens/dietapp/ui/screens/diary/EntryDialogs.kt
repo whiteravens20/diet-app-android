@@ -162,7 +162,9 @@ internal fun AddEntryDialog(form: EntryForm, state: DiaryViewModel.UiState, view
                 }
                 state.windowError?.let { ErrorBanner(errorMessage(it), Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // What is missing stands over the buttons, not squeezed beside them: with a large font the buttons take
+            // the width, and a note beside them broke a letter a line and pushed the whole form out of the window.
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val missing = when {
                     form.kind == EntryKind.RECIPE && form.recipe == null -> R.string.diary_pick_recipe_first
                     form.kind == EntryKind.INGREDIENT && form.ingredient == null -> R.string.diary_pick_ingredient_first
@@ -170,9 +172,15 @@ internal fun AddEntryDialog(form: EntryForm, state: DiaryViewModel.UiState, view
                     form.kind == EntryKind.PRODUCT && form.product?.calories == null -> R.string.diary_product_no_figures_short
                     else -> null
                 }
-                Column(Modifier.weight(1f)) { missing?.let { Note(stringResource(it)) } }
-                TextButton(onClick = viewModel::closeWindow) { Text(stringResource(R.string.common_cancel)) }
-                Button(onClick = viewModel::addEntry, enabled = !state.sending && missing == null) { Text(stringResource(R.string.diary_submit)) }
+                missing?.let { Note(stringResource(it)) }
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    TextButton(onClick = viewModel::closeWindow) { Text(stringResource(R.string.common_cancel)) }
+                    Button(onClick = viewModel::addEntry, enabled = !state.sending && missing == null) { Text(stringResource(R.string.diary_submit)) }
+                }
             }
         }
     }
