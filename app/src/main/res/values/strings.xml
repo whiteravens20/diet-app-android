@@ -382,6 +382,12 @@
     <string name="ai_fallback_all_providers_failed">AI provider didn\'t respond — falling back to the rule-based engine.</string>
     <string name="ai_fallback_data_policy_refused">OpenRouter refused: no provider of this model meets your choice of providers or the privacy settings of your OpenRouter account. You can change the choice or the model in Account settings, on the AI providers card. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_instance_data_policy_refused">OpenRouter refused: no provider of this instance\'s model meets the choice of providers its operator set. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_key_refused">The AI provider refused your key — check it, or enter a new one, in Account settings, on the AI providers card. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_no_credits">Your account at the AI provider has no credits left, or reached its spending limit. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_request_refused">The AI provider refused the request — check the model in Account settings, on the AI providers card, and the settings of your account at the provider. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_instance_provider_refused">This instance\'s AI provider refused the request — its operator has to see to it. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_no_retention_busy">The model is overloaded for now at the providers that keep no data, the only ones your choice allows. Try again in a few minutes, or choose “No training on the data” in Account settings, on the AI providers card: more providers serve it then. Falling back to the rule-based engine.</string>
+    <string name="ai_fallback_provider_busy">The model is overloaded at the AI provider for now — try again in a few minutes. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_provider_timeout">AI provider was too slow — try a smaller model or a cloud provider. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_key_unreadable">Your saved AI key can no longer be read — enter it again in Settings. Falling back to the rule-based engine.</string>
     <string name="ai_fallback_invalid_output">The AI\'s answer could not be used — the rule-based engine picked instead.</string>
