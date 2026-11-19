@@ -283,8 +283,10 @@ independent security review.
 - The screens' tests run on Android 14 and Android 17 emulators on every push and pull
   request, and on the release build as R8 shrinks it on an emulator set to Polish, against
   a diet-app instance started in the same job from the image of the version `contract/` was
-  copied from, pinned by its digest, with its catalogue loaded. In Polish, a test fails
-  when a screen it keeps a picture of shows a word of one letter that a line could end on.
+  copied from, pinned by its digest, with its catalogue loaded. A push to `dev` of a commit
+  whose screens already passed in a run started by hand on that commit does not run them
+  again. In Polish, a test fails when a screen it keeps a picture of shows a word of one
+  letter that a line could end on.
   Their report, the app's log of every test, the screenshots they take and the instance's
   log are kept with the run ([test.yml](.github/workflows/test.yml)).
 - CodeQL and a Trivy scan of the repository run on every push and pull request, and again
