@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -210,7 +211,11 @@ private fun ServingsField(form: EntryForm, problems: Map<EntryField, EntryProble
     )
 }
 
-/** A meal of one's own: its name, what a serving holds, those of its macronutrients that are known, and how many servings it is. */
+/**
+ * A meal of one's own: its name, what a serving holds, those of its macronutrients that are known, and
+ * how many servings it is: energy and servings on one row, the three macronutrients on another, each
+ * row going on to the next line where a large font leaves no room.
+ */
 @Composable
 private fun MealFields(form: EntryForm, problems: Map<EntryField, EntryProblem>, state: DiaryViewModel.UiState, viewModel: DiaryViewModel) {
     FormField(
@@ -222,39 +227,88 @@ private fun MealFields(form: EntryForm, problems: Map<EntryField, EntryProblem>,
         capitalization = KeyboardCapitalization.Sentences,
     )
     Text(stringResource(R.string.diary_one_portion), style = MaterialTheme.typography.titleSmall)
-    FormField(
-        value = form.calories,
-        onValueChange = { typed -> viewModel.typeEntry(EntryField.CALORIES) { it.copy(calories = typed) } },
-        label = stringResource(R.string.diary_calories),
-        problem = fieldProblem(EntryField.CALORIES, problems, state),
-        keyboardType = KeyboardType.Decimal,
-    )
-    FormField(
-        value = form.protein,
-        onValueChange = { typed -> viewModel.typeEntry(EntryField.PROTEIN) { it.copy(protein = typed) } },
-        label = stringResource(R.string.diary_protein),
-        optional = true,
-        problem = fieldProblem(EntryField.PROTEIN, problems, state),
-        keyboardType = KeyboardType.Decimal,
-    )
-    FormField(
-        value = form.fat,
-        onValueChange = { typed -> viewModel.typeEntry(EntryField.FAT) { it.copy(fat = typed) } },
-        label = stringResource(R.string.diary_fat),
-        optional = true,
-        problem = fieldProblem(EntryField.FAT, problems, state),
-        keyboardType = KeyboardType.Decimal,
-    )
-    FormField(
-        value = form.carbs,
-        onValueChange = { typed -> viewModel.typeEntry(EntryField.CARBS) { it.copy(carbs = typed) } },
-        label = stringResource(R.string.diary_carbs),
-        optional = true,
-        problem = fieldProblem(EntryField.CARBS, problems, state),
-        keyboardType = KeyboardType.Decimal,
+    FigureRows(
+        calories = form.calories,
+        protein = form.protein,
+        fat = form.fat,
+        carbs = form.carbs,
+        problems = problems,
+        state = state,
+        onType = { field, typed ->
+            viewModel.typeEntry(field) {
+                when (field) {
+                    EntryField.CALORIES -> it.copy(calories = typed)
+                    EntryField.PROTEIN -> it.copy(protein = typed)
+                    EntryField.FAT -> it.copy(fat = typed)
+                    else -> it.copy(carbs = typed)
+                }
+            }
+        },
+        servings = { modifier ->
+            FormField(
+                value = form.servings,
+                onValueChange = { typed -> viewModel.typeEntry(EntryField.SERVINGS) { it.copy(servings = typed) } },
+                label = stringResource(R.string.diary_servings_field),
+                problem = fieldProblem(EntryField.SERVINGS, problems, state),
+                keyboardType = KeyboardType.Decimal,
+                modifier = modifier,
+            )
+        },
     )
     Note(stringResource(R.string.diary_macros_optional))
-    ServingsField(form, problems, state, viewModel)
+}
+
+/**
+ * The figures of a serving of a meal of one's own as two rows: its energy beside [servings], and its
+ * protein, fat and carbohydrate; a macronutrient's [estimated] value, where it was estimated, is what its
+ * empty field says it would be.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FigureRows(
+    calories: String,
+    protein: String,
+    fat: String,
+    carbs: String,
+    problems: Map<EntryField, EntryProblem>,
+    state: DiaryViewModel.UiState,
+    onType: (EntryField, String) -> Unit,
+    servings: @Composable (Modifier) -> Unit,
+    estimated: (EntryField) -> String? = { null },
+) {
+    val grams = stringResource(R.string.unit_g)
+    val wide = Modifier.widthIn(min = 128.dp)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 2) {
+        FormField(
+            value = calories,
+            onValueChange = { onType(EntryField.CALORIES, it) },
+            label = stringResource(R.string.diary_calories),
+            suffix = stringResource(R.string.unit_kcal),
+            problem = fieldProblem(EntryField.CALORIES, problems, state),
+            keyboardType = KeyboardType.Decimal,
+            modifier = wide.weight(1f),
+        )
+        servings(wide.weight(1f))
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 3) {
+        listOf(
+            Triple(EntryField.PROTEIN, protein, R.string.diary_protein),
+            Triple(EntryField.FAT, fat, R.string.diary_fat),
+            Triple(EntryField.CARBS, carbs, R.string.diary_carbs),
+        ).forEach { (field, value, label) ->
+            FormField(
+                value = value,
+                onValueChange = { onType(field, it) },
+                label = stringResource(label),
+                suffix = grams,
+                placeholder = estimated(field)?.let { "≈ $it" },
+                optional = true,
+                problem = fieldProblem(field, problems, state),
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier.widthIn(min = 104.dp).weight(1f),
+            )
+        }
+    }
 }
 
 /** What was picked, and a way back to the search. */
@@ -344,7 +398,53 @@ internal fun EditEntryDialog(edit: EntryEdit, state: DiaryViewModel.UiState, vie
                     onSelect = { slot -> viewModel.typeEdit { it.copy(slot = slot) } },
                 )
                 val amount = edit.entry.amount
-                if (amount != null) {
+                if (edit.own) {
+                    FormField(
+                        value = edit.name,
+                        onValueChange = { typed -> viewModel.typeEdit { it.copy(name = typed) } },
+                        label = stringResource(R.string.diary_meal_name),
+                        problem = fieldProblem(EntryField.NAME, problems, state, Bound.Characters),
+                        keyboardType = KeyboardType.Text,
+                        capitalization = KeyboardCapitalization.Sentences,
+                    )
+                    Text(stringResource(R.string.diary_one_portion), style = MaterialTheme.typography.titleSmall)
+                    FigureRows(
+                        calories = edit.calories,
+                        protein = edit.protein,
+                        fat = edit.fat,
+                        carbs = edit.carbs,
+                        problems = problems,
+                        state = state,
+                        onType = { field, typed ->
+                            viewModel.typeEdit {
+                                when (field) {
+                                    EntryField.CALORIES -> it.copy(calories = typed)
+                                    EntryField.PROTEIN -> it.copy(protein = typed)
+                                    EntryField.FAT -> it.copy(fat = typed)
+                                    else -> it.copy(carbs = typed)
+                                }
+                            }
+                        },
+                        servings = { modifier ->
+                            FormField(
+                                value = edit.servings,
+                                onValueChange = { typed -> viewModel.typeEdit { it.copy(servings = typed) } },
+                                label = stringResource(R.string.diary_servings_field),
+                                problem = fieldProblem(EntryField.SERVINGS, problems, state),
+                                keyboardType = KeyboardType.Decimal,
+                                modifier = modifier,
+                            )
+                        },
+                        estimated = { field ->
+                            when (field) {
+                                EntryField.PROTEIN -> edit.estimatedAt("protein", edit.entry.macros?.protein)
+                                EntryField.FAT -> edit.estimatedAt("fat", edit.entry.macros?.fat)
+                                else -> edit.estimatedAt("carbs", edit.entry.macros?.carbs)
+                            }
+                        },
+                    )
+                    Note(stringResource(R.string.diary_macros_optional))
+                } else if (amount != null) {
                     // The amount as it was given, in the unit it was given in.
                     FormField(
                         value = edit.quantity,

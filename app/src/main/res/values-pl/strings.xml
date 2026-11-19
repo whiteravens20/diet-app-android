@@ -1975,10 +1975,10 @@
     <string name="diary_unit">Jednostka</string>
     <string name="diary_meal_name">Nazwa</string>
     <string name="diary_one_portion">Jedna porcja zawiera</string>
-    <string name="diary_calories">Kalorie (kcal)</string>
-    <string name="diary_protein">Białko (g)</string>
-    <string name="diary_fat">Tłuszcz (g)</string>
-    <string name="diary_carbs">Węglowodany (g)</string>
+    <string name="diary_calories">Kalorie</string>
+    <string name="diary_protein">Białko</string>
+    <string name="diary_fat">Tłuszcz</string>
+    <string name="diary_carbs">Węglowodany</string>
     <string name="diary_macros_optional">Zostaw białko, tłuszcz lub węglowodany puste, gdy ich nie znasz: zostaną oszacowane z proporcji celu dnia i oznaczone jako szacunek.</string>
     <string name="diary_adds_line">Doda do dnia %1$s kcal.</string>
     <string name="diary_submit">Dodaj do dziennika</string>

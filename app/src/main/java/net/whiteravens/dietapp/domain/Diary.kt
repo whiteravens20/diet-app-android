@@ -120,6 +120,8 @@ data class DiaryEntry(
     val productSource: ProductSource? = null,
     /** The code of the product it is of, where it has one. */
     val productCode: String? = null,
+    /** Of a meal of one's own, which macronutrients (`protein`, `fat`, `carbs`) were estimated. */
+    val estimatedMacros: List<String> = emptyList(),
 )
 
 /** What is written for a day of the diary, under the meal [slot]. */

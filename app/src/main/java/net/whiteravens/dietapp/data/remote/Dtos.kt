@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.data.remote
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -2394,7 +2396,8 @@ data class CreateDiaryEntryRequest(
 
 /**
  * PATCH `/diary/entries/:id`: what changes of an entry, nothing else: its meal, how much of it there
- * was, and for an entry of a product a product of the reader's own it is of from now on.
+ * was, for an entry of a product a product of the reader's own it is of from now on, and for a meal
+ * of one's own its name and the figures of a serving.
  */
 @Serializable
 data class UpdateDiaryEntryRequest(
@@ -2402,6 +2405,21 @@ data class UpdateDiaryEntryRequest(
     val servings: Double? = null,
     val quantity: Double? = null,
     val productId: String? = null,
+    val name: String? = null,
+    val nutrition: DiaryMealNutritionChangeDto? = null,
+)
+
+/**
+ * The figures of a serving of a meal of one's own, changed: its energy and each macronutrient, the one
+ * not known sent as null so that the server estimates it, as when the meal was written.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class DiaryMealNutritionChangeDto(
+    val calories: Double,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val protein: Double? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val fat: Double? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val carbs: Double? = null,
 )
 
 /** PUT `/recipes/:id/text`: new words for a recipe of one's own made by swapping an ingredient, in the reader's language. */
@@ -2526,6 +2544,8 @@ data class DiaryEntryDto(
     val nutrition: NutritionDto,
     /** Its macronutrients were estimated: a meal of one's own written by its energy. */
     val estimated: Boolean,
+    /** Of a meal of one's own, which macronutrients (`protein`, `fat`, `carbs`) were estimated. */
+    val estimatedMacros: List<String> = emptyList(),
 )
 
 /** What a day aims at: the target of the plan's day, or the profile's own ([from] `plan` | `profile`). */

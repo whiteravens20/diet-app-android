@@ -166,6 +166,7 @@
     <string name="macro_fat">Fat</string>
     <string name="macro_carbs">Carbs</string>
     <string name="unit_kcal">kcal</string>
+    <string name="unit_g" translatable="false">g</string>
 
     <!-- Fibre, sugars, salt and saturated fat, as labels give them -->
     <string name="label_fiber">Fibre</string>
@@ -1836,10 +1837,10 @@
     <string name="diary_unit">Unit</string>
     <string name="diary_meal_name">Name</string>
     <string name="diary_one_portion">One serving holds</string>
-    <string name="diary_calories">Calories (kcal)</string>
-    <string name="diary_protein">Protein (g)</string>
-    <string name="diary_fat">Fat (g)</string>
-    <string name="diary_carbs">Carbs (g)</string>
+    <string name="diary_calories">Calories</string>
+    <string name="diary_protein">Protein</string>
+    <string name="diary_fat">Fat</string>
+    <string name="diary_carbs">Carbs</string>
     <string name="diary_macros_optional">Leave protein, fat or carbohydrate empty when you do not know it: it is estimated from the proportions of the day\'s target and marked as an estimate.</string>
     <string name="diary_adds_line">Adds %1$s kcal to the day.</string>
     <string name="diary_submit">Add to the diary</string>

@@ -724,6 +724,21 @@ object Instance {
         return (0 until entries.length()).map { entries.getJSONObject(it).getString("name") }
     }
 
+    /** The entries of a profile's day as the API keeps them: each name with its energy, protein and the macronutrients estimated. */
+    fun diaryFigures(account: Account, profileId: String, date: LocalDate = LocalDate.now()): List<Triple<String, Pair<Int, Int>, List<String>>> {
+        val entries = call("GET", "diary/day?profileId=$profileId&date=$date", token = account.accessToken).getJSONArray("entries")
+        return (0 until entries.length()).map { at ->
+            val entry = entries.getJSONObject(at)
+            val nutrition = entry.getJSONObject("nutrition")
+            val estimated = entry.optJSONArray("estimatedMacros")
+            Triple(
+                entry.getString("name"),
+                nutrition.getDouble("calories").toInt() to nutrition.getDouble("protein").toInt(),
+                (0 until (estimated?.length() ?: 0)).map { estimated!!.getString(it) },
+            )
+        }
+    }
+
     /** What a profile's pantry holds frozen, by the ingredient of each frozen row: its quantity and its day. */
     fun frozenStock(account: Account, profileId: String): Map<String, Pair<Double, String?>> {
         val rows = JSONArray(send("GET", "inventory?profileId=$profileId", null, account.accessToken, 200, null))

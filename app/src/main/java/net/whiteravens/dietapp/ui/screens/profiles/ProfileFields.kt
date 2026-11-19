@@ -131,6 +131,8 @@ internal fun FormField(
     hint: String? = null,
     problem: String? = null,
     placeholder: String? = null,
+    /** The unit of what it holds, after the number, where the label does not say it. */
+    suffix: String? = null,
     keyboardType: KeyboardType = KeyboardType.Number,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     optional: Boolean = false,
@@ -142,6 +144,7 @@ internal fun FormField(
         onValueChange = onValueChange,
         label = { Text(label) },
         placeholder = placeholder?.let { { Text(it) } },
+        suffix = suffix?.let { { Text(it) } },
         supportingText = (problem ?: hint)?.let { { Text(it) } },
         isError = problem != null,
         singleLine = true,

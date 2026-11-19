@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.diary
 
+import net.whiteravens.dietapp.data.remote.DiaryMealNutritionChangeDto
 import net.whiteravens.dietapp.domain.DiaryLimits
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
@@ -10,6 +11,8 @@ import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Product
 import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.domain.Recipe
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -109,13 +112,6 @@ data class EntryForm(
         }
     }
 
-    private fun MutableMap<EntryField, EntryProblem>.perServing(field: EntryField, typed: String, most: Double, required: Boolean) {
-        if (typed.isBlank() && !required) return
-        val number = typed.number() ?: return run { put(field, EntryProblem.NotANumber) }
-        if (number < 0) put(field, EntryProblem.OutOfBounds(FieldRefusal.TooSmall(0.0, inclusive = true)))
-        if (number > most) put(field, EntryProblem.OutOfBounds(FieldRefusal.TooBig(most, inclusive = true)))
-    }
-
     /** The kcal the entry adds to the day, rounded as the API rounds it, where the window knows it: an ingredient's figures go through the API's units. */
     fun adds(): Int? {
         if (kind == EntryKind.PRODUCT) return productCalories()?.roundToInt()
@@ -158,6 +154,12 @@ data class EntryEdit(
     val slot: String = entry.slot,
     val servings: String = shownNumber(entry.servings),
     val quantity: String = shownNumber(entry.amount?.quantity),
+    /** A meal of one's own: its name, and what a serving holds; a macronutrient that was estimated starts empty. */
+    val name: String = entry.name,
+    val calories: String = if (entry.kind == "meal") ofServing(entry, entry.calories, 0) else "",
+    val protein: String = ownMacro(entry, "protein", entry.macros?.protein),
+    val fat: String = ownMacro(entry, "fat", entry.macros?.fat),
+    val carbs: String = ownMacro(entry, "carbs", entry.macros?.carbs),
     /** The product of the entry's code is being read, to correct it. */
     val looking: Boolean = false,
     /** What the code answers for the reader: a product of the base to correct, or a version of their own. */
@@ -169,6 +171,24 @@ data class EntryEdit(
 
     private val servingsAtFirst = shownNumber(entry.servings)
     private val quantityAtFirst = shownNumber(entry.amount?.quantity)
+    /** A meal of one's own, whose name and figures the window changes too. */
+    val own: Boolean get() = entry.kind == "meal"
+
+    /** What a macronutrient was estimated at, in a serving, while it is not known: what its field says it would be. */
+    fun estimatedAt(macro: String, grams: Double?): String? =
+        if (own && macro in entry.estimatedMacros) ofServing(entry, grams, 1).takeIf { it.isNotEmpty() } else null
+
+    /** The name typed, where it is another. */
+    val newName: String? get() = name.trim().takeIf { own && it != entry.name }
+
+    private val figuresChanged: Boolean
+        get() = own &&
+            (calories != ofServing(entry, entry.calories, 0) || protein != ownMacro(entry, "protein", entry.macros?.protein) ||
+                fat != ownMacro(entry, "fat", entry.macros?.fat) || carbs != ownMacro(entry, "carbs", entry.macros?.carbs))
+
+    /** The figures of a serving typed, where any is another: a macronutrient left empty goes as null, to be estimated. */
+    val newNutrition: DiaryMealNutritionChangeDto?
+        get() = if (!figuresChanged) null else DiaryMealNutritionChangeDto(calories.number() ?: 0.0, protein.number(), fat.number(), carbs.number())
 
     /** The meal asked for, where it is another. */
     val newSlot: String? get() = slot.takeIf { it != entry.slot }
@@ -180,10 +200,25 @@ data class EntryEdit(
     val newQuantity: Double? get() = if (entry.amount != null && quantity != quantityAtFirst) quantity.number() else null
 
     /** Whether anything is changed at all. */
-    val changed: Boolean get() = newSlot != null || newServings != null || newQuantity != null
+    val changed: Boolean get() = newSlot != null || newServings != null || newQuantity != null || newName != null || newNutrition != null
 
     /** What the field holds that the API would refuse, by field; a number left alone is not asked about. */
-    fun problems(): Map<EntryField, EntryProblem> = when {
+    fun problems(): Map<EntryField, EntryProblem> = amountProblems() + ownProblems()
+
+    /** A meal of one's own: its name, and the figures of a serving where any of them is changed. */
+    private fun ownProblems(): Map<EntryField, EntryProblem> = buildMap {
+        if (!own) return@buildMap
+        if (name.isBlank()) put(EntryField.NAME, EntryProblem.OutOfBounds(FieldRefusal.TooSmall(1.0, inclusive = true)))
+        if (name.trim().length > DiaryLimits.name) put(EntryField.NAME, EntryProblem.OutOfBounds(FieldRefusal.TooBig(DiaryLimits.name.toDouble(), inclusive = true)))
+        if (figuresChanged) {
+            perServing(EntryField.CALORIES, calories, DiaryLimits.calories, required = true)
+            perServing(EntryField.PROTEIN, protein, DiaryLimits.protein, required = false)
+            perServing(EntryField.FAT, fat, DiaryLimits.fat, required = false)
+            perServing(EntryField.CARBS, carbs, DiaryLimits.carbs, required = false)
+        }
+    }
+
+    private fun amountProblems(): Map<EntryField, EntryProblem> = when {
         entry.amount != null -> if (quantity == quantityAtFirst) {
             emptyMap()
         } else {
@@ -196,6 +231,24 @@ data class EntryEdit(
         else -> servingsProblem(servings)
     }
 }
+
+/** What is wrong with a figure of a serving of a meal of one's own typed in [field], if anything; one not [required] may be left empty. */
+private fun MutableMap<EntryField, EntryProblem>.perServing(field: EntryField, typed: String, most: Double, required: Boolean) {
+    if (typed.isBlank() && !required) return
+    val number = typed.number() ?: return run { put(field, EntryProblem.NotANumber) }
+    if (number < 0) put(field, EntryProblem.OutOfBounds(FieldRefusal.TooSmall(0.0, inclusive = true)))
+    if (number > most) put(field, EntryProblem.OutOfBounds(FieldRefusal.TooBig(most, inclusive = true)))
+}
+
+/** What a meal of one's own holds of [figure] in a serving, as its window starts with it; nothing where it is not known. */
+private fun ofServing(entry: DiaryEntry, figure: Double?, digits: Int): String {
+    val times = entry.servings?.takeIf { it > 0 } ?: 1.0
+    return figure?.let { shownNumber(BigDecimal(it / times).setScale(digits, RoundingMode.HALF_UP).toDouble()) }.orEmpty()
+}
+
+/** A macronutrient of a meal of one's own as its window starts with it: empty where it was estimated. */
+private fun ownMacro(entry: DiaryEntry, macro: String, grams: Double?): String =
+    if (entry.kind != "meal" || macro in entry.estimatedMacros) "" else ofServing(entry, grams, 1)
 
 /** The amount a picked product starts with: a serving by its label, where it gives one a diary takes. */
 internal fun firstAmount(product: Product): String =

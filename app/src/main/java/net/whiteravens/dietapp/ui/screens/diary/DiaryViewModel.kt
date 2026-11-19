@@ -569,7 +569,7 @@ class DiaryViewModel @Inject constructor(
         if (!edit.changed) return closeWindow()
         _state.update { it.copy(sending = true, showProblems = true, refused = emptyMap(), windowError = null, failed = null, copied = null, resizeLeft = null) }
         viewModelScope.launch {
-            attempt { diary.change(profileId, edit.entry.id, edit.newSlot, edit.newServings, edit.newQuantity) }
+            attempt { diary.change(profileId, edit.entry.id, edit.newSlot, edit.newServings, edit.newQuantity, edit.newName, edit.newNutrition) }
                 .onSuccess { submitted ->
                     _state.update { it.copy(sending = false, edit = null, showProblems = false, offline = it.offline || (submitted as? Submitted.Kept)?.offline == true) }
                     if (submitted is Submitted.Sent) read(showLoading = false)

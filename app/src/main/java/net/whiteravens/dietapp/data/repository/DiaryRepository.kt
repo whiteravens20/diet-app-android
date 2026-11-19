@@ -13,6 +13,7 @@ import net.whiteravens.dietapp.data.remote.CreateDiaryEntryRequest
 import net.whiteravens.dietapp.data.remote.DiaryAmountRequest
 import net.whiteravens.dietapp.data.remote.DiaryDayDto
 import net.whiteravens.dietapp.data.remote.DiaryEntryDto
+import net.whiteravens.dietapp.data.remote.DiaryMealNutritionChangeDto
 import net.whiteravens.dietapp.data.remote.DiaryMealNutritionDto
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.IngredientDto
@@ -121,14 +122,27 @@ class DiaryRepository @Inject constructor(
     suspend fun send(change: QueuedChange.DiaryAdded): DiaryEntry = apiCall(json) { api.addDiaryEntry(change.key, change.toRequest()) }.toDomain()
 
     /** Changes the entry [id] of [profileId]'s diary: the entry as the API keeps it now, or kept to be sent in its turn. */
-    suspend fun change(profileId: String, id: String, slot: String?, servings: Double?, quantity: Double?): Submitted<DiaryEntry> {
-        val queued = QueuedChange.DiaryChanged(profileId, id, slot, servings, quantity)
+    suspend fun change(
+        profileId: String,
+        id: String,
+        slot: String?,
+        servings: Double?,
+        quantity: Double?,
+        name: String? = null,
+        nutrition: DiaryMealNutritionChangeDto? = null,
+    ): Submitted<DiaryEntry> {
+        val queued = QueuedChange.DiaryChanged(profileId, id, slot, servings, quantity, name, nutrition)
         return queue.submit(queued) { send(queued) }
     }
 
     /** Sends an entry's change; answers it as the API keeps it now. */
     suspend fun send(change: QueuedChange.DiaryChanged): DiaryEntry =
-        apiCall(json) { api.changeDiaryEntry(change.id, UpdateDiaryEntryRequest(change.slot, change.servings, change.quantity)) }.toDomain()
+        apiCall(json) {
+            api.changeDiaryEntry(
+                change.id,
+                UpdateDiaryEntryRequest(change.slot, change.servings, change.quantity, name = change.name, nutrition = change.nutrition),
+            )
+        }.toDomain()
 
     /**
      * Moves the entry [id] of a product to [productId], a product of the reader's own, as when they
@@ -243,6 +257,7 @@ internal fun DiaryEntryDto.toDomain() = DiaryEntry(
     estimated = estimated,
     productSource = productSource?.let(::productSourceOf),
     productCode = productCode,
+    estimatedMacros = estimatedMacros,
 )
 
 private fun productSourceOf(source: String) = when (source) {

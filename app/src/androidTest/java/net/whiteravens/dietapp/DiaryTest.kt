@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isOn
@@ -267,6 +268,35 @@ class DiaryTest {
         screen.waitForTheApi { Instance.firstMealEaten(account, planId) }
         screen.waitUntil(20_000) { screen.onAllNodes(eaten and isOn()).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("diary-a-meal-of-the-plan-eaten")
+    }
+
+    @Test
+    fun aMealOfOnesOwnIsChangedByItsNameAndFiguresAMacronutrientLeftEmptyEstimated() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        // Written by its energy alone: its macronutrients are estimated.
+        Instance.writeInTheDiary(account, profileId, "Soup", 300)
+        screen.startSignedIn(account)
+        openTheDiary()
+
+        screen.onNodeWithContentDescription(text(R.string.diary_edit_label, "Soup")).performScrollTo().performClick()
+        screen.waitForText(text(R.string.diary_edit_title))
+        val calories = hasText(text(R.string.diary_calories)) and hasSetTextAction()
+        val protein = hasText(text(R.string.diary_protein)) and hasSetTextAction()
+        screen.onNode(calories).assert(hasText("300", substring = true))
+        screen.keepScreenshot("diary-changing-a-meal-of-ones-own")
+
+        screen.onNode(hasText(text(R.string.diary_meal_name)) and hasSetTextAction()).performScrollTo().performTextReplacement("Soup with bread")
+        screen.onNode(calories).performScrollTo().performTextReplacement("450")
+        screen.onNode(protein).performScrollTo().performTextReplacement("20")
+        screen.putKeyboardAway()
+        screen.onNode(inTheWindow(text(R.string.common_save))).performClick()
+
+        // The protein given is kept; fat and carbohydrate are estimated from what it leaves of the energy.
+        screen.waitForTheApi {
+            Instance.diaryFigures(account, profileId) == listOf(Triple("Soup with bread", 450 to 20, listOf("fat", "carbs")))
+        }
+        screen.waitForText(shown("Soup with bread"))
     }
 
     @Test

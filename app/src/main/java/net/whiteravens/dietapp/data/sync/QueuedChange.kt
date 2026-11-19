@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.data.sync
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import net.whiteravens.dietapp.data.remote.DiaryMealNutritionChangeDto
 
 /**
  * A change the application makes without a network as well, which then waits for one before the
@@ -186,7 +187,10 @@ sealed interface QueuedChange {
         override val key: String,
     ) : Addition
 
-    /** An entry of a diary changed: the meal it is under, and how much of it there was, where they are given. */
+    /**
+     * An entry of a diary changed: the meal it is under, and how much of it there was, where they are given;
+     * of a meal of one's own also its name and the figures of a serving.
+     */
     @Serializable
     @SerialName("diary-changed")
     data class DiaryChanged(
@@ -195,6 +199,8 @@ sealed interface QueuedChange {
         val slot: String? = null,
         val servings: Double? = null,
         val quantity: Double? = null,
+        val name: String? = null,
+        val nutrition: DiaryMealNutritionChangeDto? = null,
     ) : QueuedChange
 
     /** An entry taken out of a diary. */
