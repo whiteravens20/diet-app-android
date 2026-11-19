@@ -24,6 +24,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
@@ -203,19 +204,27 @@ class ShoppingTest {
         screen.onNodeWithText(text(R.string.common_save)).performScrollTo().performClick()
         screen.waitForTheApi(20_000) { Instance.shoppingRowAtHome(account, planId, other, language) == 1.0 }
 
-        // The entries are found by a part of the name: the rows shown are those whose name holds it.
-        list.performScrollToNode(hasText(text(R.string.shopping_find_entry)))
-        screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextInput(other)
+        // The entries are found by a part of the name, in the field behind the magnifier of the list's heading: the
+        // rows shown are those whose name holds it.
+        val magnifier = hasContentDescription(text(R.string.shopping_find_entry))
+        val field = hasText(text(R.string.shopping_find_entry)) and hasSetTextAction()
+        list.performScrollToNode(magnifier)
+        screen.onNode(magnifier).performClick()
+        screen.onNode(field).performTextInput(other)
         screen.putKeyboardAway()
-        // Under the field and its note, below the screen's edge at a large font.
+        // Under the field, below the screen's edge at a large font.
         screen.scrollTo(hasText(other) and isToggleable())
         screen.waitUntil(20_000) {
             val shown = screen.onAllNodes(isToggleable()).fetchSemanticsNodes()
             shown.isNotEmpty() && shown.all { node -> node.config[SemanticsProperties.Text].any { other.lowercase() in it.text.lowercase() } }
         }
         screen.onNode(hasText(other) and isToggleable()).assertExists()
-        screen.onNodeWithText(text(R.string.shopping_find_entry)).performTextReplacement("")
-        screen.putKeyboardAway()
+        screen.keepScreenshot("shopping-an-entry-looked-for")
+        // The magnifier closes the field, and the whole list is there again.
+        list.performScrollToNode(magnifier)
+        screen.onNode(magnifier).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(field).fetchSemanticsNodes().isEmpty() }
+        screen.waitUntil(20_000) { runCatching { list.performScrollToNode(hasText(shown(name)) and isToggleable()) }.isSuccess }
 
         // What the list could do without is what the API finds for it, and each leads to the plan.
         val proposals = Instance.listProposals(account, Instance.shoppingListIds(account, planId).first())

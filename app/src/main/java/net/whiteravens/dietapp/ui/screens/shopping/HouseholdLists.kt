@@ -40,6 +40,10 @@ import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import kotlin.math.roundToInt
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 
 /*
  * The household lists of the shopping screen, as the web's section shows them: one list from the
@@ -167,7 +171,8 @@ internal fun LazyListScope.householdList(
     }
     if (list.groups.any { group -> group.items.any { it.packsStand } }) {
         item(key = "household-packs") {
-            Text(stringResource(R.string.household_packs_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            var open by rememberSaveable { mutableStateOf(false) }
+            HowItWorks(stringResource(R.string.household_packs_hint), open) { open = it }
         }
     }
     list.groups.forEach { group ->

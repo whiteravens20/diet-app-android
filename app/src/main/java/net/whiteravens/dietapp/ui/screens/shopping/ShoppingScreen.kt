@@ -95,6 +95,14 @@ import java.time.LocalDate
 import java.util.Locale
 import kotlin.math.roundToInt
 import net.whiteravens.dietapp.ui.components.OutlinedField
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 
 /**
  * The shopping lists of a plan: made for the whole plan or for some of its days, grouped by aisle,
@@ -134,8 +142,13 @@ fun ShoppingScreen(
     var choosingDays by rememberSaveable { mutableStateOf(false) }
     // The list to delete, while that waits for a yes.
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
-    // What somebody in a shop is looking for on the list: the entries whose name holds the words.
+    // What somebody in a shop is looking for on the list: the entries whose name holds the words. The field opens behind
+    // the magnifier of the list's heading, and stays while it holds words: a list is never cut down by a field not shown.
     var find by rememberSaveable { mutableStateOf("") }
+    var findOpen by rememberSaveable { mutableStateOf(false) }
+    val findShown = findOpen || find.isNotEmpty()
+    // What pressing the packs does, said under "How it works" once that is opened.
+    var packsHow by rememberSaveable { mutableStateOf(false) }
     // The list taken out of the app as a text to send; as a table or on paper it is the web application's, opened in the browser.
     val context = LocalContext.current
     val chooser = stringResource(R.string.shopping_share_text)
@@ -265,14 +278,6 @@ fun ShoppingScreen(
                     }
                 }
             }
-            // A list for some of the plan's days; the whole plan's is made where it has none.
-            if (state.plan != null && !state.offline && state.lists.isNotEmpty()) {
-                item {
-                    TextButton(onClick = { choosingDays = true }, enabled = !busy) {
-                        Text(stringResource(if (state.generating) R.string.shopping_generating else R.string.shopping_generate_title))
-                    }
-                }
-            }
 
             // What could not be read is read again on asking; what could not be done is done again by its own control.
             state.readError?.let { error ->
@@ -345,10 +350,32 @@ fun ShoppingScreen(
                         val words = listWords(list)
                         ListHeader(
                             list,
+                            findShown = findShown,
+                            onFind = { open ->
+                                // Closed, it gives the whole list back.
+                                if (!open) find = ""
+                                findOpen = open
+                            },
                             onShare = { shareText(context, words.title, listText(list, words), chooser) },
                             onTableAndPrint = { web.open("shopping-lists") },
                             onDelete = { deleting = list.id }.takeUnless { state.offline || busy },
                         )
+                    }
+                    if (findShown) {
+                        item(key = "find") {
+                            val field = remember { FocusRequester() }
+                            // Opened by the magnifier to be typed in.
+                            LaunchedEffect(Unit) { if (findOpen) runCatching { field.requestFocus() } }
+                            OutlinedField(
+                                value = find,
+                                onValueChange = { find = it },
+                                label = { Text(stringResource(R.string.shopping_find_entry)) },
+                                placeholder = { Text(stringResource(R.string.shopping_find_entry_placeholder)) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                modifier = Modifier.fillMaxWidth().focusRequester(field),
+                            )
+                        }
                     }
                     // A part of a household list says so, with the way to the whole list.
                     list.household?.let { part ->
@@ -384,34 +411,9 @@ fun ShoppingScreen(
                             }
                         }
                     }
-                    item(key = "proposals") {
-                        ListProposalsPanel(
-                            found = state.shownProposals,
-                            asking = state.askingProposals,
-                            aiOn = state.aiOn,
-                            enabled = !state.offline && !busy,
-                            listFrom = list.fromDate,
-                            onAsk = viewModel::findProposals,
-                            onOpenPlanAt = { day -> onOpenPlan(list.planId, day) },
-                            onTurnAiOn = onTurnAiOn,
-                        )
-                    }
-                    item(key = "find") {
-                        OutlinedField(
-                            value = find,
-                            onValueChange = { find = it },
-                            label = { Text(stringResource(R.string.shopping_find_entry)) },
-                            placeholder = { Text(stringResource(R.string.shopping_find_entry_placeholder)) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
                     val everyItem = list.groups.flatMap { it.items }
                     if (everyItem.any { it.packsStand }) {
-                        item(key = "packs") {
-                            Text(stringResource(R.string.shopping_packs_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        item(key = "packs") { HowItWorks(stringResource(R.string.shopping_packs_hint), packsHow) { packsHow = it } }
                     }
                     val wanted = find.trim().lowercase()
                     val groups = if (wanted.isEmpty()) list.groups
@@ -449,15 +451,72 @@ fun ShoppingScreen(
                             }
                         }
                     }
+                    // Asked of the list once its rows are read: what it could do without, and the model's word on it.
+                    item(key = "proposals") {
+                        ListProposalsPanel(
+                            found = state.shownProposals,
+                            asking = state.askingProposals,
+                            aiOn = state.aiOn,
+                            enabled = !state.offline && !busy,
+                            listFrom = list.fromDate,
+                            onAsk = viewModel::findProposals,
+                            onOpenPlanAt = { day -> onOpenPlan(list.planId, day) },
+                            onTurnAiOn = onTurnAiOn,
+                        )
+                    }
+                    // A list for some of the plan's days, under the rows: the rows are what the screen is for.
+                    if (state.plan != null && !state.offline) {
+                        item(key = "generate") {
+                            TextButton(onClick = { choosingDays = true }, enabled = !busy) {
+                                Text(stringResource(if (state.generating) R.string.shopping_generating else R.string.shopping_generate_title))
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-/** A list's days and how far it is ticked off, with what can be done with the list behind one button. */
+/** A line that opens to say [what]: how something on the screen works, for whoever asks. */
 @Composable
-private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onTableAndPrint: () -> Unit, onDelete: (() -> Unit)?) {
+internal fun HowItWorks(what: String, open: Boolean, onOpen: (Boolean) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .clickable(role = Role.Button) { onOpen(!open) }
+                .semantics { if (open) collapse { onOpen(false); true } else expand { onOpen(true); true } },
+        ) {
+            Text(
+                stringResource(R.string.shopping_how_it_works),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Icon(
+                if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (open) Text(what, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/**
+ * A list's days and how far it is ticked off, on one line with the magnifier that opens the field to look for an entry
+ * with, [findShown] while it is open, and what can be done with the list behind one button.
+ */
+@Composable
+private fun ListHeader(
+    list: ShoppingList,
+    findShown: Boolean,
+    onFind: (Boolean) -> Unit,
+    onShare: () -> Unit,
+    onTableAndPrint: () -> Unit,
+    onDelete: (() -> Unit)?,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(formatDates(list.fromDate, list.toDate), style = MaterialTheme.typography.titleMedium)
@@ -466,6 +525,13 @@ private fun ListHeader(list: ShoppingList, onShare: () -> Unit, onTableAndPrint:
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        // It opens and closes the field as a fold is opened and closed.
+        IconButton(
+            onClick = { onFind(!findShown) },
+            modifier = Modifier.semantics { if (findShown) collapse { onFind(false); true } else expand { onFind(true); true } },
+        ) {
+            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.shopping_find_entry))
         }
         ListActions(onShare, onTableAndPrint, onDelete)
     }
