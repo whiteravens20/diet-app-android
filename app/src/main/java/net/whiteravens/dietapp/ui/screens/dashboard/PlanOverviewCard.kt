@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.screens.dashboard
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -29,7 +32,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
@@ -130,25 +135,51 @@ private fun Overview(overview: PlanOverview, onOpen: () -> Unit) {
         Triple(R.string.macro_fat, overview.macros.fat, overview.macrosTarget.fat),
         Triple(R.string.macro_carbs, overview.macros.carbs, overview.macrosTarget.carbs),
     ).forEach { (name, planned, target) ->
+        // On a diet whose carbohydrate is a ceiling, carbohydrate reads as the diet's band, its target as the ceiling.
+        val floor = overview.macrosTarget.carbsFloor.takeIf { name == R.string.macro_carbs }
+        val share = if (target <= 0.0) 0f else (planned / target).toFloat().coerceIn(0f, 1f)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row {
                 Text(stringResource(name), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Text(
-                    stringResource(R.string.overview_macro_value, formatNumber(planned.roundToInt()), formatNumber(target.roundToInt())),
+                    when {
+                        floor == null -> stringResource(R.string.overview_macro_value, formatNumber(planned.roundToInt()), formatNumber(target.roundToInt()))
+                        floor > 0 -> stringResource(R.string.overview_macro_band, formatNumber(planned.roundToInt()), formatNumber(floor.roundToInt()), formatNumber(target.roundToInt()))
+                        else -> stringResource(R.string.overview_macro_ceiling, formatNumber(planned.roundToInt()), formatNumber(target.roundToInt()))
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            // The bar is full at the target; what the plan holds beyond it does not make it longer.
-            LinearProgressIndicator(
-                progress = { if (target <= 0.0) 0f else (planned / target).toFloat().coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // The bar is full at the target, or at the ceiling with the band drawn under it; what the plan holds beyond it does
+            // not make it longer.
+            if (floor == null) {
+                LinearProgressIndicator(progress = { share }, modifier = Modifier.fillMaxWidth())
+            } else {
+                BandBar(share = share, from = if (target <= 0.0) 0f else (floor / target).toFloat().coerceIn(0f, 1f))
+            }
         }
     }
 
     Text(stringResource(R.string.overview_days), style = MaterialTheme.typography.titleSmall)
     DaysChart(overview.days)
+}
+
+/** A bar full at a ceiling, [share] of it filled, with the band of a diet from [from] of it up to the ceiling drawn under the fill. */
+@Composable
+private fun BandBar(share: Float, from: Float) {
+    val shape = RoundedCornerShape(50)
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(4.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .semantics { progressBarRangeInfo = ProgressBarRangeInfo(share, 0f..1f) },
+    ) {
+        Box(Modifier.fillMaxWidth(1f - from).fillMaxHeight().align(Alignment.CenterEnd).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)))
+        Box(Modifier.fillMaxWidth(share).fillMaxHeight().clip(shape).background(MaterialTheme.colorScheme.primary))
+    }
 }
 
 /** A figure of the card: what it is, what it comes to, and how to read it. */

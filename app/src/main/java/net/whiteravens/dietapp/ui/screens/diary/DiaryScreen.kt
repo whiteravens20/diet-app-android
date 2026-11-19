@@ -60,6 +60,8 @@ import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
 import net.whiteravens.dietapp.domain.MOST_DIARY_ENTRIES
 import net.whiteravens.dietapp.domain.ProductSource
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
+import net.whiteravens.dietapp.ui.common.carbsAim
+import net.whiteravens.dietapp.ui.common.carbsAgainst
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
@@ -360,8 +362,7 @@ internal fun EatenAgainstTarget(day: DiaryDay, leftOut: Int) {
                 formatNumber(day.target.protein.roundToInt()),
                 formatNumber(day.eaten.fat.roundToInt()),
                 formatNumber(day.target.fat.roundToInt()),
-                formatNumber(day.eaten.carbs.roundToInt()),
-                formatNumber(day.target.carbs.roundToInt()),
+                carbsAgainst(day.eaten.carbs, day.target.carbs, day.target.carbsFloor),
             ),
         )
         day.eatenLabel?.let { label ->

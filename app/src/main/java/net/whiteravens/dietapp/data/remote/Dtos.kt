@@ -417,9 +417,13 @@ data class AiTestConnectionResponseDto(val ok: Boolean, val models: List<String>
 
 // ── Nutrition (packages/shared/src/nutrition.ts) ────────────────────────────
 
-/** Macronutrient triple, grams. */
+/**
+ * Macronutrient triple, grams. On what a day aims at on a diet whose carbohydrate is a ceiling (low-carb,
+ * keto), [carbsFloor] is the least the diet holds a day to and [carbs] the ceiling; fat is then what
+ * protein and the day's carbohydrate leave. Null elsewhere.
+ */
 @Serializable
-data class MacrosDto(val protein: Double, val fat: Double, val carbs: Double)
+data class MacrosDto(val protein: Double, val fat: Double, val carbs: Double, val carbsFloor: Double? = null)
 
 /** What a plan holds and what it aims at. */
 @Serializable
@@ -463,13 +467,14 @@ data class PlanOverviewDto(
 @Serializable
 data class PlanOverviewAnswerDto(val overview: PlanOverviewDto? = null)
 
-/** Full nutrition snapshot — calories plus macros. */
+/** Full nutrition snapshot — calories plus macros; [carbsFloor] as [MacrosDto] has it, on what a week aims at. */
 @Serializable
 data class NutritionDto(
     val calories: Double,
     val protein: Double,
     val fat: Double,
     val carbs: Double,
+    val carbsFloor: Double? = null,
 )
 
 /** Result of the deterministic calorie engine — rendered, never recomputed here. */
@@ -2531,6 +2536,8 @@ data class DiaryTargetDto(
     val fat: Double,
     val carbs: Double,
     val from: String,
+    /** As [MacrosDto] has it. */
+    val carbsFloor: Double? = null,
 )
 
 /** A meal of the plan that holds the day, as the diary shows it. */

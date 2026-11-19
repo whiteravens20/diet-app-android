@@ -201,7 +201,7 @@ private fun QueuedChange.DiaryAdded.toRequest(): CreateDiaryEntryRequest = when 
 private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
     profileId = profileId,
     date = date,
-    target = Nutrition(target.calories, target.protein, target.fat, target.carbs),
+    target = Nutrition(target.calories, target.protein, target.fat, target.carbs, target.carbsFloor),
     targetFromPlan = target.from == "plan",
     plan = plan?.let { plan ->
         DiaryDayPlan(

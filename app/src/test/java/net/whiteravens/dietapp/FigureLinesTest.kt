@@ -75,13 +75,28 @@ class FigureLinesTest {
     @Test
     fun `the average day of a plan breaks only after a dot, while its opening words may break`() {
         val polish = texts("values-pl")
+        val english = texts("values")
         assertEquals(
             listOf("Dzień", "tego", "planu", "ma", "średnio:", "białko 136 z 134 g ·", "tłuszcz 82 z 71 g ·", "węglowodany 250 z 249 g."),
-            pieces(polish.getValue("plans_plan_macros").format("136", "134", "82", "71", "250", "249")),
+            pieces(polish.getValue("plans_plan_macros").format("136", "134", "82", "71", polish.getValue("macros_carbs_of").format("250", "249"))),
         )
         assertEquals(
             listOf("Protein 136 of 134 g ·", "fat 82 of 71 g ·", "carbs 250 of 249 g"),
-            pieces(texts("values").getValue("plans_day_macros_of").format("136", "134", "82", "71", "250", "249")),
+            pieces(english.getValue("plans_day_macros_of").format("136", "134", "82", "71", english.getValue("macros_carbs_of").format("250", "249"))),
+        )
+    }
+
+    @Test
+    fun `a day's carbohydrate on low-carb or keto, said as the diet's band, breaks nowhere inside it`() {
+        val polish = texts("values-pl")
+        val english = texts("values")
+        assertEquals(
+            listOf("Białko 156 z 163 g ·", "tłuszcz 152 z 142 g ·", "węglowodany 59 g, w normie 54–108 g"),
+            pieces(polish.getValue("diary_eaten_macros").format("156", "163", "152", "142", polish.getValue("macros_carbs_band").format("59", "54", "108"))),
+        )
+        assertEquals(
+            listOf("Protein 156 of 163 g ·", "fat 152 of 142 g ·", "carbs 20 g, at most 27 g"),
+            pieces(english.getValue("plans_day_macros_of").format("156", "163", "152", "142", english.getValue("macros_carbs_ceiling").format("20", "27"))),
         )
     }
 

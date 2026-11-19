@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.WeekSummary
+import net.whiteravens.dietapp.ui.common.carbsAgainst
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDates
@@ -104,8 +105,7 @@ private fun WeekLines(week: WeekSummary, unit: WeightUnit) {
                 target.protein.roundToInt(),
                 eaten.fat.roundToInt(),
                 target.fat.roundToInt(),
-                eaten.carbs.roundToInt(),
-                target.carbs.roundToInt(),
+                carbsAgainst(eaten.carbs, target.carbs, target.carbsFloor),
             ),
             style = MaterialTheme.typography.bodySmall,
             color = muted,

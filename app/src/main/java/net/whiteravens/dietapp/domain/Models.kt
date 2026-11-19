@@ -326,10 +326,16 @@ data class Nutrition(
     val protein: Double,
     val fat: Double,
     val carbs: Double,
+    /** On what a day aims at, as [Macros] has it. */
+    val carbsFloor: Double? = null,
 )
 
-/** Grams of protein, fat and carbohydrate: what a plan or a day aims at under its diet's split. */
-data class Macros(val protein: Double, val fat: Double, val carbs: Double)
+/**
+ * Grams of protein, fat and carbohydrate: what a plan or a day aims at under its diet's split. On a
+ * diet whose carbohydrate is a ceiling (low-carb, keto) [carbsFloor] is the least the diet holds a day
+ * to and [carbs] the ceiling, and fat is what protein and the day's carbohydrate leave; null elsewhere.
+ */
+data class Macros(val protein: Double, val fat: Double, val carbs: Double, val carbsFloor: Double? = null)
 
 /** What a model had to do with a meal: it chose the meal's recipe (and may have said why), or it wrote or changed the recipe. */
 sealed interface ModelPart {

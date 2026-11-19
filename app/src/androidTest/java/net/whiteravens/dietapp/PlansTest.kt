@@ -637,7 +637,7 @@ class PlansTest {
         screen.onNode(dayCell(planned)).performScrollTo().performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(planned.toString())) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
         // The chip is chosen before the day is drawn: the picture waits for the day's line of macronutrients.
-        screen.waitForText(text(R.string.plans_day_macros_of, *Array(6) { "#" }).substringBefore("#"), substring = true)
+        screen.waitForText(text(R.string.plans_day_macros_of, *Array(5) { "#" }).substringBefore("#"), substring = true)
         screen.keepScreenshot("plans-a-plan-at-its-day")
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
 

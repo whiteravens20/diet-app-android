@@ -39,6 +39,7 @@ import net.whiteravens.dietapp.domain.MealFate
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanWeek
+import net.whiteravens.dietapp.ui.common.carbsTarget
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatList
@@ -221,7 +222,7 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: Plan
                 R.string.plans_settings_target_macros,
                 formatNumber(preview.macrosThen.protein.roundToInt()),
                 formatNumber(preview.macrosThen.fat.roundToInt()),
-                formatNumber(preview.macrosThen.carbs.roundToInt()),
+                carbsTarget(preview.macrosThen.carbs, preview.macrosThen.carbsFloor),
             ),
         )
         if (preview.belowSafetyFloor) Note(stringResource(R.string.plans_settings_below_floor), MaterialTheme.colorScheme.error)

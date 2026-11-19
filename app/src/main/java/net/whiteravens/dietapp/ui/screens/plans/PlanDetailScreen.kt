@@ -111,6 +111,7 @@ import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
+import net.whiteravens.dietapp.ui.common.carbsAgainst
 import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
@@ -774,8 +775,7 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp:
                     formatNumber(target.protein.roundToInt()),
                     formatNumber(average.fat.roundToInt()),
                     formatNumber(target.fat.roundToInt()),
-                    formatNumber(average.carbs.roundToInt()),
-                    formatNumber(target.carbs.roundToInt()),
+                    carbsAgainst(average.carbs, target.carbs, target.carbsFloor),
                 ),
             )
             plan.averageOff?.let { off ->
@@ -1009,8 +1009,7 @@ private fun DaySummary(
                 formatNumber(day.targetMacros.protein.roundToInt()),
                 formatNumber(day.nutrition.fat.roundToInt()),
                 formatNumber(day.targetMacros.fat.roundToInt()),
-                formatNumber(day.nutrition.carbs.roundToInt()),
-                formatNumber(day.targetMacros.carbs.roundToInt()),
+                carbsAgainst(day.nutrition.carbs, day.targetMacros.carbs, day.targetMacros.carbsFloor),
             ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1703,8 +1702,7 @@ private fun SwapOfferDialog(
                             formatNumber(target.protein.roundToInt()),
                             formatNumber(offer.dayAfter.fat.roundToInt()),
                             formatNumber(target.fat.roundToInt()),
-                            formatNumber(offer.dayAfter.carbs.roundToInt()),
-                            formatNumber(target.carbs.roundToInt()),
+                            carbsAgainst(offer.dayAfter.carbs, target.carbs, target.carbsFloor),
                         ),
                     )
                 }

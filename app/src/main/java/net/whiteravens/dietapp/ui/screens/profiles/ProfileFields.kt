@@ -69,6 +69,7 @@ import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.LabelLimit
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.notes
+import net.whiteravens.dietapp.ui.common.carbsTarget
 import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.activityLevelLabel
 import net.whiteravens.dietapp.ui.common.allergenLabel
@@ -862,7 +863,7 @@ internal fun CaloriePreviewCard(
                             R.string.calorie_preview_macros,
                             formatNumber(c.targetMacros.protein, 3),
                             formatNumber(c.targetMacros.fat, 3),
-                            formatNumber(c.targetMacros.carbs, 3),
+                            carbsTarget(c.targetMacros.carbs, c.targetMacros.carbsFloor),
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )

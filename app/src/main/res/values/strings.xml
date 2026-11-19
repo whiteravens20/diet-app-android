@@ -132,6 +132,8 @@
     <string name="overview_shopping_none_hint">The plan has no shopping list yet.</string>
     <string name="overview_macros">What a day holds, against what it aims at</string>
     <string name="overview_macro_value">%1$s of %2$s g</string>
+    <string name="overview_macro_band">%1$s g, in range %2$s–%3$s g</string>
+    <string name="overview_macro_ceiling">%1$s g, at most %2$s g</string>
     <string name="overview_days">Day by day</string>
     <string name="overview_series_planned">Planned</string>
     <string name="overview_series_target">Target</string>
@@ -258,7 +260,7 @@
         <item quantity="other">%1$d-day plan · %2$s</item>
     </plurals>
     <string name="plans_plan_meta">From %1$s · %2$s kcal/day avg · %3$s%% ingredient reuse</string>
-    <string name="plans_plan_macros">A day of this plan holds on average: protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g.</string>
+    <string name="plans_plan_macros">A day of this plan holds on average: protein %1$s of %2$s g · fat %3$s of %4$s g · %5$s.</string>
     <string name="plans_may_give_way">This plan may go outside: %1$s.</string>
     <string name="plans_pantry_counted">The pantry counted in the choice of recipes.</string>
     <string name="plans_pantry_left_out">The pantry was left out of this plan for variety: the plans before it leaned on it.</string>
@@ -270,7 +272,7 @@
         <item quantity="other">%1$d meals of this plan hold something the profile has ruled out since the plan was made. Each is marked below: swap it, or make the plan again.</item>
     </plurals>
     <string name="plans_calorie_line">%1$s / %2$s kcal %3$s</string>
-    <string name="plans_day_macros_of">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
+    <string name="plans_day_macros_of">Protein %1$s of %2$s g · fat %3$s of %4$s g · %5$s</string>
     <string name="plans_custom_chip">Custom</string>
     <string name="plans_custom_meal">Custom meal</string>
     <string name="plans_custom_macros_note">Custom meal — macros entered by you.</string>
@@ -1410,7 +1412,7 @@
     <string name="calorie_preview_held">The goal to lose weight is on hold until its risk is acknowledged in the form, so the target is your maintenance.</string>
     <string name="calorie_preview_under">%1$s kcal a day under your maintenance.</string>
     <string name="calorie_preview_over">%1$s kcal a day over your maintenance.</string>
-    <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · carbohydrate %3$s g a day.</string>
+    <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · %3$s a day.</string>
     <string name="calorie_preview_said">Daily target: %1$s kcal.</string>
     <string name="calorie_preview_not_advice">An approximation for a healthy adult, not medical advice. More in the %1$s.</string>
     <string name="calorie_preview_terms">terms</string>
@@ -1612,7 +1614,7 @@
     <string name="plans_settings_skip_note">The day is skipped: only the meals eaten stay, and the day counts neither as a shortfall nor in the plan\'s averages.</string>
     <string name="plans_settings_target_same">The day\'s target stays at %1$s kcal.</string>
     <string name="plans_settings_target_change">The day\'s target: %1$s → %2$s kcal.</string>
-    <string name="plans_settings_target_macros">It aims at protein %1$s g, fat %2$s g, carbohydrate %3$s g.</string>
+    <string name="plans_settings_target_macros">It aims at protein %1$s g, fat %2$s g, %3$s.</string>
     <string name="plans_settings_below_floor">This target is under the lowest a calculated plan goes.</string>
     <string name="plans_settings_added">Added: %1$s.</string>
     <string name="plans_settings_drawn_note">The recipes of the new meals are chosen when this is saved, inside the plan\'s limits; the portions of the others adjust to the day\'s target.</string>
@@ -1773,7 +1775,17 @@
     <string name="diary_add_to">Add an entry to %1$s</string>
     <string name="diary_eaten_title">Eaten</string>
     <string name="diary_eaten_line">%1$s of %2$s kcal</string>
-    <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · carbs %5$s of %6$s g</string>
+    <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · %5$s</string>
+    <string name="macros_carbs_of">carbs %1$s of %2$s g</string>
+    <string name="macros_carbs_band">carbs %1$s g, in range %2$s–%3$s g</string>
+    <string name="macros_carbs_ceiling">carbs %1$s g, at most %2$s g</string>
+    <string name="macros_carbs_target">carbohydrate %1$s g</string>
+    <string name="macros_carbs_target_band">carbohydrate %1$s–%2$s g</string>
+    <string name="macros_carbs_target_ceiling">carbohydrate at most %1$s g</string>
+    <string name="diary_of_target">of %1$s g</string>
+    <string name="diary_in_band">in range %1$s–%2$s g</string>
+    <string name="diary_in_band_ceiling">at most %1$s g</string>
+    <string name="water_chart_later">The week’s chart shows from the second day with water.</string>
     <string name="diary_target_from_plan">The target is that of the plan\'s day.</string>
     <string name="diary_target_from_profile">No plan holds this day: the target is the profile\'s own.</string>
     <string name="diary_target_from_skipped">The plan skips this day: the target is the profile\'s own.</string>
@@ -2242,7 +2254,7 @@
     <string name="week_title_of">A week in sum</string>
     <string name="week_eaten">On average %1$d\u00A0of %2$d\u00A0kcal a day</string>
     <string name="week_nothing">Nothing was written on these days.</string>
-    <string name="week_macros">Protein %1$d of %2$d g · fat %3$d of %4$d g · carbs %5$d of %6$d g</string>
+    <string name="week_macros">Protein %1$d of %2$d g · fat %3$d of %4$d g · %5$s</string>
     <string name="week_trend">Weight: %1$s a week.</string>
     <string name="week_water_no_target">Water: %1$s a day on average.</string>
     <string name="week_trend_none">The weight\'s trend shows after at least 3\u00A0weighings within 14\u00A0days.</string>

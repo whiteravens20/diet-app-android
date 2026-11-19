@@ -131,6 +131,7 @@ fun NutritionDto.toDomain() = Nutrition(
     protein = protein,
     fat = fat,
     carbs = carbs,
+    carbsFloor = carbsFloor,
 )
 
 fun CalorieCalculationDto.toDomain() = CalorieTarget(
@@ -308,7 +309,7 @@ fun CookingChangeDto.toDomain() = CookingChange(
     stays = stays.map { MealPlace(it.date, it.mealType) },
 )
 
-fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs)
+fun MacrosDto.toDomain() = Macros(protein = protein, fat = fat, carbs = carbs, carbsFloor = carbsFloor)
 
 /** A planned amount as a meal shows it: rounded, in the unit its kind of food is counted in. */
 fun PlannedIngredientDto.toLine() =
