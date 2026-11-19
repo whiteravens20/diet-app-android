@@ -8,7 +8,10 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.remote.NotificationDto
 import net.whiteravens.dietapp.data.repository.NotificationRepository
@@ -24,6 +27,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The phone shows each of the account's unread notifications once, known by its id and the time it
@@ -90,6 +94,44 @@ class NewNotificationsTest {
 
         coEvery { notifications.unread() } throws IOException("no network")
         assertTrue(runCatching { fresh.read() }.isFailure)
+
+        coEvery { notifications.unread() } returns unread
+        assertEquals(emptyList<Any>(), fresh.read())
+    }
+
+    @Test
+    fun `two runs of the work at the same moment give each notification once between them`() = runBlocking {
+        coEvery { notifications.unread() } coAnswers {
+            delay(200)
+            unread
+        }
+        val fresh = NewNotifications(notifications, store)
+
+        val given = listOf(async(Dispatchers.IO) { fresh.read() }, async(Dispatchers.IO) { fresh.read() }).awaitAll().flatten()
+
+        assertEquals(unread.sortedBy { it.id }, given.sortedBy { it.id })
+    }
+
+    @Test
+    fun `an older answer that comes last does not take back what a newer one kept`() = runBlocking {
+        val answered = AtomicInteger()
+        coEvery { notifications.unread() } coAnswers {
+            // The first run's answer, from before the newest notification was made, comes after the second run's.
+            if (answered.getAndIncrement() == 0) {
+                delay(300)
+                unread.drop(1)
+            } else {
+                unread
+            }
+        }
+        val fresh = NewNotifications(notifications, store)
+        listOf(
+            async(Dispatchers.IO) { fresh.read() },
+            async(Dispatchers.IO) {
+                delay(50)
+                fresh.read()
+            },
+        ).awaitAll()
 
         coEvery { notifications.unread() } returns unread
         assertEquals(emptyList<Any>(), fresh.read())

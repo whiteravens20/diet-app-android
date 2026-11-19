@@ -44,8 +44,9 @@ import java.util.UUID
 /**
  * The account's notifications on the phone, against the instance the CI starts: it makes an account
  * whose two profiles, Ala and Ola, have two notifications each, and names it in the arguments
- * `phoneEmail` and `phonePassword`. The background work is run by WorkManager's test builder, the
- * way Android would run it once its period came; the read on coming to the front, by WorkManager.
+ * `phoneEmail` and `phonePassword`. Turning them on has WorkManager run the background work at once;
+ * the test runs it again with WorkManager's test builder, the way Android would once its period came.
+ * The read on coming to the front is WorkManager's.
  */
 @RunWith(AndroidJUnit4::class)
 class PhoneNotificationsTest {
@@ -95,11 +96,14 @@ class PhoneNotificationsTest {
         screen.waitUntil(10_000) { scheduled() }
         screen.keepScreenshot("account-phone-notifications-on")
 
-        // A run of the work shows the account's four notifications, each with its profile.
+        // The account's four notifications are shown, each with its profile, by whichever of the two runs
+        // read them first: the other finds them shown already.
         runTheWork()
         val reminder = text(R.string.notifications_weight_first)
         val review = text(R.string.notifications_preferences_review)
-        assertEquals(listOf("Ala" to reminder, "Ala" to review, "Ola" to reminder, "Ola" to review).sortedBy { it.toString() }, shown())
+        val four = listOf("Ala" to reminder, "Ala" to review, "Ola" to reminder, "Ola" to review).sortedBy { it.toString() }
+        runCatching { screen.waitUntil(10_000) { shown() == four } }
+        assertEquals(four, shown())
 
         // Each is shown once: put away, the next run does not show them again.
         context.getSystemService(NotificationManager::class.java).cancelAll()
