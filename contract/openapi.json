@@ -2681,7 +2681,7 @@
           "ai"
         ],
         "summary": "Verify a provider credential without persisting it.",
-        "description": "Verify a provider credential without persisting it. The UI calls this from the BYOK form to confirm the key works and populate the model dropdown.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "description": "Verify a provider credential without persisting it. The UI calls this from the BYOK form to confirm the key works and populate the model dropdown. A key left out is the one the account saved for the provider, as when a saved configuration is changed: it goes to the provider's own address alone, and Ollama, whose address the request names, is asked with none.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -8696,7 +8696,7 @@
           "recipes"
         ],
         "summary": "Put a recipe of one's own before the curators, as a candidate for the library everyone shares.",
-        "description": "Put a recipe of one's own before the curators, as a candidate for the library everyone shares. They see what the recipe says and is made of, not who sent it. Repeating the request changes nothing. A recipe made by swapping an ingredient stays its owner's (409).\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
+        "description": "Put a recipe of one's own before the curators, as a candidate for the library everyone shares. They see what the recipe says and is made of, not who sent it. Repeating the request changes nothing. A recipe made by swapping an ingredient stays its owner's (409). Refused (403) from an account whose e-mail address is not confirmed, and while five drafts with the account's recipes in them wait for the curators.\n\nAsked by an account.\n\nLimited to 10 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -12171,6 +12171,12 @@
           "all_providers_failed",
           "data_policy_refused",
           "instance_data_policy_refused",
+          "key_refused",
+          "no_credits",
+          "request_refused",
+          "instance_provider_refused",
+          "no_retention_busy",
+          "provider_busy",
           "provider_timeout",
           "key_unreadable",
           "invalid_output"
@@ -12261,7 +12267,7 @@
             "type": "number"
           },
           "targetMacros": {
-            "$ref": "#/components/schemas/Macros"
+            "$ref": "#/components/schemas/TargetMacros"
           },
           "cooking": {
             "$ref": "#/components/schemas/CookingChange"
@@ -12629,6 +12635,9 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "dataPolicy": {
+            "$ref": "#/components/schemas/AiDataPolicy"
           }
         },
         "required": [
@@ -12652,12 +12661,26 @@
               "string",
               "null"
             ]
+          },
+          "noRetentionProviders": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "ok",
           "models",
-          "error"
+          "error",
+          "noRetentionProviders"
         ],
         "additionalProperties": false
       },
@@ -13083,7 +13106,7 @@
             "type": "number"
           },
           "targetMacros": {
-            "$ref": "#/components/schemas/Macros"
+            "$ref": "#/components/schemas/TargetMacros"
           },
           "source": {
             "type": "string",
@@ -14115,10 +14138,10 @@
             "type": "object",
             "properties": {
               "now": {
-                "$ref": "#/components/schemas/Macros"
+                "$ref": "#/components/schemas/TargetMacros"
               },
               "then": {
-                "$ref": "#/components/schemas/Macros"
+                "$ref": "#/components/schemas/TargetMacros"
               }
             },
             "required": [
@@ -14535,6 +14558,17 @@
                   "plan",
                   "profile"
                 ]
+              },
+              "carbsFloor": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -14542,7 +14576,8 @@
               "fat",
               "carbs",
               "calories",
-              "from"
+              "from",
+              "carbsFloor"
             ],
             "additionalProperties": false
           },
@@ -14762,6 +14797,13 @@
           "estimated": {
             "type": "boolean"
           },
+          "estimatedMacros": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EstimatedMacro"
+            }
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -14785,6 +14827,7 @@
           "label",
           "labelAtLeast",
           "estimated",
+          "estimatedMacros",
           "createdAt"
         ],
         "additionalProperties": false
@@ -15148,6 +15191,14 @@
           "APPROVED",
           "REJECTED",
           "SHIPPED"
+        ]
+      },
+      "EstimatedMacro": {
+        "type": "string",
+        "enum": [
+          "protein",
+          "fat",
+          "carbs"
         ]
       },
       "EvenWeekRequest": {
@@ -18017,7 +18068,7 @@
             "$ref": "#/components/schemas/Nutrition"
           },
           "targetMacros": {
-            "$ref": "#/components/schemas/Macros"
+            "$ref": "#/components/schemas/TargetMacros"
           },
           "averageOff": {
             "type": "object",
@@ -18201,7 +18252,7 @@
             "type": "number"
           },
           "targetMacros": {
-            "$ref": "#/components/schemas/Macros"
+            "$ref": "#/components/schemas/TargetMacros"
           },
           "calorieDelta": {
             "type": "number"
@@ -18478,7 +18529,7 @@
             "type": "number"
           },
           "targetMacros": {
-            "$ref": "#/components/schemas/Macros"
+            "$ref": "#/components/schemas/TargetMacros"
           },
           "cooking": {
             "$ref": "#/components/schemas/CookingChange"
@@ -20014,7 +20065,7 @@
                 "$ref": "#/components/schemas/Macros"
               },
               "target": {
-                "$ref": "#/components/schemas/Macros"
+                "$ref": "#/components/schemas/TargetMacros"
               }
             },
             "required": [
@@ -26025,6 +26076,41 @@
           "pl"
         ]
       },
+      "TargetMacros": {
+        "type": "object",
+        "properties": {
+          "protein": {
+            "type": "number",
+            "minimum": 0
+          },
+          "fat": {
+            "type": "number",
+            "minimum": 0
+          },
+          "carbs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "carbsFloor": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "protein",
+          "fat",
+          "carbs",
+          "carbsFloor"
+        ],
+        "additionalProperties": false
+      },
       "Theme": {
         "type": "string",
         "enum": [
@@ -26096,6 +26182,60 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 5000
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "nutrition": {
+            "type": "object",
+            "properties": {
+              "calories": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5000
+              },
+              "protein": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fat": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "carbs": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "calories"
+            ]
           },
           "productId": {
             "type": "string",
@@ -26614,7 +26754,44 @@
           "target": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Nutrition"
+                "type": "object",
+                "properties": {
+                  "protein": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "fat": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "carbs": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "calories": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "carbsFloor": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "protein",
+                  "fat",
+                  "carbs",
+                  "calories",
+                  "carbsFloor"
+                ],
+                "additionalProperties": false
               },
               {
                 "type": "null"
