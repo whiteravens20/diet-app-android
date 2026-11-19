@@ -165,7 +165,14 @@ internal fun WaterCardContent(
                     if (state.lastWaits) WaitingMark()
                 }
             }
-            shown?.let { WaterChart(it) }
+            // A chart of a week with water on fewer than two days tells nothing: a line stands in its place.
+            shown?.let { day ->
+                if (day.days.count { it.ml > 0 } >= 2) {
+                    WaterChart(day)
+                } else {
+                    Text(stringResource(R.string.water_chart_later), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             if (noteShown) TurnOffNote(onClose = onCloseNote, onOpenProfile = onOpenProfile)
         }
     }
