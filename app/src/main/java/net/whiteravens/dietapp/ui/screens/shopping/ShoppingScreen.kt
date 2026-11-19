@@ -147,6 +147,8 @@ fun ShoppingScreen(
     var find by rememberSaveable { mutableStateOf("") }
     var findOpen by rememberSaveable { mutableStateOf(false) }
     val findShown = findOpen || find.isNotEmpty()
+    // The field takes the focus when the magnifier opens it, and not again when the screen is shown anew.
+    var focusFind by remember { mutableStateOf(false) }
     // What pressing the packs does, said under "How it works" once that is opened.
     var packsHow by rememberSaveable { mutableStateOf(false) }
     // The list taken out of the app as a text to send; as a table or on paper it is the web application's, opened in the browser.
@@ -355,6 +357,7 @@ fun ShoppingScreen(
                                 // Closed, it gives the whole list back.
                                 if (!open) find = ""
                                 findOpen = open
+                                focusFind = open
                             },
                             onShare = { shareText(context, words.title, listText(list, words), chooser) },
                             onTableAndPrint = { web.open("shopping-lists") },
@@ -365,7 +368,12 @@ fun ShoppingScreen(
                         item(key = "find") {
                             val field = remember { FocusRequester() }
                             // Opened by the magnifier to be typed in.
-                            LaunchedEffect(Unit) { if (findOpen) runCatching { field.requestFocus() } }
+                            LaunchedEffect(focusFind) {
+                                if (focusFind) {
+                                    runCatching { field.requestFocus() }
+                                    focusFind = false
+                                }
+                            }
                             OutlinedField(
                                 value = find,
                                 onValueChange = { find = it },
