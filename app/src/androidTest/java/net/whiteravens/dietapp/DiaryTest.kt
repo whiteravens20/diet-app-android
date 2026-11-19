@@ -108,8 +108,11 @@ class DiaryTest {
         screen.startSignedIn(account)
         openTheDiary()
 
-        // The last seven days, of a new profile with nothing written, and no week after them.
-        screen.scrollToText(text(R.string.week_title))
+        // The last seven days, folded to one line under the day's entries; opened, of a new profile with nothing
+        // written, and no week after them.
+        val week = hasText(text(R.string.week_title)) and hasClickAction()
+        screen.scrollTo(week)
+        screen.onNode(week).performClick()
         screen.scrollToText(text(R.string.week_nothing))
         val next = hasText(text(R.string.week_next)) and hasClickAction()
         screen.scrollTo(next)
@@ -307,15 +310,19 @@ class DiaryTest {
         screen.startSignedIn(account)
         openTheDiary()
 
-        screen.scrollToText(text(R.string.diary_copy_title))
+        // Beside the date: a window, the day before already picked.
+        screen.onNode(hasText(text(R.string.diary_copy_title)) and hasClickAction()).performClick()
         val (before, after) = text(R.string.diary_copy_button, "\u0000").split("\u0000")
         val button = hasClickAction() and hasText(before, substring = true) and hasText(after, substring = true)
-        screen.onNode(button).performScrollTo().performClick()
+        screen.waitUntil(10_000) { screen.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        screen.keepScreenshot("diary-the-copying-window")
+        screen.onNode(button).performClick()
 
         screen.waitForTheApi { Instance.diaryEntries(account, profileId) == listOf("Yesterday's stew") }
+        // The window goes once the copy is made, and the day says what came, under its date.
+        screen.waitUntil(10_000) { screen.onAllNodes(button).fetchSemanticsNodes().isEmpty() }
         screen.scrollToText(plural(R.plurals.diary_copied, 1, 1))
         screen.keepScreenshot("diary-a-day-copied")
-        screen.scrollToText(text(R.string.diary_copy_done))
     }
 
     @Test

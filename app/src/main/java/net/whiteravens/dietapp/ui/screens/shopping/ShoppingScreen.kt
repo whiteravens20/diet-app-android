@@ -76,6 +76,7 @@ import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.HowItWorks
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
@@ -489,31 +490,6 @@ fun ShoppingScreen(
     }
 }
 
-/** A line that opens to say [what]: how something on the screen works, for whoever asks. */
-@Composable
-internal fun HowItWorks(what: String, open: Boolean, onOpen: (Boolean) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clickable(role = Role.Button) { onOpen(!open) }
-                .semantics { if (open) collapse { onOpen(false); true } else expand { onOpen(true); true } },
-        ) {
-            Text(
-                stringResource(R.string.shopping_how_it_works),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Icon(
-                if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (open) Text(what, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
 
 /**
  * A list's days and how far it is ticked off, on one line with the magnifier that opens the field to look for an entry

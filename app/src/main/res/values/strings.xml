@@ -886,7 +886,7 @@
     <string name="shopping_find_entry_placeholder">Name of an ingredient…</string>
     <string name="shopping_find_entry_none">No entry of this list has “%1$s” in its name.</string>
     <string name="shopping_packs_hint">Where something is sold in packs, its row says how many it takes. Press that when you have bought them: what the plan does not need of them goes into the pantry.</string>
-    <string name="shopping_how_it_works">How it works</string>
+    <string name="common_how_it_works">How it works</string>
     <string name="shopping_at_home">at home</string>
     <string name="shopping_bought">bought</string>
     <string name="shopping_of_total">(of %1$s)</string>
@@ -1855,7 +1855,6 @@
     <string name="diary_copy_button">Copy into %1$s</string>
     <string name="diary_copied_nothing">That day holds nothing to copy.</string>
     <string name="diary_copy_same_day">Pick a day other than this one.</string>
-    <string name="diary_copy_done">That day is copied already.</string>
     <string name="diary_pick_recipe_first">Find and pick a recipe first.</string>
     <string name="diary_pick_ingredient_first">Find and pick an ingredient first.</string>
     <string name="diary_offline">Offline — as of %1$s; entries can be written, changed and removed and meals marked, copying a day and resizing its meals need a connection</string>

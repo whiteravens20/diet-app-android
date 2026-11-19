@@ -961,7 +961,7 @@
     <string name="shopping_find_entry_placeholder">Nazwa składnika…</string>
     <string name="shopping_find_entry_none">Żadna pozycja tej listy nie ma „%1$s” w nazwie.</string>
     <string name="shopping_packs_hint">Przy tym, co sprzedaje się w opakowaniach, wiersz podaje, ile ich trzeba. Po zakupie naciśnij tę liczbę: to, czego plan z nich nie potrzebuje, trafi do spiżarni.</string>
-    <string name="shopping_how_it_works">Jak to działa</string>
+    <string name="common_how_it_works">Jak to działa</string>
     <string name="shopping_at_home">w domu</string>
     <string name="shopping_bought">kupione</string>
     <string name="shopping_of_total">(z %1$s)</string>
@@ -1993,7 +1993,6 @@
     <string name="diary_copy_button">Skopiuj na %1$s</string>
     <string name="diary_copied_nothing">Tamten dzień nie ma nic do skopiowania.</string>
     <string name="diary_copy_same_day">Wybierz inny dzień niż ten.</string>
-    <string name="diary_copy_done">Ten dzień jest już skopiowany.</string>
     <string name="diary_pick_recipe_first">Najpierw znajdź i wybierz przepis.</string>
     <string name="diary_pick_ingredient_first">Najpierw znajdź i wybierz składnik.</string>
     <string name="diary_offline">Offline — stan z %1$s; wpisy można dodawać, zmieniać i usuwać, a posiłki oznaczać, kopiowanie dnia i dopasowanie porcji wymagają połączenia</string>

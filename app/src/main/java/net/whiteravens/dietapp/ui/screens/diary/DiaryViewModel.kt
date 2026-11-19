@@ -139,6 +139,8 @@ class DiaryViewModel @Inject constructor(
         val copying: Boolean = false,
         /** What the last copy into this day came to, while the page stays on it. */
         val copied: Copied? = null,
+        /** The window that copies another day into this one is open: it closes once the copy is made. */
+        val copyOpen: Boolean = false,
     ) {
         val today: LocalDate get() = LocalDate.now()
 
@@ -326,7 +328,7 @@ class DiaryViewModel @Inject constructor(
     /** Goes to [date], one a request may name; what was said of the day before goes. */
     fun pickDay(date: LocalDate) {
         if (_state.value.date == date || date < FIRST_DIARY_DAY || date > LAST_DIARY_DAY) return
-        _state.update { it.left().copy(date = date, day = null, copyFrom = date.minusDays(1).coerceAtLeast(FIRST_DIARY_DAY), copied = null) }
+        _state.update { it.left().copy(date = date, day = null, copyFrom = date.minusDays(1).coerceAtLeast(FIRST_DIARY_DAY), copied = null, copyOpen = false) }
         read()
     }
 
@@ -776,6 +778,12 @@ class DiaryViewModel @Inject constructor(
     fun chooseCopyFrom(day: LocalDate) = _state.update { it.copy(copyFrom = day) }
 
     /** Copies what was eaten on the chosen day into the day shown; what came here is not copied again by a second press. */
+    /** Opens the window that copies another day into the one shown. */
+    fun openCopy() = _state.update { it.copy(copyOpen = true, copied = null, failed = null) }
+
+    /** Closes it, nothing copied. */
+    fun closeCopy() = _state.update { it.copy(copyOpen = false) }
+
     fun copy() {
         val current = _state.value
         val profileId = current.profileId ?: return
@@ -785,7 +793,9 @@ class DiaryViewModel @Inject constructor(
         viewModelScope.launch {
             attempt { diary.copy(profileId, from, current.date) }
                 .onSuccess { copied ->
-                    _state.update { it.copy(copying = false, day = copied.day, copied = Copied(from, copied.copied), readAt = System.currentTimeMillis(), offline = false) }
+                    _state.update {
+                        it.copy(copying = false, copyOpen = false, day = copied.day, copied = Copied(from, copied.copied), readAt = System.currentTimeMillis(), offline = false)
+                    }
                 }
                 .onFailure { e -> _state.update { it.copy(copying = false, failed = Failure.COPY to e) } }
         }

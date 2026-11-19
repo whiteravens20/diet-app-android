@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -59,9 +60,9 @@ import net.whiteravens.dietapp.domain.FIRST_DIARY_DAY
 import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
 import net.whiteravens.dietapp.domain.MOST_DIARY_ENTRIES
 import net.whiteravens.dietapp.domain.ProductSource
-import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.carbsAim
 import net.whiteravens.dietapp.ui.common.carbsAgainst
+import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
@@ -75,6 +76,7 @@ import net.whiteravens.dietapp.ui.components.LabelNotes
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.HowItWorks
 import net.whiteravens.dietapp.ui.components.LabelChip
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
@@ -93,6 +95,10 @@ import net.whiteravens.dietapp.ui.components.WeekSummaryCard
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextAlign
 
 /**
  * The diary, as the web's page keeps it: of a profile and a day, what was eaten against the day's
@@ -131,6 +137,7 @@ fun DiaryScreen(
         )
     }
     state.edit?.let { edit -> EditEntryDialog(edit, state, viewModel) }
+    if (state.copyOpen) CopyDay(state, onChoose = viewModel::chooseCopyFrom, onCopy = viewModel::copy, onClose = viewModel::closeCopy)
     // A correction of the product of the entry being changed, which the entry then goes on to.
     state.edit?.found?.takeIf { it.source != ProductSource.OWN }?.let { base ->
         OwnProductDialog(
@@ -196,7 +203,20 @@ fun DiaryScreen(
                                 }
                             }
                         }
-                        item(key = "day") { DayPicker(state.date, onPick = viewModel::pickDay) }
+                        item(key = "day") {
+                            // Copying another day here is a thing done to this day: beside its date.
+                            DayPicker(state.date, onPick = viewModel::pickDay, onCopy = viewModel::openCopy.takeIf { !state.ahead && !state.tooOld })
+                        }
+                        // What the last copy into this day came to, under its date, while the page stays on it.
+                        state.copied?.let { copied ->
+                            item(key = "copied") {
+                                Text(
+                                    if (copied.count == 0) stringResource(R.string.diary_copied_nothing) else pluralStringResource(R.plurals.diary_copied, copied.count, copied.count),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                                )
+                            }
+                        }
                         state.failed?.let { (what, error) ->
                             item {
                                 val lead = stringResource(
@@ -270,12 +290,6 @@ private fun LazyListScope.day(
             }
         }
     }
-    // The day's water, where the diary takes entries for it: not a day still to come, nor one over a year back.
-    val profileId = state.profileId
-    val tracksWater = state.profiles.firstOrNull { it.id == profileId }?.waterTracking != false
-    if (profileId != null && tracksWater && !state.ahead && !state.tooOld) {
-        item(key = "water") { WaterCard(profileId = profileId, day = state.date, onOpenProfile = { onEditProfile(profileId) }) }
-    }
     item(key = "add") {
         when {
             state.ahead -> Note(stringResource(R.string.diary_ahead_note))
@@ -305,20 +319,23 @@ private fun LazyListScope.day(
             onRemove = onRemove,
         )
     }
-    if (!state.ahead && !state.tooOld) {
-        item(key = "copy") {
-            CopyDay(state, onChoose = viewModel::chooseCopyFrom, onCopy = viewModel::copy)
-        }
+    // The day's water, after what was eaten, where the diary takes entries for it: not a day still to come, nor one
+    // over a year back.
+    val profileId = state.profileId
+    val tracksWater = state.profiles.firstOrNull { it.id == profileId }?.waterTracking != false
+    if (profileId != null && tracksWater && !state.ahead && !state.tooOld) {
+        item(key = "water") { WaterCard(profileId = profileId, day = state.date, onOpenProfile = { onEditProfile(profileId) }) }
     }
-    // The profile's weeks in sum, from the one before today back a week at a time; read again when the day shown changes.
+    // The profile's weeks in sum, from the one before today back a week at a time, folded to one line; read again when
+    // the day shown changes.
     if (profileId != null) {
-        item(key = "week") { WeekSummaryCard(profileId = profileId, weeks = true, changed = state.day) }
+        item(key = "week") { WeekSummaryCard(profileId = profileId, weeks = true, changed = state.day, folded = true) }
     }
 }
 
 /** The day shown, the days on either side of it, and today. */
 @Composable
-private fun DayPicker(date: LocalDate, onPick: (LocalDate) -> Unit) {
+private fun DayPicker(date: LocalDate, onPick: (LocalDate) -> Unit, onCopy: (() -> Unit)?) {
     val today = LocalDate.now()
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -338,6 +355,7 @@ private fun DayPicker(date: LocalDate, onPick: (LocalDate) -> Unit) {
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(formatDayDate(date.toString()), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f).padding(start = 12.dp))
+            onCopy?.let { copy -> TextButton(onClick = copy) { Text(stringResource(R.string.diary_copy_title)) } }
             TextButton(onClick = { onPick(today) }, enabled = date != today) { Text(stringResource(R.string.diary_today)) }
         }
     }
@@ -390,17 +408,7 @@ private fun DaySummary(
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(stringResource(R.string.diary_eaten_title), style = MaterialTheme.typography.titleMedium)
-            EatenAgainstTarget(day, state.leftOut)
-            Note(
-                stringResource(
-                    when {
-                        plan?.skipped == true -> R.string.diary_target_from_skipped
-                        day.targetFromPlan -> R.string.diary_target_from_plan
-                        else -> R.string.diary_target_from_profile
-                    },
-                ),
-            )
-            if (day.estimated) Note(stringResource(R.string.diary_estimated_note))
+            DayFigures(day, state.leftOut)
             if (plan != null) {
                 HorizontalDivider(Modifier.padding(vertical = 4.dp))
                 if (!plan.skipped) {
@@ -450,7 +458,62 @@ private fun DaySummary(
                 }
                 TextButton(onClick = { onOpenPlan(plan.id, day.date) }) { Text(stringResource(R.string.diary_open_plan)) }
             }
+            // Where the target comes from, what ≈ and the marks of the label mean: once, under the figures they explain.
+            var explained by rememberSaveable { mutableStateOf(false) }
+            HowItWorks(open = explained, onOpen = { explained = it }) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Note(
+                        stringResource(
+                            when {
+                                plan?.skipped == true -> R.string.diary_target_from_skipped
+                                day.targetFromPlan -> R.string.diary_target_from_plan
+                                else -> R.string.diary_target_from_profile
+                            },
+                        ),
+                    )
+                    if (day.estimated) Note(stringResource(R.string.diary_estimated_note))
+                    day.eatenLabel?.let { LabelLegend(it) }
+                }
+            }
         }
+    }
+}
+
+/**
+ * What was eaten of a day against its target: the energy in figures and as a bar, each macronutrient as a figure
+ * against what the day aims at, on low-carb and keto carbohydrate against the diet's band, the label's line and the
+ * limits it crosses, which hold the day's own figures, and how many changes that wait to be sent the figures leave out.
+ */
+@Composable
+private fun DayFigures(day: DiaryDay, leftOut: Int) {
+    val share = if (day.target.calories > 0) (day.eaten.calories / day.target.calories).coerceIn(0.0, 1.0).toFloat() else 0f
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        val line = stringResource(R.string.diary_eaten_line, formatNumber(day.eaten.calories.roundToInt()), formatNumber(day.target.calories.roundToInt()))
+        Text(if (day.estimated) "≈ $line" else line, style = MaterialTheme.typography.headlineSmall)
+        // The line above says it in figures.
+        LinearProgressIndicator(progress = { share }, modifier = Modifier.fillMaxWidth(), drawStopIndicator = {})
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                Triple(R.string.diary_protein, day.eaten.protein, stringResource(R.string.diary_of_target, formatNumber(day.target.protein.roundToInt()))),
+                Triple(R.string.diary_fat, day.eaten.fat, stringResource(R.string.diary_of_target, formatNumber(day.target.fat.roundToInt()))),
+                Triple(R.string.diary_carbs, day.eaten.carbs, carbsAim(day.target.carbs, day.target.carbsFloor)),
+            ).forEach { (name, grams, aim) ->
+                val named = stringResource(name)
+                val figure = "${formatNumber(grams.roundToInt())}\u00A0${stringResource(R.string.unit_g)}"
+                // Read as one: its name, what was eaten of it and what the day aims at.
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = "$named, $figure, $aim" },
+                ) {
+                    Text(figure, style = MaterialTheme.typography.titleMedium)
+                    Text(named, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(aim, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                }
+            }
+        }
+        day.eatenLabel?.let { LabelLine(it) }
+        LabelNotes(day.labelNotes)
+        if (leftOut > 0) Note(pluralStringResource(R.plurals.diary_sum_leaves_out, leftOut, leftOut))
     }
 }
 
@@ -582,38 +645,39 @@ private fun servingsLabel(servings: Double): String {
     }
 }
 
-/** Copy into the day shown what was eaten on another day before it or after it, up to today. */
+/**
+ * The window that copies into the day shown what was eaten on another day before it or after it, up to
+ * today. It closes once the copy is made, and the day says what came under its date.
+ */
 @Composable
-private fun CopyDay(state: DiaryViewModel.UiState, onChoose: (LocalDate) -> Unit, onCopy: () -> Unit) {
+private fun CopyDay(state: DiaryViewModel.UiState, onChoose: (LocalDate) -> Unit, onCopy: () -> Unit, onClose: () -> Unit) {
     val itself = state.copyFrom == state.date
-    // What came here is not copied again by a second press: a quick double press would write it twice.
-    val done = state.copied?.takeIf { it.count > 0 }?.from == state.copyFrom
-    AppCard {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.diary_copy_title), style = MaterialTheme.typography.titleMedium)
-            Note(stringResource(R.string.diary_copy_note))
-            DateField(
-                label = stringResource(R.string.diary_copy_from),
-                day = state.copyFrom,
-                onPick = onChoose,
-                modifier = Modifier.fillMaxWidth(),
-                years = FIRST_DIARY_DAY.year..state.today.year,
-                latest = state.today,
-            )
-            if (itself) Note(stringResource(R.string.diary_copy_same_day))
-            if (done) Note(stringResource(R.string.diary_copy_done))
-            OutlinedButton(onClick = onCopy, enabled = !state.copying && !itself && !done && !state.offline) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text(stringResource(R.string.diary_copy_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Note(stringResource(R.string.diary_copy_note))
+                DateField(
+                    label = stringResource(R.string.diary_copy_from),
+                    day = state.copyFrom,
+                    onPick = onChoose,
+                    modifier = Modifier.fillMaxWidth(),
+                    years = FIRST_DIARY_DAY.year..state.today.year,
+                    latest = state.today,
+                )
+                if (itself) Note(stringResource(R.string.diary_copy_same_day))
+                state.failed?.takeIf { it.first == DiaryViewModel.Failure.COPY }?.let { (_, e) -> ErrorBanner(errorMessage(e)) }
+            }
+        },
+        // Off while the copy is sent: a quick double press would write it twice.
+        confirmButton = {
+            TextButton(onClick = onCopy, enabled = !state.copying && !itself && !state.offline) {
                 Text(stringResource(R.string.diary_copy_button, formatDayDate(state.date.toString())))
             }
-            state.copied?.let { copied ->
-                Text(
-                    if (copied.count == 0) stringResource(R.string.diary_copied_nothing) else pluralStringResource(R.plurals.diary_copied, copied.count, copied.count),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
-            }
-        }
-    }
+        },
+        dismissButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.common_cancel)) } },
+    )
 }
 
 /** A small line of what there is to know, under what it is said of. */
