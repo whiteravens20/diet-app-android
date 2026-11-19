@@ -46,6 +46,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -432,13 +436,19 @@ private fun RecipeBody(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
+            // Every number as wide as the widest, in figures of one width, against its dot: the text of each step begins at
+            // the same place, the first's as well, whatever the typeface and its size.
+            val numbers = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum")
+            val measurer = rememberTextMeasurer()
+            val widest = with(LocalDensity.current) { measurer.measure("${recipe.steps.size}.", numbers).size.width.toDp() }
             recipe.steps.forEachIndexed { index, step ->
                 Row(Modifier.padding(vertical = 6.dp)) {
                     Text(
                         "${index + 1}.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = numbers,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(end = 10.dp),
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(end = 10.dp).width(widest),
                     )
                     Text(step, style = MaterialTheme.typography.bodyMedium)
                 }
