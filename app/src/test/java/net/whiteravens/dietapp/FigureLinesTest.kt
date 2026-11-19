@@ -39,8 +39,21 @@ class FigureLinesTest {
         .split(",")
         .map { if (it == "en") "values" else "values-$it" }
 
-    /** Where a narrow screen may break a text: its pieces between plain spaces, a held space shown as one. */
-    private fun pieces(text: String): List<String> = text.split(' ').map { it.replace('\u00A0', ' ') }
+    /**
+     * The pieces a narrow screen may break a line into: at a plain space, and after a dash with no word
+     * joiner after it, as between the two numbers of a range. A no-break space reads as the space it is,
+     * and a word joiner, written as `\u2060` or as itself, as nothing.
+     */
+    private fun pieces(text: String): List<String> =
+        text.replace("\\u2060", "\u2060").split(Regex(" |(?<=–)(?!\u2060)")).map { it.replace('\u00A0', ' ').replace("\u2060", "") }
+
+    @Test
+    fun `the two numbers of a range keep together after its dash, in every language the app ships`() {
+        for (folder in folders) {
+            val parted = texts(folder).filterValues { Regex("""(\$[sd]|\d)–(?!\\u2060|\u2060)(%|\d)""").containsMatchIn(it) }.keys.toList()
+            assertEquals(folder, emptyList<String>(), parted)
+        }
+    }
 
     @Test
     fun `no dot of a language the app ships starts a line`() {

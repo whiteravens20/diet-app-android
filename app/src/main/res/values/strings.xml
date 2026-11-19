@@ -132,7 +132,7 @@
     <string name="overview_shopping_none_hint">The plan has no shopping list yet.</string>
     <string name="overview_macros">What a day holds, against what it aims at</string>
     <string name="overview_macro_value">%1$s of %2$s g</string>
-    <string name="overview_macro_band">%1$s g, in range %2$s–%3$s g</string>
+    <string name="overview_macro_band">%1$s g, in range %2$s–\u2060%3$s g</string>
     <string name="overview_macro_ceiling">%1$s g, at most %2$s g</string>
     <string name="overview_days">Day by day</string>
     <string name="overview_series_planned">Planned</string>
@@ -1322,7 +1322,7 @@
     <string name="profile_split_grams_carbs">Carbohydrate (g)</string>
     <string name="profile_grams_shares">These grams come to %1$s\u00A0kcal: %2$d%% protein, %3$d%% fat, %4$d%% carbohydrate.</string>
     <string name="profile_grams_at_target">At a target of %1$s\u00A0kcal that is %2$s\u00A0g of protein, %3$s\u00A0g of fat and %4$s\u00A0g of carbohydrate.</string>
-    <string name="profile_split_out_of_limits">This split goes past the limits: protein %1$d–%2$d%%, fat %3$d–%4$d%%, carbohydrate %5$d–%6$d%%.</string>
+    <string name="profile_split_out_of_limits">This split goes past the limits: protein %1$d–\u2060%2$d%%, fat %3$d–\u2060%4$d%%, carbohydrate %5$d–\u2060%6$d%%.</string>
     <string name="profile_per_kg_protein">Protein (g per kg of body weight)</string>
     <string name="profile_per_kg_fat">Fat (%)</string>
     <string name="profile_per_kg_line">At your weight that is %1$s\u00A0g of protein, %2$d%% of a target of %3$s\u00A0kcal. Carbohydrate is the rest: %4$d%%.</string>
@@ -1792,13 +1792,13 @@
     <string name="diary_eaten_line">%1$s of %2$s kcal</string>
     <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · %5$s</string>
     <string name="macros_carbs_of">carbs %1$s of %2$s g</string>
-    <string name="macros_carbs_band">carbs %1$s g, in range %2$s–%3$s g</string>
+    <string name="macros_carbs_band">carbs %1$s g, in range %2$s–\u2060%3$s g</string>
     <string name="macros_carbs_ceiling">carbs %1$s g, at most %2$s g</string>
     <string name="macros_carbs_target">carbohydrate %1$s g</string>
-    <string name="macros_carbs_target_band">carbohydrate %1$s–%2$s g</string>
+    <string name="macros_carbs_target_band">carbohydrate %1$s–\u2060%2$s g</string>
     <string name="macros_carbs_target_ceiling">carbohydrate at most %1$s g</string>
     <string name="diary_of_target">of %1$s g</string>
-    <string name="diary_in_band">in range %1$s–%2$s g</string>
+    <string name="diary_in_band">in range %1$s–\u2060%2$s g</string>
     <string name="diary_in_band_ceiling">at most %1$s g</string>
     <string name="water_chart_later">The week’s chart shows from the second day with water.</string>
     <string name="diary_target_from_plan">The target is that of the plan\'s day.</string>
