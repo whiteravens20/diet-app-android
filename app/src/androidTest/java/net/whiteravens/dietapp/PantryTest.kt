@@ -161,7 +161,8 @@ class PantryTest {
         screen.waitForTheApi { Instance.frozenPackages(account, profileId)[eggId]?.map { it.first }?.sorted() == listOf(1.0, 1.0, 2.0, 2.0) }
         assertEquals(setOf(thirtyDaysOn), Instance.frozenPackages(account, profileId).getValue(eggId).map { it.second }.toSet())
 
-        // The milk's fresh row put into the freezer from the window its button opens, in three portions.
+        // The milk's fresh row put into the freezer from the window its button opens, in three portions of whole
+        // millilitres, the larger first.
         press(hasContentDescription(text(R.string.pantry_freeze_of, milk)))
         screen.onNode(hasText(text(R.string.pantry_portions)) and hasSetTextAction() and hasAnyAncestor(isDialog())).performTextReplacement("3")
         screen.putKeyboardAway()
@@ -169,7 +170,7 @@ class PantryTest {
         screen.onNode(hasText(text(R.string.pantry_freeze)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi { Instance.frozenPackages(account, profileId)[milkId]?.size == 3 }
         assertEquals(
-            listOf(333.333333 to thirtyDaysOn, 333.333333 to thirtyDaysOn, 333.333334 to thirtyDaysOn),
+            listOf(333.0 to thirtyDaysOn, 333.0 to thirtyDaysOn, 334.0 to thirtyDaysOn),
             Instance.frozenPackages(account, profileId).getValue(milkId).sortedBy { it.first },
         )
         screen.waitUntil(20_000) {

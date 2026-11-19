@@ -71,17 +71,12 @@ private const val PORTION_EPSILON = 1e-6
 private fun toMillionths(quantity: Double): Double = (quantity * 1e6).roundToLong() / 1e6
 
 /**
- * [quantity] of [unit] split into [portions] packages of the freezer, as the API splits it: what is counted in whole
- * pieces as evenly as they go, the larger parts first (6 in 4: 2, 2, 1, 1) and a part of a piece with the last; anything
- * else in equal parts, what rounding leaves with the last. Null where a part would hold less than one of the unit.
+ * [quantity] split into [portions] packages of the freezer, as the API splits it: whole grams, millilitres or pieces
+ * as evenly as they go, the larger parts first (500 g in 3: 167, 167 and 166; 6 pieces in 4: 2, 2, 1 and 1), and what
+ * is less than one of the unit with the last. Null where a part would hold less than one of the unit.
  */
-fun portionsOf(quantity: Double, unit: String, portions: Int): List<Double>? {
+fun portionsOf(quantity: Double, portions: Int): List<Double>? {
     if (portions <= 1) return listOf(quantity)
-    if (unit != "piece") {
-        val each = toMillionths(quantity / portions)
-        if (each < 1) return null
-        return List(portions) { at -> if (at == portions - 1) toMillionths(quantity - each * (portions - 1)) else each }
-    }
     val whole = floor(quantity + PORTION_EPSILON).toInt()
     if (whole < portions) return null
     val base = whole / portions

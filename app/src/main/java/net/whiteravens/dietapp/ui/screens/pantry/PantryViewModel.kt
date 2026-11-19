@@ -87,7 +87,7 @@ class PantryViewModel @Inject constructor(
         /** What each package holds, where the amount goes into them in at least one of its unit each; null where it does not. */
         val parts: List<Double>? get() {
             val count = portionCount ?: return null
-            return portionsOf(amount ?: return null, unit, count)
+            return portionsOf(amount ?: return null, count)
         }
     }
 
@@ -176,7 +176,7 @@ class PantryViewModel @Inject constructor(
         /** What each package of the row of the open window holds; null where a part would hold less than one of its unit. */
         val freezeParts: List<Double>? get() {
             val row = freezing ?: return null
-            return portionsOf(row.quantity, row.unit, freezeCount ?: return null)
+            return portionsOf(row.quantity, freezeCount ?: return null)
         }
     }
 
