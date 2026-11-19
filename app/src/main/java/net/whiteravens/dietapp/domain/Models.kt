@@ -152,8 +152,12 @@ data class ProviderSetup(
     val dataPolicy: String? = null,
 )
 
-/** How a provider answered a test: whether it did, the models it lists, and what it said where it did not. */
-data class ConnectionTest(val ok: Boolean, val models: List<String>, val error: String?)
+/**
+ * How a provider answered a test: whether it did, the models it lists, and what it said where it did not;
+ * and, for OpenRouter under the choice of no retention, the providers of the model that keep no data, by
+ * name, or null where that was not asked or could not be read.
+ */
+data class ConnectionTest(val ok: Boolean, val models: List<String>, val error: String?, val noRetentionProviders: List<String>? = null)
 
 data class Profile(
     val id: String,

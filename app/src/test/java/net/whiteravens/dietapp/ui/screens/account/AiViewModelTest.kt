@@ -261,6 +261,28 @@ class AiViewModelTest {
     }
 
     @Test
+    fun `a kept key is tested with none typed, under the choice made, and one that can no longer be read is asked for again`() = runTest {
+        val openRouter = AiProviderConfig("or-id", "openrouter", "openai/gpt-6-luna", 2, true, hasKey = true, keyUnreadable = false, baseUrl = null, dataPolicy = AiDataPolicies.NO_RETENTION)
+        val unreadable = AiProviderConfig("an-id", "anthropic", "claude-x", 3, true, hasKey = true, keyUnreadable = true, baseUrl = null)
+        val oneKeepsNothing = ConnectionTest(true, listOf("openai/gpt-6-luna"), null, listOf("Azure"))
+        coEvery { ai.providers() } returns listOf(openRouter, unreadable)
+        coEvery { ai.test(any()) } returns oneKeepsNothing
+        val model = AiViewModel(ai, users)
+
+        model.change(openRouter)
+        model.test()
+
+        coVerify { ai.test(ProviderSetup("openrouter", "openai/gpt-6-luna", null, null, 2, AiDataPolicies.NO_RETENTION)) }
+        assertEquals(listOf("Azure"), model.state.value.tested?.noRetentionProviders)
+
+        model.change(unreadable)
+        val form = model.state.value.form!!
+        assertFalse(form.keyKept)
+        assertFalse(form.testable)
+        assertNull(form.setup())
+    }
+
+    @Test
     fun `a provider added of a kind the account keeps a key for keeps that key too, and one of another kind asks for a key`() = runTest {
         coEvery { ai.providers() } returns listOf(openai)
         val model = AiViewModel(ai, users)

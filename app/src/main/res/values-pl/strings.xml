@@ -1137,6 +1137,13 @@
     <string name="account_ai_change">Zmień</string>
     <string name="account_ai_change_named">Zmień %1$s</string>
     <string name="account_ai_key_kept">Zostaw puste, by zachować zapisany klucz; wpisz nowy, by go wymienić.</string>
+    <string name="account_ai_no_retention_none">U\u00A0OpenRouter każdy dostawca tego modelu przechowuje dane: przy tym wyborze OpenRouter odrzuci każde zapytanie.</string>
+    <plurals name="account_ai_no_retention_providers">
+        <item quantity="one">U\u00A0OpenRouter danych nie przechowuje jeden dostawca tego modelu: %2$s. Gdy jest przeciążony, nie ma kto go zastąpić.</item>
+        <item quantity="few">U\u00A0OpenRouter danych nie przechowuje %1$d\u00A0dostawców tego modelu: %2$s.</item>
+        <item quantity="many">U\u00A0OpenRouter danych nie przechowuje %1$d\u00A0dostawców tego modelu: %2$s.</item>
+        <item quantity="other">U\u00A0OpenRouter danych nie przechowuje %1$d\u00A0dostawców tego modelu: %2$s.</item>
+    </plurals>
     <string name="account_ai_remove_confirm">Usunąć tę konfigurację dostawcy?</string>
     <string name="account_sign_out">Wyloguj się</string>
     <string name="account_password_current">Aktualne hasło</string>

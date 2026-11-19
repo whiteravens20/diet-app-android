@@ -1052,6 +1052,11 @@
     <string name="account_ai_change">Change</string>
     <string name="account_ai_change_named">Change %1$s</string>
     <string name="account_ai_key_kept">Leave it empty to keep the saved key; type a new one to replace it.</string>
+    <string name="account_ai_no_retention_none">On OpenRouter every provider of this model keeps the data: with this choice OpenRouter refuses every request.</string>
+    <plurals name="account_ai_no_retention_providers">
+        <item quantity="one">On OpenRouter one provider of this model keeps none of the data: %2$s. When it is overloaded, nothing stands in for it.</item>
+        <item quantity="other">On OpenRouter %1$d\u00A0providers of this model keep none of the data: %2$s.</item>
+    </plurals>
     <string name="account_ai_remove_confirm">Remove this provider configuration?</string>
     <string name="account_sign_out">Sign out</string>
     <string name="account_password_current">Current password</string>

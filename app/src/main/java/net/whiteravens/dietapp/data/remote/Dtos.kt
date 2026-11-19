@@ -407,7 +407,8 @@ data class AiProviderConfigRequest(
 
 /**
  * POST `/ai/test`: a provider's key, or an Ollama server's address, tried and not kept; a key left out
- * is the one the account saved for the provider. [model] for a provider that lists none.
+ * is the one the account saved for the provider. [model] for a provider that lists none; [dataPolicy]
+ * is OpenRouter's choice of endpoints, under which the answer names the model's providers that keep no data.
  */
 @Serializable
 data class AiTestConnectionRequest(
@@ -415,11 +416,21 @@ data class AiTestConnectionRequest(
     val apiKey: String? = null,
     val baseUrl: String? = null,
     val model: String? = null,
+    val dataPolicy: String? = null,
 )
 
-/** Whether the provider answered, the models it lists (none for Anthropic), and what it said where it did not. */
+/**
+ * Whether the provider answered, the models it lists (none for Anthropic), and what it said where it did
+ * not; and, for OpenRouter under the choice of no retention, the providers of the model that keep no data,
+ * null where that was not asked or could not be read.
+ */
 @Serializable
-data class AiTestConnectionResponseDto(val ok: Boolean, val models: List<String>, val error: String?)
+data class AiTestConnectionResponseDto(
+    val ok: Boolean,
+    val models: List<String>,
+    val error: String?,
+    val noRetentionProviders: List<String>? = null,
+)
 
 // ── Nutrition (packages/shared/src/nutrition.ts) ────────────────────────────
 

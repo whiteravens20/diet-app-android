@@ -47,8 +47,11 @@ class AiRepository @Inject constructor(
 
     /** Asks the provider of [setup] whether it answers to its key or at its address, and which models it has; nothing is kept. */
     suspend fun test(setup: ProviderSetup): ConnectionTest =
-        apiCall(json) { model.testAiConnection(AiTestConnectionRequest(setup.provider, setup.apiKey, setup.baseUrl, setup.model.ifEmpty { null })) }
-            .let { ConnectionTest(it.ok, it.models, it.error) }
+        apiCall(json) {
+            model.testAiConnection(
+                AiTestConnectionRequest(setup.provider, setup.apiKey, setup.baseUrl, setup.model.ifEmpty { null }, setup.dataPolicy),
+            )
+        }.let { ConnectionTest(it.ok, it.models, it.error, it.noRetentionProviders) }
 }
 
 private fun AiQuotaStatusDto.toDomain() = AiStatus(

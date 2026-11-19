@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -41,6 +42,7 @@ import net.whiteravens.dietapp.domain.AiDataPolicies
 import net.whiteravens.dietapp.domain.AiProviderConfig
 import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.components.AppCard
@@ -311,6 +313,18 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
                 style = MaterialTheme.typography.bodySmall,
                 color = if (tested.ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             )
+            // Under the choice of no retention: how many of the model's providers it leaves, as OpenRouter lists them.
+            tested.noRetentionProviders?.takeIf { form.openRouter && form.dataPolicy == AiDataPolicies.NO_RETENTION }?.let { names ->
+                Text(
+                    if (names.isEmpty()) {
+                        stringResource(R.string.account_ai_no_retention_none)
+                    } else {
+                        pluralStringResource(R.plurals.account_ai_no_retention_providers, names.size, names.size, formatList(names))
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (names.size < 2) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         (state.testError ?: state.saveError)?.let {
             Text(errorMessage(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
