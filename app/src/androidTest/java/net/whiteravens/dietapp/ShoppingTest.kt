@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsOn
@@ -126,17 +127,22 @@ class ShoppingTest {
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(shown(forWhom))) }.isSuccess }
         screen.keepScreenshot("shopping-a-household-list")
 
-        // A row ticked on it is ticked on the server.
+        // A row ticked on it is ticked on the server. The household list stands under the plan's list, whose part may
+        // hold the same row: the household's own says under its name what each profile needs of it.
         val name = Instance.householdRows(account, language).keys.first()
-        val row = hasText(shown(name)) and isToggleable()
+        val row = hasText(shown(name)) and isToggleable() and hasText("Ala", substring = true)
         list.performScrollToNode(row)
-        // The household list stands above the plan's list, whose part may hold the same row.
-        screen.onAllNodes(row)[0].performClick()
+        screen.onNode(row).performClick()
         screen.waitForTheApi(30_000) { Instance.householdRows(account, language)[name] == true }
 
         // Ala's plan's list says it is a part of the household list.
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(shown(text(R.string.shopping_part_of, joined("Ala", "Ola"))))) }.isSuccess }
         screen.keepScreenshot("shopping-a-part-of-a-household-list")
+
+        // Its button goes down to the household lists, under the plan's list.
+        screen.onNode(hasText(text(R.string.shopping_open_household)) and hasClickAction()).performClick()
+        screen.waitUntil(20_000) { runCatching { screen.onNode(hasText(text(R.string.household_title))).assertIsDisplayed() }.isSuccess }
+        screen.keepScreenshot("shopping-the-household-lists-from-a-part")
     }
 
     @Test

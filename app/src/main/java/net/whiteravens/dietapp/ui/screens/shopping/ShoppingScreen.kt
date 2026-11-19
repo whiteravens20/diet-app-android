@@ -103,12 +103,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.expand
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.lazy.LazyListState
 
 /**
  * The shopping lists of a plan: made for the whole plan or for some of its days, grouped by aisle,
  * ticked off while shopping; a list the plan's menu changed under is made again, and a list is
  * deleted from its menu. What a list could do without leads to the plan at the day it concerns,
- * which [onOpenPlan] opens. An account of two profiles or more has its household lists above them:
+ * which [onOpenPlan] opens. An account of two profiles or more has its household lists under them:
  * one list of a plan of each profile for some days, whose part a plan's list says it is.
  */
 @Composable
@@ -239,21 +241,6 @@ fun ShoppingScreen(
                     title = stringResource(R.string.nav_shopping),
                     subtitle = stringResource(R.string.shopping_subtitle),
                 )
-            }
-            // The household lists: one list from the plans of several profiles, the one opened under them.
-            if (state.profiles.size > 1) {
-                item(key = "household") { HouseholdCard(households, state.profiles, household) }
-                households.shown?.let { list ->
-                    householdList(
-                        list,
-                        households,
-                        onChange = household::change,
-                        onUpdate = { household.update(list) },
-                        onShare = { words -> shareText(context, words.title, householdText(list, words), chooser) },
-                        onTableAndPrint = { web.open("shopping-lists") },
-                        onDelete = { deletingHousehold = list.id }.takeUnless { households.offline || households.making || households.deleting },
-                    )
-                }
             }
             // The profiles to choose among, where there is more than one.
             if (state.profiles.size > 1) item {
@@ -393,7 +380,7 @@ fun ShoppingScreen(
                                 TextButton(
                                     onClick = {
                                         household.show(part.id)
-                                        scope.launch { rows.animateScrollToItem(HOUSEHOLD_CARD) }
+                                        scope.launch { rows.scrollToKey(HOUSEHOLD_CARD) }
                                     },
                                 ) { Text(stringResource(R.string.shopping_open_household)) }
                             }
@@ -480,6 +467,22 @@ fun ShoppingScreen(
                             }
                         }
                     }
+                }
+            }
+            // The household lists, under the plan's list: one list from the plans of several profiles, the one opened
+            // under them.
+            if (state.profiles.size > 1) {
+                item(key = HOUSEHOLD_CARD) { HouseholdCard(households, state.profiles, household) }
+                households.shown?.let { list ->
+                    householdList(
+                        list,
+                        households,
+                        onChange = household::change,
+                        onUpdate = { household.update(list) },
+                        onShare = { words -> shareText(context, words.title, householdText(list, words), chooser) },
+                        onTableAndPrint = { web.open("shopping-lists") },
+                        onDelete = { deletingHousehold = list.id }.takeUnless { households.offline || households.making || households.deleting },
+                    )
                 }
             }
         }
@@ -760,5 +763,23 @@ private fun AmountField(label: String, value: String, unit: String, enabled: Boo
 private fun fieldOf(amount: Double, locale: Locale): String =
     if (amount <= 0.0) "" else NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(amount)
 
-/** Where the household card stands among the screen's items: under the header. */
-private const val HOUSEHOLD_CARD = 1
+/** The key of the household card among the screen's items, under the plan's list. */
+private const val HOUSEHOLD_CARD = "household"
+
+/** How many screens down a list is looked through for an item before it is given up. */
+private const val SCREENS_LOOKED_THROUGH = 50
+
+/**
+ * Scrolls until the item of [key] is in sight and then to it: a lazy list knows where an item is only once it has laid
+ * it out, so it is looked for a screen at a time downwards.
+ */
+private suspend fun LazyListState.scrollToKey(key: Any) {
+    repeat(SCREENS_LOOKED_THROUGH) {
+        layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }?.let { found ->
+            animateScrollToItem(found.index)
+            return
+        }
+        if (!canScrollForward) return
+        scrollBy(layoutInfo.viewportSize.height.toFloat())
+    }
+}
