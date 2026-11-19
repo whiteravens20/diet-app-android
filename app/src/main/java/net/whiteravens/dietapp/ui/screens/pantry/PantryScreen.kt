@@ -89,6 +89,16 @@ import java.time.LocalDate
 import java.util.Locale
 import net.whiteravens.dietapp.ui.components.NameAndTrail
 import net.whiteravens.dietapp.ui.components.OutlinedField
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 
 /**
  * What a profile has at home, as the web's page keeps it: something of the catalogue put in, with
@@ -166,7 +176,8 @@ fun PantryScreen(
                                 }
                             }
                         }
-                        state.failed?.let { (what, error) ->
+                        // Something put in that did not go in is said in the window it was put in with.
+                        state.failed?.takeUnless { (what, _) -> what == PantryViewModel.Failure.ADD && state.addWindow }?.let { (what, error) ->
                             item {
                                 val lead = stringResource(
                                     when (what) {
@@ -179,7 +190,14 @@ fun PantryScreen(
                                 ErrorBanner("$lead ${errorMessage(error)}", Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                             }
                         }
-                        item { AddCard(state, viewModel) }
+                        // The rows first: what is put in is put in in a window over them.
+                        item {
+                            Button(onClick = viewModel::openAdd, enabled = state.profileId != null) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.pantry_add))
+                            }
+                        }
 
                         when {
                             state.loading -> items(2) { Skeleton(Modifier.fillMaxWidth().height(96.dp)) }
@@ -228,119 +246,162 @@ fun PantryScreen(
             RemovedBar(removal.row.name, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
+    if (state.addWindow) AddWindow(state, viewModel)
     if (state.freezing != null) FreezeDialog(state, viewModel)
 }
 
 /**
- * Something of the catalogue to put into the pantry: found by a part of its name, as many of it as
- * there are in a unit it can be kept in, the day it is best eaten before where it has one, and whether
- * it goes into the freezer, in how many portions there.
+ * The window something of the catalogue is put into the pantry in: found by a part of its name, as many of it as there
+ * are in a unit it can be kept in, the day it is best eaten before where it has one, and whether it goes into the
+ * freezer, in how many portions there. It stays open for the next until it is closed: once something went in, its
+ * fields are empty again, the search has the focus, and a line says what went in.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AddCard(state: PantryViewModel.UiState, viewModel: PantryViewModel) {
+private fun AddWindow(state: PantryViewModel.UiState, viewModel: PantryViewModel) {
     val form = state.form
     val picked = form.picked
     val enabled = !state.adding
-    AppCard {
-        Text(stringResource(R.string.pantry_add_title), style = MaterialTheme.typography.titleMedium)
-        Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (picked != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
+    val search = remember { FocusRequester() }
+    // The search has the focus when the window opens and once something went in: what is put in begins with what it is.
+    LaunchedEffect(state.lastAdded) { if (picked == null) runCatching { search.requestFocus() } }
+    // A window over the whole screen, as the diary's: the form is long, and an open keyboard leaves room for little of it.
+    ScreenDialog(viewModel::closeAdd) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.pantry_add_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = viewModel::closeAdd) { Text(stringResource(R.string.common_close)) }
+            }
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Read out as it comes: the focus is back in the search by then.
+                Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+                    state.lastAdded?.let { added ->
                         Text(
-                            stringResource(R.string.pantry_ingredient),
-                            style = MaterialTheme.typography.bodySmall,
+                            addedLine(added),
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(picked.name, style = MaterialTheme.typography.bodyLarge)
                     }
-                    TextButton(onClick = viewModel::unpick, enabled = enabled) { Text(stringResource(R.string.pantry_change_pick)) }
                 }
-            } else {
-                OutlinedField(
-                    value = form.search,
-                    onValueChange = viewModel::search,
-                    label = { Text(stringResource(R.string.pantry_ingredient)) },
-                    placeholder = { Text(stringResource(R.string.pantry_search_placeholder)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    singleLine = true,
-                    enabled = enabled,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (form.search.trim().length >= ProfilesViewModel.SEARCH_FROM) {
-                    val offered = state.offered
-                    if (offered.isNotEmpty()) {
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Column {
-                                offered.forEach { ingredient ->
-                                    Text(
-                                        ingredient.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable(enabled = enabled, role = Role.Button) { viewModel.pick(ingredient) }
-                                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                                    )
+                if (picked != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.pantry_ingredient),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(picked.name, style = MaterialTheme.typography.bodyLarge)
+                        }
+                        TextButton(onClick = viewModel::unpick, enabled = enabled) { Text(stringResource(R.string.pantry_change_pick)) }
+                    }
+                } else {
+                    OutlinedField(
+                        value = form.search,
+                        onValueChange = viewModel::search,
+                        label = { Text(stringResource(R.string.pantry_ingredient)) },
+                        placeholder = { Text(stringResource(R.string.pantry_search_placeholder)) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        singleLine = true,
+                        enabled = enabled,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth().focusRequester(search),
+                    )
+                    if (form.search.trim().length >= ProfilesViewModel.SEARCH_FROM) {
+                        val offered = state.offered
+                        if (offered.isNotEmpty()) {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Column {
+                                    offered.forEach { ingredient ->
+                                        Text(
+                                            ingredient.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable(enabled = enabled, role = Role.Button) { viewModel.pick(ingredient) }
+                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                        )
+                                    }
                                 }
                             }
+                        } else if (form.searched) {
+                            Text(
+                                stringResource(R.string.pickers_no_matches),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                    } else if (form.searched) {
-                        Text(
-                            stringResource(R.string.pickers_no_matches),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                AmountField(
-                    label = stringResource(R.string.pantry_quantity),
-                    value = form.quantity,
-                    unit = null,
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    AmountField(
+                        label = stringResource(R.string.pantry_quantity),
+                        value = form.quantity,
+                        unit = null,
+                        enabled = enabled,
+                        onValue = viewModel::typeQuantity,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // Only what the ingredient can be kept in: stock in any other unit would count as nothing.
+                    ChoiceField(
+                        label = stringResource(R.string.pantry_unit),
+                        options = picked?.units ?: listOf("g", "ml", "piece"),
+                        selected = form.unit,
+                        optionLabel = { unit -> unitName(if (unit == "piece") picked?.pieceName ?: unit else unit) },
+                        onSelect = viewModel::chooseUnit,
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                DayField(form.bestBefore, enabled, onDay = viewModel::chooseBestBefore)
+                CheckRow(
+                    stringResource(R.string.pantry_frozen_box),
+                    checked = form.frozen,
                     enabled = enabled,
-                    onValue = viewModel::typeQuantity,
-                    modifier = Modifier.weight(1f),
+                    onChange = { viewModel.freezeIt(it, LocalDate.now()) },
                 )
-                // Only what the ingredient can be kept in: stock in any other unit would count as nothing.
-                ChoiceField(
-                    label = stringResource(R.string.pantry_unit),
-                    options = picked?.units ?: listOf("g", "ml", "piece"),
-                    selected = form.unit,
-                    optionLabel = { unit -> unitName(if (unit == "piece") picked?.pieceName ?: unit else unit) },
-                    onSelect = viewModel::chooseUnit,
-                    enabled = enabled,
-                    modifier = Modifier.weight(1f),
-                )
+                if (form.frozen) {
+                    PortionsField(
+                        value = form.portions,
+                        count = form.portionCount,
+                        parts = form.parts,
+                        amountKnown = form.amount != null,
+                        unit = form.unit,
+                        shownUnit = if (form.unit == "piece") picked?.pieceName ?: "piece" else form.unit,
+                        enabled = enabled,
+                        onValue = viewModel::typePortions,
+                    )
+                }
+                state.failed?.takeIf { (what, _) -> what == PantryViewModel.Failure.ADD }?.let { (_, error) ->
+                    ErrorBanner(
+                        "${stringResource(R.string.pantry_err_add)} ${errorMessage(error)}",
+                        Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
             }
-            DayField(form.bestBefore, enabled, onDay = viewModel::chooseBestBefore)
-            CheckRow(
-                stringResource(R.string.pantry_frozen_box),
-                checked = form.frozen,
-                enabled = enabled,
-                onChange = { viewModel.freezeIt(it, LocalDate.now()) },
-            )
-            if (form.frozen) {
-                PortionsField(
-                    value = form.portions,
-                    count = form.portionCount,
-                    parts = form.parts,
-                    amountKnown = form.amount != null,
-                    unit = form.unit,
-                    shownUnit = if (form.unit == "piece") picked?.pieceName ?: "piece" else form.unit,
-                    enabled = enabled,
-                    onValue = viewModel::typePortions,
-                )
-            }
-            Button(onClick = viewModel::add, enabled = state.canAdd, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(R.string.pantry_add))
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Button(onClick = viewModel::add, enabled = state.canAdd) { Text(stringResource(R.string.pantry_add)) }
             }
         }
+    }
+}
+
+/** What went in last, as the window says it. */
+@Composable
+private fun addedLine(added: PantryViewModel.Added): String {
+    val amount = amountLabel(added.amount, added.unit)
+    return when {
+        !added.frozen -> stringResource(R.string.pantry_added, added.name, amount)
+        added.portions > 1 -> pluralStringResource(R.plurals.pantry_added_portions, added.portions, added.name, amount, added.portions)
+        else -> stringResource(R.string.pantry_added_frozen, added.name, amount)
     }
 }
 

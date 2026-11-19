@@ -399,6 +399,79 @@ class PantryViewModelTest {
     }
 
     @Test
+    fun `the window things are put in with stays open for the next, saying what went in, until it is closed`() = runTest(main) {
+        val pantry = pantry()
+        coEvery { pantry.add("ada", eggs, 6.5, "piece", null) } returns Submitted.Sent(egg)
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+
+        model.openAdd()
+        assertTrue(model.state.value.addWindow)
+        assertNull(model.state.value.lastAdded)
+        model.pick(eggs)
+        model.typeQuantity("6,5")
+        model.add()
+        runCurrent()
+
+        assertTrue("The window stays open", model.state.value.addWindow)
+        assertEquals(PantryViewModel.Added("Large egg", 6.5, "piece", frozen = false, portions = 1), model.state.value.lastAdded)
+        assertEquals(PantryViewModel.AddForm(), model.state.value.form)
+        model.closeAdd()
+        assertFalse(model.state.value.addWindow)
+        assertNull("What it said goes with it", model.state.value.lastAdded)
+        model.openAdd()
+        assertNull(model.state.value.lastAdded)
+    }
+
+    @Test
+    fun `what goes into the freezer is said with the portions it goes in, the next thing put in saying nothing of it until it is in`() = runTest(main) {
+        val pantry = pantry()
+        val sent = CompletableDeferred<Submitted<PantryRow>>()
+        coEvery { pantry.add("ada", eggplant, 500.0, "g", any(), true, 3) } returns Submitted.Sent(oats.copy(frozen = true))
+        coEvery { pantry.add("ada", eggs, 2.0, "piece", any(), false, 1) } coAnswers { sent.await() }
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+        model.openAdd()
+        model.pick(eggplant)
+        model.typeQuantity("500")
+        model.freezeIt(true, LocalDate.parse("2026-11-19"))
+        model.typePortions("3")
+
+        model.add()
+        runCurrent()
+        assertEquals(PantryViewModel.Added("Eggplant", 500.0, "g", frozen = true, portions = 3), model.state.value.lastAdded)
+
+        model.pick(eggs)
+        model.typeQuantity("2")
+        model.add()
+        runCurrent()
+        assertNull("Nothing is said while the next is on its way", model.state.value.lastAdded)
+        sent.complete(Submitted.Sent(egg))
+        runCurrent()
+        assertEquals(PantryViewModel.Added("Large egg", 2.0, "piece", frozen = false, portions = 1), model.state.value.lastAdded)
+    }
+
+    @Test
+    fun `a refusal is said in the window, not over the pantry, and goes when the window is closed`() = runTest(main) {
+        val pantry = pantry()
+        coEvery { pantry.add(any(), any(), any(), any(), any()) } throws refused("QUANTITY_TOO_LARGE")
+        val model = PantryViewModel(pantry, users, queue, application)
+        runCurrent()
+        model.openAdd()
+        model.pick(eggs)
+        model.typeQuantity("2000")
+
+        model.add()
+        runCurrent()
+        assertEquals(PantryViewModel.Failure.ADD, model.state.value.failed?.first)
+        assertNull(model.state.value.lastAdded)
+
+        model.closeAdd()
+        assertNull(model.state.value.failed)
+        assertEquals("What was typed stays for the next time", "2000", model.state.value.form.quantity)
+    }
+
+    @Test
     fun `an amount left as shown is not sent, so that the exact one is not rounded, and another amount or day is`() {
         // The oats are kept to the tenth of a gram and shown to the gram: the 212 shown must not overwrite them.
         assertNull(PantryViewModel.changeOf(oats, "212", null))

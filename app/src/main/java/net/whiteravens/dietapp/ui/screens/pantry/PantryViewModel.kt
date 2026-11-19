@@ -59,6 +59,9 @@ class PantryViewModel @Inject constructor(
     /** What could not be done: something put in, a row changed, a row taken out, a row put into the freezer. */
     enum class Failure { ADD, CHANGE, REMOVE, FREEZE }
 
+    /** What went in last: [amount] of [unit] (a piece by its name) of [name], into the freezer in [portions] or fresh. */
+    data class Added(val name: String, val amount: Double, val unit: String, val frozen: Boolean, val portions: Int)
+
     /**
      * What is being put into the pantry: the ingredient looked for and picked, how much of it in which unit, until when,
      * and whether into the freezer, in how many portions there.
@@ -107,6 +110,10 @@ class PantryViewModel @Inject constructor(
         val rows: List<PantryRow> = emptyList(),
         val error: Throwable? = null,
         val form: AddForm = AddForm(),
+        /** Whether the window things are put in with is open: it stays open for the next until it is closed. */
+        val addWindow: Boolean = false,
+        /** What went in last while the window was open, said in it until the next goes. */
+        val lastAdded: Added? = null,
         /** Whether something is on its way into the pantry. */
         val adding: Boolean = false,
         /** The row whose change, or whose taking out, is on its way. */
@@ -310,6 +317,12 @@ class PantryViewModel @Inject constructor(
         if (text.all(Char::isDigit) && text.length <= 2) _state.update { it.copy(form = it.form.copy(portions = text)) }
     }
 
+    /** Opens the window things are put in with, the form as it was left and nothing said yet. */
+    fun openAdd() = _state.update { it.copy(addWindow = true, lastAdded = null, failed = it.failed?.takeUnless { (what, _) -> what == Failure.ADD }) }
+
+    /** Closes the window: what it said of the last thing put in, or why that did not go in, goes with it. */
+    fun closeAdd() = _state.update { it.copy(addWindow = false, lastAdded = null, failed = it.failed?.takeUnless { (what, _) -> what == Failure.ADD }) }
+
     /** Puts what the form holds into the pantry, and empties the form; a refusal leaves it as it is, to be put right. */
     fun add() {
         val current = _state.value
@@ -319,15 +332,16 @@ class PantryViewModel @Inject constructor(
         val ingredient = form.picked ?: return
         val amount = form.amount ?: return
         val portions = form.portionCount ?: return
-        _state.update { it.copy(adding = true, failed = null) }
+        val added = Added(ingredient.name, amount, if (form.unit == "piece") ingredient.pieceName else form.unit, form.frozen, portions)
+        _state.update { it.copy(adding = true, failed = null, lastAdded = null) }
         viewModelScope.launch {
             attempt { pantry.add(profileId, ingredient, amount, form.unit, form.bestBefore, form.frozen, portions) }
                 .onSuccess { submitted ->
                     _state.update {
                         when (submitted) {
-                            is Submitted.Sent -> it.copy(adding = false, rows = it.rows.withRow(submitted.answer), form = AddForm())
+                            is Submitted.Sent -> it.copy(adding = false, rows = it.rows.withRow(submitted.answer), form = AddForm(), lastAdded = added)
                             // Kept to be sent: shown among the rows as one of the changes waiting.
-                            is Submitted.Kept -> it.copy(adding = false, form = AddForm(), offline = it.offline || submitted.offline)
+                            is Submitted.Kept -> it.copy(adding = false, form = AddForm(), lastAdded = added, offline = it.offline || submitted.offline)
                         }
                     }
                     if (submitted is Submitted.Sent) read(showLoading = false)

@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
@@ -17,6 +19,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
@@ -28,7 +31,6 @@ import net.whiteravens.dietapp.testing.scrollTo
 import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
-import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
 import org.junit.After
@@ -58,6 +60,42 @@ class PantryTest {
     @After
     fun backOnline() = screen.airplaneMode(false)
 
+    /** A button of a window over the pantry. */
+    private fun inTheWindow(words: String): SemanticsMatcher = hasText(words) and hasClickAction() and hasAnyAncestor(isDialog())
+
+    /** Opens the window things are put in with, from its button over the rows. */
+    private fun openTheWindow() {
+        val add = hasText(text(R.string.pantry_add)) and hasClickAction() and !hasAnyAncestor(isDialog())
+        screen.scrollTo(add)
+        screen.onNode(add).performScrollTo().performClick()
+        screen.waitForText(text(R.string.pantry_add_title))
+    }
+
+    /** Finds [name] in the window's search by a part of it, and picks it. */
+    private fun pick(name: String) {
+        screen.onNode(hasText(text(R.string.pantry_ingredient)) and hasSetTextAction()).performTextInput(name.take(4))
+        val found = hasText(name) and hasClickAction() and hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(found).fetchSemanticsNodes().isNotEmpty() }
+        screen.putKeyboardAway()
+        screen.onNode(found).performScrollTo().performClick()
+    }
+
+    /** The window's field of [label]. */
+    private fun field(label: Int): SemanticsMatcher = hasText(text(label)) and hasSetTextAction() and hasAnyAncestor(isDialog())
+
+    /** Puts in what the window holds, once that can be done: its button stands under the window's fields, always in sight. */
+    private fun putIn() {
+        val add = inTheWindow(text(R.string.pantry_add))
+        screen.waitUntil(20_000) { screen.onAllNodes(add and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(add).performClick()
+    }
+
+    /** Closes the window by its button: the rows are there again. */
+    private fun closeTheWindow() {
+        screen.onNode(inTheWindow(text(R.string.common_close))).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(text(R.string.pantry_add_title))).fetchSemanticsNodes().isEmpty() }
+    }
+
     /** Presses what [button] finds once it can be pressed: a row's buttons wait while a change is on its way. */
     private fun press(button: SemanticsMatcher) {
         screen.scrollTo(button)
@@ -82,25 +120,26 @@ class PantryTest {
         screen.scrollToText(text(R.string.pantry_expiring_soon))
         screen.keepScreenshot("pantry-a-row-going-soon")
 
-        // The egg found by a part of its name, and put in in pieces, as it is counted: more than a
-        // row holds is refused in the API's words, and the form keeps it to be put right.
-        screen.scrollToText(text(R.string.pantry_ingredient))
-        screen.onNodeWithText(text(R.string.pantry_ingredient)).performScrollTo().performTextInput(egg.take(4))
+        // The egg found by a part of its name in the window the button over the rows opens, and put in
+        // in pieces, as it is counted: more than a row holds is refused in the API's words, in the
+        // window, and the form keeps it to be put right.
+        openTheWindow()
+        pick(egg)
+        screen.onNode(field(R.string.pantry_quantity)).performScrollTo().performTextInput("2000")
         screen.putKeyboardAway()
-        val found = hasText(egg) and hasClickAction()
-        screen.scrollTo(found)
-        screen.onNode(found).performScrollTo().performClick()
-        screen.onNodeWithText(text(R.string.pantry_quantity)).performScrollTo().performTextInput("2000")
-        screen.putKeyboardAway()
-        screen.onNodeWithText(text(R.string.pantry_add)).performScrollTo().performClick()
-        screen.scrollToText("${text(R.string.pantry_err_add)} ${text(R.string.error_code_quantity_too_large)}")
+        putIn()
+        screen.waitForText("${text(R.string.pantry_err_add)} ${text(R.string.error_code_quantity_too_large)}")
         screen.keepScreenshot("pantry-more-than-a-row-holds")
 
-        screen.onNodeWithText(text(R.string.pantry_quantity)).performScrollTo().performTextReplacement("6")
+        screen.onNode(field(R.string.pantry_quantity)).performScrollTo().performTextReplacement("6")
         screen.putKeyboardAway()
-        screen.waitForEnabled(text(R.string.pantry_add))
-        screen.onNodeWithText(text(R.string.pantry_add)).performScrollTo().performClick()
+        putIn()
         screen.waitForTheApi { Instance.pantry(account, profileId)[eggId]?.let { it.first == 6.0 && it.second == "piece" } == true }
+        // The window stays for the next, empty, and says what went in; its button closes it.
+        screen.waitForText(text(R.string.pantry_added, egg, plural(R.plurals.amount_piece, 6, "6")))
+        screen.onNode(field(R.string.pantry_quantity)).assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")))
+        screen.keepScreenshot("pantry-the-window-after-something-went-in")
+        closeTheWindow()
         screen.scrollToText(weighing(plural(R.plurals.amount_piece, 6, "6"), 330))
         screen.keepScreenshot("pantry-two-rows")
 
@@ -142,24 +181,22 @@ class PantryTest {
         screen.scrollToText(milk)
 
         // Six eggs put in with the freezer's box ticked, which dates them 30 days on, in four portions as even as they go.
-        screen.scrollToText(text(R.string.pantry_ingredient))
-        screen.onNodeWithText(text(R.string.pantry_ingredient)).performScrollTo().performTextInput(egg.take(4))
+        openTheWindow()
+        pick(egg)
+        screen.onNode(field(R.string.pantry_quantity)).performScrollTo().performTextInput("6")
         screen.putKeyboardAway()
-        val found = hasText(egg) and hasClickAction()
-        screen.scrollTo(found)
-        screen.onNode(found).performScrollTo().performClick()
-        screen.onNodeWithText(text(R.string.pantry_quantity)).performScrollTo().performTextInput("6")
-        screen.putKeyboardAway()
-        screen.onNodeWithText(text(R.string.pantry_frozen_box)).performScrollTo().performClick()
-        val portions = hasText(text(R.string.pantry_portions)) and hasSetTextAction()
+        screen.onNode(hasText(text(R.string.pantry_frozen_box)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
+        val portions = field(R.string.pantry_portions)
         screen.onNode(portions).performScrollTo().performTextReplacement("4")
         screen.putKeyboardAway()
         // The field and the line under it that says what each package holds.
         screen.onNode(portions).performScrollTo()
         screen.keepScreenshot("pantry-put-in-frozen-in-portions")
-        screen.onNodeWithText(text(R.string.pantry_add)).performScrollTo().performClick()
+        putIn()
         screen.waitForTheApi { Instance.frozenPackages(account, profileId)[eggId]?.map { it.first }?.sorted() == listOf(1.0, 1.0, 2.0, 2.0) }
         assertEquals(setOf(thirtyDaysOn), Instance.frozenPackages(account, profileId).getValue(eggId).map { it.second }.toSet())
+        screen.waitForText(plural(R.plurals.pantry_added_portions, 4, egg, plural(R.plurals.amount_piece, 6, "6"), 4))
+        closeTheWindow()
 
         // The milk's fresh row put into the freezer from the window its button opens, in three portions of whole
         // millilitres, the larger first.
@@ -193,18 +230,16 @@ class PantryTest {
         screen.onNodeWithText(text(R.string.pantry_title)).performClick()
         screen.scrollToText(weighing(plural(R.plurals.amount_clove, 3, "3"), 15))
 
-        // The egg found while there is a network, and put in once there is none: it is shown among the
-        // rows, and says that it waits to be sent.
-        screen.scrollToText(text(R.string.pantry_ingredient))
-        screen.onNodeWithText(text(R.string.pantry_ingredient)).performScrollTo().performTextInput(egg.take(4))
-        screen.putKeyboardAway()
-        val found = hasText(egg) and hasClickAction()
-        screen.scrollTo(found)
-        screen.onNode(found).performScrollTo().performClick()
-        screen.onNodeWithText(text(R.string.pantry_quantity)).performScrollTo().performTextInput("6")
+        // The egg found while there is a network, and put in once there is none: the window says it
+        // went in, and it is shown among the rows, saying that it waits to be sent.
+        openTheWindow()
+        pick(egg)
+        screen.onNode(field(R.string.pantry_quantity)).performScrollTo().performTextInput("6")
         screen.putKeyboardAway()
         screen.airplaneMode(true)
-        screen.onNodeWithText(text(R.string.pantry_add)).performScrollTo().performClick()
+        putIn()
+        screen.waitForText(text(R.string.pantry_added, egg, plural(R.plurals.amount_piece, 6, "6")))
+        closeTheWindow()
         screen.scrollToText(plural(R.plurals.amount_piece, 6, "6"))
         screen.waitForText(text(R.string.change_waiting))
 

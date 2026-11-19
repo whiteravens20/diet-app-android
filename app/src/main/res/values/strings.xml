@@ -826,6 +826,12 @@
     </plurals>
     <string name="pantry_past_date">past its date</string>
     <string name="pantry_add">Add</string>
+    <string name="pantry_added">Added: %1$s, %2$s.</string>
+    <string name="pantry_added_frozen">Added to the freezer: %1$s, %2$s.</string>
+    <plurals name="pantry_added_portions">
+        <item quantity="one">Added to the freezer: %1$s, %2$s in %3$d\u00A0portion.</item>
+        <item quantity="other">Added to the freezer: %1$s, %2$s in %3$d\u00A0portions.</item>
+    </plurals>
     <string name="pantry_change_of">Change %1$s</string>
     <string name="pantry_remove_of">Remove %1$s</string>
     <string name="pantry_err_add">Could not add the item.</string>

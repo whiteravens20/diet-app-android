@@ -900,6 +900,14 @@
     </plurals>
     <string name="pantry_past_date">po terminie</string>
     <string name="pantry_add">Dodaj</string>
+    <string name="pantry_added">Dodano: %1$s, %2$s.</string>
+    <string name="pantry_added_frozen">Dodano do zamrażarki: %1$s, %2$s.</string>
+    <plurals name="pantry_added_portions">
+        <item quantity="one">Dodano do zamrażarki: %1$s, %2$s w\u00A0%3$d\u00A0porcji.</item>
+        <item quantity="few">Dodano do zamrażarki: %1$s, %2$s w\u00A0%3$d\u00A0porcjach.</item>
+        <item quantity="many">Dodano do zamrażarki: %1$s, %2$s w\u00A0%3$d\u00A0porcjach.</item>
+        <item quantity="other">Dodano do zamrażarki: %1$s, %2$s w\u00A0%3$d\u00A0porcjach.</item>
+    </plurals>
     <string name="pantry_change_of">Zmień: %1$s</string>
     <string name="pantry_remove_of">Usuń %1$s</string>
     <string name="pantry_err_add">Nie udało się dodać pozycji.</string>
