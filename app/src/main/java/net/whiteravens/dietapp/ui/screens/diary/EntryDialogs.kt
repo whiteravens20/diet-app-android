@@ -5,14 +5,15 @@ package net.whiteravens.dietapp.ui.screens.diary
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -35,8 +37,11 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.io.IOException
+import kotlin.math.roundToInt
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.MEAL_TYPES
@@ -50,14 +55,12 @@ import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.OutlinedField
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.screens.profiles.FormField
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
-import java.io.IOException
-import kotlin.math.roundToInt
-import net.whiteravens.dietapp.ui.components.OutlinedField
 
 /** What a field of the open window says: what it holds that the API would refuse, once it was sent, or why the API did. */
 @Composable
@@ -259,11 +262,11 @@ private fun MealFields(form: EntryForm, problems: Map<EntryField, EntryProblem>,
 }
 
 /**
- * The figures of a serving of a meal of one's own as two rows: its energy beside [servings], and its
- * protein, fat and carbohydrate; a macronutrient's [estimated] value, where it was estimated, is what its
- * empty field says it would be.
+ * The figures of a serving of a meal of one's own in two columns, as the web's window has them: its
+ * energy beside [servings], then its protein, fat and carbohydrate; in one column where two fields of
+ * the phone's size of text do not fit side by side. A macronutrient's [estimated] value, where it was
+ * estimated, is what its empty field says it would be.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FigureRows(
     calories: String,
@@ -277,25 +280,27 @@ private fun FigureRows(
     estimated: (EntryField) -> String? = { null },
 ) {
     val grams = stringResource(R.string.unit_g)
-    val wide = Modifier.widthIn(min = 128.dp)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 2) {
-        FormField(
-            value = calories,
-            onValueChange = { onType(EntryField.CALORIES, it) },
-            label = stringResource(R.string.diary_calories),
-            suffix = stringResource(R.string.unit_kcal),
-            problem = fieldProblem(EntryField.CALORIES, problems, state),
-            keyboardType = KeyboardType.Decimal,
-            modifier = wide.weight(1f),
-        )
-        servings(wide.weight(1f))
-    }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 3) {
-        listOf(
-            Triple(EntryField.PROTEIN, protein, R.string.diary_protein),
-            Triple(EntryField.FAT, fat, R.string.diary_fat),
-            Triple(EntryField.CARBS, carbs, R.string.diary_carbs),
-        ).forEach { (field, value, label) ->
+    val energy = stringResource(R.string.diary_calories)
+    val kcal = stringResource(R.string.unit_kcal)
+    val fields: List<@Composable (Modifier) -> Unit> = listOf(
+        { place ->
+            FormField(
+                value = calories,
+                onValueChange = { onType(EntryField.CALORIES, it) },
+                label = energy,
+                suffix = kcal,
+                problem = fieldProblem(EntryField.CALORIES, problems, state),
+                keyboardType = KeyboardType.Decimal,
+                modifier = place,
+            )
+        },
+        servings,
+    ) + listOf(
+        Triple(EntryField.PROTEIN, protein, R.string.diary_protein),
+        Triple(EntryField.FAT, fat, R.string.diary_fat),
+        Triple(EntryField.CARBS, carbs, R.string.diary_carbs),
+    ).map { (field, value, label) ->
+        { place: Modifier ->
             FormField(
                 value = value,
                 onValueChange = { onType(field, it) },
@@ -305,11 +310,33 @@ private fun FigureRows(
                 optional = true,
                 problem = fieldProblem(field, problems, state),
                 keyboardType = KeyboardType.Decimal,
-                modifier = Modifier.widthIn(min = 104.dp).weight(1f),
+                modifier = place,
             )
         }
     }
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = figureColumns(maxWidth, LocalDensity.current.fontScale)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            fields.chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(FIGURE_GAP)) {
+                    row.forEach { field -> field(Modifier.weight(1f)) }
+                    // A row with a field fewer keeps the columns of the rows above it.
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
 }
+
+/** The room a field of a figure needs at the phone's usual size of text: its name and "optional" above it, side by side. */
+internal val FIGURE_FIELD_WIDTH = 150.dp
+
+/** The space between two fields of a row. */
+private val FIGURE_GAP = 8.dp
+
+/** How many fields of figures stand side by side in [width] at the phone's [fontScale]: two where both fit, else one. */
+internal fun figureColumns(width: Dp, fontScale: Float): Int =
+    if (width >= FIGURE_FIELD_WIDTH * fontScale * 2 + FIGURE_GAP) 2 else 1
 
 /** What was picked, and a way back to the search. */
 @Composable
