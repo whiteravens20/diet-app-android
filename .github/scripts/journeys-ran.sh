@@ -4,9 +4,13 @@
 set -euo pipefail
 
 written=$(grep -rhE '^\s*@Test\b' app/src/androidTest/java | wc -l)
-# The reports of one run, or of the parts a run was split into: whichever of them are there.
+# The reports of one run, or of the parts a run was split into: those of the directories named, or
+# of the job's own build, whichever of them are there.
+if [ "$#" -eq 0 ]; then
+  set -- app/build/outputs/androidTest-results/connected app/build/screens-parts
+fi
 dirs=()
-for dir in app/build/outputs/androidTest-results/connected app/build/screens-parts; do
+for dir in "$@"; do
   if [ -d "$dir" ]; then dirs+=("$dir"); fi
 done
 ran=0

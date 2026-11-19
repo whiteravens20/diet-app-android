@@ -91,7 +91,7 @@ jobs:
           set -euo pipefail
           screens=run
           for run in $(gh api "repos/$REPO/actions/workflows/test.yml/runs?head_sha=$SHA&event=workflow_dispatch&status=success" --jq '.workflow_runs[].id'); do
-            green=$(gh api "repos/$REPO/actions/runs/$run/jobs" --jq '[.jobs[] | select(.name | startswith("Screens on")) | select(.conclusion == "success")] | length')
+            green=$(gh api "repos/$REPO/actions/runs/$run/jobs?per_page=100" --jq '[.jobs[] | select(.name == "Screens on an emulator" or .name == "Screens on Android 17" or .name == "Screens on the release build") | select(.conclusion == "success")] | length')
             if [ "$green" -ge 3 ]; then
               screens=passed
               echo "The screens of $SHA passed in https://github.com/$REPO/actions/runs/$run" >> "$GITHUB_STEP_SUMMARY"
@@ -101,25 +101,27 @@ jobs:
           echo "screens=$screens" >> "$GITHUB_OUTPUT"
 
   # The screens on an emulator, against a diet-app instance started in the same job from
-  # the version contract/ was copied from (contract/diet-app.env), with its catalogue.
+  # the version contract/ was copied from (contract/diet-app.env), with its catalogue. Each
+  # configuration runs its journeys in three parts, each part a job of its own, all at once.
   screens:
-    name: ${{ matrix.name }}
+    name: ${{ matrix.config.name }}, part ${{ matrix.part }} of 3
     needs: dry-run
     if: ${{ !cancelled() && needs.dry-run.outputs.screens != 'passed' }}
     runs-on: ubuntu-latest
-    # The build, then three parts, each on an emulator booted for it: on a slow runner the
-    # release build's job ran past 45 minutes.
-    timeout-minutes: 60
+    # The build, then one part on an emulator booted for it: about 25 minutes.
+    timeout-minutes: 40
     # What the entry of the matrix says, as the scripts below read it: variables, never
     # pasted into a script.
     env:
-      BUILD_TYPE: ${{ matrix.build-type }}
-      VARIANT: ${{ matrix.variant }}
-      LOCALE: ${{ matrix.locale }}
+      BUILD_TYPE: ${{ matrix.config.build-type }}
+      VARIANT: ${{ matrix.config.variant }}
+      LOCALE: ${{ matrix.config.locale }}
+      PART: ${{ matrix.part }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        part: [1, 2, 3]
+        config:
           # Android 14, as most of the phones the app is tried on run.
           - name: Screens on an emulator
             api-level: 34
@@ -195,7 +197,7 @@ jobs:
         run: .github/scripts/start-diet-app.sh "$RUNNER_TEMP/diet-app"
 
       - name: Serve diet-app over HTTPS with a certificate of a test authority
-        if: matrix.test-authority
+        if: matrix.config.test-authority
         run: |
           .github/scripts/serve-with-test-authority.sh "$RUNNER_TEMP/authority"
           echo "TEST_AUTHORITY=$RUNNER_TEMP/authority" >> "$GITHUB_ENV"
@@ -226,25 +228,25 @@ jobs:
       # orchestrator ends the app's process before every journey. 37.2.12 does not crash, but it
       # never frees what that emulation held for the ended processes: one emulator running every
       # journey filled the runner's memory, so the journeys run in three parts, each on an emulator
-      # started afresh.
-      - name: Run the screens' tests, part 1 of 3
+      # started afresh on a runner of its own.
+      - name: Run the screens' tests, part ${{ matrix.part }} of 3
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           emulator-build: 16428233
-          api-level: ${{ matrix.api-level }}
+          api-level: ${{ matrix.config.api-level }}
           # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
           # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
           # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
           profile: pixel_6
-          cores: ${{ matrix.cores }}
-          ram-size: ${{ matrix.ram-size }}
-          disk-size: ${{ matrix.disk-size }}
-          emulator-boot-timeout: ${{ matrix.boot-timeout }}
+          cores: ${{ matrix.config.cores }}
+          ram-size: ${{ matrix.config.ram-size }}
+          disk-size: ${{ matrix.config.disk-size }}
+          emulator-boot-timeout: ${{ matrix.config.boot-timeout }}
           arch: x86_64
           target: google_apis
           # Turned off by settle-emulator.sh, once the settings service answers.
           disable-animations: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.config.emulator-features }}
           script: |
             .github/scripts/set-locale.sh "$LOCALE"
             .github/scripts/keep-emulator-log.sh
@@ -253,80 +255,11 @@ jobs:
             .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
             .github/scripts/wait-for-play-services.sh
             free -m
-            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connected${VARIANT}AndroidTest
+            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=$((PART - 1)) connected${VARIANT}AndroidTest
 
-      - name: Keep the results of part 1
+      - name: Keep the results of the part
         if: ${{ !cancelled() }}
-        run: .github/scripts/keep-part-results.sh 1
-
-      - name: Run the screens' tests, part 2 of 3
-        if: ${{ !cancelled() }}
-        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-        with:
-          emulator-build: 16428233
-          api-level: ${{ matrix.api-level }}
-          # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
-          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
-          # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
-          profile: pixel_6
-          cores: ${{ matrix.cores }}
-          ram-size: ${{ matrix.ram-size }}
-          disk-size: ${{ matrix.disk-size }}
-          emulator-boot-timeout: ${{ matrix.boot-timeout }}
-          arch: x86_64
-          target: google_apis
-          # Turned off by settle-emulator.sh, once the settings service answers.
-          disable-animations: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
-          script: |
-            .github/scripts/set-locale.sh "$LOCALE"
-            .github/scripts/keep-emulator-log.sh
-            .github/scripts/settle-emulator.sh
-            .github/scripts/install-test-authority.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
-            .github/scripts/wait-for-play-services.sh
-            free -m
-            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connected${VARIANT}AndroidTest
-
-      - name: Keep the results of part 2
-        if: ${{ !cancelled() }}
-        run: .github/scripts/keep-part-results.sh 2
-
-      - name: Run the screens' tests, part 3 of 3
-        if: ${{ !cancelled() }}
-        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-        with:
-          emulator-build: 16428233
-          api-level: ${{ matrix.api-level }}
-          # A phone's screen, 1080x2400 at 420 dpi (411x914 dp), as the testers' phones have: the
-          # default AVD is 320x640 at 160 dpi, narrower than any phone, and its pictures misled. A
-          # profile the runner's command-line tools (12.0) know; newer ones (pixel_7a) they do not.
-          profile: pixel_6
-          cores: ${{ matrix.cores }}
-          ram-size: ${{ matrix.ram-size }}
-          disk-size: ${{ matrix.disk-size }}
-          emulator-boot-timeout: ${{ matrix.boot-timeout }}
-          arch: x86_64
-          target: google_apis
-          # Turned off by settle-emulator.sh, once the settings service answers.
-          disable-animations: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.emulator-features }}
-          script: |
-            .github/scripts/set-locale.sh "$LOCALE"
-            .github/scripts/keep-emulator-log.sh
-            .github/scripts/settle-emulator.sh
-            .github/scripts/install-test-authority.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
-            .github/scripts/wait-for-play-services.sh
-            free -m
-            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connected${VARIANT}AndroidTest
-
-      - name: Keep the results of part 3
-        if: ${{ !cancelled() }}
-        run: .github/scripts/keep-part-results.sh 3
-
-      - name: Check that every journey ran
-        run: .github/scripts/journeys-ran.sh
+        run: .github/scripts/keep-part-results.sh "$PART"
 
       - name: Keep what diet-app logged
         if: always()
@@ -342,7 +275,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ${{ matrix.artifact }}
+          name: ${{ matrix.config.artifact }}-part-${{ matrix.part }}
           path: |
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
@@ -352,3 +285,55 @@ jobs:
             app/build/diet-app.log
           if-no-files-found: ignore
           retention-days: 14
+
+  # What a configuration's three parts did together: each passed, and their reports counted every
+  # journey that is written (an emulator lost along the way can leave Gradle green with part of the
+  # journeys run). Its name is the configuration's, the check branch protection asks for.
+  screens-passed:
+    name: ${{ matrix.name }}
+    needs: [dry-run, screens]
+    if: ${{ !cancelled() && needs.dry-run.outputs.screens != 'passed' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Screens on an emulator
+            artifact: screens
+          - name: Screens on Android 17
+            artifact: screens-android-17
+          - name: Screens on the release build
+            artifact: screens-release-build
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check that its three parts passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.run_id }}
+          NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          parts=$(gh api "repos/$REPO/actions/runs/$RUN/jobs?filter=latest&per_page=100" |
+            jq -r --arg name "$NAME, part " '.jobs[] | select(.name | startswith($name)) | "\(.name): \(.conclusion)"')
+          echo "$parts"
+          passed=$(grep -c ': success$' <<< "$parts" || true)
+          if [ "$passed" -ne 3 ]; then
+            echo "::error::$passed of the three parts passed."
+            exit 1
+          fi
+
+      - name: Download what its parts left
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: ${{ matrix.artifact }}-part-*
+          path: parts
+
+      - name: Check that every journey ran
+        run: .github/scripts/journeys-ran.sh parts/*/screens-parts
