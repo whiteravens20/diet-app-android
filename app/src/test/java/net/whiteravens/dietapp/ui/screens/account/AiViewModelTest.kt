@@ -236,6 +236,44 @@ class AiViewModelTest {
     }
 
     @Test
+    fun `a saved provider is changed from its row, starting from its model, place and choice, the provider fixed and its key kept unless another is typed`() = runTest {
+        val openRouter = AiProviderConfig("or-id", "openrouter", "openai/gpt-6-luna", 2, true, hasKey = true, keyUnreadable = false, baseUrl = null, dataPolicy = AiDataPolicies.NO_RETENTION)
+        coEvery { ai.providers() } returns listOf(openRouter)
+        coEvery { ai.save(any()) } returns openai
+        val model = AiViewModel(ai, users)
+
+        model.change(openRouter)
+
+        val form = model.state.value.form!!
+        assertEquals(listOf("openrouter", "openai/gpt-6-luna", "2", AiDataPolicies.NO_RETENTION), listOf(form.provider, form.model, form.priority, form.dataPolicy))
+        assertTrue(form.fixed)
+        assertTrue(form.keyKept)
+        assertTrue(form.testable)
+        // It is the one being changed, not one that saving replaces.
+        assertNull(model.state.value.replaced)
+
+        model.edit { it.copy(provider = "openai") }
+        assertEquals("openrouter", model.state.value.form?.provider)
+        model.choosePolicy(AiDataPolicies.NO_TRAINING)
+        model.save()
+
+        coVerify { ai.save(ProviderSetup("openrouter", "openai/gpt-6-luna", null, null, 2, AiDataPolicies.NO_TRAINING)) }
+    }
+
+    @Test
+    fun `a provider added of a kind the account keeps a key for keeps that key too, and one of another kind asks for a key`() = runTest {
+        coEvery { ai.providers() } returns listOf(openai)
+        val model = AiViewModel(ai, users)
+
+        model.open()
+        assertTrue(model.state.value.form!!.keyKept)
+
+        model.edit { it.copy(provider = "anthropic") }
+        assertFalse(model.state.value.form!!.keyKept)
+        assertFalse(model.state.value.form!!.testable)
+    }
+
+    @Test
     fun `the provider of the kind the form holds is named as the one saving replaces`() = runTest {
         coEvery { ai.providers() } returns listOf(ollama, openai)
         val model = AiViewModel(ai, users)

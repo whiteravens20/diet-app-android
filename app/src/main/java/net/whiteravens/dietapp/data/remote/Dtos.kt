@@ -388,9 +388,10 @@ data class AiProviderConfigDto(
 )
 
 /**
- * PUT `/ai/providers`: the account's configuration of a provider, made the first time and replaced
+ * PUT `/ai/providers`: the account's configuration of a provider, made the first time and changed
  * afterwards. [apiKey] is the provider's key, which every provider but Ollama needs, kept sealed and
- * never shown again; [baseUrl] is an Ollama server's address; the lowest [priority] is asked first.
+ * never shown again; left out, a saved configuration keeps the key it has. [baseUrl] is an Ollama
+ * server's address; the lowest [priority] is asked first.
  */
 @Serializable
 data class AiProviderConfigRequest(
@@ -404,7 +405,10 @@ data class AiProviderConfigRequest(
     val dataPolicy: String? = null,
 )
 
-/** POST `/ai/test`: a provider's key, or an Ollama server's address, tried and not kept; [model] for a provider that lists none. */
+/**
+ * POST `/ai/test`: a provider's key, or an Ollama server's address, tried and not kept; a key left out
+ * is the one the account saved for the provider. [model] for a provider that lists none.
+ */
 @Serializable
 data class AiTestConnectionRequest(
     val provider: String,

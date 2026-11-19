@@ -27,9 +27,9 @@ import javax.inject.Inject
  * What AI the account has, as the web's settings show it: the mode it chose, offered as far as the
  * instance and the account's providers allow, with what is left of the instance's allowance; and the
  * providers it brings of its own, listed with whether their keys can still be read, one set up in a
- * form whose connection can be tested before it is saved, and one removed. The key typed is kept
- * here, not in the screen's saved state, which the system may write to disk, and goes once the
- * provider is saved or the form closed.
+ * form whose connection can be tested before it is saved, one changed in the same form, its key kept
+ * unless another is typed, and one removed. The key typed is kept here, not in the screen's saved
+ * state, which the system may write to disk, and goes once the provider is saved or the form closed.
  */
 @HiltViewModel
 class AiViewModel @Inject constructor(private val ai: AiRepository, private val users: UserRepository) : ViewModel() {
@@ -89,9 +89,12 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
             else -> true
         }
 
-        /** The account's provider of the form's kind, which saving the form replaces; null where it has none. */
+        /**
+         * The account's provider of the form's kind, which saving the form replaces; null where it has
+         * none, or where the form was opened from it to change it.
+         */
         val replaced: AiProviderConfig?
-            get() = form?.let { form -> providers.orEmpty().firstOrNull { it.provider == form.provider } }
+            get() = form?.takeUnless { it.fixed }?.let { form -> providers.orEmpty().firstOrNull { it.provider == form.provider } }
     }
 
     private val _state = MutableStateFlow(UiState())
@@ -133,8 +136,32 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
      */
     fun open() = _state.update { state ->
         val chosen = state.providers.orEmpty().firstOrNull { it.provider == "openrouter" }?.dataPolicy
+        val form = ProviderForm(dataPolicy = chosen ?: AiDataPolicies.NO_TRAINING)
         state.copy(
-            form = ProviderForm(dataPolicy = chosen ?: AiDataPolicies.NO_TRAINING),
+            form = form.copy(keyKept = keyKept(state.providers, form.provider)),
+            saveError = null,
+            tested = null,
+            testError = null,
+            refused = emptyMap(),
+        )
+    }
+
+    /**
+     * Opens the form for the saved [provider] to be changed: from its model, place, choice of
+     * OpenRouter's endpoints and Ollama server's address, the provider fixed, and its key kept unless
+     * another is typed, where it can still be read.
+     */
+    fun change(provider: AiProviderConfig) = _state.update { state ->
+        state.copy(
+            form = ProviderForm(
+                provider = provider.provider,
+                model = provider.model,
+                baseUrl = provider.baseUrl.orEmpty(),
+                priority = provider.priority.toString(),
+                dataPolicy = provider.dataPolicy ?: AiDataPolicies.NO_TRAINING,
+                fixed = true,
+                keyKept = keyKept(state.providers, provider.provider),
+            ),
             saveError = null,
             tested = null,
             testError = null,
@@ -145,9 +172,21 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
     /** Closes the form, and what was typed in it goes. */
     fun cancel() = _state.update { it.copy(form = null, saveError = null, tested = null, testError = null, refused = emptyMap()) }
 
-    /** Changes what the form holds; a test of what it held before no longer says anything of it. */
-    fun edit(change: (ProviderForm) -> ProviderForm) =
-        _state.update { state -> state.form?.let { state.copy(form = change(it), tested = null, testError = null, refused = emptyMap()) } ?: state }
+    /**
+     * Changes what the form holds, its provider kept where the form changes a saved one; a test of what
+     * it held before no longer says anything of it.
+     */
+    fun edit(change: (ProviderForm) -> ProviderForm) = _state.update { state ->
+        state.form?.let { held ->
+            val changed = change(held).let { if (held.fixed) it.copy(provider = held.provider) else it }
+            state.copy(
+                form = changed.copy(keyKept = keyKept(state.providers, changed.provider)),
+                tested = null,
+                testError = null,
+                refused = emptyMap(),
+            )
+        } ?: state
+    }
 
     /** Takes one of the models the provider listed when its connection was tested. */
     fun chooseModel(model: String) = _state.update { state -> state.form?.let { state.copy(form = it.copy(model = model)) } ?: state }
@@ -212,6 +251,10 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
         }
     }
 
+    /** Whether the account keeps a key for [provider] that can still be read: a form of it may leave its key empty. */
+    private fun keyKept(providers: List<AiProviderConfig>?, provider: String): Boolean =
+        provider != "ollama" && providers.orEmpty().any { it.provider == provider && it.hasKey && !it.keyUnreadable }
+
     private suspend fun readStatus() {
         attempt { ai.status() }
             .onSuccess { status -> _state.update { it.copy(status = status, statusFailed = null) } }
@@ -228,7 +271,9 @@ class AiViewModel @Inject constructor(private val ai: AiRepository, private val 
 /**
  * A provider of the account's own as its form holds it: which, the model to ask, its key or its
  * Ollama server's address, its place in the order providers are asked in, as typed, and which of
- * OpenRouter's endpoints may serve its requests.
+ * OpenRouter's endpoints may serve its requests. [fixed] where it changes a saved provider, which it
+ * keeps; [keyKept] where the account keeps a key for the provider that can still be read, which an
+ * empty field leaves as it is.
  */
 data class ProviderForm(
     val provider: String = PROVIDERS.first(),
@@ -237,6 +282,8 @@ data class ProviderForm(
     val baseUrl: String = "",
     val priority: String = "0",
     val dataPolicy: String = AiDataPolicies.NO_TRAINING,
+    val fixed: Boolean = false,
+    val keyKept: Boolean = false,
 ) {
     /** Ollama is reached at an address and takes no key; every other provider takes a key. */
     val ollama: Boolean
@@ -250,9 +297,9 @@ data class ProviderForm(
     val place: Int?
         get() = priority.trim().toIntOrNull()
 
-    /** Whether there is something to test: a key, or an Ollama server's address. */
+    /** Whether there is something to test: a key typed or kept, or an Ollama server's address. */
     val testable: Boolean
-        get() = if (ollama) baseUrl.isNotBlank() else apiKey.isNotBlank()
+        get() = if (ollama) baseUrl.isNotBlank() else apiKey.isNotBlank() || keyKept
 
     /** The provider as it is saved; null while the model, the key or the address is missing, or the place is no whole number. */
     fun setup(): ProviderSetup? {
@@ -262,11 +309,14 @@ data class ProviderForm(
         return asked().copy(model = chosen, priority = place)
     }
 
-    /** What a test sends: the key or the address, and the model where one is typed, which a provider that lists none needs. */
+    /**
+     * What a test sends: the key typed, none where it is kept, or the address, and the model where one
+     * is typed, which a provider that lists none needs.
+     */
     fun asked() = ProviderSetup(
         provider = provider,
         model = model.trim(),
-        apiKey = apiKey.trim().takeUnless { ollama },
+        apiKey = apiKey.trim().takeUnless { ollama || it.isEmpty() },
         baseUrl = baseUrl.trim().takeIf { ollama },
         priority = place ?: 0,
         dataPolicy = dataPolicy.takeIf { openRouter },

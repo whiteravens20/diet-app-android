@@ -1134,6 +1134,9 @@
     <string name="account_ai_test_ok_models">Połączono. Wybierz jeden z modeli z listy.</string>
     <string name="account_ai_remove">Usuń</string>
     <string name="account_ai_remove_named">Usuń %1$s</string>
+    <string name="account_ai_change">Zmień</string>
+    <string name="account_ai_change_named">Zmień %1$s</string>
+    <string name="account_ai_key_kept">Zostaw puste, by zachować zapisany klucz; wpisz nowy, by go wymienić.</string>
     <string name="account_ai_remove_confirm">Usunąć tę konfigurację dostawcy?</string>
     <string name="account_sign_out">Wyloguj się</string>
     <string name="account_password_current">Aktualne hasło</string>

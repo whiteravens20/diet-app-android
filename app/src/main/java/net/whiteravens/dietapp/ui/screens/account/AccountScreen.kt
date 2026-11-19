@@ -236,6 +236,7 @@ fun AccountScreen(
                         AiProviderActions(
                             retry = ai::load,
                             open = ai::open,
+                            change = ai::change,
                             cancel = ai::cancel,
                             edit = ai::edit,
                             chooseModel = ai::chooseModel,

@@ -1049,6 +1049,9 @@
     <string name="account_ai_test_ok_models">Connected. Choose one of the models it lists.</string>
     <string name="account_ai_remove">Remove</string>
     <string name="account_ai_remove_named">Remove %1$s</string>
+    <string name="account_ai_change">Change</string>
+    <string name="account_ai_change_named">Change %1$s</string>
+    <string name="account_ai_key_kept">Leave it empty to keep the saved key; type a new one to replace it.</string>
     <string name="account_ai_remove_confirm">Remove this provider configuration?</string>
     <string name="account_sign_out">Sign out</string>
     <string name="account_password_current">Current password</string>

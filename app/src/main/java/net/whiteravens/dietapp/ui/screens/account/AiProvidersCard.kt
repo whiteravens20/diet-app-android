@@ -52,8 +52,9 @@ import net.whiteravens.dietapp.ui.screens.profiles.FormField
 
 /**
  * The AI providers the account brings of its own, as the web's settings show them: each with its
- * model and whether its key is kept and can still be read, removed once that is confirmed; and a
- * form for one more, whose connection can be tested, and its models listed, before it is saved.
+ * model and whether its key is kept and can still be read, changed in the form, or removed once that
+ * is confirmed; and a form for one more, whose connection can be tested, and its models listed,
+ * before it is saved.
  */
 @Composable
 internal fun AiProvidersCard(state: AiViewModel.UiState, actions: AiProviderActions) {
@@ -111,7 +112,12 @@ internal fun AiProvidersCard(state: AiViewModel.UiState, actions: AiProviderActi
                 ) {
                     providers.forEachIndexed { index, provider ->
                         if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                        ProviderRow(provider, enabled = !state.removing, onRemove = { removing = provider })
+                        ProviderRow(
+                            provider,
+                            enabled = !state.removing,
+                            onChange = { actions.change(provider) },
+                            onRemove = { removing = provider },
+                        )
                     }
                 }
             }
@@ -138,6 +144,7 @@ internal fun AiProvidersCard(state: AiViewModel.UiState, actions: AiProviderActi
 internal class AiProviderActions(
     val retry: () -> Unit,
     val open: () -> Unit,
+    val change: (AiProviderConfig) -> Unit,
     val cancel: () -> Unit,
     val edit: ((ProviderForm) -> ProviderForm) -> Unit,
     val chooseModel: (String) -> Unit,
@@ -149,11 +156,13 @@ internal class AiProviderActions(
 
 /**
  * One provider: its name and model, the address of an Ollama server, the choice of OpenRouter's
- * endpoints, whether its key is kept or can no longer be read, and its removal, which says whose it is.
+ * endpoints, whether its key is kept or can no longer be read, and its change and removal, each of
+ * which says whose it is.
  */
 @Composable
-private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onRemove: () -> Unit) {
+private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onChange: () -> Unit, onRemove: () -> Unit) {
     val name = providerName(provider.provider)
+    val changing = stringResource(R.string.account_ai_change_named, name)
     val described = stringResource(R.string.account_ai_remove_named, name)
     Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -163,6 +172,9 @@ private fun ProviderRow(provider: AiProviderConfig, enabled: Boolean, onRemove: 
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f),
             )
+            TextButton(onClick = onChange, modifier = Modifier.semantics { contentDescription = changing }) {
+                Text(stringResource(R.string.account_ai_change))
+            }
             TextButton(onClick = onRemove, enabled = enabled, modifier = Modifier.semantics { contentDescription = described }) {
                 Text(stringResource(R.string.account_ai_remove), color = MaterialTheme.colorScheme.error)
             }
@@ -219,6 +231,8 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
             selected = form.provider,
             optionLabel = { providerName(it) },
             onSelect = { chosen -> actions.edit { it.copy(provider = chosen) } },
+            // A saved provider is changed as it is: another is one more to add.
+            enabled = !form.fixed,
         )
         state.replaced?.let {
             Text(
@@ -257,12 +271,13 @@ private fun ProviderFormFields(state: AiViewModel.UiState, form: ProviderForm, a
             )
         } else {
             val refusedKey = state.refused["apiKey"]?.let { refusalText(it, Bound.Characters) }
+            val kept = stringResource(R.string.account_ai_key_kept).takeIf { form.keyKept }
             PasswordField(
                 value = form.apiKey,
                 onValueChange = { typed -> actions.edit { it.copy(apiKey = typed) } },
                 label = stringResource(R.string.account_ai_api_key),
                 isError = refusedKey != null,
-                hint = refusedKey,
+                hint = refusedKey ?: kept,
                 secret = Secret.Key,
                 sending = state.saving,
             )
