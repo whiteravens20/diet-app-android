@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Diet App API",
-    "version": "0.326.0",
+    "version": "0.365.0",
     "description": "What the API of Diet App is asked and what it answers. Written by `npm run contract` from the controllers and from the schemas of `@diet-app/shared`; the integration tests hold every answer to the schema its route names here.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -3312,7 +3312,7 @@
           "diary"
         ],
         "summary": "Copy what was eaten on one day into another of today or at most a year before it: the entries of the day, and the meals its plan marked as eaten, which come in as entries.",
-        "description": "Copy what was eaten on one day into another of today or at most a year before it: the entries of the day, and the meals its plan marked as eaten, which come in as entries. Nothing is copied where the day would then hold more than the most. Sent again with the same `Idempotency-Key` within a week, it is answered with the day as it is now and copies nothing.\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "description": "Copy what was eaten on one day into another of today or at most a year before it: the entries of the day, and the meals its plan marked as eaten, which come in as entries. Nothing is copied where the day would then hold more than the most. Sent again with the same `Idempotency-Key` within a week, it is answered with the day as it is now and copies nothing. A copy into today sizes the day of the plan the diary shows again, and says how (`WrittenDiaryCopy.planChange`).\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -3366,7 +3366,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DiaryCopyResult"
+                  "$ref": "#/components/schemas/WrittenDiaryCopy"
                 }
               }
             }
@@ -3446,7 +3446,7 @@
           "diary"
         ],
         "summary": "Write an entry for a day of today or at most a year before it, by the client's day (`X-Client-Date`): a recipe in servings, an ingredient in an amount, a product in grams or millilitres, or a meal of one's own by its figures.",
-        "description": "Write an entry for a day of today or at most a year before it, by the client's day (`X-Client-Date`): a recipe in servings, an ingredient in an amount, a product in grams or millilitres, or a meal of one's own by its figures. What a meal of one's own leaves out, or a product's label lacks, is estimated from its energy. Its figures are worked out now and kept. Sent again with the same `Idempotency-Key` within a week, it is answered with the entry the first request wrote and writes nothing.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "description": "Write an entry for a day of today or at most a year before it, by the client's day (`X-Client-Date`): a recipe in servings, an ingredient in an amount, a product in grams or millilitres, or a meal of one's own by its figures. What a meal of one's own leaves out, or a product's label lacks, is estimated from its energy. Its figures are worked out now and kept. Sent again with the same `Idempotency-Key` within a week, it is answered with the entry the first request wrote and writes nothing. An entry of today sizes the day of the plan the diary shows again, as a meal of one's own added to the plan does, and says how (`WrittenDiaryEntry.planChange`).\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -3500,7 +3500,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DiaryEntry"
+                  "$ref": "#/components/schemas/WrittenDiaryEntry"
                 }
               }
             }
@@ -3521,8 +3521,8 @@
         "tags": [
           "diary"
         ],
-        "summary": "Remove an entry.",
-        "description": "Remove an entry.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "summary": "Remove an entry; the day of the plan the diary shows follows, where it is today, as it does a new entry.",
+        "description": "Remove an entry; the day of the plan the diary shows follows, where it is today, as it does a new entry.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -3536,6 +3536,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           }
         ],
@@ -3558,7 +3568,7 @@
           "diary"
         ],
         "summary": "Change an entry: the meal it is under, or how much of it there was, which changes its figures in proportion.",
-        "description": "Change an entry: the meal it is under, or how much of it there was, which changes its figures in proportion. An entry of a product can be moved to a product of the reader's own, whose label then gives its figures.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "description": "Change an entry: the meal it is under, or how much of it there was, which changes its figures in proportion. An entry of a product can be moved to a product of the reader's own, whose label then gives its figures. A change of an entry of today sizes the day of the plan the diary shows again, and says how (`WrittenDiaryEntry.planChange`).\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -3572,6 +3582,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           },
           {
@@ -3600,7 +3620,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DiaryEntry"
+                  "$ref": "#/components/schemas/WrittenDiaryEntry"
                 }
               }
             }
@@ -4757,8 +4777,8 @@
         "tags": [
           "inventory"
         ],
-        "summary": "Take a row out of the pantry.",
-        "description": "Take a row out of the pantry.\n\nAsked by an account.",
+        "summary": "Take a row out of the pantry: the food is not at home.",
+        "description": "Take a row out of the pantry: the food is not at home. The profile's shopping lists follow: a row that took of it counts it at home no more (it unticks where it no longer meets the need), a row not ticked counts on no more than the pantry holds, and nothing of it comes back to the pantry when a list is removed.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -4790,7 +4810,7 @@
           "inventory"
         ],
         "summary": "Change a row of the pantry.",
-        "description": "Change a row of the pantry.\n\nAsked by an account.",
+        "description": "Change a row of the pantry. Lowered, the rows of the profile's lists not ticked count on no more than the pantry holds.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -5739,6 +5759,80 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/KeepFrozenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/meal-plans/{id}/left": {
+      "post": {
+        "operationId": "MealPlans_keepLeft",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "\"Dodaj do spiżarni\": what a pack the menu opens and does not finish leaves goes into the pantry as fresh food, dated its last day, once (`KeepLeftRequest`).",
+        "description": "\"Dodaj do spiżarni\": what a pack the menu opens and does not finish leaves goes into the pantry as fresh food, dated its last day, once (`KeepLeftRequest`).\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeepLeftRequest"
               }
             }
           }
@@ -14504,24 +14598,6 @@
           "currentPassword"
         ]
       },
-      "DiaryCopyResult": {
-        "type": "object",
-        "properties": {
-          "copied": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 40
-          },
-          "day": {
-            "$ref": "#/components/schemas/DiaryDay"
-          }
-        },
-        "required": [
-          "copied",
-          "day"
-        ],
-        "additionalProperties": false
-      },
       "DiaryDay": {
         "type": "object",
         "properties": {
@@ -16946,6 +17022,22 @@
         ]
       },
       "KeepFrozenRequest": {
+        "type": "object",
+        "properties": {
+          "ingredientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "$ref": "#/components/schemas/CalendarDay"
+          }
+        },
+        "required": [
+          "ingredientId",
+          "date"
+        ]
+      },
+      "KeepLeftRequest": {
         "type": "object",
         "properties": {
           "ingredientId": {
@@ -19901,6 +19993,18 @@
           },
           "wasted": {
             "type": "boolean"
+          },
+          "date": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "until": {
+            "$ref": "#/components/schemas/CalendarDay"
+          },
+          "forThePantry": {
+            "type": "boolean"
+          },
+          "inPantry": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -19910,7 +20014,11 @@
           "packSize",
           "packs",
           "left",
-          "wasted"
+          "wasted",
+          "date",
+          "until",
+          "forThePantry",
+          "inPantry"
         ],
         "additionalProperties": false
       },
@@ -27012,6 +27120,210 @@
           "silent",
           "none"
         ]
+      },
+      "WrittenDiaryCopy": {
+        "type": "object",
+        "properties": {
+          "copied": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 40
+          },
+          "day": {
+            "$ref": "#/components/schemas/DiaryDay"
+          },
+          "planChange": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RebalanceResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "copied",
+          "day",
+          "planChange"
+        ],
+        "additionalProperties": false
+      },
+      "WrittenDiaryEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "profileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "mealType": {
+            "$ref": "#/components/schemas/MealType"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DiaryEntryKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "recipeId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ingredientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "productId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "productCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productSource": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "servings": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "$ref": "#/components/schemas/Unit"
+                  },
+                  "shown": {
+                    "$ref": "#/components/schemas/DisplayAmount"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "unit",
+                  "shown"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/Nutrition"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LabelNutrients"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "labelAtLeast": {
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabelNutrient"
+            }
+          },
+          "estimated": {
+            "type": "boolean"
+          },
+          "estimatedMacros": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EstimatedMacro"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "planChange": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RebalanceResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "profileId",
+          "date",
+          "mealType",
+          "kind",
+          "name",
+          "recipeId",
+          "ingredientId",
+          "productId",
+          "productCode",
+          "productSource",
+          "servings",
+          "amount",
+          "nutrition",
+          "label",
+          "labelAtLeast",
+          "estimated",
+          "estimatedMacros",
+          "createdAt",
+          "planChange"
+        ],
+        "additionalProperties": false
       },
       "emailAddress": {
         "type": "string",
