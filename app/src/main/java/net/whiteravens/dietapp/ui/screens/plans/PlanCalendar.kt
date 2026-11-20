@@ -30,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -232,17 +233,18 @@ private fun DayCell(
             Spacer(Modifier.weight(1f))
             if (day != null && day.plans > 1) Fitted("+${day.plans - 1}", quiet)
         }
+        // Every cell keeps the room of all its lines, those it does not show unseen, so that every day of the month is
+        // as tall as one that shows them all, at any size of the font.
         when {
-            day == null -> Unit
+            day == null -> Fitted("0", Color.Transparent)
             day.skipped -> Fitted("—", quiet)
             // Without grouping: a cell has the room for the figures and no more.
             else -> Fitted(day.calories.roundToInt().toString(), if (off) colors.tertiary else colors.onSurface, if (off) FontWeight.SemiBold else null)
         }
-        if (day != null && day.mealsEaten > 0) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = quiet, modifier = Modifier.size(9.dp))
-                Fitted("${day.mealsEaten}/${day.meals}", quiet)
-            }
+        val eaten = day != null && day.mealsEaten > 0
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.alpha(if (eaten) 1f else 0f)) {
+            Icon(Icons.Default.Check, contentDescription = null, tint = quiet, modifier = Modifier.size(9.dp))
+            Fitted(if (eaten) "${day!!.mealsEaten}/${day.meals}" else "0/0", quiet)
         }
     }
 }

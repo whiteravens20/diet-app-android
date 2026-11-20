@@ -621,7 +621,9 @@ class PlansTest {
         val account = Instance.newAccount()
         val profileId = Instance.newProfile(account)
         val month = YearMonth.now()
-        Instance.newPlan(account, profileId, days = 3, start = month.atDay(10))
+        val planId = Instance.newPlan(account, profileId, days = 3, start = month.atDay(10))
+        // A meal of the first day eaten: its cell says so on a line of its own.
+        Instance.markEaten(account, planId, Instance.mealAt(account, planId, 0, "breakfast").first)
         screen.signIn(account)
 
         screen.openTab(text(R.string.tab_meal_plans))
@@ -634,6 +636,9 @@ class PlansTest {
             screen.onAllNodes(dayCell(planned)).fetchSemanticsNodes().any { it.config[SemanticsProperties.ContentDescription].single() != free }
         }
         screen.keepScreenshot("plans-the-calendar")
+        // Every day of the month as tall as one that shows all its lines: one with a meal eaten, one of the plan, one free.
+        val heights = listOf(month.atDay(10), planned, month.atDay(20)).map { screen.onNode(dayCell(it)).fetchSemanticsNode().boundsInRoot.height }
+        assertEquals("the days of the calendar are as tall as each other: $heights", 1, heights.distinct().size)
         screen.onNode(dayCell(planned)).performScrollTo().performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(planned.toString())) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
         // The chip is chosen before the day is drawn: the picture waits for the day's line of macronutrients.
