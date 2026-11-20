@@ -960,6 +960,8 @@ data class OpenPack(
     val date: String = "",
     /** Given to the pantry already. */
     val inPantry: Boolean = false,
+    /** Enough is left to give the pantry: a spoonful of a pack or more; less the plan only says. */
+    val forThePantry: Boolean = false,
 )
 
 /**

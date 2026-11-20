@@ -11,7 +11,7 @@ import org.junit.Test
 /** The packs a plan leaves something in, said one line a food as the web's page says them. */
 class FoodsLeftTest {
     private fun pack(id: String, name: String, size: Double, left: Int) =
-        OpenPack(id, name, "g", size, packs = 3, left = left, wasted = left > size / 5, date = "2026-01-05")
+        OpenPack(id, name, "g", size, packs = 3, left = left, wasted = left > size / 5, date = "2026-01-05", forThePantry = left >= size / 20)
 
     @Test
     fun aFoodLeftOfInSeveralPacksIsOneLineInTheOrderTheServerGivesItsRestsAddedUp() {
@@ -49,6 +49,9 @@ class FoodsLeftTest {
 
         assertEquals(listOf(monday), food.toGive)
         assertTrue(food.given)
+        // Less than a spoonful of a pack left: nothing to give.
+        val crumbs = chicken.copy(left = 20, forThePantry = false)
+        assertEquals(emptyList<OpenPack>(), foodsLeft(listOf(crumbs), today = "2026-01-06").single().toGive)
         // The day before the first is opened, nothing is given and nothing was.
         val before = foodsLeft(listOf(monday, thursday), today = "2026-01-04").single()
         assertEquals(emptyList<OpenPack>(), before.toGive)

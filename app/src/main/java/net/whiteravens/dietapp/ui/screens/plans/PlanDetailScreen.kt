@@ -2101,8 +2101,9 @@ private fun thawItems(lines: List<ThawLine>): String = lines.map { line ->
 
 /**
  * What the menu leaves of one food's packs it does not finish: the rests of its [packs] added up, and how many of them
- * leave more than a fifth. [toGive] are those opened by today and not given to the pantry yet: before the day a pack is
- * opened, the pantry would hold what was not even bought. [given]: the pantry was given some of them.
+ * leave more than a fifth. [toGive] are those opened by today that leave a spoonful or more and were not given to the
+ * pantry yet: before the day a pack is opened, the pantry would hold what was not even bought. [given]: the pantry was
+ * given some of them.
  */
 internal data class FoodLeft(
     val name: String,
@@ -2126,7 +2127,7 @@ internal fun foodsLeft(open: List<OpenPack>, today: String = LocalDate.now().toS
             packs.sumOf { it.left },
             packs.size,
             packs.count { it.wasted },
-            toGive = packs.filter { !it.inPantry && it.date <= today },
+            toGive = packs.filter { it.forThePantry && !it.inPantry && it.date <= today },
             given = packs.any { it.inPantry },
         )
     }

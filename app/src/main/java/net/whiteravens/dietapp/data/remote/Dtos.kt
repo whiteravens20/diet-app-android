@@ -1572,6 +1572,8 @@ data class PlanOpenPackDto(
     val date: String = "",
     /** The last day it keeps once opened. */
     val until: String = "",
+    /** Enough is left to give the pantry: a spoonful of a pack (a twentieth) or more. */
+    val forThePantry: Boolean = false,
     /** Given to the pantry already ("Dodaj do spiżarni"): it is given once. */
     val inPantry: Boolean = false,
 )
