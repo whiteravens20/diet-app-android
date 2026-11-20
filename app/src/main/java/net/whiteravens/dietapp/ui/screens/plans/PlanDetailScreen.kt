@@ -496,6 +496,7 @@ fun PlanDetailScreen(
                     PlanFacts(
                         plan,
                         onReroll = openReroll.takeUnless { readOnly || busy },
+                        onKeepLeft = viewModel::keepLeft.takeUnless { readOnly || busy },
                         useUp = if (readOnly) null else {
                             {
                                 UseUpPanel(
@@ -763,7 +764,12 @@ private fun PlanActions(onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, 
  * the limits it was let go outside of, and what the pantry had to do with it.
  */
 @Composable
-private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp: (@Composable () -> Unit)?) {
+private fun PlanFacts(
+    plan: MealPlan,
+    onReroll: ((RerollStart) -> Unit)?,
+    useUp: (@Composable () -> Unit)?,
+    onKeepLeft: ((List<OpenPack>) -> Unit)? = null,
+) {
     val average = plan.averageDailyNutrition
     val target = plan.targetMacros
     AppCard {
@@ -786,7 +792,7 @@ private fun PlanFacts(plan: MealPlan, onReroll: ((RerollStart) -> Unit)?, useUp:
                 val locale = LocalConfiguration.current.locales[0]
                 Fact(stringResource(R.string.plans_joint_apart, formatList(plan.apart.map { mealTypeLabel(it).lowercase(locale) })))
             }
-            if (plan.packs.bought > 0) PacksLine(plan.packs, plan.joint?.profileName, useUp.takeIf { plan.packs.open.any { it.wasted } })
+            if (plan.packs.bought > 0) PacksLine(plan.packs, plan.joint?.profileName, useUp.takeIf { plan.packs.open.any { it.wasted } }, onKeepLeft)
             if (plan.mayGiveWay.isNotEmpty()) {
                 Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
                 if (onReroll != null) {
@@ -819,7 +825,7 @@ private fun Fact(text: String, modifier: Modifier = Modifier, color: Color = Mat
  * `together` names the other person of a joint plan, whose menu the server counts with this one: one kitchen.
  */
 @Composable
-private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable () -> Unit)?) {
+private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable () -> Unit)?, onKeepLeft: ((List<OpenPack>) -> Unit)?) {
     var open by rememberSaveable { mutableStateOf(false) }
     val percent = formatNumber((packs.used / packs.bought * 100).roundToInt())
     val wasted = packs.open.count { it.wasted }
@@ -849,7 +855,7 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
         if (open) {
             Column(Modifier.padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 if (packs.open.isEmpty() && packs.frozen.isEmpty()) Fact(stringResource(R.string.plans_packs_all_finished))
-                foodsLeft(packs.open).forEach { food -> FoodLeftLine(food) }
+                foodsLeft(packs.open).forEach { food -> FoodLeftLine(food, onKeepLeft) }
                 if (packs.frozen.isNotEmpty()) IntoFreezerLine(packs.frozen)
                 if (packs.fromFreezer.isNotEmpty()) {
                     Fact(
@@ -2093,14 +2099,36 @@ private fun thawItems(lines: List<ThawLine>): String = lines.map { line ->
     else stringResource(R.string.plans_thaw_item_meal, line.name, amount, mealTypeLabel(slot).lowercase(LocalConfiguration.current.locales[0]))
 }.joinToString("; ")
 
-/** What the menu leaves of one food's packs it does not finish: the rests of its [packs] added up, and how many of them leave more than a fifth. */
-internal data class FoodLeft(val name: String, val unit: String, val packSize: Double, val left: Int, val packs: Int, val much: Int)
+/**
+ * What the menu leaves of one food's packs it does not finish: the rests of its [packs] added up, and how many of them
+ * leave more than a fifth. [toGive] are those opened by today and not given to the pantry yet: before the day a pack is
+ * opened, the pantry would hold what was not even bought. [given]: the pantry was given some of them.
+ */
+internal data class FoodLeft(
+    val name: String,
+    val unit: String,
+    val packSize: Double,
+    val left: Int,
+    val packs: Int,
+    val much: Int,
+    val toGive: List<OpenPack> = emptyList(),
+    val given: Boolean = false,
+)
 
 /** The packs left of each food, in the order the server gives them: one line a food, its rests added up, as the web's page says them. */
-internal fun foodsLeft(open: List<OpenPack>): List<FoodLeft> =
+internal fun foodsLeft(open: List<OpenPack>, today: String = LocalDate.now().toString()): List<FoodLeft> =
     open.groupBy { it.ingredientId }.values.map { packs ->
         val first = packs.first()
-        FoodLeft(first.name, first.unit, first.packSize, packs.sumOf { it.left }, packs.size, packs.count { it.wasted })
+        FoodLeft(
+            first.name,
+            first.unit,
+            first.packSize,
+            packs.sumOf { it.left },
+            packs.size,
+            packs.count { it.wasted },
+            toGive = packs.filter { !it.inPantry && it.date <= today },
+            given = packs.any { it.inPantry },
+        )
     }
 
 /**
@@ -2108,7 +2136,7 @@ internal fun foodsLeft(open: List<OpenPack>): List<FoodLeft> =
  * fifth is left; marked where any is.
  */
 @Composable
-internal fun FoodLeftLine(food: FoodLeft) {
+internal fun FoodLeftLine(food: FoodLeft, onKeep: ((List<OpenPack>) -> Unit)? = null) {
     val left = amountLabel(food.left.toDouble(), food.unit)
     val size = amountLabel(food.packSize, food.unit)
     val packs = formatNumber(food.packs)
@@ -2119,6 +2147,17 @@ internal fun FoodLeftLine(food: FoodLeft) {
         else -> pluralStringResource(R.plurals.plans_packs_left_total_much, food.much, food.name, left, packs, size, formatNumber(food.much))
     }
     if (food.much > 0) Fact(text, color = MaterialTheme.colorScheme.tertiary) else Fact(text)
+    // "Dodaj do spiżarni": what its packs leave goes into the pantry as fresh food, once, from the day a pack is opened.
+    if (onKeep != null) {
+        if (food.toGive.isEmpty()) {
+            if (food.given) Fact(stringResource(R.string.plans_packs_in_pantry))
+        } else {
+            val giving = stringResource(R.string.plans_packs_keep_for, food.name, amountLabel(food.toGive.sumOf { it.left }.toDouble(), food.unit))
+            TextButton(onClick = { onKeep(food.toGive) }, modifier = Modifier.semantics { contentDescription = giving }) {
+                Text(stringResource(R.string.plans_packs_keep))
+            }
+        }
+    }
 }
 
 /** What the plan puts in the freezer, one item a food: each of its rests with the day it goes in, as the web's page says it. */

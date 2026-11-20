@@ -1568,6 +1568,12 @@ data class PlanOpenPackDto(
     val left: Int,
     /** More of it is left than the fifth of a pack a plan accepts. */
     val wasted: Boolean,
+    /** The day the last of them is opened; empty from a server older than this client. */
+    val date: String = "",
+    /** The last day it keeps once opened. */
+    val until: String = "",
+    /** Given to the pantry already ("Dodaj do spiżarni"): it is given once. */
+    val inPantry: Boolean = false,
 )
 
 /** What a meal takes out of the freezer, on [date]: taken out the day before, or that day where it is the plan's first. */
@@ -1621,6 +1627,10 @@ data class PlanPacksDto(
 /** "Dodaj do spiżarni" of the rest the plan freezes of [ingredientId] on [date]: what is left of it goes into the pantry as frozen, once. */
 @Serializable
 data class KeepFrozenRequest(val ingredientId: String, val date: String)
+
+/** "Dodaj do spiżarni" of what a pack the menu opens leaves: the pack by its food and the day it is opened. */
+@Serializable
+data class KeepLeftRequest(val ingredientId: String, val date: String)
 
 /** What a plan was asked for when it was made. */
 @Serializable

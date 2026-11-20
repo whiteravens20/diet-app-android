@@ -302,6 +302,9 @@
         <item quantity="one">%1$s: %2$s left in total of %3$s packs of %4$s, more than a fifth of one of them</item>
         <item quantity="other">%1$s: %2$s left in total of %3$s packs of %4$s, more than a fifth of %5$s of them</item>
     </plurals>
+    <string name="plans_packs_keep">Add to the pantry</string>
+    <string name="plans_packs_in_pantry">Added to the pantry.</string>
+    <string name="plans_packs_keep_for">Add to the pantry: %1$s, %2$s</string>
     <string name="plans_packs_all_finished">Every pack the menu opens is used up.</string>
     <string name="plans_packs_explain">Counted from the menu alone; what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>
     <string name="plans_packs_explain_freezer">Counted from the menu; what was in the freezer when the plan was made goes first, and the rest of what is at home is for the shopping list to count. A pack used to four fifths counts as used: what is left of it is no reason for another meal.</string>

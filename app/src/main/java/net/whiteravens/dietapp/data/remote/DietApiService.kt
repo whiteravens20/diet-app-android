@@ -440,6 +440,9 @@ interface DietApiService {
     @POST("meal-plans/{id}/frozen")
     suspend fun keepFrozen(@Path("id") id: String, @Body body: KeepFrozenRequest): MealPlanDto
 
+    @POST("meal-plans/{id}/left")
+    suspend fun keepLeft(@Path("id") id: String, @Body body: KeepLeftRequest): MealPlanDto
+
     /** Takes a meal off its day; the day is balanced again without it. [forAll], of a shared meal, off the other person's day too. */
     @DELETE("meal-plans/{id}/meals/{mealId}")
     suspend fun removeMeal(

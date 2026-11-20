@@ -438,7 +438,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     packs = PlanPacks(
         bought = packs.bought,
         used = packs.used,
-        open = packs.open.map { OpenPack(it.ingredientId, it.name, it.unit, it.packSize, it.packs, it.left, it.wasted) },
+        open = packs.open.map { OpenPack(it.ingredientId, it.name, it.unit, it.packSize, it.packs, it.left, it.wasted, it.date, it.inPantry) },
         frozen = packs.frozen.map { rest ->
             FrozenRest(
                 rest.ingredientId,

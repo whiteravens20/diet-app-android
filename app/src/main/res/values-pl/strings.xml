@@ -323,6 +323,9 @@
         <item quantity="many">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z %5$s ponad jedna piąta</item>
         <item quantity="other">%1$s: zostaje razem %2$s z %3$s opakowań po %4$s, z %5$s ponad jedna piąta</item>
     </plurals>
+    <string name="plans_packs_keep">Dodaj do spiżarni</string>
+    <string name="plans_packs_in_pantry">Dodano do spiżarni.</string>
+    <string name="plans_packs_keep_for">Dodaj do spiżarni: %1$s, %2$s</string>
     <string name="plans_packs_all_finished">Każde otwarte opakowanie jest zużyte do końca.</string>
     <string name="plans_packs_explain">Policzone z samego jadłospisu; to, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>
     <string name="plans_packs_explain_freezer">Policzone z jadłospisu; to, co było w zamrażarce, gdy plan powstał, idzie najpierw, a resztę tego, co jest w domu, liczy lista zakupów. Opakowanie zużyte w czterech piątych uznaje się za zużyte: to, co z niego zostaje, nie jest powodem do kolejnego posiłku.</string>

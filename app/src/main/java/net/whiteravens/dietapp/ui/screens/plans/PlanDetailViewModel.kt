@@ -28,6 +28,7 @@ import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LeftoverOffer
+import net.whiteravens.dietapp.domain.OpenPack
 import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MarkedRecipe
@@ -415,6 +416,30 @@ class PlanDetailViewModel @Inject constructor(
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
                     if (e.isPlanChanged() || (e is ApiException && e.code == "FROZEN_REST_GONE")) reload()
+                }
+        }
+    }
+
+    /**
+     * "Dodaj do spiżarni" of what one food's [packs] leave: each pack not given yet goes into the profile's pantry as
+     * fresh food, one after another, once. A pack the plan no longer leaves anything of says so and the plan is read
+     * again.
+     */
+    fun keepLeft(packs: List<OpenPack>) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            var result: Result<MealPlan>? = null
+            for (pack in packs.filter { !it.inPantry }) {
+                result = attempt { plans.keepLeft(planId, pack.ingredientId, pack.date) }
+                if (result.isFailure) break
+            }
+            val done = result ?: return@launch _state.update { it.copy(changing = false) }
+            done
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged() || (e is ApiException && e.code == "PACK_LEFT_GONE")) reload()
                 }
         }
     }

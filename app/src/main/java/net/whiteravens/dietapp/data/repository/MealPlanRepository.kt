@@ -80,6 +80,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import net.whiteravens.dietapp.data.remote.KeepFrozenRequest
+import net.whiteravens.dietapp.data.remote.KeepLeftRequest
 
 /**
  * Offline-first meal-plan access (docs/sync-strategy.md). Reads serve the Room
@@ -598,6 +599,13 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun keepFrozen(planId: String, ingredientId: String, date: String): MealPlan {
         val plan = apiCall(json) { api.keepFrozen(planId, KeepFrozenRequest(ingredientId, date)) }
+        mirror(plan)
+        return plan.toDomain()
+    }
+
+    /** "Dodaj do spiżarni" of what the pack of [ingredientId] opened on [date] leaves: into the pantry as fresh food, once. */
+    suspend fun keepLeft(planId: String, ingredientId: String, date: String): MealPlan {
+        val plan = apiCall(json) { api.keepLeft(planId, KeepLeftRequest(ingredientId, date)) }
         mirror(plan)
         return plan.toDomain()
     }

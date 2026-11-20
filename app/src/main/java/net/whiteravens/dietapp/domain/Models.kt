@@ -956,6 +956,10 @@ data class OpenPack(
     val packs: Int,
     val left: Int,
     val wasted: Boolean,
+    /** The day the last of them is opened: what names it to the server. */
+    val date: String = "",
+    /** Given to the pantry already. */
+    val inPantry: Boolean = false,
 )
 
 /**
