@@ -302,17 +302,20 @@ class PlansTest {
     @Test
     fun aPlanThatWastesNothingSaysToFreezeARestAndGivesThePantryWhatItLeavesOnce() {
         val account = Instance.newAccount()
-        val profileId = Instance.newProfile(account, dietType = "low_carb", mealCount = 3)
+        // Five meals a day: 19 of 20 plans of the week that ends today froze a rest by today, 11 of 20 with three
+        // (2026-11-20).
+        val profileId = Instance.newProfile(account, dietType = "low_carb", mealCount = 5)
         val (_, found) = Instance.planThatFreezes(account, profileId)
         val rest = checkNotNull(found) { "eight draws froze no rest of meat or fish that leaves something for the pantry" }
         screen.startSignedIn(account)
 
-        // The day the rest goes in the freezer, chosen in the calendar of plans: the plan opens at it.
+        // The day the rest goes in the freezer, chosen in the calendar of plans: the plan opens at it. A day of the week
+        // that ends today, so of this month or the one before.
         screen.openTab(text(R.string.tab_meal_plans))
         screen.waitForText(text(R.string.plans_calendar_title))
         val day = LocalDate.parse(rest.date)
         if (YearMonth.from(day) != YearMonth.now()) {
-            screen.onNode(hasContentDescription(text(R.string.plans_calendar_next))).performScrollTo().performClick()
+            screen.onNode(hasContentDescription(text(R.string.plans_calendar_previous))).performScrollTo().performClick()
         }
         val free = text(R.string.plans_calendar_day_free, spoken(day))
         screen.waitUntil(20_000) {
@@ -333,7 +336,8 @@ class PlansTest {
         screen.onAllNodes(line)[0].performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("plans-freeze-a-rest")
 
-        // "Dodaj do spiżarni" gives the pantry what the plan leaves of it, frozen, dated a month on, and only once.
+        // "Dodaj do spiżarni" gives the pantry what the plan leaves of it, frozen, dated a month from the day it went in, and
+        // only once.
         val keep = hasContentDescription(text(R.string.plans_freeze_keep_for, rest.name, "\u0000").substringBefore("\u0000"), substring = true)
         screen.onNode(keep).performScrollTo().performClick()
         screen.waitForTheApi { Instance.frozenStock(account, profileId)[rest.ingredientId]?.first == rest.left.toDouble() }

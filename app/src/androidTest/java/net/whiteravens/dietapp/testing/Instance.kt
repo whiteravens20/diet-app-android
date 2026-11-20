@@ -451,27 +451,29 @@ object Instance {
     data class FrozenOf(val ingredientId: String, val name: String, val date: String, val left: Int)
 
     /**
-     * A plan of a week from today for [profileId] that wastes nothing, made again until it freezes a rest it leaves
-     * something of for the pantry, eight times at most: the plan's id and that rest, null where no draw gave one.
+     * A plan of the week that ends today for [profileId] that wastes nothing, made again with its past days until it
+     * freezes a rest it leaves something of for the pantry, eight times at most: the plan's id and that rest, null where
+     * no draw gave one. Ending today, as the pantry is given a rest only from the day it is frozen: a plan freezes what it
+     * does not eat fresh of a pack opened in its last days (measured on 2026-11-20: of 20 plans beginning today, none
+     * froze one by today).
      */
     fun planThatFreezes(account: Account, profileId: String): Pair<String, FrozenOf?> {
         val planId = call(
             "POST",
             "meal-plans/generate",
-            JSONObject().put("profileId", profileId).put("startDate", LocalDate.now().toString()).put("durationDays", 7)
+            JSONObject().put("profileId", profileId).put("startDate", LocalDate.now().minusDays(6).toString()).put("durationDays", 7)
                 .put("lessWaste", true).put("noWaste", true),
             token = account.accessToken,
             expect = 201,
         ).getString("id")
         val frozenIn = {
             val frozen = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONObject("packs").getJSONArray("frozen")
-            (0 until frozen.length()).map(frozen::getJSONObject).firstOrNull { it.getInt("left") > 0 }?.let {
-                FrozenOf(it.getString("ingredientId"), it.getString("name"), it.getString("date"), it.getInt("left"))
-            }
+            (0 until frozen.length()).map(frozen::getJSONObject).firstOrNull { it.getInt("left") > 0 }
+                ?.let { FrozenOf(it.getString("ingredientId"), it.getString("name"), it.getString("date"), it.getInt("left")) }
         }
         repeat(8) {
             frozenIn()?.let { return planId to it }
-            call("POST", "meal-plans/$planId/regenerate", JSONObject(), token = account.accessToken, expect = 201)
+            call("POST", "meal-plans/$planId/regenerate", JSONObject().put("includePast", true), token = account.accessToken, expect = 201)
         }
         return planId to frozenIn()
     }
