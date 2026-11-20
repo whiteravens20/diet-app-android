@@ -7,18 +7,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.domain.FrozenRest
 import net.whiteravens.dietapp.domain.Thaw
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.ui.screens.plans.FreezeLine
 import net.whiteravens.dietapp.ui.theme.DietAppTheme
 import org.junit.Assert.assertEquals
@@ -29,7 +37,8 @@ import java.util.Locale
 
 /**
  * The line of a plan's day that says to freeze the rest of a pack the plan takes in several portions: every portion
- * with its day, the part for later last, joined as the language joins a list, in English and in Polish.
+ * with its day, the part for later last, joined as the language joins a list, in English and in Polish; and its
+ * "Dodaj do spiżarni", offered from the day the rest goes in the freezer.
  */
 @RunWith(AndroidJUnit4::class)
 class FreezeLineTest {
@@ -79,5 +88,22 @@ class FreezeLineTest {
             said,
         )
         compose.keepScreenshot("plans-freeze-in-portions")
+    }
+
+    @Test
+    fun aRestIsOfferedToThePantryFromTheDayThePlanFreezesIt() {
+        val keep = text(R.string.plans_freeze_keep)
+        // The rest goes in the freezer on 2026-11-17.
+        var today by mutableStateOf("2026-11-16")
+        compose.setContent {
+            DietAppTheme {
+                Surface { Column(Modifier.padding(16.dp)) { FreezeLine(rest("Chicken breast", left = 300), onKeep = {}, today = today) } }
+            }
+        }
+        // The day before: given then, the pantry would hold what was not even bought.
+        compose.onAllNodesWithText(keep).assertCountEquals(0)
+        compose.keepScreenshot("plans-freeze-a-rest-of-a-later-day")
+        today = "2026-11-17"
+        compose.onNodeWithText(keep).assertIsDisplayed()
     }
 }
