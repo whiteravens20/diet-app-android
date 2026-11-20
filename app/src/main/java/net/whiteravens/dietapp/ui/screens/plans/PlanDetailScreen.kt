@@ -2175,10 +2175,11 @@ internal fun IntoFreezerLine(frozen: List<FrozenRest>) {
 
 /**
  * A rest of meat or fish the plan freezes, said where it goes in: in the portions the plan takes later, each with its
- * day, and the one for later, frozen apart; with "Dodaj do spiżarni" for that one, or that the pantry has it.
+ * day, and the one for later, frozen apart; with "Dodaj do spiżarni" for that one from the day it is frozen (before it,
+ * the pantry would hold what was not even bought), or that the pantry has it.
  */
 @Composable
-internal fun FreezeLine(rest: FrozenRest, onKeep: ((FrozenRest) -> Unit)?) {
+internal fun FreezeLine(rest: FrozenRest, onKeep: ((FrozenRest) -> Unit)?, today: String = LocalDate.now().toString()) {
     val left = amountLabel(rest.left.toDouble(), rest.unit)
     val portions = rest.thawed.map { taken ->
         stringResource(R.string.plans_freeze_portion_on, amountLabel(taken.amount.toDouble(), rest.unit), weekdayShort(taken.date))
@@ -2189,7 +2190,7 @@ internal fun FreezeLine(rest: FrozenRest, onKeep: ((FrozenRest) -> Unit)?) {
     if (rest.left > 0) {
         if (rest.inPantry) {
             Hint(stringResource(R.string.plans_freeze_in_pantry))
-        } else {
+        } else if (rest.date <= today) {
             val named = stringResource(R.string.plans_freeze_keep_for, rest.name, left)
             TextButton(
                 onClick = { onKeep?.invoke(rest) },
