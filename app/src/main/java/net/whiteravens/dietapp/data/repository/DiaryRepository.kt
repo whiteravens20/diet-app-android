@@ -18,6 +18,7 @@ import net.whiteravens.dietapp.data.remote.DiaryMealNutritionDto
 import net.whiteravens.dietapp.data.remote.DietApiService
 import net.whiteravens.dietapp.data.remote.IngredientDto
 import net.whiteravens.dietapp.data.remote.ProductDto
+import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.UpdateDiaryEntryRequest
 import net.whiteravens.dietapp.data.remote.ExpenditureDto
 import net.whiteravens.dietapp.data.remote.ExpenditureRequest
@@ -34,6 +35,7 @@ import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.DiaryTopping
+import net.whiteravens.dietapp.domain.DiaryWritten
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Nutrition
@@ -42,6 +44,7 @@ import net.whiteravens.dietapp.domain.WeekSummary
 import net.whiteravens.dietapp.domain.WeekWater
 import net.whiteravens.dietapp.domain.WeightTrend
 import net.whiteravens.dietapp.domain.Product
+import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.ProductSource
 import java.time.Duration
 import java.time.LocalDate
@@ -112,14 +115,18 @@ class DiaryRepository @Inject constructor(
     /** The products the instance holds that have the words of [search] in their name or brand, and can go into a diary. */
     suspend fun products(search: String): List<Product> = apiCall(json) { api.searchProducts(search) }.items.map { it.toDomain() }
 
-    /** Writes [entry] for the day of [date] of [profileId]'s diary: the entry as the API keeps it, or kept to be sent in its turn. */
-    suspend fun add(profileId: String, date: LocalDate, entry: NewDiaryEntry): Submitted<DiaryEntry> {
+    /**
+     * Writes [entry] for the day of [date] of [profileId]'s diary: the entry as the API keeps it, with what it did to
+     * the plan's day, or kept to be sent in its turn.
+     */
+    suspend fun add(profileId: String, date: LocalDate, entry: NewDiaryEntry): Submitted<DiaryWritten> {
         val queued = entry.toChange(profileId, date.toString())
         return queue.submit(queued) { send(queued) }
     }
 
-    /** Sends an entry written; answers it as the API keeps it. */
-    suspend fun send(change: QueuedChange.DiaryAdded): DiaryEntry = apiCall(json) { api.addDiaryEntry(change.key, change.toRequest()) }.toDomain()
+    /** Sends an entry written; answers it as the API keeps it, with what it did to the plan's day. */
+    suspend fun send(change: QueuedChange.DiaryAdded): DiaryWritten =
+        apiCall(json) { api.addDiaryEntry(change.key, change.toRequest()) }.written()
 
     /** Changes the entry [id] of [profileId]'s diary: the entry as the API keeps it now, or kept to be sent in its turn. */
     suspend fun change(
@@ -130,29 +137,29 @@ class DiaryRepository @Inject constructor(
         quantity: Double?,
         name: String? = null,
         nutrition: DiaryMealNutritionChangeDto? = null,
-    ): Submitted<DiaryEntry> {
+    ): Submitted<DiaryWritten> {
         val queued = QueuedChange.DiaryChanged(profileId, id, slot, servings, quantity, name, nutrition)
         return queue.submit(queued) { send(queued) }
     }
 
-    /** Sends an entry's change; answers it as the API keeps it now. */
-    suspend fun send(change: QueuedChange.DiaryChanged): DiaryEntry =
+    /** Sends an entry's change; answers it as the API keeps it now, with what it did to the plan's day. */
+    suspend fun send(change: QueuedChange.DiaryChanged): DiaryWritten =
         apiCall(json) {
             api.changeDiaryEntry(
                 change.id,
                 UpdateDiaryEntryRequest(change.slot, change.servings, change.quantity, name = change.name, nutrition = change.nutrition),
             )
-        }.toDomain()
+        }.written()
 
     /**
      * Moves the entry [id] of a product to [productId], a product of the reader's own, as when they
      * correct what the base says: its figures are that label's, for the same amount or [quantity]. It
      * needs a network, as writing that product did.
      */
-    suspend fun toOwnProduct(id: String, productId: String, slot: String?, quantity: Double?): DiaryEntry =
+    suspend fun toOwnProduct(id: String, productId: String, slot: String?, quantity: Double?): DiaryWritten =
         apiCall(json) {
             api.changeDiaryEntry(id, UpdateDiaryEntryRequest(mealType = slot, quantity = quantity, productId = productId))
-        }.toDomain()
+        }.written()
 
     /** Takes the entry [id] out of [profileId]'s diary, or keeps that to be sent in its turn. */
     suspend fun remove(profileId: String, id: String): Submitted<Unit> {
@@ -171,7 +178,7 @@ class DiaryRepository @Inject constructor(
     suspend fun copy(profileId: String, from: LocalDate, to: LocalDate): DiaryCopied {
         val answer = apiCall(json) { api.copyDiaryDay(UUID.randomUUID().toString(), CopyDiaryDayRequest(profileId, from.toString(), to.toString())) }
         keep(answer.day)
-        return DiaryCopied(answer.copied, answer.day.toDomain())
+        return DiaryCopied(answer.copied, answer.day.toDomain(), answer.planChange?.toRebalanced())
     }
 
     /** Keeps the day read, and forgets those read long enough ago. */
@@ -244,6 +251,12 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
     eatenLabel = eatenLabel?.toDomain(),
     labelNotes = labelNotes.toNotes(),
 )
+
+/** An entry as it was written or changed, with what it did to the day of the plan the diary shows. */
+private fun DiaryEntryDto.written() = DiaryWritten(toDomain(), planChange?.toRebalanced())
+
+/** What a change of the diary did to a plan's day, as a change of the plan says it. */
+private fun RebalanceResultDto.toRebalanced() = Rebalanced(plan.toDomain(), rebalance?.toDomain(), fallbackReason = null)
 
 internal fun DiaryEntryDto.toDomain() = DiaryEntry(
     id = id,

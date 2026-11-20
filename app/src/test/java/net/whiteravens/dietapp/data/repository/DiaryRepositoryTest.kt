@@ -207,7 +207,27 @@ class DiaryRepositoryTest {
         assertEquals(setOf("profileId", "date", "mealType", "kind", "recipeId", "servings"), body.keys)
         assertEquals("recipe", body.getValue("kind").jsonPrimitive.content)
         assertEquals(1.5, body.getValue("servings").jsonPrimitive.double, 0.0)
-        assertEquals(339.0, (submitted as Submitted.Sent).answer.calories)
+        assertEquals(339.0, (submitted as Submitted.Sent).answer.entry.calories)
+    }
+
+    @Test
+    fun `an entry of today is read back with what it did to the day of the plan the diary shows`() {
+        server.enqueue(answer(201, "diary-entry-plan-resized"))
+
+        val submitted = runBlocking { repository().add(profileId, day, NewDiaryEntry.OwnMeal("snack", "Cake", 1.0, 300.0, null, null, null)) }
+
+        val written = (submitted as Submitted.Sent).answer
+        assertEquals("5989d1d5-4db2-4d1e-88b0-ca11e4a173a8", written.planChange?.plan?.id)
+        assertNotNull(written.planChange?.rebalance)
+    }
+
+    @Test
+    fun `an entry the plan does not follow is read back with no change of it`() {
+        server.enqueue(answer(201, "diary-entry-recipe"))
+
+        val submitted = runBlocking { repository().add(profileId, day, NewDiaryEntry.OfRecipe("breakfast", "r", "Bites", 226.0, 1.5)) }
+
+        assertNull((submitted as Submitted.Sent).answer.planChange)
     }
 
     @Test
@@ -299,7 +319,7 @@ class DiaryRepositoryTest {
         assertEquals("meal", body.getValue("kind").jsonPrimitive.content)
         assertEquals("Grandma's soup", body.getValue("name").jsonPrimitive.content)
         assertEquals(setOf("calories"), body.getValue("nutrition").jsonObject.keys)
-        assertTrue((submitted as Submitted.Sent).answer.estimated)
+        assertTrue((submitted as Submitted.Sent).answer.entry.estimated)
     }
 
     @Test
@@ -352,7 +372,7 @@ class DiaryRepositoryTest {
         assertEquals("PATCH", sent.method)
         assertEquals("/api/diary/entries/e", sent.requestUrl!!.encodedPath)
         assertEquals(setOf("mealType", "quantity"), sent.bodyJson().keys)
-        val answer = (submitted as Submitted.Sent).answer
+        val answer = (submitted as Submitted.Sent).answer.entry
         assertEquals("lunch", answer.slot)
         assertEquals(300.0, answer.amount?.quantity)
         assertEquals(58.0, answer.calories)
@@ -362,7 +382,7 @@ class DiaryRepositoryTest {
     fun `an entry of a product goes on to a product of one's own at once, by that product's id, with the meal asked for`() {
         server.enqueue(answer(200, "diary-entry-changed"))
 
-        val entry = runBlocking { repository().toOwnProduct("e", "p", "lunch", null) }
+        val entry = runBlocking { repository().toOwnProduct("e", "p", "lunch", null) }.entry
 
         val sent = server.takeRequest()
         assertEquals("PATCH", sent.method)

@@ -160,7 +160,14 @@ data class DiaryIngredient(
 )
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */
-data class DiaryCopied(val copied: Int, val day: DiaryDay)
+data class DiaryCopied(val copied: Int, val day: DiaryDay, val planChange: Rebalanced? = null)
+
+/**
+ * An entry as the server wrote or changed it, with what that did to the day of the plan the diary shows: where the
+ * entry is of today, the day is sized again with it counted as eaten, as a meal of one's own added to the plan sizes
+ * it ([planChange]); null for another day or a day without a plan.
+ */
+data class DiaryWritten(val entry: DiaryEntry, val planChange: Rebalanced?)
 
 /**
  * A product with a barcode, as an entry takes it. Its figures are those of its label, in 100 of its

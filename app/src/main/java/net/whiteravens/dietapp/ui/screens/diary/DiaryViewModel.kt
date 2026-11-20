@@ -531,7 +531,7 @@ class DiaryViewModel @Inject constructor(
                 .onSuccess { submitted ->
                     // Kept to be sent: shown among the entries as one of the changes waiting.
                     _state.update { it.copy(sending = false, form = null, showProblems = false, offline = it.offline || (submitted as? Submitted.Kept)?.offline == true) }
-                    if (submitted is Submitted.Sent) read(showLoading = false)
+                    if (submitted is Submitted.Sent) planChanged(submitted.answer.planChange)
                 }
                 .onFailure(::windowRefused)
         }
@@ -574,7 +574,7 @@ class DiaryViewModel @Inject constructor(
             attempt { diary.change(profileId, edit.entry.id, edit.newSlot, edit.newServings, edit.newQuantity, edit.newName, edit.newNutrition) }
                 .onSuccess { submitted ->
                     _state.update { it.copy(sending = false, edit = null, showProblems = false, offline = it.offline || (submitted as? Submitted.Kept)?.offline == true) }
-                    if (submitted is Submitted.Sent) read(showLoading = false)
+                    if (submitted is Submitted.Sent) planChanged(submitted.answer.planChange)
                 }
                 .onFailure(::windowRefused)
         }
@@ -602,9 +602,9 @@ class DiaryViewModel @Inject constructor(
         _state.update { it.copy(sending = true, windowError = null, failed = null, copied = null, resizeLeft = null) }
         viewModelScope.launch {
             attempt { diary.toOwnProduct(edit.entry.id, product.id, edit.newSlot, edit.newQuantity) }
-                .onSuccess {
+                .onSuccess { written ->
                     _state.update { it.copy(sending = false, edit = null, showProblems = false) }
-                    read(showLoading = false)
+                    planChanged(written.planChange)
                 }
                 .onFailure { failure ->
                     _state.update { it.copy(edit = it.edit?.copy(found = null)) }
@@ -757,6 +757,14 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
+    /**
+     * What a change of the diary did to the day of the plan it shows: an entry of today sizes it again, as a meal of
+     * one's own does there, said as a change of the plan is; the day is read again either way.
+     */
+    private fun planChanged(change: Rebalanced?) {
+        if (change != null) rebalanced(change.plan.id, change) else read(showLoading = false)
+    }
+
     /** What a change of the plan left: said where it scaled a meal; a press to resize that moved nothing says what is left. */
     private fun rebalanced(planId: String, answer: Rebalanced, said: Boolean = true, resizing: Boolean = false) {
         val rebalance = answer.rebalance
@@ -796,6 +804,8 @@ class DiaryViewModel @Inject constructor(
                     _state.update {
                         it.copy(copying = false, copyOpen = false, day = copied.day, copied = Copied(from, copied.copied), readAt = System.currentTimeMillis(), offline = false)
                     }
+                    // A copy into today sizes the plan's day again, as an entry does.
+                    copied.planChange?.let { rebalanced(it.plan.id, it) }
                 }
                 .onFailure { e -> _state.update { it.copy(copying = false, failed = Failure.COPY to e) } }
         }

@@ -2571,6 +2571,11 @@ data class DiaryEntryDto(
     val estimated: Boolean,
     /** Of a meal of one's own, which macronutrients (`protein`, `fat`, `carbs`) were estimated. */
     val estimatedMacros: List<String> = emptyList(),
+    /**
+     * Of an entry as it is written or changed (`WrittenDiaryEntry`): where it is of today, what it did to the day of
+     * the plan the diary shows, sized again with the entry counted as eaten; null otherwise, and in a day's list.
+     */
+    val planChange: RebalanceResultDto? = null,
 )
 
 /** What a day aims at: the target of the plan's day, or the profile's own ([from] `plan` | `profile`). */
@@ -2637,4 +2642,9 @@ data class DiaryDayDto(
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */
 @Serializable
-data class DiaryCopyResultDto(val copied: Int, val day: DiaryDayDto)
+data class DiaryCopyResultDto(
+    val copied: Int,
+    val day: DiaryDayDto,
+    /** Where the copy is into today, what it did to the day of the plan the diary shows (`WrittenDiaryCopy`). */
+    val planChange: RebalanceResultDto? = null,
+)

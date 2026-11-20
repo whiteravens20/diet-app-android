@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.domain.DiaryDayPlan
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.DiaryWritten
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.Meal
@@ -154,6 +155,7 @@ class DiaryViewModelTest {
 
     /** A plan of one day, which holds the meals [changes] speak of. */
     private fun planHolding(changes: List<ScaleChange>) = mockk<MealPlan> {
+        every { id } returns "p"
         every { days } returns listOf(
             mockk<PlanDay> {
                 every { meals } returns changes.map { change -> mockk<Meal> { every { id } returns change.mealId } }
@@ -385,7 +387,7 @@ class DiaryViewModelTest {
 
     @Test
     fun `an entry written with a network closes the window, and the day is read anew`() {
-        coEvery { diary.add(any(), any(), any()) } returns Submitted.Sent(entry("new"))
+        coEvery { diary.add(any(), any(), any()) } returns Submitted.Sent(DiaryWritten(entry("new"), null))
         val model = model()
         model.openWindow("dinner")
         model.typeOwnMeal()
@@ -396,6 +398,24 @@ class DiaryViewModelTest {
         coVerify { diary.add("a", today, NewDiaryEntry.OwnMeal("dinner", "Soup", 1.0, 300.0, null, null, null)) }
         assertNull(model.state.value.form)
         assertEquals(300.0, model.state.value.day?.eaten?.calories)
+    }
+
+    @Test
+    fun `an entry of today sizes the day of the plan again, said as a change of the plan is, with the way back`() {
+        val change = ScaleChange("n", 1.0, 0.8)
+        val answer = rebalanced(change)
+        coEvery { diary.add(any(), any(), any()) } returns Submitted.Sent(DiaryWritten(entry("new"), answer))
+        coEvery { plans.undo("p", answer.rebalance!!) } returns rebalanced()
+        val model = model()
+        model.openWindow("dinner")
+        model.typeOwnMeal()
+
+        model.addEntry()
+
+        assertEquals(answer.rebalance, model.state.value.rebalance)
+        assertEquals("p", model.state.value.rebalancedPlan)
+        model.undoRebalance()
+        coVerify { plans.undo("p", answer.rebalance!!) }
     }
 
     @Test
@@ -584,7 +604,7 @@ class DiaryViewModelTest {
 
     @Test
     fun `an entry changed goes by what changes, and the day is read anew`() {
-        coEvery { diary.change(any(), any(), any(), any(), any()) } returns Submitted.Sent(entry("e"))
+        coEvery { diary.change(any(), any(), any(), any(), any()) } returns Submitted.Sent(DiaryWritten(entry("e"), null))
         val model = model()
         val e = entry("e")
 
@@ -750,7 +770,7 @@ class DiaryViewModelTest {
         val entry = DiaryEntry("e", "snack", "product", "Mleko, Mlekovita", null, DiaryAmount(250.0, "ml", 250.0, "ml"), 150.0, null, false, ProductSource.OPEN_FOOD_FACTS, "5900512320359")
         val mine = milk.copy(id = "m", name = "Moje mleko", source = ProductSource.OWN, correction = true)
         coEvery { diary.product("5900512320359") } returns milk andThen mine
-        coEvery { diary.toOwnProduct("e", any(), any(), any()) } returns entry.copy(productSource = ProductSource.OWN)
+        coEvery { diary.toOwnProduct("e", any(), any(), any()) } returns DiaryWritten(entry.copy(productSource = ProductSource.OWN), null)
         val model = model()
         model.openEdit(entry)
         assertTrue(model.state.value.edit!!.correctable)
