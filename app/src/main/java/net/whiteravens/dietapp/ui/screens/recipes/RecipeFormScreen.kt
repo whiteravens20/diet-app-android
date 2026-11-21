@@ -69,6 +69,8 @@ import net.whiteravens.dietapp.ui.common.unitName
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.ScreenHeader
+import net.whiteravens.dietapp.ui.components.FieldRow
+import net.whiteravens.dietapp.ui.components.SideBySide
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
@@ -145,6 +147,12 @@ fun RecipeFormScreen(
     }
 }
 
+/** Servings, preparation and cooking: the width they need side by side at the font's usual size, the unit in each frame. */
+internal val SERVINGS_AND_TIMES = FieldRow(296.dp, 2f, 3f, 3f)
+
+/** How hard a recipe is and its cuisine: the width the hardest word and the longest cuisine need side by side at the font's usual size. */
+internal val DIFFICULTY_AND_CUISINE = FieldRow(336.dp, 3f, 5f)
+
 /**
  * What the recipe is called and what it is, the meals it suits, its servings and times, how hard it is, its kitchen,
  * and what the dish is: its taste, form and starch base, as [proposed] from the title and the ingredients until chosen.
@@ -169,38 +177,52 @@ private fun AboutCard(form: RecipeForm, marks: RecipeMarks, onEdit: RecipeEdit, 
                 problem = refused[RecipeField.DESCRIPTION]?.let { refusalOf(it, Bound.Characters) },
             )
             MealsField(form.mealTypes, refused[RecipeField.MEALS], onEdit)
-            FormField(
-                value = form.servings,
-                onValueChange = { typed -> onEdit { it.copy(servings = typed) } },
-                label = stringResource(R.string.own_recipe_field_servings),
-                problem = numberMark(RecipeField.SERVINGS in marks.notWhole, refused[RecipeField.SERVINGS], Bound.Number(), whole = true),
-            )
-            FormField(
-                value = form.prepMinutes,
-                onValueChange = { typed -> onEdit { it.copy(prepMinutes = typed) } },
-                label = stringResource(R.string.own_recipe_field_prep),
-                problem = numberMark(RecipeField.PREP in marks.notWhole, refused[RecipeField.PREP], Bound.Number(), whole = true),
-            )
-            FormField(
-                value = form.cookMinutes,
-                onValueChange = { typed -> onEdit { it.copy(cookMinutes = typed) } },
-                label = stringResource(R.string.own_recipe_field_cook),
-                problem = numberMark(RecipeField.COOK in marks.notWhole, refused[RecipeField.COOK], Bound.Number(), whole = true),
-            )
-            ChoiceField(
-                label = stringResource(R.string.recipes_difficulty),
-                options = DIFFICULTIES,
-                selected = form.difficulty,
-                optionLabel = { difficultyLabel(it) },
-                onSelect = { chosen -> onEdit { it.copy(difficulty = chosen) } },
-            )
-            ChoiceField(
-                label = stringResource(R.string.recipes_cuisine),
-                options = listOf<String?>(null) + ProfileChoices.CUISINES,
-                selected = form.cuisine,
-                optionLabel = { cuisine -> if (cuisine == null) stringResource(R.string.own_recipe_cuisine_none) else cuisineLabel(cuisine) },
-                onSelect = { chosen -> onEdit { it.copy(cuisine = chosen) } },
-            )
+            // How many servings and how long, side by side where the three fit at the font's size; one under another where not.
+            val minutes = stringResource(R.string.unit_min)
+            SideBySide(SERVINGS_AND_TIMES) { place ->
+                FormField(
+                    value = form.servings,
+                    onValueChange = { typed -> onEdit { it.copy(servings = typed) } },
+                    label = stringResource(R.string.own_recipe_field_servings),
+                    problem = numberMark(RecipeField.SERVINGS in marks.notWhole, refused[RecipeField.SERVINGS], Bound.Number(), whole = true),
+                    modifier = place(0),
+                )
+                FormField(
+                    value = form.prepMinutes,
+                    onValueChange = { typed -> onEdit { it.copy(prepMinutes = typed) } },
+                    label = stringResource(R.string.own_recipe_field_prep),
+                    problem = numberMark(RecipeField.PREP in marks.notWhole, refused[RecipeField.PREP], Bound.Number(), whole = true),
+                    suffix = minutes,
+                    modifier = place(1),
+                )
+                FormField(
+                    value = form.cookMinutes,
+                    onValueChange = { typed -> onEdit { it.copy(cookMinutes = typed) } },
+                    label = stringResource(R.string.own_recipe_field_cook),
+                    problem = numberMark(RecipeField.COOK in marks.notWhole, refused[RecipeField.COOK], Bound.Number(), whole = true),
+                    suffix = minutes,
+                    modifier = place(2),
+                )
+            }
+            // How hard it is and its cuisine side by side where the longest cuisine fits beside the hardest word; one under the other where not.
+            SideBySide(DIFFICULTY_AND_CUISINE) { place ->
+                ChoiceField(
+                    label = stringResource(R.string.recipes_difficulty),
+                    options = DIFFICULTIES,
+                    selected = form.difficulty,
+                    optionLabel = { difficultyLabel(it) },
+                    onSelect = { chosen -> onEdit { it.copy(difficulty = chosen) } },
+                    modifier = place(0),
+                )
+                ChoiceField(
+                    label = stringResource(R.string.recipes_cuisine),
+                    options = listOf<String?>(null) + ProfileChoices.CUISINES,
+                    selected = form.cuisine,
+                    optionLabel = { cuisine -> if (cuisine == null) stringResource(R.string.own_recipe_cuisine_none) else cuisineLabel(cuisine) },
+                    onSelect = { chosen -> onEdit { it.copy(cuisine = chosen) } },
+                    modifier = place(1),
+                )
+            }
             TraitsFields(form, proposed, onEdit)
         }
     }

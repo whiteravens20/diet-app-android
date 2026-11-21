@@ -157,6 +157,7 @@
     <string name="macro_carbs">Carbs</string>
     <string name="unit_kcal">kcal</string>
     <string name="unit_g" translatable="false">g</string>
+    <string name="unit_min" translatable="false">min</string>
 
     <!-- Fibre, sugars, salt and saturated fat, as labels give them -->
     <string name="label_fiber">Fibre</string>
@@ -676,8 +677,8 @@
     <string name="own_recipe_field_description">Description</string>
     <string name="own_recipe_field_meals">Meals it suits</string>
     <string name="own_recipe_field_servings">Servings</string>
-    <string name="own_recipe_field_prep">Preparation (min)</string>
-    <string name="own_recipe_field_cook">Cooking (min)</string>
+    <string name="own_recipe_field_prep">Preparation</string>
+    <string name="own_recipe_field_cook">Cooking</string>
     <string name="own_recipe_cuisine_none">None in particular</string>
     <string name="own_recipe_traits_legend">What the dish is</string>
     <string name="own_recipe_traits_hint">Filled in from the title and the ingredients. It decides what may be put on the plate beside the dish in a joint plan; correct it if it is wrong.</string>
