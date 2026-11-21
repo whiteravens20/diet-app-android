@@ -117,10 +117,10 @@ class FigureLinesTest {
     private fun shown(text: String): String = text.replace("\\u00A0", "\u00A0")
 
     @Test
-    fun `every line of macronutrients of a language the app ships breaks only after a dot, its opening words aside`() {
+    fun `every line of figures of a language the app ships breaks only after a dot, its opening words aside`() {
         for (folder in folders) {
             val loose = texts(folder)
-                .filterKeys { "macros" in it }
+                .filterKeys { "macros" in it || "figures" in it }
                 .mapValues { (_, text) -> shown(text) }
                 .filterValues { DOT in it && it.substringAfterLast(": ").split(DOT).any { pair -> ' ' in pair } }
                 .keys.toList()
