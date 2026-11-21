@@ -1824,6 +1824,7 @@
     <string name="diary_rebalance_note">The meals from recipes that are not eaten get other portions, so that the day comes as close to its target as it can. The entries, the eaten meals and the meals of your own stay as they are.</string>
     <string name="diary_plan_past_note">This day is over. If the plan still has days from today on, what it is off by can be spread over them on the plan\'s page.</string>
     <string name="diary_open_plan">Open the plan</string>
+    <string name="diary_open_meal">Open the meal</string>
     <string name="diary_from_plan">From the plan</string>
     <string name="diary_eaten_of">Eaten: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>

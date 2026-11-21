@@ -83,6 +83,9 @@ class PlanDetailViewModel @Inject constructor(
     /** The day the plan opens at, where the route names one (yyyy-MM-dd): the calendar's day that was chosen. */
     private val openAt: String? = savedStateHandle.get<String>(PlanDetailRoute::day.name)
 
+    /** The meal the plan was opened for, from the diary: its window opens at once, and closing it goes back. */
+    val askedMeal: String? = savedStateHandle.get<String>(PlanDetailRoute::meal.name)
+
     /** A re-roll refused for something the user can allow: a lock that may no longer hold to drop ([DROP_LOCKS]), or days that have passed to make again too ([INCLUDE_PAST]). */
     data class Refused(val reroll: Reroll, val allow: String)
 

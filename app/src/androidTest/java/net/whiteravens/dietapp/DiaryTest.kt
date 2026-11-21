@@ -280,6 +280,16 @@ class DiaryTest {
         screen.waitForTheApi { Instance.firstMealEaten(account, planId) }
         screen.waitUntil(20_000) { screen.onAllNodes(eaten and isOn()).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("diary-a-meal-of-the-plan-eaten")
+
+        // A meal of the plan opens from the diary in its window, as the plan shows it; closing the window comes back to
+        // the diary.
+        screen.onAllNodes(hasText(shown(title), substring = true) and hasClickAction())[0].performScrollTo().performClick()
+        val inTheWindow = hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(text(R.string.recipes_ingredients)) and inTheWindow).fetchSemanticsNodes().isNotEmpty() }
+        screen.keepScreenshot("diary-a-meal-of-the-plan-opened")
+        screen.onNode(hasText(text(R.string.common_close)) and inTheWindow).performClick()
+        screen.waitForText(text(R.string.diary_subhead))
+        screen.onAllNodes(eaten)[0].assertExists()
     }
 
     @Test

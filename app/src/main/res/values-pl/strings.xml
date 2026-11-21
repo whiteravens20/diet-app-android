@@ -1966,6 +1966,7 @@
     <string name="diary_rebalance_note">Niezjedzone posiłki z przepisów dostaną inne porcje, żeby dzień jak najbardziej zbliżył się do celu. Wpisy, zjedzone posiłki i własne posiłki zostają bez zmian.</string>
     <string name="diary_plan_past_note">Ten dzień już minął. Jeśli plan ma jeszcze dni od dziś, na stronie planu można rozłożyć na nie różnicę.</string>
     <string name="diary_open_plan">Otwórz plan</string>
+    <string name="diary_open_meal">Otwórz posiłek</string>
     <string name="diary_from_plan">Z planu</string>
     <string name="diary_eaten_of">Zjedzone: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>

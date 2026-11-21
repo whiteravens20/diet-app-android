@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.diary
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,12 +41,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -112,6 +115,8 @@ fun DiaryScreen(
     onBack: () -> Unit,
     onProfiles: () -> Unit,
     onOpenPlan: (planId: String, day: String) -> Unit,
+    /** A meal of the day's plan, opened in its window as the plan shows it. */
+    onOpenMeal: (planId: String, day: String, mealId: String) -> Unit = { _, _, _ -> },
     onEditProfile: (profileId: String) -> Unit = {},
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -242,7 +247,7 @@ fun DiaryScreen(
                                 }
                             }
 
-                            else -> day(state, viewModel, onOpenPlan, onEditProfile, hidden) { viewModel.remove(it, undoFor) }
+                            else -> day(state, viewModel, onOpenPlan, onOpenMeal, onEditProfile, hidden) { viewModel.remove(it, undoFor) }
                         }
                     }
                 }
@@ -271,6 +276,7 @@ private fun LazyListScope.day(
     state: DiaryViewModel.UiState,
     viewModel: DiaryViewModel,
     onOpenPlan: (planId: String, day: String) -> Unit,
+    onOpenMeal: (planId: String, day: String, mealId: String) -> Unit,
     onEditProfile: (profileId: String) -> Unit,
     hidden: Set<Any>,
     onRemove: (DiaryEntry) -> Unit,
@@ -315,6 +321,9 @@ private fun LazyListScope.day(
             state = state,
             onAdd = { viewModel.openWindow(slot) },
             onEaten = viewModel::setEaten,
+            // A meal of the plan opens in its window, as the plan shows it; one of one's own still waiting to be sent is
+            // not on the server's plan yet.
+            onOpen = state.day?.plan?.id?.let { planId -> { meal: DiaryPlanMeal -> onOpenMeal(planId, state.date.toString(), meal.id) } },
             onEdit = viewModel::openEdit,
             onRemove = onRemove,
         )
@@ -496,6 +505,7 @@ private fun MealSection(
     state: DiaryViewModel.UiState,
     onAdd: () -> Unit,
     onEaten: (DiaryPlanMeal) -> Unit,
+    onOpen: ((DiaryPlanMeal) -> Unit)?,
     onEdit: (DiaryEntry) -> Unit,
     onRemove: (DiaryEntry) -> Unit,
 ) {
@@ -513,7 +523,13 @@ private fun MealSection(
         AppCard {
             meals.forEachIndexed { index, meal ->
                 if (index > 0) HorizontalDivider()
-                PlanMealRow(meal, waiting = meal.id in state.waitingMeals, enabled = !state.changing && !state.ahead && meal.id !in state.waitingOwnMeals, onEaten = { onEaten(meal) })
+                PlanMealRow(
+                    meal,
+                    waiting = meal.id in state.waitingMeals,
+                    enabled = !state.changing && !state.ahead && meal.id !in state.waitingOwnMeals,
+                    onEaten = { onEaten(meal) },
+                    onOpen = onOpen?.takeIf { meal.id !in state.waitingOwnMeals }?.let { open -> { open(meal) } },
+                )
             }
             entries.forEachIndexed { index, entry ->
                 if (index > 0 || meals.isNotEmpty()) HorizontalDivider()
@@ -530,13 +546,16 @@ private fun MealSection(
     }
 }
 
-/** A meal of the plan: its name, that it is the plan's, what it comes to, and whether it was eaten. */
+/** A meal of the plan: its name, that it is the plan's, what it comes to, and whether it was eaten; a press on it opens it. */
 @Composable
-private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean, onEaten: () -> Unit) {
+private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean, onEaten: () -> Unit, onOpen: (() -> Unit)?) {
     val eaten = stringResource(R.string.diary_eaten_of, meal.name)
+    val opens = stringResource(R.string.diary_open_meal)
     Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(meal.name, style = MaterialTheme.typography.bodyMedium)
+        // A press on what it is opens it as the plan shows it: its amounts, its steps, its label.
+        Column(Modifier.weight(1f).then(if (onOpen != null) Modifier.clickable(role = Role.Button, onClickLabel = opens, onClick = onOpen) else Modifier)) {
+            // Green where it opens, as the app's text buttons and the web's names are.
+            Text(meal.name, style = MaterialTheme.typography.bodyMedium, color = if (onOpen != null) MaterialTheme.colorScheme.primary else Color.Unspecified)
             // A portion of a shared pot is the plan's, which a split by weight comes only near; its words hold its figure
             // to its unit themselves, and the rest of them may break as words do.
             val kcal = meal.calories?.let {

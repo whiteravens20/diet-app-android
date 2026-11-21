@@ -183,7 +183,8 @@ fun PlanDetailScreen(
     // Read again on being shown again: the plan may have been changed elsewhere in the meantime.
     WhenShownAgain(viewModel::shownAgain)
     val plan = state.shown
-    var openMealId by rememberSaveable { mutableStateOf<String?>(null) }
+    // The meal whose window is open; the one the plan was opened for, from the diary, at once.
+    var openMealId by rememberSaveable { mutableStateOf(viewModel.askedMeal) }
     // The day a meal of one's own is being added to, while its form is open.
     var addingTo by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
@@ -336,7 +337,8 @@ fun PlanDetailScreen(
             ownName = state.profileName ?: stringResource(R.string.plans_portion_you),
             dietType = plan.dietType,
             onOpenRecipe = meal.recipeId?.let { id -> { openMealId = null; onOpenRecipe(id, toCook.servings, toCook.whole) } },
-            onDismiss = { openMealId = null },
+            // The window opened for the diary goes back to it on closing: the plan was only its way there.
+            onDismiss = { if (openMealId == viewModel.askedMeal) onBack() else openMealId = null },
         )
     }
 

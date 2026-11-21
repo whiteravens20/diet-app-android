@@ -102,7 +102,7 @@ import kotlin.reflect.KClass
 
 @Serializable object DashboardRoute
 @Serializable object PlansRoute
-@Serializable data class PlanDetailRoute(val planId: String, val day: String? = null)
+@Serializable data class PlanDetailRoute(val planId: String, val day: String? = null, val meal: String? = null)
 @Serializable object RecipesRoute
 @Serializable data class RecipeDetailRoute(val recipeId: String, val portion: String? = null, val whole: Boolean = false)
 @Serializable data class RecipeFormRoute(val recipeId: String? = null)
@@ -382,6 +382,7 @@ private fun MainScaffold(
                         onBack = { navController.popBackStack() },
                         onProfiles = { navController.navigate(ProfilesRoute) },
                         onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
+                        onOpenMeal = { planId, day, meal -> navController.navigate(PlanDetailRoute(planId, day, meal)) },
                         onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId)) },
                     )
                 }
