@@ -9,7 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -150,6 +149,8 @@ import net.whiteravens.dietapp.ui.components.NameAndTrail
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenDialog
+import net.whiteravens.dietapp.ui.components.FieldRow
+import net.whiteravens.dietapp.ui.components.SideBySide
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.aiOffText
@@ -1449,8 +1450,8 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
  * anything is sent, so that nobody types the whole meal as one serving of several. A field the API
  * refused says why, from what came of the meal [sent] last.
  */
-/** The width three fields of grams need side by side at the font's usual size. */
-private val MACROS_SIDE_BY_SIDE = 288.dp
+/** The three macronutrients of a meal of one's own: the width their fields of grams need side by side at the font's usual size. */
+internal val MACROS_SIDE_BY_SIDE = FieldRow(288.dp, 1f, 1f, 1f)
 
 @Composable
 private fun CustomMealDialog(
@@ -1537,18 +1538,10 @@ private fun CustomMealDialog(
                 Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
                 // The three macronutrients side by side, in grams, where they fit at the font's size; one under another where not.
                 val grams = stringResource(R.string.unit_g)
-                BoxWithConstraints {
-                    @Composable
-                    fun Macros(cell: Modifier) {
-                        Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = cell)
-                        Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = cell)
-                        Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = cell)
-                    }
-                    if (maxWidth >= MACROS_SIDE_BY_SIDE * LocalDensity.current.fontScale) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Macros(Modifier.weight(1f)) }
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { Macros(Modifier) }
-                    }
+                SideBySide(MACROS_SIDE_BY_SIDE) { place ->
+                    Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = place(0))
+                    Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = place(1))
+                    Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = place(2))
                 }
                 Amount(
                     form.servings,

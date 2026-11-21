@@ -8,7 +8,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +31,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -53,7 +51,9 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.DateField
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.FieldRow
 import net.whiteravens.dietapp.ui.components.ScreenHeader
+import net.whiteravens.dietapp.ui.components.SideBySide
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
@@ -65,8 +65,8 @@ import net.whiteravens.dietapp.ui.screens.profiles.SupplyNote
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
-/** The width a date and a length need side by side at the font's usual size. */
-private val DATE_AND_LENGTH = 296.dp
+/** When a plan begins and for how long: the width both need side by side at the font's usual size, the date taking more. */
+internal val DATE_AND_LENGTH = FieldRow(296.dp, 3f, 2f)
 
 /**
  * A new plan for a profile: from a day, for some days, with what it is made for where that differs
@@ -108,34 +108,20 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                 AppCard {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         // When it begins and for how long, side by side where both fit at the font's size; one under the other where not.
-                        BoxWithConstraints {
-                            @Composable
-                            fun Begins(cell: Modifier) = DateField(
+                        SideBySide(DATE_AND_LENGTH) { place ->
+                            DateField(
                                 stringResource(R.string.plans_start_date),
                                 form.startDate,
                                 onPick = { day -> viewModel.edit { it.copy(startDate = day) } },
-                                modifier = cell,
+                                modifier = place(0),
                             )
-
-                            @Composable
-                            fun Lasts(cell: Modifier) = FormField(
+                            FormField(
                                 value = form.durationDays,
                                 onValueChange = { typed -> viewModel.edit { it.copy(durationDays = typed) } },
                                 label = stringResource(R.string.plans_duration_days),
-                                modifier = cell,
+                                modifier = place(1),
                                 problem = numberProblem(PlanField.DURATION in problems, refusals.plan[PlanField.DURATION]),
                             )
-                            if (maxWidth >= DATE_AND_LENGTH * LocalDensity.current.fontScale) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Begins(Modifier.weight(3f))
-                                    Lasts(Modifier.weight(2f))
-                                }
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Begins(Modifier)
-                                    Lasts(Modifier)
-                                }
-                            }
                         }
                         CheckRow(
                             label = stringResource(R.string.plans_meal_prep),

@@ -56,10 +56,12 @@ import net.whiteravens.dietapp.data.auth.KeystoreSealer
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.remote.AuthTokens
 import net.whiteravens.dietapp.ui.common.holdLetters
+import org.junit.Assert.assertTrue
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 /**
  * A text of the app's, in the language the device runs in, with [args] put in. Without arguments it is read as the
@@ -206,6 +208,16 @@ fun ComposeTestRule.dayChange(item: String) {
     scrollTo(options)
     onNode(options).performClick()
     onNode(hasText(item) and hasAnyAncestor(isPopup())).performClick()
+}
+
+/**
+ * Asserts that the [fields] stand side by side in one row, in that order: one top, one height, each after the one
+ * before. A label that takes two lines makes its field taller than the others, which the top alone does not show.
+ */
+fun ComposeTestRule.assertInOneRow(vararg fields: SemanticsMatcher) {
+    val bounds = fields.map { onNode(it).fetchSemanticsNode().boundsInRoot }
+    val inRow = bounds.zipWithNext().all { (one, next) -> abs(one.top - next.top) < 1f && abs(one.height - next.height) < 1f && one.right <= next.left }
+    assertTrue("the fields stand in one row, one height: $bounds", inRow)
 }
 
 /** Opens the fold of the dashboard under which the seven days, the split a day aims at and the favourite sets stand. */
