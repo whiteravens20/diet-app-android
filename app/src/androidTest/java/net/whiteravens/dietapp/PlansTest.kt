@@ -597,10 +597,12 @@ class PlansTest {
         screen.onNodeWithText(card, substring = true).performClick()
         screen.scrollToText(text(R.string.plans_cook_days))
         screen.onAllNodesWithText(shown(dish.title))[0].performScrollTo().performClick()
-        val asText = screen.onNode(hasText(text(R.string.recipe_share_text)) and inTheWindow)
-        asText.performScrollTo()
+        // The ways to send it stand behind one button beside the window's title.
+        val share = hasContentDescription(text(R.string.recipe_share_chooser)) and hasClickAction()
+        val way = { words: Int -> screen.onNode(hasText(text(words)) and hasAnyAncestor(isPopup())) }
+        screen.onNode(share and inTheWindow).performClick()
         screen.keepScreenshot("plans-a-meal-to-send")
-        val fromTheMeal = sharedBy { asText.performClick() }
+        val fromTheMeal = sharedBy { way(R.string.recipe_share_text).performClick() }
         assertEquals(dish.title, fromTheMeal.getStringExtra(Intent.EXTRA_SUBJECT))
         val mealText = fromTheMeal.getStringExtra(Intent.EXTRA_TEXT).orEmpty().lines()
         assertEquals(dish.title, mealText[0])
@@ -612,7 +614,8 @@ class PlansTest {
 
         // As a page to print, under the dish's title: the printing's window is pictured and closed.
         screen.printedAs(dish.title, "plans-a-meal-to-print") {
-            screen.onNode(hasText(text(R.string.recipe_share_pdf)) and inTheWindow).performScrollTo().performClick()
+            screen.onNode(share and inTheWindow).performClick()
+            way(R.string.recipe_share_pdf).performClick()
         }
 
         // The recipe's own screen sends it as it is written there: its own servings and lines. The window's buttons
@@ -620,10 +623,9 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.plans_open_recipe)) and inTheWindow).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_open_recipe)).fetchSemanticsNodes().isEmpty() }
         screen.waitForText(text(R.string.recipes_nutrition_per_serving))
-        screen.scrollToText(text(R.string.recipe_share_text))
-        screen.onNodeWithText(text(R.string.recipe_share_text)).performScrollTo()
+        screen.onNode(share).performClick()
         screen.keepScreenshot("recipes-a-recipe-to-send")
-        val fromTheRecipe = sharedBy { screen.onNodeWithText(text(R.string.recipe_share_text)).performClick() }
+        val fromTheRecipe = sharedBy { way(R.string.recipe_share_text).performClick() }
         val recipeText = fromTheRecipe.getStringExtra(Intent.EXTRA_TEXT).orEmpty().lines()
         assertEquals(dish.title, recipeText[0])
         // A text for a message has plain spaces where the app holds words together with no-break ones.
