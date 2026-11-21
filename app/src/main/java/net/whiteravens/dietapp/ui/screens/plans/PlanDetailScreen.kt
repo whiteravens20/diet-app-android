@@ -95,7 +95,7 @@ import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealTopping
 import net.whiteravens.dietapp.ui.components.Text
-import net.whiteravens.dietapp.ui.screens.recipes.RecipeShareRow
+import net.whiteravens.dietapp.ui.screens.recipes.RecipeShareMenu
 import net.whiteravens.dietapp.ui.screens.recipes.SharedLine
 import net.whiteravens.dietapp.ui.screens.recipes.sharedRecipe
 import net.whiteravens.dietapp.domain.CustomMeal
@@ -1897,13 +1897,31 @@ private fun MealDialog(
     ScreenDialog(onDismiss) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(mealName(meal), style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "${mealTypeLabel(meal.slot)}$DOT${formatDayDate(date)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                Row(verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(mealName(meal), style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            "${mealTypeLabel(meal.slot)}$DOT${formatDayDate(date)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    // A meal of a recipe is sent as the window shows it: this meal's amounts, or those of the whole cooking.
+                    if (meal.recipeId != null && toCook.lines.isNotEmpty()) {
+                        RecipeShareMenu(
+                            sharedRecipe(
+                                title = meal.name,
+                                servings = toCook.servings,
+                                lines = toCook.lines.map { line ->
+                                    val rest = line.rest?.let { stringResource(R.string.plans_rest_of_pack, amountLabel(it.quantity, it.unit, it.grams)) }
+                                    SharedLine(line.name, amountLabel(line.quantity, line.unit, line.grams), listOfNotNull(line.note, rest).joinToString("; ").ifEmpty { null })
+                                },
+                                steps = meal.steps,
+                                source = meal.recipeSource,
+                                byModel = meal.recipeByModel,
+                            ),
+                        )
+                    }
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     meal.byModel?.let { AiMark(modelPartText(it), spelledOut = true) }
@@ -1946,22 +1964,6 @@ private fun MealDialog(
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 leftoverHint(meal)?.let { Hint(it) }
                 if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))
-                // A meal of a recipe is sent as the window shows it: this meal's amounts, or those of the whole cooking.
-                if (meal.recipeId != null && toCook.lines.isNotEmpty()) {
-                    RecipeShareRow(
-                        sharedRecipe(
-                            title = meal.name,
-                            servings = toCook.servings,
-                            lines = toCook.lines.map { line ->
-                                val rest = line.rest?.let { stringResource(R.string.plans_rest_of_pack, amountLabel(it.quantity, it.unit, it.grams)) }
-                                SharedLine(line.name, amountLabel(line.quantity, line.unit, line.grams), listOfNotNull(line.note, rest).joinToString("; ").ifEmpty { null })
-                            },
-                            steps = meal.steps,
-                            source = meal.recipeSource,
-                            byModel = meal.recipeByModel,
-                        ),
-                    )
-                }
                 if (toCook.lines.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(stringResource(R.string.recipes_ingredients), style = MaterialTheme.typography.titleMedium)

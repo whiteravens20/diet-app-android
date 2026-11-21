@@ -130,6 +130,7 @@ fun RecipeDetailScreen(
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(start = 4.dp).weight(1f),
                     )
+                    recipe?.let { RecipeShareMenu(toSend(it)) }
                     if (recipe?.own == true) {
                         IconButton(onClick = { onEdit(recipe.id) }) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.own_recipe_edit_title))
@@ -306,6 +307,17 @@ private fun Marks(
     }
 }
 
+/** [recipe] as it is sent: as it is written here, its own servings, whatever meal it was opened from. */
+@Composable
+private fun toSend(recipe: Recipe): SharedRecipe = sharedRecipe(
+    title = recipe.title,
+    servings = recipe.servings.toDouble(),
+    lines = recipe.ingredients.map { SharedLine(it.name, amountLabel(it.quantity, it.unit, it.grams), it.note) },
+    steps = recipe.steps,
+    source = recipe.source,
+    byModel = recipe.byModel != null,
+)
+
 private fun androidx.compose.foundation.lazy.LazyListScope.skeletonItems() {
     item { Skeleton(Modifier.fillMaxWidth().height(24.dp)) }
     item { Skeleton(Modifier.fillMaxWidth().height(180.dp)) }
@@ -345,17 +357,6 @@ private fun RecipeBody(
         }
         recipe.source?.let { SourceLine(it) }
         marks()
-        // Sent as it is written here: the recipe's own servings, whatever meal it was opened from.
-        RecipeShareRow(
-            sharedRecipe(
-                title = recipe.title,
-                servings = recipe.servings.toDouble(),
-                lines = recipe.ingredients.map { SharedLine(it.name, amountLabel(it.quantity, it.unit, it.grams), it.note) },
-                steps = recipe.steps,
-                source = recipe.source,
-                byModel = recipe.byModel != null,
-            ),
-        )
 
         AppCard {
             Text(

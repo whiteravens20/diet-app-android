@@ -706,7 +706,6 @@
     <string name="recipe_cuisine">Kuchnia: %1$s</string>
     <string name="recipe_source">Źródło: %1$s</string>
     <string name="recipe_source_licence">Licencja: %1$s</string>
-    <string name="recipe_share_label">Udostępnij przepis:</string>
     <string name="recipe_share_text">Tekst</string>
     <string name="recipe_share_pdf">PDF</string>
     <string name="recipe_share_chooser">Udostępnij przepis</string>

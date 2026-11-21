@@ -650,7 +650,6 @@
     <string name="recipe_cuisine">%1$s cuisine</string>
     <string name="recipe_source">From %1$s</string>
     <string name="recipe_source_licence">Licence: %1$s</string>
-    <string name="recipe_share_label">Share the recipe:</string>
     <string name="recipe_share_text">Text</string>
     <string name="recipe_share_pdf">PDF</string>
     <string name="recipe_share_chooser">Share the recipe</string>

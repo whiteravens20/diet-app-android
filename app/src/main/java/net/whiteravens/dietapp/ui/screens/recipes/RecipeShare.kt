@@ -10,24 +10,21 @@ import android.util.Base64
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import net.whiteravens.dietapp.R
@@ -222,37 +219,37 @@ fun sharedRecipe(
 }
 
 /**
- * The ways to send [recipe] to somebody who is to cook it, as the web offers them: as a text, through
- * the system's sharing, and as a PDF, through its printing. Nothing goes to the instance: what is
- * sent goes where the user sends it.
+ * The ways to send [recipe] to somebody who is to cook it, as the web offers them, behind one button of the screen's
+ * top row: as a text, through the system's sharing, and as a PDF, through its printing. Nothing goes to the instance:
+ * what is sent goes where the user sends it.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun RecipeShareRow(recipe: SharedRecipe, modifier: Modifier = Modifier) {
+fun RecipeShareMenu(recipe: SharedRecipe) {
     val context = LocalContext.current
     val chooser = stringResource(R.string.recipe_share_chooser)
     val appName = stringResource(R.string.app_name)
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        itemVerticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.recipe_share_label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        // The two ways stay together: on a narrow screen they go under the words as one.
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { shareText(context, recipe.title, recipeText(recipe), chooser) }) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(R.string.recipe_share_text), modifier = Modifier.padding(start = 8.dp))
-            }
-            OutlinedButton(onClick = { printRecipe(context, recipe, appName) }) {
-                Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(R.string.recipe_share_pdf), modifier = Modifier.padding(start = 8.dp))
-            }
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Default.Share, contentDescription = chooser)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.recipe_share_text)) },
+                leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
+                onClick = {
+                    open = false
+                    shareText(context, recipe.title, recipeText(recipe), chooser)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.recipe_share_pdf)) },
+                leadingIcon = { Icon(AppIcons.Download, contentDescription = null) },
+                onClick = {
+                    open = false
+                    printRecipe(context, recipe, appName)
+                },
+            )
         }
     }
 }
