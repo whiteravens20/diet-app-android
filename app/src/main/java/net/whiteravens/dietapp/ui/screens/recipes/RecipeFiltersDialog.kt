@@ -112,9 +112,9 @@ internal fun RecipeFiltersDialog(
                 Text(stringResource(R.string.recipes_filters), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
             }
-            Choice(stringResource(R.string.recipes_diet_type), RECIPE_DIET_TAGS.toList(), draft.dietType, { dietTypeLabel(it) }) { draft = draft.copy(dietType = it) }
-            Choice(stringResource(R.string.recipes_meal_type), MEAL_TYPES, draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
-            Choice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
+            ChipChoice(stringResource(R.string.recipes_diet_type), RECIPE_DIET_TAGS.toList(), draft.dietType, { dietTypeLabel(it) }) { draft = draft.copy(dietType = it) }
+            ChipChoice(stringResource(R.string.recipes_meal_type), MEAL_TYPES, draft.mealType, { mealTypeLabel(it) }) { draft = draft.copy(mealType = it) }
+            ChipChoice(stringResource(R.string.recipes_difficulty), DIFFICULTIES, draft.difficulty, { difficultyLabel(it) }) { draft = draft.copy(difficulty = it) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Figure(stringResource(R.string.recipes_max_calories), calories, FilterFigure.CALORIES, problemOf(FilterFigure.CALORIES), Modifier.weight(1f)) {
                     calories = it
@@ -144,7 +144,7 @@ internal fun RecipeFiltersDialog(
                 Icon(if (more) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
             }
             if (more) {
-                Choice(stringResource(R.string.recipes_cuisine), ProfileChoices.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
+                ChipChoice(stringResource(R.string.recipes_cuisine), ProfileChoices.CUISINES, draft.cuisine, { cuisineLabel(it) }) { draft = draft.copy(cuisine = it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Figure(stringResource(R.string.recipes_min_protein), protein, FilterFigure.PROTEIN, problemOf(FilterFigure.PROTEIN), Modifier.weight(1f)) {
                         protein = it
@@ -178,12 +178,12 @@ internal fun RecipeFiltersDialog(
             // What a profile marked and favours, for the profile chosen where there is more than one.
             if (profiles.isNotEmpty()) {
                 if (profiles.size > 1) {
-                    Choice(stringResource(R.string.recipes_favorites_profile), profiles.map { it.id }, draft.profileId, { id -> profiles.first { it.id == id }.name }, any = false) {
+                    ChipChoice(stringResource(R.string.recipes_favorites_profile), profiles.map { it.id }, draft.profileId, { id -> profiles.first { it.id == id }.name }, any = false) {
                         draft = draft.copy(profileId = it)
                     }
                 }
                 CheckRow(stringResource(R.string.recipes_uses_favorites), checked = draft.favoriteIngredients) { draft = draft.copy(favoriteIngredients = it) }
-                Choice(stringResource(R.string.recipes_marked), MARKS, draft.marked, { markLabel(it) }, anyLabel = stringResource(R.string.recipes_marked_any)) { draft = draft.copy(marked = it) }
+                ChipChoice(stringResource(R.string.recipes_marked), MARKS, draft.marked, { markLabel(it) }, anyLabel = stringResource(R.string.recipes_marked_any)) { draft = draft.copy(marked = it) }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -212,10 +212,10 @@ private fun markLabel(mark: String): String = when (mark) {
     else -> stringResource(R.string.recipes_marked_marked)
 }
 
-/** One of [options] under [title], or none ("Any", where [any]), each a chip. */
+/** One of [options] under [title], or none ("Any", where [any]), each a chip: a filter window's choice. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Choice(
+internal fun ChipChoice(
     title: String,
     options: List<String>,
     selected: String?,

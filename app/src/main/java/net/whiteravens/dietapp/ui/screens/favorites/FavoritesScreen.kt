@@ -17,11 +17,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -33,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,18 +62,22 @@ import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.AppIcons
+import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.HowItWorks
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.RemovedBar
+import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.WaitingMark
 import net.whiteravens.dietapp.ui.components.undoForMillis
-import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import net.whiteravens.dietapp.ui.components.OutlinedField
+import net.whiteravens.dietapp.ui.screens.recipes.ChipChoice
 
 /**
  * The recipes a profile marked, to look through and keep in order, as the web's page has them: each
@@ -94,6 +102,10 @@ fun FavoritesScreen(
     val shown = state.shownItems.filter { it.recipeId !in hidden }
     // Read again on being shown again: a recipe opened from the list may have been marked otherwise in its view.
     WhenShownAgain(viewModel::shownAgain)
+    var filtering by rememberSaveable { mutableStateOf(false) }
+    // The recipe whose mark is being changed in its window, by its id.
+    var changing by rememberSaveable { mutableStateOf<String?>(null) }
+    var howItWorks by rememberSaveable { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         PullToRead(state.pulled, viewModel::pull) {
@@ -148,24 +160,19 @@ fun FavoritesScreen(
                                 }
                             }
                         }
-                        // The filters and their legend once there is something to narrow: over nothing marked they ask for nothing.
+                        // The search and the filters once there is something to narrow: over nothing marked they ask for nothing.
+                        // What a mark does to the plans stands behind "How it works".
                         if (!state.nothingMarked) {
                             item {
-                                Filters(
+                                SearchAndFilters(
                                     query = query,
                                     onQuery = { viewModel.query.value = it.take(FavoriteFilter.SEARCH_LENGTH) },
                                     filter = state.filter,
-                                    tags = state.tags,
-                                    onNarrow = viewModel::narrow,
+                                    onFilters = { filtering = true },
+                                    onClear = { viewModel.narrow(state.filter.cleared()) },
                                 )
                             }
-                            item {
-                                Text(
-                                    stringResource(R.string.favorites_legend),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            item { HowItWorks(stringResource(R.string.favorites_legend), howItWorks) { howItWorks = it } }
                         }
                         state.failed?.let { (what, error) ->
                             item {
@@ -212,15 +219,11 @@ fun FavoritesScreen(
                                     )
                                 }
                                 items(shown, key = { it.recipeId }) { kept ->
-                                    MarkCard(
+                                    MarkRow(
                                         item = state.shown(kept),
                                         waiting = kept.recipeId in state.waitingRecipes,
-                                        busy = state.busy,
                                         onOpen = { onOpenRecipe(kept.recipeId) },
-                                        onSentiment = { viewModel.setSentiment(kept, it) },
-                                        onAddTag = { viewModel.addTag(kept, it) },
-                                        onRemoveTag = { viewModel.removeTag(kept, it) },
-                                        onRemove = { viewModel.remove(kept, undoFor) },
+                                        onChange = { changing = kept.recipeId },
                                     )
                                 }
                             }
@@ -233,12 +236,38 @@ fun FavoritesScreen(
             RemovedBar(removal.item.title, viewModel::keepRemoved, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
+
+    if (filtering) {
+        FavoriteFiltersDialog(
+            filter = state.filter,
+            tags = state.tags,
+            onApply = { chosen ->
+                viewModel.narrow(chosen)
+                filtering = false
+            },
+            onDismiss = { filtering = false },
+        )
+    }
+    // The window closes with its recipe: a mark taken off, or gone from the list.
+    shown.firstOrNull { it.recipeId == changing }?.let { kept ->
+        MarkDialog(
+            item = state.shown(kept),
+            busy = state.busy,
+            onSentiment = { viewModel.setSentiment(kept, it) },
+            onAddTag = { viewModel.addTag(kept, it) },
+            onRemoveTag = { viewModel.removeTag(kept, it) },
+            onRemove = {
+                changing = null
+                viewModel.remove(kept, undoFor)
+            },
+            onDismiss = { changing = null },
+        )
+    }
 }
 
-/** The words of a title, the meal, how a recipe is marked, a tag of the profile's and the order, as the web's fields are. */
+/** The words of a title to look for, and the button of the window that narrows by the rest, which counts those at work. */
 @Composable
-private fun Filters(query: String, onQuery: (String) -> Unit, filter: FavoriteFilter, tags: List<String>, onNarrow: (FavoriteFilter) -> Unit) {
-    val any = stringResource(R.string.favorites_any)
+private fun SearchAndFilters(query: String, onQuery: (String) -> Unit, filter: FavoriteFilter, onFilters: () -> Unit, onClear: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedField(
             value = query,
@@ -250,89 +279,120 @@ private fun Filters(query: String, onQuery: (String) -> Unit, filter: FavoriteFi
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
-        ChoiceField(
-            label = stringResource(R.string.favorites_meal_type),
-            options = listOf(null) + MEAL_TYPES,
-            selected = filter.mealType,
-            optionLabel = { meal -> meal?.let { mealTypeLabel(it) } ?: any },
-            onSelect = { onNarrow(filter.copy(mealType = it)) },
-        )
-        ChoiceField(
-            label = stringResource(R.string.favorites_marked),
-            options = listOf(null) + FavoriteFilter.SENTIMENTS,
-            selected = filter.sentiment,
-            optionLabel = { sentiment -> sentiment?.let { sentimentLabel(it) } ?: any },
-            onSelect = { onNarrow(filter.copy(sentiment = it)) },
-        )
-        ChoiceField(
-            label = stringResource(R.string.favorites_tag),
-            options = listOf(null) + tags,
-            selected = filter.tag,
-            optionLabel = { tag -> tag ?: any },
-            onSelect = { onNarrow(filter.copy(tag = it)) },
-        )
-        ChoiceField(
-            label = stringResource(R.string.favorites_sort),
-            options = FavoriteFilter.SORTS,
-            selected = filter.sort,
-            optionLabel = { sortLabel(it) },
-            onSelect = { onNarrow(filter.copy(sort = it)) },
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            val atWork = filter.atWork
+            OutlinedButton(onClick = onFilters) {
+                Text(if (atWork > 0) pluralStringResource(R.plurals.recipes_filters_on, atWork, atWork) else stringResource(R.string.recipes_filters))
+            }
+            if (atWork > 0) TextButton(onClick = onClear) { Text(stringResource(R.string.recipes_clear_filters)) }
+        }
+    }
+}
+
+/** The meal, how a recipe is marked, a tag of the profile's and the order, as chips in a window, applied together. */
+@Composable
+private fun FavoriteFiltersDialog(filter: FavoriteFilter, tags: List<String>, onApply: (FavoriteFilter) -> Unit, onDismiss: () -> Unit) {
+    var draft by remember(filter) { mutableStateOf(filter) }
+    val any = stringResource(R.string.favorites_any)
+    ScreenDialog(onDismiss) {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.recipes_filters), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            }
+            ChipChoice(stringResource(R.string.favorites_meal_type), MEAL_TYPES, draft.mealType, { mealTypeLabel(it) }, anyLabel = any) { draft = draft.copy(mealType = it) }
+            ChipChoice(stringResource(R.string.favorites_marked), FavoriteFilter.SENTIMENTS, draft.sentiment, { sentimentLabel(it) }, anyLabel = any) { draft = draft.copy(sentiment = it) }
+            if (tags.isNotEmpty()) {
+                ChipChoice(stringResource(R.string.favorites_tag), tags, draft.tag, { it }, anyLabel = any) { draft = draft.copy(tag = it) }
+            }
+            ChipChoice(stringResource(R.string.favorites_sort), FavoriteFilter.SORTS, draft.sort, { sortLabel(it) }, any = false) { chosen ->
+                chosen?.let { draft = draft.copy(sort = it) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { draft = draft.cleared() }) { Text(stringResource(R.string.recipes_clear_filters)) }
+                Button(onClick = { onApply(draft) }) { Text(stringResource(R.string.recipes_filters_apply)) }
+            }
+        }
     }
 }
 
 /**
- * A marked recipe: what it is, how it is marked and under which tags, each to change, and its mark
- * to take off; a change of it [waiting] to be sent says so.
+ * A marked recipe as a row: what it is, how it is marked and under which tags, a change of it [waiting] to be sent; a
+ * press on its name opens it, and the button beside it opens the window where its mark is changed.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MarkCard(
+private fun MarkRow(item: MarkedRecipe, waiting: Boolean, onOpen: () -> Unit, onChange: () -> Unit) {
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).clickable(role = Role.Button, onClick = onOpen), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(item.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.favorites_facts, formatNumber(item.calories), formatList(item.mealTypes.map { mealTypeLabel(it) })),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        if (item.sentiment == "avoid") AppIcons.Block else Icons.Default.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        (listOf(sentimentLabel(item.sentiment)) + item.tags).joinToString(DOT),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
+            }
+            val changeLabel = stringResource(R.string.favorites_change_of, item.title)
+            TextButton(onClick = onChange, modifier = Modifier.semantics { contentDescription = changeLabel }) {
+                Text(stringResource(R.string.favorites_change))
+            }
+        }
+    }
+}
+
+/**
+ * The window of a marked recipe: how it is marked, its tags, and its mark to take off. Each change is sent as it is
+ * made, as the list made them; the window stays open for the next, and closes with the mark taken off.
+ */
+@Composable
+private fun MarkDialog(
     item: MarkedRecipe,
-    waiting: Boolean,
     busy: Boolean,
-    onOpen: () -> Unit,
     onSentiment: (String) -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     onRemove: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    AppCard {
-        Text(
-            item.title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable(role = Role.Button, onClick = onOpen),
-        )
-        Text(
-            stringResource(R.string.favorites_facts, formatNumber(item.calories), formatList(item.mealTypes.map { mealTypeLabel(it) })),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp),
-        )
-        if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
-        val removeLabel = stringResource(R.string.favorites_remove_of, item.title)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(top = 8.dp),
-        ) {
-            ChoiceField(
-                label = stringResource(R.string.favorites_marked),
-                options = FavoriteFilter.SENTIMENTS,
-                selected = item.sentiment,
-                optionLabel = { sentimentLabel(it) },
-                onSelect = onSentiment,
-                enabled = !busy,
-                description = stringResource(R.string.favorites_marked_as, item.title),
-                modifier = Modifier.weight(1f),
-            )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(item.title) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val markedAs = stringResource(R.string.favorites_marked_as, item.title)
+                Column(Modifier.semantics { contentDescription = markedAs }) {
+                    ChipChoice(stringResource(R.string.favorites_marked), FavoriteFilter.SENTIMENTS, item.sentiment, { sentimentLabel(it) }, any = false) { chosen ->
+                        if (!busy && chosen != null && chosen != item.sentiment) onSentiment(chosen)
+                    }
+                }
+                Tags(item, busy, onAddTag, onRemoveTag)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) } },
+        dismissButton = {
+            val removeLabel = stringResource(R.string.favorites_remove_of, item.title)
             TextButton(onClick = onRemove, enabled = !busy, modifier = Modifier.semantics { contentDescription = removeLabel }) {
                 Text(stringResource(R.string.favorites_remove), color = MaterialTheme.colorScheme.error)
             }
-        }
-        Tags(item, busy, onAddTag, onRemoveTag)
-    }
+        },
+    )
 }
 
 /** The tags of a marked recipe: each can be taken off, and another put on, up to the most a recipe holds. */
