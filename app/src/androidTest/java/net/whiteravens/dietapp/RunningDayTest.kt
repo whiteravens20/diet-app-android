@@ -17,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import java.time.LocalDate
 import net.whiteravens.dietapp.testing.Account
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.dayChange
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.putKeyboardAway
@@ -60,10 +61,8 @@ class RunningDayTest {
         val card = formatDate(LocalDate.now().minusDays(1).toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
-        screen.scrollToText(text(R.string.plans_go_to_today))
-        screen.onNodeWithText(text(R.string.plans_go_to_today)).performClick()
-        screen.scrollToText(text(R.string.plans_day_settings))
-        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.dayChange(text(R.string.plans_go_to_today))
+        screen.dayChange(text(R.string.plans_day_settings))
         screen.waitForText(text(R.string.plans_settings_unchanged))
     }
 

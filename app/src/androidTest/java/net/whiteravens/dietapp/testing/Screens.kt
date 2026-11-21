@@ -21,10 +21,13 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -198,6 +201,14 @@ fun ComposeTestRule.scrollToText(sought: String, substring: Boolean = false, tim
     scrollTo(hasText(shown(sought), substring = substring), timeoutMillis)
 
 /** Opens the fold of the dashboard under which the seven days, the split a day aims at and the favourite sets stand. */
+/** Presses [item] among the options of the day a plan shows, behind the button beside the day's sum. */
+fun ComposeTestRule.dayChange(item: String) {
+    val options = hasContentDescription("${text(R.string.plans_day_options)}: ", substring = true) and hasClickAction()
+    scrollTo(options)
+    onNode(options).performClick()
+    onNode(hasText(item) and hasAnyAncestor(isPopup())).performClick()
+}
+
 fun ComposeTestRule.openTheDashboardsMore() {
     // As the screen shows it, a word of one letter held to the next; the bottom bar's "Więcej" has nothing to expand.
     scrollToText(text(R.string.dashboard_more))

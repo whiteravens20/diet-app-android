@@ -428,6 +428,9 @@
     <string name="substitute_rewrite_with_ai_hint">Uses one AI request. Without it, the name of the new ingredient simply replaces the old one in the text.</string>
     <string name="substitute_step_replace">2. Replace %1$s with…</string>
     <string name="plans_recalculate">Make again…</string>
+    <string name="plans_facts">Plan details</string>
+    <string name="plans_day_options">Day options</string>
+    <string name="plans_day_label">Fibre, sugars, salt…</string>
     <string name="plans_change_day">Change day…</string>
     <string name="plans_hold_limits">Make it again inside every limit…</string>
     <string name="plans_include_past_and_retry">Make the days that have passed again too</string>

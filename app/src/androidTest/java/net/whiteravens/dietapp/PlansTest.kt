@@ -44,6 +44,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.awaitTheKeyboard
+import net.whiteravens.dietapp.testing.dayChange
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
@@ -118,7 +119,7 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isNotEmpty() }
         screen.onNodeWithText(formatDayDate(LocalDate.now().plusDays(1).toString())).performScrollTo().performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isEmpty() }
-        screen.onNodeWithText(text(R.string.plans_go_to_today)).performScrollTo().performClick()
+        screen.dayChange(text(R.string.plans_go_to_today))
         screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("plans-today")
 
@@ -135,8 +136,7 @@ class PlansTest {
 
         // The first day is filled another way, from the ways its window offers.
         val remade = Instance.planRevision(account, planId)
-        screen.scrollToText(text(R.string.plans_other_ways))
-        screen.onNodeWithText(text(R.string.plans_other_ways)).performClick()
+        screen.dayChange(text(R.string.plans_other_ways))
         screen.waitForText(text(R.string.plans_ways_take), timeoutMillis = 60_000)
         screen.keepScreenshot("plans-other-ways")
         screen.onAllNodesWithText(text(R.string.plans_ways_take))[0].performClick()
@@ -144,8 +144,7 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
 
         // Opened again on the day, the window offers ways anew and stays open: it does not hand back the way it took.
-        screen.scrollToText(text(R.string.plans_other_ways))
-        screen.onNodeWithText(text(R.string.plans_other_ways)).performClick()
+        screen.dayChange(text(R.string.plans_other_ways))
         screen.waitForText(text(R.string.plans_ways_take), timeoutMillis = 60_000)
         screen.waitForIdle()
         assertTrue(screen.onAllNodes(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty())
@@ -248,6 +247,7 @@ class PlansTest {
         assertTrue(options.getBoolean("noWaste"))
         assertTrue(options.getBoolean("lessWaste"))
         assertTrue(options.getBoolean("respectInventory"))
+        screen.onNode(hasText(text(R.string.plans_facts)) and hasClickAction()).performScrollTo().performClick()
         screen.scrollToText(text(R.string.plans_no_waste_line))
         screen.keepScreenshot("plans-a-plan-that-wastes-nothing")
 
@@ -487,6 +487,7 @@ class PlansTest {
 
         // Its packs are counted in one kitchen with the other plan's, and the line says so.
         val countedTogether = text(R.string.plans_packs_line_joint, "Ewa", "\u0000").substringBefore("\u0000")
+        screen.onNode(hasText(text(R.string.plans_facts)) and hasClickAction()).performScrollTo().performClick()
         screen.scrollToText(countedTogether, substring = true)
         screen.keepScreenshot("plans-packs-counted-together")
 
@@ -662,8 +663,10 @@ class PlansTest {
         screen.waitUntil(5_000) { screen.onAllNodesWithText(text(R.string.plans_calendar_legend_more)).fetchSemanticsNodes().isEmpty() }
         screen.onNode(dayCell(planned)).performScrollTo().performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(planned.toString())) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
-        // The chip is chosen before the day is drawn: the picture waits for the day's line of macronutrients.
-        screen.waitForText(text(R.string.plans_day_macros_of, *Array(5) { "#" }).substringBefore("#"), substring = true)
+        // The chip is chosen before the day is drawn: the picture waits for the day's figures of macronutrients.
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(hasContentDescription("${text(R.string.macros_protein)},", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
         screen.keepScreenshot("plans-a-plan-at-its-day")
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
 
@@ -811,8 +814,7 @@ class PlansTest {
         screen.onNodeWithText(card, substring = true).performClick()
 
         // Today's settings: another number of meals, and what that does said before it is saved.
-        screen.scrollToText(text(R.string.plans_day_settings))
-        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.dayChange(text(R.string.plans_day_settings))
         screen.waitForText(text(R.string.plans_settings_unchanged))
         screen.onNode(hasText(text(R.string.plans_settings_meal_count)) and hasAnyAncestor(isDialog())).performClick()
         screen.onNode(hasText(plural(R.plurals.plans_settings_meal_count_option, wanted, wanted)) and hasAnyAncestor(isPopup())).performClick()
@@ -824,8 +826,7 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }
 
         // Opened again, the window starts from the day as it is now.
-        screen.scrollToText(text(R.string.plans_day_settings))
-        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.dayChange(text(R.string.plans_day_settings))
         screen.waitForText(text(R.string.plans_settings_unchanged))
         screen.onNode(hasText(text(R.string.common_cancel)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }
@@ -887,8 +888,7 @@ class PlansTest {
         screen.onNodeWithText(card, substring = true).performClick()
 
         // Today made a training day: what that does to the week, and the two ways of saving it.
-        screen.scrollToText(text(R.string.plans_day_settings))
-        screen.onNodeWithText(text(R.string.plans_day_settings)).performClick()
+        screen.dayChange(text(R.string.plans_day_settings))
         screen.waitForText(text(R.string.plans_settings_unchanged))
         // The day's own target and its cooking time may stay empty, and say so in their outline.
         val optional = hasStateDescription(text(R.string.common_optional))
@@ -1010,9 +1010,12 @@ class PlansTest {
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
 
-        // The line of packs unfolds into what the plan leaves of each, and the way to use them up.
-        val packs = SemanticsMatcher.keyIsDefined(SemanticsActions.Expand)
-        screen.waitUntil(20_000) { screen.onAllNodes(packs).fetchSemanticsNodes().isNotEmpty() }
+        // The plan's details unfold into its line of packs, which unfolds into what the plan leaves of each, and the way
+        // to use them up.
+        val details = hasText(text(R.string.plans_facts)) and hasClickAction()
+        screen.waitUntil(20_000) { screen.onAllNodes(details).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(details).performScrollTo().performClick()
+        val packs = SemanticsMatcher.keyIsDefined(SemanticsActions.Expand) and hasText(text(R.string.plans_packs_line, "\u0000").substringBefore("\u0000"), substring = true)
         screen.onNode(packs).performScrollTo().performClick()
         screen.scrollToText(text(R.string.plans_use_up_ask))
         screen.onNodeWithText(text(R.string.plans_use_up_ask)).performClick()

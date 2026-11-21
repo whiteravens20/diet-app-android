@@ -28,6 +28,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.awaitTheKeyboard
+import net.whiteravens.dietapp.testing.dayChange
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
@@ -267,8 +268,7 @@ class DiaryTest {
         screen.keepScreenshot("diary-an-entry-in-the-plans-day")
 
         // From the plan's day to its diary.
-        screen.scrollToText(text(R.string.plans_open_diary))
-        screen.onNodeWithText(text(R.string.plans_open_diary)).performClick()
+        screen.dayChange(text(R.string.plans_open_diary))
         screen.waitForText(text(R.string.diary_subhead))
         screen.scrollToText(text(R.string.diary_plan_over))
         screen.keepScreenshot("diary-the-plans-day-over-its-target")

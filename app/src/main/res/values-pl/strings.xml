@@ -453,6 +453,9 @@
     <string name="substitute_rewrite_with_ai_hint">Zużywa jedno zapytanie AI. Bez tego nazwa nowego składnika po prostu zastąpi w treści starą.</string>
     <string name="substitute_step_replace">2. %1$s: wybierz zamiennik</string>
     <string name="plans_recalculate">Ułóż ponownie…</string>
+    <string name="plans_facts">Szczegóły planu</string>
+    <string name="plans_day_options">Opcje dnia</string>
+    <string name="plans_day_label">Błonnik, cukry, sól…</string>
     <string name="plans_change_day">Zmień dzień…</string>
     <string name="plans_hold_limits">Ułóż ponownie, trzymając wszystkie limity…</string>
     <string name="plans_include_past_and_retry">Ułóż ponownie także dni, które już minęły</string>

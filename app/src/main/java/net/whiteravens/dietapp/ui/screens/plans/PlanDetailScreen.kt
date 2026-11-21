@@ -73,6 +73,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.expand
@@ -117,6 +118,7 @@ import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
 import net.whiteravens.dietapp.ui.common.carbsAgainst
+import net.whiteravens.dietapp.ui.common.carbsAim
 import net.whiteravens.dietapp.ui.common.Bound
 import net.whiteravens.dietapp.ui.common.MARK
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
@@ -141,7 +143,9 @@ import net.whiteravens.dietapp.ui.components.AiOffNote
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.Folded
 import net.whiteravens.dietapp.ui.components.LabelChip
+import net.whiteravens.dietapp.ui.components.NameAndTrail
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenDialog
@@ -766,8 +770,10 @@ private fun PlanActions(onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, 
 }
 
 /**
- * What a day of the plan holds against its targets, the packs its menu opens and does not finish,
- * the limits it was let go outside of, and what the pantry had to do with it.
+ * The plan's card, one line high: its facts folded behind their name, with the way to make the plan again beside
+ * them. What stands against the plan stays in sight under the line: its average off the target, its macros off
+ * theirs, the limits it was let go outside of. Unfolded, what a day of it holds against its targets, the packs its
+ * menu opens and does not finish, and what the pantry and wasting less had to do with it.
  */
 @Composable
 private fun PlanFacts(
@@ -778,44 +784,67 @@ private fun PlanFacts(
 ) {
     val average = plan.averageDailyNutrition
     val target = plan.targetMacros
+    var open by rememberSaveable { mutableStateOf(false) }
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Fact(
-                stringResource(
-                    R.string.plans_plan_macros,
-                    formatNumber(average.protein.roundToInt()),
-                    formatNumber(target.protein.roundToInt()),
-                    formatNumber(average.fat.roundToInt()),
-                    formatNumber(target.fat.roundToInt()),
-                    carbsAgainst(average.carbs, target.carbs, target.carbsFloor),
-                ),
-            )
+            val fold: @Composable () -> Unit = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .clickable(role = Role.Button) { open = !open }
+                        .semantics { if (open) collapse { open = false; true } else expand { open = true; true } },
+                ) {
+                    Text(stringResource(R.string.plans_facts), style = MaterialTheme.typography.titleSmall)
+                    Icon(
+                        if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (onReroll != null) {
+                NameAndTrail(name = fold) {
+                    OutlinedButton(onClick = { onReroll(RerollStart(RerollScope.WHOLE)) }) { Text(stringResource(R.string.plans_recalculate)) }
+                }
+            } else {
+                fold()
+            }
             plan.averageOff?.let { off ->
                 Fact(stringResource(if (off == "over") R.string.plans_average_over else R.string.plans_average_under), color = MaterialTheme.colorScheme.tertiary)
             }
             if (plan.averageMacrosOff) Fact(stringResource(R.string.plans_average_macros), color = MaterialTheme.colorScheme.tertiary)
-            if (plan.apart.isNotEmpty()) {
-                val locale = LocalConfiguration.current.locales[0]
-                Fact(stringResource(R.string.plans_joint_apart, formatList(plan.apart.map { mealTypeLabel(it).lowercase(locale) })))
-            }
-            if (plan.packs.bought > 0) PacksLine(plan.packs, plan.joint?.profileName, useUp.takeIf { plan.packs.open.any { it.wasted } }, onKeepLeft)
             if (plan.mayGiveWay.isNotEmpty()) {
                 Fact(stringResource(R.string.plans_may_give_way, limitNames(plan.mayGiveWay)))
                 if (onReroll != null) {
                     TextButton(onClick = { onReroll(RerollStart(RerollScope.WHOLE, holdLimits = true)) }) { Text(stringResource(R.string.plans_hold_limits)) }
                 }
             }
-            when (plan.pantry) {
-                "counted" -> Fact(stringResource(R.string.plans_pantry_counted))
-                "left_out" -> Fact(stringResource(R.string.plans_pantry_left_out))
-                "unused" -> Fact(stringResource(R.string.plans_pantry_unused))
-            }
-            when {
-                plan.noWaste -> Fact(stringResource(R.string.plans_no_waste_line))
-                plan.lessWaste -> Fact(stringResource(R.string.plans_less_waste_line))
-            }
-            if (onReroll != null) {
-                OutlinedButton(onClick = { onReroll(RerollStart(RerollScope.WHOLE)) }) { Text(stringResource(R.string.plans_recalculate)) }
+            if (open) {
+                Fact(
+                    stringResource(
+                        R.string.plans_plan_macros,
+                        formatNumber(average.protein.roundToInt()),
+                        formatNumber(target.protein.roundToInt()),
+                        formatNumber(average.fat.roundToInt()),
+                        formatNumber(target.fat.roundToInt()),
+                        carbsAgainst(average.carbs, target.carbs, target.carbsFloor),
+                    ),
+                )
+                if (plan.apart.isNotEmpty()) {
+                    val locale = LocalConfiguration.current.locales[0]
+                    Fact(stringResource(R.string.plans_joint_apart, formatList(plan.apart.map { mealTypeLabel(it).lowercase(locale) })))
+                }
+                if (plan.packs.bought > 0) PacksLine(plan.packs, plan.joint?.profileName, useUp.takeIf { plan.packs.open.any { it.wasted } }, onKeepLeft)
+                when (plan.pantry) {
+                    "counted" -> Fact(stringResource(R.string.plans_pantry_counted))
+                    "left_out" -> Fact(stringResource(R.string.plans_pantry_left_out))
+                    "unused" -> Fact(stringResource(R.string.plans_pantry_unused))
+                }
+                when {
+                    plan.noWaste -> Fact(stringResource(R.string.plans_no_waste_line))
+                    plan.lessWaste -> Fact(stringResource(R.string.plans_less_waste_line))
+                }
             }
         }
     }
@@ -995,41 +1024,39 @@ private fun DaySummary(
         }
         if (day.skipped) {
             // A day the user skips is no shortfall, and there is nothing in it to fill; its settings can bring it back.
-            Text(stringResource(R.string.plans_day_skipped), style = MaterialTheme.typography.titleMedium)
-            onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
-            onToday?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_go_to_today)) } }
-            onDiary?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_open_diary)) } }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.plans_day_skipped), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                DayChanges(day, onOtherWays = null, onChange = null, onSettings, onToday, onDiary)
+            }
             return@AppCard
         }
         daySettingsLine(day)?.let { line ->
             Text(line, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 4.dp))
         }
-        Text(
-            stringResource(
-                R.string.plans_calorie_line,
-                formatNumber(day.nutrition.calories.roundToInt()),
-                formatNumber(day.calorieTarget.roundToInt()),
-                formatSigned(day.calorieDelta),
-            ),
-            style = MaterialTheme.typography.titleMedium,
-            color = if (day.offTarget == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
-        )
-        Text(
-            stringResource(
-                R.string.plans_day_macros_of,
-                formatNumber(day.nutrition.protein.roundToInt()),
-                formatNumber(day.targetMacros.protein.roundToInt()),
-                formatNumber(day.nutrition.fat.roundToInt()),
-                formatNumber(day.targetMacros.fat.roundToInt()),
-                carbsAgainst(day.nutrition.carbs, day.targetMacros.carbs, day.targetMacros.carbsFloor),
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(
+                    R.string.plans_calorie_line,
+                    formatNumber(day.nutrition.calories.roundToInt()),
+                    formatNumber(day.calorieTarget.roundToInt()),
+                    formatSigned(day.calorieDelta),
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (day.offTarget == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+                modifier = Modifier.weight(1f),
+            )
+            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onDiary)
+        }
+        DayMacros(day)
+        // What the label adds stands behind a tap: the figures above are what a day is planned by.
         day.label?.let { label ->
-            LabelLine(label, Modifier.padding(top = 2.dp))
-            LabelLegend(label, Modifier.padding(top = 2.dp))
+            var labelOpen by rememberSaveable(day.date) { mutableStateOf(false) }
+            Folded(stringResource(R.string.plans_day_label), labelOpen, onOpen = { labelOpen = it }) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    LabelLine(label)
+                    LabelLegend(label)
+                }
+            }
         }
         LabelNotes(day.labelNotes, Modifier.padding(top = 4.dp))
         if (day.macrosOff) {
@@ -1125,13 +1152,72 @@ private fun DaySummary(
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        if (onOtherWays != null || onChange != null || onSettings != null || onToday != null || onDiary != null) {
-            FlowRow(modifier = Modifier.padding(top = 4.dp)) {
-                onOtherWays?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_other_ways)) } }
-                onChange?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_change_day)) } }
-                onSettings?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_day_settings)) } }
-                onToday?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_go_to_today)) } }
-                onDiary?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_open_diary)) } }
+    }
+}
+
+/**
+ * The ways to change a day and to go from it, behind the day's options beside its sum, as the plan's own are beside
+ * its name: its other versions, the day made again, its settings, today's day of the plan and the day's diary, each
+ * where it has one.
+ */
+@Composable
+private fun DayChanges(
+    day: PlanDay,
+    onOtherWays: (() -> Unit)?,
+    onChange: (() -> Unit)?,
+    onSettings: (() -> Unit)?,
+    onToday: (() -> Unit)?,
+    onDiary: (() -> Unit)?,
+) {
+    val ways = listOfNotNull(
+        onOtherWays?.let { R.string.plans_other_ways to it },
+        onChange?.let { R.string.plans_change_day to it },
+        onSettings?.let { R.string.plans_day_settings to it },
+        onToday?.let { R.string.plans_go_to_today to it },
+        onDiary?.let { R.string.plans_open_diary to it },
+    )
+    if (ways.isEmpty()) return
+    var open by remember { mutableStateOf(false) }
+    val named = stringResource(R.string.plans_action_for, stringResource(R.string.plans_day_options), formatDayDate(day.date))
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = named, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            ways.forEach { (label, action) ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(label)) },
+                    onClick = {
+                        open = false
+                        action()
+                    },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A day's macronutrients as figures in a row, as the diary's day has them: what the day holds of each, its name, and
+ * what the day aims at, on low-carb and keto carbohydrate against the diet's band; each read as one.
+ */
+@Composable
+private fun DayMacros(day: PlanDay) {
+    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            Triple(R.string.macros_protein, day.nutrition.protein, stringResource(R.string.diary_of_target, formatNumber(day.targetMacros.protein.roundToInt()))),
+            Triple(R.string.macros_fat, day.nutrition.fat, stringResource(R.string.diary_of_target, formatNumber(day.targetMacros.fat.roundToInt()))),
+            Triple(R.string.macros_carbs, day.nutrition.carbs, carbsAim(day.targetMacros.carbs, day.targetMacros.carbsFloor)),
+        ).forEach { (name, grams, aim) ->
+            val named = stringResource(name)
+            val figure = "${formatNumber(grams.roundToInt())}\u00A0g"
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = "$named, $figure, $aim" },
+            ) {
+                Text(figure, style = MaterialTheme.typography.titleMedium)
+                Text(named, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Text(aim, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
         }
     }
