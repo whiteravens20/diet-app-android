@@ -181,11 +181,11 @@ private fun NotificationCard(
             val named = MaterialTheme.colorScheme.primary
             Text(
                 buildAnnotatedString {
-                    profileName?.let { name ->
-                        withStyle(SpanStyle(color = named, fontWeight = FontWeight.Medium)) { append(name) }
-                        append(DOT)
-                    }
                     append(said)
+                    profileName?.let { name ->
+                        append(DOT)
+                        withStyle(SpanStyle(color = named, fontWeight = FontWeight.Medium)) { append(name) }
+                    }
                 },
                 style = MaterialTheme.typography.bodyMedium,
             )

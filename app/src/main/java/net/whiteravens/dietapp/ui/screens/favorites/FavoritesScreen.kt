@@ -342,7 +342,7 @@ private fun MarkRow(item: MarkedRecipe, waiting: Boolean, onOpen: () -> Unit, on
                         modifier = Modifier.size(14.dp),
                     )
                     Text(
-                        (listOf(sentimentLabel(item.sentiment)) + item.tags).joinToString(DOT),
+                        listOf(sentimentLabel(item.sentiment)).joinToString(DOT),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

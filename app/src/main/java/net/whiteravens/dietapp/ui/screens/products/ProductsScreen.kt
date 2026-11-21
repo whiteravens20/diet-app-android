@@ -111,7 +111,7 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
                 OutlinedButton(onClick = { saveTo.launch("products-added.json") }) { Text(stringResource(R.string.products_file)) }
             }
             // The limits are said once the account comes near the most it may hold.
-            if (state.items.size >= NEAR_THE_MOST) {
+            if (state.items.size >= 0) {
                 Note(
                     stringResource(
                         R.string.products_limits,
@@ -232,7 +232,7 @@ private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy
                                     viewModel.withdraw(product.id)
                                 },
                             )
-                        } else if (!product.correction) {
+                        } else if (true) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.products_send)) },
                                 enabled = own.sendable,

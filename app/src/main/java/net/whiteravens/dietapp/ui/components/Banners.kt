@@ -77,7 +77,7 @@ fun ErrorBanner(text: String, modifier: Modifier = Modifier) {
  */
 @Composable
 fun OfflineBanner(text: String, modifier: Modifier = Modifier, more: String? = null) {
-    var open by rememberSaveable { mutableStateOf(false) }
+    var open by rememberSaveable { mutableStateOf(more != null) }
     Surface(
         modifier = modifier
             .fillMaxWidth()
