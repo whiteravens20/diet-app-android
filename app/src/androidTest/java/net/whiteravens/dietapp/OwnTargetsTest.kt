@@ -18,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openProfileSection
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollToText
@@ -78,6 +79,7 @@ class OwnTargetsTest {
         screen.waitForText(text(R.string.profiles_editing, "Ala"))
 
         // The custom diet, chosen, is kept with the split the form begins with.
+        screen.openProfileSection(R.string.profile_section_food)
         press(text(R.string.profile_diet_type))
         screen.onNode(hasText(text(R.string.diet_custom)) and hasAnyAncestor(isPopup())).performClick()
         screen.waitForTheApi(20_000) { Instance.profile(account, profileId).getString("dietType") == "custom" }

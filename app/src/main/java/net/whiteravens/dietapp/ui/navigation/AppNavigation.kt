@@ -90,6 +90,7 @@ import net.whiteravens.dietapp.ui.screens.plans.SplitScreen
 import net.whiteravens.dietapp.ui.screens.plans.NewPlanScreen
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreen
 import net.whiteravens.dietapp.ui.screens.profiles.ProfileFormScreen
+import net.whiteravens.dietapp.ui.screens.profiles.ProfileSection
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeDetailScreen
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeFormScreen
@@ -115,7 +116,8 @@ import kotlin.reflect.KClass
 @Serializable object LibrariesRoute
 @Serializable object NotificationsRoute
 @Serializable object ProfilesRoute
-@Serializable data class ProfileFormRoute(val profileId: String? = null)
+/** A profile's form, or a new one's; [section] (`ProfileSection`'s name) is opened beside the first, as a link asks. */
+@Serializable data class ProfileFormRoute(val profileId: String? = null, val section: String? = null)
 @Serializable object FavoritesRoute
 @Serializable object PantryRoute
 @Serializable object ProductsRoute
@@ -350,7 +352,7 @@ private fun MainScaffold(
                         onWeightShown = { entry.savedStateHandle[SHOW_WEIGHT_OF] = null },
                         showWaterOf = waterOf,
                         onWaterShown = { entry.savedStateHandle[SHOW_WATER_OF] = null },
-                        onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId)) },
+                        onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId, ProfileSection.GOAL.name)) },
                     )
                 }
                 composable<PlansRoute> {
@@ -385,7 +387,7 @@ private fun MainScaffold(
                         onProfiles = { navController.navigate(ProfilesRoute) },
                         onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
                         onOpenMeal = { planId, day, meal -> navController.navigate(PlanDetailRoute(planId, day, meal)) },
-                        onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId)) },
+                        onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId, ProfileSection.GOAL.name)) },
                     )
                 }
                 composable<RecipesRoute> {
@@ -460,8 +462,13 @@ private fun MainScaffold(
                         },
                     )
                 }
-                composable<ProfileFormRoute> {
-                    ProfileFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
+                composable<ProfileFormRoute> { entry ->
+                    val asked = entry.toRoute<ProfileFormRoute>().section
+                    ProfileFormScreen(
+                        onBack = { navController.popBackStack() },
+                        onSaved = { navController.popBackStack() },
+                        asked = ProfileSection.entries.firstOrNull { it.name == asked },
+                    )
                 }
                 composable<FavoritesRoute> {
                     FavoritesScreen(

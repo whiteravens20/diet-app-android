@@ -1481,6 +1481,23 @@
     <string name="profile_reminder_off">Wyłączone</string>
     <string name="profile_reminder_daily">Codziennie</string>
     <string name="profile_reminder_weekly">Co tydzień</string>
+    <string name="profile_summary_target">cel %1$s</string>
+    <string name="profile_summary_own_target">cel ręczny %1$s kcal</string>
+    <string name="profile_summary_water">woda %1$s l</string>
+    <string name="profile_summary_without">bez: %1$s</string>
+    <string name="profile_summary_none">Brak</string>
+    <plurals name="profile_summary_days_in_row">
+        <item quantity="one">%1$d dzień z rzędu</item>
+        <item quantity="few">%1$d dni z rzędu</item>
+        <item quantity="many">%1$d dni z rzędu</item>
+        <item quantity="other">%1$d dnia z rzędu</item>
+    </plurals>
+    <plurals name="profile_summary_times_a_week">
+        <item quantity="one">%1$d raz w tygodniu</item>
+        <item quantity="few">%1$d razy w tygodniu</item>
+        <item quantity="many">%1$d razy w tygodniu</item>
+        <item quantity="other">%1$d razy w tygodniu</item>
+    </plurals>
     <string name="profile_section_body">O Tobie</string>
     <string name="profile_section_goal">Twój cel</string>
     <string name="profile_section_food">Jak jesz</string>

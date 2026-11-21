@@ -359,7 +359,7 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
  * to the hundredth; in pounds, where no pace is a round number, to the tenth.
  */
 @Composable
-private fun paceLabel(pace: String?, unit: WeightUnit): String {
+internal fun paceLabel(pace: String?, unit: WeightUnit): String {
     if (pace == null) return stringResource(R.string.profile_pace_none)
     val kg = pace.toDouble()
     val amount = if (unit == WeightUnit.LB) "${formatNumber(unit.shown(kg), 1)}\u00A0lb" else "${formatNumber(kg, 2)}\u00A0kg"
@@ -614,7 +614,7 @@ internal fun ReminderChoices(form: ProfileForm, onEdit: FormEdit) {
 
 /** The name of a limit from labels: `Salt at most`. */
 @Composable
-private fun labelLimitName(limit: LabelLimit): String = stringResource(
+internal fun labelLimitName(limit: LabelLimit): String = stringResource(
     when (limit) {
         LabelLimit.SALT_AT_MOST -> R.string.profile_label_limit_salt_at_most
         LabelLimit.FIBER_AT_LEAST -> R.string.profile_label_limit_fiber_at_least

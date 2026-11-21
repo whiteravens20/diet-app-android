@@ -2,10 +2,13 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
@@ -28,6 +31,7 @@ import net.whiteravens.dietapp.testing.assertInOneRow
 import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.openProfileSection
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.putKeyboardAway
@@ -43,6 +47,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Locale
+import kotlin.math.abs
 
 /**
  * Profiles as an account holder makes and keeps them: the first one in three steps from the empty
@@ -87,7 +92,12 @@ class ProfilesTest {
         screen.onNode(hasText(text(R.string.activity_active)) and hasAnyAncestor(isPopup())).performClick()
         screen.waitForTheApi(20_000) { Instance.profile(account, profileId).getString("activityLevel") == "active" }
 
+        // A kept profile opens with its first section, the others folded to a line of what they hold.
+        screen.onNode(hasText(text(R.string.profile_section_goal)) and SemanticsMatcher.keyIsDefined(SemanticsActions.Expand)).assertExists()
+        screen.keepScreenshot("profiles-kept-folded")
+
         // A field with a label of two lines, chosen: the label stands above the frame, whole.
+        screen.openProfileSection(R.string.profile_section_variety)
         val kindPerDay = hasText(text(R.string.profile_max_meals_per_day_same_kind)) and hasSetTextAction()
         screen.onNode(kindPerDay).performScrollTo().performClick()
         screen.keepScreenshot("profiles-long-label-chosen")
@@ -95,6 +105,16 @@ class ProfilesTest {
         // Left for the next field, as the keyboard's key does.
         screen.onNode(kindPerDay).performImeAction()
         screen.waitForTheApi(20_000) { Instance.profile(account, profileId).getJSONObject("preferences").optInt("maxMealsPerDaySameKind") == 2 }
+
+        // Folded while one of its fields is still being typed in, a section keeps what the field holds, and its line says it.
+        screen.openProfileSection(R.string.profile_section_goal)
+        val target = hasText(text(R.string.profile_target_weight, unit.code)) and hasSetTextAction()
+        val typed = if (unit == WeightUnit.LB) "150" else "68"
+        screen.onNode(target).performScrollTo().performTextReplacement(typed)
+        screen.onNode(hasText(text(R.string.profile_section_goal)) and hasClickAction()).performScrollTo().performClick()
+        val kg = if (unit == WeightUnit.LB) 150 * 0.45359237 else 68.0
+        screen.waitForTheApi(20_000) { abs(Instance.profile(account, profileId).optDouble("targetWeightKg", 0.0) - kg) < 0.1 }
+        screen.waitForText(text(R.string.profile_summary_target, "$typed\u00A0${unit.code}"), substring = true)
 
         // A field typed into without a network: leaving says it is not kept and asks whether to leave it behind.
         screen.airplaneMode(true)
@@ -202,6 +222,7 @@ class ProfilesTest {
         screen.waitForText(text(R.string.profile_activity_hint_very_active))
         screen.keepScreenshot("profiles-what-a-level-means")
         // The water a day may stay empty and says so; the profile drinks more, and is reminded to.
+        screen.openProfileSection(R.string.profile_section_goal)
         val water = hasText(text(R.string.profile_water_target)) and hasSetTextAction()
         screen.onNode(water).assert(hasStateDescription(text(R.string.common_optional)))
         screen.onNode(water).performScrollTo().performTextReplacement("2500")
@@ -266,6 +287,7 @@ class ProfilesTest {
         // So is each limit from labels to turn on, in the profile's form.
         press(text(R.string.common_edit))
         screen.waitForText(text(R.string.profiles_editing, "Ala"))
+        screen.openProfileSection(R.string.profile_label_limits)
         listOf(
             R.string.profile_label_limit_salt_at_most,
             R.string.profile_label_limit_fiber_at_least,

@@ -2,25 +2,37 @@
 
 package net.whiteravens.dietapp.ui.screens.profiles
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -48,7 +60,13 @@ import androidx.compose.ui.semantics.liveRegion
  * asked.
  */
 @Composable
-fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: ProfileFormViewModel = hiltViewModel()) {
+fun ProfileFormScreen(
+    onBack: () -> Unit,
+    onSaved: () -> Unit,
+    /** The section a link came for, open beside the first: the water's note asks for the goal. */
+    asked: ProfileSection? = null,
+    viewModel: ProfileFormViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     LaunchedEffect(state.saved) { if (state.saved != null) onSaved() }
@@ -61,6 +79,10 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
         viewModel.leave()
     }
     BackHandler(enabled = keeping && !state.left) { leave() }
+    // The sections open: a new profile's every one, a kept one's body alone, the rest folded to a line of what they hold.
+    var opened by rememberSaveable(keeping) {
+        mutableStateOf(if (keeping) setOfNotNull(ProfileSection.BODY, asked) else ProfileSection.entries.toSet())
+    }
     LaunchedEffect(state.left) { if (state.left) onBack() }
     if (state.askLeaving) LeaveBehind(offline = state.autosave == Autosave.OFFLINE, onStay = viewModel::stay, onLeave = viewModel::leaveBehind)
 
@@ -97,38 +119,34 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
             else -> {
                 val form = state.form
                 val marks = state.marks
+                // A section that needs an answer opens by itself: a field to fix, or a risk to acknowledge.
+                val needing = sectionsNeeding(marks, state.risks, form.acknowledgeRisk)
+                LaunchedEffect(needing) { if (!opened.containsAll(needing)) opened = opened + needing }
+                // A section folded while one of its fields is typed in keeps what the field holds: the field is left as it goes.
+                val section = @Composable { which: ProfileSection, first: Boolean ->
+                    FormSection(which, sectionLine(which, form, state.unit), which in opened, first) { open ->
+                        opened = if (open) opened + which else opened - which
+                    }
+                }
                 // A field of a kept profile keeps what it holds once it is left.
                 CompositionLocalProvider(LocalFieldLeft provides if (keeping) viewModel::keep else null) {
                     AppCard {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FormSection(stringResource(R.string.profile_section_body), first = true)
-                            NameField(form, marks, viewModel::edit)
-                            BodyFields(form, state.unit, marks, viewModel::edit)
-                            FormSection(stringResource(R.string.profile_section_goal))
-                            PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
-                            TargetWeightField(form, state.unit, marks, viewModel::edit)
-                            WaterTrackingChoice(form, viewModel::edit)
-                            if (form.waterTracking) WaterTargetField(form, marks, viewModel::edit)
-                            OwnTargetField(form, marks, viewModel::edit)
-                            // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
-                            val correction = state.correction
-                            val editingId = state.editingId
-                            if (correction != null && editingId != null) {
-                                KeptCorrection(profileId = editingId, correction = correction, onDecided = viewModel::load)
+                            section(ProfileSection.BODY, true)
+                            if (ProfileSection.BODY in opened) {
+                                NameField(form, marks, viewModel::edit)
+                                BodyFields(form, state.unit, marks, viewModel::edit)
                             }
-                            RiskBox(
-                                reasons = state.risks,
-                                acknowledged = form.acknowledgeRisk,
-                                onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
-                            )
-                            ReminderField(form, viewModel::edit)
-                            ReminderChoices(form, viewModel::edit)
-                            FormSection(stringResource(R.string.profile_section_food))
-                            DietFields(form, marks, rules, viewModel::edit, target = state.ownTarget, weightKg = form.bodyWeightKg(state.unit))
-                            FormSection(stringResource(R.string.profile_section_variety))
-                            LimitFields(form, marks, viewModel::edit)
-                            FormSection(stringResource(R.string.profile_label_limits))
-                            LabelLimitFields(form, marks, viewModel::edit)
+                            section(ProfileSection.GOAL, false)
+                            if (ProfileSection.GOAL in opened) GoalFields(state, viewModel)
+                            section(ProfileSection.FOOD, false)
+                            if (ProfileSection.FOOD in opened) {
+                                DietFields(form, marks, rules, viewModel::edit, target = state.ownTarget, weightKg = form.bodyWeightKg(state.unit))
+                            }
+                            section(ProfileSection.VARIETY, false)
+                            if (ProfileSection.VARIETY in opened) LimitFields(form, marks, viewModel::edit)
+                            section(ProfileSection.LABELS, false)
+                            if (ProfileSection.LABELS in opened) LabelLimitFields(form, marks, viewModel::edit)
                         }
                     }
                 }
@@ -152,15 +170,62 @@ fun ProfileFormScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Profil
     }
 }
 
-/** The heading of a part of the form, with a line above every part but the first. */
+/**
+ * The heading of a part of the form, with a line above every part but the first: a press folds it to one [line] of
+ * what it holds, and opens it again.
+ */
 @Composable
-private fun FormSection(title: String, first: Boolean = false) {
+private fun FormSection(section: ProfileSection, line: String, open: Boolean, first: Boolean, onOpen: (Boolean) -> Unit) {
     if (!first) HorizontalDivider(Modifier.padding(top = 8.dp))
-    Text(
-        title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(top = if (first) 0.dp else 8.dp).semantics { heading() },
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = if (first) 0.dp else 8.dp)
+            .heightIn(min = 48.dp)
+            .clickable(role = Role.Button) { onOpen(!open) }
+            .semantics { if (open) collapse { onOpen(false); true } else expand { onOpen(true); true } },
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(section.title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+            if (!open) {
+                Text(line, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Icon(
+            if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * The goal: the pace, the weight to work towards, water, a target typed by hand, the correction the real expenditure
+ * brought, the risks to acknowledge and the reminders.
+ */
+@Composable
+private fun GoalFields(state: ProfileFormViewModel.UiState, viewModel: ProfileFormViewModel) {
+    val form = state.form
+    val marks = state.marks
+    PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
+    TargetWeightField(form, state.unit, marks, viewModel::edit)
+    WaterTrackingChoice(form, viewModel::edit)
+    if (form.waterTracking) WaterTargetField(form, marks, viewModel::edit)
+    OwnTargetField(form, marks, viewModel::edit)
+    // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
+    val correction = state.correction
+    val editingId = state.editingId
+    if (correction != null && editingId != null) {
+        KeptCorrection(profileId = editingId, correction = correction, onDecided = viewModel::load)
+    }
+    RiskBox(
+        reasons = state.risks,
+        acknowledged = form.acknowledgeRisk,
+        onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
     )
+    ReminderField(form, viewModel::edit)
+    ReminderChoices(form, viewModel::edit)
 }
 
 /** What the form of a kept profile says of its changes, beside "Gotowe"; nothing before the first one. */

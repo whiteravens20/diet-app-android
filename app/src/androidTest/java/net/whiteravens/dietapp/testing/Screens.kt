@@ -420,6 +420,13 @@ fun ComposeTestRule.openAccountSection(account: Account, @StringRes name: Int) {
     waitUntil(20_000) { onAllNodes(hasText(text(R.string.account_group_general))).fetchSemanticsNodes().isEmpty() }
 }
 
+/** Opens the section of a profile's form headed [title], where it stands folded to one line; an open one stays open. */
+fun ComposeTestRule.openProfileSection(@StringRes title: Int) {
+    val folded = hasText(text(title)) and SemanticsMatcher.keyIsDefined(SemanticsActions.Expand)
+    if (onAllNodes(folded).fetchSemanticsNodes().isNotEmpty()) onNode(folded).performScrollTo().performClick()
+    waitUntil(5_000) { onAllNodes(folded).fetchSemanticsNodes().isEmpty() }
+}
+
 /** The button of the sign-in screen, whose title says the same words. */
 fun ComposeTestRule.pressToSignIn() {
     // Waited for, not taken as there: on Android 17 the form is out of the tree for a moment while the keyboard's
