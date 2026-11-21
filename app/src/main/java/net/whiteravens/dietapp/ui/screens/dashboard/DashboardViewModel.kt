@@ -141,12 +141,17 @@ class DashboardViewModel @Inject constructor(
         val waitingDiary: List<Waiting> = emptyList(),
         /** What AI the account has, where it uses AI: the instance's requests left, or a provider of its own. */
         val ai: AiStatus? = null,
+        /** The profile picked by its chip; the first is shown where none is, or where the one picked is gone. */
+        val picked: String? = null,
     ) {
         /** How many notifications the bell counts: those not read yet, less those read on the phone. */
         val shownUnread: Int get() = (unread - readsWaiting).coerceAtLeast(0)
 
         /** The profiles as shown: their weights as read, with those logged and removed that wait to be sent over them. */
         val shown: List<ProfileStats> get() = profiles.map { it.withWaiting(waitingWeights.map(Waiting::change)) }
+
+        /** The profile the dashboard shows, one at a time: the one picked by its chip, or the first. */
+        val active: ProfileStats? get() = shown.let { all -> all.firstOrNull { it.profile.id == picked } ?: all.firstOrNull() }
 
         /** How many changes that wait to be sent the sum of [stats]'s day leaves out. */
         fun leftOut(stats: ProfileStats): Int {
@@ -248,6 +253,9 @@ class DashboardViewModel @Inject constructor(
      * elsewhere, keeping what is shown until the answer is there; nothing while the first reading runs,
      * and on coming back to the front only as often as [ReadingAnew] lets it.
      */
+    /** Shows [profileId]'s dashboard, as its chip or a reminder of its water or weights picks it. */
+    fun pickProfile(profileId: String) = _state.update { it.copy(picked = profileId) }
+
     fun shownAgain(cameToTheFront: Boolean) {
         if (!_state.value.loading && again.due(cameToTheFront)) read(showLoading = false)
     }

@@ -136,6 +136,22 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `one profile is shown at a time, the first until its chip picks another, and the first again where the one picked is gone`() {
+        val users = mockk<UserRepository>()
+        val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()
+        val (ala, olek) = listOf(Profile("a", "Ala", "balanced", 4, 70.0, null), Profile("b", "Olek", "vegan", 3, 70.0, null))
+        coEvery { users.profiles() } returns listOf(ala, olek)
+        coEvery { users.calorieTarget(any()) } returns target
+        val viewModel = DashboardViewModel(users, plans, weights, notifications, queue, ai, diary, server)
+
+        assertEquals(ala, viewModel.state.value.active?.profile)
+        viewModel.pickProfile(olek.id)
+        assertEquals(olek, viewModel.state.value.active?.profile)
+        viewModel.pickProfile("gone")
+        assertEquals(ala, viewModel.state.value.active?.profile)
+    }
+
+    @Test
     fun `the dashboard read again on coming back shows a profile made in the meantime, and a failed reading leaves what was shown`() {
         val users = mockk<UserRepository>()
         val target = json.decodeFromString<CalorieCalculationDto>(fixture("profile-calories")).toDomain()

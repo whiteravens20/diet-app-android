@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
@@ -80,6 +81,7 @@ import kotlin.math.roundToInt
  * [onOpenAccount]. With [showWeightOf], the weights of that profile are brought into view, and
  * [onWeightShown] says so; with [showWaterOf], its water, and [onWaterShown] says so.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DashboardScreen(
     onCreateProfile: () -> Unit,
@@ -104,13 +106,17 @@ fun DashboardScreen(
     WhenShownAgain(viewModel::shownAgain)
     val web = rememberWebPages()
     val list = rememberLazyListState()
-    // The items before the profiles': the header, the offline line and a newer build's card where they show.
-    val leading = 1 + (if (state.readAt != null && state.offline) 1 else 0) + (if (newer != null) 1 else 0)
-    // The profile's card is composed first, if it is out of sight, and its weights or its water then brought into view.
+    // The items before the profile's: the header, the offline line, a newer build's card and the chips where they show.
+    val leading = 1 + (if (state.readAt != null && state.offline) 1 else 0) + (if (newer != null) 1 else 0) +
+        (if (state.shown.size > 1) 1 else 0)
+    // A reminder's profile is picked, its card composed first if it is out of sight, and its weights or its water then
+    // brought into view.
     val shownOf = showWeightOf ?: showWaterOf
-    LaunchedEffect(shownOf, state.profiles) {
-        val at = state.profiles.indexOfFirst { it.profile.id == shownOf }
-        if (at >= 0 && list.layoutInfo.visibleItemsInfo.none { it.key == shownOf }) list.scrollToItem(at + leading)
+    LaunchedEffect(shownOf) { shownOf?.let(viewModel::pickProfile) }
+    LaunchedEffect(shownOf, state.active?.profile?.id) {
+        if (shownOf != null && state.active?.profile?.id == shownOf && list.layoutInfo.visibleItemsInfo.none { it.key == shownOf }) {
+            list.scrollToItem(leading)
+        }
     }
 
     PullToRead(state.pulled, viewModel::pull) {
@@ -162,7 +168,21 @@ fun DashboardScreen(
                 }
                 if (newer != null) item(key = "update") { UpdateCard(viewModel = update) }
                 state.readAt?.takeIf { state.offline }?.let { readAt -> item { OfflineAsOf(readAt) } }
-                state.shown.forEach { stats ->
+                // The profiles to choose among, only where there are two or more: one is shown at a time.
+                if (state.shown.size > 1) {
+                    item(key = "profiles") {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.shown.forEach { stats ->
+                                FilterChip(
+                                    selected = stats.profile.id == state.active?.profile?.id,
+                                    onClick = { viewModel.pickProfile(stats.profile.id) },
+                                    label = { Text(stats.profile.name) },
+                                )
+                            }
+                        }
+                    }
+                }
+                state.active?.let { stats ->
                     item(key = stats.profile.id) {
                         val today: @Composable () -> Unit = {
                             TodayCard(

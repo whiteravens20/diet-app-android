@@ -97,7 +97,7 @@ class DashboardTest {
         Instance.newProfile(account, name = "Ola")
         screen.pullDown()
 
-        // A second profile's card is below the first, out of view: the list composes only what is in view.
+        // A second profile shows as a chip beside the first, whose dashboard stays shown until the chip is pressed.
         screen.scrollToText("Ola")
         screen.keepScreenshot("dashboard-pulled-down")
     }
@@ -115,7 +115,7 @@ class DashboardTest {
         Instance.newProfile(account, name = "Ola")
         screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
 
-        // A second profile's card is below the first, out of view: the list composes only what is in view.
+        // A second profile shows as a chip beside the first, whose dashboard stays shown until the chip is pressed.
         screen.scrollToText("Ola")
     }
 
@@ -130,7 +130,7 @@ class DashboardTest {
         val actions = screen.onNode(pullable).fetchSemanticsNode().config[SemanticsActions.CustomActions]
         screen.runOnIdle { actions.first { it.label == text(R.string.pull_to_read) }.action() }
 
-        // A second profile's card is below the first, out of view: the list composes only what is in view.
+        // A second profile shows as a chip beside the first, whose dashboard stays shown until the chip is pressed.
         screen.scrollToText("Ola")
     }
 
