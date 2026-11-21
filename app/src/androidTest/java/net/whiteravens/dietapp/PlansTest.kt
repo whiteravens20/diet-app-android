@@ -285,7 +285,7 @@ class PlansTest {
 
         // The meal's day, chosen in the calendar of plans, a month on where it lies there: the plan opens at it.
         screen.openTab(text(R.string.tab_meal_plans))
-        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.scrollToText(text(R.string.plans_calendar_title))
         val day = LocalDate.parse(rest.date)
         if (YearMonth.from(day) != YearMonth.now()) {
             screen.onNode(hasContentDescription(text(R.string.plans_calendar_next))).performScrollTo().performClick()
@@ -323,7 +323,7 @@ class PlansTest {
         // The day the rest goes in the freezer, chosen in the calendar of plans: the plan opens at it. A day of the week
         // that ends today, so of this month or the one before.
         screen.openTab(text(R.string.tab_meal_plans))
-        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.scrollToText(text(R.string.plans_calendar_title))
         val day = LocalDate.parse(rest.date)
         if (YearMonth.from(day) != YearMonth.now()) {
             screen.onNode(hasContentDescription(text(R.string.plans_calendar_previous))).performScrollTo().performClick()
@@ -361,7 +361,7 @@ class PlansTest {
         // the way back at the top of the plan, which the meals have scrolled out of view.
         screen.onAllNodes(hasScrollToNodeAction())[0].performScrollToIndex(0)
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
-        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.scrollToText(text(R.string.plans_calendar_title))
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.pantry_title)).performClick()
         screen.scrollToText(text(R.string.pantry_frozen))
@@ -647,7 +647,7 @@ class PlansTest {
         screen.signIn(account)
 
         screen.openTab(text(R.string.tab_meal_plans))
-        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.scrollToText(text(R.string.plans_calendar_title))
 
         // The plan's second day says what it holds once the month is read, and opens the plan there.
         val planned = month.atDay(11)
@@ -655,6 +655,8 @@ class PlansTest {
         screen.waitUntil(20_000) {
             screen.onAllNodes(dayCell(planned)).fetchSemanticsNodes().any { it.config[SemanticsProperties.ContentDescription].single() != free }
         }
+        // The whole month in the picture: the calendar stands under the plans, its marks at its foot.
+        screen.scrollTo(hasContentDescription(text(R.string.plans_calendar_marks_help)))
         screen.keepScreenshot("plans-the-calendar")
         // Every day of the month as tall as one that shows all its lines: one with a meal eaten, one of the plan, one free.
         val heights = listOf(month.atDay(10), planned, month.atDay(20)).map { screen.onNode(dayCell(it)).fetchSemanticsNode().boundsInRoot.height }
@@ -677,7 +679,7 @@ class PlansTest {
 
         // A day that no plan holds begins a new plan on it.
         val open = month.atDay(20)
-        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.scrollToText(text(R.string.plans_calendar_title))
         screen.onNode(dayCell(open)).performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_start_date))
         screen.waitForText(formatDate(open.toString()))
@@ -805,7 +807,7 @@ class PlansTest {
         screen.waitForText(text(R.string.plans_delete_confirm))
         screen.onNode(hasText(text(R.string.common_delete)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi(20_000) { Instance.planIds(account, profileId).isEmpty() }
-        screen.waitForText(text(R.string.plans_calendar_title))
+        screen.scrollToText(text(R.string.plans_calendar_title))
     }
 
     @Test

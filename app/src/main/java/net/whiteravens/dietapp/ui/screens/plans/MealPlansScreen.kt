@@ -141,18 +141,6 @@ fun MealPlansScreen(
                 }
                 if (profileId != null) {
                     item {
-                        PlanCalendar(
-                            calendar = state.calendar,
-                            today = today,
-                            onLeaf = viewModel::leaf,
-                            onThisMonth = { viewModel.showMonth(YearMonth.from(today)) },
-                            onRetry = viewModel::retryCalendar,
-                            onOpen = { planId, date -> onOpenPlan(planId, date.toString()) },
-                            // A day without a plan is where the next one can begin: the form starts on it.
-                            onStart = { date -> onNewPlan(profileId, date.toString()) },
-                        )
-                    }
-                    item {
                         Text(
                             state.profiles.find { it.id == profileId }?.let { stringResource(R.string.plans_for, it.name) } ?: stringResource(R.string.nav_meal_plans),
                             style = MaterialTheme.typography.titleMedium,
@@ -170,7 +158,8 @@ fun MealPlansScreen(
                         )
                     }
                 }
-                items(state.plans, key = { it.id }) { plan ->
+                // The plan under way first, the rest in the list's order: today's plan is what the screen is opened for.
+                items(underWayFirst(state.plans, today), key = { it.id }) { plan ->
                     PlanCard(plan, onClick = { onOpenPlan(plan.id, null) })
                 }
                 if (state.hasMore) {
@@ -182,9 +171,33 @@ fun MealPlansScreen(
                         ) { Text(stringResource(R.string.plans_show_more)) }
                     }
                 }
+                // The calendar after the plans, as the web has it.
+                if (profileId != null) {
+                    item {
+                        PlanCalendar(
+                            calendar = state.calendar,
+                            today = today,
+                            onLeaf = viewModel::leaf,
+                            onThisMonth = { viewModel.showMonth(YearMonth.from(today)) },
+                            onRetry = viewModel::retryCalendar,
+                            onOpen = { planId, date -> onOpenPlan(planId, date.toString()) },
+                            // A day without a plan is where the next one can begin: the form starts on it.
+                            onStart = { date -> onNewPlan(profileId, date.toString()) },
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+/** The plans of the list with those under way on [today] first, the rest in the list's order. */
+internal fun underWayFirst(plans: List<MealPlanSummary>, today: LocalDate): List<MealPlanSummary> {
+    val runs = { plan: MealPlanSummary ->
+        val start = LocalDate.parse(plan.startDate)
+        !start.isAfter(today) && !start.plusDays(plan.durationDays - 1L).isBefore(today)
+    }
+    return plans.filter(runs) + plans.filterNot(runs)
 }
 
 /** A plan in the list: what it is, when it begins, what a day of it holds on average, with whom it is made, and a model's hand in it. */
