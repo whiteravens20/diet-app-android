@@ -361,37 +361,6 @@ private fun DayPicker(date: LocalDate, onPick: (LocalDate) -> Unit, onCopy: (() 
     }
 }
 
-/**
- * What was eaten of a day against its target, in figures and as a bar, with how many changes that
- * wait to be sent the figures, which are the server's, leave out.
- */
-@Composable
-internal fun EatenAgainstTarget(day: DiaryDay, leftOut: Int) {
-    val share = if (day.target.calories > 0) (day.eaten.calories / day.target.calories).coerceIn(0.0, 1.0).toFloat() else 0f
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        val line = stringResource(R.string.diary_eaten_line, formatNumber(day.eaten.calories.roundToInt()), formatNumber(day.target.calories.roundToInt()))
-        Text(if (day.estimated) "≈ $line" else line, style = MaterialTheme.typography.headlineSmall)
-        // The line above says it in figures.
-        LinearProgressIndicator(progress = { share }, modifier = Modifier.fillMaxWidth(), drawStopIndicator = {})
-        Note(
-            stringResource(
-                R.string.diary_eaten_macros,
-                formatNumber(day.eaten.protein.roundToInt()),
-                formatNumber(day.target.protein.roundToInt()),
-                formatNumber(day.eaten.fat.roundToInt()),
-                formatNumber(day.target.fat.roundToInt()),
-                carbsAgainst(day.eaten.carbs, day.target.carbs, day.target.carbsFloor),
-            ),
-        )
-        day.eatenLabel?.let { label ->
-            LabelLine(label)
-            LabelLegend(label)
-        }
-        LabelNotes(day.labelNotes)
-        if (leftOut > 0) Note(pluralStringResource(R.plurals.diary_sum_leaves_out, leftOut, leftOut))
-    }
-}
-
 /** What was eaten against the day's target, whose target it is, and where the plan's day stands with the diary counted. */
 @Composable
 private fun DaySummary(
@@ -481,11 +450,12 @@ private fun DaySummary(
 
 /**
  * What was eaten of a day against its target: the energy in figures and as a bar, each macronutrient as a figure
- * against what the day aims at, on low-carb and keto carbohydrate against the diet's band, the label's line and the
- * limits it crosses, which hold the day's own figures, and how many changes that wait to be sent the figures leave out.
+ * against what the day aims at, on low-carb and keto carbohydrate against the diet's band, the label's line (where
+ * [labelLine]; the dashboard leaves it to the diary) and the limits it crosses, which hold the day's own figures, and
+ * how many changes that wait to be sent the figures leave out.
  */
 @Composable
-private fun DayFigures(day: DiaryDay, leftOut: Int) {
+internal fun DayFigures(day: DiaryDay, leftOut: Int, labelLine: Boolean = true) {
     val share = if (day.target.calories > 0) (day.eaten.calories / day.target.calories).coerceIn(0.0, 1.0).toFloat() else 0f
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         val line = stringResource(R.string.diary_eaten_line, formatNumber(day.eaten.calories.roundToInt()), formatNumber(day.target.calories.roundToInt()))
@@ -511,7 +481,7 @@ private fun DayFigures(day: DiaryDay, leftOut: Int) {
                 }
             }
         }
-        day.eatenLabel?.let { LabelLine(it) }
+        if (labelLine) day.eatenLabel?.let { LabelLine(it) }
         LabelNotes(day.labelNotes)
         if (leftOut > 0) Note(pluralStringResource(R.plurals.diary_sum_leaves_out, leftOut, leftOut))
     }

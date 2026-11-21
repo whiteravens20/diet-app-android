@@ -2,14 +2,13 @@
 
 package net.whiteravens.dietapp.ui.screens.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,23 +20,34 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.LocalDate
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.notes
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
@@ -46,29 +56,24 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.noteText
 import net.whiteravens.dietapp.ui.components.AccentChip
 import net.whiteravens.dietapp.ui.components.AppCard
-import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.EmptyState
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.ExpenditureCard
+import net.whiteravens.dietapp.ui.components.KeepWeightCard
 import net.whiteravens.dietapp.ui.components.MacroLegend
 import net.whiteravens.dietapp.ui.components.MacroRing
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
 import net.whiteravens.dietapp.ui.components.ScreenHeader
 import net.whiteravens.dietapp.ui.components.Skeleton
-import net.whiteravens.dietapp.ui.components.StatCard
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.UpdateCard
-import net.whiteravens.dietapp.ui.components.ExpenditureCard
-import net.whiteravens.dietapp.ui.components.KeepWeightCard
 import net.whiteravens.dietapp.ui.components.UpdateViewModel
 import net.whiteravens.dietapp.ui.components.WaterCard
 import net.whiteravens.dietapp.ui.components.WeekSummaryCard
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.screens.notifications.NotificationsBell
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
-import java.time.LocalDate
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /**
  * What every profile ate today, its calorie target, deficit and macro split, what its plan of the
@@ -269,7 +274,6 @@ private fun ProfileSummary(
 ) {
     val profile = stats.profile
     val target = stats.target
-    val kcal = stringResource(R.string.unit_kcal)
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FlowRow(
@@ -282,45 +286,8 @@ private fun ProfileSummary(
             OutlinedButton(onClick = onNewPlan) { Text(stringResource(R.string.dashboard_generate_plan)) }
         }
 
+        // What the day holds so far, with the target's figures in a line under it.
         today()
-
-        // As tall as the taller of the two: one has a hint under its value, the other none.
-        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(
-                label = stringResource(R.string.dashboard_daily_target),
-                value = target?.let { "${it.dailyTarget.roundToInt()}\u00A0$kcal" } ?: "—",
-                icon = AppIcons.Target,
-                hint = target?.let {
-                    stringResource(
-                        if (it.source == "manual_override") R.string.dashboard_manual_hint
-                        else R.string.dashboard_calculated_hint,
-                    )
-                },
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
-            StatCard(
-                label = stringResource(R.string.dashboard_maintenance),
-                value = target?.let { "${it.maintenance.roundToInt()}\u00A0$kcal" } ?: "—",
-                icon = AppIcons.Flame,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
-        }
-        // As tall as the taller of the two: one has a hint under its value, the other none.
-        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            // Under maintenance a deficit, above it a surplus: the label says which, the number how much.
-            StatCard(
-                label = stringResource(if (target != null && target.dailyDeficit < 0) R.string.dashboard_daily_surplus else R.string.dashboard_daily_deficit),
-                value = target?.let { "${abs(it.dailyDeficit).roundToInt()}\u00A0$kcal" } ?: "—",
-                icon = AppIcons.Schedule,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
-            StatCard(
-                label = stringResource(R.string.dashboard_meals_per_day),
-                value = profile.mealCount.toString(),
-                icon = AppIcons.Restaurant,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
-        }
 
         stats.targetError?.let { ErrorBanner(errorMessage(it)) }
 
@@ -349,50 +316,78 @@ private fun ProfileSummary(
 
         water()
 
-        WeekSummaryCard(profileId = profile.id)
+        weight()
 
-        if (target != null) {
-            AppCard {
-                Text(
-                    stringResource(R.string.dashboard_macro_split),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 12.dp),
-                )
-                Column(
-                    Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    MacroRing(
-                        nutrition = target.targetMacros,
-                        centerLabel = stringResource(R.string.dashboard_kcal_per_day),
+        More {
+            // The seven days, the split a day aims at and the favourite sets: looked at now and then.
+            WeekSummaryCard(profileId = profile.id)
+
+            if (target != null) {
+                AppCard {
+                    Text(
+                        stringResource(R.string.dashboard_macro_split),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 12.dp),
                     )
-                    MacroLegend(
-                        labels = listOf(
-                            stringResource(R.string.macro_protein),
-                            stringResource(R.string.macro_fat),
-                            stringResource(R.string.macro_carbs),
-                        ),
-                        grams = listOf(
-                            target.targetMacros.protein,
-                            target.targetMacros.fat,
-                            target.targetMacros.carbs,
-                        ),
-                    )
-                    // Protein per kilogram past a limit at the weight and the target of today: the split holds it there.
-                    if (target.customSplitHeld) {
-                        Text(
-                            stringResource(R.string.calorie_preview_split_held),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.tertiary,
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        MacroRing(
+                            nutrition = target.targetMacros,
+                            centerLabel = stringResource(R.string.dashboard_kcal_per_day),
                         )
+                        MacroLegend(
+                            labels = listOf(
+                                stringResource(R.string.macro_protein),
+                                stringResource(R.string.macro_fat),
+                                stringResource(R.string.macro_carbs),
+                            ),
+                            grams = listOf(
+                                target.targetMacros.protein,
+                                target.targetMacros.fat,
+                                target.targetMacros.carbs,
+                            ),
+                        )
+                        // Protein per kilogram past a limit at the weight and the target of today: the split holds it there.
+                        if (target.customSplitHeld) {
+                            Text(
+                                stringResource(R.string.calorie_preview_split_held),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.tertiary,
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        weight()
-        sets()
+            sets()
+        }
+    }
+}
+
+/** What is looked at now and then, folded under "Więcej": composed only once it is opened. */
+@Composable
+private fun More(content: @Composable () -> Unit) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button) { open = !open }
+                .semantics { if (open) collapse { open = false; true } else expand { open = true; true } }
+                .padding(vertical = 12.dp),
+        ) {
+            Text(stringResource(R.string.dashboard_more), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            Icon(
+                if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (open) content()
     }
 }
 

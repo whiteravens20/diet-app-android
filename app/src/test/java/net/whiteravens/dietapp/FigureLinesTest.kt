@@ -105,7 +105,7 @@ class FigureLinesTest {
         val english = texts("values")
         assertEquals(
             listOf("Białko 156 z 163 g ·", "tłuszcz 152 z 142 g ·", "węglowodany 59 g, w normie 54–108 g"),
-            pieces(polish.getValue("diary_eaten_macros").format("156", "163", "152", "142", polish.getValue("macros_carbs_band").format("59", "54", "108"))),
+            pieces(polish.getValue("plans_day_macros_of").format("156", "163", "152", "142", polish.getValue("macros_carbs_band").format("59", "54", "108"))),
         )
         assertEquals(
             listOf("Protein 156 of 163 g ·", "fat 152 of 142 g ·", "carbs 20 g, at most 27 g"),

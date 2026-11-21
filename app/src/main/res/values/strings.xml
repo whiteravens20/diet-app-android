@@ -103,12 +103,15 @@
         <item quantity="one">Your calorie target and macro split.</item>
         <item quantity="other">Calorie targets across your %d profiles.</item>
     </plurals>
-    <string name="dashboard_daily_target">Daily target</string>
-    <string name="dashboard_manual_hint">Manually set</string>
-    <string name="dashboard_calculated_hint">Calculated</string>
-    <string name="dashboard_maintenance">Maintenance</string>
-    <string name="dashboard_daily_deficit">Daily deficit</string>
-    <string name="dashboard_meals_per_day">Meals per day</string>
+    <string name="dashboard_figures">Maintenance\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0%3$s\u00A0kcal\u00A0· %4$s</string>
+    <string name="dashboard_figures_manual">Target\u00A0set\u00A0by\u00A0hand\u00A0· maintenance\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0%3$s\u00A0kcal\u00A0· %4$s</string>
+    <string name="dashboard_figures_deficit">deficit</string>
+    <string name="dashboard_figures_surplus">surplus</string>
+    <plurals name="dashboard_figures_meals">
+        <item quantity="one">%1$s\u00A0meal\u00A0a\u00A0day</item>
+        <item quantity="other">%1$s\u00A0meals\u00A0a\u00A0day</item>
+    </plurals>
+    <string name="dashboard_more">Week, macros and favourite sets</string>
     <string name="dashboard_macro_split">Target macro split</string>
     <string name="overview_title_active">The plan under way</string>
     <string name="overview_title_upcoming">The plan that begins next</string>
@@ -138,7 +141,6 @@
     <string name="overview_series_planned">Planned</string>
     <string name="overview_series_target">Target</string>
     <string name="dashboard_generate_plan">Make a meal plan</string>
-    <string name="dashboard_daily_surplus">Daily surplus</string>
     <string name="overview_eaten_hint">%1$s of the %2$s that were due by today.</string>
     <string name="overview_on_diet_hint">%1$s of %2$s fit the diet of the plan (%3$s).</string>
     <string name="overview_favourites_hint">%1$s of %2$s are of a recipe marked as a favourite or as eaten often.</string>
@@ -1793,7 +1795,6 @@
     <string name="diary_add_to">Add an entry to %1$s</string>
     <string name="diary_eaten_title">Eaten</string>
     <string name="diary_eaten_line">%1$s of %2$s kcal</string>
-    <string name="diary_eaten_macros">Protein %1$s of %2$s g · fat %3$s of %4$s g · %5$s</string>
     <string name="macros_carbs_of">carbs %1$s of %2$s g</string>
     <string name="macros_carbs_band">carbs %1$s g, in range %2$s–\u2060%3$s g</string>
     <string name="macros_carbs_ceiling">carbs %1$s g, at most %2$s g</string>

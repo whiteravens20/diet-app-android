@@ -197,6 +197,15 @@ private fun keyboardHeight(): Int {
 fun ComposeTestRule.scrollToText(sought: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
     scrollTo(hasText(shown(sought), substring = substring), timeoutMillis)
 
+/** Opens the fold of the dashboard under which the seven days, the split a day aims at and the favourite sets stand. */
+fun ComposeTestRule.openTheDashboardsMore() {
+    // As the screen shows it, a word of one letter held to the next; the bottom bar's "Więcej" has nothing to expand.
+    scrollToText(text(R.string.dashboard_more))
+    onNode(hasText(shown(text(R.string.dashboard_more))) and SemanticsMatcher.keyIsDefined(SemanticsActions.Expand))
+        .performScrollTo()
+        .performClick()
+}
+
 /**
  * Keeps a picture of the whole screen, dialogs included, among the run's artefacts, under
  * `screenshots/`. A picture the device does not give, or one that cannot be written, is left out

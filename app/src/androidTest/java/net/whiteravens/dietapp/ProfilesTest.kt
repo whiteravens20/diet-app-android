@@ -167,10 +167,10 @@ class ProfilesTest {
         assertEquals("0.5", made.getString("weeklyLossTarget"))
         assertEquals("peanuts", made.getJSONObject("preferences").getJSONArray("allergens").getString(0))
 
-        // The dashboard shows the target the profile now has.
+        // The dashboard shows the target the profile now has, as the day's figure ("0 z 2298 kcal").
         val target = Instance.dailyTarget(account, made.getString("id"))
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()
-        screen.waitForText(heldTogether("$target ${text(R.string.unit_kcal)}"))
+        screen.waitForText(heldTogether("$target ${text(R.string.unit_kcal)}"), substring = true)
     }
 
     @Test

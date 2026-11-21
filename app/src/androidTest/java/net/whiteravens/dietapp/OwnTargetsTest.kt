@@ -27,6 +27,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.testing.openTheDashboardsMore
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -131,6 +132,7 @@ class OwnTargetsTest {
         Instance.changeProfile(account, profileId, JSONObject().put("customProteinPerKg", 3))
         Instance.changeProfile(account, profileId, JSONObject().put("weightKg", 150))
         screen.openTab(text(R.string.tab_dashboard))
+        screen.openTheDashboardsMore()
         screen.scrollToText(text(R.string.dashboard_macro_split))
         screen.waitForText(text(R.string.calorie_preview_split_held))
         screen.onNodeWithText(text(R.string.calorie_preview_split_held)).performScrollTo()

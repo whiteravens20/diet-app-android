@@ -10,20 +10,24 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.common.errorMessage
+import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.Text
-import net.whiteravens.dietapp.ui.screens.diary.EatenAgainstTarget
+import net.whiteravens.dietapp.ui.screens.diary.DayFigures
 import java.time.LocalDate
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * What a profile ate today against the day's target, as the server worked it out, with how many
- * changes that wait to be sent it leaves out, the way to the diary ([onOpen]) and to its window that
- * adds an entry ([onAdd]). Without a network, a day not kept on the phone says so; adding works all
- * the same.
+ * changes that wait to be sent it leaves out, what the target comes from in a line under it, the way to
+ * the diary ([onOpen]) and to its window that adds an entry ([onAdd]). Without a network, a day not
+ * kept on the phone says so; adding works all the same.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -42,7 +46,7 @@ internal fun TodayCard(
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.diary_today_title), style = MaterialTheme.typography.titleMedium)
             when {
-                day != null -> EatenAgainstTarget(day, leftOut)
+                day != null -> DayFigures(day, leftOut, labelLine = false)
                 stats.todayError != null -> Text(
                     errorMessage(stats.todayError),
                     style = MaterialTheme.typography.bodySmall,
@@ -50,6 +54,21 @@ internal fun TodayCard(
                 )
                 offline || stats.keptOnly -> Text(
                     stringResource(R.string.diary_not_on_the_phone),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // The target itself stands once, as the day's figure above (a plan's day rounds it to tens, so the two would
+            // differ beside each other); a target set by hand says so first.
+            stats.target?.let { target ->
+                Text(
+                    stringResource(
+                        if (target.source == "manual_override") R.string.dashboard_figures_manual else R.string.dashboard_figures,
+                        formatNumber(target.maintenance.roundToInt()),
+                        stringResource(if (target.dailyDeficit < 0) R.string.dashboard_figures_surplus else R.string.dashboard_figures_deficit),
+                        formatNumber(abs(target.dailyDeficit).roundToInt()),
+                        pluralStringResource(R.plurals.dashboard_figures_meals, stats.profile.mealCount, formatNumber(stats.profile.mealCount)),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

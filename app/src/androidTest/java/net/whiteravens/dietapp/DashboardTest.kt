@@ -43,6 +43,7 @@ import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.testing.openTheDashboardsMore
 import net.whiteravens.dietapp.ui.common.formatDate
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -70,11 +71,14 @@ class DashboardTest {
         screen.signIn(account)
 
         screen.waitForText("Ala")
-        screen.waitForText(heldTogether("$target ${text(R.string.unit_kcal)}"))
+        // The target in the day's figure, and what it comes from in a line under it.
+        screen.waitForText(heldTogether("$target ${text(R.string.unit_kcal)}"), substring = true)
+        screen.waitForText(text(R.string.dashboard_figures).substringBefore("%"), substring = true)
         screen.keepScreenshot("dashboard-a-profile")
 
-        // A profile's favourite sets are made and changed in the web application, whose dashboard opens in the browser.
-        // The profile is one item of the list, its sets' card at the item's end: scrolled to itself, not to the item.
+        // A profile's favourite sets are made and changed in the web application, whose dashboard opens in the browser:
+        // under "Więcej", at the profile's end, scrolled to itself, not to the profile.
+        screen.openTheDashboardsMore()
         screen.onNodeWithText(text(R.string.favorite_sets_in_the_browser)).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("dashboard-favourite-sets-in-the-browser")
         opensSignedInTheBrowser("/dashboard") {
@@ -278,10 +282,10 @@ class DashboardTest {
         screen.waitForTheApi(20_000) { !Instance.profile(account, profileId).getBoolean("waterTracking") }
         screen.onNodeWithText(text(R.string.profile_autosave_done)).performScrollTo().performClick()
 
-        // Back on the dashboard, the profile has no water card: the card would stand above its split of macronutrients.
-        screen.scrollToText(text(R.string.dashboard_macro_split))
+        // Back on the dashboard, the profile has no water card: the card would stand above its weights.
+        screen.scrollToText(text(R.string.weight_title))
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.water_title)).fetchSemanticsNodes().isEmpty() }
-        screen.onNodeWithText(text(R.string.dashboard_macro_split)).assertIsDisplayed()
+        screen.onNodeWithText(text(R.string.weight_title)).assertIsDisplayed()
     }
 
     @Test
@@ -301,6 +305,7 @@ class DashboardTest {
 
         // The week before today in sum: what was eaten against the target, the days counted and the weight's way,
         // its last line, brought into view with the card above it.
+        screen.openTheDashboardsMore()
         screen.scrollToText(text(R.string.week_title))
         val (trend, _) = text(R.string.week_trend, "\u0000").split("\u0000")
         screen.waitForText(trend, substring = true)
