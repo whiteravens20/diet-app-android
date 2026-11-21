@@ -123,6 +123,16 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
             }
             if (state.fileSaved) Note(stringResource(R.string.products_file_saved))
         }
+        // Where the base comes from and its licence, under the list.
+        item {
+            Column {
+                Note(stringResource(R.string.products_source))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.diary_product_source_name)) }
+                    TextButton(onClick = { web.openOutside(ODBL) }) { Text(stringResource(R.string.diary_product_source_licence)) }
+                }
+            }
+        }
         state.refused?.takeIf { state.refusedOn == null }?.let { refused ->
             item { ErrorBanner(if (refused is IOException) stringResource(R.string.products_offline) else errorMessage(refused)) }
         }
@@ -152,16 +162,6 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
                     state.refused?.takeIf { state.refusedOn == own.product.id },
                     viewModel,
                 )
-            }
-        }
-        // Where the base comes from and its licence, under the list.
-        item {
-            Column {
-                Note(stringResource(R.string.products_source))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.diary_product_source_name)) }
-                    TextButton(onClick = { web.openOutside(ODBL) }) { Text(stringResource(R.string.diary_product_source_licence)) }
-                }
             }
         }
     }
