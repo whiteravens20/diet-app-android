@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,10 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -24,6 +29,7 @@ import net.whiteravens.dietapp.domain.ProfilePreferences
 import net.whiteravens.dietapp.domain.WasteLevel
 import net.whiteravens.dietapp.domain.WasteRules
 import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.components.HowItWorks
 import net.whiteravens.dietapp.ui.components.Text
 
 /** A profile's own limits on repeats: the most days running and times in seven days of one recipe. */
@@ -34,11 +40,11 @@ data class Repeats(val daysInARow: Int, val timesAWeek: Int) {
 }
 
 /**
- * The choice of how much a plan does to waste less, as the web's: each level with what it gives and
- * costs said beside it, in figures for the plan's diet as the instance measured them ([less], [none]),
- * and in words where there are none, for the custom diet or while the figures are on their way. Of a
- * plan that wastes nothing it says which limits of the profile ([repeats], once known) it loosens, and
- * to what.
+ * The choice of how much a plan does to waste less, as the web's: each level with a line of what it
+ * does, and the chosen one with the rest under "How it works": what it gives and costs in figures for
+ * the plan's diet as the instance measured them ([less], [none]), and in words where there are none,
+ * for the custom diet or while the figures are on their way. Of a plan that wastes nothing it says
+ * which limits of the profile ([repeats], once known) it loosens, and to what.
  */
 @Composable
 internal fun WasteLevelChoice(
@@ -53,11 +59,13 @@ internal fun WasteLevelChoice(
         Text(stringResource(R.string.plans_waste_level), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
         Level(
             stringResource(R.string.plans_waste_usual),
+            stringResource(R.string.plans_waste_usual_says),
             listOf(stringResource(R.string.plans_waste_usual_hint)),
             selected = level == WasteLevel.USUAL,
         ) { onChange(WasteLevel.USUAL) }
         Level(
             stringResource(R.string.plans_less_waste),
+            stringResource(R.string.plans_less_waste_says),
             listOfNotNull(
                 less?.let {
                     stringResource(
@@ -77,6 +85,7 @@ internal fun WasteLevelChoice(
         ) { onChange(WasteLevel.LESS) }
         Level(
             stringResource(R.string.plans_no_waste),
+            stringResource(R.string.plans_no_waste_says),
             rules?.let { noWasteSaid(none, it, repeats) }.orEmpty(),
             selected = level == WasteLevel.NONE,
         ) { onChange(WasteLevel.NONE) }
@@ -118,11 +127,12 @@ private fun noWasteSaid(effect: LessWasteEffect?, rules: WasteRules, repeats: Re
 }
 
 /**
- * One level: its button stands at its label, the first of many lines, as a button in a row of one line
- * stands; the lines below say what the level gives and costs. The whole is one control, a finger high at least.
+ * One level: its button stands at its label, as a button in a row of one line stands, with the [line] of what the
+ * level does under it; the whole is one control, a finger high at least. The chosen level has the rest of what it
+ * gives and costs, [said], under "How it works" below the control.
  */
 @Composable
-private fun Level(label: String, said: List<String>, selected: Boolean, onSelect: () -> Unit) {
+private fun Level(label: String, line: String, said: List<String>, selected: Boolean, onSelect: () -> Unit) {
     Row(
         verticalAlignment = Alignment.Top,
         modifier = Modifier
@@ -134,13 +144,17 @@ private fun Level(label: String, said: List<String>, selected: Boolean, onSelect
         Column(Modifier.padding(start = 8.dp, top = 14.dp, bottom = 12.dp)) {
             // Its own colour: a dialog's text is muted, and a label is not.
             Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-            said.forEachIndexed { index, line ->
-                Text(
-                    line,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = if (index > 0) Modifier.padding(top = 4.dp) else Modifier,
-                )
+            Text(line, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (selected && said.isNotEmpty()) {
+        var open by rememberSaveable { mutableStateOf(false) }
+        // Under the label, past the button.
+        Column(Modifier.padding(start = 32.dp)) {
+            HowItWorks(open, onOpen = { open = it }) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    said.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
             }
         }
     }
