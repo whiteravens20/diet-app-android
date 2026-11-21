@@ -128,9 +128,10 @@ class ShoppingTest {
         screen.keepScreenshot("shopping-a-household-list")
 
         // A row ticked on it is ticked on the server. The household list stands under the plan's list, whose part may
-        // hold the same row: the household's own says under its name what each profile needs of it.
+        // hold the same row: the household's own says under its name what each profile needs of it, Ala, Ola or both,
+        // as the two plans came out.
         val name = Instance.householdRows(account, language).keys.first()
-        val row = hasText(shown(name)) and isToggleable() and hasText("Ala", substring = true)
+        val row = hasText(shown(name)) and isToggleable() and (hasText("Ala", substring = true) or hasText("Ola", substring = true))
         list.performScrollToNode(row)
         screen.onNode(row).performClick()
         screen.waitForTheApi(30_000) { Instance.householdRows(account, language)[name] == true }
