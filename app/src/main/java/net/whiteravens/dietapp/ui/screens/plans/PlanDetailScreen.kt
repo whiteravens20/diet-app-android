@@ -480,7 +480,7 @@ fun PlanDetailScreen(
                         }
                     }
                 }
-                if (state.offline) item { OfflineAsOf(state.readAt, says = R.string.offline_readonly) }
+                if (state.offline) item { OfflineAsOf(state.readAt, works = R.string.offline_plan_works) }
                 // A re-roll refused for something the user can allow: asked again with it allowed.
                 state.refused?.let { refused ->
                     item {

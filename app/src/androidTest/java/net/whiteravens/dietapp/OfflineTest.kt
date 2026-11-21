@@ -4,6 +4,7 @@ package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -83,11 +84,15 @@ class OfflineTest {
         // Opened again without it: the copy, said to be one with the time it was read, and its meals.
         screen.airplaneMode(true)
         screen.onNodeWithText(card, substring = true).performClick()
-        // The text around the time, with the time itself told by the clock's form alone.
-        val (asOf, readOnly) = text(R.string.offline_readonly, TIME).split(TIME)
-        screen.waitForText(readOnly, substring = true, timeoutMillis = 40_000)
-        val said = screen.onNodeWithText(readOnly, substring = true).fetchSemanticsNode().config[SemanticsProperties.Text].joinToString("")
-        assertTrue(said, said.matches(Regex(Regex.escape(asOf) + ".*\\d{2}:\\d{2}" + Regex.escape(readOnly))))
+        // One line: the text before the time, with the time itself told by the clock's form alone. What still works
+        // without a network opens under it at a press.
+        val asOf = text(R.string.offline_cached, TIME).substringBefore(TIME)
+        screen.waitForText(asOf, substring = true, timeoutMillis = 40_000)
+        val said = screen.onNodeWithText(asOf, substring = true).fetchSemanticsNode().config[SemanticsProperties.Text].joinToString("")
+        assertTrue(said, said.matches(Regex(Regex.escape(asOf) + ".*\\d{2}:\\d{2}")))
+        screen.onAllNodesWithText(text(R.string.offline_plan_works)).assertCountEquals(0)
+        screen.onNodeWithText(asOf, substring = true).performClick()
+        screen.waitForText(text(R.string.offline_plan_works))
         screen.scrollToText(shown(title))
         screen.keepScreenshot("offline-a-plan-from-the-copy")
     }
