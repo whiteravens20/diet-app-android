@@ -30,7 +30,12 @@ internal fun HowItWorks(what: String, open: Boolean, onOpen: (Boolean) -> Unit) 
 
 /** A line that opens to show [content], how something on the screen works, for whoever asks: the explanations stand behind it. */
 @Composable
-internal fun HowItWorks(open: Boolean, onOpen: (Boolean) -> Unit, content: @Composable () -> Unit) {
+internal fun HowItWorks(open: Boolean, onOpen: (Boolean) -> Unit, content: @Composable () -> Unit) =
+    Folded(stringResource(R.string.common_how_it_works), open, onOpen, content)
+
+/** A line named [label] that opens to show [content]: what is there for whoever asks stands behind it. */
+@Composable
+internal fun Folded(label: String, open: Boolean, onOpen: (Boolean) -> Unit, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -40,7 +45,7 @@ internal fun HowItWorks(open: Boolean, onOpen: (Boolean) -> Unit, content: @Comp
                 .semantics { if (open) collapse { onOpen(false); true } else expand { onOpen(true); true } },
         ) {
             Text(
-                stringResource(R.string.common_how_it_works),
+                label,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

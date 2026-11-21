@@ -888,6 +888,11 @@ class PlansTest {
         screen.waitUntil(20_000) { screen.onAllNodes(saveDay).fetchSemanticsNodes().isNotEmpty() }
         screen.onNode(hasText(text(R.string.plans_list_out_of_date_days)) and hasAnyAncestor(isDialog())).performScrollTo()
         screen.keepScreenshot("plans-a-day-and-its-week")
+        // The rest of what it does to the week stands under its one line: the pace, and what evening the week out does.
+        screen.onNode(hasText(text(R.string.plans_settings_week_more)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
+        val evenNote = plural(R.plurals.plans_settings_week_even_note, 2, "\u0000", 2, "\u0000").substringBefore("\u0000")
+        screen.onNode(hasText(evenNote, substring = true) and hasAnyAncestor(isDialog())).performScrollTo()
+        screen.keepScreenshot("plans-a-day-and-its-week-more")
         screen.onNode(saveDay).performClick()
         screen.waitForTheApi(60_000) { Instance.firstWeek(account, planId).getBoolean("uneven") }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }

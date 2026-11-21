@@ -5,12 +5,14 @@ package net.whiteravens.dietapp.ui.screens.plans
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +20,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,6 +33,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,12 +48,13 @@ import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.ui.common.carbsTarget
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
-import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.ErrorBanner
+import net.whiteravens.dietapp.ui.components.Folded
+import net.whiteravens.dietapp.ui.components.HowItWorks
 import net.whiteravens.dietapp.ui.components.ScreenDialog
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
@@ -99,8 +106,10 @@ fun DaySettingsDialog(
                     selected = state.kind,
                     optionLabel = { kindLabel(it) },
                     onSelect = viewModel::setKind,
-                    hint = stringResource(R.string.plans_settings_kind_hint),
                 )
+                // What each kind does to the day's target: under the choice, for whoever asks.
+                var kindsOpen by rememberSaveable { mutableStateOf(false) }
+                HowItWorks(stringResource(R.string.plans_settings_kind_hint), kindsOpen) { kindsOpen = it }
                 if (!skipped) {
                     ChoiceField(
                         label = stringResource(R.string.plans_settings_meal_count),
@@ -203,7 +212,8 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: Plan
         Note(stringResource(R.string.plans_settings_unchanged))
         val average = weekOff?.average
         if (weekOff != null && average != null) {
-            Note(stringResource(R.string.plans_settings_even_week_note, formatNumber(average.roundToInt()), formatNumber(weekOff.target.roundToInt())))
+            Note(stringResource(R.string.plans_settings_week_average, formatNumber(average.roundToInt()), formatNumber(weekOff.target.roundToInt())))
+            WeekMore { Note(stringResource(R.string.plans_settings_even_week_note)) }
         }
         ListNote(weekOff?.listOutOfDate == true, several = true)
         return
@@ -227,10 +237,7 @@ private fun Outcome(preview: DaySettingsPreview, skipped: Boolean, weekOff: Plan
         )
         if (preview.belowSafetyFloor) Note(stringResource(R.string.plans_settings_below_floor), MaterialTheme.colorScheme.error)
     }
-    preview.meals.forEach { meal -> Note("${mealTypeLabel(meal.slot)}: ${fateText(meal)}", MaterialTheme.colorScheme.onSurface) }
-    if (preview.added.isNotEmpty()) {
-        Note(stringResource(R.string.plans_settings_added, formatList(preview.added.map { mealTypeLabel(it) })), MaterialTheme.colorScheme.onSurface)
-    }
+    MealsTable(preview.meals, preview.added)
     if (preview.added.isNotEmpty() || preview.meals.any { it.fate == "redrawn" }) Note(stringResource(R.string.plans_settings_drawn_note))
     val kcal = preview.dayCalories
     val short = preview.short
@@ -288,38 +295,107 @@ private fun WeekOutcome(week: DaySettingsWeek, unit: WeightUnit) {
         pace > 0 -> stringResource(R.string.plans_settings_week_pace_loss, weight)
         else -> stringResource(R.string.plans_settings_week_pace_gain, weight)
     }
-    Note("$average $paced", MaterialTheme.colorScheme.onSurface)
-    if (week.unevenAlone) {
-        Note(
-            pluralStringResource(
-                R.plurals.plans_settings_week_even_note,
-                week.otherDays,
-                formatNumber(week.evenedTarget.roundToInt()),
-                week.otherDays,
-                formatNumber(week.averageEvened.roundToInt()),
-            ),
-        )
-        ListNote(week.listOutOfDate, several = true)
+    Note(average, MaterialTheme.colorScheme.onSurface)
+    WeekMore {
+        Note(paced)
+        if (week.unevenAlone) {
+            Note(
+                pluralStringResource(
+                    R.plurals.plans_settings_week_even_note,
+                    week.otherDays,
+                    formatNumber(week.evenedTarget.roundToInt()),
+                    week.otherDays,
+                    formatNumber(week.averageEvened.roundToInt()),
+                ),
+            )
+        }
+    }
+    if (week.unevenAlone) ListNote(week.listOutOfDate, several = true)
+}
+
+/** The rest of what a change does to its week, under its one line: the pace it comes to and what evening it out does. */
+@Composable
+private fun WeekMore(content: @Composable () -> Unit) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    Folded(stringResource(R.string.plans_settings_week_more), open, onOpen = { open = it }) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) { content() }
     }
 }
 
+/** Of a row of the table of meals: the share of its width the meal's name takes, and each of the two figures. */
+private const val NAME_SHARE = 0.4f
+private const val FIGURE_SHARE = 0.3f
+
 /**
- * What becomes of a meal, in words: its fate, and why where there is more to it than the day's new target. A dish
- * the change resizes says its servings and kcal now and after it, where the preview gives them.
+ * Each meal of the day in a row of a table: its portion and kcal before and after where the change gives it another
+ * portion, what becomes of it otherwise, and the meals the day gains.
  */
 @Composable
-private fun fateText(meal: MealFate): String {
-    val portion = meal.portion
-    if (meal.fate == "resized" && portion != null) {
-        return stringResource(
-            R.string.plans_fate_resized_portion,
-            formatNumber(portion.servingsNow, fractionDigits = 2),
-            servingsWord(portion.servingsThen, fractionDigits = 2),
-            formatNumber(portion.kcalNow.roundToInt()),
-            formatNumber(portion.kcalThen.roundToInt()),
-        )
+private fun MealsTable(meals: List<MealFate>, added: List<String>) {
+    Column(Modifier.fillMaxWidth()) {
+        TableLine(stringResource(R.string.plans_settings_table_meal), head = true) {
+            TableFigure(stringResource(R.string.plans_settings_table_portion), head = true)
+            TableFigure(stringResource(R.string.plans_settings_table_kcal), head = true)
+        }
+        meals.forEach { meal ->
+            HorizontalDivider()
+            val portion = meal.portion?.takeIf { meal.fate == "resized" }
+            TableLine(mealTypeLabel(meal.slot)) {
+                if (portion != null) {
+                    TableFigure(moved(formatNumber(portion.servingsNow, fractionDigits = 2), formatNumber(portion.servingsThen, fractionDigits = 2)))
+                    TableFigure(moved(formatNumber(portion.kcalNow.roundToInt()), formatNumber(portion.kcalThen.roundToInt())))
+                } else {
+                    TableWords(fateText(meal))
+                }
+            }
+        }
+        added.forEach { slot ->
+            HorizontalDivider()
+            TableLine(mealTypeLabel(slot)) { TableWords(stringResource(R.string.plans_fate_added)) }
+        }
     }
-    return stringResource(
+}
+
+/** A row of the table of meals: the meal's name, or the head of the column of names, then the rest of the row. */
+@Composable
+private fun TableLine(name: String, head: Boolean = false, rest: @Composable RowScope.() -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            name,
+            style = if (head) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(NAME_SHARE),
+        )
+        rest()
+    }
+}
+
+/** A figure of the table, or the head of its column, at the end of its cell. */
+@Composable
+private fun RowScope.TableFigure(text: String, head: Boolean = false) {
+    Text(
+        text,
+        style = if (head) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodySmall,
+        color = if (head) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+        textAlign = TextAlign.End,
+        modifier = Modifier.weight(FIGURE_SHARE),
+    )
+}
+
+/** What becomes of a meal, in the place of both its figures. */
+@Composable
+private fun RowScope.TableWords(text: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(2 * FIGURE_SHARE))
+}
+
+/** A figure before and after, held on one line. */
+private fun moved(now: String, then: String) = "$now\u00A0→\u00A0$then"
+
+
+/** What becomes of a meal, in words: its fate, and why where there is more to it than the day's new target. */
+@Composable
+private fun fateText(meal: MealFate): String =
+    stringResource(
         when (meal.fate) {
             "stays" -> when (meal.because) {
                 "eaten" -> R.string.plans_fate_stays_eaten
@@ -332,7 +408,6 @@ private fun fateText(meal: MealFate): String {
             else -> if (meal.because == "skipped") R.string.plans_fate_removed_skipped else R.string.plans_fate_removed_fewer
         },
     )
-}
 
 /** The kind of a day as the window names it: `normal` | `training` | `rest` | `skip`. */
 @Composable
