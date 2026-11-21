@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.hasAnyAncestor
@@ -787,6 +788,8 @@ class PlansTest {
         // Looked for in the window alone: a meal behind it may be called as an ingredient is.
         screen.onNode(hasText(line) and hasAnyAncestor(isDialog())).performClick()
         screen.waitForText(text(R.string.substitute_step_replace, line))
+        // A field is a frame 48 dp high: the search, which has no label and nothing under it, is that frame alone.
+        screen.onNode(hasSetTextAction() and hasAnyAncestor(isDialog())).assertHeightIsEqualTo(48.dp)
         screen.keepScreenshot("plans-an-ingredient-to-substitute")
         screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.substitute_step_pick)).fetchSemanticsNodes().isEmpty() }

@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.KeyboardActionHandler
@@ -80,7 +81,7 @@ fun OutlinedField(
     val optionalWord = stringResource(R.string.common_optional)
     OutlinedTextField(
         state = state,
-        modifier = modifier.then(if (optional) Modifier.semantics { stateDescription = optionalWord } else Modifier),
+        modifier = modifier.heightIn(min = FIELD_HEIGHT).then(if (optional) Modifier.semantics { stateDescription = optionalWord } else Modifier),
         enabled = enabled,
         readOnly = readOnly,
         labelPosition = TextFieldLabelPosition.Above(),
@@ -104,8 +105,21 @@ fun OutlinedField(
         lineLimits = if (singleLine) TextFieldLineLimits.SingleLine else TextFieldLineLimits.MultiLine(minHeightInLines = minLines),
         shape = shape,
         colors = colors,
+        contentPadding = FIELD_PADDING,
     )
 }
+
+/**
+ * The room around what a field holds: a frame 48 dp high for a line of text, a finger's height. Material's 56 dp keep
+ * room for a label in the frame, and the label of these fields stands above it.
+ */
+private val FIELD_PADDING = OutlinedTextFieldDefaults.contentPadding(top = 12.dp, bottom = 12.dp)
+
+/**
+ * The least height of a field: its frame alone where it has no label. Without it Material's own least height, 56 dp,
+ * holds a field of no label and nothing under it, which is its frame and nothing more.
+ */
+private val FIELD_HEIGHT = 48.dp
 
 /** What a field of a secret holds, which the words of its eye name. */
 enum class Secret { Password, Key }
@@ -143,7 +157,7 @@ fun OutlinedSecretField(
     val words = wordsOf(secret)
     OutlinedTextField(
         state = typedState(value, onValueChange),
-        modifier = if (shown) modifier else modifier.semantics { password() },
+        modifier = modifier.heightIn(min = FIELD_HEIGHT).then(if (shown) Modifier else Modifier.semantics { password() }),
         enabled = enabled,
         labelPosition = TextFieldLabelPosition.Above(),
         label = labelOf(label, optional = false),
@@ -173,6 +187,7 @@ fun OutlinedSecretField(
         shape = shape,
         // The eye is no part of a refusal: only the label and the frame take the colour of an error.
         colors = OutlinedTextFieldDefaults.colors(errorTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant),
+        contentPadding = FIELD_PADDING,
     )
 }
 

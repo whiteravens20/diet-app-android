@@ -39,7 +39,7 @@ class OutlinedFieldTest {
         // Hidden until the eye is pressed, and hidden is dots and the mark of a password.
         assertTrue(own.contains("var shown by remember { mutableStateOf(false) }"))
         assertTrue(own.contains("outputTransformation = if (shown) null else Dots"))
-        assertTrue(own.contains("modifier = if (shown) modifier else modifier.semantics { password() }"))
+        assertTrue(own.contains("if (shown) Modifier else Modifier.semantics { password() }"))
         // Dots again when the app leaves the screen, and when the screen sends what the field holds.
         assertTrue(own.contains("LifecycleEventEffect(Lifecycle.Event.ON_STOP) { shown = false }"))
         assertTrue(own.contains("LaunchedEffect(sending) { if (sending) shown = false }"))
