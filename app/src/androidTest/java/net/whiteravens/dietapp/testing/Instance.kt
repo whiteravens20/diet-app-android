@@ -345,6 +345,13 @@ object Instance {
             .first { it.getString("id") == mealId }.isNull("eatenAt")
     }
 
+    /** Whether a meal both people of a joint plan eat is cooked apart, as the plan answers now. */
+    fun cooksApart(account: Account, planId: String, mealId: String): Boolean {
+        val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")
+        return (0 until days.length()).flatMap { d -> days.getJSONObject(d).getJSONArray("meals").let { meals -> (0 until meals.length()).map(meals::getJSONObject) } }
+            .first { it.getString("id") == mealId }.getJSONObject("shared").getBoolean("apart")
+    }
+
     /** Deletes a plan, as its menu does. */
     fun deletePlan(account: Account, planId: String) {
         send("DELETE", "meal-plans/$planId", null, account.accessToken, 204, null)

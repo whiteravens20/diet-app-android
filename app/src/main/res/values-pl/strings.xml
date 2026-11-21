@@ -2175,13 +2175,9 @@
     <string name="plans_portion_you">Ty</string>
     <string name="plans_shared_chip">Wspólne</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
-    <string name="plans_plate_you">Twój talerz</string>
-    <string name="plans_plate_more">więcej: %1$s</string>
-    <string name="plans_plate_less">mniej: %1$s</string>
-    <string name="plans_plate_line">%1$s – %2$s.</string>
-    <string name="plans_plate_as_recipe">jak w przepisie</string>
     <string name="plans_plates_title">Talerze</string>
-    <string name="plans_plates_intro">Plan dzieli te składniki inaczej niż przepis, żeby dzień każdej osoby trzymał jej podział makroskładników. Resztę garnka podziel według wielkości porcji.</string>
+    <string name="plans_plates_intro">Plan dzieli te składniki inaczej niż przepis, żeby dzień każdej osoby trzymał jej podział makroskładników.</string>
+    <string name="plans_plates_pot">Resztę garnka podziel według wielkości porcji.</string>
     <string name="plans_plates_ingredient">Składnik</string>
     <string name="plans_plates_you">Ty</string>
     <!-- What is left of a meal, carried to a meal of the next day. -->

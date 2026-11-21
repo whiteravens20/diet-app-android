@@ -77,7 +77,10 @@ import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -1256,7 +1259,6 @@ private fun MealCard(
                         modifier = Modifier.padding(top = 4.dp),
                     )
                 }
-                meal.shared?.let { shared -> SharedPortion(meal, shared, date, today, readOnly, busy, added, onEatenTogether, onSetApart) }
             }
             if (swapping) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -1270,6 +1272,10 @@ private fun MealCard(
                     aiOn,
                     canSwap = !readOnly && changeable && !meal.eaten && !meal.custom && meal.leftover == null,
                     readOnly = readOnly,
+                    // A meal both people eat is marked eaten for both from its day on; one of one's own waiting is not on the server yet.
+                    eatenByBoth = meal.shared?.let { !meal.eaten && !it.with.eaten && date <= today && !added } == true,
+                    onEatenTogether = onEatenTogether,
+                    onSetApart = onSetApart,
                     onChange = onChange,
                     onPickFavorite = onPickFavorite,
                     onSubstitute = onSubstitute,
@@ -1278,51 +1284,6 @@ private fun MealCard(
                     onUndoLeftover = onUndoLeftover,
                 )
             }
-        }
-    }
-}
-
-/**
- * What a meal both people of a joint plan eat says under it: the other person's portion, eaten or not,
- * the box to cook each portion apart (in one pot otherwise), and, from its day on, one press that marks
- * it eaten in both plans, as the box beside the meal marks it in this plan alone.
- */
-@Composable
-private fun SharedPortion(
-    meal: Meal,
-    shared: SharedMeal,
-    date: String,
-    today: String,
-    readOnly: Boolean,
-    busy: Boolean,
-    added: Boolean,
-    onEatenTogether: () -> Unit,
-    onSetApart: (Boolean) -> Unit,
-) {
-    val other = shared.with
-    val line = stringResource(R.string.plans_shared_line, other.profileName, servingsWord((other.servings * 10).roundToInt() / 10.0), formatNumber(other.calories.roundToInt()))
-    Text(
-        if (other.eaten) "$line$DOT${stringResource(R.string.plans_shared_eaten)}" else line,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 4.dp),
-    )
-    // Of a dish served on plates of their own: what each plate holds more and less of than the recipe.
-    if (platesOf(meal).isNotEmpty()) {
-        Text(
-            "${plateWords(stringResource(R.string.plans_plate_you), meal.lines)} ${plateWords(other.profileName, other.lines)}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-    // How it is cooked is the same in both plans, and is said to the server at once; a leftover is cooked already.
-    if (meal.leftover == null) {
-        CheckRow(label = stringResource(R.string.plans_cook_apart), checked = shared.apart, enabled = !readOnly && !busy, onChange = onSetApart)
-    }
-    if (!meal.eaten && !other.eaten && date <= today && !added) {
-        val named = stringResource(R.string.plans_action_for, stringResource(R.string.plans_eaten_together), mealName(meal))
-        TextButton(onClick = onEatenTogether, enabled = !busy, modifier = Modifier.semantics { contentDescription = named }) {
-            Text(stringResource(R.string.plans_eaten_together))
         }
     }
 }
@@ -1528,7 +1489,8 @@ private fun CustomMealDialog(
  * The ways to change a meal, behind one button named by the meal, as the web folds them on a narrow
  * screen: any recipe of the plan's diet, a favourite picked by hand, a model's pick (off, and saying
  * why, on an account without a model), one with the profile's favourite ingredients, or one of its
- * ingredients substituted, where it [canSwap]; and taking it off its day, whichever it is.
+ * ingredients substituted, where it [canSwap]; and taking it off its day, whichever it is. A meal both people of a joint
+ * plan eat is marked eaten for both from there, where it is [eatenByBoth], and cooked apart or in one pot.
  */
 @Composable
 private fun MealChanges(
@@ -1539,6 +1501,9 @@ private fun MealChanges(
     aiOn: Boolean,
     canSwap: Boolean,
     readOnly: Boolean,
+    eatenByBoth: Boolean,
+    onEatenTogether: () -> Unit,
+    onSetApart: (Boolean) -> Unit,
     onChange: (SwapAsk) -> Unit,
     onPickFavorite: () -> Unit,
     onSubstitute: () -> Unit,
@@ -1559,6 +1524,12 @@ private fun MealChanges(
             fun pick(action: () -> Unit) {
                 open = false
                 action()
+            }
+            // One press marks it eaten in both plans, as the box beside the meal marks it in this plan alone.
+            if (eatenByBoth) Change(stringResource(R.string.plans_eaten_together), null) { pick(onEatenTogether) }
+            // How it is cooked is the same in both plans, and is said to the server at once; a leftover is cooked already.
+            meal.shared?.takeIf { meal.leftover == null }?.let { shared ->
+                Ticked(stringResource(R.string.plans_cook_apart), shared.apart, enabled = !readOnly) { pick { onSetApart(!shared.apart) } }
             }
             if (canSwap) {
                 parted?.let { before ->
@@ -1599,6 +1570,21 @@ private fun MealChanges(
             Change(stringResource(R.string.plans_remove), null) { pick(onRemove) }
         }
     }
+}
+
+/** A way a meal is made, ticked or not, among its changes: a press turns it the other way. */
+@Composable
+private fun Ticked(label: String, checked: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(label) },
+        trailingIcon = { Checkbox(checked = checked, onCheckedChange = null, enabled = enabled) },
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.semantics {
+            role = Role.Checkbox
+            toggleableState = ToggleableState(checked)
+        },
+    )
 }
 
 /** A way to change a meal, with what it does under its name where the name alone does not say it. */
@@ -1832,9 +1818,21 @@ private fun MealDialog(
                 }
                 meal.label?.let { LabelGrid(it) }
                 cookHint(meal, date)?.let { Hint(it) }
+                // The other person's portion of a dish each cooks apart, or of a leftover: a pot says both portions in its own line.
+                meal.shared?.takeUnless { pot }?.let { shared ->
+                    val other = shared.with
+                    val line = stringResource(R.string.plans_shared_line, other.profileName, servingsWord((other.servings * 10).roundToInt() / 10.0), formatNumber(other.calories.roundToInt()))
+                    Text(
+                        if (other.eaten) "$line$DOT${stringResource(R.string.plans_shared_eaten)}" else line,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 // The topping is this person's alone: never in the pot, nor in what it is split into.
                 meal.topping?.let { Text(toppingWords(R.string.plans_topping_note, it), style = MaterialTheme.typography.bodyMedium) }
-                toCook.pot?.takeIf { it.plates.isNotEmpty() }?.let { Plates(it) }
+                // Whose plates differ from the recipe: those of the pot, or of a dish each person cooks apart.
+                val plated = toCook.pot?.let { it.name to it.plates } ?: meal.shared?.let { it.with.profileName to platesOf(meal) }
+                plated?.takeIf { it.second.isNotEmpty() }?.let { (name, plates) -> Plates(name, plates, pot) }
                 if (split.isNotEmpty()) {
                     TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
                 }
@@ -1942,16 +1940,20 @@ internal fun servingsWord(servings: Double, fractionDigits: Int = 1): String =
     }
 
 /**
- * The lines of a pot both people cook whose plates differ from the recipe: what each plate takes of them, under
- * whose name, and how each part is split as near as a split comes.
+ * The lines of a dish both people eat whose plates differ from the recipe: what each plate takes of them, under
+ * whose [name]; of a [pot], how the rest of it and each part are split, as near as a split comes.
  */
 @Composable
-private fun Plates(pot: PotPortions) {
+private fun Plates(name: String, plates: List<PlateRow>, pot: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.plans_plates_title), style = MaterialTheme.typography.titleMedium)
-        Hint(stringResource(R.string.plans_plates_intro))
-        PlateRowLine(stringResource(R.string.plans_plates_ingredient), stringResource(R.string.plans_plates_you), pot.name, head = true)
-        pot.plates.forEach { row ->
+        // A dish each person cooks apart has no pot to split.
+        Hint(
+            if (pot) "${stringResource(R.string.plans_plates_intro)} ${stringResource(R.string.plans_plates_pot)}"
+            else stringResource(R.string.plans_plates_intro),
+        )
+        PlateRowLine(stringResource(R.string.plans_plates_ingredient), stringResource(R.string.plans_plates_you), name, head = true)
+        plates.forEach { row ->
             HorizontalDivider()
             PlateRowLine(
                 row.name,
@@ -1959,13 +1961,15 @@ private fun Plates(pot: PotPortions) {
                 amountLabel(row.theirs.quantity, row.theirs.unit, row.theirs.grams),
             )
         }
-        Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                stringResource(R.string.split_part_risk),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(12.dp),
-            )
+        if (pot) {
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.split_part_risk),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
         }
     }
 }

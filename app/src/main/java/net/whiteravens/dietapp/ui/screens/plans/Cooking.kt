@@ -198,22 +198,6 @@ internal data class PlateRow(val ingredientId: String, val name: String, val min
  * The lines of a dish both people eat that a plate of either holds otherwise than the recipe's proportion: what
  * each plate takes of them. None where both plates are the recipe's, and for a meal of one plan alone.
  */
-/** What a person's plate of a shared dish holds more and less of than the recipe, by the names of its lines. */
-@Composable
-internal fun plateWords(who: String, lines: List<MealLine>): String {
-    val more = lines.filter { (it.share ?: 1.0) > 1.0 }.map { it.name }
-    val less = lines.filter { (it.share ?: 1.0) < 1.0 }.map { it.name }
-    val changes = listOfNotNull(
-        more.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.plans_plate_more, formatList(it)) },
-        less.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.plans_plate_less, formatList(it)) },
-    )
-    return stringResource(
-        R.string.plans_plate_line,
-        who,
-        changes.joinToString("; ").ifEmpty { stringResource(R.string.plans_plate_as_recipe) },
-    )
-}
-
 internal fun platesOf(meal: Meal): List<PlateRow> {
     val theirs = meal.shared?.with?.lines.orEmpty()
     return meal.lines.mapIndexedNotNull { index, line ->

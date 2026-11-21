@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
@@ -484,17 +485,20 @@ class PlansTest {
         screen.scrollToText(countedTogether, substring = true)
         screen.keepScreenshot("plans-packs-counted-together")
 
-        // A meal both eat says so, with the other's portion.
+        // A meal both eat says so; among its changes it is marked eaten for both and cooked apart, in one pot until then.
         val shared = Instance.sharedMeal(account, planId)
-        val together = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_eaten_together), shared.title))
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), shared.title))
-        screen.scrollTo(together)
-        screen.waitForText("Ewa: ", substring = true)
+        val inTheMenu = hasAnyAncestor(isPopup())
+        screen.scrollTo(change)
+        screen.onAllNodes(change)[0].performScrollTo()
         screen.keepScreenshot("plans-a-shared-meal")
+        screen.onAllNodes(change)[0].performClick()
+        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).assertIsOff()
+        screen.onNode(hasText(text(R.string.plans_eaten_together)) and inTheMenu).assertExists()
+        screen.keepScreenshot("plans-a-shared-meal-changes")
 
         // Another dish for it is asked for both, and the offer says it can be for this plan alone.
-        screen.onAllNodes(change)[0].performScrollTo().performClick()
-        screen.onNodeWithText(text(R.string.plans_swap)).performClick()
+        screen.onNode(hasText(text(R.string.plans_swap)) and inTheMenu).performClick()
         screen.waitForText(text(R.string.plans_offer_for_all, "Ewa"))
         screen.keepScreenshot("plans-a-shared-swap")
         screen.onNode(hasText(text(R.string.common_cancel)) and inAWindow).performClick()
@@ -508,8 +512,9 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_cancel)) and inAWindow).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_remove_for_all)).fetchSemanticsNodes().isEmpty() }
 
-        // One press marks it eaten in both plans.
-        screen.onAllNodes(together)[0].performScrollTo().performClick()
+        // One press among its changes marks it eaten in both plans.
+        screen.onAllNodes(change)[0].performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.plans_eaten_together)) and inTheMenu).performClick()
         screen.waitForTheApi(20_000) {
             Instance.mealEaten(account, planId, shared.mealId) && Instance.mealEaten(account, shared.theirPlanId, shared.theirMealId)
         }
@@ -524,7 +529,7 @@ class PlansTest {
         screen.keepScreenshot("plans-a-pot")
         screen.onNode(hasText(text(R.string.split_open)) and inAWindow).performScrollTo().performClick()
         screen.waitForText(text(R.string.split_plan_intro_parts))
-        // Looked for in the split's window alone: the meal's card under it names the other person too.
+        // Looked for in the split's window alone: the meal's window under it names the other person too.
         val splitWindow = isDialog() and hasAnyDescendant(hasText(text(R.string.split_plan_intro_parts)))
         screen.waitUntil(10_000) {
             listOf("Adam: ", "Ewa: ").all { name -> screen.onAllNodes(hasText(name, substring = true) and hasAnyAncestor(splitWindow)).fetchSemanticsNodes().isNotEmpty() }
@@ -1059,7 +1064,7 @@ class PlansTest {
         // Adam eats high in protein, Ewa as most do: a dish both eat is served on two plates of their own.
         val adam = Instance.newProfile(account, name = "Adam", weightKg = 95, dietType = "high_protein", activityLevel = "active", mealCount = 4)
         val ewa = Instance.newProfile(account, name = "Ewa", mealCount = 4)
-        val (_, found) = Instance.platedPlanTogether(account, adam, ewa)
+        val (planId, found) = Instance.platedPlanTogether(account, adam, ewa)
         val plated = checkNotNull(found) { "eight draws gave no plate of his own today" }
         screen.startSignedIn(account)
         val inAWindow = hasAnyAncestor(isDialog())
@@ -1069,16 +1074,13 @@ class PlansTest {
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
 
-        // The meal says what Adam's plate holds more and less of than the recipe, and what Ewa's does.
-        val yours = text(R.string.plans_plate_line, text(R.string.plans_plate_you), "\u0000").substringBefore("\u0000")
-        screen.scrollToText(yours, substring = true)
-        screen.keepScreenshot("plans-a-plate")
-
-        // Its window shows both plates of the lines they hold otherwise than the recipe, and how a part is split.
+        // The meal's window shows both plates of the lines they hold otherwise than the recipe, and how the pot and a part are split.
+        screen.scrollToText(shown(plated.title))
         screen.onAllNodesWithText(shown(plated.title))[0].performScrollTo().performClick()
         screen.waitForText(text(R.string.plans_plates_title))
         screen.onNode(hasText(text(R.string.plans_plates_title)) and inAWindow).performScrollTo()
         screen.keepScreenshot("plans-the-plates-in-the-meal")
+        screen.onNode(hasText(text(R.string.plans_plates_pot), substring = true) and inAWindow).assertExists()
         screen.onNode(hasText(text(R.string.split_part_risk)) and inAWindow).performScrollTo()
 
         // Split by one part weighed alone: each plate gets of it what the plan gives it.
@@ -1105,6 +1107,23 @@ class PlansTest {
         screen.putKeyboardAway()
         screen.onNode(hasText(text(R.string.split_part_risk)) and inSplit).performScrollTo()
         screen.keepScreenshot("plans-a-part-split-by-the-plates")
+        screen.onNode(hasText(text(R.string.common_close)) and inSplit).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.split_plan_intro_parts)).fetchSemanticsNodes().isEmpty() }
+        screen.onNode(hasText(text(R.string.common_close)) and inAWindow).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_plates_title)).fetchSemanticsNodes().isEmpty() }
+
+        // Cooked apart, from among its changes: its window says Ewa's portion and both plates, with no pot to split.
+        val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), plated.title))
+        screen.onAllNodes(change)[0].performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.plans_cook_apart)) and hasAnyAncestor(isPopup())).performClick()
+        screen.waitForTheApi(20_000) { Instance.cooksApart(account, planId, plated.mealId) }
+        screen.onAllNodesWithText(shown(plated.title))[0].performScrollTo().performClick()
+        screen.waitUntil(10_000) { screen.onAllNodes(hasText("Ewa: ", substring = true) and inAWindow).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(hasText(text(R.string.plans_plates_intro)) and inAWindow).performScrollTo()
+        screen.keepScreenshot("plans-the-plates-cooked-apart")
+        check(screen.onAllNodes(hasText(text(R.string.split_part_risk)) and inAWindow).fetchSemanticsNodes().isEmpty()) {
+            "a dish cooked apart has no pot to split"
+        }
     }
 
     /** Puts away the card that says how a change balanced its day, where the change left one. */
