@@ -103,10 +103,11 @@
         <item quantity="one">Your calorie target and macro split.</item>
         <item quantity="other">Calorie targets across your %d profiles.</item>
     </plurals>
-    <string name="dashboard_figures">Maintenance\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0%3$s\u00A0kcal\u00A0· %4$s</string>
-    <string name="dashboard_figures_manual">Target\u00A0set\u00A0by\u00A0hand\u00A0· maintenance\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0%3$s\u00A0kcal\u00A0· %4$s</string>
-    <string name="dashboard_figures_deficit">deficit</string>
-    <string name="dashboard_figures_surplus">surplus</string>
+    <string name="dashboard_figures">Maintenance\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0· %3$s</string>
+    <string name="dashboard_figures_manual">Target\u00A0set\u00A0by\u00A0hand\u00A0· maintenance\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0· %3$s</string>
+    <string name="dashboard_figures_deficit">deficit\u00A0%1$s\u00A0kcal</string>
+    <string name="dashboard_figures_surplus">surplus\u00A0%1$s\u00A0kcal</string>
+    <string name="dashboard_figures_keep">maintaining\u00A0weight</string>
     <plurals name="dashboard_figures_meals">
         <item quantity="one">%1$s\u00A0meal\u00A0a\u00A0day</item>
         <item quantity="other">%1$s\u00A0meals\u00A0a\u00A0day</item>

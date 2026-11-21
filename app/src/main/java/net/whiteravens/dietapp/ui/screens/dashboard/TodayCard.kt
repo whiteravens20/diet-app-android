@@ -20,7 +20,6 @@ import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.diary.DayFigures
 import java.time.LocalDate
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -61,12 +60,17 @@ internal fun TodayCard(
             // The target itself stands once, as the day's figure above (a plan's day rounds it to tens, so the two would
             // differ beside each other); a target set by hand says so first.
             stats.target?.let { target ->
+                // A target that is the expenditure keeps the weight: said so, not as a deficit of nothing.
+                val gap = when (val kept = targetGap(target.dailyDeficit)) {
+                    is TargetGap.Surplus -> stringResource(R.string.dashboard_figures_surplus, formatNumber(kept.kcal))
+                    is TargetGap.Deficit -> stringResource(R.string.dashboard_figures_deficit, formatNumber(kept.kcal))
+                    TargetGap.Keep -> stringResource(R.string.dashboard_figures_keep)
+                }
                 Text(
                     stringResource(
                         if (target.source == "manual_override") R.string.dashboard_figures_manual else R.string.dashboard_figures,
                         formatNumber(target.maintenance.roundToInt()),
-                        stringResource(if (target.dailyDeficit < 0) R.string.dashboard_figures_surplus else R.string.dashboard_figures_deficit),
-                        formatNumber(abs(target.dailyDeficit).roundToInt()),
+                        gap,
                         pluralStringResource(R.plurals.dashboard_figures_meals, stats.profile.mealCount, formatNumber(stats.profile.mealCount)),
                     ),
                     style = MaterialTheme.typography.bodySmall,
@@ -79,5 +83,22 @@ internal fun TodayCard(
                 OutlinedButton(onClick = onOpen) { Text(stringResource(R.string.diary_open)) }
             }
         }
+    }
+}
+
+/** What a profile's target takes from its expenditure, by the whole kcal: a deficit, a surplus, or the weight kept. */
+internal sealed interface TargetGap {
+    data class Deficit(val kcal: Int) : TargetGap
+    data class Surplus(val kcal: Int) : TargetGap
+    data object Keep : TargetGap
+}
+
+/** The gap of a target below its expenditure, [dailyDeficit] kcal a day: none once it rounds to nothing. */
+internal fun targetGap(dailyDeficit: Double): TargetGap {
+    val kcal = dailyDeficit.roundToInt()
+    return when {
+        kcal < 0 -> TargetGap.Surplus(-kcal)
+        kcal == 0 -> TargetGap.Keep
+        else -> TargetGap.Deficit(kcal)
     }
 }

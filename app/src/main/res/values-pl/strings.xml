@@ -101,10 +101,11 @@
         <item quantity="many">Cele kaloryczne dla %d profili.</item>
         <item quantity="other">Cele kaloryczne dla %d profili.</item>
     </plurals>
-    <string name="dashboard_figures">Zapotrzebowanie\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0%3$s\u00A0kcal\u00A0· %4$s</string>
-    <string name="dashboard_figures_manual">Cel\u00A0ustawiony\u00A0ręcznie\u00A0· zapotrzebowanie\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0%3$s\u00A0kcal\u00A0· %4$s</string>
-    <string name="dashboard_figures_deficit">deficyt</string>
-    <string name="dashboard_figures_surplus">nadwyżka</string>
+    <string name="dashboard_figures">Zapotrzebowanie\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0· %3$s</string>
+    <string name="dashboard_figures_manual">Cel\u00A0ustawiony\u00A0ręcznie\u00A0· zapotrzebowanie\u00A0%1$s\u00A0kcal\u00A0· %2$s\u00A0· %3$s</string>
+    <string name="dashboard_figures_deficit">deficyt\u00A0%1$s\u00A0kcal</string>
+    <string name="dashboard_figures_surplus">nadwyżka\u00A0%1$s\u00A0kcal</string>
+    <string name="dashboard_figures_keep">utrzymanie\u00A0wagi</string>
     <plurals name="dashboard_figures_meals">
         <item quantity="one">%1$s\u00A0posiłek\u00A0dziennie</item>
         <item quantity="few">%1$s\u00A0posiłki\u00A0dziennie</item>
