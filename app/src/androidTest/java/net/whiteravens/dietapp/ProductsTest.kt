@@ -6,9 +6,11 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onAllNodesWithText
@@ -46,6 +48,15 @@ class ProductsTest {
         screen.onNodeWithText(text(R.string.products_title)).performScrollTo().performClick()
         screen.waitForText(text(R.string.products_subhead))
     }
+
+    /** Opens the menu of the product called [name], which holds what the card does beside changing it. */
+    private fun openTheMenuOf(name: String) {
+        val options = hasContentDescription(text(R.string.plans_action_for, text(R.string.products_options), name)) and hasClickAction()
+        screen.onNode(options).performScrollTo().performClick()
+    }
+
+    /** What the open menu offers in [words]. */
+    private fun inTheMenu(words: String): SemanticsMatcher = hasText(words) and hasAnyAncestor(isPopup())
 
     private fun type(label: Int, words: String) {
         screen.onNode(hasText(text(label)) and hasSetTextAction()).performScrollTo().performTextReplacement(words)
@@ -91,7 +102,10 @@ class ProductsTest {
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(text(R.string.products_edit_title))).fetchSemanticsNodes().isEmpty() }
         screen.waitForText("Babcia")
 
-        screen.onNode(hasText(text(R.string.products_remove)) and hasClickAction()).performScrollTo().performClick()
+        // Changing it is the card's one named action; removing it is in its menu.
+        openTheMenuOf("Chleb babci")
+        screen.keepScreenshot("products-the-card-menu")
+        screen.onNode(inTheMenu(text(R.string.products_remove))).performClick()
         screen.waitForText(text(R.string.products_remove_note))
         screen.keepScreenshot("products-a-word-before-removing")
         // The word that answers the question stands under the button that asked it.
@@ -118,7 +132,9 @@ class ProductsTest {
         screen.waitForText(text(R.string.products_state_correction))
         screen.waitForText(text(R.string.products_correction_note))
         screen.keepScreenshot("products-a-correction")
-        // A correction stays its author's: nothing offers to send it to the base.
-        screen.onAllNodes(hasText(text(R.string.products_send)) and hasClickAction()).assertCountEquals(0)
+        // A correction stays its author's: its menu offers nothing that sends it to the base.
+        openTheMenuOf("Moje mleko")
+        screen.onNode(inTheMenu(text(R.string.products_remove))).assertExists()
+        screen.onAllNodes(inTheMenu(text(R.string.products_send))).assertCountEquals(0)
     }
 }
