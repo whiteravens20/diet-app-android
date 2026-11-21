@@ -30,6 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +46,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatMoment
 import net.whiteravens.dietapp.ui.common.notificationText
 import net.whiteravens.dietapp.ui.components.AppCard
+import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.components.ErrorBanner
 import net.whiteravens.dietapp.ui.components.OfflineAsOf
 import net.whiteravens.dietapp.ui.components.PullToRead
@@ -161,26 +166,28 @@ private fun NotificationCard(
     water: WaterPress? = null,
 ) {
     AppCard {
-        // The text has the card's whole width, which a small phone needs, and the dismissal comes under it.
+        // The text has the card's whole width, which a small phone needs, the profile's name its first word; the
+        // moment and the dismissal share the row under it.
         Column(
             Modifier
                 .fillMaxWidth()
                 .then(if (onOpen != null) Modifier.clickable(enabled = enabled, onClick = onOpen) else Modifier),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            profileName?.let {
-                Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            }
-            // What an amount added says in the reminder's place for a moment, as the web's bell says it; the card
-            // names the profile above it already.
+            // What an amount added says in the reminder's place for a moment, as the web's bell says it.
             val added = water?.added?.let { ml ->
                 stringResource(R.string.notifications_water_added_amount, "$ml\u00A0${stringResource(R.string.unit_ml)}")
             }
-            Text(added ?: notificationText(notification.about), style = MaterialTheme.typography.bodyMedium)
+            val said = added ?: notificationText(notification.about)
+            val named = MaterialTheme.colorScheme.primary
             Text(
-                formatMoment(notification.createdAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                buildAnnotatedString {
+                    profileName?.let { name ->
+                        withStyle(SpanStyle(color = named, fontWeight = FontWeight.Medium)) { append(name) }
+                        append(DOT)
+                    }
+                    append(said)
+                },
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
         if (water != null && water.added == null) {
@@ -198,8 +205,14 @@ private fun NotificationCard(
                 TextButton(onClick = open, enabled = enabled && !water.adding) { Text(stringResource(R.string.notifications_water_go)) }
             }
         }
-        TextButton(onClick = onDismiss, enabled = enabled, modifier = Modifier.align(Alignment.End)) {
-            Text(stringResource(R.string.notifications_dismiss))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                formatMoment(notification.createdAt),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onDismiss, enabled = enabled) { Text(stringResource(R.string.notifications_dismiss)) }
         }
     }
 }
