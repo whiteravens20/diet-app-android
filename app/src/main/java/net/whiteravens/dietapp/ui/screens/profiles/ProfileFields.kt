@@ -612,7 +612,6 @@ internal fun ReminderChoices(form: ProfileForm, onEdit: FormEdit) {
     }
 }
 
-/** How often a plan of the profile may repeat itself. */
 /** The name of a limit from labels: `Salt at most`. */
 @Composable
 private fun labelLimitName(limit: LabelLimit): String = stringResource(
@@ -670,6 +669,7 @@ internal fun LabelLimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: Fo
     )
 }
 
+/** How often a plan of the profile may repeat itself. */
 @Composable
 internal fun LimitFields(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
     val limits = form.limits
