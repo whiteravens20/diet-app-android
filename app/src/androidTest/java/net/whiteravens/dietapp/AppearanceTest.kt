@@ -11,7 +11,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openAccountSection
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -33,7 +33,7 @@ class AppearanceTest {
         Instance.newProfile(account)
         Instance.choosePalette(account, "ocean")
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.appearance_palette)
 
         // The scheme the web set for the account is followed, and named in the choice that follows it.
         val followed = text(R.string.appearance_palette_account, text(R.string.appearance_palette_ocean))

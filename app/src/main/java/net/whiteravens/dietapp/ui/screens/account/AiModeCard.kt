@@ -46,12 +46,10 @@ import net.whiteravens.dietapp.ui.components.Text
 @Composable
 internal fun AiModeCard(state: AiViewModel.UiState, contact: String?, onChoose: (String) -> Unit, onRetry: () -> Unit) {
     AppCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.account_ai), style = MaterialTheme.typography.titleMedium)
         Text(
             stringResource(R.string.account_ai_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
         )
         if (state.statusFailed != null) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
@@ -127,13 +125,7 @@ private fun ModeRow(mode: String, status: AiStatus, chosen: Boolean, enabled: Bo
             RadioButton(selected = chosen, onClick = null, enabled = enabled)
             Column(Modifier.padding(start = 8.dp)) {
                 Text(
-                    stringResource(
-                        when (mode) {
-                            AiModes.NONE -> R.string.account_ai_mode_none
-                            AiModes.INSTANCE -> R.string.account_ai_mode_admin
-                            else -> R.string.account_ai_mode_byok
-                        },
-                    ),
+                    aiModeName(mode),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                 )

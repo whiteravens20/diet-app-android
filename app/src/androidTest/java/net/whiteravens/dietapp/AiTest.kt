@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
@@ -25,7 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.HELD_DOT
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openAccountSection
 import net.whiteravens.dietapp.testing.openTab
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
@@ -64,7 +65,7 @@ class AiTest {
     fun anOwnProviderIsTestedThenSavedAndOneWithAKeyRemovedOnceThatIsConfirmed() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.account_ai)
         show(text(R.string.account_ai_providers_none))
 
         // The instance's own Ollama server, the one address a user's may name where the operator lists
@@ -134,7 +135,7 @@ class AiTest {
     fun anOpenRouterKeyIsSavedWithTheEndpointsChosenWhichItsRowNamesAndItsFormStartsFrom() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.account_ai)
         show(text(R.string.account_ai_providers_none))
 
         // OpenRouter alone has the choice of its endpoints, which starts at no training on the data.
@@ -173,7 +174,7 @@ class AiTest {
     fun theInstancesProviderIsChosenWithItsAllowanceAndTheAccountsOwnOnceItHasOne() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.account_ai)
 
         // A new account has AI off, and its own providers' mode waits for a provider.
         show(text(R.string.account_ai_mode_byok_unavailable))
@@ -228,9 +229,9 @@ class AiTest {
         screen.keepScreenshot("ai-off-note")
 
         screen.onNodeWithText(note).performFirstLinkClick()
-        screen.waitForText(account.email)
-        // The account's AI settings are read after the account itself.
+        // The link opens the AI section of the settings at once, not their list; back from it leads straight back.
         show(text(R.string.account_ai_mode_admin))
+        screen.onAllNodesWithText(text(R.string.account_group_general)).assertCountEquals(0)
         screen.onNodeWithText(text(R.string.account_ai_mode_admin)).performClick()
         screen.waitForTheApi { Instance.aiMode(account) == "admin" }
         screen.onNodeWithContentDescription(text(R.string.common_back)).performScrollTo().performClick()

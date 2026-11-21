@@ -11,7 +11,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openAccountSection
 import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
@@ -34,11 +34,11 @@ class SessionsTest {
         val account = Instance.newAccount()
         val label = checkNotNull(Instance.sessions(account.accessToken)[account.sessionId])
         screen.signIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.account_sessions)
 
         screen.waitForText(text(R.string.account_session_current))
-        // The cards above the sessions read what they show on their own and can grow after this phone's
-        // row was scrolled to: it is scrolled to again until it stays in view.
+        // The card reads what it shows on its own and can grow after this phone's row was scrolled to: it is scrolled
+        // to again until it stays in view.
         val thisPhone = screen.onNodeWithText(text(R.string.account_session_current))
         screen.waitUntil(20_000) { runCatching { thisPhone.performScrollTo().assertIsDisplayed() }.isSuccess }
         screen.keepScreenshot("account-sessions")

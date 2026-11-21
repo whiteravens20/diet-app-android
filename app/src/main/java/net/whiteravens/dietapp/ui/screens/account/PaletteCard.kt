@@ -33,12 +33,7 @@ import net.whiteravens.dietapp.ui.theme.colorSchemeOf
 @Composable
 fun PaletteCard(state: AppearanceState, onChoose: (Palette?) -> Unit) {
     AppCard {
-        Text(
-            stringResource(R.string.appearance_palette),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PaletteChip(
                 stringResource(R.string.appearance_palette_account, paletteName(state.account)),
                 state.account,
@@ -71,8 +66,9 @@ private fun PaletteChip(label: String, palette: Palette, selected: Boolean, onCl
     )
 }
 
+/** [palette] by its name. */
 @Composable
-private fun paletteName(palette: Palette): String = stringResource(
+internal fun paletteName(palette: Palette): String = stringResource(
     when (palette) {
         Palette.DEFAULT -> R.string.appearance_palette_default
         Palette.OCEAN -> R.string.appearance_palette_ocean

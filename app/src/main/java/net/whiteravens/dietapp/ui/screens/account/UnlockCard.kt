@@ -8,13 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.ui.components.AppCard
@@ -31,21 +27,16 @@ internal fun UnlockCard(viewModel: UnlockViewModel) {
     val on by viewModel.on.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val failed by viewModel.failed.collectAsStateWithLifecycle()
-    // What the phone has enrolled changes in its own settings: read again whenever the screen comes back.
-    var available by remember { mutableStateOf(viewModel.available()) }
-    LifecycleResumeEffect(Unit) {
-        available = viewModel.available()
-        onPauseOrDispose {}
-    }
+    // What the phone has enrolled changes in its own settings, which the list of settings reads as well.
+    val available = rememberUnlockAvailable(viewModel)
     if (!available && on != true) return
 
     AppCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.unlock_title), style = MaterialTheme.typography.titleMedium)
         Text(
             stringResource(R.string.unlock_about),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+            modifier = Modifier.padding(bottom = 4.dp),
         )
         CheckRow(
             label = stringResource(R.string.unlock_switch),

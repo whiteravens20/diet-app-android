@@ -16,7 +16,7 @@ import net.whiteravens.dietapp.data.auth.StandInPhone
 import net.whiteravens.dietapp.data.auth.UnlockStandIn
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openAccountSection
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
@@ -66,7 +66,7 @@ class UnlockTest {
     fun theUnlockIsTurnedOnInTheSettingsLocksAfterHalfAnHourAwayOpensAtAPromptThatPassesAndIsTurnedOff() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.unlock_title)
         switch().performScrollTo().assertIsOff()
         screen.keepScreenshot("unlock-setting")
 
@@ -87,11 +87,11 @@ class UnlockTest {
         screen.waitForTheShell()
 
         // Turned off with one more prompt: back after half an hour, nothing is asked.
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.unlock_title)
         switch().performScrollTo().performClick()
         turnedOn(false)
         awayForHalfAnHour()
-        screen.waitForText(account.email)
+        screen.waitForText(text(R.string.unlock_switch))
         screen.onNodeWithText(text(R.string.unlock_locked)).assertDoesNotExist()
     }
 
@@ -99,7 +99,7 @@ class UnlockTest {
     fun aCancelledPromptLeavesItAsItWasOnAndOff() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.unlock_title)
 
         phone.passes = false
         switch().performScrollTo().performClick()
@@ -120,7 +120,7 @@ class UnlockTest {
     fun aChangedFingerprintEndsTheSessionOnThePhoneSaysWhyAndTheSignInFollows() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.unlock_title)
         switch().performScrollTo().performClick()
         turnedOn(true)
 

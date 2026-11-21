@@ -48,10 +48,13 @@ class AccountTest {
         screen.waitForText(account.email)
         screen.onNodeWithText(account.displayName).assertIsDisplayed()
         screen.onNodeWithText(shownAddress).performScrollTo().assertIsDisplayed()
+        // The settings are a list of rows under the web's groups, each a name and its value.
+        screen.onNodeWithText(text(R.string.account_group_security)).performScrollTo().assertIsDisplayed()
         screen.keepScreenshot("account-settings")
 
         // The password, the address, the name and the language of the mails are changed in the web
-        // application, whose settings the account's screen opens in the browser, signed in.
+        // application, whose settings the account's section of them opens in the browser, signed in.
+        screen.onNode(hasText(text(R.string.account_web_settings)) and hasClickAction()).performScrollTo().performClick()
         screen.onNodeWithText(text(R.string.web_open)).performScrollTo()
         screen.keepScreenshot("account-the-web-applications-settings")
         val first = opensSignedInTheBrowser("/settings?tab=account") {
@@ -64,7 +67,10 @@ class AccountTest {
         }
         assertNotEquals(first, second)
 
-        // The rows of the account's sessions say whose sign-out they are; the account's own button says nothing more.
+        // Back on the list, which the section's screen came from. The rows of the account's sessions say whose sign-out
+        // they are; the account's own button says nothing more.
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+        screen.waitForText(text(R.string.account_group_general))
         screen.onNode(hasText(text(R.string.account_sign_out)) and SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
             .performScrollTo().performClick()
         screen.waitForText(text(R.string.auth_sign_in_title))
@@ -79,6 +85,7 @@ class AccountTest {
         screen.openTab(text(R.string.nav_more))
         screen.onNodeWithText(text(R.string.account_title)).performClick()
         screen.waitForText(account.email)
+        screen.onNode(hasText(text(R.string.account_weight_unit)) and hasClickAction()).performScrollTo().performClick()
 
         // Each choice is kept with the account at once, and "by where I am" gives the choice back.
         for ((label, kept) in listOf(R.string.account_weight_unit_kg to "kg", R.string.account_weight_unit_by_region to null, R.string.account_weight_unit_lb to "lb")) {
@@ -87,6 +94,11 @@ class AccountTest {
             screen.waitForTheApi(20_000) { Instance.weightUnit(account) == kept }
         }
         screen.keepScreenshot("account-weight-unit")
+        // The list says the unit chosen beside the setting's name.
+        screen.onNodeWithContentDescription(text(R.string.common_back)).performClick()
+        screen.waitUntil(20_000) {
+            screen.onAllNodes(hasText(text(R.string.account_weight_unit)) and hasText(text(R.string.account_weight_unit_lb))).fetchSemanticsNodes().isNotEmpty()
+        }
 
         // On the dashboard, reached from the bar the account's screen does not show, a weight is typed
         // in pounds, and the API keeps it in kilograms.

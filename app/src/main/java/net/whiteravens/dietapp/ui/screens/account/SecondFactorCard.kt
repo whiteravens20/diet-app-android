@@ -73,12 +73,10 @@ internal fun SecondFactorCard(
         if ((step as? Step.Codes)?.fresh == true) onOthersSignedOut()
     }
     AppCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.account_second_factor), style = MaterialTheme.typography.titleMedium)
         Text(
             stringResource(R.string.account_second_factor_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
         )
         if (state.readFailed != null) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {

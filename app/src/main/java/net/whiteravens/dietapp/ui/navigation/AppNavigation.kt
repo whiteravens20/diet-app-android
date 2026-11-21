@@ -76,6 +76,7 @@ import net.whiteravens.dietapp.notify.WaterShortcuts
 import net.whiteravens.dietapp.ui.screens.about.AboutScreen
 import net.whiteravens.dietapp.ui.screens.about.LibrariesScreen
 import net.whiteravens.dietapp.ui.screens.account.AccountScreen
+import net.whiteravens.dietapp.ui.screens.account.AccountSection
 import net.whiteravens.dietapp.ui.screens.auth.AuthScreen
 import net.whiteravens.dietapp.ui.screens.dashboard.DashboardScreen
 import net.whiteravens.dietapp.ui.screens.diary.DiaryScreen
@@ -108,7 +109,8 @@ import kotlin.reflect.KClass
 @Serializable data class RecipeFormRoute(val recipeId: String? = null)
 @Serializable object ShoppingRoute
 @Serializable object MoreRoute
-@Serializable object AccountRoute
+/** The account's settings, at the section a link names (`AccountSection`'s name), or at their list. */
+@Serializable data class AccountRoute(val section: String? = null)
 @Serializable object AboutRoute
 @Serializable object LibrariesRoute
 @Serializable object NotificationsRoute
@@ -373,7 +375,7 @@ private fun MainScaffold(
                     PlanDetailScreen(
                         onBack = { navController.popBackStack() },
                         onOpenRecipe = { recipe, portion, whole -> navController.navigate(RecipeDetailRoute(recipe, portion.toString(), whole)) },
-                        onTurnAiOn = { navController.navigate(AccountRoute) },
+                        onTurnAiOn = { navController.navigate(AccountRoute(AccountSection.AI.name)) },
                         onOpenDiary = { profileId, date -> navController.navigate(DiaryRoute(profileId, date)) },
                     )
                 }
@@ -389,7 +391,7 @@ private fun MainScaffold(
                 composable<RecipesRoute> {
                     RecipesScreen(
                         onOpenRecipe = { navController.navigate(RecipeDetailRoute(it)) },
-                        onTurnAiOn = { navController.navigate(AccountRoute) },
+                        onTurnAiOn = { navController.navigate(AccountRoute(AccountSection.AI.name)) },
                         onWrite = { navController.navigate(RecipeFormRoute()) },
                     )
                 }
@@ -418,11 +420,14 @@ private fun MainScaffold(
                 composable<ShoppingRoute> {
                     ShoppingScreen(
                         onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
-                        onTurnAiOn = { navController.navigate(AccountRoute) },
+                        onTurnAiOn = { navController.navigate(AccountRoute(AccountSection.AI.name)) },
                     )
                 }
                 composable<MoreRoute> { MoreScreen(onOpen = { navController.navigate(it) }) }
-                composable<AccountRoute> { AccountScreen(onBack = { navController.popBackStack() }) }
+                composable<AccountRoute> { entry ->
+                    val asked = entry.toRoute<AccountRoute>().section
+                    AccountScreen(onBack = { navController.popBackStack() }, asked = AccountSection.entries.firstOrNull { it.name == asked })
+                }
                 composable<AboutRoute> {
                     AboutScreen(onBack = { navController.popBackStack() }, onLibraries = { navController.navigate(LibrariesRoute) })
                 }

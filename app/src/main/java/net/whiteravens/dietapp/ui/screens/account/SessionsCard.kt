@@ -40,12 +40,10 @@ internal fun SessionsCard(
     onRetry: () -> Unit,
 ) {
     AppCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.account_sessions), style = MaterialTheme.typography.titleMedium)
         Text(
             stringResource(R.string.account_sessions_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
         )
         if (state.readFailed != null) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {

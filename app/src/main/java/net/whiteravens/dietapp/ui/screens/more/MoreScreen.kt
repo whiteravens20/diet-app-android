@@ -52,7 +52,7 @@ val moreEntries: List<MoreEntry>
         MoreEntry(FavoritesRoute, Icons.Default.Star, R.string.favorites_title),
         MoreEntry(PantryRoute, AppIcons.Inventory, R.string.pantry_title),
         MoreEntry(ProductsRoute, AppIcons.Barcode, R.string.products_title),
-        MoreEntry(AccountRoute, Icons.Default.Settings, R.string.account_title),
+        MoreEntry(AccountRoute(), Icons.Default.Settings, R.string.account_title),
     )
 
 /**

@@ -409,6 +409,17 @@ fun ComposeTestRule.openAccountSettings(account: Account) {
     waitForText(account.email)
 }
 
+/**
+ * Opens the account's settings at the section named [name], from the row of their list that says it; the list's
+ * groups are gone once its own screen stands.
+ */
+fun ComposeTestRule.openAccountSection(account: Account, @StringRes name: Int) {
+    openAccountSettings(account)
+    val row = hasText(text(name)) and hasClickAction()
+    onNode(row).performScrollTo().performClick()
+    waitUntil(20_000) { onAllNodes(hasText(text(R.string.account_group_general))).fetchSemanticsNodes().isEmpty() }
+}
+
 /** The button of the sign-in screen, whose title says the same words. */
 fun ComposeTestRule.pressToSignIn() {
     // Waited for, not taken as there: on Android 17 the form is out of the tree for a moment while the keyboard's

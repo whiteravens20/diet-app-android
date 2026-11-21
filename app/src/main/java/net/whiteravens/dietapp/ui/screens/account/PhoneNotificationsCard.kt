@@ -17,14 +17,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.notify.PhoneNotifier
@@ -41,29 +39,23 @@ import net.whiteravens.dietapp.ui.components.Text
 internal fun PhoneNotificationsCard(viewModel: PhoneNotificationsViewModel) {
     val on by viewModel.on.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    // What the system allows changes in its own settings: read again whenever the screen comes back.
-    var allowed by remember { mutableStateOf(PhoneNotifier.allowed(context)) }
-    var unrestricted by remember { mutableStateOf(batteryUnrestricted(context)) }
+    // What the system allows changes in its own settings, which the list of settings says as well.
+    val allowance = rememberPhoneAllowance()
     // Android said no to the permission when it was asked for here.
     var refused by rememberSaveable { mutableStateOf(false) }
-    LifecycleResumeEffect(Unit) {
-        allowed = PhoneNotifier.allowed(context)
-        unrestricted = batteryUnrestricted(context)
-        onPauseOrDispose {}
-    }
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        allowed = PhoneNotifier.allowed(context)
+        allowance.read()
         refused = !granted
         if (granted) viewModel.turnOn()
     }
+    val notices = phoneNotices(on, allowance.allowed, allowance.unrestricted)
 
     AppCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.phone_notifications_title), style = MaterialTheme.typography.titleMedium)
         Text(
             stringResource(R.string.phone_notifications_about),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+            modifier = Modifier.padding(bottom = 4.dp),
         )
         CheckRow(
             label = stringResource(R.string.phone_notifications_show),
@@ -78,13 +70,13 @@ internal fun PhoneNotificationsCard(viewModel: PhoneNotificationsViewModel) {
                 }
             },
         )
-        if ((on == true && !allowed) || (on != true && refused)) {
+        if (notices == PhoneNotices.BLOCKED || (on != true && refused)) {
             Note(stringResource(R.string.phone_notifications_not_allowed))
             TextButton(onClick = { context.open(appNotificationSettings(context)) }) {
                 Text(stringResource(R.string.phone_notifications_open_settings))
             }
         }
-        if (on == true && allowed && !unrestricted) {
+        if (notices == PhoneNotices.DELAYED) {
             Note(stringResource(R.string.phone_notifications_battery))
             if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) Note(stringResource(R.string.phone_notifications_battery_samsung))
             TextButton(onClick = { context.open(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }) {
@@ -105,7 +97,7 @@ private fun Note(text: String) {
 }
 
 /** Whether Android lets the application's work run on time, outside its saving of battery. */
-private fun batteryUnrestricted(context: Context): Boolean =
+internal fun batteryUnrestricted(context: Context): Boolean =
     context.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) == true
 
 /** The system's page of the application's notifications. */

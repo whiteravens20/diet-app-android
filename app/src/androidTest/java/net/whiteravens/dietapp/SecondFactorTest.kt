@@ -15,7 +15,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openAccountSection
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
@@ -45,10 +45,10 @@ class SecondFactorTest {
     fun twoStepSignInIsSetUpWithTheKeyShownGivenNewRecoveryCodesAndSwitchedOff() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.account_second_factor)
 
-        // The cards above read what they show on their own and can grow after the button was scrolled to, so
-        // that the tap lands beside it: it is tapped again until the password is asked for.
+        // The card reads what it shows on its own and can grow after the button was scrolled to, so that the tap lands
+        // beside it: it is tapped again until the password is asked for.
         val setUp = screen.onNodeWithText(text(R.string.account_second_factor_set_up))
         val password = text(R.string.account_password_current)
         screen.waitUntil(20_000) {

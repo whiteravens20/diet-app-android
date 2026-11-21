@@ -1072,6 +1072,29 @@
     <string name="about_update_off">Sprawdzanie nowej wersji jest wyłączone w ustawieniach konta.</string>
     <string name="account_weight_unit_failed">Nie udało się zapisać jednostki.</string>
     <string name="account_settings_hint">Hasło, adres e-mail, nazwa konta, język maili, dane konta w pliku i usunięcie konta są w aplikacji webowej.</string>
+    <string name="account_group_general">Ogólne</string>
+    <string name="account_group_ai">AI</string>
+    <string name="account_group_security">Bezpieczeństwo</string>
+    <string name="account_group_account">Konto i dane</string>
+    <string name="account_web_settings">Hasło, adres i dane konta</string>
+    <string name="account_web_settings_where">W aplikacji webowej</string>
+    <string name="account_ai_providers_none_short">Brak</string>
+    <plurals name="account_ai_providers_count">
+        <item quantity="one">%1$d dostawca</item>
+        <item quantity="few">%1$d dostawcy</item>
+        <item quantity="many">%1$d dostawców</item>
+        <item quantity="other">%1$d dostawcy</item>
+    </plurals>
+    <plurals name="account_sessions_count">
+        <item quantity="one">%1$d sesja</item>
+        <item quantity="few">%1$d sesje</item>
+        <item quantity="many">%1$d sesji</item>
+        <item quantity="other">%1$d sesji</item>
+    </plurals>
+    <string name="phone_notifications_blocked">Zablokowane w telefonie</string>
+    <string name="phone_notifications_delayed">Włączone, oszczędzanie baterii może je opóźnić</string>
+    <string name="common_on">Włączone</string>
+    <string name="common_off">Wyłączone</string>
     <string name="account_ai">Asystent AI</string>
     <string name="account_ai_body">Wybierz, jak działają funkcje AI. Kalorie i makroskładniki zawsze przelicza wbudowany silnik aplikacji — AI nigdy nie wymyśla wartości odżywczych.</string>
     <string name="account_ai_status_failed">Nie udało się odczytać ustawień AI konta.</string>

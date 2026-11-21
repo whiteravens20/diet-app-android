@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.account
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +66,8 @@ import net.whiteravens.dietapp.ui.components.rememberWebPages
 @Composable
 fun AccountScreen(
     onBack: () -> Unit,
+    /** The section a link asked for, opened at once; going back from it leaves the settings. */
+    asked: AccountSection? = null,
     viewModel: AccountViewModel = hiltViewModel(),
     secondFactor: SecondFactorViewModel = hiltViewModel(),
     sessions: SessionsViewModel = hiltViewModel(),
@@ -84,6 +87,11 @@ fun AccountScreen(
     val operatorContact by viewModel.operatorContact.collectAsStateWithLifecycle()
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     val web = rememberWebPages()
+    // The section open on its own screen, or the list of them where none is; the list keeps its place under it.
+    var section by rememberSaveable { mutableStateOf(asked) }
+    val listScroll = rememberScrollState()
+    val backToList = section != null && asked == null
+    BackHandler(enabled = backToList) { section = null }
     // The account's cards are read again together: on being shown again, and on a pull.
     val readTheOthers = {
         ai.load()
@@ -108,14 +116,18 @@ fun AccountScreen(
         viewModel.pull()
         readTheOthers()
     }) {
+        val open = section
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(if (open == null) listScroll else rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            ScreenHeader(title = stringResource(R.string.account_title), onBack = onBack)
+            ScreenHeader(
+                title = stringResource(open?.title ?: R.string.account_title),
+                onBack = if (backToList) ({ section = null }) else onBack,
+            )
             state.readAt?.takeIf { state.offline }?.let { readAt -> OfflineAsOf(readAt) }
 
             state.error?.let {
@@ -127,6 +139,74 @@ fun AccountScreen(
                 state.loading -> {
                     Skeleton(Modifier.fillMaxWidth().height(96.dp))
                     Skeleton(Modifier.fillMaxWidth().height(120.dp))
+                }
+
+                open != null -> when (open) {
+                    AccountSection.UNIT -> AppCard {
+                        WeightUnitChoice(
+                            chosen = state.weightUnit,
+                            saving = state.choosing != null,
+                            failed = state.unitError,
+                            onChoose = viewModel::chooseWeightUnit,
+                        )
+                    }
+
+                    AccountSection.PALETTE -> PaletteCard(colours, onChoose = appearance::choose)
+                    AccountSection.UPDATES -> UpdatesCard(update)
+                    AccountSection.NOTIFICATIONS -> PhoneNotificationsCard(phoneNotifications)
+                    // The mode and the providers it may use stand together, as on the web's tab: the mode points to them.
+                    AccountSection.AI -> {
+                        AiModeCard(aiState, operatorContact, onChoose = ai::chooseMode, onRetry = ai::load)
+                        AiProvidersCard(
+                            aiState,
+                            AiProviderActions(
+                                retry = ai::load,
+                                open = ai::open,
+                                change = ai::change,
+                                cancel = ai::cancel,
+                                edit = ai::edit,
+                                chooseModel = ai::chooseModel,
+                                choosePolicy = ai::choosePolicy,
+                                test = ai::test,
+                                save = ai::save,
+                                remove = ai::remove,
+                            ),
+                        )
+                    }
+
+                    AccountSection.UNLOCK -> UnlockCard(unlock)
+                    AccountSection.SECOND_FACTOR -> SecondFactorCard(
+                        twoStep,
+                        SecondFactorActions(
+                            load = secondFactor::load,
+                            setUp = secondFactor::setUp,
+                            prove = secondFactor::prove,
+                            cancel = secondFactor::cancel,
+                            saved = secondFactor::saved,
+                            typePassword = secondFactor::typePassword,
+                            typeCode = secondFactor::typeCode,
+                            continueWithPassword = secondFactor::continueWithPassword,
+                            switchOn = secondFactor::switchOn,
+                            submitProof = secondFactor::submitProof,
+                        ),
+                        onOthersSignedOut = sessions::load,
+                    )
+
+                    AccountSection.SESSIONS -> SessionsCard(signedIn, onEnd = sessions::end, onEndAll = sessions::endAll, onRetry = sessions::load)
+                    AccountSection.WEB -> AppCard {
+                        Text(
+                            stringResource(R.string.account_settings_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedButton(
+                            onClick = { web.open("settings", "tab" to "account") },
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.padding(top = 8.dp),
+                        ) {
+                            Text(stringResource(R.string.web_open))
+                        }
+                    }
                 }
 
                 state.user != null -> {
@@ -190,107 +270,111 @@ fun AccountScreen(
                         }
                     }
 
+                    // The settings by the web's tabs: a row a setting, its value beside its name; a press opens its screen.
+                    val unitValue = stringResource(
+                        when (state.weightUnit) {
+                            null -> R.string.account_weight_unit_by_region
+                            "kg" -> R.string.account_weight_unit_kg
+                            else -> R.string.account_weight_unit_lb
+                        },
+                    )
+                    val paletteValue = colours.chosen?.let { paletteName(it) }
+                        ?: stringResource(R.string.appearance_palette_account, paletteName(colours.account))
+                    val updatesOn by update.on.collectAsStateWithLifecycle()
+                    val noticesOn by phoneNotifications.on.collectAsStateWithLifecycle()
+                    val allowance = rememberPhoneAllowance()
+                    val unlockOn by unlock.on.collectAsStateWithLifecycle()
+                    val unlockShown = rememberUnlockAvailable(unlock) || unlockOn == true
+                    val open = { chosen: AccountSection -> section = chosen }
+
+                    SettingsHeading(R.string.account_group_general)
                     AppCard {
-                        WeightUnitChoice(
-                            chosen = state.weightUnit,
-                            saving = state.choosing != null,
-                            failed = state.unitError,
-                            onChoose = viewModel::chooseWeightUnit,
-                        )
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            modifier = Modifier.padding(vertical = 10.dp),
-                        )
-                        ServerRow(serverUrl, onEdit = { showServerDialog = true })
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            modifier = Modifier.padding(vertical = 10.dp),
-                        )
-                        Text(
-                            stringResource(R.string.account_settings_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                        OutlinedButton(
-                            onClick = { web.open("settings", "tab" to "account") },
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text(stringResource(R.string.web_open))
+                        SettingRow(stringResource(R.string.account_weight_unit), unitValue) { open(AccountSection.UNIT) }
+                        RowLine()
+                        SettingRow(stringResource(R.string.appearance_palette), paletteValue) { open(AccountSection.PALETTE) }
+                        RowLine()
+                        SettingRow(stringResource(R.string.server_title), serverAddress(serverUrl)) { showServerDialog = true }
+                        if (update.hasChannel) {
+                            RowLine()
+                            SettingRow(stringResource(R.string.updates_title), onOrOff(updatesOn)) { open(AccountSection.UPDATES) }
                         }
+                        RowLine()
+                        SettingRow(
+                            stringResource(R.string.phone_notifications_title),
+                            noticesOn?.let { phoneNoticesSaid(phoneNotices(it, allowance.allowed, allowance.unrestricted)) },
+                        ) { open(AccountSection.NOTIFICATIONS) }
                     }
 
-                    PaletteCard(colours, onChoose = appearance::choose)
+                    SettingsHeading(R.string.account_group_ai)
+                    AppCard {
+                        SettingRow(stringResource(R.string.account_ai), aiState.mode?.let { aiModeName(it) }) { open(AccountSection.AI) }
+                        RowLine()
+                        SettingRow(
+                            stringResource(R.string.account_ai_providers),
+                            aiState.providers?.let { providers ->
+                                if (providers.isEmpty()) {
+                                    stringResource(R.string.account_ai_providers_none_short)
+                                } else {
+                                    pluralStringResource(R.plurals.account_ai_providers_count, providers.size, providers.size)
+                                }
+                            },
+                        ) { open(AccountSection.AI) }
+                    }
 
-                    if (update.hasChannel) UpdatesCard(update)
+                    SettingsHeading(R.string.account_group_security)
+                    AppCard {
+                        if (unlockShown) {
+                            SettingRow(stringResource(R.string.unlock_title), onOrOff(unlockOn)) { open(AccountSection.UNLOCK) }
+                            RowLine()
+                        }
+                        SettingRow(stringResource(R.string.account_second_factor), onOrOff(twoStep.secondFactor?.enabled)) {
+                            open(AccountSection.SECOND_FACTOR)
+                        }
+                        RowLine()
+                        SettingRow(
+                            stringResource(R.string.account_sessions),
+                            signedIn.sessions?.let { pluralStringResource(R.plurals.account_sessions_count, it.size, it.size) },
+                        ) { open(AccountSection.SESSIONS) }
+                    }
 
-                    PhoneNotificationsCard(phoneNotifications)
-
-                    UnlockCard(unlock)
-
-                    AiModeCard(aiState, operatorContact, onChoose = ai::chooseMode, onRetry = ai::load)
-
-                    AiProvidersCard(
-                        aiState,
-                        AiProviderActions(
-                            retry = ai::load,
-                            open = ai::open,
-                            change = ai::change,
-                            cancel = ai::cancel,
-                            edit = ai::edit,
-                            chooseModel = ai::chooseModel,
-                            choosePolicy = ai::choosePolicy,
-                            test = ai::test,
-                            save = ai::save,
-                            remove = ai::remove,
-                        ),
-                    )
-
-                    SecondFactorCard(
-                        twoStep,
-                        SecondFactorActions(
-                            load = secondFactor::load,
-                            setUp = secondFactor::setUp,
-                            prove = secondFactor::prove,
-                            cancel = secondFactor::cancel,
-                            saved = secondFactor::saved,
-                            typePassword = secondFactor::typePassword,
-                            typeCode = secondFactor::typeCode,
-                            continueWithPassword = secondFactor::continueWithPassword,
-                            switchOn = secondFactor::switchOn,
-                            submitProof = secondFactor::submitProof,
-                        ),
-                        onOthersSignedOut = sessions::load,
-                    )
-
-                    SessionsCard(signedIn, onEnd = sessions::end, onEndAll = sessions::endAll, onRetry = sessions::load)
+                    SettingsHeading(R.string.account_group_account)
+                    AppCard {
+                        SettingRow(stringResource(R.string.account_web_settings), stringResource(R.string.account_web_settings_where)) {
+                            open(AccountSection.WEB)
+                        }
+                    }
                 }
             }
 
-            Button(
-                onClick = viewModel::signOut,
-                enabled = !state.signingOut,
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (state.signingOut) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                } else {
-                    Text(stringResource(R.string.account_sign_out))
+            if (open == null) {
+                Button(
+                    onClick = viewModel::signOut,
+                    enabled = !state.signingOut,
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (state.signingOut) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    } else {
+                        Text(stringResource(R.string.account_sign_out))
+                    }
                 }
             }
         }
     }
 }
+
+/** The line between two rows of a group. */
+@Composable
+private fun RowLine() = HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
 /**
  * The unit body weights are shown and typed in, as the web's settings choose it: by where the phone
@@ -301,11 +385,6 @@ fun AccountScreen(
 @Composable
 private fun WeightUnitChoice(chosen: String?, saving: Boolean, failed: Throwable?, onChoose: (String?) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            stringResource(R.string.account_weight_unit),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(
                 null to R.string.account_weight_unit_by_region,
@@ -332,37 +411,6 @@ private fun WeightUnitChoice(chosen: String?, saving: Boolean, failed: Throwable
                 color = MaterialTheme.colorScheme.error,
             )
         }
-    }
-}
-
-@Composable
-private fun ServerRow(url: String, onEdit: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                stringResource(R.string.server_title),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(serverAddress(url), style = MaterialTheme.typography.bodySmall)
-        }
-        TextButton(onClick = onEdit) { Text(stringResource(R.string.common_edit)) }
-    }
-}
-
-@Composable
-private fun SettingRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

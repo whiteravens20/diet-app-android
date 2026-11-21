@@ -28,7 +28,7 @@ import net.whiteravens.dietapp.notify.NotificationsWorker
 import net.whiteravens.dietapp.notify.PhoneNotifier
 import net.whiteravens.dietapp.testing.Instance
 import net.whiteravens.dietapp.testing.keepScreenshot
-import net.whiteravens.dietapp.testing.openAccountSettings
+import net.whiteravens.dietapp.testing.openAccountSection
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForTheApi
@@ -88,7 +88,7 @@ class PhoneNotificationsTest {
         }
         val account = Instance.signedIn(email!!, password!!)
         screen.startSignedIn(account)
-        screen.openAccountSettings(account)
+        screen.openAccountSection(account, R.string.phone_notifications_title)
 
         // Off until they are turned on, which schedules the work.
         assertEquals(false, scheduled())
