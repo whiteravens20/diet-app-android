@@ -1867,6 +1867,8 @@
     <string name="plans_open_diary">Diary of the day</string>
     <string name="plans_day_over_diary_hint">With the diary\'s entries counted as eaten, this day holds more than a tenth over its target.</string>
     <string name="plans_day_under_diary_hint">With the diary\'s entries counted as eaten, this day holds more than a tenth under its target.</string>
+    <string name="plans_off_target_question_over">This day is %1$s\u00A0kcal over its target: what is to be done?</string>
+    <string name="plans_off_target_question_under">This day is %1$s\u00A0kcal short of its target: what is to be done?</string>
     <string name="plans_resize_day">Resize the day\'s meals</string>
     <string name="plans_resize_day_note">Counts the diary\'s entries as eaten and gives the meals from recipes that are not eaten other portions, so that the day comes as close to its target as it can.</string>
     <string name="plans_resize_nothing">The portions are as close to the target as their limits allow.</string>

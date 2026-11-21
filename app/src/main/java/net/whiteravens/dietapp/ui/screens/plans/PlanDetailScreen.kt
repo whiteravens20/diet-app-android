@@ -26,11 +26,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -1050,33 +1052,54 @@ private fun DaySummary(
         }
         val standing = day.offTarget
         if (standing != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 8.dp),
-            ) {
-                CautionChip(stringResource(if (standing == "over") R.string.plans_day_over else R.string.plans_day_under))
-            }
+            val mark = stringResource(if (standing == "over") R.string.plans_day_over else R.string.plans_day_under)
             // A day the diary put off its target has not been resized with it: nothing says that resizing failed.
-            Text(
-                stringResource(
-                    when {
-                        day.diary != null -> if (standing == "over") R.string.plans_day_over_diary_hint else R.string.plans_day_under_diary_hint
-                        else -> if (standing == "over") R.string.plans_day_over_hint else R.string.plans_day_under_hint
-                    },
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
+            val why = stringResource(
+                when {
+                    day.diary != null -> if (standing == "over") R.string.plans_day_over_diary_hint else R.string.plans_day_under_diary_hint
+                    else -> if (standing == "over") R.string.plans_day_over_hint else R.string.plans_day_under_hint
+                },
             )
-            // What resizing does is said beside the button that does it, before it is pressed.
-            onResize?.let { resize ->
-                OutlinedButton(onClick = resize, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_resize_day)) }
-                Text(
-                    stringResource(if (day.diary != null) R.string.plans_resize_day_note else R.string.plans_resize_day_note_plain),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (onResize != null || onSpread != null) {
+                // The mark opens the question of what to do, with each way said before it is pressed.
+                var asking by rememberSaveable(day.date) { mutableStateOf(false) }
+                Surface(
+                    onClick = { asking = true },
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.padding(top = 8.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 3.dp, bottom = 3.dp)) {
+                        Text(mark, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
+                if (asking) {
+                    OffTargetDialog(
+                        day = day,
+                        over = standing == "over",
+                        why = why,
+                        onResize = onResize,
+                        onSpread = onSpread,
+                        spreadListed = spreadListed,
+                        onDismiss = { asking = false },
+                    )
+                }
+            } else {
+                // With no way to close the gap, the mark says why in a line of its own.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(top = 8.dp),
+                ) {
+                    CautionChip(mark)
+                }
+                Text(why, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
             }
             // A press that changes nothing says so, or it looks as if it had not been heard.
             resizeLeft?.let { left ->
@@ -1089,16 +1112,6 @@ private fun DaySummary(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 4.dp).semantics { liveRegion = LiveRegionMode.Polite },
                 )
-            }
-            // What spreading does is said beside the button that does it, before it is pressed.
-            onSpread?.let { spread ->
-                OutlinedButton(onClick = spread, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(R.string.plans_spread)) }
-                Text(
-                    stringResource(if (standing == "over") R.string.plans_spread_note_over else R.string.plans_spread_note_under),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                ListNote(spreadListed, several = true)
             }
         }
         if (day.belowSafetyFloor) {
@@ -2004,6 +2017,50 @@ private fun portionNote(recipeServings: Int, servings: Double, whole: Boolean): 
             servingsWord(servings),
         )
     }
+
+/**
+ * The question a day off its target asks, opened from the mark on the day: how far off it is, why, and the ways the
+ * plan has to close it, each with what it does said before it is pressed. Pressing one closes the window.
+ */
+@Composable
+private fun OffTargetDialog(
+    day: PlanDay,
+    over: Boolean,
+    why: String,
+    onResize: (() -> Unit)?,
+    onSpread: (() -> Unit)?,
+    spreadListed: Boolean,
+    onDismiss: () -> Unit,
+) {
+    val gap = formatNumber(abs(day.calorieDelta).roundToInt())
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(if (over) R.string.plans_off_target_question_over else R.string.plans_off_target_question_under, gap)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(why, style = MaterialTheme.typography.bodyMedium)
+                onResize?.let { resize ->
+                    OutlinedButton(onClick = { onDismiss(); resize() }, modifier = Modifier.padding(top = 8.dp)) { Text(stringResource(R.string.plans_resize_day)) }
+                    Text(
+                        stringResource(if (day.diary != null) R.string.plans_resize_day_note else R.string.plans_resize_day_note_plain),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                onSpread?.let { spread ->
+                    OutlinedButton(onClick = { onDismiss(); spread() }, modifier = Modifier.padding(top = 8.dp)) { Text(stringResource(R.string.plans_spread)) }
+                    Text(
+                        stringResource(if (over) R.string.plans_spread_note_over else R.string.plans_spread_note_under),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    ListNote(spreadListed, several = true)
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) } },
+    )
+}
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
 @Composable

@@ -2009,6 +2009,8 @@
     <string name="plans_open_diary">Dziennik dnia</string>
     <string name="plans_day_over_diary_hint">Licząc wpisy dziennika jako zjedzone, ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel.</string>
     <string name="plans_day_under_diary_hint">Licząc wpisy dziennika jako zjedzone, ten dzień ma o ponad jedną dziesiątą mniej kalorii niż jego cel.</string>
+    <string name="plans_off_target_question_over">Ten dzień ma %1$s\u00A0kcal ponad cel: co z\u00A0tym zrobić?</string>
+    <string name="plans_off_target_question_under">Temu dniu brakuje %1$s\u00A0kcal do celu: co z\u00A0tym zrobić?</string>
     <string name="plans_resize_day">Dopasuj porcje dnia</string>
     <string name="plans_resize_day_note">Liczy wpisy dziennika jako zjedzone i daje niezjedzonym posiłkom z przepisów inne porcje, żeby dzień jak najbardziej zbliżył się do celu.</string>
     <string name="plans_resize_nothing">Porcje są już tak blisko celu, jak pozwalają ich granice.</string>

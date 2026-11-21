@@ -252,6 +252,15 @@ class DiaryTest {
         screen.scrollToText(line)
         screen.keepScreenshot("diary-as-a-plans-day-says-it")
 
+        // What to do of a day over its target is asked in a window its mark opens: how far off it is, and the ways.
+        screen.onNode(hasText(text(R.string.plans_day_over)) and hasClickAction()).performScrollTo().performClick()
+        val question = hasText(text(R.string.plans_off_target_question_over).substringBefore("%"), substring = true) and hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(question).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(hasText(text(R.string.plans_spread)) and hasAnyAncestor(isDialog())).assertExists()
+        screen.keepScreenshot("plans-a-day-over-its-target-asks")
+        screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(question).fetchSemanticsNodes().isEmpty() }
+
         // The entry itself stands in the plan's day, under the dinner, marked as the diary's.
         screen.scrollToText("A large dinner")
         screen.waitForText(text(R.string.plans_from_diary_chip))
