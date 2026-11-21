@@ -2348,6 +2348,7 @@
     <string name="products_edit">Zmień</string>
     <string name="products_send">Wyślij do bazy</string>
     <string name="products_withdraw">Wycofaj</string>
+    <string name="products_options">Opcje produktu</string>
     <string name="products_remove">Usuń</string>
     <string name="products_send_needs">Aby go wysłać, potrzebny jest kod, kalorie, białko, tłuszcz i węglowodany.</string>
     <string name="products_send_note">Trafi do sprawdzających tej instancji. Po przyjęciu każdy tutaj będzie mógł go znaleźć, a produkt będzie udostępniany na licencji Open Database License w pliku, który może pobrać każde konto tutaj, bez informacji, kto go dodał. Gdy usuniesz konto, przyjęty produkt zostanie w bazie.</string>

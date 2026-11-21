@@ -2198,6 +2198,7 @@
     <string name="products_edit">Change</string>
     <string name="products_send">Send to the base</string>
     <string name="products_withdraw">Take back</string>
+    <string name="products_options">Product options</string>
     <string name="products_remove">Remove</string>
     <string name="products_send_needs">To send it, it needs a code, calories, protein, fat and carbohydrates.</string>
     <string name="products_send_note">It goes to the reviewers of this instance. Once accepted, everyone here can find it, and it is shared under the Open Database License in a file every account here can download, without saying who added it. If you delete your account, an accepted product stays in the base.</string>

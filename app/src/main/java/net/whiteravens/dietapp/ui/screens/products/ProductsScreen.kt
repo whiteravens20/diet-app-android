@@ -5,23 +5,35 @@ package net.whiteravens.dietapp.ui.screens.products
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -199,18 +211,45 @@ private fun OwnProductCard(own: OwnProduct, asking: ProductsViewModel.Ask?, busy
                 Note(stringResource(R.string.products_correction_note))
                 TextButton(onClick = { web.openOutside(offProductPage(code)) }) { Text(stringResource(R.string.products_correct_at_off)) }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // One named action, the change; sending, taking back and removing in the card's menu.
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = { viewModel.openOn(own) }, enabled = !busy) { Text(stringResource(R.string.products_edit)) }
-                if (own.state == OwnProductState.SENT) {
-                    TextButton(onClick = { viewModel.withdraw(product.id) }, enabled = !busy) { Text(stringResource(R.string.products_withdraw)) }
-                } else if (!product.correction) {
-                    TextButton(
-                        onClick = { viewModel.ask(product.id, ProductsViewModel.Ask.SEND) },
-                        enabled = !busy && own.sendable,
-                    ) { Text(stringResource(R.string.products_send)) }
-                }
-                TextButton(onClick = { viewModel.ask(product.id, ProductsViewModel.Ask.REMOVE) }, enabled = !busy) {
-                    Text(stringResource(R.string.products_remove))
+                Spacer(Modifier.weight(1f))
+                var menu by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { menu = true }, enabled = !busy) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.plans_action_for, stringResource(R.string.products_options), product.name),
+                        )
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        if (own.state == OwnProductState.SENT) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.products_withdraw)) },
+                                onClick = {
+                                    menu = false
+                                    viewModel.withdraw(product.id)
+                                },
+                            )
+                        } else if (!product.correction) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.products_send)) },
+                                enabled = own.sendable,
+                                onClick = {
+                                    menu = false
+                                    viewModel.ask(product.id, ProductsViewModel.Ask.SEND)
+                                },
+                            )
+                        }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.products_remove)) },
+                            onClick = {
+                                menu = false
+                                viewModel.ask(product.id, ProductsViewModel.Ask.REMOVE)
+                            },
+                        )
+                    }
                 }
             }
             refused?.let { ErrorBanner(if (it is IOException) stringResource(R.string.products_offline) else errorMessage(it)) }
