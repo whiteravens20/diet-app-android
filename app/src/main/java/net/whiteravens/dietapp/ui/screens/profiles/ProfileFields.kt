@@ -82,6 +82,8 @@ import net.whiteravens.dietapp.ui.common.refusalText
 import net.whiteravens.dietapp.ui.common.reminderCadenceLabel
 import net.whiteravens.dietapp.ui.common.sexLabel
 import net.whiteravens.dietapp.ui.components.CheckRow
+import net.whiteravens.dietapp.ui.components.FieldRow
+import net.whiteravens.dietapp.ui.components.SideBySide
 import net.whiteravens.dietapp.ui.components.Skeleton
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.rememberWebPages
@@ -224,18 +226,41 @@ internal fun NameField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit)
     )
 }
 
+/** Age, height and weight: the width they need side by side at the font's usual size, as three fields of grams do. */
+internal val BODY_FIGURES = FieldRow(288.dp, 1f, 1f, 1f)
+
 /**
- * The body a calorie target is worked out from: age, sex, height, weight and how much it moves.
+ * The body a calorie target is worked out from: age, height, weight, sex and how much it moves.
  * The weight is typed in the account's unit.
  */
 @Composable
 internal fun BodyFields(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks, onEdit: FormEdit) {
-    FormField(
-        value = form.age,
-        onValueChange = { typed -> onEdit { it.copy(age = typed) } },
-        label = stringResource(R.string.profile_age),
-        problem = marks.of(ProfileField.AGE),
-    )
+    // The three figures side by side where they fit at the font's size; one under another where not.
+    SideBySide(BODY_FIGURES) { place ->
+        FormField(
+            value = form.age,
+            onValueChange = { typed -> onEdit { it.copy(age = typed) } },
+            label = stringResource(R.string.profile_age),
+            problem = marks.of(ProfileField.AGE),
+            modifier = place(0),
+        )
+        FormField(
+            value = form.height,
+            onValueChange = { typed -> onEdit { it.copy(height = typed) } },
+            label = stringResource(R.string.profile_height_cm),
+            problem = marks.of(ProfileField.HEIGHT, Bound.Number(decimals = 1), whole = false),
+            keyboardType = KeyboardType.Decimal,
+            modifier = place(1),
+        )
+        FormField(
+            value = form.weight,
+            onValueChange = { typed -> onEdit { it.copy(weight = typed) } },
+            label = stringResource(R.string.profile_weight, unit.code),
+            problem = marks.of(ProfileField.WEIGHT, unit.refusalBound, whole = false),
+            keyboardType = KeyboardType.Decimal,
+            modifier = place(2),
+        )
+    }
     ChoiceField(
         label = stringResource(R.string.profile_sex),
         options = listOf(null, "male", "female", "non_binary"),
@@ -243,20 +268,6 @@ internal fun BodyFields(form: ProfileForm, unit: WeightUnit, marks: ProfileMarks
         optionLabel = { sexLabel(it) },
         onSelect = { chosen -> onEdit { it.copy(sex = chosen) } },
         hint = stringResource(R.string.profile_sex_hint),
-    )
-    FormField(
-        value = form.height,
-        onValueChange = { typed -> onEdit { it.copy(height = typed) } },
-        label = stringResource(R.string.profile_height_cm),
-        problem = marks.of(ProfileField.HEIGHT, Bound.Number(decimals = 1), whole = false),
-        keyboardType = KeyboardType.Decimal,
-    )
-    FormField(
-        value = form.weight,
-        onValueChange = { typed -> onEdit { it.copy(weight = typed) } },
-        label = stringResource(R.string.profile_weight, unit.code),
-        problem = marks.of(ProfileField.WEIGHT, unit.refusalBound, whole = false),
-        keyboardType = KeyboardType.Decimal,
     )
     ChoiceField(
         label = stringResource(R.string.profile_activity_level),

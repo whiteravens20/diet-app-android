@@ -24,6 +24,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.assertInOneRow
 import net.whiteravens.dietapp.testing.airplaneMode
 import net.whiteravens.dietapp.testing.heldTogether
 import net.whiteravens.dietapp.testing.keepScreenshot
@@ -131,6 +132,11 @@ class ProfilesTest {
         type(text(R.string.profile_weight, unit.code), weight)
         screen.onNode(hasText(text(R.string.profile_weight, unit.code)) and hasSetTextAction())
             .assert(!hasStateDescription(text(R.string.common_optional)))
+        // Age, height and weight stand side by side.
+        screen.assertInOneRow(
+            *listOf(text(R.string.profile_age), text(R.string.profile_height_cm), text(R.string.profile_weight, unit.code))
+                .map { hasText(it) and hasSetTextAction() }.toTypedArray(),
+        )
         // What the body comes to is shown as it is typed, said to be no medical advice: maintenance and
         // the figure at rest, as the step chooses no pace. The target follows on the step that does.
         screen.waitForText(text(R.string.calorie_preview_maintenance))
