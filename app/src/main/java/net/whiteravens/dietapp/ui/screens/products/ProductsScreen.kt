@@ -56,6 +56,9 @@ import kotlin.math.roundToInt
 
 private const val ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
+/** How many products an account holds when the screen says its limits: nine in ten of the most it may hold. */
+private const val NEAR_THE_MOST = OwnProductLimits.MOST_HELD * 9 / 10
+
 /**
  * The account's products with a barcode, new to the base or its corrections of the base's: their state,
  * a new one written, one changed, sent to the instance's reviewers, taken back or removed, and the file of
@@ -95,18 +98,16 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
                 Button(onClick = viewModel::openNew) { Text(stringResource(R.string.products_add)) }
                 OutlinedButton(onClick = { saveTo.launch("products-added.json") }) { Text(stringResource(R.string.products_file)) }
             }
-            Note(
-                stringResource(
-                    R.string.products_limits,
-                    formatNumber(OwnProductLimits.MOST_HELD),
-                    formatNumber(OwnProductLimits.WRITTEN_A_DAY),
-                    formatNumber(OwnProductLimits.SENT_A_DAY),
-                ),
-            )
-            Note(stringResource(R.string.products_source))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.diary_product_source_name)) }
-                TextButton(onClick = { web.openOutside(ODBL) }) { Text(stringResource(R.string.diary_product_source_licence)) }
+            // The limits are said once the account comes near the most it may hold.
+            if (state.items.size >= NEAR_THE_MOST) {
+                Note(
+                    stringResource(
+                        R.string.products_limits,
+                        formatNumber(OwnProductLimits.MOST_HELD),
+                        formatNumber(OwnProductLimits.WRITTEN_A_DAY),
+                        formatNumber(OwnProductLimits.SENT_A_DAY),
+                    ),
+                )
             }
             if (state.fileSaved) Note(stringResource(R.string.products_file_saved))
         }
@@ -139,6 +140,16 @@ fun ProductsScreen(onBack: () -> Unit, viewModel: ProductsViewModel = hiltViewMo
                     state.refused?.takeIf { state.refusedOn == own.product.id },
                     viewModel,
                 )
+            }
+        }
+        // Where the base comes from and its licence, under the list.
+        item {
+            Column {
+                Note(stringResource(R.string.products_source))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { web.openOutside(OPEN_FOOD_FACTS) }) { Text(stringResource(R.string.diary_product_source_name)) }
+                    TextButton(onClick = { web.openOutside(ODBL) }) { Text(stringResource(R.string.diary_product_source_licence)) }
+                }
             }
         }
     }
