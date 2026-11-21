@@ -399,7 +399,11 @@ fun ComposeTestRule.openAccountSettings(account: Account) {
 
 /** The button of the sign-in screen, whose title says the same words. */
 fun ComposeTestRule.pressToSignIn() {
-    onNode(hasText(text(R.string.auth_sign_in_button)) and hasClickAction()).performScrollTo().performClick()
+    // Waited for, not taken as there: on Android 17 the form is out of the tree for a moment while the keyboard's
+    // insets settle, after the app comes back to the front or the keyboard is put away (a press there found no button).
+    val press = hasText(text(R.string.auth_sign_in_button)) and hasClickAction()
+    waitUntil(20_000) { onAllNodes(press).fetchSemanticsNodes().isNotEmpty() }
+    onNode(press).performScrollTo().performClick()
 }
 
 /** Signs [account] in on the sign-in screen, as a person would, and waits for the signed-in shell. */
