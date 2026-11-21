@@ -75,6 +75,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
 
 @RunWith(AndroidJUnit4::class)
 class PlansTest {
@@ -91,8 +92,12 @@ class PlansTest {
         screen.waitForEnabled(text(R.string.plans_generate))
         screen.onNode(hasText(text(R.string.plans_generate)) and hasClickAction()).performClick()
 
-        // The new plan's form: three days, cooked ahead, four meals a day instead of the profile's own.
+        // The new plan's form: three days, cooked ahead, four meals a day instead of the profile's own. When it begins
+        // and for how long stand side by side.
         screen.waitForText(text(R.string.plans_start_date))
+        val begins = screen.onNodeWithText(text(R.string.plans_start_date)).fetchSemanticsNode().boundsInRoot
+        val lasts = screen.onNodeWithText(text(R.string.plans_duration_days)).fetchSemanticsNode().boundsInRoot
+        assertTrue("the date ($begins) and the length ($lasts) stand in one row", abs(begins.top - lasts.top) < 1f && begins.right <= lasts.left)
         screen.onNodeWithText(text(R.string.plans_duration_days)).performTextReplacement("3")
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.plans_meal_prep)).performScrollTo().performClick()
@@ -742,6 +747,10 @@ class PlansTest {
         screen.onNodeWithText(text(R.string.plans_custom_protein)).performScrollTo().performTextInput("12")
         screen.onNodeWithText(text(R.string.plans_custom_fat)).performScrollTo().performTextInput("8")
         screen.onNodeWithText(text(R.string.plans_custom_carbs)).performScrollTo().performTextInput("40")
+        // The three macronutrients stand side by side.
+        val macros = listOf(R.string.plans_custom_protein, R.string.plans_custom_fat, R.string.plans_custom_carbs)
+            .map { screen.onNodeWithText(text(it)).fetchSemanticsNode().boundsInRoot }
+        assertTrue("the macronutrients stand in one row: $macros", macros.zipWithNext().all { (one, next) -> abs(one.top - next.top) < 1f && one.right <= next.left })
         screen.onNodeWithText(text(R.string.plans_custom_servings)).performScrollTo().performTextReplacement("2")
         screen.waitForText(text(R.string.plans_custom_total, "600", "24", "16", "80"))
         screen.keepScreenshot("plans-a-meal-of-ones-own")

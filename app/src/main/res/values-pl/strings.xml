@@ -367,9 +367,9 @@
     <string name="plans_custom_name">Nazwa posiłku</string>
     <string name="plans_custom_meal_type">Pora posiłku</string>
     <string name="plans_custom_calories">Kalorie (kcal)</string>
-    <string name="plans_custom_protein">Białko (g)</string>
-    <string name="plans_custom_fat">Tłuszcz (g)</string>
-    <string name="plans_custom_carbs">Węglowodany (g)</string>
+    <string name="plans_custom_protein">Białko</string>
+    <string name="plans_custom_fat">Tłuszcz</string>
+    <string name="plans_custom_carbs">Węglowodany</string>
     <string name="plans_custom_servings">Porcje</string>
     <string name="plans_custom_per_serving">Jedna porcja zawiera</string>
     <string name="plans_custom_servings_hint">Ile takich porcji składa się na posiłek.</string>

@@ -344,9 +344,9 @@
     <string name="plans_custom_name">Meal name</string>
     <string name="plans_custom_meal_type">Meal slot</string>
     <string name="plans_custom_calories">Calories (kcal)</string>
-    <string name="plans_custom_protein">Protein (g)</string>
-    <string name="plans_custom_fat">Fat (g)</string>
-    <string name="plans_custom_carbs">Carbs (g)</string>
+    <string name="plans_custom_protein">Protein</string>
+    <string name="plans_custom_fat">Fat</string>
+    <string name="plans_custom_carbs">Carbs</string>
     <string name="plans_custom_servings">Servings</string>
     <string name="plans_custom_per_serving">One serving holds</string>
     <string name="plans_custom_servings_hint">The meal counts as this many of those servings.</string>

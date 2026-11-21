@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -1446,6 +1447,9 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
  * anything is sent, so that nobody types the whole meal as one serving of several. A field the API
  * refused says why, from what came of the meal [sent] last.
  */
+/** The width three fields of grams need side by side at the font's usual size. */
+private val MACROS_SIDE_BY_SIDE = 288.dp
+
 @Composable
 private fun CustomMealDialog(
     date: String,
@@ -1471,13 +1475,23 @@ private fun CustomMealDialog(
     }
 
     @Composable
-    fun Amount(value: String, label: String, field: CustomMealField, change: (CustomMealForm, String) -> CustomMealForm, hint: String? = null) {
+    fun Amount(
+        value: String,
+        label: String,
+        field: CustomMealField,
+        change: (CustomMealForm, String) -> CustomMealForm,
+        hint: String? = null,
+        suffix: String? = null,
+        modifier: Modifier = Modifier,
+    ) {
         FormField(
             value = value,
             onValueChange = { typed -> form = change(form, typed) },
             label = label,
+            modifier = modifier,
             hint = hint,
             problem = problemOf(field, Bound.Number(decimals = 2)),
+            suffix = suffix,
             keyboardType = KeyboardType.Decimal,
         )
     }
@@ -1519,9 +1533,21 @@ private fun CustomMealDialog(
                 Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
                 Hint(stringResource(R.string.plans_custom_macros_optional))
                 Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
-                Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) })
-                Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) })
-                Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) })
+                // The three macronutrients side by side, in grams, where they fit at the font's size; one under another where not.
+                val grams = stringResource(R.string.unit_g)
+                BoxWithConstraints {
+                    @Composable
+                    fun Macros(cell: Modifier) {
+                        Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = cell)
+                        Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = cell)
+                        Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = cell)
+                    }
+                    if (maxWidth >= MACROS_SIDE_BY_SIDE * LocalDensity.current.fontScale) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Macros(Modifier.weight(1f)) }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { Macros(Modifier) }
+                    }
+                }
                 Amount(
                     form.servings,
                     stringResource(R.string.plans_custom_servings),
