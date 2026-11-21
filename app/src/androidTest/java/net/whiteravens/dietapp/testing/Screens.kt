@@ -200,7 +200,6 @@ private fun keyboardHeight(): Int {
 fun ComposeTestRule.scrollToText(sought: String, substring: Boolean = false, timeoutMillis: Long = 20_000) =
     scrollTo(hasText(shown(sought), substring = substring), timeoutMillis)
 
-/** Opens the fold of the dashboard under which the seven days, the split a day aims at and the favourite sets stand. */
 /** Presses [item] among the options of the day a plan shows, behind the button beside the day's sum. */
 fun ComposeTestRule.dayChange(item: String) {
     val options = hasContentDescription("${text(R.string.plans_day_options)}: ", substring = true) and hasClickAction()
@@ -209,6 +208,7 @@ fun ComposeTestRule.dayChange(item: String) {
     onNode(hasText(item) and hasAnyAncestor(isPopup())).performClick()
 }
 
+/** Opens the fold of the dashboard under which the seven days, the split a day aims at and the favourite sets stand. */
 fun ComposeTestRule.openTheDashboardsMore() {
     // As the screen shows it, a word of one letter held to the next; the bottom bar's "Więcej" has nothing to expand.
     scrollToText(text(R.string.dashboard_more))
