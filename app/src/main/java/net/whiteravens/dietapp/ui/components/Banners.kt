@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.ui.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.ServerVersion
@@ -64,30 +71,54 @@ fun ErrorBanner(text: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Muted "offline — showing cached data" strip for the offline-first screens. */
+/**
+ * Muted "offline — showing cached data" strip for the offline-first screens: one line, and where the screen says
+ * what works without a network ([more]), a press opens it under the line and closes it again.
+ */
 @Composable
-fun OfflineBanner(text: String, modifier: Modifier = Modifier) {
+fun OfflineBanner(text: String, modifier: Modifier = Modifier, more: String? = null) {
+    var open by rememberSaveable { mutableStateOf(false) }
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (more == null) {
+                    Modifier
+                } else {
+                    Modifier
+                        .clickable(role = Role.Button) { open = !open }
+                        .semantics { if (open) collapse { open = false; true } else expand { open = true; true } }
+                },
+            ),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                Icons.Default.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-            Text(
-                text,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                if (more != null) {
+                    Icon(
+                        if (open) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            if (open && more != null) {
+                Text(more, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
@@ -189,13 +220,17 @@ fun ConfirmEmailNotice(state: ConfirmEmailViewModel.UiState, onResend: () -> Uni
 }
 
 /**
- * The screen shows what it read at [readAt] (not said where it is not known), as the server cannot
- * be reached now, in the words of [says], which take the time; and how many changes made on the
- * phone wait to be sent, where any does.
+ * The screen shows what it read at [readAt] (not said where it is not known), as the server cannot be reached now,
+ * and how many changes made on the phone wait to be sent, where any does: one line. What still works without a
+ * network, where the screen says it ([works]), opens under the line at a press.
  */
 @Composable
-fun OfflineAsOf(readAt: Long?, modifier: Modifier = Modifier, @StringRes says: Int = R.string.offline_cached) {
-    val asOf = stringResource(says, readAt?.let(::formatSyncedAt) ?: "—")
+fun OfflineAsOf(readAt: Long?, modifier: Modifier = Modifier, @StringRes works: Int? = null) {
+    val asOf = stringResource(R.string.offline_cached, readAt?.let(::formatSyncedAt) ?: "—")
     val waiting = LocalWaitingChanges.current
-    OfflineBanner(if (waiting > 0) "$asOf$DOT${pluralStringResource(R.plurals.changes_waiting, waiting, waiting)}" else asOf, modifier)
+    OfflineBanner(
+        if (waiting > 0) "$asOf$DOT${pluralStringResource(R.plurals.changes_waiting, waiting, waiting)}" else asOf,
+        modifier,
+        more = works?.let { stringResource(it) },
+    )
 }

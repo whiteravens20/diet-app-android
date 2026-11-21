@@ -172,7 +172,7 @@
     <string name="label_note_at_least">%1$s: %2$s, mniej niż %3$s z ustawień profilu</string>
 
     <!-- Offline -->
-    <string name="offline_cached">Offline — stan z %1$s</string>
+    <string name="offline_cached">Offline\u00A0· stan z %1$s</string>
     <!-- Changes made on the phone that wait for a network, and those the server refused. -->
     <string name="change_waiting">Czeka na wysłanie</string>
     <string name="change_refused">Nie zapisano: %1$s. %2$s</string>
@@ -200,10 +200,10 @@
     <string name="account_leave_sending">Wysyłanie…</string>
     <string name="account_leave_drop">Porzuć i wyloguj</string>
     <plurals name="changes_waiting">
-        <item quantity="one">%1$d zmiana czeka na wysłanie</item>
-        <item quantity="few">%1$d zmiany czekają na wysłanie</item>
-        <item quantity="many">%1$d zmian czeka na wysłanie</item>
-        <item quantity="other">%1$d zmiany czeka na wysłanie</item>
+        <item quantity="one">%1$d zmiana czeka</item>
+        <item quantity="few">%1$d zmiany czekają</item>
+        <item quantity="many">%1$d zmian czeka</item>
+        <item quantity="other">%1$d zmiany czeka</item>
     </plurals>
     <plurals name="account_leave_waiting">
         <item quantity="one">%1$d zmiana zrobiona na tym telefonie czeka na wysłanie. Wysłać ją przed wylogowaniem czy porzucić?</item>
@@ -211,7 +211,7 @@
         <item quantity="many">%1$d zmian zrobionych na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
         <item quantity="other">%1$d zmiany zrobionej na tym telefonie czeka na wysłanie. Wysłać je przed wylogowaniem czy porzucić?</item>
     </plurals>
-    <string name="offline_readonly">Offline — stan z %1$s; posiłki można oznaczać jako zjedzone, dodawać i usuwać, inne zmiany wymagają połączenia</string>
+    <string name="offline_plan_works">Posiłki można oznaczać jako zjedzone, dodawać i\u00A0usuwać; inne zmiany wymagają połączenia.</string>
 
     <!-- Meal plans -->
     <string name="plans_subtitle">Plany dopasowane do celu kalorycznego każdego profilu.</string>
@@ -2020,7 +2020,7 @@
     <string name="diary_copy_same_day">Wybierz inny dzień niż ten.</string>
     <string name="diary_pick_recipe_first">Najpierw znajdź i wybierz przepis.</string>
     <string name="diary_pick_ingredient_first">Najpierw znajdź i wybierz składnik.</string>
-    <string name="diary_offline">Offline — stan z %1$s; wpisy można dodawać, zmieniać i usuwać, a posiłki oznaczać, kopiowanie dnia i dopasowanie porcji wymagają połączenia</string>
+    <string name="offline_diary_works">Wpisy można dodawać, zmieniać i\u00A0usuwać, a\u00A0posiłki oznaczać; kopiowanie dnia i\u00A0dopasowanie porcji wymagają połączenia.</string>
     <string name="diary_not_on_the_phone">Tego dnia nie ma jeszcze na telefonie, a bez połączenia nie da się go odczytać. To, co teraz wpiszesz, poczeka na wysłanie.</string>
     <string name="plans_open_diary">Dziennik dnia</string>
     <string name="plans_day_over_diary_hint">Licząc wpisy dziennika jako zjedzone, ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel.</string>

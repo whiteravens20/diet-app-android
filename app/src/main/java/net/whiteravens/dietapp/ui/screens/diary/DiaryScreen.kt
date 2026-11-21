@@ -170,7 +170,7 @@ fun DiaryScreen(
                 item {
                     ScreenHeader(title = stringResource(R.string.diary_title), subtitle = stringResource(R.string.diary_subhead), onBack = onBack)
                 }
-                if (state.offline) item { OfflineAsOf(state.readAt, says = R.string.diary_offline) }
+                if (state.offline) item { OfflineAsOf(state.readAt, works = R.string.offline_diary_works) }
 
                 when {
                     state.loadingProfiles -> item { Skeleton(Modifier.fillMaxWidth().height(160.dp)) }
