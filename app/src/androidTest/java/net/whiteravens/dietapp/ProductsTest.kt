@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -24,6 +25,7 @@ import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -62,6 +64,12 @@ class ProductsTest {
 
         openTheProducts()
         screen.waitForText(text(R.string.products_empty_title))
+        // An account far from the most it may hold is told no limits; where the base comes from stands under the list.
+        screen.onAllNodesWithText(text(R.string.products_limits, 500, 50, 10)).assertCountEquals(0)
+        screen.scrollToText(text(R.string.products_source))
+        val list = screen.onNodeWithText(text(R.string.products_empty_title)).fetchSemanticsNode().boundsInRoot
+        val source = screen.onNodeWithText(text(R.string.products_source)).fetchSemanticsNode().boundsInRoot
+        assertTrue("the source ($source) stands under the list ($list)", source.top >= list.bottom)
         screen.keepScreenshot("products-none-yet")
 
         screen.onNode(hasText(text(R.string.products_add)) and hasClickAction()).performClick()
