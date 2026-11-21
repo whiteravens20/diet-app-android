@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.testing.Instance
+import net.whiteravens.dietapp.testing.assertInOneRow
 import net.whiteravens.dietapp.testing.clickFirst
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.testing.openTab
@@ -174,6 +175,12 @@ class RecipesTest {
 
         screen.onNode(hasText(text(R.string.recipes_write)) and hasClickAction()).performScrollTo().performClick()
         screen.waitForText(text(R.string.own_recipe_new_intro))
+        // Servings and the two times stand side by side. How hard it is and its cuisine need more than a phone's form
+        // gives, whole, and stand one under the other here.
+        screen.assertInOneRow(
+            *listOf(R.string.own_recipe_field_servings, R.string.own_recipe_field_prep, R.string.own_recipe_field_cook)
+                .map { hasText(text(it)) and hasSetTextAction() }.toTypedArray(),
+        )
         type(text(R.string.own_recipe_field_description), "Oats cooked in milk.")
         press(text(R.string.meal_breakfast))
         // Before any ingredient, what the dish is waits for them.
