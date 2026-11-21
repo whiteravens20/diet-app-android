@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
-import net.whiteravens.dietapp.data.repository.AiRepository
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
 import net.whiteravens.dietapp.data.repository.NotificationRepository
@@ -27,8 +26,6 @@ import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.data.sync.Waiting
 import net.whiteravens.dietapp.domain.InstanceRules
-import net.whiteravens.dietapp.domain.AiModes
-import net.whiteravens.dietapp.domain.AiStatus
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DiaryDay
 import net.whiteravens.dietapp.domain.FieldRefusal
@@ -63,7 +60,6 @@ class DashboardViewModel @Inject constructor(
     private val weights: WeightRepository,
     private val notifications: NotificationRepository,
     private val queue: ChangeQueue,
-    private val ai: AiRepository,
     private val diary: DiaryRepository,
     server: ServerRepository,
 ) : ViewModel() {
@@ -139,8 +135,6 @@ class DashboardViewModel @Inject constructor(
         val readsWaiting: Int = 0,
         /** The changes of diaries and of plans' meals that wait to be sent, in the order they were made. */
         val waitingDiary: List<Waiting> = emptyList(),
-        /** What AI the account has, where it uses AI: the instance's requests left, or a provider of its own. */
-        val ai: AiStatus? = null,
         /** The profile picked by its chip; the first is shown where none is, or where the one picked is gone. */
         val picked: String? = null,
     ) {
@@ -454,15 +448,6 @@ class DashboardViewModel @Inject constructor(
             val account = async { attempt { users.me() }.getOrNull() }
             // Weights are shown in the account's unit; while it cannot be read, in the one shown before.
             val unit = async { account.await()?.let { WeightUnit.of(it.weightUnit, Locale.getDefault()) } }
-            // What AI the account has is asked only where it uses AI, as the web's chip asks it. Null
-            // where it could not be read, the account or its AI: what is shown stays.
-            val aiNow = async {
-                when (account.await()?.aiMode) {
-                    null -> null
-                    AiModes.NONE -> Result.success<AiStatus?>(null)
-                    else -> attempt { ai.status() }.getOrNull()?.let { Result.success<AiStatus?>(it) }
-                }
-            }
             val unread = async { attempt { notifications.unread().size }.getOrNull() }
             val since = Instant.now().minus(WEIGHT_DAYS)
             attempt {
@@ -495,7 +480,6 @@ class DashboardViewModel @Inject constructor(
                 .onSuccess { found ->
                     val inUnit = unit.await()
                     val notRead = unread.await()
-                    val aiRead = aiNow.await()
                     // A weight logged or taken back while this was read was answered after it: what is shown is newer.
                     _state.update {
                         if (showLoading || it.profiles === before) {
@@ -508,10 +492,9 @@ class DashboardViewModel @Inject constructor(
                                 pulled = false,
                                 readAt = System.currentTimeMillis(),
                                 offline = false,
-                                ai = if (aiRead == null) it.ai else aiRead.getOrNull(),
                             )
                         } else {
-                            it.copy(loading = false, unread = notRead ?: it.unread, pulled = false, ai = if (aiRead == null) it.ai else aiRead.getOrNull())
+                            it.copy(loading = false, unread = notRead ?: it.unread, pulled = false)
                         }
                     }
                 }

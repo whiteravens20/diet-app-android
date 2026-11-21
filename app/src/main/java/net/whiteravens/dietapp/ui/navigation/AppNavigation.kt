@@ -342,7 +342,6 @@ private fun MainScaffold(
                         onOpenPlan = { planId -> navController.navigate(PlanDetailRoute(planId)) },
                         onNewPlan = { profileId -> navController.navigate(NewPlanRoute(profileId)) },
                         onOpenNotifications = { navController.navigate(NotificationsRoute) },
-                        onOpenAccount = { navController.navigate(AccountRoute) },
                         onOpenDiary = { profileId, adding -> navController.navigate(DiaryRoute(profileId, adding = adding)) },
                         onScan = { profileId -> navController.navigate(DiaryRoute(profileId, adding = true, scanning = true)) },
                         showWeightOf = weightOf,

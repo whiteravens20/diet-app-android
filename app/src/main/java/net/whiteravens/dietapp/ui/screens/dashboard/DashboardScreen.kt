@@ -76,15 +76,14 @@ import net.whiteravens.dietapp.ui.screens.notifications.NotificationsBell
 import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 
 /**
- * What every profile ate today, its calorie target, deficit and macro split, what its plan of the
- * moment comes to, and its weights — the web dashboard, whose favourite sets are made and changed
+ * A profile's day, its target, what its plan of the moment comes to, its water and its weights, one
+ * profile at a time, picked by its chip — the web dashboard, whose favourite sets are made and changed
  * there, in the browser. Today's card opens the diary, and its window to add to it, on [onOpenDiary],
  * and the camera over that window on [onScan];
  * a plan opens on [onOpenPlan]; a plan is made for a profile on [onNewPlan]; the bell in the header
- * counts the notifications not read yet and opens them on [onOpenNotifications]; under the header,
- * where the account uses AI, its requests are said, and open the account's settings on
- * [onOpenAccount]. With [showWeightOf], the weights of that profile are brought into view, and
- * [onWeightShown] says so; with [showWaterOf], its water, and [onWaterShown] says so.
+ * counts the notifications not read yet and opens them on [onOpenNotifications]. With [showWeightOf],
+ * that profile is picked and its weights are brought into view, and [onWeightShown] says so; with
+ * [showWaterOf], its water, and [onWaterShown] says so.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -93,7 +92,6 @@ fun DashboardScreen(
     onOpenPlan: (planId: String) -> Unit,
     onNewPlan: (profileId: String) -> Unit,
     onOpenNotifications: () -> Unit,
-    onOpenAccount: () -> Unit,
     onOpenDiary: (profileId: String, adding: Boolean) -> Unit,
     onScan: (profileId: String) -> Unit,
     showWeightOf: String? = null,
@@ -168,7 +166,6 @@ fun DashboardScreen(
                             )
                             NotificationsBell(state.shownUnread, onClick = onOpenNotifications)
                         }
-                        state.ai?.let { AiRequests(it, onOpen = onOpenAccount) }
                     }
                 }
                 if (newer != null) item(key = "update") { UpdateCard(viewModel = update) }
