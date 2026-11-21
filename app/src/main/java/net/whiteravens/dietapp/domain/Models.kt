@@ -595,6 +595,8 @@ data class PlanDay(
     val skipped: Boolean,
     /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
     val offTarget: String?,
+    /** Sizing the day again would give a meal another portion, as the server works it out. */
+    val resizes: Boolean = true,
     /** A target somebody typed puts the day under the lowest a calculated plan goes. */
     val belowSafetyFloor: Boolean,
     /** What the day holds is far from the share of macronutrients it aims at. */

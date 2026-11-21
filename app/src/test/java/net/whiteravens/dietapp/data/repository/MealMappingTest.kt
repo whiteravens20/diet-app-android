@@ -157,11 +157,13 @@ class MealMappingTest {
     }
 
     @Test
-    fun `a day says where it stands against its target, and a list says when the plan has changed under it`() {
-        val day = plan.days.first().copy(offTarget = "over", belowSafetyFloor = true).toDomain(plan.report)
+    fun `a day says where it stands against its target, whether sizing it again moves a meal, and a list says when the plan has changed under it`() {
+        val day = plan.days.first().copy(offTarget = "over", resizes = false, belowSafetyFloor = true).toDomain(plan.report)
         val list = json.decodeFromString<ShoppingListDto>(fixture("shopping-list")).copy(stale = true).toDomain()
 
         assertEquals("over", day.offTarget)
+        assertFalse(day.resizes)
+        assertTrue(plan.days.first().toDomain(plan.report).resizes)
         assertTrue(day.belowSafetyFloor)
         assertTrue(list.stale)
     }

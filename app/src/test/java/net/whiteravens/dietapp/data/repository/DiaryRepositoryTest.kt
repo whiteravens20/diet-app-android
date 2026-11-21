@@ -103,6 +103,8 @@ class DiaryRepositoryTest {
         assertTrue(read.estimated)
         val plan = checkNotNull(read.plan)
         assertEquals("over", plan.offTarget)
+        // What the server says of sizing the day again: here its meals cannot come any closer.
+        assertFalse(plan.resizes)
         assertEquals(805.0, plan.calorieDelta, 0.0)
         assertEquals(listOf("breakfast", "lunch", "snack", "dinner"), plan.meals.map { it.slot })
         assertEquals(listOf(true, false, false, false), plan.meals.map { it.eaten })

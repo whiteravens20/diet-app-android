@@ -599,9 +599,10 @@ fun PlanDetailScreen(
                         onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
                         // The diary of a day that has come.
                         onDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today },
-                        // A day of today or after it is resized with its own meals.
+                        // A day of today or after it is resized with its own meals, where the server says that would move one.
                         onResize = { viewModel.resizeDay(day.date) }.takeUnless {
-                            readOnly || busy || day.date < today || day.meals.none { meal -> !meal.eaten && meal.recipeId != null && !meal.custom }
+                            readOnly || busy || day.date < today || !day.resizes ||
+                                day.meals.none { meal -> !meal.eaten && meal.recipeId != null && !meal.custom }
                         },
                         resizeLeft = state.resizeLeft?.takeIf { it.first == day.date }?.second,
                         thaws = thawsByDay(plan, today)[day.date],

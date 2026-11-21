@@ -75,6 +75,8 @@ data class DiaryDayPlan(
     val calorieDelta: Double,
     /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
     val offTarget: String?,
+    /** Sizing the day again would give a meal another portion, as the server works it out. */
+    val resizes: Boolean = true,
 )
 
 /** A meal of the plan that holds a day, as the diary shows it. [calories] is null for one of one's own still on its way. */

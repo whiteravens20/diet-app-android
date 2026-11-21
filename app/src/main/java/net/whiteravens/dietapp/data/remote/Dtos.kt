@@ -1364,6 +1364,11 @@ data class MealPlanDayDto(
     val calorieDelta: Double,
     /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
     val offTarget: String? = null,
+    /**
+     * Sizing the day again would give a meal another portion (it stands off its target, from today on); true from an
+     * API that does not say it, whose day is then judged by its meals alone.
+     */
+    val resizes: Boolean = true,
     /** What the day holds is far from the share of macronutrients it aims at. */
     val macrosOff: Boolean = false,
     /** The user skips the day: no shortfall, left out of the plan's averages; what was eaten of it stays. */
@@ -2621,6 +2626,8 @@ data class DiaryDayPlanDto(
     val calorieDelta: Double,
     /** `over` | `under` when the day is outside a tenth either side of its target; null inside it. */
     val offTarget: String? = null,
+    /** As [MealPlanDayDto.resizes] of the same day. */
+    val resizes: Boolean = true,
 )
 
 /** GET `/diary/day`: a day of a profile's diary. */

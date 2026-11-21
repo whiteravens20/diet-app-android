@@ -348,6 +348,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     calorieDelta = calorieDelta,
     skipped = skipped,
     offTarget = offTarget,
+    resizes = resizes,
     belowSafetyFloor = belowSafetyFloor,
     macrosOff = macrosOff,
     targetMacros = targetMacros.toDomain(),

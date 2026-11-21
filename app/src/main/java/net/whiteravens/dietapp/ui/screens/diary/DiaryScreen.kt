@@ -403,8 +403,8 @@ private fun DaySummary(
     val plan = day.plan
     // Where nothing is written, the plan's day stands as its own meals put it.
     val written = day.entries.isNotEmpty()
-    // A meal from a recipe that is not eaten yet is all a rebalance moves.
-    val resizable = plan?.meals?.any { !it.eaten && it.recipeId != null } == true
+    // A meal from a recipe that is not eaten yet is all a rebalance moves, where the server says that would move one.
+    val resizable = plan?.resizes == true && plan.meals.any { !it.eaten && it.recipeId != null }
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(stringResource(R.string.diary_eaten_title), style = MaterialTheme.typography.titleMedium)
