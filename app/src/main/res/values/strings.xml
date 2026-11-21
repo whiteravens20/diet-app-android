@@ -768,6 +768,8 @@
     </plurals>
     <string name="favorites_facts">%1$s kcal a serving · %2$s</string>
     <string name="favorites_marked_as">How %1$s is marked</string>
+    <string name="favorites_change">Change</string>
+    <string name="favorites_change_of">Change the mark of %1$s</string>
     <string name="favorites_remove">Remove</string>
     <string name="favorites_remove_of">Remove the mark of %1$s</string>
     <string name="favorites_tags_of">Tags of %1$s</string>

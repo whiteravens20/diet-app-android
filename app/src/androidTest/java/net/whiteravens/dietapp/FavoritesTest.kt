@@ -3,10 +3,11 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -26,6 +27,7 @@ import net.whiteravens.dietapp.testing.signIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.ui.components.DOT
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -46,7 +48,22 @@ class FavoritesTest {
     fun backOnline() = screen.airplaneMode(false)
 
     /** Picks [option] in the list a field of choices opened. */
-    private fun pick(option: String) = screen.onNode(hasText(option) and hasAnyAncestor(isPopup())).performClick()
+    /** Presses [words] in the window in front. */
+    private fun inTheWindow(words: String) = screen.onNode(hasText(words) and hasAnyAncestor(isDialog())).performClick()
+
+    /** Opens the window where the mark of the recipe called [title] is changed. */
+    private fun openTheMarkOf(title: String) {
+        val change = hasContentDescription(text(R.string.favorites_change_of, title)) and hasClickAction()
+        screen.scrollTo(change)
+        screen.onNode(change).performScrollTo().performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(title) and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    /** Closes the window in front. */
+    private fun closeTheWindow() {
+        inTheWindow(text(R.string.common_close))
+        screen.waitUntil(20_000) { screen.onAllNodes(isDialog()).fetchSemanticsNodes().isEmpty() }
+    }
 
     @Test
     fun theMarkedRecipesAreNarrowedAndEachMarkIsChangedTaggedAndTakenOff() {
@@ -64,48 +81,45 @@ class FavoritesTest {
         screen.scrollToText(first.second)
         screen.keepScreenshot("favorites-the-list")
 
-        // Narrowed to the recipes eaten often, the favourite is not listed; and back. The filter is
-        // the field of marks that says no recipe's name.
-        val markedAs = text(R.string.favorites_marked)
-        val often = text(R.string.favorites_sentiment_often)
-        val filter = hasText(markedAs) and !hasContentDescription(text(R.string.favorites_marked_as, second.second))
-        val filterAny = filter and hasText(text(R.string.favorites_any))
-        screen.scrollTo(filterAny)
-        screen.onNode(filterAny).performScrollTo().performClick()
-        pick(often)
+        // Narrowed to the recipes eaten often in the window of filters, the favourite is not listed; and back.
+        screen.onNode(hasText(text(R.string.recipes_filters)) and hasClickAction()).performScrollTo().performClick()
+        inTheWindow(text(R.string.favorites_sentiment_often))
+        screen.keepScreenshot("favorites-the-filters")
+        inTheWindow(text(R.string.recipes_filters_apply))
         screen.scrollToText(plural(R.plurals.favorites_count, 1, 1))
         screen.scrollToText(second.second)
         assertTrue(screen.onAllNodesWithText(first.second).fetchSemanticsNodes().isEmpty())
-        val filterOften = filter and hasText(often)
-        screen.scrollTo(filterOften)
-        screen.onNode(filterOften).performScrollTo().performClick()
-        pick(text(R.string.favorites_any))
+        screen.onNode(hasText(plural(R.plurals.recipes_filters_on, 1, 1)) and hasClickAction()).assertExists()
+        screen.onNode(hasText(text(R.string.recipes_clear_filters)) and hasClickAction()).performClick()
         screen.scrollToText(plural(R.plurals.favorites_count, 2, 2))
 
-        // The favourite marked to avoid, in the field that names it.
-        val firstMark = hasContentDescription(text(R.string.favorites_marked_as, first.second))
-        screen.scrollTo(firstMark)
-        screen.onNode(firstMark).performScrollTo().performClick()
-        pick(text(R.string.favorites_sentiment_avoid))
+        // The favourite marked to avoid, in its window.
+        openTheMarkOf(first.second)
+        inTheWindow(text(R.string.favorites_sentiment_avoid))
         screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[first.first]?.first == "avoid" }
+        closeTheWindow()
 
-        // A tag put on the other recipe, in the field that names it, once the change before is in:
-        // a mark on its way to the API holds every field of the list.
+        // A tag put on the other recipe in its window, once the change before is in: a mark on its way to the API
+        // holds every change.
+        openTheMarkOf(second.second)
         val secondTag = hasContentDescription(text(R.string.favorites_new_tag_of, second.second))
-        screen.scrollTo(secondTag)
         screen.waitUntil(20_000) { screen.onAllNodes(secondTag and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        screen.onNode(secondTag).performScrollTo().performTextInput("for later")
+        screen.onNode(secondTag).performTextInput("for later")
         screen.putKeyboardAway()
-        screen.onAllNodes(hasText(text(R.string.favorites_add_tag)) and isEnabled())[0].performScrollTo().performClick()
+        screen.onNode(hasText(text(R.string.favorites_add_tag)) and isEnabled() and hasAnyAncestor(isDialog())).performClick()
         screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[second.first]?.second == listOf("for later") }
-        screen.scrollToText("for later")
+        screen.keepScreenshot("favorites-a-mark-in-its-window")
+        closeTheWindow()
+        // The row says the mark and the tag.
+        screen.scrollToText("${text(R.string.favorites_sentiment_often)}$DOT" + "for later")
         screen.keepScreenshot("favorites-changed")
 
-        // The mark taken off the first recipe, once the tag is in.
+        // The mark taken off the first recipe in its window, once the tag is in: the window closes with it.
+        openTheMarkOf(first.second)
         val remove = hasContentDescription(text(R.string.favorites_remove_of, first.second))
-        screen.scrollTo(remove)
         screen.waitUntil(20_000) { screen.onAllNodes(remove and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        screen.onNode(remove).performScrollTo().performClick()
+        screen.onNode(remove).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodes(isDialog()).fetchSemanticsNodes().isEmpty() }
         screen.keepScreenshot("favorites-a-mark-taken-off")
         screen.waitForTheApi(20_000) { first.first !in Instance.marks(account, profileId) }
         screen.scrollToText(plural(R.plurals.favorites_count, 1, 1))
@@ -127,16 +141,16 @@ class FavoritesTest {
         // Without a network the first is marked to avoid all the same, and says that the change waits
         // to be sent; the second's mark taken off leaves the list.
         screen.airplaneMode(true)
-        val firstMark = hasContentDescription(text(R.string.favorites_marked_as, first.second))
-        screen.scrollTo(firstMark)
-        screen.onNode(firstMark).performScrollTo().performClick()
-        pick(text(R.string.favorites_sentiment_avoid))
+        openTheMarkOf(first.second)
+        inTheWindow(text(R.string.favorites_sentiment_avoid))
+        closeTheWindow()
         screen.waitForText(text(R.string.change_waiting))
+        openTheMarkOf(second.second)
         val remove = hasContentDescription(text(R.string.favorites_remove_of, second.second))
-        screen.scrollTo(remove)
         screen.waitUntil(20_000) { screen.onAllNodes(remove and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        screen.onNode(remove).performScrollTo().performClick()
+        screen.onNode(remove).performClick()
         screen.scrollToText(plural(R.plurals.favorites_count, 1, 1))
+        val firstMark = hasContentDescription(text(R.string.favorites_change_of, first.second))
         screen.scrollTo(firstMark)
         screen.keepScreenshot("favorites-changes-waiting")
         val waiting = hasText(plural(R.plurals.changes_waiting, 2, 2), substring = true)

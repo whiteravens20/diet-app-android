@@ -834,6 +834,8 @@
     </plurals>
     <string name="favorites_facts">%1$s kcal na porcję · %2$s</string>
     <string name="favorites_marked_as">Jak oznaczony jest przepis %1$s</string>
+    <string name="favorites_change">Zmień</string>
+    <string name="favorites_change_of">Zmień oznaczenie przepisu %1$s</string>
     <string name="favorites_remove">Usuń</string>
     <string name="favorites_remove_of">Usuń oznaczenie przepisu %1$s</string>
     <string name="favorites_tags_of">Tagi przepisu %1$s</string>

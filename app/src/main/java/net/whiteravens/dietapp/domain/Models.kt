@@ -1180,6 +1180,12 @@ data class FavoriteFilter(
     /** Whether anything narrows the list; the order does not. */
     val narrowed: Boolean get() = search.isNotBlank() || mealType != null || sentiment != null || tag != null
 
+    /** How many of the filters of the window narrow the list: the meal, the mark and the tag; the words and the order do not. */
+    val atWork: Int get() = listOfNotNull(mealType, sentiment, tag).size
+
+    /** The filters of the window taken away; the words searched for and the order stay. */
+    fun cleared(): FavoriteFilter = copy(mealType = null, sentiment = null, tag = null)
+
     companion object {
         /** The order the API lists marks in where none is asked for. */
         const val NEWEST = "newest"
