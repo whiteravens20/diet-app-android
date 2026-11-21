@@ -127,10 +127,6 @@
     <string name="overview_energy_hint">On average, against a target of %1$s kcal.</string>
     <string name="overview_eaten">Eaten</string>
     <string name="overview_eaten_not_yet_hint">No day of the plan has come yet.</string>
-    <string name="overview_on_diet">On the diet</string>
-    <string name="overview_favourites">Favourites</string>
-    <string name="overview_reuse">Ingredients used again</string>
-    <string name="overview_reuse_hint">The share of the plan’s ingredients that more than one of its recipes uses.</string>
     <string name="overview_shopping">Shopping</string>
     <string name="overview_shopping_none_hint">The plan has no shopping list yet.</string>
     <string name="overview_macros">What a day holds, against what it aims at</string>
@@ -142,8 +138,6 @@
     <string name="overview_series_target">Target</string>
     <string name="dashboard_generate_plan">Make a meal plan</string>
     <string name="overview_eaten_hint">%1$s of the %2$s that were due by today.</string>
-    <string name="overview_on_diet_hint">%1$s of %2$s fit the diet of the plan (%3$s).</string>
-    <string name="overview_favourites_hint">%1$s of %2$s are of a recipe marked as a favourite or as eaten often.</string>
     <string name="overview_shopping_hint">%1$s of %2$s ticked on the plan’s lists.</string>
     <plurals name="overview_meals">
         <item quantity="one">%d meal</item>

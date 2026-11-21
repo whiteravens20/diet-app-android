@@ -7,9 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,10 +51,10 @@ import kotlin.math.roundToInt
 import net.whiteravens.dietapp.ui.components.Text
 
 /**
- * What the plan a profile is living by comes to, as the web's card says it: what a day of it holds
- * against what it aims at, how much of what was due is eaten, how much of it fits the diet and is
- * made of favourites, how far the shopping is, and its days side by side. Read-only: every figure is
- * the API's. A profile with no plan is offered to make one ([onNewPlan]); a plan opens on [onOpen].
+ * What the plan a profile is living by comes to, as the web's card says it, in what changes while it
+ * runs: what a day of it holds against what it aims at, how much of what was due is eaten, how far the
+ * shopping is, its macronutrients, and its days side by side where they differ. Read-only: every figure
+ * is the API's. A profile with no plan is offered to make one ([onNewPlan]); a plan opens on [onOpen].
  */
 @Composable
 internal fun PlanOverviewCard(overview: PlanOverview?, failed: Throwable?, onOpen: (planId: String) -> Unit, onNewPlan: () -> Unit) {
@@ -101,7 +99,6 @@ private fun Overview(overview: PlanOverview, onOpen: () -> Unit) {
     }
     OutlinedButton(onClick = onOpen) { Text(stringResource(R.string.overview_open)) }
 
-    val diet = dietTypeLabel(overview.dietType)
     val shopping = overview.shoppingLists > 0
     Figures(
         listOf(
@@ -113,9 +110,6 @@ private fun Overview(overview: PlanOverview, onOpen: () -> Unit) {
             // Nothing was due before the first day of a plan: there is no share to name yet.
             if (overview.eaten.of == 0) Figure(stringResource(R.string.overview_eaten), "—", stringResource(R.string.overview_eaten_not_yet_hint))
             else Figure(stringResource(R.string.overview_eaten), formatPercent(overview.eaten.part), stringResource(R.string.overview_eaten_hint, formatNumber(overview.eaten.meals), meals(overview.eaten))),
-            Figure(stringResource(R.string.overview_on_diet), formatPercent(overview.onDiet.part), stringResource(R.string.overview_on_diet_hint, formatNumber(overview.onDiet.meals), meals(overview.onDiet), diet)),
-            Figure(stringResource(R.string.overview_favourites), formatPercent(overview.favourites.part), stringResource(R.string.overview_favourites_hint, formatNumber(overview.favourites.meals), meals(overview.favourites))),
-            Figure(stringResource(R.string.overview_reuse), formatPercent(overview.ingredientReuse), stringResource(R.string.overview_reuse_hint)),
             if (!shopping) Figure(stringResource(R.string.overview_shopping), "—", stringResource(R.string.overview_shopping_none_hint))
             else Figure(
                 stringResource(R.string.overview_shopping),
@@ -161,8 +155,23 @@ private fun Overview(overview: PlanOverview, onOpen: () -> Unit) {
         }
     }
 
-    Text(stringResource(R.string.overview_days), style = MaterialTheme.typography.titleSmall)
-    DaysChart(overview.days)
+    // A chart of days that hold the same says nothing: drawn where they differ.
+    if (daysDiffer(overview.days)) {
+        Text(stringResource(R.string.overview_days), style = MaterialTheme.typography.titleSmall)
+        DaysChart(overview.days)
+    }
+}
+
+/**
+ * Whether a plan's days differ enough for a chart of them to say something: a day skipped, targets of their own, or
+ * what the days hold apart by a twentieth of the target they aim at on average.
+ */
+internal fun daysDiffer(days: List<OverviewDay>): Boolean {
+    if (days.any { it.skipped }) return true
+    if (days.map { it.target }.distinct().size > 1) return true
+    if (days.size < 2) return false
+    val held = days.map { it.calories }
+    return held.max() - held.min() >= days.sumOf { it.target } / days.size / 20
 }
 
 /** A bar full at a ceiling, [share] of it filled, with the band of a diet from [from] of it up to the ceiling drawn under the fill. */
@@ -185,25 +194,25 @@ private fun BandBar(share: Float, from: Float) {
 /** A figure of the card: what it is, what it comes to, and how to read it. */
 private data class Figure(val label: String, val value: String, val hint: String)
 
-/** The figures two to a row, each in a box of its own, the two boxes of a row as tall as each other. */
+/**
+ * The figures one under another, each in a box of its own as wide as the card: three of them two to a row
+ * left the last alone in its row (as the web on a phone).
+ */
 @Composable
 private fun Figures(figures: List<Figure>) {
-    figures.chunked(2).forEach { pair ->
-        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            pair.forEach { figure ->
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                ) {
-                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(figure.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(figure.value, style = MaterialTheme.typography.titleLarge)
-                        Text(figure.hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        figures.forEach { figure ->
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(figure.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(figure.value, style = MaterialTheme.typography.titleLarge)
+                    Text(figure.hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            if (pair.size == 1) Spacer(Modifier.weight(1f))
         }
     }
 }
