@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,8 +38,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -329,9 +337,21 @@ private fun LineFields(line: FormLine, marks: RecipeMarks, onEdit: RecipeEdit) {
     fun change(edit: (FormLine) -> FormLine) = onEdit { form -> form.copy(lines = form.lines.map { if (it.key == line.key) edit(it) else it }) }
     // A piece is called what the ingredient calls it: a slice of bread, a clove of garlic.
     val unitLabel: @Composable (String) -> String = { unit -> unitName(if (unit == PIECE) line.ingredient.pieceName else unit) }
+    val noteOf = stringResource(R.string.own_recipe_note_of, name)
+    // The note stands behind a button until it is asked for; one written, or refused, stays open.
+    var noting by rememberSaveable(line.key) { mutableStateOf(false) }
+    val noteShown = noting || line.note.isNotEmpty() || refused[LinePart.NOTE] != null
+    val noteFocus = remember { FocusRequester() }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            if (!noteShown) {
+                TextButton(onClick = { noting = true }, modifier = Modifier.semantics { contentDescription = noteOf }) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.own_recipe_field_note))
+                }
+            }
             IconButton(
                 onClick = { onEdit { form -> form.copy(lines = form.lines.filterNot { it.key == line.key }) } },
                 colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
@@ -364,17 +384,20 @@ private fun LineFields(line: FormLine, marks: RecipeMarks, onEdit: RecipeEdit) {
                 modifier = Modifier.weight(1f),
             )
         }
-        val noteOf = stringResource(R.string.own_recipe_note_of, name)
-        FormField(
-            value = line.note,
-            onValueChange = { typed -> change { it.copy(note = typed) } },
-            label = stringResource(R.string.own_recipe_field_note),
-            optional = true,
-            problem = refused[LinePart.NOTE]?.let { refusalOf(it, Bound.Characters) },
-            keyboardType = KeyboardType.Text,
-            capitalization = KeyboardCapitalization.Sentences,
-            modifier = Modifier.semantics { contentDescription = noteOf },
-        )
+        if (noteShown) {
+            FormField(
+                value = line.note,
+                onValueChange = { typed -> change { it.copy(note = typed) } },
+                label = stringResource(R.string.own_recipe_field_note),
+                optional = true,
+                problem = refused[LinePart.NOTE]?.let { refusalOf(it, Bound.Characters) },
+                keyboardType = KeyboardType.Text,
+                capitalization = KeyboardCapitalization.Sentences,
+                modifier = Modifier.focusRequester(noteFocus).semantics { contentDescription = noteOf },
+            )
+            // A note asked for takes the keyboard at once.
+            LaunchedEffect(noting) { if (noting && line.note.isEmpty()) noteFocus.requestFocus() }
+        }
     }
 }
 

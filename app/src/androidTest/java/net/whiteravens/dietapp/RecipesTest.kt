@@ -2,7 +2,9 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -189,6 +191,12 @@ class RecipesTest {
         screen.keepScreenshot("recipes-written-traits-waiting")
         addIngredient(oats, "60")
         addIngredient(milk, "250")
+        // An ingredient's note stands behind a button beside its name until it is asked for.
+        val oatsNote = hasContentDescription(text(R.string.own_recipe_note_of, oats))
+        screen.onAllNodes(oatsNote and hasSetTextAction()).assertCountEquals(0)
+        screen.onNode(oatsNote and hasClickAction()).performScrollTo().performClick()
+        screen.onNode(oatsNote and hasSetTextAction()).performTextInput("fine")
+        screen.putKeyboardAway()
         type(text(R.string.own_recipe_step_number, 1), "Cook the oats in the milk for five minutes.")
 
         // What a serving holds is worked out as the recipe is written, and its allergens with it.
@@ -231,8 +239,10 @@ class RecipesTest {
         // Edited from its view, it is saved as a new version in its place.
         screen.onNode(edit).performClick()
         screen.waitForText(text(R.string.own_recipe_edit_intro))
-        // The form shows once the recipe is read.
+        // The form shows once the recipe is read: the note written stands open, the button stands where none was.
         screen.waitForText(text(R.string.own_recipe_field_servings))
+        screen.onNode(oatsNote and hasSetTextAction()).assertTextContains("fine")
+        screen.onNode(hasContentDescription(text(R.string.own_recipe_note_of, milk)) and hasClickAction() and !hasSetTextAction()).assertExists()
         screen.onNodeWithText(text(R.string.own_recipe_field_servings)).performScrollTo().performTextReplacement("2")
         press(text(R.string.own_recipe_save))
         screen.waitForTheApi { Instance.ownRecipes(account).singleOrNull()?.let { (id, servings) -> id != written && servings == 2 } == true }
