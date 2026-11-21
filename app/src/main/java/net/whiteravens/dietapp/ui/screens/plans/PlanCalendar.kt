@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +30,10 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -39,14 +45,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -76,6 +83,7 @@ private val CELL = RoundedCornerShape(6.dp)
  * says what it holds, and choosing it opens its plan at that day; a day that none holds is where a
  * new plan can begin. Each day says in words what its cell shows, to somebody who does not see it.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PlanCalendar(
     calendar: MealPlansViewModel.Calendar,
@@ -161,13 +169,42 @@ internal fun PlanCalendar(
             }
         }
 
-        // What the marks in a day mean is said in words: a mark alone says it to nobody who does not already know.
-        Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Legend(stringResource(R.string.plans_calendar_legend_day))
-            OffTargetLegend(stringResource(R.string.plans_calendar_legend_off))
-            Legend(stringResource(R.string.plans_calendar_legend_eaten), Icons.Default.Check)
-            Legend(stringResource(R.string.plans_calendar_legend_skipped))
-            Legend(stringResource(R.string.plans_calendar_legend_more))
+        // The marks of a day in one row, each with its word; what they mean in full, in sentences, behind the question
+        // mark: a mark alone says it to nobody who does not already know.
+        var marksOpen by rememberSaveable { mutableStateOf(false) }
+        val colors = MaterialTheme.colorScheme
+        val quiet = colors.onSurfaceVariant
+        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Mark(stringResource(R.string.plans_calendar_mark_plan)) { Swatch(colors.primary, ground = 0.06f, frame = 0.4f) }
+                Mark(stringResource(R.string.plans_calendar_mark_off)) { Swatch(colors.tertiary, ground = 0.1f, frame = 0.6f) }
+                Mark(stringResource(R.string.plans_calendar_mark_eaten)) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = quiet, modifier = Modifier.size(12.dp))
+                }
+                Mark(stringResource(R.string.plans_calendar_mark_skipped)) { Text("—", style = MaterialTheme.typography.labelSmall, color = quiet) }
+                Mark(stringResource(R.string.plans_calendar_mark_more)) { Text("+1", style = MaterialTheme.typography.labelSmall, color = quiet) }
+            }
+            val help = stringResource(R.string.plans_calendar_marks_help)
+            IconButton(
+                onClick = { marksOpen = !marksOpen },
+                modifier = Modifier.semantics {
+                    contentDescription = help
+                    if (marksOpen) collapse { marksOpen = false; true } else expand { marksOpen = true; true }
+                },
+            ) {
+                Box(Modifier.size(24.dp).border(1.dp, colors.outline, CircleShape), contentAlignment = Alignment.Center) {
+                    Text("?", style = MaterialTheme.typography.labelMedium, color = colors.onSurface)
+                }
+            }
+        }
+        if (marksOpen) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Legend(stringResource(R.string.plans_calendar_legend_day))
+                Legend(stringResource(R.string.plans_calendar_legend_off))
+                Legend(stringResource(R.string.plans_calendar_legend_eaten))
+                Legend(stringResource(R.string.plans_calendar_legend_skipped))
+                Legend(stringResource(R.string.plans_calendar_legend_more))
+            }
         }
     }
 }
@@ -285,30 +322,26 @@ private fun spokenDay(date: LocalDate, day: PlanCalendarDay?): String {
     )
 }
 
+/** A sentence of what the calendar's marks mean. */
 @Composable
-private fun Legend(text: String, icon: ImageVector? = null) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 4.dp).size(12.dp))
-        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun Legend(text: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** A mark of a day, drawn small, with its word beside it. */
+@Composable
+private fun Mark(word: String, mark: @Composable () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        mark()
+        Text(word, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-/** What sets a day off its target apart, its frame and ground in small, beside what it means. */
+/** A day's frame and ground in small: of a plan's day, or of one off its target. */
 @Composable
-private fun OffTargetLegend(text: String) {
-    val tint = MaterialTheme.colorScheme.tertiary
+private fun Swatch(tint: Color, ground: Float, frame: Float) {
     val shape = RoundedCornerShape(3.dp)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .padding(end = 4.dp)
-                .size(12.dp)
-                .clip(shape)
-                .background(tint.copy(alpha = 0.1f))
-                .border(1.dp, tint.copy(alpha = 0.6f), shape),
-        )
-        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    Box(Modifier.size(12.dp).clip(shape).background(tint.copy(alpha = ground)).border(1.dp, tint.copy(alpha = frame), shape))
 }
 
 /** A frame of dashes around a cell, for a day of the month before or after. */

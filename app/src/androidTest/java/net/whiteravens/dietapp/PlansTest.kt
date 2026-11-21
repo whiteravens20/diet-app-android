@@ -648,6 +648,13 @@ class PlansTest {
         // Every day of the month as tall as one that shows all its lines: one with a meal eaten, one of the plan, one free.
         val heights = listOf(month.atDay(10), planned, month.atDay(20)).map { screen.onNode(dayCell(it)).fetchSemanticsNode().boundsInRoot.height }
         assertEquals("the days of the calendar are as tall as each other: $heights", 1, heights.distinct().size)
+        // The marks of a day stand in one row, each with its word; what they mean, in sentences, is behind the question mark.
+        val marks = hasContentDescription(text(R.string.plans_calendar_marks_help))
+        screen.onNode(marks).performScrollTo().performClick()
+        screen.onNodeWithText(text(R.string.plans_calendar_legend_more)).performScrollTo()
+        screen.keepScreenshot("plans-the-calendar-marks")
+        screen.onNode(marks).performClick()
+        screen.waitUntil(5_000) { screen.onAllNodesWithText(text(R.string.plans_calendar_legend_more)).fetchSemanticsNodes().isEmpty() }
         screen.onNode(dayCell(planned)).performScrollTo().performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(hasText(formatDayDate(planned.toString())) and isSelected()).fetchSemanticsNodes().isNotEmpty() }
         // The chip is chosen before the day is drawn: the picture waits for the day's line of macronutrients.

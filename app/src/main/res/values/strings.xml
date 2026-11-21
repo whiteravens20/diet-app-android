@@ -226,6 +226,12 @@
     <string name="plans_calendar_legend_eaten">Meals marked as eaten, out of the meals of the day.</string>
     <string name="plans_calendar_legend_skipped">— is a day the plan skips: nothing is planned on it.</string>
     <string name="plans_calendar_legend_more">+1 and the like: so many more plans hold the same day. The calendar shows the plan made last.</string>
+    <string name="plans_calendar_mark_plan">a plan\'s day</string>
+    <string name="plans_calendar_mark_off">off target</string>
+    <string name="plans_calendar_mark_eaten">eaten</string>
+    <string name="plans_calendar_mark_skipped">skipped</string>
+    <string name="plans_calendar_mark_more">more plans</string>
+    <string name="plans_calendar_marks_help">What the calendar\'s marks mean</string>
     <string name="plans_calendar_day_planned">%1$s: %2$s of %3$s kcal%4$s, %5$s%6$s. Choose it to open the plan.</string>
     <string name="plans_calendar_day_skipped">%1$s: a day the plan skips%2$s. Choose it to open the plan.</string>
     <string name="plans_calendar_over">, over the target</string>
