@@ -25,6 +25,7 @@ import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.testing.waitForTheApi
+import net.whiteravens.dietapp.ui.components.DOT
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
@@ -50,8 +51,8 @@ class NotificationsTest {
         hasContentDescription(if (unread > 0) plural(R.plurals.notifications_unread, unread, unread) else text(R.string.notifications_title)) and
             hasClickAction()
 
-    /** The notification of [profile] that says [said], which opens where it leads. */
-    private fun notification(profile: String, said: String): SemanticsMatcher = hasText(profile) and hasText(said) and hasClickAction()
+    /** The notification of [profile] that says [said], the profile's name its first word, which opens where it leads. */
+    private fun notification(profile: String, said: String): SemanticsMatcher = hasText("$profile$DOT$said") and hasClickAction()
 
     /** Brings the bell into view, waiting for it to count [unread], and opens the notifications. */
     private fun openTheBell(unread: Int) {
@@ -141,7 +142,7 @@ class NotificationsTest {
 
         // A press adds its amount to the day the reminder is about, says so for a moment, and the reminder goes, read.
         screen.onNode(amount).performClick()
-        val added = text(R.string.notifications_water_added_amount, "250\u00A0${text(R.string.unit_ml)}")
+        val added = "Ala$DOT" + text(R.string.notifications_water_added_amount, "250\u00A0${text(R.string.unit_ml)}")
         screen.waitForText(added)
         screen.keepScreenshot("notifications-water-added")
         screen.waitForTheApi(20_000) { Instance.water(account, profileId, day) == 250 }
