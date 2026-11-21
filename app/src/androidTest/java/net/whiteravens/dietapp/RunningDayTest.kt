@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -26,6 +27,7 @@ import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForText
 import net.whiteravens.dietapp.ui.common.formatDate
+import net.whiteravens.dietapp.ui.common.formatDayDate
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -54,14 +56,16 @@ class RunningDayTest {
         return account to planId
     }
 
-    /** The settings of today's day, from the plan's card: it opens at its first day, yesterday, and goes to today. */
+    /** The settings of today's day, from the plan's card: the plan began yesterday, and opens at today. */
     private fun openTodaysSettings(account: Account) {
         screen.startSignedIn(account)
         screen.openTab(text(R.string.tab_meal_plans))
         val card = formatDate(LocalDate.now().minusDays(1).toString())
         screen.scrollToText(card, substring = true)
         screen.onNodeWithText(card, substring = true).performClick()
-        screen.dayChange(text(R.string.plans_go_to_today))
+        // Opened from the list, a plan under way opens at today, not at its first day.
+        val today = hasText(formatDayDate(LocalDate.now().toString())) and hasText(text(R.string.plans_today))
+        screen.waitUntil(20_000) { screen.onAllNodes(today and isSelected()).fetchSemanticsNodes().isNotEmpty() }
         screen.dayChange(text(R.string.plans_day_settings))
         screen.waitForText(text(R.string.plans_settings_unchanged))
     }

@@ -49,6 +49,7 @@ import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
+import java.time.LocalDate
 import javax.inject.Inject
 import net.whiteravens.dietapp.domain.FrozenRest
 
@@ -308,7 +309,14 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     /** The index of the day the route names in [plan], or of its first day. */
-    private fun dayOf(plan: MealPlan): Int = plan.days.indexOfFirst { it.date == openAt }.coerceAtLeast(0)
+    /**
+     * The day a plan opens at: the one it was opened at (a day of the calendar, of the diary, of a list), else today
+     * where the plan holds it, as the web opens it, else its first.
+     */
+    private fun dayOf(plan: MealPlan): Int {
+        val at = openAt ?: LocalDate.now().toString()
+        return plan.days.indexOfFirst { it.date == at }.coerceAtLeast(0)
+    }
 
     fun selectDay(index: Int) {
         _state.update { it.copy(selectedDay = index, resizeLeft = null) }

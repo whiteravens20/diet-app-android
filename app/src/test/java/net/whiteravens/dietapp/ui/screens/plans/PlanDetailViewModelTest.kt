@@ -97,6 +97,7 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import java.time.LocalDate
 import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
@@ -287,7 +288,7 @@ class PlanDetailViewModelTest {
     }
 
     @Test
-    fun `a plan opened at a day of the calendar shows that day, and one opened from the list its first`() {
+    fun `a plan opens at the day it was opened at, else at today where it holds today, else at its first`() {
         val api = mockk<DietApiService>()
         coEvery { api.mealPlan(plan.id) } returns plan
         val day = plan.days[3]
@@ -296,7 +297,14 @@ class PlanDetailViewModelTest {
         val fromList = model(api)
 
         assertEquals(3, atDay.state.value.selectedDay)
+        // The fixture's days are long gone: the plan does not hold today.
         assertEquals(0, fromList.state.value.selectedDay)
+
+        // A plan under way, today its third day, opens there from the list.
+        val today = LocalDate.now()
+        val running = plan.copy(id = "running", days = plan.days.mapIndexed { index, one -> one.copy(date = today.plusDays(index - 2L).toString()) })
+        coEvery { api.mealPlan("running") } returns running
+        assertEquals(2, model(api, mapOf("planId" to "running")).state.value.selectedDay)
     }
 
     /** A day balanced around a meal: one meal scaled down, and the day still over its target. */
