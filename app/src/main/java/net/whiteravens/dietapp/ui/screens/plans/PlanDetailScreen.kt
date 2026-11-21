@@ -1209,11 +1209,10 @@ private fun MealCard(
                     if (meal.disliked.isNotEmpty()) LabelChip(stringResource(R.string.plans_disliked))
                     if (meal.outsideLimits.isNotEmpty()) CautionChip(stringResource(R.string.plans_outside_limit_chip))
                     if (meal.onlyRecipe) LabelChip(stringResource(R.string.plans_only_recipe_chip))
-                    // A small difference is the sizing of an ordinary day, and says nothing to the reader; a leftover and the meal it
-                    // was left of are parts of a portion, not resized.
-                    if (abs(meal.quantityScale - 1.0) >= AUTO_BALANCED_FROM && meal.leftover == null && meal.carriedTo == null) {
-                        PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
-                    }
+                    // The portion in words once it is a tenth off the plan's: a smaller difference is the sizing of an ordinary day and
+                    // says nothing to the reader; the factor itself is in the meal's window. A leftover and the meal it was left of are
+                    // parts of a portion, not resized.
+                    portionChip(meal)?.let { PlainChip(servingsWord(it)) }
                     cookChip(meal, date)?.let { PlainChip(it) }
                     leftoverChip(meal)?.let { PlainChip(it) }
                     if (meal.shared != null) PlainChip(stringResource(R.string.plans_shared_chip))
@@ -1345,8 +1344,21 @@ private fun DiaryEntryCard(entry: DiaryEntry, onOpen: (() -> Unit)?) {
     }
 }
 
-/** From how far off a whole recipe a meal's portion is worth a mark of its own. */
-private const val AUTO_BALANCED_FROM = 0.05
+/** From how far off its plan's portion a meal's portion is worth a mark of its own on the card: a tenth. */
+private const val PORTION_CHIP_FROM = 0.1
+
+/** From how far off its plan's portion the meal's window gives the factor it was sized by: a twentieth, as it ever was. */
+private const val SCALED_FROM = 0.05
+
+/** A meal's portion as the card says it: its servings as sized, to a tenth. */
+internal fun portionOf(meal: Meal): Double = (meal.servings * meal.quantityScale * 10).roundToInt() / 10.0
+
+/**
+ * The portion a meal's card says in words, once it is a tenth off its plan's; null for a smaller sizing, and for a
+ * leftover and the meal it was left of, which are parts of a portion, not resized.
+ */
+internal fun portionChip(meal: Meal): Double? =
+    if (abs(meal.quantityScale - 1.0) >= PORTION_CHIP_FROM && meal.leftover == null && meal.carriedTo == null) portionOf(meal) else null
 
 /** How near its target a day stays as it is, as a share of the target: the API does not fit it then. */
 private const val DAY_ON_TARGET = 0.02
@@ -1793,6 +1805,10 @@ private fun MealDialog(
                     if (meal.estimated) LabelChip(stringResource(R.string.plans_estimated_chip))
                     cookChip(meal, date)?.let { PlainChip(it) }
                     leftoverChip(meal)?.let { PlainChip(it) }
+                    // The factor the planner sized the meal by, which its card says as the portion in words.
+                    if (abs(meal.quantityScale - 1.0) >= SCALED_FROM && meal.leftover == null && meal.carriedTo == null) {
+                        PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
+                    }
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
