@@ -858,7 +858,7 @@
     <string name="weight_target_label">target</string>
     <string name="weight_series_entry">Logged</string>
     <string name="weight_series_mean">7-day average</string>
-    <string name="weight_empty">Log a weight to see your 90-day trend.</string>
+    <string name="weight_empty">The 90-day chart shows from the second day with a weight logged.</string>
     <string name="weight_remove_latest">Remove last entry</string>
     <string name="weight_remove_latest_label">%1$s · %2$s</string>
     <string name="weight_remove_latest_confirm">Remove the last logged weight (%1$s · %2$s)?</string>

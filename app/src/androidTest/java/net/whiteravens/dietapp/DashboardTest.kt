@@ -177,9 +177,9 @@ class DashboardTest {
         Instance.chooseWeightUnit(account, "kg")
         screen.signIn(account)
 
-        // The weight logged three days ago is a point of the chart, which says its day in words.
+        // One weight is no trend: a line of words says from which day one is drawn, and none is.
         screen.scrollToText(text(R.string.weight_title))
-        screen.scrollTo(hasContentDescription(formatDate(threeDaysAgo.toString()), substring = true))
+        screen.scrollToText(text(R.string.weight_empty))
 
         // Today's weight, typed with a decimal comma, is logged and the field emptied.
         val field = hasText(text(R.string.weight_today, "kg"))
@@ -191,8 +191,9 @@ class DashboardTest {
         screen.waitUntil(20_000) {
             screen.onAllNodes(field and SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))).fetchSemanticsNodes().isNotEmpty()
         }
-        // The chart's days are read again, and today is one of them.
+        // Two weights are drawn: the chart says each of its days in words, today's and the one of three days ago.
         screen.scrollTo(hasContentDescription(formatDate(LocalDate.now().toString()), substring = true))
+        screen.onAllNodes(hasContentDescription(formatDate(threeDaysAgo.toString()), substring = true))[0].assertExists()
         screen.keepScreenshot("dashboard-a-weight-logged")
 
         // The last entry taken back once it is confirmed; the one before it stays, and is the one offered next.
@@ -201,6 +202,8 @@ class DashboardTest {
         screen.waitForTheApi(20_000) { Instance.weights(account, profileId) == listOf(80.6) }
         val before = NumberFormat.getNumberInstance(Locale.getDefault()).apply { maximumFractionDigits = 1 }.format(80.6)
         screen.waitForText("(${text(R.string.weight_remove_latest_label, heldTogether("$before kg"), formatDate(threeDaysAgo.toString()))})")
+        // One weight again: the line of words in the chart's place.
+        screen.scrollToText(text(R.string.weight_empty))
     }
 
     @Test

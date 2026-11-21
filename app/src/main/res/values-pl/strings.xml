@@ -935,7 +935,7 @@
     <string name="weight_target_label">cel</string>
     <string name="weight_series_entry">Wpis</string>
     <string name="weight_series_mean">Średnia 7 dni</string>
-    <string name="weight_empty">Zapisz wagę, aby zobaczyć trend z 90 dni.</string>
+    <string name="weight_empty">Wykres z\u00A090\u00A0dni pojawi się od drugiego dnia z\u00A0zapisaną wagą.</string>
     <string name="weight_remove_latest">Usuń ostatni wpis</string>
     <string name="weight_remove_latest_label">%1$s · %2$s</string>
     <string name="weight_remove_latest_confirm">Usunąć ostatnią zapisaną wagę (%1$s · %2$s)?</string>
