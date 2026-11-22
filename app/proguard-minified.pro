@@ -61,6 +61,12 @@
 -keep class net.whiteravens.dietapp.ui.navigation.TabBarKt { *** TabBar*(...); }
 -keep class net.whiteravens.dietapp.ui.navigation.Tab { *; }
 -keep class net.whiteravens.dietapp.domain.Palette { *; }
+-keep class net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreenKt { *** ShoppingItemRow(...); }
+-keep class net.whiteravens.dietapp.domain.ShoppingItem { *; }
+-keep class net.whiteravens.dietapp.domain.RowPacks { *; }
+-keep class net.whiteravens.dietapp.domain.BuyLater { *; }
+-keep class net.whiteravens.dietapp.domain.ItemShare { *; }
+-keep class net.whiteravens.dietapp.domain.RowChange { *; }
 
 # The libraries the tests share with the app, whose copy in the app they use: AndroidX (Compose,
 # the test runner's own), Kotlin's, Guava's and the injection annotations Espresso builds on.

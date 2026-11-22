@@ -43,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -435,14 +436,16 @@ fun ShoppingScreen(
                         item(key = "group-${group.category}") {
                             AppCard {
                                 group.items.forEach { item ->
-                                    ShoppingItemRow(
-                                        item = item,
-                                        busy = item.id in state.updating,
-                                        // A row is changed without a network as well: the change waits to be sent.
-                                        readOnly = busy,
-                                        waiting = item.id in state.waitingItems,
-                                        onChange = { change -> viewModel.change(item.id, change) },
-                                    )
+                                    key(item.id) {
+                                        ShoppingItemRow(
+                                            item = item,
+                                            busy = item.id in state.updating,
+                                            // A row is changed without a network as well: the change waits to be sent.
+                                            readOnly = busy,
+                                            waiting = item.id in state.waitingItems,
+                                            onChange = { change -> viewModel.change(item.id, change) },
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -597,11 +600,19 @@ internal fun ShoppingItemRow(
     onChange: (RowChange) -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
-    var editing by rememberSaveable(item.id) { mutableStateOf(false) }
+    // What the row keeps when the screen saves it (its card scrolled away, the phone turned) is named by the row, and the
+    // fields by the row as the server has it too: a restored state is not checked against what it was begun from, so
+    // without the names a card scrolled back after a new list took the old list's fields, and a row changed elsewhere
+    // took its own old ones.
+    var editing by rememberSaveable(item.id, key = "shopping-editing:${item.id}") { mutableStateOf(false) }
     // The two fields as typed, begun anew whenever the server's row changes.
     val server = listOf(item.atHome, item.purchasedQuantity, item.checked)
-    var home by rememberSaveable(item.id, server) { mutableStateOf(fieldOf(item.atHome, locale)) }
-    var bought by rememberSaveable(item.id, server) { mutableStateOf(fieldOf(boughtOf(item), locale)) }
+    var home by rememberSaveable(item.id, server, key = "shopping-home:${item.id}:$server") {
+        mutableStateOf(fieldOf(item.atHome, locale))
+    }
+    var bought by rememberSaveable(item.id, server, key = "shopping-bought:${item.id}:$server") {
+        mutableStateOf(fieldOf(boughtOf(item), locale))
+    }
     val homeNow = typed(home) ?: 0.0
     val boughtNow = typed(bought) ?: 0.0
     // What is left to buy follows the fields while they are typed in.

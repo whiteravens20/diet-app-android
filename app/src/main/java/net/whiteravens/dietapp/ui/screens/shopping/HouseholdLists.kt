@@ -42,6 +42,7 @@ import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.profiles.ChoiceField
 import kotlin.math.roundToInt
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -190,13 +191,15 @@ internal fun LazyListScope.householdList(
         item(key = "household-group-${group.category}") {
             AppCard {
                 group.items.forEach { item ->
-                    ShoppingItemRow(
-                        item = item,
-                        busy = item.id in state.updating,
-                        readOnly = busy,
-                        waiting = item.id in state.waitingItems,
-                        onChange = { change -> onChange(item.id, change) },
-                    )
+                    key(item.id) {
+                        ShoppingItemRow(
+                            item = item,
+                            busy = item.id in state.updating,
+                            readOnly = busy,
+                            waiting = item.id in state.waitingItems,
+                            onChange = { change -> onChange(item.id, change) },
+                        )
+                    }
                 }
             }
         }
