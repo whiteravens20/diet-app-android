@@ -66,7 +66,7 @@ import kotlinx.serialization.encodeToString
  */
 @HiltViewModel
 class DiaryViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val diary: DiaryRepository,
     private val users: UserRepository,
     private val plans: MealPlanRepository,
@@ -350,6 +350,8 @@ class DiaryViewModel @Inject constructor(
     fun pickProfile(profileId: String) {
         if (_state.value.profileId == profileId) return
         _state.update { it.left().copy(profileId = profileId, day = null) }
+        // Kept as the route's: the screen comes back on it, and so does a window open on it, after Android ends the app.
+        savedStateHandle[DiaryRoute::profileId.name] = profileId
         read()
     }
 
@@ -357,6 +359,7 @@ class DiaryViewModel @Inject constructor(
     fun pickDay(date: LocalDate) {
         if (_state.value.date == date || date < FIRST_DIARY_DAY || date > LAST_DIARY_DAY) return
         _state.update { it.left().copy(date = date, day = null, copyFrom = date.minusDays(1).coerceAtLeast(FIRST_DIARY_DAY), copied = null, copyOpen = false) }
+        savedStateHandle[DiaryRoute::date.name] = date.toString()
         read()
     }
 

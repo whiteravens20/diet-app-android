@@ -581,6 +581,25 @@ class DiaryViewModelTest {
     }
 
     @Test
+    fun `a window open on a day and a profile picked on the screen comes back on that day and that profile`() {
+        val state = SavedStateHandle(mapOf("profileId" to "a", "date" to today.toString(), "adding" to false))
+        val before = model(kept = state)
+        before.pickProfile("b")
+        before.pickDay(today.minusDays(2))
+        before.openWindow("lunch")
+        before.window.chooseKind(EntryKind.MEAL)
+        before.window.typeEntry(EntryField.NAME) { it.copy(name = "Stew") }
+        main.scheduler.advanceUntilIdle()
+
+        val after = model(kept = state)
+        main.scheduler.advanceUntilIdle()
+
+        assertEquals("b", after.state.value.profileId)
+        assertEquals(today.minusDays(2), after.state.value.date)
+        assertEquals("Stew", after.state.value.form?.name)
+    }
+
+    @Test
     fun `a recipe picked in a window Android ends the app with is read again by its id, with the servings typed for it`() {
         val oats = mockk<Recipe>(relaxed = true) { every { id } returns "oats" }
         coEvery { recipes.byId("oats") } returns oats
