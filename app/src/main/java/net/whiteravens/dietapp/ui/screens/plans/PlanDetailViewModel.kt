@@ -51,6 +51,8 @@ import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.FrozenRest
@@ -60,6 +62,7 @@ import net.whiteravens.dietapp.ui.screens.diary.EntryForm
 import net.whiteravens.dietapp.ui.screens.diary.EntryKind
 import net.whiteravens.dietapp.ui.screens.diary.EntryWindow
 import net.whiteravens.dietapp.ui.screens.diary.EntryWindowState
+import net.whiteravens.dietapp.ui.screens.diary.KeptEntryForm
 
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
@@ -242,6 +245,15 @@ class PlanDetailViewModel @Inject constructor(
     private val heard = mutableSetOf<Long>()
 
     init {
+        // The window of a meal of one's own that Android ended the app with comes back as it was left.
+        savedStateHandle.get<String>(KEPT_MEAL_WINDOW)
+            ?.let { runCatching { KeptEntryForm.json.decodeFromString<KeptEntryForm>(it) }.getOrNull() }
+            ?.let(mealWindow::restore)
+        viewModelScope.launch {
+            _mealWindow.map { it.form?.let(KeptEntryForm::of) }.distinctUntilChanged().collect { form ->
+                savedStateHandle[KEPT_MEAL_WINDOW] = form?.let { KeptEntryForm.json.encodeToString(it) }
+            }
+        }
         load()
         followAiMode()
         followWaiting()
@@ -1080,3 +1092,6 @@ private fun QueuedChange.OwnMealAdded.ownMeal() = Meal(
     onlyRecipe = false,
     estimated = protein == null || fat == null || carbs == null,
 )
+
+/** Where the screen's saved state keeps the window of a meal of one's own, what it is of. */
+private const val KEPT_MEAL_WINDOW = "keptMealWindow"

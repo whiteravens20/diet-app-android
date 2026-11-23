@@ -109,6 +109,9 @@ class DiaryRepository @Inject constructor(
     /** The catalogue's ingredients whose name holds [search], in the app's language, as an entry takes them. */
     suspend fun ingredients(search: String): List<DiaryIngredient> = apiCall(json) { api.ingredients(search = search) }.map { it.toDiary() }
 
+    /** The ingredient of [id], as an entry takes it: what a window kept of it is read again by. */
+    suspend fun ingredient(id: String): DiaryIngredient = apiCall(json) { api.ingredients(ids = id) }.single().toDiary()
+
     /** The product of a barcode, in the form Open Food Facts keeps it: from the instance, which asks for what it does not hold. */
     suspend fun product(code: String): Product = apiCall(json) { api.productByCode(code) }.toDomain()
 

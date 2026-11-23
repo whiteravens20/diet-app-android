@@ -121,8 +121,14 @@ class DiaryViewModelTest {
 
     private fun plan(vararg meals: DiaryPlanMeal, offTarget: String? = null) = DiaryDayPlan("p", false, meals.toList(), 0.0, offTarget)
 
-    private fun model(profileId: String? = null, date: String? = null, adding: Boolean = false) = DiaryViewModel(
-        SavedStateHandle(buildMap {
+    private fun model(
+        profileId: String? = null,
+        date: String? = null,
+        adding: Boolean = false,
+        // The screen's saved state, as Android gives it back to a screen it ended the app under.
+        kept: SavedStateHandle? = null,
+    ) = DiaryViewModel(
+        kept ?: SavedStateHandle(buildMap {
             profileId?.let { put("profileId", it) }
             date?.let { put("date", it) }
             put("adding", adding)
@@ -547,11 +553,57 @@ class DiaryViewModelTest {
         assertEquals("Soup", model.state.value.form?.name)
     }
 
+    @Test
+    fun `a window Android ends the app with comes back with what was typed in it, its meal and the day`() {
+        val state = SavedStateHandle(mapOf("profileId" to "a", "date" to today.toString(), "adding" to false))
+        val before = model(kept = state)
+        before.openWindow("dinner")
+        before.window.chooseKind(EntryKind.MEAL)
+        before.window.typeEntry(EntryField.NAME) { it.copy(name = "Soup") }
+        before.window.typeEntry(EntryField.CALORIES) { it.copy(calories = "320") }
+        main.scheduler.advanceUntilIdle()
+
+        // The process is ended: the view model goes, the saved state stays.
+        val after = model(kept = state)
+        main.scheduler.advanceUntilIdle()
+
+        val form = after.state.value.form!!
+        assertEquals(EntryKind.MEAL, form.kind)
+        assertEquals("dinner", form.slot)
+        assertEquals("Soup", form.name)
+        assertEquals("320", form.calories)
+        assertEquals(today, after.state.value.date)
+
+        // Put away, it does not come back.
+        after.closeWindow()
+        main.scheduler.advanceUntilIdle()
+        assertNull(model(kept = state).state.value.form)
+    }
+
+    @Test
+    fun `a recipe picked in a window Android ends the app with is read again by its id, with the servings typed for it`() {
+        val oats = mockk<Recipe>(relaxed = true) { every { id } returns "oats" }
+        coEvery { recipes.byId("oats") } returns oats
+        val state = SavedStateHandle(mapOf("profileId" to "a", "adding" to false))
+        val before = model(kept = state)
+        before.openWindow("breakfast")
+        before.window.pickRecipe(oats)
+        before.window.typeEntry(EntryField.SERVINGS) { it.copy(servings = "1,5") }
+        main.scheduler.advanceUntilIdle()
+
+        val after = model(kept = state)
+        main.scheduler.advanceUntilIdle()
+
+        coVerify { recipes.byId("oats") }
+        assertSame(oats, after.state.value.form?.recipe)
+        assertEquals("1,5", after.state.value.form?.servings)
+    }
+
     // ── Looking for what to write ───────────────────────────────────────────
 
     @Test
     fun `a search goes out from two letters, once typing pauses, and what it found is offered`() {
-        val found = mockk<Recipe>()
+        val found = mockk<Recipe> { every { id } returns "found" }
         coEvery { recipes.search(any(), any()) } returns RecipePage(List(10) { found }, 1, 1)
         val model = model()
         model.openWindow("lunch")
@@ -609,7 +661,7 @@ class DiaryViewModelTest {
 
     @Test
     fun `a recipe picked empties the search, and picked again the servings start over`() {
-        val found = mockk<Recipe>()
+        val found = mockk<Recipe> { every { id } returns "found" }
         val model = model()
         model.openWindow("lunch")
 

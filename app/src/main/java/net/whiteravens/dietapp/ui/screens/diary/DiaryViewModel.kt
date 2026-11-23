@@ -53,6 +53,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeParseException
 import javax.inject.Inject
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 
 /**
  * The diary, as the web's page keeps it: what a profile ate on a day, the meals its plan marks as
@@ -229,13 +231,22 @@ class DiaryViewModel @Inject constructor(
     private val withdrawn = mutableSetOf<Long>()
 
     init {
-        // The window asked for by the way here opens once: a screen brought back keeps it as it was left.
-        if (savedStateHandle.get<Boolean>(DiaryRoute::adding.name) == true) {
+        // A window Android ended the app with comes back as it was left; the one asked for by the way here opens once.
+        val kept = savedStateHandle.get<String>(KEPT_WINDOW)?.let { runCatching { KeptEntryForm.json.decodeFromString<KeptEntryForm>(it) }.getOrNull() }
+        if (kept != null) {
+            window.restore(kept)
+        } else if (savedStateHandle.get<Boolean>(DiaryRoute::adding.name) == true) {
             savedStateHandle[DiaryRoute::adding.name] = false
             openWindow(mealAt(LocalTime.now()))
             if (savedStateHandle.get<Boolean>(DiaryRoute::scanning.name) == true) {
                 savedStateHandle[DiaryRoute::scanning.name] = false
                 window.openScanner()
+            }
+        }
+        // What the window holds is kept as it changes, for when Android ends the app in the background.
+        viewModelScope.launch {
+            _state.map { it.form?.let(KeptEntryForm::of) }.distinctUntilChanged().collect { form ->
+                savedStateHandle[KEPT_WINDOW] = form?.let { KeptEntryForm.json.encodeToString(it) }
             }
         }
         loadProfiles()
@@ -681,3 +692,6 @@ private fun String?.toDiaryDay(): LocalDate? {
     }
     return day?.takeIf { it >= FIRST_DIARY_DAY && it <= LAST_DIARY_DAY }
 }
+
+/** Where the screen's saved state keeps the window that adds an entry. */
+private const val KEPT_WINDOW = "keptWindow"

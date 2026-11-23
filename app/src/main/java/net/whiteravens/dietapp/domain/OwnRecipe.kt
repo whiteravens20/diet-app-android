@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp.domain
 
+import kotlinx.serialization.Serializable
+
 /** How hard a recipe is, the easiest first: what a list of difficulties offers to choose from. */
 val DIFFICULTIES = listOf("easy", "medium", "hard")
 
@@ -9,6 +11,7 @@ val DIFFICULTIES = listOf("easy", "medium", "hard")
  * An ingredient of the catalogue as a recipe written by hand takes it: the [units] an amount of it
  * can be given in, the one to offer first first, and what a piece of it is called ([pieceName]).
  */
+@Serializable
 data class LineIngredient(val id: String, val name: String, val units: List<String>, val pieceName: String)
 
 /** A line of a recipe written by hand: how much of an ingredient, in which unit, and a note where there is one. */

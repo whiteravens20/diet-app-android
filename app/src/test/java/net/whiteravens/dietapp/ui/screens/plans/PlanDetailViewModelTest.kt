@@ -106,7 +106,12 @@ import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.LeftoverPlaceDto
 import net.whiteravens.dietapp.data.remote.LeftoverPortionDto
 import net.whiteravens.dietapp.data.remote.PutLeftoverRequest
+import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.domain.Recipe
+import net.whiteravens.dietapp.ui.screens.diary.EntryField
+import net.whiteravens.dietapp.ui.screens.diary.EntryKind
+import org.junit.Assert.assertSame
 
 /**
  * A meal swapped on the plan's screen, the way the web application swaps one: a recipe is offered,
@@ -165,7 +170,20 @@ class PlanDetailViewModelTest {
         asking: ModelApiService = mockk(),
         cache: CacheDao = NoCache,
         queue: ChangeQueue = changeQueue(),
-    ) = PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, cache, json, queue), favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        // The screen's saved state, as Android gives it back to a screen it ended the app under.
+        kept: SavedStateHandle? = null,
+        recipes: RecipeRepository = mockk(relaxed = true),
+    ) = PlanDetailViewModel(
+        kept ?: SavedStateHandle(at),
+        MealPlanRepository(api, asking, cache, json, queue),
+        favorites,
+        users,
+        server,
+        queue,
+        mockk(relaxed = true),
+        mockk(relaxed = true),
+        recipes,
+    )
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
@@ -951,6 +969,27 @@ class PlanDetailViewModelTest {
         assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
         model.customMealClosed()
         assertNull(model.mealWindowState.value.form)
+    }
+
+    @Test
+    fun `the window of a meal of one's own that Android ends the app with comes back with the recipe it is of and the servings typed`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val oats = mockk<Recipe>(relaxed = true) { every { id } returns "oats" }
+        val recipes = mockk<RecipeRepository> { coEvery { byId("oats") } returns oats }
+        val state = SavedStateHandle(mapOf("planId" to plan.id))
+        val before = model(api, kept = state, recipes = recipes)
+        before.openMealWindow()
+        before.mealWindow.chooseKind(EntryKind.RECIPE)
+        before.mealWindow.pickRecipe(oats)
+        before.mealWindow.typeEntry(EntryField.SERVINGS) { it.copy(servings = "2") }
+
+        // The process is ended: the view model goes, the saved state stays.
+        val after = model(api, kept = state, recipes = recipes)
+
+        assertEquals(EntryKind.RECIPE, after.mealWindowState.value.form?.kind)
+        assertSame(oats, after.mealWindowState.value.form?.recipe)
+        assertEquals("2", after.mealWindowState.value.form?.servings)
     }
 
     @Test

@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.recipes
 
+import kotlinx.serialization.Serializable
 import net.whiteravens.dietapp.domain.DishTraits
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LineIngredient
@@ -29,6 +30,7 @@ enum class LinePart(val key: String) {
 }
 
 /** A line of the form: its ingredient, its amount as it is typed, the unit chosen and a note; kept by [key] as lines come and go. */
+@Serializable
 data class FormLine(
     val key: Int,
     val ingredient: LineIngredient,
@@ -38,6 +40,7 @@ data class FormLine(
 )
 
 /** A step of the form, kept by [key], so that what is said of it follows it when it is moved. */
+@Serializable
 data class FormStep(val key: Int, val text: String = "")
 
 /** What a serving is asked about: [servings] of [lines], their notes left out, and the [title] the traits are proposed from. */
@@ -47,6 +50,7 @@ data class PreviewAsk(val servings: Int, val lines: List<OwnRecipeLine>, val tit
  * A recipe of one's own as its form is filled in, the numbers as they are typed. What the API takes
  * of them is the API's to say: the form knows a number from what is not one, and nothing more.
  */
+@Serializable
 data class RecipeForm(
     val title: String = "",
     val description: String = "",

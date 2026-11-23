@@ -7,6 +7,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.DiaryIngredient
@@ -39,6 +41,69 @@ data class EntryWindowState(
 )
 
 /**
+ * What the window that adds what was eaten keeps of itself for when Android ends the app in the background: what it is
+ * of and where it goes, what was typed in it, and what was picked, by what reads it again.
+ */
+@Serializable
+data class KeptEntryForm(
+    val kind: EntryKind,
+    val slot: String,
+    val search: String = "",
+    val recipeId: String? = null,
+    val ingredientId: String? = null,
+    val productId: String? = null,
+    val productCode: String? = null,
+    val productName: String? = null,
+    val servings: String = "1",
+    val quantity: String = "",
+    val unit: String = "g",
+    val name: String = "",
+    val calories: String = "",
+    val protein: String = "",
+    val fat: String = "",
+    val carbs: String = "",
+) {
+    /** The window as it opens again: what was typed in it, what was picked to be read again. */
+    fun toForm() = EntryForm(
+        kind = kind,
+        slot = slot,
+        search = search,
+        servings = servings,
+        quantity = quantity,
+        unit = unit,
+        name = name,
+        calories = calories,
+        protein = protein,
+        fat = fat,
+        carbs = carbs,
+    )
+
+    companion object {
+        fun of(form: EntryForm) = KeptEntryForm(
+            kind = form.kind,
+            slot = form.slot,
+            search = form.search,
+            recipeId = form.recipe?.id,
+            ingredientId = form.ingredient?.id,
+            productId = form.product?.id,
+            productCode = form.product?.code,
+            productName = form.product?.name,
+            servings = form.servings,
+            quantity = form.quantity,
+            unit = form.unit,
+            name = form.name,
+            calories = form.calories,
+            protein = form.protein,
+            fat = form.fat,
+            carbs = form.carbs,
+        )
+
+        /** How it is written into a screen's saved state, and read back. */
+        val json = Json { ignoreUnknownKeys = true }
+    }
+}
+
+/**
  * The window that adds what was eaten, to a day of the diary or to a plan's day: it looks for what is typed, takes
  * what is picked, reads a barcode and writes a product of one's own, on the state its owner keeps ([read], [write]).
  * Where the window opens, what adding sends and what closing puts away with it are its owner's ([open], [add],
@@ -65,6 +130,32 @@ class EntryWindow(
     /** Lets an answer on its way to the window go unheard: the window closes, or opens anew. */
     fun stop() {
         searching?.cancel()
+    }
+
+    /**
+     * Opens the window as it was [kept] when Android ended the app: what was typed comes back at once, and what was
+     * picked is read again and taken, the amount typed for it kept. Where it cannot be read, it is looked for again.
+     */
+    fun restore(kept: KeptEntryForm) {
+        searching?.cancel()
+        write { EntryWindowState(form = kept.toForm()) }
+        val picked = kept.recipeId ?: kept.ingredientId ?: kept.productCode ?: kept.productName
+        if (picked == null) {
+            if (kept.search.isNotBlank()) search(kept.search)
+            return
+        }
+        searching = scope.launch {
+            when {
+                kept.recipeId != null -> attempt { recipes.byId(kept.recipeId) }
+                    .onSuccess { recipe -> changeForm { it.copy(recipe = recipe) } }
+                kept.ingredientId != null -> attempt { diary.ingredient(kept.ingredientId) }
+                    .onSuccess { found -> changeForm { it.copy(ingredient = found, unit = it.unit.takeIf { unit -> unit in found.units } ?: found.units.first()) } }
+                kept.productCode != null -> attempt { diary.product(kept.productCode) }
+                    .onSuccess { found -> changeForm { it.copy(product = found) } }
+                kept.productName != null -> attempt { diary.products(kept.productName) }
+                    .onSuccess { found -> found.firstOrNull { it.id == kept.productId }?.let { product -> changeForm { it.copy(product = product) } } }
+            }
+        }
     }
 
     /** Opens the window, and the camera over it. */

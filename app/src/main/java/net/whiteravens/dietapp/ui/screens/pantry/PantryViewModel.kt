@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.pantry
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,6 +41,10 @@ import java.io.IOException
 import java.text.Collator
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * A profile's pantry, as the web's page keeps it: its rows, each changed or taken out where it is
@@ -54,6 +59,7 @@ class PantryViewModel @Inject constructor(
     private val users: UserRepository,
     private val queue: ChangeQueue,
     @ApplicationScope private val application: CoroutineScope,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     /** What could not be done: something put in, a row changed, a row taken out, a row put into the freezer. */
@@ -199,6 +205,19 @@ class PantryViewModel @Inject constructor(
     private val withdrawn = mutableSetOf<Long>()
 
     init {
+        // The window Android ended the app with comes back as it was left, for the profile it was open for.
+        savedStateHandle.get<String>(KEPT_ADD)
+            ?.let { runCatching { KeptAddForm.json.decodeFromString<KeptAddForm>(it) }.getOrNull() }
+            ?.let { kept ->
+                _state.update { it.copy(profileId = kept.profileId ?: it.profileId, addWindow = true, form = kept.toForm()) }
+                if (kept.picked == null && kept.search.isNotBlank()) search(kept.search)
+            }
+        // What the window holds is kept as it changes, for when Android ends the app in the background.
+        viewModelScope.launch {
+            _state.map { state -> if (state.addWindow) KeptAddForm.of(state.profileId, state.form) else null }.distinctUntilChanged().collect { kept ->
+                savedStateHandle[KEPT_ADD] = kept?.let { KeptAddForm.json.encodeToString(it) }
+            }
+        }
         loadProfiles()
         followWaiting()
     }
@@ -596,3 +615,50 @@ internal fun List<PantryRow>.withWaiting(profileId: String?, waiting: List<Queue
             else -> rows
         }
     }
+
+/** Where the screen's saved state keeps the window things are put in with. */
+private const val KEPT_ADD = "keptAdd"
+
+/**
+ * What the window things are put in with keeps of itself for when Android ends the app in the background: the profile
+ * it is open for, and what was typed and picked in it.
+ */
+@Serializable
+internal data class KeptAddForm(
+    val profileId: String? = null,
+    val search: String = "",
+    val picked: StockableIngredient? = null,
+    val quantity: String = "",
+    val unit: String = "g",
+    val bestBefore: String? = null,
+    val frozen: Boolean = false,
+    val boxDay: String? = null,
+    val portions: String = "1",
+) {
+    fun toForm() = PantryViewModel.AddForm(
+        search = search,
+        picked = picked,
+        quantity = quantity,
+        unit = unit,
+        bestBefore = bestBefore?.let(LocalDate::parse),
+        frozen = frozen,
+        boxDay = boxDay?.let(LocalDate::parse),
+        portions = portions,
+    )
+
+    companion object {
+        fun of(profileId: String?, form: PantryViewModel.AddForm) = KeptAddForm(
+            profileId = profileId,
+            search = form.search,
+            picked = form.picked,
+            quantity = form.quantity,
+            unit = form.unit,
+            bestBefore = form.bestBefore?.toString(),
+            frozen = form.frozen,
+            boxDay = form.boxDay?.toString(),
+            portions = form.portions,
+        )
+
+        val json = Json { ignoreUnknownKeys = true }
+    }
+}
