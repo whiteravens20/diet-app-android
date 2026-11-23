@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.remote.AuthTokens
 import org.junit.After
@@ -103,18 +104,46 @@ class TokenStoreTest {
     }
 
     @Test
-    fun `the refresh token waiting to be revoked is kept sealed too, with the server that issued it`() = runBlocking {
+    fun `the refresh tokens waiting to be revoked are kept sealed too, with the servers that issued them`() = runBlocking {
         val store = TokenStore(data, sealer)
-        val pending = PendingRevocation(REFRESH, "https://diet.example.test/api/")
+        val pending = listOf(
+            PendingRevocation(REFRESH, "https://diet.example.test/api/"),
+            PendingRevocation("refresh-2", "https://another.example.test/api/"),
+        )
 
-        store.setPendingRevocation(pending)
+        store.keepPendingRevocations(pending)
 
         assertFalse(file.holds(REFRESH))
-        assertEquals(pending, store.pendingRevocation())
+        assertEquals(pending, store.pendingRevocations())
         val other = newKey()
-        assertNull(TokenStore(data, AesGcmSealer({ other }, { other })).pendingRevocation())
-        store.setPendingRevocation(null)
-        assertNull(store.pendingRevocation())
+        assertEquals(emptyList<PendingRevocation>(), TokenStore(data, AesGcmSealer({ other }, { other })).pendingRevocations())
+        store.keepPendingRevocations(emptyList())
+        assertEquals(emptyList<PendingRevocation>(), store.pendingRevocations())
+    }
+
+    @Test
+    fun `no more than the newest few sign-outs are kept to revoke`() = runBlocking {
+        val store = TokenStore(data, sealer)
+        val many = (1..TokenStore.MOST_PENDING + 2).map { PendingRevocation("refresh-$it", "https://diet.example.test/api/") }
+
+        store.keepPendingRevocations(many)
+
+        assertEquals(many.takeLast(TokenStore.MOST_PENDING), store.pendingRevocations())
+    }
+
+    @Test
+    fun `the one revocation an earlier version kept is read, and kept with the others from then on`() = runBlocking {
+        val store = TokenStore(data, sealer)
+        data.edit { prefs ->
+            prefs[stringPreferencesKey("pending_revocation")] = sealer.seal("pending_revocation", REFRESH)
+            prefs[stringPreferencesKey("pending_revocation_server")] = "https://diet.example.test/api/"
+        }
+        val earlier = PendingRevocation(REFRESH, "https://diet.example.test/api/")
+
+        assertEquals(listOf(earlier), store.pendingRevocations())
+        store.keepPendingRevocations(store.pendingRevocations() + PendingRevocation("refresh-2", "https://diet.example.test/api/"))
+        assertEquals(listOf(earlier, PendingRevocation("refresh-2", "https://diet.example.test/api/")), store.pendingRevocations())
+        assertFalse(data.data.first().contains(stringPreferencesKey("pending_revocation")))
     }
 
     private companion object {
