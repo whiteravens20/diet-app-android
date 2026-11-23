@@ -128,20 +128,7 @@ fun DiaryScreen(
     // Read again on being shown again: a plan's page and a recipe change what a day shows.
     WhenShownAgain(viewModel::shownAgain)
 
-    state.form?.let { form -> AddEntryDialog(form, state, viewModel) }
-    state.form?.writingProduct?.let { code ->
-        OwnProductDialog(
-            product = null,
-            code = code,
-            from = state.form?.correcting,
-            onSaved = { saved -> viewModel.takeWrittenProduct(saved.product) },
-            onDismiss = viewModel::closeOwnProduct,
-            onOwnMeal = {
-                viewModel.closeOwnProduct()
-                viewModel.asOwnMeal(null)
-            },
-        )
-    }
+    state.form?.let { form -> AddEntryDialog(form, state.date, state.window, viewModel.window) }
     state.edit?.let { edit -> EditEntryDialog(edit, state, viewModel) }
     if (state.copyOpen) CopyDay(state, onChoose = viewModel::chooseCopyFrom, onCopy = viewModel::copy, onClose = viewModel::closeCopy)
     // A correction of the product of the entry being changed, which the entry then goes on to.
@@ -154,8 +141,8 @@ fun DiaryScreen(
             onDismiss = viewModel::stopCorrecting,
         )
     }
-    // After the window it goes over: the window that opens last is the one on top.
-    if (state.scanning) ScannerDialog(viewModel::scanned, viewModel::closeScanner)
+    // A product of one's own being written, and the camera: over the window that adds an entry.
+    EntryWindowOverlays(state.window, viewModel.window)
 
     // The card of a rebalance stands over the end of the list: the list ends that much higher, so
     // that nothing of it stays under the card.

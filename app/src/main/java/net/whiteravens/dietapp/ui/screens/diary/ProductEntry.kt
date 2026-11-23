@@ -64,19 +64,19 @@ internal fun ProductSourceNote(product: Product) {
  * holds as they are typed, and a code is asked about only when somebody says so.
  */
 @Composable
-internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryViewModel) {
+internal fun ProductSearch(form: EntryForm, lookups: Boolean, host: EntryWindow) {
     FormField(
         value = form.search,
-        onValueChange = viewModel::search,
+        onValueChange = host::search,
         label = stringResource(R.string.diary_product_field),
         problem = null,
         keyboardType = KeyboardType.Text,
     )
     Note(stringResource(R.string.diary_product_hint))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = viewModel::openScanner) { Text(stringResource(R.string.diary_product_scan)) }
+        Button(onClick = host::openScanner) { Text(stringResource(R.string.diary_product_scan)) }
         if (looksLikeProductCode(form.search)) {
-            OutlinedButton(onClick = viewModel::checkCode, enabled = !form.checkingCode) { Text(stringResource(R.string.diary_product_check)) }
+            OutlinedButton(onClick = host::checkCode, enabled = !form.checkingCode) { Text(stringResource(R.string.diary_product_check)) }
         }
     }
     Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -90,23 +90,23 @@ internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryVi
             }
             Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             if (failure is ApiException && failure.code == "PRODUCT_NOT_FOUND") {
-                OutlinedButton(onClick = { viewModel.writeOwnProduct(productCodeOf(form.search).orEmpty()) }) {
+                OutlinedButton(onClick = { host.writeOwnProduct(productCodeOf(form.search).orEmpty()) }) {
                     Text(stringResource(R.string.diary_product_add_own))
                 }
             }
-            TextButton(onClick = { viewModel.asOwnMeal(null) }) { Text(stringResource(R.string.diary_product_as_own)) }
+            TextButton(onClick = { host.asOwnMeal(null) }) { Text(stringResource(R.string.diary_product_as_own)) }
         }
         val searching = !looksLikeProductCode(form.search) && canSearchProducts(form.search)
         when {
             !searching || !form.searched -> Unit
             form.searchFailed is IOException -> {
                 Note(stringResource(R.string.diary_product_offline))
-                TextButton(onClick = { viewModel.asOwnMeal(null) }) { Text(stringResource(R.string.diary_product_as_own)) }
+                TextButton(onClick = { host.asOwnMeal(null) }) { Text(stringResource(R.string.diary_product_as_own)) }
             }
             form.searchFailed != null -> Text(stringResource(R.string.diary_search_failed), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             form.products.isEmpty() -> {
                 Note(stringResource(R.string.diary_product_nothing_here))
-                AddOwnProduct(viewModel)
+                AddOwnProduct(host)
             }
             else -> Surface(
                 shape = MaterialTheme.shapes.medium,
@@ -121,24 +121,24 @@ internal fun ProductSearch(form: EntryForm, lookups: Boolean, viewModel: DiaryVi
                                 found.calories?.let { held(stringResource(R.string.diary_per_100, formatNumber(it.roundToInt()), unitName(found.unit))) },
                                 stringResource(R.string.diary_product_own_mark).takeIf { found.source == ProductSource.OWN },
                             ).joinToString(DOT).ifEmpty { null },
-                        ) { viewModel.pickProduct(found) }
+                        ) { host.pickProduct(found) }
                     }
                 }
             }
         }
-        if (searching && form.searched && form.searchFailed == null && form.products.isNotEmpty()) AddOwnProduct(viewModel)
+        if (searching && form.searched && form.searchFailed == null && form.products.isNotEmpty()) AddOwnProduct(host)
     }
 }
 
 /** The way to a product of one's own from what a search found, or did not. */
 @Composable
-private fun AddOwnProduct(viewModel: DiaryViewModel) {
-    TextButton(onClick = { viewModel.writeOwnProduct("") }) { Text(stringResource(R.string.diary_product_add_own)) }
+private fun AddOwnProduct(host: EntryWindow) {
+    TextButton(onClick = { host.writeOwnProduct("") }) { Text(stringResource(R.string.diary_product_add_own)) }
 }
 
 /** What was picked: what its label says in 100 of its unit, with what is unknown said to be so. */
 @Composable
-internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
+internal fun PickedProduct(product: Product, host: EntryWindow) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -150,12 +150,12 @@ internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
                     Text(product.name, style = MaterialTheme.typography.bodyLarge)
                     listOfNotNull(product.brand, product.pack).joinToString(DOT).takeIf { it.isNotEmpty() }?.let { Note(it) }
                 }
-                TextButton(onClick = viewModel::unpick) { Text(stringResource(R.string.diary_change_pick)) }
+                TextButton(onClick = host::unpick) { Text(stringResource(R.string.diary_change_pick)) }
             }
             val energy = product.calories
             if (energy == null) {
                 Text(stringResource(R.string.diary_product_no_figures), style = MaterialTheme.typography.bodyMedium)
-                OutlinedButton(onClick = { viewModel.asOwnMeal(product.name) }) { Text(stringResource(R.string.diary_product_as_own)) }
+                OutlinedButton(onClick = { host.asOwnMeal(product.name) }) { Text(stringResource(R.string.diary_product_as_own)) }
             } else {
                 Text(stringResource(R.string.diary_label_in_100, unitName(product.unit)), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 LabelRow(stringResource(R.string.diary_label_energy), (if (product.energyWorkedOut) "≈ " else "") + stringResource(R.string.diary_meal_kcal, formatNumber(energy.roundToInt())))
@@ -179,7 +179,7 @@ internal fun PickedProduct(product: Product, viewModel: DiaryViewModel) {
             if (product.correctable) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Note(stringResource(R.string.diary_product_correct_hint))
-                    OutlinedButton(onClick = { viewModel.correctProduct(product) }) { Text(stringResource(R.string.diary_product_correct)) }
+                    OutlinedButton(onClick = { host.correctProduct(product) }) { Text(stringResource(R.string.diary_product_correct)) }
                 }
             }
         }
@@ -201,11 +201,11 @@ private fun LabelRow(label: String, value: String, inner: Boolean = false) {
 /** What the amount of a picked product is typed in, with a serving and a pack a press away. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ProductAmount(product: Product, form: EntryForm, problem: String?, viewModel: DiaryViewModel) {
+internal fun ProductAmount(product: Product, form: EntryForm, problem: String?, host: EntryWindow) {
     val unit = unitName(product.unit)
     FormField(
         value = form.quantity,
-        onValueChange = { typed -> viewModel.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = typed) } },
+        onValueChange = { typed -> host.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = typed) } },
         label = "${stringResource(R.string.diary_quantity)} ($unit)",
         problem = problem,
         keyboardType = KeyboardType.Decimal,
@@ -215,12 +215,12 @@ internal fun ProductAmount(product: Product, form: EntryForm, problem: String?, 
     if (serving != null || pack != null) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             serving?.let { amount ->
-                OutlinedButton(onClick = { viewModel.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = plainNumber(amount)) } }) {
+                OutlinedButton(onClick = { host.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = plainNumber(amount)) } }) {
                     Text(stringResource(R.string.diary_product_serving, "${plainNumber(amount)}\u00A0$unit"))
                 }
             }
             pack?.let { amount ->
-                OutlinedButton(onClick = { viewModel.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = plainNumber(amount)) } }) {
+                OutlinedButton(onClick = { host.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = plainNumber(amount)) } }) {
                     Text(stringResource(R.string.diary_product_pack, "${plainNumber(amount)}\u00A0$unit"))
                 }
             }
