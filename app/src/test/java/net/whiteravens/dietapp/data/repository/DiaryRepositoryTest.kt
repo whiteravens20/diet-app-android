@@ -3,7 +3,9 @@
 package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -51,7 +53,13 @@ import org.junit.Test
 import java.time.Duration
 import java.time.LocalDate
 import java.util.UUID
+import java.util.concurrent.Executors
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.json.Json
 
 /**
  * A day of a diary read and kept on the phone, an entry written, changed and taken out, without a
@@ -76,10 +84,15 @@ class DiaryRepositoryTest {
         runCatching { server.shutdown() }
     }
 
-    private fun repository(queue: ChangeQueue = changeQueue()): DiaryRepository {
+    private fun repository(
+        queue: ChangeQueue = changeQueue(),
+        // What the repository itself writes and reads the phone's copy with, apart from the network's.
+        written: Json = json,
+        work: CoroutineDispatcher = Dispatchers.Unconfined,
+    ): DiaryRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return DiaryRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), kept, json, queue, Dispatchers.Unconfined)
+        return DiaryRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), kept, written, queue, work)
     }
 
     private fun answer(status: Int, name: String) =
@@ -162,6 +175,29 @@ class DiaryRepositoryTest {
         assertEquals(read, copy.copy(syncedAt = null))
         assertTrue(checkNotNull(copy.syncedAt) >= before)
         assertNull(runBlocking { diary.keptDay(profileId, day.minusDays(1)) })
+    }
+
+    @Test
+    fun `a day is written for the phone and read back on the work dispatcher, never on the thread that asks for it`() {
+        server.enqueue(answer(200, "diary-day"))
+        val worker = Executors.newSingleThreadExecutor { Thread(it, "day-work") }
+        val threads = mutableListOf<String>()
+        val spied = spyk(json)
+        every { spied.encodeToString(any<SerializationStrategy<Any?>>(), any()) } answers {
+            threads += "written on ${Thread.currentThread().name.substringBefore(' ')}"
+            callOriginal()
+        }
+        every { spied.decodeFromString(any<DeserializationStrategy<Any?>>(), any<String>()) } answers {
+            threads += "read on ${Thread.currentThread().name.substringBefore(' ')}"
+            callOriginal()
+        }
+        val diary = repository(written = spied, work = worker.asCoroutineDispatcher())
+
+        runBlocking { diary.day(profileId, day) }
+        runBlocking { diary.keptDay(profileId, day) }
+        worker.shutdown()
+
+        assertEquals(listOf("written on day-work", "read on day-work"), threads)
     }
 
     @Test

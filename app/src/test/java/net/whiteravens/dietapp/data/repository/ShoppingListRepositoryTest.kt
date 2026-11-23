@@ -3,7 +3,10 @@
 package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+import java.util.concurrent.Executors
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -37,7 +40,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.json.Json
 
 /** The shopping lists of a plan, and the copies the phone keeps of them, against a local server answering what the backend answered. */
 class ShoppingListRepositoryTest {
@@ -74,11 +82,17 @@ class ShoppingListRepositoryTest {
         }
     }
 
-    private fun repository(cache: CacheDao, queue: ChangeQueue = changeQueue()): ShoppingListRepository {
+    private fun repository(
+        cache: CacheDao,
+        queue: ChangeQueue = changeQueue(),
+        // What the repository itself writes and reads the phone's copy with, apart from the network's.
+        written: Json = json,
+        work: CoroutineDispatcher = Dispatchers.Unconfined,
+    ): ShoppingListRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
         val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
-        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json, queue, Dispatchers.Unconfined)
+        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, written, queue, work)
     }
 
     /** The captured list of a plan, its days and id those given: another list of the same plan. */
@@ -90,6 +104,30 @@ class ShoppingListRepositoryTest {
         JsonObject(captured + mapOf("id" to JsonPrimitive(id), "fromDate" to JsonPrimitive(from), "toDate" to JsonPrimitive(to))).toString(),
         1L,
     )
+
+    @Test
+    fun `a list is written for the phone and read back on the work dispatcher, never on the thread that asks for it`() {
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(fixture("shopping-list")))
+        val worker = Executors.newSingleThreadExecutor { Thread(it, "list-work") }
+        val threads = mutableListOf<String>()
+        val spied = spyk(json)
+        every { spied.encodeToString(any<SerializationStrategy<Any?>>(), any()) } answers {
+            threads += "written on ${Thread.currentThread().name.substringBefore(' ')}"
+            callOriginal()
+        }
+        every { spied.decodeFromString(any<DeserializationStrategy<Any?>>(), any<String>()) } answers {
+            threads += "read on ${Thread.currentThread().name.substringBefore(' ')}"
+            callOriginal()
+        }
+        val lists = repository(Cache(emptyList()), written = spied, work = worker.asCoroutineDispatcher())
+
+        val fetched = runBlocking { lists.refresh("8c5a17c2-3059-4e2d-ba86-6418f7470e33") }
+        val read = runBlocking { lists.cached(fetched.id) }
+        worker.shutdown()
+
+        assertEquals(listOf("written on list-work", "read on list-work"), threads)
+        assertEquals(fetched.id, read?.id)
+    }
 
     @Test
     fun `a list is made for the days asked, and the copies kept of the lists of the plan that share a day with it go`() {
