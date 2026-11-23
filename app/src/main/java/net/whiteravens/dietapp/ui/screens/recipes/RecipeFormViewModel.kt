@@ -26,6 +26,11 @@ import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.RecipeFormRoute
 import net.whiteravens.dietapp.ui.screens.profiles.ProfilesViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * A recipe of one's own written by hand, or a new version of one edited, as the web's form has it:
@@ -90,7 +95,16 @@ class RecipeFormViewModel @Inject constructor(
     private var searching: Job? = null
 
     init {
-        load()
+        // A form Android ended the app with comes back as it was left, what was typed in it before what was read.
+        val kept = savedStateHandle.get<String>(KEPT_FORM)?.let { runCatching { keptJson.decodeFromString<KeptRecipeForm>(it) }.getOrNull() }
+        if (kept != null) _state.update { it.copy(form = kept.form, fromSwap = kept.fromSwap) } else load()
+        // What the form holds is kept as it changes, once a recipe edited was read into it.
+        viewModelScope.launch {
+            _state.filterNot { it.editing != null && (it.loading || it.loadError != null) }
+                .map { KeptRecipeForm(it.form, it.fromSwap) }
+                .distinctUntilChanged()
+                .collect { savedStateHandle[KEPT_FORM] = keptJson.encodeToString(it) }
+        }
         previews()
     }
 
@@ -220,3 +234,12 @@ class RecipeFormViewModel @Inject constructor(
         const val OFFERED = 12
     }
 }
+
+/** Where the screen's saved state keeps the form. */
+private const val KEPT_FORM = "keptForm"
+
+private val keptJson = Json { ignoreUnknownKeys = true }
+
+/** What the form keeps of itself for when Android ends the app in the background: what was typed, and whether it began as a swap. */
+@Serializable
+private data class KeptRecipeForm(val form: RecipeForm, val fromSwap: Boolean = false)

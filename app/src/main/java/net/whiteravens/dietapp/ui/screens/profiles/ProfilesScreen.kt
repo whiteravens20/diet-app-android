@@ -413,6 +413,23 @@ private fun IngredientPicker(
                 }
             }
         }
+        // The kin of what was just added to foods to avoid or not liked: each offered to add as well, until declined.
+        val kin = state.kin[profile.id to list].orEmpty().filterNot { it.id in ids }
+        if (kin.isNotEmpty()) {
+            Text(
+                stringResource(if (list == IngredientList.AVOIDED) R.string.profile_avoided_kin else R.string.profile_disliked_kin),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                kin.forEach { one ->
+                    OutlinedButton(onClick = { viewModel.addKin(profile, list, one) }, enabled = enabled) {
+                        Text(stringResource(R.string.pickers_add_kin, one.name))
+                    }
+                }
+                TextButton(onClick = { viewModel.declineKin(profile.id, list) }, enabled = enabled) { Text(stringResource(R.string.pickers_kin_no)) }
+            }
+        }
         OutlinedField(
             value = search.text,
             onValueChange = { viewModel.search(profile.id, list, it) },

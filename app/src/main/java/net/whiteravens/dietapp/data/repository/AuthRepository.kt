@@ -9,6 +9,7 @@ import net.whiteravens.dietapp.data.auth.PendingRevocation
 import net.whiteravens.dietapp.data.auth.SessionEnd
 import net.whiteravens.dietapp.data.auth.TokenStore
 import net.whiteravens.dietapp.data.config.ServerConfigStore
+import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.remote.AuthApiService
 import net.whiteravens.dietapp.data.remote.LoginRequest
 import net.whiteravens.dietapp.data.remote.PasswordResetRequestDto
@@ -28,8 +29,10 @@ import javax.inject.Singleton
  * authenticated client attaches and refreshes tokens transparently. Sign-out
  * ends the session on the device at once ([SessionEnd]: the offline cache, then
  * the tokens) and revokes it on the server; a revocation that cannot reach the
- * server is kept and tried again at the next start ([retryRevocation]), on the
- * server that issued the session, whichever the app talks to by then.
+ * server, or that it answers with a limit or an error of its own, is kept and
+ * tried again at the next start ([retryRevocation]), on the server that issued
+ * the session, whichever the app talks to by then. Several are kept, one a
+ * sign-out.
  */
 @Singleton
 class AuthRepository @Inject constructor(
@@ -77,7 +80,9 @@ class AuthRepository @Inject constructor(
 
     suspend fun signOut() {
         // Kept before anything else, so that a revocation cut short is still tried again.
-        tokens.current()?.let { session -> tokens.setPendingRevocation(PendingRevocation(session.refreshToken, servers.current())) }
+        tokens.current()?.let { session ->
+            tokens.keepPendingRevocations(tokens.pendingRevocations() + PendingRevocation(session.refreshToken, servers.current()))
+        }
         sessionEnd.end()
         retryRevocation()
     }
@@ -88,17 +93,30 @@ class AuthRepository @Inject constructor(
      */
     suspend fun leave() = sessionEnd.end()
 
-    /** Revokes on the server a session signed out of on this device, if one is still waiting for it. */
+    /** Revokes on the server each session signed out of on this device that is still waiting for it. */
     suspend fun retryRevocation() {
-        val pending = tokens.pendingRevocation() ?: return
+        val pending = tokens.pendingRevocations()
+        if (pending.isEmpty()) return
+        tokens.keepPendingRevocations(pending.filterNot { one -> done(one) })
+    }
+
+    /**
+     * Whether the server is done with [one]: revoked now, or its token refused by the API as no good (400, 401, 404),
+     * which is what was wanted. A limit, an error of the server, an answer that is not the API's, or no server at all
+     * keep it for the next start.
+     */
+    private suspend fun done(one: PendingRevocation): Boolean =
         try {
-            authApi.logout(ServerAddress(pending.server), RefreshRequest(pending.refreshToken))
-            tokens.setPendingRevocation(null)
+            authApi.logout(ServerAddress(one.server), RefreshRequest(one.refreshToken))
+            true
         } catch (e: HttpException) {
-            // The server refused it: the token is no good any more, which is what was wanted.
-            tokens.setPendingRevocation(null)
+            e.code() in NO_GOOD && !ApiException.from(e, json).code.startsWith(ApiException.NOT_THE_API)
         } catch (e: IOException) {
-            // Still no server: tried again at the next start.
+            false
         }
+
+    private companion object {
+        /** What the API answers a token it does not take: malformed, unknown or already revoked. */
+        val NO_GOOD = setOf(400, 401, 404)
     }
 }

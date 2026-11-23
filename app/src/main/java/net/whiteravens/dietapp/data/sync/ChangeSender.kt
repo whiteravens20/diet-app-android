@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.data.sync
 
+import kotlinx.serialization.SerializationException
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.HouseholdListRepository
@@ -11,6 +12,7 @@ import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.ShoppingListRepository
 import net.whiteravens.dietapp.data.repository.WaterRepository
 import net.whiteravens.dietapp.data.repository.WeightRepository
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,7 +32,33 @@ class ChangeSender @Inject constructor(
     private val notifications: NotificationRepository,
     private val diary: DiaryRepository,
 ) {
+    /**
+     * Sends [change]; an answer this version cannot read means the server made the change all the same: the copy it
+     * changed is read again (a plan, a list, the household's lists, a diary's day), and the queue takes it as sent.
+     */
     suspend fun send(change: QueuedChange) {
+        try {
+            sendIt(change)
+        } catch (unread: SerializationException) {
+            runCatching { readAgain(change) }
+            throw unread
+        }
+    }
+
+    private suspend fun readAgain(change: QueuedChange) {
+        when (change) {
+            is QueuedChange.ShoppingRow -> lists.refresh(change.listId)
+            is QueuedChange.HouseholdRow -> households.refresh()
+            is QueuedChange.Eaten -> plans.refreshPlan(change.planId)
+            is QueuedChange.OwnMealAdded -> plans.refreshPlan(change.planId)
+            is QueuedChange.MealRemoved -> plans.refreshPlan(change.planId)
+            is QueuedChange.DiaryAdded -> diary.day(change.profileId, LocalDate.parse(change.date))
+            // The rest is read again by its screen when it is next shown.
+            else -> Unit
+        }
+    }
+
+    private suspend fun sendIt(change: QueuedChange) {
         when (change) {
             is QueuedChange.ShoppingRow -> lists.send(change)
             is QueuedChange.HouseholdRow -> households.send(change)

@@ -108,6 +108,11 @@ class ChangeQueue @Inject constructor(
                 throw e
             } catch (e: IOException) {
                 return Drained.OFFLINE
+            } catch (e: SerializationException) {
+                // The server made the change and answered in a shape this version cannot read: it is sent, not refused,
+                // and the screens read what it changed again.
+                dao.remove(row.id)
+                overlapped = 0
             } catch (e: ApiException) {
                 when {
                     // What the change takes away is gone already: it was made.

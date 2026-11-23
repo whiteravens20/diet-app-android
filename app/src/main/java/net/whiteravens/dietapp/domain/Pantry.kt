@@ -5,6 +5,7 @@ package net.whiteravens.dietapp.domain
 import java.time.LocalDate
 import kotlin.math.floor
 import kotlin.math.roundToLong
+import kotlinx.serialization.Serializable
 
 /**
  * A row of a profile's pantry: how much of an ingredient it holds, as the API shows it ([shown] in
@@ -35,6 +36,7 @@ data class PantryRow(
  * An ingredient of the catalogue as the pantry takes it: the [units] the API keeps it in, the [unit]
  * offered first, and what a piece of it is called ([pieceName]).
  */
+@Serializable
 data class StockableIngredient(
     val id: String,
     val name: String,

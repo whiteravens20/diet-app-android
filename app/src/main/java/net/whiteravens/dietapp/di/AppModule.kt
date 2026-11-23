@@ -41,6 +41,7 @@ import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * Marks the token-free OkHttp/Retrofit pair. [AuthApiService] must ride this
@@ -57,6 +58,11 @@ annotation class Unauthenticated
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ApplicationScope
+
+/** The dispatcher the repositories write, read and map whole plans, lists and diary days on: never the main thread. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class WorkDispatcher
 
 /** Hilt graph: networking, JSON, auth plumbing and the offline cache database. */
 @Module
@@ -170,6 +176,10 @@ object AppModule {
     @Singleton
     @ApplicationScope
     fun applicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @Provides
+    @WorkDispatcher
+    fun workDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
     /** Whether the app may reach the phone's local network, as Android tells it. */
     @Provides

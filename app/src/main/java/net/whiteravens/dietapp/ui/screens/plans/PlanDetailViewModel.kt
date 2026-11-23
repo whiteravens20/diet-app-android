@@ -51,7 +51,18 @@ import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import net.whiteravens.dietapp.data.repository.DiaryRepository
+import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.FrozenRest
+import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.ui.screens.diary.EntryField
+import net.whiteravens.dietapp.ui.screens.diary.EntryForm
+import net.whiteravens.dietapp.ui.screens.diary.EntryKind
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindow
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindowState
+import net.whiteravens.dietapp.ui.screens.diary.KeptEntryForm
 
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
@@ -74,6 +85,8 @@ class PlanDetailViewModel @Inject constructor(
     private val server: ServerRepository,
     private val queue: ChangeQueue,
     private val profiles: ProfileRepository,
+    private val diary: DiaryRepository,
+    private val recipes: RecipeRepository,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -204,15 +217,47 @@ class PlanDetailViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    private val _mealWindow = MutableStateFlow(EntryWindowState())
+
+    /** The window that adds a meal of one's own, while it is open: what it is of, as the diary's window picks it. */
+    val mealWindowState: StateFlow<EntryWindowState> = _mealWindow.asStateFlow()
+
+    /** What looks for, picks and reads a code in that window, as in the diary's. */
+    val mealWindow = EntryWindow(
+        viewModelScope,
+        diary,
+        recipes,
+        server.rules,
+        read = { _mealWindow.value },
+        write = { change -> _mealWindow.update(change) },
+        open = ::openMealWindow,
+        // It is sent with the day and the place its window holds: `addMealOf`.
+        add = {},
+        close = ::closeMealWindow,
+    )
+
     private val again = ReadingAnew()
 
     /** The meals of one's own taken back while they waited: they leave the queue unsent. */
     private val withdrawn = mutableSetOf<Long>()
 
+    /** The refused changes of the plan already read again for. */
+    private val heard = mutableSetOf<Long>()
+
     init {
+        // The window of a meal of one's own that Android ended the app with comes back as it was left.
+        savedStateHandle.get<String>(KEPT_MEAL_WINDOW)
+            ?.let { runCatching { KeptEntryForm.json.decodeFromString<KeptEntryForm>(it) }.getOrNull() }
+            ?.let(mealWindow::restore)
+        viewModelScope.launch {
+            _mealWindow.map { it.form?.let(KeptEntryForm::of) }.distinctUntilChanged().collect { form ->
+                savedStateHandle[KEPT_MEAL_WINDOW] = form?.let { KeptEntryForm.json.encodeToString(it) }
+            }
+        }
         load()
         followAiMode()
         followWaiting()
+        followRefused()
     }
 
     /**
@@ -267,6 +312,24 @@ class PlanDetailViewModel @Inject constructor(
                     withdrawn.retainAll { id -> waiting.any { it.id == id } }
                     _state.update { it.copy(waiting = waiting, offline = it.offline && !sent) }
                     if (sent) readSent()
+                }
+        }
+    }
+
+    /**
+     * A change of the plan the queue sent and the server refused as not found (a meal, a day, the plan): the plan is
+     * read again, whose own answer says whether it is gone, as a plan removed on another device is.
+     */
+    private fun followRefused() {
+        viewModelScope.launch {
+            queue.refused
+                .map { refused -> refused.filter { one -> one.code in NOT_FOUND && one.change?.let { planId in plansOf(it) } == true }.map { it.id }.toSet() }
+                .distinctUntilChanged()
+                .collect { ids ->
+                    if (!heard.containsAll(ids)) {
+                        heard += ids
+                        reload()
+                    }
                 }
         }
     }
@@ -391,7 +454,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onFailure { e ->
                     // The offer was for the plan as it was: it does not outlive a refusal.
                     _state.update { it.copy(offer = null, taking = false, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -500,7 +563,7 @@ class PlanDetailViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _state.update { s -> s.copy(leftoverWindow = s.leftoverWindow?.copy(sending = false, error = e)) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -554,7 +617,7 @@ class PlanDetailViewModel @Inject constructor(
                     // The window says why: by its fields where the API named them.
                     val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
                     _state.update { it.copy(changing = false, customMeal = CustomMealSent(refused = refused, error = e.takeIf { refused.isEmpty() })) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -562,6 +625,56 @@ class PlanDetailViewModel @Inject constructor(
     /** The window of a meal of one's own put away, or done: what came of the meal goes with it. */
     fun customMealClosed() {
         _state.update { it.copy(customMeal = null) }
+        closeMealWindow()
+    }
+
+    /** Opens the window of a meal of one's own at its figures typed by hand, as it always opened. */
+    fun openMealWindow() {
+        mealWindow.stop()
+        // Its time of day is the window's own field: the form's is not read.
+        _mealWindow.value = EntryWindowState(form = EntryForm(kind = EntryKind.MEAL, slot = "lunch"))
+    }
+
+    /** Puts that window's search and what it picked away. */
+    fun closeMealWindow() {
+        mealWindow.stop()
+        _mealWindow.value = EntryWindowState()
+    }
+
+    /**
+     * Adds to the day of [date], at [slot], a meal of one's own of what the window picked ([of]), beside the day's meals
+     * or in the place of [replaces]. A refusal is said by the window's fields where the API named one, as the diary's
+     * window says it; the window stays to be put right.
+     */
+    fun addMealOf(date: String, slot: String, of: NewDiaryEntry, replaces: String? = null) {
+        if (_state.value.changing || _mealWindow.value.sending) return
+        _mealWindow.update { it.copy(sending = true, showProblems = true, refused = emptyMap(), windowError = null) }
+        _state.update { it.copy(changing = true, error = null, customMeal = CustomMealSent()) }
+        viewModelScope.launch {
+            attempt { plans.addMealOf(planId, date, slot, of, replaces) }
+                .onSuccess { answer ->
+                    _mealWindow.update { it.copy(sending = false) }
+                    _state.update {
+                        it.copy(
+                            plan = answer.plan,
+                            changing = false,
+                            rebalance = answer.rebalance.shown(),
+                            lastSwap = null,
+                            customMeal = CustomMealSent(added = true),
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    // The API names what it refused under what the meal is of: `of.servings`, `of.amount.quantity`.
+                    val fields = EntryField.entries.map { it.path }
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                        .mapKeys { (path, _) -> path.removePrefix("of.") }
+                        .filterKeys { it in fields }
+                    _mealWindow.update { it.copy(sending = false, refused = refused, windowError = e.takeIf { refused.isEmpty() }) }
+                    _state.update { it.copy(changing = false, customMeal = null) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
     }
 
     /**
@@ -612,7 +725,7 @@ class PlanDetailViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -639,7 +752,7 @@ class PlanDetailViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -654,7 +767,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { evened -> _state.update { it.copy(plan = evened, changing = false, rebalance = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -669,7 +782,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { taken -> _state.update { it.copy(plan = taken, changing = false, rebalance = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -751,7 +864,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null, rebalance = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(setWindow = it.setWindow?.copy(applying = false, error = e)) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -840,7 +953,7 @@ class PlanDetailViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e, lastSwap = null) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -865,7 +978,7 @@ class PlanDetailViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -881,7 +994,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { offer -> _state.update { it.copy(offering = null, offer = offer) } }
                 .onFailure { e ->
                     _state.update { it.copy(offering = null, offer = null, error = e) }
-                    if (e.isPlanChanged()) reload()
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
                 }
         }
     }
@@ -899,7 +1012,13 @@ class PlanDetailViewModel @Inject constructor(
 
     private fun Throwable.isPlanGone() = this is ApiException && code == "PLAN_NOT_FOUND"
 
+    /** Refused because what it names is not there: the plan, or one of its days or meals, removed elsewhere. */
+    private fun Throwable.isNotFound() = this is ApiException && code in NOT_FOUND
+
     companion object {
+        /** The refusals of a change of a plan that say what it names is not there. */
+        private val NOT_FOUND = setOf("PLAN_NOT_FOUND", "DAY_NOT_FOUND", "MEAL_NOT_FOUND")
+
         /** What a re-roll refused for a lock that may no longer hold is asked again with. */
         const val DROP_LOCKS = "dropIneligibleLocks"
 
@@ -973,3 +1092,6 @@ private fun QueuedChange.OwnMealAdded.ownMeal() = Meal(
     onlyRecipe = false,
     estimated = protein == null || fat == null || carbs == null,
 )
+
+/** Where the screen's saved state keeps the window of a meal of one's own, what it is of. */
+private const val KEPT_MEAL_WINDOW = "keptMealWindow"

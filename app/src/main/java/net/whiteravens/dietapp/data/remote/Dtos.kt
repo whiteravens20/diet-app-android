@@ -956,6 +956,8 @@ data class IngredientDto(
      * in its pieces alone. An amount in another unit is refused with `UNIT_NOT_CONVERTIBLE`.
      */
     val pantryUnits: List<String>,
+    /** The ids of the foods of its kin, offered beside it where it is added to the foods to avoid; none from an API that does not say it. */
+    val kin: List<String> = emptyList(),
 )
 
 // ── Pantry (packages/shared/src/inventory.ts) ───────────────────────────────
@@ -1371,6 +1373,8 @@ data class MealPlanDayDto(
     val resizes: Boolean = true,
     /** What the day holds is far from the share of macronutrients it aims at. */
     val macrosOff: Boolean = false,
+    /** Of a day [macrosOff]: what it holds too much and too little of, and what makes it so; null otherwise and from an API that does not say it. */
+    val macrosOffWhy: MacrosOffWhyDto? = null,
     /** The user skips the day: no shortfall, left out of the plan's averages; what was eaten of it stays. */
     val skipped: Boolean,
     /** A target somebody typed has put the day under the lowest a calculated plan goes. */
@@ -1393,7 +1397,13 @@ data class MealPlanDayDto(
  * themselves, the first written first; none from an instance that does not list them.
  */
 @Serializable
-data class DayDiaryDto(val entries: Int, val nutrition: NutritionDto, val items: List<DiaryEntryDto> = emptyList())
+data class DayDiaryDto(
+    val entries: Int,
+    val nutrition: NutritionDto,
+    val items: List<DiaryEntryDto> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [nutrition]; none from an API that does not say it. */
+    val otherPlans: List<EatenInOtherPlanDto> = emptyList(),
+)
 
 /** The settings of a day of a running plan, as POST `.../settings/preview` and PUT `.../settings` take them. */
 @Serializable
@@ -1629,6 +1639,38 @@ data class PlanPacksDto(
     val open: List<PlanOpenPackDto>,
     val frozen: List<PlanFrozenRestDto> = emptyList(),
     val fromFreezer: List<PlanFreezerStockDto> = emptyList(),
+    /** What the freezer holds of the menu's foods that the plan leaves there, and why; none from an API that does not say it. */
+    val staysFrozen: List<PlanFrozenKeptDto> = emptyList(),
+)
+
+/**
+ * Packages of [name] the plan leaves in the freezer, [amount] in [unit] together: [why] `whole`, it would not eat one
+ * whole in the days a thawed package keeps ([mostInTwoDays] the most it eats in two), or `later`, frozen after the
+ * plan was made.
+ */
+@Serializable
+data class PlanFrozenKeptDto(
+    val ingredientId: String,
+    val name: String,
+    val unit: String,
+    val amount: Int,
+    val packages: Int,
+    val why: String,
+    val mostInTwoDays: Int,
+)
+
+/** What a day off its split holds too much ([over]) and too little ([under]) of, and each thing that makes it so. */
+@Serializable
+data class MacrosOffWhyDto(val over: String, val under: String, val causes: List<MacrosOffCauseDto>)
+
+/** One thing that keeps a day off its split: its [kind], with what that kind names. */
+@Serializable
+data class MacrosOffCauseDto(
+    val kind: String,
+    val share: Int? = null,
+    val minutes: Int? = null,
+    val count: Int? = null,
+    val slots: List<String> = emptyList(),
 )
 
 /** "Dodaj do spiżarni" of the rest the plan freezes of [ingredientId] on [date]: what is left of it goes into the pantry as frozen, once. */
@@ -2199,12 +2241,28 @@ data class PutLeftoverRequest(
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
 @Serializable
 data class AddCustomMealRequest(
-    val name: String,
+    /** Its name; none for a meal [of] something, which names it. */
+    val name: String? = null,
     val mealType: String,
-    val nutrition: EnteredNutritionDto,
-    val servings: Double,
+    /** What one serving holds; none for a meal [of] something, whose figures the server works out. */
+    val nutrition: EnteredNutritionDto? = null,
+    val servings: Double = 1.0,
     /** A meal of the same day this one is eaten in the place of: it leaves the day. */
     val replaces: String? = null,
+    /** What the meal is of, chosen as an entry of the diary is; none for one typed by its figures. */
+    val of: CustomMealOfDto? = null,
+)
+
+/** What a meal of one's own is of, as an entry of the diary is: `recipe` in [servings], `ingredient` in [amount], `product` in [quantity]. */
+@Serializable
+data class CustomMealOfDto(
+    val kind: String,
+    val recipeId: String? = null,
+    val servings: Double? = null,
+    val ingredientId: String? = null,
+    val amount: DiaryAmountRequest? = null,
+    val productId: String? = null,
+    val quantity: Double? = null,
 )
 
 /** What one serving of a meal of one's own holds: a macronutrient left out is estimated, and the meal says so. */
@@ -2246,6 +2304,11 @@ data class ShoppingListItemDto(
     val purchasedQuantity: Double? = null,
     /** Earliest best-before among contributing pantry rows, or null. */
     val pantryBestBefore: String? = null,
+    /**
+     * What the freezer holds of the food that the row does not count as at home, in the row's unit: packages the plan
+     * leaves frozen; none from an API that does not say it.
+     */
+    val frozenKept: Double = 0.0,
     /** Estimated calories contributed by this line (informational). */
     val estimatedCalories: Double,
     /** What a piece weighs, for a row counted in pieces of some kind; null for one weighed. */
@@ -2257,6 +2320,11 @@ data class ShoppingListItemDto(
     val checked: Boolean = false,
     /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
     val shares: List<ItemShareDto> = emptyList(),
+    /**
+     * Whose pantry holds what is at home, where more than the row's own counts: every pantry of a household list's
+     * row, and the others a part counts on; none otherwise, and from an API that does not say it.
+     */
+    val pantries: List<RowPantryDto> = emptyList(),
 )
 
 /** [count] packs of [size] [sizeUnit], which come to [quantity] in the row's unit. */
@@ -2296,6 +2364,10 @@ data class ShoppingListDto(
 /** What a profile's plan needs of a row of a household list, in the row's unit. */
 @Serializable
 data class ItemShareDto(val profileId: String, val profile: String, val totalQuantity: Double)
+
+/** What the pantry of a profile holds of what is at home for a row, in the row's unit. */
+@Serializable
+data class RowPantryDto(val profileId: String, val profile: String, val quantity: Double)
 
 /** The household list a plan's own list is a part of: its id, and the names of the profiles it is for. */
 @Serializable
@@ -2617,6 +2689,20 @@ data class DiaryPlanMealDto(
 @Serializable
 data class DiaryToppingDto(val name: String, val display: DisplayAmountDto)
 
+/** A meal eaten on the day from another plan of the profile: as a meal of the plan says it, with the plan it is of. */
+@Serializable
+data class EatenInOtherPlanDto(
+    val id: String,
+    val mealType: String,
+    val name: String,
+    val recipeId: String? = null,
+    val eaten: Boolean,
+    val nutrition: NutritionDto,
+    val fromPot: Boolean = false,
+    val topping: DiaryToppingDto? = null,
+    val planId: String,
+)
+
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */
 @Serializable
 data class DiaryDayPlanDto(
@@ -2647,6 +2733,8 @@ data class DiaryDayDto(
     val eatenLabel: LabelTotalsDto? = null,
     /** The limits of the profile the day crosses. */
     val labelNotes: List<LabelLimitNoteDto> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [eaten]; none from an API that does not say it. */
+    val otherPlans: List<EatenInOtherPlanDto> = emptyList(),
 )
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */

@@ -51,6 +51,9 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import net.whiteravens.dietapp.di.WorkDispatcher
 
 /**
  * A profile's diary: a day read, and kept on the phone for a while so that it is there without a
@@ -64,6 +67,8 @@ class DiaryRepository @Inject constructor(
     private val kept: KeptReadsDao,
     private val json: Json,
     private val queue: ChangeQueue,
+    /** Where a whole day is written for the phone, read back and mapped: off the caller's thread. */
+    @WorkDispatcher private val work: CoroutineDispatcher,
 ) {
     /** What [profileId]'s diary and weights say it really uses, and the correction proposed or kept. */
     suspend fun expenditure(profileId: String): Expenditure = apiCall(json) { api.expenditure(profileId) }.toDomain()
@@ -86,8 +91,10 @@ class DiaryRepository @Inject constructor(
 
     /** The day as it was last read on this phone; null where it was not, or not for a while. */
     suspend fun keptDay(profileId: String, date: LocalDate): DiaryDay? = kept.diaryDay(profileId, date.toString())?.let { row ->
-        readOrDrop({ json.decodeFromString<DiaryDayDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
-            kept.deleteDiaryDay(profileId, date.toString())
+        withContext(work) {
+            readOrDrop({ json.decodeFromString<DiaryDayDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
+                kept.deleteDiaryDay(profileId, date.toString())
+            }
         }
     }
 
@@ -108,6 +115,9 @@ class DiaryRepository @Inject constructor(
 
     /** The catalogue's ingredients whose name holds [search], in the app's language, as an entry takes them. */
     suspend fun ingredients(search: String): List<DiaryIngredient> = apiCall(json) { api.ingredients(search = search) }.map { it.toDiary() }
+
+    /** The ingredient of [id], as an entry takes it: what a window kept of it is read again by. */
+    suspend fun ingredient(id: String): DiaryIngredient = apiCall(json) { api.ingredients(ids = id) }.single().toDiary()
 
     /** The product of a barcode, in the form Open Food Facts keeps it: from the instance, which asks for what it does not hold. */
     suspend fun product(code: String): Product = apiCall(json) { api.productByCode(code) }.toDomain()
@@ -184,7 +194,8 @@ class DiaryRepository @Inject constructor(
     /** Keeps the day read, and forgets those read long enough ago. */
     private suspend fun keep(day: DiaryDayDto) {
         val now = System.currentTimeMillis()
-        kept.upsertDiaryDay(CachedDiaryDay(day.profileId, day.date, json.encodeToString(day), now))
+        val written = withContext(work) { json.encodeToString(day) }
+        kept.upsertDiaryDay(CachedDiaryDay(day.profileId, day.date, written, now))
         kept.deleteDiaryReadBefore(now - KEPT_FOR.toMillis())
     }
 
@@ -251,6 +262,7 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
     syncedAt = syncedAt,
     eatenLabel = eatenLabel?.toDomain(),
     labelNotes = labelNotes.toNotes(),
+    otherPlans = otherPlans.map { it.toDomain() },
 )
 
 /** An entry as it was written or changed, with what it did to the day of the plan the diary shows. */

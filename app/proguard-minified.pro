@@ -44,7 +44,7 @@
 -keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
--keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.NewPlanScreenKt { *** getDATE_AND_LENGTH(); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices { *; }
@@ -67,6 +67,16 @@
 -keep class net.whiteravens.dietapp.domain.BuyLater { *; }
 -keep class net.whiteravens.dietapp.domain.ItemShare { *; }
 -keep class net.whiteravens.dietapp.domain.RowChange { *; }
+-keep class net.whiteravens.dietapp.domain.RowPantry { *; }
+-keep class net.whiteravens.dietapp.domain.FrozenKept { *; }
+-keep class net.whiteravens.dietapp.domain.MacrosOffWhy { *; }
+-keep class net.whiteravens.dietapp.domain.MacrosOffCause { *; }
+-keep class net.whiteravens.dietapp.domain.MacrosOffCause$* { *; }
+-keep class net.whiteravens.dietapp.domain.EatenElsewhere { *; }
+-keep class net.whiteravens.dietapp.domain.DiaryPlanMeal { *; }
+-keep class net.whiteravens.dietapp.domain.DiaryTopping { *; }
+-keep class net.whiteravens.dietapp.domain.Macros { *; }
+-keep class net.whiteravens.dietapp.ui.screens.diary.DiaryScreenKt { *** OtherPlanMealRow(...); }
 
 # The libraries the tests share with the app, whose copy in the app they use: AndroidX (Compose,
 # the test runner's own), Kotlin's, Guava's and the injection annotations Espresso builds on.

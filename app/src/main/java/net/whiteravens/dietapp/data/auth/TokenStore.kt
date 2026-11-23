@@ -12,6 +12,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import net.whiteravens.dietapp.data.remote.AuthTokens
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,6 +26,7 @@ private val Context.authDataStore by preferencesDataStore(name = "auth")
 data class Session(val accessToken: String, val refreshToken: String)
 
 /** A session signed out of on this device that is not revoked yet: its refresh token, and the server that issued it. */
+@Serializable
 data class PendingRevocation(val refreshToken: String, val server: String)
 
 /**
@@ -68,22 +73,30 @@ class TokenStore internal constructor(
         }
     }
 
-    /** The session signed out of that its server has not revoked yet, or null. */
-    suspend fun pendingRevocation(): PendingRevocation? {
+    /**
+     * The sessions signed out of that their servers have not revoked yet, the oldest first. One kept the way an
+     * earlier version kept it, alone, comes first.
+     */
+    suspend fun pendingRevocations(): List<PendingRevocation> {
         val prefs = store.data.first()
-        val refreshToken = prefs[PENDING_REVOCATION]?.let { sealer.open(PENDING_REVOCATION.name, it) } ?: return null
-        val server = prefs[PENDING_REVOCATION_SERVER] ?: return null
-        return PendingRevocation(refreshToken, server)
+        val alone = prefs[PENDING_REVOCATION]?.let { sealer.open(PENDING_REVOCATION.name, it) }?.let { token ->
+            prefs[PENDING_REVOCATION_SERVER]?.let { server -> PendingRevocation(token, server) }
+        }
+        val listed = prefs[PENDING_REVOCATIONS]?.let { sealer.open(PENDING_REVOCATIONS.name, it) }
+            ?.let { opened -> runCatching { Json.decodeFromString<List<PendingRevocation>>(opened) }.getOrNull() }
+            .orEmpty()
+        return listOfNotNull(alone) + listed
     }
 
-    suspend fun setPendingRevocation(pending: PendingRevocation?) {
+    /** Keeps [pending] as the sessions to revoke, sealed as one, the newest [MOST_PENDING] of them. */
+    suspend fun keepPendingRevocations(pending: List<PendingRevocation>) {
         store.edit { prefs ->
-            if (pending == null) {
-                prefs.remove(PENDING_REVOCATION)
-                prefs.remove(PENDING_REVOCATION_SERVER)
+            prefs.remove(PENDING_REVOCATION)
+            prefs.remove(PENDING_REVOCATION_SERVER)
+            if (pending.isEmpty()) {
+                prefs.remove(PENDING_REVOCATIONS)
             } else {
-                prefs[PENDING_REVOCATION] = sealer.seal(PENDING_REVOCATION.name, pending.refreshToken)
-                prefs[PENDING_REVOCATION_SERVER] = pending.server
+                prefs[PENDING_REVOCATIONS] = sealer.seal(PENDING_REVOCATIONS.name, Json.encodeToString(pending.takeLast(MOST_PENDING)))
             }
         }
     }
@@ -98,11 +111,17 @@ class TokenStore internal constructor(
         return session
     }
 
-    private companion object {
-        val ACCESS_TOKEN = stringPreferencesKey("access_token")
-        val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
-        val SESSION_ID = stringPreferencesKey("session_id")
-        val PENDING_REVOCATION = stringPreferencesKey("pending_revocation")
-        val PENDING_REVOCATION_SERVER = stringPreferencesKey("pending_revocation_server")
+    companion object {
+        /** How many sessions signed out of without a server are kept to revoke: more sign-outs than that keep the newest. */
+        const val MOST_PENDING = 5
+
+        private val ACCESS_TOKEN = stringPreferencesKey("access_token")
+        private val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        private val SESSION_ID = stringPreferencesKey("session_id")
+
+        /** Where an earlier version kept the one session it had to revoke, and its server. */
+        private val PENDING_REVOCATION = stringPreferencesKey("pending_revocation")
+        private val PENDING_REVOCATION_SERVER = stringPreferencesKey("pending_revocation_server")
+        private val PENDING_REVOCATIONS = stringPreferencesKey("pending_revocations")
     }
 }

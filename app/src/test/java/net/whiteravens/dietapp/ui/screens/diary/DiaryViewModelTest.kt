@@ -33,6 +33,8 @@ import net.whiteravens.dietapp.domain.DiaryDayPlan
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.EatenElsewhere
+import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.DiaryWritten
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
@@ -103,12 +105,30 @@ class DiaryViewModelTest {
         plan: DiaryDayPlan? = null,
         eaten: Double = 0.0,
         syncedAt: Long? = null,
-    ) = DiaryDay(profileId, date.toString(), Nutrition(2000.0, 100.0, 60.0, 250.0), plan != null, plan, entries, Nutrition(eaten, 0.0, 0.0, 0.0), false, syncedAt)
+        otherPlans: List<EatenElsewhere> = emptyList(),
+    ) = DiaryDay(
+        profileId,
+        date.toString(),
+        Nutrition(2000.0, 100.0, 60.0, 250.0),
+        plan != null,
+        plan,
+        entries,
+        Nutrition(eaten, 0.0, 0.0, 0.0),
+        false,
+        syncedAt,
+        otherPlans = otherPlans,
+    )
 
     private fun plan(vararg meals: DiaryPlanMeal, offTarget: String? = null) = DiaryDayPlan("p", false, meals.toList(), 0.0, offTarget)
 
-    private fun model(profileId: String? = null, date: String? = null, adding: Boolean = false) = DiaryViewModel(
-        SavedStateHandle(buildMap {
+    private fun model(
+        profileId: String? = null,
+        date: String? = null,
+        adding: Boolean = false,
+        // The screen's saved state, as Android gives it back to a screen it ended the app under.
+        kept: SavedStateHandle? = null,
+    ) = DiaryViewModel(
+        kept ?: SavedStateHandle(buildMap {
             profileId?.let { put("profileId", it) }
             date?.let { put("date", it) }
             put("adding", adding)
@@ -148,9 +168,9 @@ class DiaryViewModelTest {
     )
 
     private fun DiaryViewModel.typeOwnMeal(name: String = "Soup", calories: String = "300") {
-        chooseKind(EntryKind.MEAL)
-        typeEntry(EntryField.NAME) { it.copy(name = name) }
-        typeEntry(EntryField.CALORIES) { it.copy(calories = calories) }
+        window.chooseKind(EntryKind.MEAL)
+        window.typeEntry(EntryField.NAME) { it.copy(name = name) }
+        window.typeEntry(EntryField.CALORIES) { it.copy(calories = calories) }
     }
 
     /** A plan of one day, which holds the meals [changes] speak of. */
@@ -364,6 +384,17 @@ class DiaryViewModelTest {
     }
 
     @Test
+    fun `a time of the day that holds only a meal eaten from another plan is shown, with that meal`() {
+        val elsewhere = EatenElsewhere(DiaryPlanMeal("m", "snack", "Owsianka", "r", true, 320.0), planId = "q", Macros(12.0, 8.0, 50.0))
+        coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e1", slot = "breakfast")), otherPlans = listOf(elsewhere))
+
+        val state = model().state.value
+
+        assertEquals(listOf("breakfast", "snack"), state.slots)
+        assertEquals(listOf(elsewhere), state.day?.otherPlans)
+    }
+
+    @Test
     fun `a day to come and a day over a year back take no entry, and one with the most entries neither`() {
         assertTrue(model(date = today.plusDays(1).toString()).state.value.ahead)
         assertFalse(model(date = today.plusDays(1).toString()).state.value.canAdd)
@@ -374,6 +405,17 @@ class DiaryViewModelTest {
         coEvery { diary.day("a", today) } returns day(entries = (1..40).map { entry("e$it") })
         assertTrue(model().state.value.full)
         assertFalse(model().state.value.canAdd)
+    }
+
+    @Test
+    fun `a day holding more entries than may be written, as a removed plan's eaten meals leave it, reads whole and takes none`() {
+        coEvery { diary.day("a", today) } returns day(entries = (1..45).map { entry("e$it") })
+
+        val state = model().state.value
+
+        assertEquals(45, state.entries.size)
+        assertTrue(state.full)
+        assertFalse(state.canAdd)
     }
 
     @Test
@@ -493,7 +535,7 @@ class DiaryViewModelTest {
         assertTrue(model.state.value.refused["servings"] is FieldRefusal.TooBig)
         assertNull(model.state.value.windowError)
 
-        model.typeEntry(EntryField.SERVINGS) { it.copy(servings = "2") }
+        model.window.typeEntry(EntryField.SERVINGS) { it.copy(servings = "2") }
         assertNull(model.state.value.refused["servings"])
     }
 
@@ -511,27 +553,73 @@ class DiaryViewModelTest {
         assertEquals("Soup", model.state.value.form?.name)
     }
 
+    @Test
+    fun `a window Android ends the app with comes back with what was typed in it, its meal and the day`() {
+        val state = SavedStateHandle(mapOf("profileId" to "a", "date" to today.toString(), "adding" to false))
+        val before = model(kept = state)
+        before.openWindow("dinner")
+        before.window.chooseKind(EntryKind.MEAL)
+        before.window.typeEntry(EntryField.NAME) { it.copy(name = "Soup") }
+        before.window.typeEntry(EntryField.CALORIES) { it.copy(calories = "320") }
+        main.scheduler.advanceUntilIdle()
+
+        // The process is ended: the view model goes, the saved state stays.
+        val after = model(kept = state)
+        main.scheduler.advanceUntilIdle()
+
+        val form = after.state.value.form!!
+        assertEquals(EntryKind.MEAL, form.kind)
+        assertEquals("dinner", form.slot)
+        assertEquals("Soup", form.name)
+        assertEquals("320", form.calories)
+        assertEquals(today, after.state.value.date)
+
+        // Put away, it does not come back.
+        after.closeWindow()
+        main.scheduler.advanceUntilIdle()
+        assertNull(model(kept = state).state.value.form)
+    }
+
+    @Test
+    fun `a recipe picked in a window Android ends the app with is read again by its id, with the servings typed for it`() {
+        val oats = mockk<Recipe>(relaxed = true) { every { id } returns "oats" }
+        coEvery { recipes.byId("oats") } returns oats
+        val state = SavedStateHandle(mapOf("profileId" to "a", "adding" to false))
+        val before = model(kept = state)
+        before.openWindow("breakfast")
+        before.window.pickRecipe(oats)
+        before.window.typeEntry(EntryField.SERVINGS) { it.copy(servings = "1,5") }
+        main.scheduler.advanceUntilIdle()
+
+        val after = model(kept = state)
+        main.scheduler.advanceUntilIdle()
+
+        coVerify { recipes.byId("oats") }
+        assertSame(oats, after.state.value.form?.recipe)
+        assertEquals("1,5", after.state.value.form?.servings)
+    }
+
     // ── Looking for what to write ───────────────────────────────────────────
 
     @Test
     fun `a search goes out from two letters, once typing pauses, and what it found is offered`() {
-        val found = mockk<Recipe>()
+        val found = mockk<Recipe> { every { id } returns "found" }
         coEvery { recipes.search(any(), any()) } returns RecipePage(List(10) { found }, 1, 1)
         val model = model()
         model.openWindow("lunch")
 
-        model.search("o")
+        model.window.search("o")
         main.scheduler.advanceUntilIdle()
         assertFalse(model.state.value.form!!.searched)
         coVerify(exactly = 0) { recipes.search(any(), any()) }
 
-        model.search("oat")
-        model.search("oats")
+        model.window.search("oat")
+        model.window.search("oats")
         main.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { recipes.search(match { it.search == "oats" }, any()) }
         assertTrue(model.state.value.form!!.searched)
-        assertEquals(DiaryViewModel.OFFERED, model.state.value.form!!.recipes.size)
+        assertEquals(EntryWindow.OFFERED, model.state.value.form!!.recipes.size)
     }
 
     @Test
@@ -540,13 +628,13 @@ class DiaryViewModelTest {
         coEvery { diary.ingredients("egg") } returns listOf(egg)
         val model = model()
         model.openWindow("lunch")
-        model.chooseKind(EntryKind.INGREDIENT)
+        model.window.chooseKind(EntryKind.INGREDIENT)
 
-        model.search("egg")
+        model.window.search("egg")
         main.scheduler.advanceUntilIdle()
         assertEquals(listOf(egg), model.state.value.form!!.ingredients)
 
-        model.pickIngredient(egg)
+        model.window.pickIngredient(egg)
 
         assertSame(egg, model.state.value.form!!.ingredient)
         assertEquals("g", model.state.value.form!!.unit)
@@ -559,7 +647,7 @@ class DiaryViewModelTest {
         val model = model()
         model.openWindow("lunch")
 
-        model.search("oat")
+        model.window.search("oat")
         main.scheduler.advanceUntilIdle()
 
         assertTrue(model.state.value.form!!.searched)
@@ -567,21 +655,21 @@ class DiaryViewModelTest {
         assertEquals(emptyList<Recipe>(), model.state.value.form!!.recipes)
 
         // Typed further, what was said of the last words goes.
-        model.search("oats")
+        model.window.search("oats")
         assertNull(model.state.value.form!!.searchFailed)
     }
 
     @Test
     fun `a recipe picked empties the search, and picked again the servings start over`() {
-        val found = mockk<Recipe>()
+        val found = mockk<Recipe> { every { id } returns "found" }
         val model = model()
         model.openWindow("lunch")
 
-        model.pickRecipe(found)
+        model.window.pickRecipe(found)
         assertSame(found, model.state.value.form?.recipe)
-        model.typeEntry(EntryField.SERVINGS) { it.copy(servings = "3") }
+        model.window.typeEntry(EntryField.SERVINGS) { it.copy(servings = "3") }
 
-        model.unpick()
+        model.window.unpick()
 
         assertNull(model.state.value.form?.recipe)
         assertEquals("1", model.state.value.form?.servings)
@@ -591,9 +679,9 @@ class DiaryViewModelTest {
     fun `another kind leaves what was looked for, and what was said of it`() {
         val model = model()
         model.openWindow("lunch")
-        model.search("oat")
+        model.window.search("oat")
 
-        model.chooseKind(EntryKind.INGREDIENT)
+        model.window.chooseKind(EntryKind.INGREDIENT)
 
         assertEquals("", model.state.value.form?.search)
         assertEquals(EntryKind.INGREDIENT, model.state.value.form?.kind)
@@ -730,14 +818,14 @@ class DiaryViewModelTest {
     fun `a product of one's own is written over the window, of the code looked for, and the search stays behind it`() {
         val model = model()
         model.openWindowNow()
-        model.chooseKind(EntryKind.PRODUCT)
-        model.search("5900512320359")
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.search("5900512320359")
 
-        model.writeOwnProduct("5900512320359")
+        model.window.writeOwnProduct("5900512320359")
 
         assertEquals("5900512320359", model.state.value.form?.writingProduct)
 
-        model.closeOwnProduct()
+        model.window.closeOwnProduct()
 
         assertNull(model.state.value.form?.writingProduct)
         assertEquals("5900512320359", model.state.value.form?.search)
@@ -747,16 +835,16 @@ class DiaryViewModelTest {
     fun `a correction of a product of the base takes its place over the window, keeping the amount typed`() {
         val model = model()
         model.openWindowNow()
-        model.chooseKind(EntryKind.PRODUCT)
-        model.pickProduct(milk)
-        model.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = "300") }
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.pickProduct(milk)
+        model.window.typeEntry(EntryField.PRODUCT_QUANTITY) { it.copy(quantity = "300") }
 
-        model.correctProduct(milk)
+        model.window.correctProduct(milk)
         assertEquals("5900512320359", model.state.value.form?.writingProduct)
         assertEquals(milk, model.state.value.form?.correcting)
 
         val corrected = milk.copy(id = "c", calories = 64.0, source = ProductSource.OWN, correction = true)
-        model.takeWrittenProduct(corrected)
+        model.window.takeWrittenProduct(corrected)
 
         val form = model.state.value.form!!
         assertNull(form.writingProduct)
@@ -806,11 +894,11 @@ class DiaryViewModelTest {
     fun `what was written is picked, with a serving of its label to start from`() {
         val model = model()
         model.openWindowNow()
-        model.chooseKind(EntryKind.PRODUCT)
-        model.writeOwnProduct("")
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.writeOwnProduct("")
         val written = Product("p", null, "Chleb", null, null, "g", null, 50.0, 245.0, null, null, null, null, null, null, null, false, false, ProductSource.OWN)
 
-        model.takeWrittenProduct(written)
+        model.window.takeWrittenProduct(written)
 
         val form = model.state.value.form!!
         assertNull(form.writingProduct)
@@ -982,15 +1070,15 @@ class DiaryViewModelTest {
         coEvery { diary.product("5900512320359") } returns milk
         val model = model()
         model.openWindow("snack")
-        model.chooseKind(EntryKind.PRODUCT)
+        model.window.chooseKind(EntryKind.PRODUCT)
 
-        model.search("59005123")
+        model.window.search("59005123")
         main.scheduler.advanceTimeBy(5_000)
         coVerify(exactly = 0) { diary.product(any()) }
         coVerify(exactly = 0) { diary.products(any()) }
 
-        model.search("5900512320359")
-        model.checkCode()
+        model.window.search("5900512320359")
+        model.window.checkCode()
         assertEquals(milk, model.state.value.form?.product)
         assertEquals("250", model.state.value.form?.quantity)
         assertEquals("", model.state.value.form?.search)
@@ -1000,15 +1088,15 @@ class DiaryViewModelTest {
     fun `a mistyped code is said to be one, and nobody is asked`() {
         val model = model()
         model.openWindow("snack")
-        model.chooseKind(EntryKind.PRODUCT)
-        model.search("5900512320358")
-        model.checkCode()
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.search("5900512320358")
+        model.window.checkCode()
 
         assertTrue(model.state.value.form!!.codeBad)
         coVerify(exactly = 0) { diary.product(any()) }
 
         // Going on typing takes the words back.
-        model.search("590051232035")
+        model.window.search("590051232035")
         assertFalse(model.state.value.form!!.codeBad)
     }
 
@@ -1016,11 +1104,11 @@ class DiaryViewModelTest {
     fun `a code the camera read is asked about at once`() {
         coEvery { diary.product("5900512320359") } returns milk
         val model = model()
-        model.openScanner()
+        model.window.openScanner()
         assertTrue(model.state.value.scanning)
         assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
 
-        model.scanned("5900512320359")
+        model.window.scanned("5900512320359")
 
         assertFalse(model.state.value.scanning)
         assertEquals(milk, model.state.value.form?.product)
@@ -1032,14 +1120,14 @@ class DiaryViewModelTest {
         coEvery { diary.product(any()) } throws unknown
         val model = model()
         model.openWindow("snack")
-        model.chooseKind(EntryKind.PRODUCT)
-        model.search("5900512320359")
-        model.checkCode()
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.search("5900512320359")
+        model.window.checkCode()
 
         assertEquals(unknown, model.state.value.form?.codeFailed)
         assertNull(model.state.value.form?.product)
 
-        model.asOwnMeal(null)
+        model.window.asOwnMeal(null)
         assertEquals(EntryKind.MEAL, model.state.value.form?.kind)
         assertNull(model.state.value.form?.codeFailed)
     }
@@ -1049,16 +1137,16 @@ class DiaryViewModelTest {
         coEvery { diary.products("mleko") } returns listOf(milk)
         val model = model()
         model.openWindow("snack")
-        model.chooseKind(EntryKind.PRODUCT)
+        model.window.chooseKind(EntryKind.PRODUCT)
 
-        model.search("ml")
+        model.window.search("ml")
         main.scheduler.advanceTimeBy(5_000)
         coVerify(exactly = 0) { diary.products(any()) }
 
-        model.search("mleko")
+        model.window.search("mleko")
         main.scheduler.advanceTimeBy(5_000)
         assertEquals(listOf(milk), model.state.value.form?.products)
-        model.pickProduct(milk)
+        model.window.pickProduct(milk)
         assertEquals(milk, model.state.value.form?.product)
         assertEquals("250", model.state.value.form?.quantity)
     }
@@ -1067,11 +1155,11 @@ class DiaryViewModelTest {
     fun `a product without figures leads to a meal of its name`() {
         val model = model()
         model.openWindow("snack")
-        model.chooseKind(EntryKind.PRODUCT)
-        model.pickProduct(milk.copy(calories = null, servingAmount = null))
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.pickProduct(milk.copy(calories = null, servingAmount = null))
         assertEquals("", model.state.value.form?.quantity)
 
-        model.asOwnMeal("Mleko")
+        model.window.asOwnMeal("Mleko")
         assertEquals(EntryKind.MEAL, model.state.value.form?.kind)
         assertEquals("Mleko", model.state.value.form?.name)
     }
@@ -1080,11 +1168,11 @@ class DiaryViewModelTest {
     fun `no amount goes along to another kind, and a product comes back as it started`() {
         val model = model()
         model.openWindow("snack")
-        model.chooseKind(EntryKind.PRODUCT)
-        model.pickProduct(milk)
-        model.chooseKind(EntryKind.INGREDIENT)
+        model.window.chooseKind(EntryKind.PRODUCT)
+        model.window.pickProduct(milk)
+        model.window.chooseKind(EntryKind.INGREDIENT)
         assertEquals("", model.state.value.form?.quantity)
-        model.chooseKind(EntryKind.PRODUCT)
+        model.window.chooseKind(EntryKind.PRODUCT)
         assertEquals("250", model.state.value.form?.quantity)
     }
 
@@ -1102,7 +1190,7 @@ class DiaryViewModelTest {
         )
         assertTrue(model.state.value.scanning)
         assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
-        model.closeScanner()
+        model.window.closeScanner()
         assertFalse(model.state.value.scanning)
         assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
     }

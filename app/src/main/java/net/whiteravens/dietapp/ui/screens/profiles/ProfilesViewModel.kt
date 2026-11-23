@@ -81,6 +81,11 @@ class ProfilesViewModel @Inject constructor(
         val readAt: Long? = null,
         /** Reading it anew failed for want of a network: what is shown is as it was at [readAt]. */
         val offline: Boolean = false,
+        /**
+         * The kin of what was last added to a list of foods to avoid or not liked, by the profile and the list: offered
+         * until each is taken or the offer is declined.
+         */
+        val kin: Map<Pair<String, IngredientList>, List<IngredientChoice>> = emptyMap(),
     ) {
         /** The preferences of [profile] as the screen shows them: what is kept, with what is being sent on top. */
         fun preferencesOf(profile: ProfileDetails): Shown {
@@ -215,7 +220,35 @@ class ProfilesViewModel @Inject constructor(
         }
         searching.remove(profile.id to list)?.cancel()
         change(profile, list.change(ids + chosen.map { it.id }))
+        if (list != IngredientList.FAVOURITE) offerKin(profile.id, list, chosen, ids + chosen.map { it.id })
     }
+
+    /** Offers the kin of what was [added] to a list of foods to avoid or not liked that the list does not [hold], by their names. */
+    private fun offerKin(profileId: String, list: IngredientList, added: List<IngredientChoice>, hold: List<String>) {
+        val key = profileId to list
+        val kinIds = added.flatMap { it.kin }.distinct().filterNot { it in hold }
+        _state.update { it.copy(kin = it.kin - key) }
+        if (kinIds.isEmpty()) return
+        viewModelScope.launch {
+            attempt { profiles.ingredientsOf(kinIds) }.onSuccess { found ->
+                _state.update { state ->
+                    state.copy(kin = state.kin + (key to found), names = state.names + found.associate { it.id to it.name })
+                }
+            }
+        }
+    }
+
+    /** A food of the kin offered, added to the list as well; the rest stays offered. */
+    fun addKin(profile: ProfileDetails, list: IngredientList, kin: IngredientChoice) {
+        val ids = _state.value.preferencesOf(profile).ids(list)
+        if (_state.value.sending != null || kin.id in ids) return
+        val key = profile.id to list
+        _state.update { state -> state.copy(kin = state.kin + (key to state.kin[key].orEmpty().filterNot { it.id == kin.id })) }
+        change(profile, list.change(ids + kin.id))
+    }
+
+    /** The kin offered are not wanted: the offer goes. */
+    fun declineKin(profileId: String, list: IngredientList) = _state.update { it.copy(kin = it.kin - (profileId to list)) }
 
     fun remove(profile: ProfileDetails, list: IngredientList, id: String) {
         change(profile, list.change(_state.value.preferencesOf(profile).ids(list) - id))

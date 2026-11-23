@@ -51,6 +51,7 @@ import org.junit.Test
 import java.time.Duration
 import java.time.LocalDate
 import java.util.UUID
+import kotlinx.coroutines.Dispatchers
 
 /**
  * A day of a diary read and kept on the phone, an entry written, changed and taken out, without a
@@ -78,7 +79,7 @@ class DiaryRepositoryTest {
     private fun repository(queue: ChangeQueue = changeQueue()): DiaryRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return DiaryRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), kept, json, queue)
+        return DiaryRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), kept, json, queue, Dispatchers.Unconfined)
     }
 
     private fun answer(status: Int, name: String) =

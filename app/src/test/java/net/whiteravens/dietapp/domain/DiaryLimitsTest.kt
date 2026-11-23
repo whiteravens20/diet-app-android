@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.time.LocalTime
@@ -51,9 +52,10 @@ class DiaryLimitsTest {
     }
 
     @Test
-    fun `the most entries a day holds`() {
+    fun `a day reads at least as many entries as the phone lets it write`() {
+        // The meals eaten from a plan that is removed stay in the diary, and may leave a day more than are written.
         val entries = schemas.getValue("DiaryDay").jsonObject.getValue("properties").jsonObject.getValue("entries").jsonObject
-        assertEquals(entries.getValue("maxItems").jsonPrimitive.int, MOST_DIARY_ENTRIES)
+        assertTrue(entries.getValue("maxItems").jsonPrimitive.int >= MOST_DIARY_ENTRIES)
     }
 
     @Test

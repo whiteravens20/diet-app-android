@@ -56,9 +56,23 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.NoDisplay" />
 
+        <!-- A tap on one of the application's notifications, with no screen of its own: only its own pending intents start it. -->
+        <activity
+            android:name=".notify.NotificationTapActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- A press of an amount on a reminder of water: only the application's own notifications send it. -->
         <receiver
             android:name=".notify.WaterReminderReceiver"
+            android:exported="false" />
+
+        <!-- The system's installer answering an install session of a newer build: only the session's pending intent reaches it. -->
+        <receiver
+            android:name=".data.update.UpdateStatusReceiver"
             android:exported="false" />
     </application>
 </manifest>

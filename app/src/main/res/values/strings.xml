@@ -321,6 +321,12 @@
     <string name="plans_packs_into_freezer_item">%1$s, %2$s</string>
     <string name="plans_packs_into_freezer_rest">%1$s (%2$s)</string>
     <string name="plans_packs_from_freezer">From the freezer, of what it held when the plan was made: %1$s.</string>
+    <string name="plans_stays_frozen_title">Stays in the freezer:</string>
+    <plurals name="plans_stays_frozen_whole">
+        <item quantity="one">%1$s, %2$s: the plan eats at most %4$s of it in 2\u00A0days, and thawed it has to be eaten within 2\u00A0days. Freeze it in portions of up to %4$s.</item>
+        <item quantity="other">%1$s, %2$s, %3$s\u00A0packages: the plan eats at most %4$s of it in 2\u00A0days, and thawed it has to be eaten within 2\u00A0days. Freeze it in portions of up to %4$s.</item>
+    </plurals>
+    <string name="plans_stays_frozen_later">%1$s, %2$s: frozen after the plan was made, and a plan counts the freezer as it was on the day it was made. Make the plan again to use it.</string>
     <string name="plans_packs_from_freezer_item_left">%1$s, a portion of %2$s, of which the plan eats %3$s</string>
     <string name="plans_use_up_ask">What would use them up?</string>
     <string name="plans_use_up_asking">Looking…</string>
@@ -333,7 +339,7 @@
     <string name="plans_mark_eaten">Mark as eaten</string>
     <string name="plans_action_for">%1$s: %2$s</string>
     <string name="plans_add_custom_meal">+ Add custom meal</string>
-    <string name="plans_delete_confirm">Delete this plan? This cannot be undone.</string>
+    <string name="plans_delete_confirm">Delete this plan? This cannot be undone. What was eaten from it stays in the diary.</string>
     <string name="plans_delete_joint_note">The other plan (%1$s) stays as a plan of its own, without shared meals.</string>
     <string name="plans_rebalance_title">The portions of the day were sized again</string>
     <string name="plans_rebalance_summary">%1$s → %2$s kcal · %3$s meal(s) rescaled.</string>
@@ -354,6 +360,8 @@
     <string name="plans_custom_servings_hint">The meal counts as this many of those servings.</string>
     <string name="plans_custom_total">The meal adds to the day: %1$s kcal · protein %2$s g · fat %3$s g · carbs %4$s g.</string>
     <string name="plans_custom_total_pending">What the meal adds to the day shows here once one serving and the number of servings are filled in.</string>
+    <string name="plans_custom_total_pending_chosen">What the meal adds to the day shows here once it is chosen and its amount filled in.</string>
+    <string name="plans_custom_kind_typed">Typed figures</string>
     <string name="plans_custom_submit">Add meal</string>
     <string name="plans_change_meal">Change</string>
     <string name="plans_swap">Swap</string>
@@ -901,6 +909,8 @@
     <string name="shopping_bought">bought</string>
     <string name="shopping_of_total">(of %1$s)</string>
     <string name="shopping_best_before">best before %1$s</string>
+    <string name="shopping_from_pantries">From the pantry: %1$s</string>
+    <string name="shopping_frozen_kept">%1$s more stays in the freezer: the plan does not thaw it.</string>
     <string name="shopping_buy_packs">Bought in packs: %1$s of %2$s</string>
     <plurals name="shopping_buy_later">
         <item quantity="one">Of these, buy %1$d pack %2$s (%3$s) at the earliest.</item>
@@ -1443,6 +1453,8 @@
     <string name="profile_disliked_hint">The planner and the swaps take a recipe with one of these only where nothing else fits the meal. To rule a food out altogether, put it under “Avoid ingredients”.</string>
     <string name="profile_avoided">Avoid ingredients</string>
     <string name="profile_avoided_hint">The planner skips recipes that contain these.</string>
+    <string name="profile_avoided_kin">Avoid as well:</string>
+    <string name="profile_disliked_kin">Add as well:</string>
     <string name="profile_risk_minor">Under 18 the figures of this application are an approximation, and losing weight is something to do with a doctor.</string>
     <string name="profile_risk_underweight">With this height and weight the body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
     <string name="profile_risk_held">Until the box below is ticked, the goal is saved but plans follow maintenance.</string>
@@ -1472,6 +1484,8 @@
     <string name="pickers_none_yet">None yet.</string>
     <string name="pickers_no_matches">No matches.</string>
     <string name="pickers_add_ticked">Add the ticked (%1$d)</string>
+    <string name="pickers_add_kin">+ %1$s</string>
+    <string name="pickers_kin_no">No, thanks</string>
     <string name="pickers_remove">Remove %1$s</string>
     <!-- Two to five meals a day: both languages say any of these numbers as written here. -->
     <string name="catalogue_none" tools:ignore="PluralsCandidate">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet.</string>
@@ -1861,6 +1875,7 @@
     <string name="diary_open_plan">Open the plan</string>
     <string name="diary_open_meal">Open the meal</string>
     <string name="diary_from_plan">From the plan</string>
+    <string name="diary_from_other_plan">From another plan</string>
     <string name="diary_eaten_of">Eaten: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>
     <string name="diary_meal_kcal_from_pot">≈%1$s\u00A0kcal from a shared pot</string>
@@ -1944,6 +1959,8 @@
         <item quantity="one">The diary adds %2$s kcal to this day (%1$d entry).</item>
         <item quantity="other">The diary adds %2$s kcal to this day (%1$d entries).</item>
     </plurals>
+    <string name="plans_other_plans_line">What was eaten from another plan adds %1$s\u00A0kcal to this day.</string>
+    <string name="plans_diary_and_other_plans_line">The diary and what was eaten from another plan add %1$s\u00A0kcal to this day.</string>
     <string name="diary_kind_product">Product</string>
     <string name="diary_pick_product_first">First find and pick a product.</string>
     <string name="diary_product_no_figures_short">This product has no figures to add.</string>
@@ -2058,6 +2075,26 @@
     <string name="plans_reword_intro">Correct the title, the description and the steps. The change goes into this recipe, so the plan shows it at once. Ingredients and nutrition stay as they are.</string>
     <string name="plans_macros_off_chip">Macros off target</string>
     <string name="plans_macros_off_hint">This day\'s share of macronutrients is far from its target. Swapping a meal shows what the new recipe would make of it.</string>
+    <string name="plans_macros_lean">Too much %1$s, too little %2$s.</string>
+    <string name="plans_macro_of_protein">protein</string>
+    <string name="plans_macro_of_fat">fat</string>
+    <string name="plans_macro_of_carbs">carbohydrate</string>
+    <string name="plans_macros_cause_fixed">Meals the plan does not change (eaten, your own, leftovers, diary entries) hold %1$s%% of the day\'s energy and are far from the target themselves.</string>
+    <string name="plans_macros_cause_cook_time">A cooking-time limit of %1$s\u00A0min leaves few dishes of this diet. Lengthen it in “Day settings…” or add a meal.</string>
+    <plurals name="plans_macros_cause_fewer_meals">
+        <item quantity="one">The day has %1$s meal, fewer than the plan\'s other days, so fewer dishes balance the split. Add a meal in “Day settings…”.</item>
+        <item quantity="other">The day has %1$s meals, fewer than the plan\'s other days, so fewer dishes balance the split. Add a meal in “Day settings…”.</item>
+    </plurals>
+    <string name="plans_macros_cause_use_up">The day uses up food that goes off soon, so its recipes are chosen for that, not for the split.</string>
+    <plurals name="plans_macros_cause_by_hand">
+        <item quantity="one">One meal of the day was chosen by hand: a swap, a favourite or a dish off the diet.</item>
+        <item quantity="other">%1$s meals of the day were chosen by hand: a swap, a favourite or a dish off the diet.</item>
+    </plurals>
+    <string name="plans_macros_cause_single_dish">When the plan was made, only one dish fit %1$s: the exclusions and the diet leave few recipes there.</string>
+    <string name="plans_macros_cause_no_waste">A “No waste” plan chooses its dishes to use up opened packs, not for the split. A next plan with “Waste less”, or without either, comes closer to the target.</string>
+    <string name="plans_macros_cause_repeats">The limit “Max times one recipe can repeat” (%1$s) leaves few dishes that keep the split. A next plan with a higher limit has more to choose from.</string>
+    <string name="plans_macros_cause_protein_kinds">The profile\'s limits on meals with the same kind of protein leave fewer dishes with protein. If the split matters more, loosen them in the profile.</string>
+    <string name="plans_macros_cause_diet">The dishes of this diet that fit the profile\'s settings usually have another split. Swapping a meal shows what the new recipe would make of it.</string>
     <string name="plans_average_over">On average a day of this plan holds more than a tenth over its target.</string>
     <string name="plans_average_under">On average a day of this plan holds more than a tenth under its target.</string>
     <string name="plans_average_macros">The plan\'s average macronutrients are far from its target.</string>
@@ -2149,6 +2186,7 @@
     <string name="recipe_portion_whole_same">Below are the amounts of the original recipe, for %1$s: as much as this cooking in the plan.</string>
     <string name="plans_estimated_chip">≈ estimate</string>
     <string name="plans_from_diary_chip">from the diary</string>
+    <string name="plans_from_other_plan_chip">from another plan</string>
     <string name="plans_custom_estimated_note">Custom meal: what was not entered of its macronutrients is estimated from the day\'s target.</string>
     <string name="plans_custom_macros_optional">The calories are enough. What you leave out is estimated from the day\'s target and marked ≈.</string>
     <string name="plans_custom_total_estimated">The meal adds to the day: %1$s kcal. The macronutrients left out will be estimated from the day\'s target.</string>

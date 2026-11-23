@@ -229,12 +229,19 @@ class ChangeQueueTest {
     }
 
     @Test
-    fun `a change whose answer cannot be read is kept as refused, not sent again and again`() = runBlocking {
-        queue.submit(row("bread"), offline)
+    fun `a change whose answer cannot be read was made, so it leaves as sent, neither refused nor sent again`() = runBlocking {
+        listOf("bread", "milk").forEach { queue.submit(row(it), offline) }
+        val sent = mutableListOf<QueuedChange>()
 
-        assertEquals(Drained.EMPTY, queue.drain { throw SerializationException("unreadable answer") })
+        val drained = queue.drain { change ->
+            sent += change
+            if (change == row("bread")) throw SerializationException("unreadable answer")
+        }
 
-        assertEquals(ChangeQueue.UNSENDABLE, queue.refused.first().single().code)
+        assertEquals(Drained.EMPTY, drained)
+        assertEquals(listOf(row("bread"), row("milk")), sent)
+        assertTrue(queue.refused.first().isEmpty())
+        assertTrue(queue.waiting.first().isEmpty())
     }
 
     @Test

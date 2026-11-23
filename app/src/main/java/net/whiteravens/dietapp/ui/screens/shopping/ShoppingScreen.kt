@@ -669,9 +669,25 @@ internal fun ShoppingItemRow(
                             if (item.shares.isNotEmpty()) {
                                 Text(sharesLine(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
+                            // And whose pantry holds what is at home, as a part counting on another's does.
+                            if (item.pantries.isNotEmpty()) {
+                                Text(
+                                    stringResource(R.string.shopping_from_pantries, pantriesLine(item)),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                             // Fresh meat or fish for a later day: which of its packs to buy later, and from when.
                             laterLines(item).forEach { later ->
                                 Text(later, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            // What the freezer keeps of the food that the row does not count: the plan leaves it there.
+                            if (item.frozenKept > 0) {
+                                Text(
+                                    stringResource(R.string.shopping_frozen_kept, amountLabel(item.frozenKept, item.displayUnit, item.gramsOf(item.frozenKept))),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
                             if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
                         }

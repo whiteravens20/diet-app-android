@@ -50,8 +50,8 @@ import java.io.IOException
 class AuthRepositoryTest {
     private val json = AppModule.json()
 
-    /** The token store's pending revocation, kept in memory. */
-    private class Tokens(var session: Session?, var pending: PendingRevocation? = null)
+    /** The token store's pending revocations, kept in memory. */
+    private class Tokens(var session: Session?, var pending: List<PendingRevocation> = emptyList())
 
     /** The server the app talks to, [SERVER] unless a test changes it. */
     private var current = SERVER
@@ -67,13 +67,18 @@ class AuthRepositoryTest {
         every { tokens.session } returns emptyFlow()
         coEvery { tokens.current() } answers { held.session }
         coEvery { tokens.clear() } answers { held.session = null }
-        coEvery { tokens.pendingRevocation() } answers { held.pending }
-        coEvery { tokens.setPendingRevocation(any()) } answers { held.pending = firstArg() }
+        coEvery { tokens.pendingRevocations() } answers { held.pending }
+        coEvery { tokens.keepPendingRevocations(any()) } answers { held.pending = firstArg() }
         return tokens
     }
 
     private fun refused(status: Int) = HttpException(
         Response.error<Any>(status, """{"statusCode":$status,"error":"INVALID_REFRESH","message":"No."}""".toResponseBody("application/json".toMediaType())),
+    )
+
+    /** An answer of something before the API: a proxy's page. */
+    private fun notTheApi(status: Int) = HttpException(
+        Response.error<Any>(status, "<html><body>$status</body></html>".toResponseBody("text/html".toMediaType())),
     )
 
     @Test
@@ -88,13 +93,13 @@ class AuthRepositoryTest {
         runBlocking { AuthRepository(api, tokens, sessionEnd, servers(), json).signOut() }
 
         coVerifyOrder {
-            tokens.setPendingRevocation(PendingRevocation("refresh-1", SERVER))
+            tokens.keepPendingRevocations(listOf(PendingRevocation("refresh-1", SERVER)))
             sessionEnd.end()
             api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1"))
-            tokens.setPendingRevocation(null)
+            tokens.keepPendingRevocations(emptyList())
         }
         assertNull(held.session)
-        assertNull(held.pending)
+        assertEquals(emptyList<PendingRevocation>(), held.pending)
     }
 
     @Test
@@ -109,18 +114,18 @@ class AuthRepositoryTest {
         runBlocking { auth.signOut() }
 
         assertNull(held.session)
-        assertEquals(PendingRevocation("refresh-1", SERVER), held.pending)
+        assertEquals(listOf(PendingRevocation("refresh-1", SERVER)), held.pending)
 
         coEvery { api.logout(any(), any()) } returns Unit
         runBlocking { auth.retryRevocation() }
 
-        assertNull(held.pending)
+        assertEquals(emptyList<PendingRevocation>(), held.pending)
         coVerify(exactly = 2) { api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1")) }
     }
 
     @Test
     fun `a revocation kept from before a change of server goes to the server of its session alone`() {
-        val held = Tokens(session = null, pending = PendingRevocation("refresh-1", SERVER))
+        val held = Tokens(session = null, pending = listOf(PendingRevocation("refresh-1", SERVER)))
         val api = mockk<AuthApiService>()
         coEvery { api.logout(any(), any()) } returns Unit
         current = "https://another.example.test/api/"
@@ -129,22 +134,62 @@ class AuthRepositoryTest {
 
         coVerify(exactly = 1) { api.logout(any(), any()) }
         coVerify { api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1")) }
-        assertNull(held.pending)
+        assertEquals(emptyList<PendingRevocation>(), held.pending)
     }
 
     @Test
-    fun `a revocation the server refuses is not kept, the token being no good already`() {
-        val held = Tokens(session = null, pending = PendingRevocation("refresh-1", SERVER))
+    fun `a revocation the API refuses as no good is not kept, the token being no good already`() {
+        for (status in listOf(400, 401, 404)) {
+            val held = Tokens(session = null, pending = listOf(PendingRevocation("refresh-1", SERVER)))
+            val api = mockk<AuthApiService>()
+            coEvery { api.logout(any(), any()) } throws refused(status)
+
+            runBlocking { AuthRepository(api, tokens(held), mockk(), servers(), json).retryRevocation() }
+
+            assertEquals("answered $status", emptyList<PendingRevocation>(), held.pending)
+        }
+    }
+
+    @Test
+    fun `a revocation answered with a limit, an error of the server or a page not of the API is kept and sent at the next start`() {
+        for (answer in listOf(refused(429), refused(503), notTheApi(404), notTheApi(502))) {
+            val held = Tokens(session = null, pending = listOf(PendingRevocation("refresh-1", SERVER)))
+            val api = mockk<AuthApiService>()
+            coEvery { api.logout(any(), any()) } throws answer
+            val auth = AuthRepository(api, tokens(held), mockk(), servers(), json)
+
+            runBlocking { auth.retryRevocation() }
+            assertEquals("answered ${answer.code()}", listOf(PendingRevocation("refresh-1", SERVER)), held.pending)
+
+            coEvery { api.logout(any(), any()) } returns Unit
+            runBlocking { auth.retryRevocation() }
+            assertEquals(emptyList<PendingRevocation>(), held.pending)
+        }
+    }
+
+    @Test
+    fun `two sign-outs without a server are both kept, and both revoked at the next start`() {
+        val held = Tokens(Session("access", "refresh-1"))
+        val sessionEnd = mockk<SessionEnd>()
+        coEvery { sessionEnd.end() } answers { held.session = null }
         val api = mockk<AuthApiService>()
-        coEvery { api.logout(any(), any()) } throws refused(401)
+        coEvery { api.logout(any(), any()) } throws IOException("no network")
+        val auth = AuthRepository(api, tokens(held), sessionEnd, servers(), json)
 
-        runBlocking { AuthRepository(api, tokens(held), mockk(), servers(), json).retryRevocation() }
+        runBlocking { auth.signOut() }
+        held.session = Session("access-2", "refresh-2")
+        runBlocking { auth.signOut() }
+        assertEquals(listOf(PendingRevocation("refresh-1", SERVER), PendingRevocation("refresh-2", SERVER)), held.pending)
 
-        assertNull(held.pending)
+        coEvery { api.logout(any(), any()) } returns Unit
+        runBlocking { auth.retryRevocation() }
+        assertEquals(emptyList<PendingRevocation>(), held.pending)
+        coVerify { api.logout(ServerAddress(SERVER), RefreshRequest("refresh-1")) }
+        coVerify { api.logout(ServerAddress(SERVER), RefreshRequest("refresh-2")) }
     }
 
     @Test
-    fun `the end of a session takes the phone's notifications, the account's colours, the icon's shortcuts and the notices put aside away and clears the cached copies, before the tokens, and the unlock after them`() {
+    fun `the end of a session takes the phone's notifications, the account's colours, the icon's shortcuts and the notices put aside away and clears the cached copies, before the tokens and once more after them, and the unlock after them`() {
         val cache = mockk<CacheDatabase>(relaxed = true)
         val tokens = mockk<TokenStore>(relaxed = true)
         val phoneNotifications = mockk<PhoneNotificationsSwitch>(relaxed = true)
@@ -169,6 +214,8 @@ class AuthRepositoryTest {
             waterNote.forget()
             cache.clearAllTables()
             tokens.clear()
+            // Once more: what a request under way at the sign-out wrote back after the first clearing goes too.
+            cache.clearAllTables()
             unlock.forget()
             unlockDevice.deleteKey()
         }

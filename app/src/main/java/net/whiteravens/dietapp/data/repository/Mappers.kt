@@ -15,6 +15,8 @@ import net.whiteravens.dietapp.data.remote.LabelTotalsDto
 import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.CookingChangeDto
+import net.whiteravens.dietapp.data.remote.EatenInOtherPlanDto
+import net.whiteravens.dietapp.data.remote.MacrosOffWhyDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
@@ -90,12 +92,19 @@ import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.data.remote.HouseholdListDto
 import net.whiteravens.dietapp.data.remote.PlanThawDto
+import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.DiaryTopping
+import net.whiteravens.dietapp.domain.EatenElsewhere
 import net.whiteravens.dietapp.domain.FreezerStock
+import net.whiteravens.dietapp.domain.FrozenKept
+import net.whiteravens.dietapp.domain.MacrosOffCause
+import net.whiteravens.dietapp.domain.MacrosOffWhy
 import net.whiteravens.dietapp.domain.FrozenRest
 import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.HouseholdOf
 import net.whiteravens.dietapp.domain.HouseholdPart
 import net.whiteravens.dietapp.domain.ItemShare
+import net.whiteravens.dietapp.domain.RowPantry
 import net.whiteravens.dietapp.domain.LineAmount
 import net.whiteravens.dietapp.domain.Thaw
 
@@ -351,6 +360,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     resizes = resizes,
     belowSafetyFloor = belowSafetyFloor,
     macrosOff = macrosOff,
+    macrosOffWhy = macrosOffWhy?.toDomain(),
     targetMacros = targetMacros.toDomain(),
     locks = overrides?.lockedSlots.orEmpty().associate { it.mealType to it.recipeId },
     settings = mealCount?.let { count ->
@@ -363,7 +373,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
             useUpBy = overrides?.useUpBy == true,
         )
     },
-    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }) },
+    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }, it.otherPlans.map { meal -> meal.toDomain() }) },
     label = dayLabel?.toDomain(),
     labelNotes = labelNotes.toNotes(),
     listed = listed,
@@ -454,6 +464,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
             )
         },
         fromFreezer = packs.fromFreezer.map { held -> FreezerStock(held.ingredientId, held.name, held.unit, held.date, held.mealId, held.amount, held.eaten) },
+        staysFrozen = packs.staysFrozen.map { kept -> FrozenKept(kept.name, kept.unit, kept.amount, kept.packages, kept.why == "later", kept.mostInTwoDays) },
     ),
     byModel = generationMode == "ai_assisted",
     mayGiveWay = options.allowRelaxations,
@@ -559,6 +570,8 @@ fun ShoppingListItemDto.toDomain() = ShoppingItem(
     buyLater = buyLater.map { BuyLater(it.packs, it.from) },
     gramsPerPiece = gramsPerPiece,
     shares = shares.map { ItemShare(it.profileId, it.profile, it.totalQuantity) },
+    pantries = pantries.map { RowPantry(it.profileId, it.profile, it.quantity) },
+    frozenKept = frozenKept,
 )
 
 fun ShoppingListGroupDto.toDomain() = ShoppingGroup(
@@ -592,3 +605,40 @@ fun HouseholdListDto.toDomain(syncedAt: Long? = null) = HouseholdList(
 )
 
 private fun PlanThawDto.toDomain() = Thaw(date, mealId, amount)
+
+/** A day's why as the screen says it; a cause of a kind this version does not know is left unsaid, not named as another. */
+fun MacrosOffWhyDto.toDomain() = MacrosOffWhy(
+    over = over,
+    under = under,
+    causes = causes.mapNotNull { cause ->
+        when (cause.kind) {
+            "fixed" -> MacrosOffCause.Fixed(cause.share ?: 0)
+            "cookTime" -> MacrosOffCause.CookTime(cause.minutes ?: 0)
+            "fewerMeals" -> MacrosOffCause.FewerMeals(cause.count ?: 0)
+            "useUp" -> MacrosOffCause.UseUp
+            "byHand" -> MacrosOffCause.ByHand(cause.count ?: 0)
+            "singleDish" -> MacrosOffCause.SingleDish(cause.slots)
+            "noWaste" -> MacrosOffCause.NoWaste
+            "repeats" -> MacrosOffCause.Repeats(cause.count ?: 0)
+            "proteinKinds" -> MacrosOffCause.ProteinKinds
+            "diet" -> MacrosOffCause.Diet
+            else -> null
+        }
+    }.distinct(),
+)
+
+/** A meal eaten on its day from another plan of the profile, as the diary and a plan's day show it. */
+internal fun EatenInOtherPlanDto.toDomain() = EatenElsewhere(
+    DiaryPlanMeal(
+        id,
+        mealType,
+        name,
+        recipeId,
+        eaten,
+        nutrition.calories,
+        fromPot,
+        topping?.let { DiaryTopping(it.name, it.display.quantity, it.display.unit, it.display.grams) },
+    ),
+    planId,
+    Macros(nutrition.protein, nutrition.fat, nutrition.carbs),
+)

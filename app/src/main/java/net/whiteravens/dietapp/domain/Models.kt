@@ -323,7 +323,13 @@ data class CalorieQuestion(
 data class CaloriePreview(val calculation: CalorieTarget, val paces: List<CalorieTarget>)
 
 /** An ingredient of the catalogue, as a picker offers it. */
-data class IngredientChoice(val id: String, val name: String, val category: String)
+data class IngredientChoice(
+    val id: String,
+    val name: String,
+    val category: String,
+    /** The ids of the foods of its kin: offered beside it where it is added to the foods to avoid or not liked. */
+    val kin: List<String> = emptyList(),
+)
 
 data class Nutrition(
     val calories: Double,
@@ -601,6 +607,8 @@ data class PlanDay(
     val belowSafetyFloor: Boolean,
     /** What the day holds is far from the share of macronutrients it aims at. */
     val macrosOff: Boolean = false,
+    /** Of a day [macrosOff]: what it holds too much and too little of, and what makes it so. */
+    val macrosOffWhy: MacrosOffWhy? = null,
     /** What the day aims at in grams under the diet's split. */
     val targetMacros: Macros,
     /** The recipe each meal of the day was locked to when the plan was made, by meal. */
@@ -618,7 +626,13 @@ data class PlanDay(
 )
 
 /** What the diary adds to a day of a plan: how many entries, what they come to, and the entries, the first written first. */
-data class DayDiary(val entries: Int, val nutrition: Nutrition, val items: List<DiaryEntry> = emptyList())
+data class DayDiary(
+    val entries: Int,
+    val nutrition: Nutrition,
+    val items: List<DiaryEntry> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [nutrition]. */
+    val otherPlans: List<EatenElsewhere> = emptyList(),
+)
 
 /**
  * What a day of a running plan is set to: its kind ([dayType] `normal` | `rest` | `training`),
@@ -908,7 +922,48 @@ data class PlanPacks(
     val open: List<OpenPack>,
     val frozen: List<FrozenRest> = emptyList(),
     val fromFreezer: List<FreezerStock> = emptyList(),
+    /** What the freezer holds of the menu's foods that the plan leaves there, and why. */
+    val staysFrozen: List<FrozenKept> = emptyList(),
 )
+
+/** Packages the plan leaves in the freezer: [why] whole (too much for the days a thawed one keeps) or later (frozen after the plan). */
+data class FrozenKept(
+    val name: String,
+    val unit: String,
+    val amount: Int,
+    val packages: Int,
+    val later: Boolean,
+    val mostInTwoDays: Int,
+)
+
+/** What a day off its split holds too much and too little of (`protein` | `fat` | `carbs`), and each thing that makes it so. */
+data class MacrosOffWhy(val over: String, val under: String, val causes: List<MacrosOffCause>)
+
+/** One thing that keeps a day off its split. */
+sealed interface MacrosOffCause {
+    /** What the plan does not change holds [share] per cent of the day, itself far from the split. */
+    data class Fixed(val share: Int) : MacrosOffCause
+
+    data class CookTime(val minutes: Int) : MacrosOffCause
+
+    data class FewerMeals(val count: Int) : MacrosOffCause
+
+    data object UseUp : MacrosOffCause
+
+    data class ByHand(val count: Int) : MacrosOffCause
+
+    /** One dish alone fit these times of day when the plan was made. */
+    data class SingleDish(val slots: List<String>) : MacrosOffCause
+
+    data object NoWaste : MacrosOffCause
+
+    data class Repeats(val count: Int) : MacrosOffCause
+
+    data object ProteinKinds : MacrosOffCause
+
+    /** None of the others: the diet's dishes themselves. */
+    data object Diet : MacrosOffCause
+}
 
 /** What a meal takes out of the freezer on [date] (yyyy-MM-dd); [mealId] null where the meal is none of this plan's. */
 data class Thaw(val date: String, val mealId: String?, val amount: Int)
@@ -1264,6 +1319,10 @@ data class ShoppingItem(
     val gramsPerPiece: Double? = null,
     /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
     val shares: List<ItemShare> = emptyList(),
+    /** Whose pantry holds what is at home, where more than the row's own counts. */
+    val pantries: List<RowPantry> = emptyList(),
+    /** What the freezer keeps of the food that the row does not count: the plan leaves it there. */
+    val frozenKept: Double = 0.0,
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome
@@ -1344,6 +1403,9 @@ data class ShoppingList(
 
 /** What a profile's plan needs of a row of a household list, in the row's unit. */
 data class ItemShare(val profileId: String, val profile: String, val totalQuantity: Double)
+
+/** What the pantry of a profile holds of what is at home for a row, in the row's unit. */
+data class RowPantry(val profileId: String, val profile: String, val quantity: Double)
 
 /** The household list a plan's own list is a part of, and the profiles it is for. */
 data class HouseholdOf(val id: String, val profiles: List<String>)

@@ -154,7 +154,7 @@
           "admin"
         ],
         "summary": "What the API sees of the connection the administrator is on.",
-        "description": "What the API sees of the connection the administrator is on. Opened through the public address of the instance, it shows whether the reverse proxy passes the client's address on and whether `TRUST_PROXY` is set to believe it.\n\nAsked by the administrator.",
+        "description": "What the API sees of the connection the administrator is on. Opened through the public address of the instance, it shows whether the reverse proxy passes the client's address on and whether `TRUST_PROXY` is set to believe it. Without it, the address the web server says it accepted the connection from is the client's, unless a proxy stands before the web server: its address then differs from the one the proxy wrote last.\n\nAsked by the administrator.",
         "security": [
           {
             "administrator": []
@@ -3163,7 +3163,7 @@
           "auth"
         ],
         "summary": "Open an account, and a session with it.",
-        "description": "Open an account, and a session with it. An address opens at most three accounts a day, where the instance knows the client's address (`TRUST_PROXY`); the fourth is 429 `TOO_MANY_SIGN_UPS`.\n\nAsked by anyone.\n\nLimited to 10 in a minute, for each sender.",
+        "description": "Open an account, and a session with it. An address opens at most three accounts a day, where the instance knows the client's address (`TRUST_PROXY`, or the bundled web server's word for a public one); the fourth is 429 `TOO_MANY_SIGN_UPS`.\n\nAsked by anyone.\n\nLimited to 10 in a minute, for each sender.",
         "security": [],
         "parameters": [
           {
@@ -4726,7 +4726,7 @@
           "inventory"
         ],
         "summary": "Put something into the pantry: added to the row of that ingredient and unit, or a new row; what is counted, to its row in pieces.",
-        "description": "Put something into the pantry: added to the row of that ingredient and unit, or a new row; what is counted, to its row in pieces. Sent again with the same `Idempotency-Key` within a week, it is answered with that row as it is now and adds nothing.\n\nAsked by an account.",
+        "description": "Put something into the pantry: added to the row of that ingredient and unit, or a new row; what is counted, to its row in pieces. An ingredient the catalogue retired is refused as one that does not exist (404 `INGREDIENT_NOT_FOUND`) unless the pantry still holds it. Sent again with the same `Idempotency-Key` within a week, it is answered with that row as it is now and adds nothing.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -5119,7 +5119,7 @@
           "meal-plans"
         ],
         "summary": "Delete a plan.",
-        "description": "Delete a plan. Its shopping lists go with it, and what was obtained for days still ahead goes into the pantry.\n\nAsked by an account.",
+        "description": "Delete a plan. Its shopping lists go with it, and what was obtained for days still ahead goes into the pantry; what was eaten from it stays in the diary, each meal marked eaten as an entry of its day.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -5133,6 +5133,15 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -6982,6 +6991,16 @@
         ],
         "parameters": [
           {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "Accept-Language",
             "in": "header",
             "required": false,
@@ -7409,6 +7428,16 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
           {
             "name": "Accept-Language",
             "in": "header",
@@ -10115,6 +10144,16 @@
             }
           },
           {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "Accept-Language",
             "in": "header",
             "required": false,
@@ -11425,12 +11464,13 @@
           "replaces": {
             "type": "string",
             "format": "uuid"
+          },
+          "of": {
+            "$ref": "#/components/schemas/CustomMealOf"
           }
         },
         "required": [
-          "name",
-          "mealType",
-          "nutrition"
+          "mealType"
         ]
       },
       "AddFavoriteRequest": {
@@ -13993,6 +14033,91 @@
           "indian"
         ]
       },
+      "CustomMealOf": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "recipe"
+              },
+              "recipeId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "servings": {
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 20
+              }
+            },
+            "required": [
+              "kind",
+              "recipeId",
+              "servings"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "ingredient"
+              },
+              "ingredientId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "amount": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 5000
+                  },
+                  "unit": {
+                    "$ref": "#/components/schemas/Unit"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "unit"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "ingredientId",
+              "amount"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "product"
+              },
+              "productId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "quantity": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 5000
+              }
+            },
+            "required": [
+              "kind",
+              "productId",
+              "quantity"
+            ]
+          }
+        ]
+      },
       "DayMealFate": {
         "type": "object",
         "properties": {
@@ -14722,10 +14847,17 @@
             ]
           },
           "entries": {
-            "maxItems": 40,
+            "maxItems": 60,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DiaryEntry"
+            }
+          },
+          "otherPlans": {
+            "maxItems": 1980,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EatenInOtherPlan"
             }
           },
           "eaten": {
@@ -14751,6 +14883,7 @@
           "target",
           "plan",
           "entries",
+          "otherPlans",
           "eaten",
           "eatenLabel",
           "labelNotes",
@@ -15282,6 +15415,84 @@
           "REJECTED",
           "SHIPPED"
         ]
+      },
+      "EatenInOtherPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mealType": {
+            "$ref": "#/components/schemas/MealType"
+          },
+          "name": {
+            "type": "string"
+          },
+          "recipeId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "eaten": {
+            "type": "boolean"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/Nutrition"
+          },
+          "label": {
+            "$ref": "#/components/schemas/LabelTotals"
+          },
+          "topping": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "display": {
+                    "$ref": "#/components/schemas/DisplayAmount"
+                  }
+                },
+                "required": [
+                  "name",
+                  "display"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fromPot": {
+            "type": "boolean"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "mealType",
+          "name",
+          "recipeId",
+          "eaten",
+          "nutrition",
+          "label",
+          "topping",
+          "fromPot",
+          "planId"
+        ],
+        "additionalProperties": false
       },
       "EstimatedMacro": {
         "type": "string",
@@ -16098,6 +16309,32 @@
             "type": "number",
             "minimum": 0
           },
+          "pantries": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "profileId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "profileId",
+                "profile",
+                "quantity"
+              ],
+              "additionalProperties": false
+            }
+          },
           "toBuyQuantity": {
             "type": "number",
             "minimum": 0
@@ -16113,6 +16350,11 @@
                 "type": "null"
               }
             ]
+          },
+          "frozenKept": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
           },
           "pantryBestBefore": {
             "default": null,
@@ -16226,8 +16468,10 @@
           "displayUnit",
           "gramsPerPiece",
           "alreadyHaveQuantity",
+          "pantries",
           "toBuyQuantity",
           "purchasedQuantity",
+          "frozenKept",
           "pantryBestBefore",
           "estimatedCalories",
           "packs",
@@ -16350,6 +16594,14 @@
               "$ref": "#/components/schemas/Allergen"
             }
           },
+          "kin": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "dietCompatibility": {
             "default": [],
             "type": "array",
@@ -16423,6 +16675,7 @@
           "displayUnit",
           "perTeaspoon",
           "allergens",
+          "kin",
           "dietCompatibility",
           "tags",
           "packSize",
@@ -17928,6 +18181,14 @@
         ],
         "additionalProperties": false
       },
+      "MacroName": {
+        "type": "string",
+        "enum": [
+          "protein",
+          "fat",
+          "carbs"
+        ]
+      },
       "MacroReach": {
         "type": "object",
         "properties": {
@@ -18040,6 +18301,198 @@
           "protein",
           "fat",
           "carbs"
+        ],
+        "additionalProperties": false
+      },
+      "MacrosOffCause": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "fixed"
+              },
+              "share": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "kind",
+              "share"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "cookTime"
+              },
+              "minutes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "minutes"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "fewerMeals"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "kind",
+              "count"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "useUp"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "byHand"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "kind",
+              "count"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "singleDish"
+              },
+              "slots": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MealType"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "slots"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "noWaste"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "repeats"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "kind",
+              "count"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "proteinKinds"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "diet"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MacrosOffWhy": {
+        "type": "object",
+        "properties": {
+          "over": {
+            "$ref": "#/components/schemas/MacroName"
+          },
+          "under": {
+            "$ref": "#/components/schemas/MacroName"
+          },
+          "causes": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MacrosOffCause"
+            }
+          }
+        },
+        "required": [
+          "over",
+          "under",
+          "causes"
         ],
         "additionalProperties": false
       },
@@ -18329,23 +18782,31 @@
                 "properties": {
                   "entries": {
                     "type": "integer",
-                    "minimum": 1
+                    "minimum": 0
                   },
                   "nutrition": {
                     "$ref": "#/components/schemas/Nutrition"
                   },
                   "items": {
-                    "maxItems": 40,
+                    "maxItems": 60,
                     "type": "array",
                     "items": {
                       "$ref": "#/components/schemas/DiaryEntry"
+                    }
+                  },
+                  "otherPlans": {
+                    "maxItems": 1980,
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/EatenInOtherPlan"
                     }
                   }
                 },
                 "required": [
                   "entries",
                   "nutrition",
-                  "items"
+                  "items",
+                  "otherPlans"
                 ],
                 "additionalProperties": false
               },
@@ -18382,6 +18843,17 @@
           },
           "macrosOff": {
             "type": "boolean"
+          },
+          "macrosOffWhy": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MacrosOffWhy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "skipped": {
             "type": "boolean"
@@ -18422,6 +18894,7 @@
           "offTarget",
           "resizes",
           "macrosOff",
+          "macrosOffWhy",
           "skipped",
           "belowSafetyFloor",
           "overrides",
@@ -19926,6 +20399,50 @@
         ],
         "additionalProperties": false
       },
+      "PlanFrozenKept": {
+        "type": "object",
+        "properties": {
+          "ingredientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "packages": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "why": {
+            "type": "string",
+            "enum": [
+              "whole",
+              "later"
+            ]
+          },
+          "mostInTwoDays": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "ingredientId",
+          "name",
+          "unit",
+          "amount",
+          "packages",
+          "why",
+          "mostInTwoDays"
+        ],
+        "additionalProperties": false
+      },
       "PlanFrozenRest": {
         "type": "object",
         "properties": {
@@ -20373,6 +20890,13 @@
             "items": {
               "$ref": "#/components/schemas/PlanFreezerStock"
             }
+          },
+          "staysFrozen": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanFrozenKept"
+            }
           }
         },
         "required": [
@@ -20380,7 +20904,8 @@
           "used",
           "open",
           "frozen",
-          "fromFreezer"
+          "fromFreezer",
+          "staysFrozen"
         ],
         "additionalProperties": false
       },
@@ -25693,6 +26218,32 @@
             "type": "number",
             "minimum": 0
           },
+          "pantries": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "profileId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "profileId",
+                "profile",
+                "quantity"
+              ],
+              "additionalProperties": false
+            }
+          },
           "toBuyQuantity": {
             "type": "number",
             "minimum": 0
@@ -25708,6 +26259,11 @@
                 "type": "null"
               }
             ]
+          },
+          "frozenKept": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
           },
           "pantryBestBefore": {
             "default": null,
@@ -25795,8 +26351,10 @@
           "displayUnit",
           "gramsPerPiece",
           "alreadyHaveQuantity",
+          "pantries",
           "toBuyQuantity",
           "purchasedQuantity",
+          "frozenKept",
           "pantryBestBefore",
           "estimatedCalories",
           "packs",

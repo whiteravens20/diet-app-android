@@ -67,6 +67,11 @@ fun laterLines(item: ShoppingItem): List<String> {
 fun sharesLine(item: ShoppingItem): String =
     item.shares.map { share -> held("${share.profile} ${amountLabel(share.totalQuantity, item.displayUnit, item.gramsOf(share.totalQuantity))}") }.joinToString(DOT)
 
+/** Whose pantry holds what is at home for a row, in one line, as the web says it: `Ala 615 g`. */
+@Composable
+fun pantriesLine(item: ShoppingItem): String =
+    item.pantries.map { pantry -> held("${pantry.profile} ${amountLabel(pantry.quantity, item.displayUnit, item.gramsOf(pantry.quantity))}") }.joinToString(DOT)
+
 /** Hands [text] to the platform's window that shares a text with another app, or copies it, under [title]. */
 fun shareText(context: Context, title: String, text: String, chooser: String) {
     val send = Intent(Intent.ACTION_SEND).apply {

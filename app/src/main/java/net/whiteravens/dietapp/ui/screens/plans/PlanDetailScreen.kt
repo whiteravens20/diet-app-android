@@ -106,6 +106,8 @@ import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.OpenPack
+import net.whiteravens.dietapp.domain.MacrosOffCause
+import net.whiteravens.dietapp.domain.MacrosOffWhy
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.PlanWeek
@@ -167,6 +169,19 @@ import kotlin.math.roundToInt
 import net.whiteravens.dietapp.domain.FrozenRest
 import kotlin.math.pow
 import kotlin.math.roundToLong
+import net.whiteravens.dietapp.domain.EatenElsewhere
+import net.whiteravens.dietapp.domain.FrozenKept
+import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.ui.components.held
+import net.whiteravens.dietapp.ui.screens.diary.EntryForm
+import net.whiteravens.dietapp.ui.screens.diary.EntryKind
+import net.whiteravens.dietapp.ui.screens.diary.EntryPick
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindow
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindowOverlays
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindowState
+import net.whiteravens.dietapp.ui.screens.diary.KindChip
+import net.whiteravens.dietapp.ui.screens.diary.missingOf
 
 /**
  * One plan: what it is and what a day of it holds on average, its days, and the selected day's
@@ -178,6 +193,7 @@ fun PlanDetailScreen(
     onOpenRecipe: (recipeId: String, portion: Double, whole: Boolean) -> Unit,
     onTurnAiOn: () -> Unit,
     onOpenDiary: (profileId: String, date: String) -> Unit,
+    onOpenPlanMeal: (planId: String, date: String, mealId: String) -> Unit,
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -231,6 +247,10 @@ fun PlanDetailScreen(
                 viewModel.customMealClosed()
             }
         }
+        val window by viewModel.mealWindowState.collectAsStateWithLifecycle()
+        val rules by viewModel.mealWindow.rules.collectAsStateWithLifecycle()
+        // A window brought back after the app was ended opens at its figures typed by hand, as it always opened.
+        LaunchedEffect(window.form == null) { if (window.form == null) viewModel.openMealWindow() }
         CustomMealDialog(
             date = date,
             listed = plan?.days?.firstOrNull { it.date == date }?.listed == true,
@@ -238,12 +258,18 @@ fun PlanDetailScreen(
             meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty().filterNot { it.id in state.waitingAdditions },
             sent = state.customMeal,
             sending = state.changing,
+            window = window,
+            host = viewModel.mealWindow,
+            rules = rules,
             onAdd = { meal, replaces -> viewModel.addCustomMeal(date, meal, replaces) },
+            onAddOf = { of, slot, replaces -> viewModel.addMealOf(date, slot, of, replaces) },
             onDismiss = {
                 addingTo = null
                 viewModel.customMealClosed()
             },
         )
+        // A product of one's own being written, and the camera: over the window.
+        EntryWindowOverlays(window, viewModel.mealWindow)
     }
 
     // The meal whose removal from its day is to be confirmed, with what it does said in the window.
@@ -626,11 +652,18 @@ fun PlanDetailScreen(
                 val written = day.diary?.items.orEmpty()
                 // The diary of a day that has come opens from what it holds.
                 val openDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today }
+                // What another plan of the profile had eaten that day counts as the diary does, and opens in its plan.
+                val others = day.diary?.otherPlans.orEmpty()
+                val openOther = { other: EatenElsewhere -> onOpenPlanMeal(other.planId, day.date, other.meal.id) }
                 // What the diary holds for a meal the day has none of stands where that meal would in the day.
                 val apart = entriesApart(day.meals, written)
+                val othersApart = linesApart(day.meals, others) { it.meal.slot }
                 day.meals.forEachIndexed { index, meal ->
                     apart[index].orEmpty().forEach { entry ->
                         item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
+                    }
+                    othersApart[index].orEmpty().forEach { other ->
+                        item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
                     }
                     item(key = meal.id) {
                         MealCard(
@@ -671,13 +704,25 @@ fun PlanDetailScreen(
                         written.filter { it.slot == meal.slot }.forEach { entry ->
                             item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
                         }
+                        others.filter { it.meal.slot == meal.slot }.forEach { other ->
+                            item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
+                        }
                     }
                 }
                 apart[-1].orEmpty().forEach { entry ->
                     item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
                 }
+                othersApart[-1].orEmpty().forEach { other ->
+                    item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
+                }
                 item(key = "add-${day.id}") {
-                    TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
+                    TextButton(
+                        onClick = {
+                            viewModel.openMealWindow()
+                            addingTo = day.date
+                        },
+                        enabled = !busy,
+                    ) { Text(stringResource(R.string.plans_add_custom_meal)) }
                 }
                 if (!readOnly) {
                     // What every swap of the plan puts first: under the meals, out of their way.
@@ -908,6 +953,8 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
                         ),
                     )
                 }
+                // What the freezer holds of the menu's foods that the plan leaves there, and why.
+                if (packs.staysFrozen.isNotEmpty()) StaysFrozenLines(packs.staysFrozen)
                 // What the freezer held goes first only in a plan that took something out of it.
                 Fact(stringResource(if (packs.fromFreezer.isNotEmpty()) R.string.plans_packs_explain_freezer else R.string.plans_packs_explain))
                 useUp?.invoke()
@@ -1065,7 +1112,9 @@ private fun DaySummary(
         LabelNotes(day.labelNotes, Modifier.padding(top = 4.dp))
         if (day.macrosOff) {
             Row(Modifier.padding(top = 4.dp)) { CautionChip(stringResource(R.string.plans_macros_off_chip)) }
-            Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
+            val why = day.macrosOffWhy
+            if (why == null) Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
+            else MacrosOffWhyLines(why, Modifier.padding(top = 4.dp))
         }
         if (over) Fact(stringResource(R.string.plans_day_is_over), Modifier.padding(top = 4.dp))
         thaws?.forToday?.takeIf { it.isNotEmpty() }?.let { lines ->
@@ -1077,8 +1126,14 @@ private fun DaySummary(
         frozen.forEach { rest -> FreezeLine(rest, onKeepFrozen) }
         // What the diary adds to the day is counted in the figures above.
         day.diary?.let { diary ->
+            val kcal = formatNumber(diary.nutrition.calories.roundToInt())
             Text(
-                pluralStringResource(R.plurals.plans_diary_line, diary.entries, diary.entries, formatNumber(diary.nutrition.calories.roundToInt())),
+                // What was eaten from the profile's other plans that day counts as the diary does.
+                when {
+                    diary.otherPlans.isEmpty() -> pluralStringResource(R.plurals.plans_diary_line, diary.entries, diary.entries, kcal)
+                    diary.entries == 0 -> stringResource(R.string.plans_other_plans_line, kcal)
+                    else -> stringResource(R.string.plans_diary_and_other_plans_line, kcal)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
@@ -1408,6 +1463,42 @@ private fun DiaryEntryCard(entry: DiaryEntry, onOpen: (() -> Unit)?) {
     }
 }
 
+/**
+ * A meal eaten that day from another plan of the profile, where the diary's entries stand: its time of the day, that
+ * it is another plan's, its name and what it comes to. A press opens it in its plan.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun OtherPlanMealCard(other: EatenElsewhere, onOpen: () -> Unit) {
+    val meal = other.meal
+    AppCard(onClick = onOpen, modifier = Modifier.padding(start = 24.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LabelChip(mealTypeLabel(meal.slot))
+            PlainChip(stringResource(R.string.plans_from_other_plan_chip))
+        }
+        Text(
+            meal.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        val kcal = meal.calories?.let { held(stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt()))) }
+        val macros = stringResource(
+            R.string.diary_entry_macros,
+            formatNumber(other.macros.protein.roundToInt()),
+            formatNumber(other.macros.fat.roundToInt()),
+            formatNumber(other.macros.carbs.roundToInt()),
+        )
+        Text(
+            listOfNotNull(kcal, macros).joinToString(DOT),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
+}
+
 /** From how far off its plan's portion a meal's portion is worth a mark of its own on the card: a tenth. */
 private const val PORTION_CHIP_FROM = 0.1
 
@@ -1453,6 +1544,7 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
 /** The three macronutrients of a meal of one's own: the width their fields of grams need side by side at the font's usual size. */
 internal val MACROS_SIDE_BY_SIDE = FieldRow(288.dp, 1f, 1f, 1f)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CustomMealDialog(
     date: String,
@@ -1461,7 +1553,12 @@ private fun CustomMealDialog(
     meals: List<Meal>,
     sent: PlanDetailViewModel.CustomMealSent?,
     sending: Boolean,
+    /** What the meal is of where it is not typed by its figures: a recipe, an ingredient or a product, as the diary picks it. */
+    window: EntryWindowState,
+    host: EntryWindow,
+    rules: InstanceRules?,
     onAdd: (CustomMeal, replaces: String?) -> Unit,
+    onAddOf: (NewDiaryEntry, slot: String, replaces: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var form by rememberSaveable(stateSaver = CustomMealFormSaver) { mutableStateOf(CustomMealForm()) }
@@ -1506,15 +1603,26 @@ private fun CustomMealDialog(
                 Text(stringResource(R.string.plans_custom_modal_title), style = MaterialTheme.typography.titleLarge)
                 Text(formatDayDate(date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            // Figures typed first, as the window always had them; what the diary chooses beside them.
+            val picking = window.form ?: EntryForm(kind = EntryKind.MEAL, slot = form.slot)
+            val typed = picking.kind == EntryKind.MEAL
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FormField(
-                    value = form.name,
-                    onValueChange = { typed -> form = form.copy(name = typed) },
-                    label = stringResource(R.string.plans_custom_name),
-                    problem = problemOf(CustomMealField.NAME, Bound.Characters),
-                    keyboardType = KeyboardType.Text,
-                    capitalization = KeyboardCapitalization.Sentences,
-                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    KindChip(EntryKind.MEAL, R.string.plans_custom_kind_typed, picking, host)
+                    if (rules?.productsOffered == true) KindChip(EntryKind.PRODUCT, R.string.diary_kind_product, picking, host)
+                    KindChip(EntryKind.RECIPE, R.string.diary_kind_recipe, picking, host)
+                    KindChip(EntryKind.INGREDIENT, R.string.diary_kind_ingredient, picking, host)
+                }
+                if (typed) {
+                    FormField(
+                        value = form.name,
+                        onValueChange = { typed -> form = form.copy(name = typed) },
+                        label = stringResource(R.string.plans_custom_name),
+                        problem = problemOf(CustomMealField.NAME, Bound.Characters),
+                        keyboardType = KeyboardType.Text,
+                        capitalization = KeyboardCapitalization.Sentences,
+                    )
+                }
                 ChoiceField(
                     label = stringResource(R.string.plans_custom_meal_type),
                     options = CUSTOM_MEAL_SLOTS,
@@ -1533,41 +1641,52 @@ private fun CustomMealDialog(
                     },
                     onSelect = { id -> replaces = id },
                 )
-                Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
-                Hint(stringResource(R.string.plans_custom_macros_optional))
-                Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
-                // The three macronutrients side by side, in grams, where they fit at the font's size; one under another where not.
-                val grams = stringResource(R.string.unit_g)
-                SideBySide(MACROS_SIDE_BY_SIDE) { place ->
-                    Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = place(0))
-                    Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = place(1))
-                    Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = place(2))
+                if (!typed) {
+                    EntryPick(picking, picking.problems(), window, host, rules)
+                    Text(
+                        picking.adds()?.let { stringResource(R.string.diary_adds_line, formatNumber(it)) }
+                            ?: stringResource(R.string.plans_custom_total_pending_chosen),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
                 }
-                Amount(
-                    form.servings,
-                    stringResource(R.string.plans_custom_servings),
-                    CustomMealField.SERVINGS,
-                    { f, v -> f.copy(servings = v) },
-                    hint = stringResource(R.string.plans_custom_servings_hint),
-                )
-                val adds = form.adds()
-                Text(
-                    if (adds != null && !form.whole) {
-                        stringResource(R.string.plans_custom_total_estimated, formatNumber(adds.calories))
-                    } else if (adds != null) {
-                        stringResource(
-                            R.string.plans_custom_total,
-                            formatNumber(adds.calories),
-                            formatNumber(adds.protein),
-                            formatNumber(adds.fat),
-                            formatNumber(adds.carbs),
-                        )
-                    } else {
-                        stringResource(R.string.plans_custom_total_pending)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
+                if (typed) {
+                    Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
+                    Hint(stringResource(R.string.plans_custom_macros_optional))
+                    Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
+                    // The three macronutrients side by side, in grams, where they fit at the font's size; one under another where not.
+                    val grams = stringResource(R.string.unit_g)
+                    SideBySide(MACROS_SIDE_BY_SIDE) { place ->
+                        Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = place(0))
+                        Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = place(1))
+                        Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = place(2))
+                    }
+                    Amount(
+                        form.servings,
+                        stringResource(R.string.plans_custom_servings),
+                        CustomMealField.SERVINGS,
+                        { f, v -> f.copy(servings = v) },
+                        hint = stringResource(R.string.plans_custom_servings_hint),
+                    )
+                    val adds = form.adds()
+                    Text(
+                        if (adds != null && !form.whole) {
+                            stringResource(R.string.plans_custom_total_estimated, formatNumber(adds.calories))
+                        } else if (adds != null) {
+                            stringResource(
+                                R.string.plans_custom_total,
+                                formatNumber(adds.calories),
+                                formatNumber(adds.protein),
+                                formatNumber(adds.fat),
+                                formatNumber(adds.carbs),
+                            )
+                        } else {
+                            stringResource(R.string.plans_custom_total_pending)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
                 // What adding it does to the day, said before it is added.
                 Text(
                     stringResource(if (replaces != null) R.string.plans_custom_instead_note else R.string.plans_custom_beside_note),
@@ -1576,16 +1695,24 @@ private fun CustomMealDialog(
                 )
                 meals.firstOrNull { it.id == replaces }?.let { meal -> apartNote(meal, date, today)?.let { Hint(it) } }
                 ListNote(listed)
-                sent?.error?.let { ErrorBanner(errorMessage(it)) }
+                (if (typed) sent?.error else window.windowError)?.let { ErrorBanner(errorMessage(it)) }
             }
+            // What a meal picked still needs, over the buttons, as the diary's window says it.
+            val missing = if (typed) null else missingOf(picking)
+            missing?.let { Hint(stringResource(it)) }
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
                 Button(
                     onClick = {
-                        val meal = form.meal()
-                        if (meal != null) onAdd(meal, replaces) else showProblems = true
+                        if (typed) {
+                            val meal = form.meal()
+                            if (meal != null) onAdd(meal, replaces) else showProblems = true
+                        } else {
+                            val of = picking.entry()
+                            if (of != null) onAddOf(of, form.slot, replaces) else host.sayProblems()
+                        }
                     },
-                    enabled = !sending,
+                    enabled = !sending && !window.sending && missing == null,
                 ) { Text(stringResource(R.string.plans_custom_submit)) }
             }
         }
@@ -2176,6 +2303,66 @@ private fun OffTargetDialog(
 }
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
+/** What the freezer holds of a plan's foods that the plan leaves there, and why: each package it does not thaw. */
+@Composable
+internal fun StaysFrozenLines(kept: List<FrozenKept>) {
+    Fact(stringResource(R.string.plans_stays_frozen_title))
+    kept.forEach { one ->
+        val amount = amountLabel(one.amount.toDouble(), one.unit)
+        val said = if (one.later) {
+            stringResource(R.string.plans_stays_frozen_later, one.name, amount)
+        } else {
+            pluralStringResource(
+                R.plurals.plans_stays_frozen_whole,
+                one.packages,
+                one.name,
+                amount,
+                formatNumber(one.packages),
+                amountLabel(one.mostInTwoDays.toDouble(), one.unit),
+            )
+        }
+        Fact("• $said")
+    }
+}
+
+/** What a day off its split holds too much and too little of, and each thing that makes it so with what helps. */
+@Composable
+internal fun MacrosOffWhyLines(why: MacrosOffWhy, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Fact(stringResource(R.string.plans_macros_lean, macroOf(why.over), macroOf(why.under)), color = MaterialTheme.colorScheme.onSurface)
+        why.causes.forEach { cause -> Fact("• ${causeOf(cause)}") }
+    }
+}
+
+/** A macronutrient as the line of too much and too little names it. */
+@Composable
+private fun macroOf(name: String): String = stringResource(
+    when (name) {
+        "protein" -> R.string.plans_macro_of_protein
+        "fat" -> R.string.plans_macro_of_fat
+        else -> R.string.plans_macro_of_carbs
+    },
+)
+
+/** What keeps a day off its split, and what helps. */
+@Composable
+private fun causeOf(cause: MacrosOffCause): String = when (cause) {
+    is MacrosOffCause.Fixed -> stringResource(R.string.plans_macros_cause_fixed, formatNumber(cause.share))
+    is MacrosOffCause.CookTime -> stringResource(R.string.plans_macros_cause_cook_time, formatNumber(cause.minutes))
+    is MacrosOffCause.FewerMeals -> pluralStringResource(R.plurals.plans_macros_cause_fewer_meals, cause.count, formatNumber(cause.count))
+    MacrosOffCause.UseUp -> stringResource(R.string.plans_macros_cause_use_up)
+    is MacrosOffCause.ByHand -> pluralStringResource(R.plurals.plans_macros_cause_by_hand, cause.count, formatNumber(cause.count))
+    is MacrosOffCause.SingleDish -> {
+        val names = mutableListOf<String>()
+        for (slot in cause.slots) names += mealTypeLabel(slot).lowercase()
+        stringResource(R.string.plans_macros_cause_single_dish, names.joinToString(", "))
+    }
+    MacrosOffCause.NoWaste -> stringResource(R.string.plans_macros_cause_no_waste)
+    is MacrosOffCause.Repeats -> stringResource(R.string.plans_macros_cause_repeats, formatNumber(cause.count))
+    MacrosOffCause.ProteinKinds -> stringResource(R.string.plans_macros_cause_protein_kinds)
+    MacrosOffCause.Diet -> stringResource(R.string.plans_macros_cause_diet)
+}
+
 @Composable
 private fun CautionChip(text: String) {
     LabelChip(text = text, container = MaterialTheme.colorScheme.tertiaryContainer, content = MaterialTheme.colorScheme.onTertiaryContainer)

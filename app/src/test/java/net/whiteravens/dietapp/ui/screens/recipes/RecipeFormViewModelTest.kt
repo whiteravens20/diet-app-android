@@ -65,8 +65,8 @@ class RecipeFormViewModelTest {
         coEvery { it.preview(any(), any(), any()) } returns serving
     }
 
-    private fun model(recipeId: String? = null) =
-        RecipeFormViewModel(SavedStateHandle(if (recipeId == null) emptyMap() else mapOf("recipeId" to recipeId)), recipes)
+    private fun model(recipeId: String? = null, kept: SavedStateHandle? = null) =
+        RecipeFormViewModel(kept ?: SavedStateHandle(if (recipeId == null) emptyMap() else mapOf("recipeId" to recipeId)), recipes)
 
     /** Fills the form in as a person would: a name, a description, a meal, and two lines with their amounts. */
     private fun RecipeFormViewModel.fill() {
@@ -76,6 +76,37 @@ class RecipeFormViewModelTest {
         val (first, second) = state.value.form.lines
         edit { form -> form.copy(lines = listOf(first.copy(quantity = "80"), second.copy(quantity = "300", note = "warm"))) }
         edit { form -> form.copy(steps = listOf(form.steps.single().copy(text = "Fry small pancakes."))) }
+    }
+
+    @Test
+    fun `a recipe being written that Android ends the app with comes back as it was typed, lines and all`() = runTest(main) {
+        val state = SavedStateHandle()
+        val before = model(kept = state)
+        before.fill()
+        runCurrent()
+
+        // The process is ended: the view model goes, the saved state stays.
+        val after = model(kept = state)
+        runCurrent()
+
+        assertEquals(before.state.value.form, after.state.value.form)
+    }
+
+    @Test
+    fun `a recipe being edited that Android ends the app with comes back as it was typed, not as it is read again`() = runTest(main) {
+        val kept = OwnRecipe("Oat pancakes", "Soft.", listOf("Fry."), 2, listOf("breakfast"), 10, 15, "easy", null, listOf(OwnRecipeLine(OATS, 80.0, "g")))
+        coEvery { recipes.toEdit("r1") } returns RecipeToEdit(kept, listOf(oats))
+        val state = SavedStateHandle(mapOf("recipeId" to "r1"))
+        val before = model(kept = state)
+        runCurrent()
+        before.edit { it.copy(title = "Oat pancakes, thinner") }
+        runCurrent()
+
+        val after = model(kept = state)
+        runCurrent()
+
+        assertEquals("Oat pancakes, thinner", after.state.value.form.title)
+        coVerify(exactly = 1) { recipes.toEdit("r1") }
     }
 
     @Test

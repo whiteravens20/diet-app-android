@@ -3,7 +3,9 @@
 package net.whiteravens.dietapp.data.repository
 
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -65,7 +67,14 @@ import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.util.UUID
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.json.Json
 
 /** The plans of a profile, a page at a time, from a local server answering what the backend answered. */
 class MealPlanRepositoryTest {
@@ -110,11 +119,17 @@ class MealPlanRepositoryTest {
         }
     }
 
-    private fun repository(cache: CacheDao, queue: ChangeQueue = changeQueue()): MealPlanRepository {
+    private fun repository(
+        cache: CacheDao,
+        queue: ChangeQueue = changeQueue(),
+        // What the repository itself writes and reads the phone's copy with, apart from the network's.
+        kept: Json = json,
+        work: CoroutineDispatcher = Dispatchers.Unconfined,
+    ): MealPlanRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
         val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
-        return MealPlanRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json, queue)
+        return MealPlanRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, kept, queue, work)
     }
 
     private fun answer(name: String) = MockResponse().setHeader("Content-Type", "application/json").setBody(fixture(name))
@@ -488,6 +503,36 @@ class MealPlanRepositoryTest {
         val preview = runBlocking { repository(Cache()).previewDaySettings("plan-1", "day-1", DaySettings(calorieTarget = 4320, mealCount = 3)) }
 
         assertEquals(DayShort(kcal = 1030.0, days = 0, takes = 0.0, left = 1030.0, listOutOfDate = false, none = "full"), preview.short)
+    }
+
+    @Test
+    fun `a plan is written for the phone and read back on the work dispatcher, never on the thread that asks for it`() {
+        server.enqueue(answer("meal-plan-target-moved"))
+        val worker = Executors.newSingleThreadExecutor { Thread(it, "plan-work") }
+        val work = worker.asCoroutineDispatcher()
+        val threads = mutableListOf<String>()
+        val kept = spyk(json)
+        every { kept.encodeToString(any<SerializationStrategy<Any?>>(), any()) } answers {
+            threads += "written on ${Thread.currentThread().name.substringBefore(' ')}"
+            callOriginal()
+        }
+        every { kept.decodeFromString(any<DeserializationStrategy<Any?>>(), any<String>()) } answers {
+            threads += "read on ${Thread.currentThread().name.substringBefore(' ')}"
+            callOriginal()
+        }
+        val cache = Cache()
+        // A copy that gives back what was written into it.
+        val copy = object : CacheDao by cache {
+            override suspend fun mealPlan(id: String): CachedMealPlan? = cache.plans.lastOrNull { it.id == id }
+        }
+        val plans = repository(copy, kept = kept, work = work)
+
+        val fetched = runBlocking { plans.refreshPlan("3b5e406f-5b59-4503-af22-754625a7d902") }
+        val read = runBlocking { plans.cachedPlan(fetched.id) }
+        worker.shutdown()
+
+        assertEquals(listOf("written on plan-work", "read on plan-work"), threads)
+        assertEquals(fetched.id, read?.id)
     }
 
     @Test
