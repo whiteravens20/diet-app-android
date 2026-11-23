@@ -49,6 +49,8 @@ import org.junit.runner.RunWith
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Locale
+import net.whiteravens.dietapp.testing.savedStateHolds
+import org.junit.Assert.assertTrue
 
 /**
  * The diary: what was eaten today on the dashboard and written from there, a recipe and an ingredient
@@ -100,6 +102,20 @@ class DiaryTest {
     private fun submit() {
         screen.onNode(inTheWindow(text(R.string.diary_submit))).performClick()
         screen.waitUntil(20_000) { screen.onAllNodes(inTheWindow(text(R.string.diary_submit))).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun aMealOfOnesOwnTypedInTheWindowIsKeptForWhenAndroidEndsTheApp() {
+        val account = Instance.newAccount()
+        Instance.newProfile(account, name = "Ala")
+        screen.startSignedIn(account)
+        openTheDiary()
+
+        pressAdd()
+        writeMeal("Grandma's stew", "640")
+
+        // What Android keeps of the app when it ends it in the background, and opens the window again from.
+        assertTrue("the meal typed is not in the saved state", screen.savedStateHolds("Grandma's stew"))
     }
 
     @Test
