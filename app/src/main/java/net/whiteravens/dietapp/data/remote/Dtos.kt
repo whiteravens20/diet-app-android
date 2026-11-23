@@ -1371,6 +1371,8 @@ data class MealPlanDayDto(
     val resizes: Boolean = true,
     /** What the day holds is far from the share of macronutrients it aims at. */
     val macrosOff: Boolean = false,
+    /** Of a day [macrosOff]: what it holds too much and too little of, and what makes it so; null otherwise and from an API that does not say it. */
+    val macrosOffWhy: MacrosOffWhyDto? = null,
     /** The user skips the day: no shortfall, left out of the plan's averages; what was eaten of it stays. */
     val skipped: Boolean,
     /** A target somebody typed has put the day under the lowest a calculated plan goes. */
@@ -1647,6 +1649,20 @@ data class PlanFrozenKeptDto(
     val packages: Int,
     val why: String,
     val mostInTwoDays: Int,
+)
+
+/** What a day off its split holds too much ([over]) and too little ([under]) of, and each thing that makes it so. */
+@Serializable
+data class MacrosOffWhyDto(val over: String, val under: String, val causes: List<MacrosOffCauseDto>)
+
+/** One thing that keeps a day off its split: its [kind], with what that kind names. */
+@Serializable
+data class MacrosOffCauseDto(
+    val kind: String,
+    val share: Int? = null,
+    val minutes: Int? = null,
+    val count: Int? = null,
+    val slots: List<String> = emptyList(),
 )
 
 /** "Dodaj do spiżarni" of the rest the plan freezes of [ingredientId] on [date]: what is left of it goes into the pantry as frozen, once. */

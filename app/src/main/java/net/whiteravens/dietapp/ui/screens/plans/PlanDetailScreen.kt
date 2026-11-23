@@ -106,6 +106,8 @@ import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.OpenPack
+import net.whiteravens.dietapp.domain.MacrosOffCause
+import net.whiteravens.dietapp.domain.MacrosOffWhy
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanPacks
 import net.whiteravens.dietapp.domain.PlanWeek
@@ -1085,7 +1087,9 @@ private fun DaySummary(
         LabelNotes(day.labelNotes, Modifier.padding(top = 4.dp))
         if (day.macrosOff) {
             Row(Modifier.padding(top = 4.dp)) { CautionChip(stringResource(R.string.plans_macros_off_chip)) }
-            Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
+            val why = day.macrosOffWhy
+            if (why == null) Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
+            else MacrosOffWhyLines(why, Modifier.padding(top = 4.dp))
         }
         if (over) Fact(stringResource(R.string.plans_day_is_over), Modifier.padding(top = 4.dp))
         thaws?.forToday?.takeIf { it.isNotEmpty() }?.let { lines ->
@@ -2196,6 +2200,44 @@ private fun OffTargetDialog(
 }
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
+/** What a day off its split holds too much and too little of, and each thing that makes it so with what helps. */
+@Composable
+private fun MacrosOffWhyLines(why: MacrosOffWhy, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Fact(stringResource(R.string.plans_macros_lean, macroOf(why.over), macroOf(why.under)), color = MaterialTheme.colorScheme.onSurface)
+        why.causes.forEach { cause -> Fact("• ${causeOf(cause)}") }
+    }
+}
+
+/** A macronutrient as the line of too much and too little names it. */
+@Composable
+private fun macroOf(name: String): String = stringResource(
+    when (name) {
+        "protein" -> R.string.plans_macro_of_protein
+        "fat" -> R.string.plans_macro_of_fat
+        else -> R.string.plans_macro_of_carbs
+    },
+)
+
+/** What keeps a day off its split, and what helps. */
+@Composable
+private fun causeOf(cause: MacrosOffCause): String = when (cause) {
+    is MacrosOffCause.Fixed -> stringResource(R.string.plans_macros_cause_fixed, formatNumber(cause.share))
+    is MacrosOffCause.CookTime -> stringResource(R.string.plans_macros_cause_cook_time, formatNumber(cause.minutes))
+    is MacrosOffCause.FewerMeals -> pluralStringResource(R.plurals.plans_macros_cause_fewer_meals, cause.count, formatNumber(cause.count))
+    MacrosOffCause.UseUp -> stringResource(R.string.plans_macros_cause_use_up)
+    is MacrosOffCause.ByHand -> pluralStringResource(R.plurals.plans_macros_cause_by_hand, cause.count, formatNumber(cause.count))
+    is MacrosOffCause.SingleDish -> {
+        val names = mutableListOf<String>()
+        for (slot in cause.slots) names += mealTypeLabel(slot).lowercase()
+        stringResource(R.string.plans_macros_cause_single_dish, names.joinToString(", "))
+    }
+    MacrosOffCause.NoWaste -> stringResource(R.string.plans_macros_cause_no_waste)
+    is MacrosOffCause.Repeats -> stringResource(R.string.plans_macros_cause_repeats, formatNumber(cause.count))
+    MacrosOffCause.ProteinKinds -> stringResource(R.string.plans_macros_cause_protein_kinds)
+    MacrosOffCause.Diet -> stringResource(R.string.plans_macros_cause_diet)
+}
+
 @Composable
 private fun CautionChip(text: String) {
     LabelChip(text = text, container = MaterialTheme.colorScheme.tertiaryContainer, content = MaterialTheme.colorScheme.onTertiaryContainer)

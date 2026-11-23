@@ -2224,6 +2224,30 @@
     <string name="plans_reword_intro">Popraw tytuł, opis i kroki. Zmiana trafi do tego przepisu, więc plan od razu ją pokaże. Składniki i wartości odżywcze zostają bez zmian.</string>
     <string name="plans_macros_off_chip">Makro poza celem</string>
     <string name="plans_macros_off_hint">Proporcje makroskładników tego dnia są daleko od celu. Zamiana posiłku pokaże, jak zmieni je nowy przepis.</string>
+    <string name="plans_macros_lean">Za dużo %1$s, za mało %2$s.</string>
+    <string name="plans_macro_of_protein">białka</string>
+    <string name="plans_macro_of_fat">tłuszczu</string>
+    <string name="plans_macro_of_carbs">węglowodanów</string>
+    <string name="plans_macros_cause_fixed">Posiłki, których plan nie zmienia (zjedzone, własne, resztki, wpisy w\u00A0dzienniku), to %1$s%% energii dnia i\u00A0same są daleko od celu.</string>
+    <string name="plans_macros_cause_cook_time">Limit %1$s\u00A0min gotowania zostawia mało dań tej diety. Wydłuż go w\u00A0„Ustawienia dnia…” albo dodaj posiłek.</string>
+    <plurals name="plans_macros_cause_fewer_meals">
+        <item quantity="one">Dzień ma %1$s\u00A0posiłek, mniej niż inne dni planu, więc mniej dań wyrównuje proporcje. Dodaj posiłek w\u00A0„Ustawienia dnia…”.</item>
+        <item quantity="few">Dzień ma %1$s\u00A0posiłki, mniej niż inne dni planu, więc mniej dań wyrównuje proporcje. Dodaj posiłek w\u00A0„Ustawienia dnia…”.</item>
+        <item quantity="many">Dzień ma %1$s\u00A0posiłków, mniej niż inne dni planu, więc mniej dań wyrównuje proporcje. Dodaj posiłek w\u00A0„Ustawienia dnia…”.</item>
+        <item quantity="other">Dzień ma %1$s\u00A0posiłku, mniej niż inne dni planu, więc mniej dań wyrównuje proporcje. Dodaj posiłek w\u00A0„Ustawienia dnia…”.</item>
+    </plurals>
+    <string name="plans_macros_cause_use_up">Dzień zużywa żywność z\u00A0krótką datą, więc jego przepisy są dobrane pod nią, a\u00A0nie pod proporcje.</string>
+    <plurals name="plans_macros_cause_by_hand">
+        <item quantity="one">Jeden posiłek tego dnia wybrano ręcznie: zamiana, ulubione albo danie spoza diety.</item>
+        <item quantity="few">%1$s\u00A0posiłki tego dnia wybrano ręcznie: zamiana, ulubione albo danie spoza diety.</item>
+        <item quantity="many">%1$s\u00A0posiłków tego dnia wybrano ręcznie: zamiana, ulubione albo danie spoza diety.</item>
+        <item quantity="other">%1$s\u00A0posiłku tego dnia wybrano ręcznie: zamiana, ulubione albo danie spoza diety.</item>
+    </plurals>
+    <string name="plans_macros_cause_single_dish">Przy układaniu planu na %1$s pasowało tylko jedno danie: wykluczenia i\u00A0dieta zostawiają tu mało przepisów.</string>
+    <string name="plans_macros_cause_no_waste">Plan „Bez marnowania” dobiera dania tak, by zużywać otwarte opakowania, a\u00A0nie pod proporcje. Bliżej celu będzie następny plan z\u00A0„Mniej marnowania” albo bez tej opcji.</string>
+    <string name="plans_macros_cause_repeats">Limit „Maks. powtórzeń jednego przepisu” (%1$s) zostawia mało dań, które trzymają proporcje. Następny plan z\u00A0wyższym limitem będzie miał większy wybór.</string>
+    <string name="plans_macros_cause_protein_kinds">Limity posiłków z\u00A0tym samym rodzajem białka w\u00A0profilu zostawiają mniej dań z\u00A0białkiem. Jeśli proporcje są ważniejsze, poluzuj je w\u00A0profilu.</string>
+    <string name="plans_macros_cause_diet">Dania tej diety, które pasują do ustawień profilu, mają zwykle inne proporcje. Zamiana posiłku pokaże, jak zmieni je nowy przepis.</string>
     <string name="plans_average_over">Średnio dzień tego planu ma o ponad jedną dziesiątą więcej kalorii niż cel.</string>
     <string name="plans_average_under">Średnio dzień tego planu ma o ponad jedną dziesiątą mniej kalorii niż cel.</string>
     <string name="plans_average_macros">Średnie makroskładniki tego planu są daleko od celu.</string>

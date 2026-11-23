@@ -601,6 +601,8 @@ data class PlanDay(
     val belowSafetyFloor: Boolean,
     /** What the day holds is far from the share of macronutrients it aims at. */
     val macrosOff: Boolean = false,
+    /** Of a day [macrosOff]: what it holds too much and too little of, and what makes it so. */
+    val macrosOffWhy: MacrosOffWhy? = null,
     /** What the day aims at in grams under the diet's split. */
     val targetMacros: Macros,
     /** The recipe each meal of the day was locked to when the plan was made, by meal. */
@@ -921,6 +923,35 @@ data class FrozenKept(
     val later: Boolean,
     val mostInTwoDays: Int,
 )
+
+/** What a day off its split holds too much and too little of (`protein` | `fat` | `carbs`), and each thing that makes it so. */
+data class MacrosOffWhy(val over: String, val under: String, val causes: List<MacrosOffCause>)
+
+/** One thing that keeps a day off its split. */
+sealed interface MacrosOffCause {
+    /** What the plan does not change holds [share] per cent of the day, itself far from the split. */
+    data class Fixed(val share: Int) : MacrosOffCause
+
+    data class CookTime(val minutes: Int) : MacrosOffCause
+
+    data class FewerMeals(val count: Int) : MacrosOffCause
+
+    data object UseUp : MacrosOffCause
+
+    data class ByHand(val count: Int) : MacrosOffCause
+
+    /** One dish alone fit these times of day when the plan was made. */
+    data class SingleDish(val slots: List<String>) : MacrosOffCause
+
+    data object NoWaste : MacrosOffCause
+
+    data class Repeats(val count: Int) : MacrosOffCause
+
+    data object ProteinKinds : MacrosOffCause
+
+    /** None of the others: the diet's dishes themselves. */
+    data object Diet : MacrosOffCause
+}
 
 /** What a meal takes out of the freezer on [date] (yyyy-MM-dd); [mealId] null where the meal is none of this plan's. */
 data class Thaw(val date: String, val mealId: String?, val amount: Int)

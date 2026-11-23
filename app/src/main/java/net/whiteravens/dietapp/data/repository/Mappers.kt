@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.LabelTotalsDto
 import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.CookingChangeDto
+import net.whiteravens.dietapp.data.remote.MacrosOffWhyDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.MealPlanPageDto
@@ -92,6 +93,8 @@ import net.whiteravens.dietapp.data.remote.HouseholdListDto
 import net.whiteravens.dietapp.data.remote.PlanThawDto
 import net.whiteravens.dietapp.domain.FreezerStock
 import net.whiteravens.dietapp.domain.FrozenKept
+import net.whiteravens.dietapp.domain.MacrosOffCause
+import net.whiteravens.dietapp.domain.MacrosOffWhy
 import net.whiteravens.dietapp.domain.FrozenRest
 import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.HouseholdOf
@@ -353,6 +356,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     resizes = resizes,
     belowSafetyFloor = belowSafetyFloor,
     macrosOff = macrosOff,
+    macrosOffWhy = macrosOffWhy?.toDomain(),
     targetMacros = targetMacros.toDomain(),
     locks = overrides?.lockedSlots.orEmpty().associate { it.mealType to it.recipeId },
     settings = mealCount?.let { count ->
@@ -597,3 +601,24 @@ fun HouseholdListDto.toDomain(syncedAt: Long? = null) = HouseholdList(
 )
 
 private fun PlanThawDto.toDomain() = Thaw(date, mealId, amount)
+
+/** A day's why as the screen says it; a cause of a kind this version does not know is left unsaid, not named as another. */
+fun MacrosOffWhyDto.toDomain() = MacrosOffWhy(
+    over = over,
+    under = under,
+    causes = causes.mapNotNull { cause ->
+        when (cause.kind) {
+            "fixed" -> MacrosOffCause.Fixed(cause.share ?: 0)
+            "cookTime" -> MacrosOffCause.CookTime(cause.minutes ?: 0)
+            "fewerMeals" -> MacrosOffCause.FewerMeals(cause.count ?: 0)
+            "useUp" -> MacrosOffCause.UseUp
+            "byHand" -> MacrosOffCause.ByHand(cause.count ?: 0)
+            "singleDish" -> MacrosOffCause.SingleDish(cause.slots)
+            "noWaste" -> MacrosOffCause.NoWaste
+            "repeats" -> MacrosOffCause.Repeats(cause.count ?: 0)
+            "proteinKinds" -> MacrosOffCause.ProteinKinds
+            "diet" -> MacrosOffCause.Diet
+            else -> null
+        }
+    }.distinct(),
+)
