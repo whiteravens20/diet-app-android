@@ -1213,5 +1213,37 @@ class PlansTest {
     private fun dayCell(date: LocalDate): SemanticsMatcher = hasContentDescription("${spoken(date)}:", substring = true)
 
     private fun spoken(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.getDefault()))
-}
 
+    @Test
+    fun aMealOfOnesOwnIsARecipeLookedForAndPickedAsTheDiaryPicksOne() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account)
+        val planId = Instance.newPlan(account, profileId)
+        val language = text(R.string.api_language)
+        val (_, recipe) = Instance.recipes(account, 1, language).single()
+        val before = Instance.firstDayRecipes(account, planId, language).count { it == recipe }
+        screen.signIn(account)
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // The window opens at the figures typed, as it always did; beside them, what the diary's window picks from.
+        screen.scrollToText(text(R.string.plans_add_custom_meal))
+        screen.onNodeWithText(text(R.string.plans_add_custom_meal)).performClick()
+        screen.waitForText(text(R.string.plans_custom_modal_title))
+        screen.onNode(hasText(text(R.string.diary_kind_recipe)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        screen.onNode(hasText(text(R.string.diary_search_recipe)) and hasSetTextAction()).performTextInput(recipe)
+        val found = hasText(shown(recipe)) and hasClickAction() and !hasSetTextAction() and hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(found).fetchSemanticsNodes().isNotEmpty() }
+        screen.putKeyboardAway()
+        screen.onNode(found).performScrollTo().performClick()
+        screen.waitForText(text(R.string.diary_servings_field))
+        screen.keepScreenshot("plans-a-meal-of-a-recipe")
+        screen.onNode(hasText(text(R.string.plans_custom_submit)) and hasClickAction()).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_custom_modal_title)).fetchSemanticsNodes().isEmpty() }
+        // It goes in as that recipe, beside the day's meals.
+        screen.waitForTheApi(20_000) { Instance.firstDayRecipes(account, planId, language).count { it == recipe } == before + 1 }
+    }
+}

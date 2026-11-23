@@ -384,6 +384,8 @@
     <string name="plans_custom_servings_hint">Ile takich porcji składa się na posiłek.</string>
     <string name="plans_custom_total">Posiłek doda do dnia: %1$s kcal · białko %2$s g · tłuszcz %3$s g · węglowodany %4$s g.</string>
     <string name="plans_custom_total_pending">Tu pojawi się to, co posiłek doda do dnia, gdy wpiszesz jedną porcję i liczbę porcji.</string>
+    <string name="plans_custom_total_pending_chosen">Tu pojawi się to, co posiłek doda do dnia, gdy go wybierzesz i\u00A0podasz ilość.</string>
+    <string name="plans_custom_kind_typed">Wpisane wartości</string>
     <string name="plans_custom_submit">Dodaj posiłek</string>
     <string name="plans_change_meal">Zmień</string>
     <string name="plans_swap">Zamień</string>

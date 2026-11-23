@@ -79,8 +79,11 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import net.whiteravens.dietapp.data.remote.CustomMealOfDto
+import net.whiteravens.dietapp.data.remote.DiaryAmountRequest
 import net.whiteravens.dietapp.data.remote.KeepFrozenRequest
 import net.whiteravens.dietapp.data.remote.KeepLeftRequest
+import net.whiteravens.dietapp.domain.NewDiaryEntry
 
 /**
  * Offline-first meal-plan access (docs/sync-strategy.md). Reads serve the Room
@@ -466,6 +469,22 @@ class MealPlanRepository @Inject constructor(
         return queue.submit(queued) { send(queued) }
     }
 
+    /**
+     * Adds to the day of [date] (yyyy-MM-dd), at [slot], a meal of one's own [of] a recipe, an ingredient or a product,
+     * whose name and figures the server works out as it does an entry of the diary's; the day is balanced around it.
+     * It needs the network, as looking for what it is of does; the plan as the server then has it is kept and given back.
+     */
+    suspend fun addMealOf(planId: String, date: String, slot: String, of: NewDiaryEntry, replaces: String? = null): Rebalanced = kept(
+        apiCall(json) {
+            api.addCustomMeal(
+                planId,
+                date,
+                UUID.randomUUID().toString(),
+                AddCustomMealRequest(mealType = slot, replaces = replaces, of = of.toOf()),
+            )
+        },
+    )
+
     /** Sends a meal of one's own; the plan as the server then has it is kept and given back. */
     suspend fun send(change: QueuedChange.OwnMealAdded): Rebalanced = kept(
         apiCall(json) {
@@ -720,3 +739,11 @@ private fun Reroll.toRequest() = RegenerateRequest(
     noWaste = noWaste,
     forAll = forAll,
 )
+
+/** What a meal of one's own is of, as the API takes it: what an entry of the diary would be of. */
+private fun NewDiaryEntry.toOf(): CustomMealOfDto = when (this) {
+    is NewDiaryEntry.OfRecipe -> CustomMealOfDto("recipe", recipeId = recipeId, servings = servings)
+    is NewDiaryEntry.OfIngredient -> CustomMealOfDto("ingredient", ingredientId = ingredientId, amount = DiaryAmountRequest(quantity, unit))
+    is NewDiaryEntry.OfProduct -> CustomMealOfDto("product", productId = productId, quantity = quantity)
+    is NewDiaryEntry.OwnMeal -> error("A meal typed by its figures is added as one of one's own, not of something")
+}

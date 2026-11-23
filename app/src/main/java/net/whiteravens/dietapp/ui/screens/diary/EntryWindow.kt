@@ -77,6 +77,9 @@ class EntryWindow(
     /** Puts the camera away, back to the window. */
     fun closeScanner() = write { it.copy(scanning = false) }
 
+    /** Says what the window holds that cannot be sent: its fields say it from now on. */
+    fun sayProblems() = write { it.copy(showProblems = true) }
+
     /** The code the camera read: asked about at once, as somebody meant to. */
     fun scanned(code: String) {
         write { it.copy(scanning = false) }

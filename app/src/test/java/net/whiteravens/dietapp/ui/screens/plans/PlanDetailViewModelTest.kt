@@ -98,12 +98,15 @@ import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
 import java.time.LocalDate
+import net.whiteravens.dietapp.data.remote.AddCustomMealRequest
+import net.whiteravens.dietapp.data.remote.CustomMealOfDto
 import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.LeftoverPlaceDto
 import net.whiteravens.dietapp.data.remote.LeftoverPortionDto
 import net.whiteravens.dietapp.data.remote.PutLeftoverRequest
+import net.whiteravens.dietapp.domain.NewDiaryEntry
 
 /**
  * A meal swapped on the plan's screen, the way the web application swaps one: a recipe is offered,
@@ -162,7 +165,7 @@ class PlanDetailViewModelTest {
         asking: ModelApiService = mockk(),
         cache: CacheDao = NoCache,
         queue: ChangeQueue = changeQueue(),
-    ) = PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, cache, json, queue), favorites, users, server, queue, mockk(relaxed = true))
+    ) = PlanDetailViewModel(SavedStateHandle(at), MealPlanRepository(api, asking, cache, json, queue), favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
         Response.error<Any>(
@@ -347,7 +350,7 @@ class PlanDetailViewModelTest {
         }
         val queue = changeQueue()
         val plans = MealPlanRepository(api, mockk(), kept, json, queue)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
 
         model.setEaten(meal.id, true)
 
@@ -596,7 +599,7 @@ class PlanDetailViewModelTest {
         coEvery { api.mealPlan(plan.id) } returns plan
         val queue = changeQueue()
         val plans = MealPlanRepository(api, mockk(), NoCache, json, queue)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
         coEvery { api.setMealEaten(any(), any(), any()) } throws IOException("no network")
         model.setEaten(meal.id, true)
         assertEquals(1, model.state.value.waiting.size)
@@ -920,6 +923,37 @@ class PlanDetailViewModelTest {
     }
 
     @Test
+    fun `a meal of one's own of a product goes as what it is of at the window's time of day, and a refusal under it names the window's field`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val date = plan.days.first().date
+        val sent = mutableListOf<AddCustomMealRequest>()
+        val tooMuch = """{"statusCode":400,"error":"VALIDATION_FAILED","message":"Request payload failed validation.","issues":[{"path":"of.quantity","message":"Too big: expected number to be <=5000","code":"too_big","maximum":5000,"inclusive":true}]}"""
+        coEvery { api.addCustomMeal(plan.id, date, any(), capture(sent)) } throws
+            HttpException(Response.error<Any>(400, tooMuch.toResponseBody("application/json".toMediaType()))) andThen swapped
+        val model = model(api)
+        model.openMealWindow()
+        val bar = NewDiaryEntry.OfProduct("lunch", "6f1d2a40-0000-4000-8000-0000000000aa", "Granola bar", "g", 6000.0, 2700.0)
+
+        model.addMealOf(date, "breakfast", bar, replaces = "m1")
+
+        assertEquals(
+            AddCustomMealRequest(mealType = "breakfast", replaces = "m1", of = CustomMealOfDto("product", productId = bar.productId, quantity = 6000.0)),
+            sent.single(),
+        )
+        assertEquals(FieldRefusal.TooBig(5000.0, inclusive = true), model.mealWindowState.value.refused["quantity"])
+        assertNull(model.mealWindowState.value.windowError)
+        assertNull(model.state.value.customMeal)
+
+        model.addMealOf(date, "breakfast", bar.copy(quantity = 60.0))
+
+        assertEquals(PlanDetailViewModel.CustomMealSent(added = true), model.state.value.customMeal)
+        assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
+        model.customMealClosed()
+        assertNull(model.mealWindowState.value.form)
+    }
+
+    @Test
     fun `a meal of one's own that waits goes among its day's meals by its time of day, or in the place of the meal it replaces`() {
         val read = plan.toDomain()
         val day = read.days.first()
@@ -980,7 +1014,7 @@ class PlanDetailViewModelTest {
         coEvery { plans.resizeDay(plan.id, "2026-10-31") } returns Rebalanced(plan, moved, null)
         val users = mockk<UserRepository>(relaxed = true)
         val favorites = mockk<FavoriteRepository>(relaxed = true)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue(), mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue(), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
 
         model.resizeDay("2026-10-31")
 
@@ -1004,7 +1038,7 @@ class PlanDetailViewModelTest {
         coEvery { plans.cachedPlan(any()) } returns null
         val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
         coEvery { plans.refreshPlan(any()) } returns plan
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue(), mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue(), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
         val meal = plan.days.flatMap { it.meals }.first { it.recipeId != null }
 
         model.substituted(Rebalanced(plan, null, null), meal.id)

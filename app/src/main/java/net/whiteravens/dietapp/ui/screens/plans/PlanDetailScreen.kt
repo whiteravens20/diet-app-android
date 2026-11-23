@@ -171,7 +171,17 @@ import kotlin.math.pow
 import kotlin.math.roundToLong
 import net.whiteravens.dietapp.domain.EatenElsewhere
 import net.whiteravens.dietapp.domain.FrozenKept
+import net.whiteravens.dietapp.domain.InstanceRules
+import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.ui.components.held
+import net.whiteravens.dietapp.ui.screens.diary.EntryForm
+import net.whiteravens.dietapp.ui.screens.diary.EntryKind
+import net.whiteravens.dietapp.ui.screens.diary.EntryPick
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindow
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindowOverlays
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindowState
+import net.whiteravens.dietapp.ui.screens.diary.KindChip
+import net.whiteravens.dietapp.ui.screens.diary.missingOf
 
 /**
  * One plan: what it is and what a day of it holds on average, its days, and the selected day's
@@ -237,6 +247,10 @@ fun PlanDetailScreen(
                 viewModel.customMealClosed()
             }
         }
+        val window by viewModel.mealWindowState.collectAsStateWithLifecycle()
+        val rules by viewModel.mealWindow.rules.collectAsStateWithLifecycle()
+        // A window brought back after the app was ended opens at its figures typed by hand, as it always opened.
+        LaunchedEffect(window.form == null) { if (window.form == null) viewModel.openMealWindow() }
         CustomMealDialog(
             date = date,
             listed = plan?.days?.firstOrNull { it.date == date }?.listed == true,
@@ -244,12 +258,18 @@ fun PlanDetailScreen(
             meals = plan?.days?.firstOrNull { it.date == date }?.meals.orEmpty().filterNot { it.id in state.waitingAdditions },
             sent = state.customMeal,
             sending = state.changing,
+            window = window,
+            host = viewModel.mealWindow,
+            rules = rules,
             onAdd = { meal, replaces -> viewModel.addCustomMeal(date, meal, replaces) },
+            onAddOf = { of, slot, replaces -> viewModel.addMealOf(date, slot, of, replaces) },
             onDismiss = {
                 addingTo = null
                 viewModel.customMealClosed()
             },
         )
+        // A product of one's own being written, and the camera: over the window.
+        EntryWindowOverlays(window, viewModel.mealWindow)
     }
 
     // The meal whose removal from its day is to be confirmed, with what it does said in the window.
@@ -696,7 +716,13 @@ fun PlanDetailScreen(
                     item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
                 }
                 item(key = "add-${day.id}") {
-                    TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
+                    TextButton(
+                        onClick = {
+                            viewModel.openMealWindow()
+                            addingTo = day.date
+                        },
+                        enabled = !busy,
+                    ) { Text(stringResource(R.string.plans_add_custom_meal)) }
                 }
                 if (!readOnly) {
                     // What every swap of the plan puts first: under the meals, out of their way.
@@ -1518,6 +1544,7 @@ private val CustomMealFormSaver = listSaver<CustomMealForm, String>(
 /** The three macronutrients of a meal of one's own: the width their fields of grams need side by side at the font's usual size. */
 internal val MACROS_SIDE_BY_SIDE = FieldRow(288.dp, 1f, 1f, 1f)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CustomMealDialog(
     date: String,
@@ -1526,7 +1553,12 @@ private fun CustomMealDialog(
     meals: List<Meal>,
     sent: PlanDetailViewModel.CustomMealSent?,
     sending: Boolean,
+    /** What the meal is of where it is not typed by its figures: a recipe, an ingredient or a product, as the diary picks it. */
+    window: EntryWindowState,
+    host: EntryWindow,
+    rules: InstanceRules?,
     onAdd: (CustomMeal, replaces: String?) -> Unit,
+    onAddOf: (NewDiaryEntry, slot: String, replaces: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var form by rememberSaveable(stateSaver = CustomMealFormSaver) { mutableStateOf(CustomMealForm()) }
@@ -1571,15 +1603,26 @@ private fun CustomMealDialog(
                 Text(stringResource(R.string.plans_custom_modal_title), style = MaterialTheme.typography.titleLarge)
                 Text(formatDayDate(date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            // Figures typed first, as the window always had them; what the diary chooses beside them.
+            val picking = window.form ?: EntryForm(kind = EntryKind.MEAL, slot = form.slot)
+            val typed = picking.kind == EntryKind.MEAL
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FormField(
-                    value = form.name,
-                    onValueChange = { typed -> form = form.copy(name = typed) },
-                    label = stringResource(R.string.plans_custom_name),
-                    problem = problemOf(CustomMealField.NAME, Bound.Characters),
-                    keyboardType = KeyboardType.Text,
-                    capitalization = KeyboardCapitalization.Sentences,
-                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    KindChip(EntryKind.MEAL, R.string.plans_custom_kind_typed, picking, host)
+                    if (rules?.productsOffered == true) KindChip(EntryKind.PRODUCT, R.string.diary_kind_product, picking, host)
+                    KindChip(EntryKind.RECIPE, R.string.diary_kind_recipe, picking, host)
+                    KindChip(EntryKind.INGREDIENT, R.string.diary_kind_ingredient, picking, host)
+                }
+                if (typed) {
+                    FormField(
+                        value = form.name,
+                        onValueChange = { typed -> form = form.copy(name = typed) },
+                        label = stringResource(R.string.plans_custom_name),
+                        problem = problemOf(CustomMealField.NAME, Bound.Characters),
+                        keyboardType = KeyboardType.Text,
+                        capitalization = KeyboardCapitalization.Sentences,
+                    )
+                }
                 ChoiceField(
                     label = stringResource(R.string.plans_custom_meal_type),
                     options = CUSTOM_MEAL_SLOTS,
@@ -1598,41 +1641,52 @@ private fun CustomMealDialog(
                     },
                     onSelect = { id -> replaces = id },
                 )
-                Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
-                Hint(stringResource(R.string.plans_custom_macros_optional))
-                Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
-                // The three macronutrients side by side, in grams, where they fit at the font's size; one under another where not.
-                val grams = stringResource(R.string.unit_g)
-                SideBySide(MACROS_SIDE_BY_SIDE) { place ->
-                    Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = place(0))
-                    Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = place(1))
-                    Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = place(2))
+                if (!typed) {
+                    EntryPick(picking, picking.problems(), window, host, rules)
+                    Text(
+                        picking.adds()?.let { stringResource(R.string.diary_adds_line, formatNumber(it)) }
+                            ?: stringResource(R.string.plans_custom_total_pending_chosen),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
                 }
-                Amount(
-                    form.servings,
-                    stringResource(R.string.plans_custom_servings),
-                    CustomMealField.SERVINGS,
-                    { f, v -> f.copy(servings = v) },
-                    hint = stringResource(R.string.plans_custom_servings_hint),
-                )
-                val adds = form.adds()
-                Text(
-                    if (adds != null && !form.whole) {
-                        stringResource(R.string.plans_custom_total_estimated, formatNumber(adds.calories))
-                    } else if (adds != null) {
-                        stringResource(
-                            R.string.plans_custom_total,
-                            formatNumber(adds.calories),
-                            formatNumber(adds.protein),
-                            formatNumber(adds.fat),
-                            formatNumber(adds.carbs),
-                        )
-                    } else {
-                        stringResource(R.string.plans_custom_total_pending)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
+                if (typed) {
+                    Text(stringResource(R.string.plans_custom_per_serving), style = MaterialTheme.typography.titleSmall)
+                    Hint(stringResource(R.string.plans_custom_macros_optional))
+                    Amount(form.calories, stringResource(R.string.plans_custom_calories), CustomMealField.CALORIES, { f, v -> f.copy(calories = v) })
+                    // The three macronutrients side by side, in grams, where they fit at the font's size; one under another where not.
+                    val grams = stringResource(R.string.unit_g)
+                    SideBySide(MACROS_SIDE_BY_SIDE) { place ->
+                        Amount(form.protein, stringResource(R.string.plans_custom_protein), CustomMealField.PROTEIN, { f, v -> f.copy(protein = v) }, suffix = grams, modifier = place(0))
+                        Amount(form.fat, stringResource(R.string.plans_custom_fat), CustomMealField.FAT, { f, v -> f.copy(fat = v) }, suffix = grams, modifier = place(1))
+                        Amount(form.carbs, stringResource(R.string.plans_custom_carbs), CustomMealField.CARBS, { f, v -> f.copy(carbs = v) }, suffix = grams, modifier = place(2))
+                    }
+                    Amount(
+                        form.servings,
+                        stringResource(R.string.plans_custom_servings),
+                        CustomMealField.SERVINGS,
+                        { f, v -> f.copy(servings = v) },
+                        hint = stringResource(R.string.plans_custom_servings_hint),
+                    )
+                    val adds = form.adds()
+                    Text(
+                        if (adds != null && !form.whole) {
+                            stringResource(R.string.plans_custom_total_estimated, formatNumber(adds.calories))
+                        } else if (adds != null) {
+                            stringResource(
+                                R.string.plans_custom_total,
+                                formatNumber(adds.calories),
+                                formatNumber(adds.protein),
+                                formatNumber(adds.fat),
+                                formatNumber(adds.carbs),
+                            )
+                        } else {
+                            stringResource(R.string.plans_custom_total_pending)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
                 // What adding it does to the day, said before it is added.
                 Text(
                     stringResource(if (replaces != null) R.string.plans_custom_instead_note else R.string.plans_custom_beside_note),
@@ -1641,16 +1695,24 @@ private fun CustomMealDialog(
                 )
                 meals.firstOrNull { it.id == replaces }?.let { meal -> apartNote(meal, date, today)?.let { Hint(it) } }
                 ListNote(listed)
-                sent?.error?.let { ErrorBanner(errorMessage(it)) }
+                (if (typed) sent?.error else window.windowError)?.let { ErrorBanner(errorMessage(it)) }
             }
+            // What a meal picked still needs, over the buttons, as the diary's window says it.
+            val missing = if (typed) null else missingOf(picking)
+            missing?.let { Hint(stringResource(it)) }
             Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
                 Button(
                     onClick = {
-                        val meal = form.meal()
-                        if (meal != null) onAdd(meal, replaces) else showProblems = true
+                        if (typed) {
+                            val meal = form.meal()
+                            if (meal != null) onAdd(meal, replaces) else showProblems = true
+                        } else {
+                            val of = picking.entry()
+                            if (of != null) onAddOf(of, form.slot, replaces) else host.sayProblems()
+                        }
                     },
-                    enabled = !sending,
+                    enabled = !sending && !window.sending && missing == null,
                 ) { Text(stringResource(R.string.plans_custom_submit)) }
             }
         }

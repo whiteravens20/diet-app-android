@@ -308,6 +308,12 @@ object Instance {
         return (0 until meals.length()).map { meals.getJSONObject(it) }.filter { it.getString("source") == "USER_CUSTOM" }.map { it.getString("customName") }
     }
 
+    /** The titles of the recipes the meals of a plan's first day are of, in the day's order. */
+    fun firstDayRecipes(account: Account, planId: String, language: String): List<String> {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken, language = language).getJSONArray("days").getJSONObject(0).getJSONArray("meals")
+        return (0 until meals.length()).map { meals.getJSONObject(it) }.filterNot { it.isNull("recipe") }.map { it.getJSONObject("recipe").getString("title") }
+    }
+
     /** The title of a meal of a plan, as the plan answers it now: a substitution can reword it. */
     fun mealTitle(account: Account, planId: String, mealId: String): String {
         val days = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days")

@@ -51,7 +51,15 @@ import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
 import java.io.IOException
 import java.time.LocalDate
 import javax.inject.Inject
+import net.whiteravens.dietapp.data.repository.DiaryRepository
+import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.domain.FrozenRest
+import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.ui.screens.diary.EntryField
+import net.whiteravens.dietapp.ui.screens.diary.EntryForm
+import net.whiteravens.dietapp.ui.screens.diary.EntryKind
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindow
+import net.whiteravens.dietapp.ui.screens.diary.EntryWindowState
 
 /**
  * One plan: cache-first load, day selection, and a meal swapped the way the web application
@@ -74,6 +82,8 @@ class PlanDetailViewModel @Inject constructor(
     private val server: ServerRepository,
     private val queue: ChangeQueue,
     private val profiles: ProfileRepository,
+    private val diary: DiaryRepository,
+    private val recipes: RecipeRepository,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -203,6 +213,25 @@ class PlanDetailViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
+
+    private val _mealWindow = MutableStateFlow(EntryWindowState())
+
+    /** The window that adds a meal of one's own, while it is open: what it is of, as the diary's window picks it. */
+    val mealWindowState: StateFlow<EntryWindowState> = _mealWindow.asStateFlow()
+
+    /** What looks for, picks and reads a code in that window, as in the diary's. */
+    val mealWindow = EntryWindow(
+        viewModelScope,
+        diary,
+        recipes,
+        server.rules,
+        read = { _mealWindow.value },
+        write = { change -> _mealWindow.update(change) },
+        open = ::openMealWindow,
+        // It is sent with the day and the place its window holds: `addMealOf`.
+        add = {},
+        close = ::closeMealWindow,
+    )
 
     private val again = ReadingAnew()
 
@@ -584,6 +613,56 @@ class PlanDetailViewModel @Inject constructor(
     /** The window of a meal of one's own put away, or done: what came of the meal goes with it. */
     fun customMealClosed() {
         _state.update { it.copy(customMeal = null) }
+        closeMealWindow()
+    }
+
+    /** Opens the window of a meal of one's own at its figures typed by hand, as it always opened. */
+    fun openMealWindow() {
+        mealWindow.stop()
+        // Its time of day is the window's own field: the form's is not read.
+        _mealWindow.value = EntryWindowState(form = EntryForm(kind = EntryKind.MEAL, slot = "lunch"))
+    }
+
+    /** Puts that window's search and what it picked away. */
+    fun closeMealWindow() {
+        mealWindow.stop()
+        _mealWindow.value = EntryWindowState()
+    }
+
+    /**
+     * Adds to the day of [date], at [slot], a meal of one's own of what the window picked ([of]), beside the day's meals
+     * or in the place of [replaces]. A refusal is said by the window's fields where the API named one, as the diary's
+     * window says it; the window stays to be put right.
+     */
+    fun addMealOf(date: String, slot: String, of: NewDiaryEntry, replaces: String? = null) {
+        if (_state.value.changing || _mealWindow.value.sending) return
+        _mealWindow.update { it.copy(sending = true, showProblems = true, refused = emptyMap(), windowError = null) }
+        _state.update { it.copy(changing = true, error = null, customMeal = CustomMealSent()) }
+        viewModelScope.launch {
+            attempt { plans.addMealOf(planId, date, slot, of, replaces) }
+                .onSuccess { answer ->
+                    _mealWindow.update { it.copy(sending = false) }
+                    _state.update {
+                        it.copy(
+                            plan = answer.plan,
+                            changing = false,
+                            rebalance = answer.rebalance.shown(),
+                            lastSwap = null,
+                            customMeal = CustomMealSent(added = true),
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    // The API names what it refused under what the meal is of: `of.servings`, `of.amount.quantity`.
+                    val fields = EntryField.entries.map { it.path }
+                    val refused = (e as? ApiException)?.fieldRefusals.orEmpty()
+                        .mapKeys { (path, _) -> path.removePrefix("of.") }
+                        .filterKeys { it in fields }
+                    _mealWindow.update { it.copy(sending = false, refused = refused, windowError = e.takeIf { refused.isEmpty() }) }
+                    _state.update { it.copy(changing = false, customMeal = null) }
+                    if (e.isPlanChanged()) reload()
+                }
+        }
     }
 
     /**

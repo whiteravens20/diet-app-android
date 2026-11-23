@@ -2239,12 +2239,28 @@ data class PutLeftoverRequest(
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */
 @Serializable
 data class AddCustomMealRequest(
-    val name: String,
+    /** Its name; none for a meal [of] something, which names it. */
+    val name: String? = null,
     val mealType: String,
-    val nutrition: EnteredNutritionDto,
-    val servings: Double,
+    /** What one serving holds; none for a meal [of] something, whose figures the server works out. */
+    val nutrition: EnteredNutritionDto? = null,
+    val servings: Double = 1.0,
     /** A meal of the same day this one is eaten in the place of: it leaves the day. */
     val replaces: String? = null,
+    /** What the meal is of, chosen as an entry of the diary is; none for one typed by its figures. */
+    val of: CustomMealOfDto? = null,
+)
+
+/** What a meal of one's own is of, as an entry of the diary is: `recipe` in [servings], `ingredient` in [amount], `product` in [quantity]. */
+@Serializable
+data class CustomMealOfDto(
+    val kind: String,
+    val recipeId: String? = null,
+    val servings: Double? = null,
+    val ingredientId: String? = null,
+    val amount: DiaryAmountRequest? = null,
+    val productId: String? = null,
+    val quantity: Double? = null,
 )
 
 /** What one serving of a meal of one's own holds: a macronutrient left out is estimated, and the meal says so. */
