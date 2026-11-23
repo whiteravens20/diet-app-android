@@ -37,6 +37,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
 
 /** The shopping lists of a plan, and the copies the phone keeps of them, against a local server answering what the backend answered. */
 class ShoppingListRepositoryTest {
@@ -77,7 +78,7 @@ class ShoppingListRepositoryTest {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
         val client = AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders())
-        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json, queue)
+        return ShoppingListRepository(AppModule.api(client, json), AppModule.modelApi(client, json), cache, json, queue, Dispatchers.Unconfined)
     }
 
     /** The captured list of a plan, its days and id those given: another list of the same plan. */

@@ -92,7 +92,7 @@ class MealPlansViewModelTest {
         val before = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { _, e -> escaped = e }
         val model = try {
-            MealPlansViewModel(UserRepository(api, json, mockk(relaxed = true), MemoryKeptReads()), MealPlanRepository(api, mockk(), cache, json, changeQueue()))
+            MealPlansViewModel(UserRepository(api, json, mockk(relaxed = true), MemoryKeptReads()), MealPlanRepository(api, mockk(), cache, json, changeQueue(), Dispatchers.Unconfined))
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(before)
         }
@@ -115,7 +115,7 @@ class MealPlansViewModelTest {
         val kept = json.encodeToString(json.decodeFromString<MealPlanPageDto>(fixture("meal-plans")))
         val cache = Cache(CachedPlanList(profile.id, kept, 1L))
 
-        val model = MealPlansViewModel(UserRepository(api, json, mockk(relaxed = true), MemoryKeptReads()), MealPlanRepository(api, mockk(), cache, json, changeQueue()))
+        val model = MealPlansViewModel(UserRepository(api, json, mockk(relaxed = true), MemoryKeptReads()), MealPlanRepository(api, mockk(), cache, json, changeQueue(), Dispatchers.Unconfined))
 
         assertEquals(emptyList<MealPlanSummary>(), model.state.value.plans)
         assertEquals("PROFILE_NOT_FOUND", (model.state.value.error as ApiException).code)

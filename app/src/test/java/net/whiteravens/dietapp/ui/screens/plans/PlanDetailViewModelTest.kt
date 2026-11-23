@@ -175,7 +175,7 @@ class PlanDetailViewModelTest {
         recipes: RecipeRepository = mockk(relaxed = true),
     ) = PlanDetailViewModel(
         kept ?: SavedStateHandle(at),
-        MealPlanRepository(api, asking, cache, json, queue),
+        MealPlanRepository(api, asking, cache, json, queue, Dispatchers.Unconfined),
         favorites,
         users,
         server,
@@ -367,7 +367,7 @@ class PlanDetailViewModelTest {
             override suspend fun mealPlan(id: String) = copy?.takeIf { it.id == id }
         }
         val queue = changeQueue()
-        val plans = MealPlanRepository(api, mockk(), kept, json, queue)
+        val plans = MealPlanRepository(api, mockk(), kept, json, queue, Dispatchers.Unconfined)
         val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
 
         model.setEaten(meal.id, true)
@@ -616,7 +616,7 @@ class PlanDetailViewModelTest {
         val api = mockk<DietApiService>()
         coEvery { api.mealPlan(plan.id) } returns plan
         val queue = changeQueue()
-        val plans = MealPlanRepository(api, mockk(), NoCache, json, queue)
+        val plans = MealPlanRepository(api, mockk(), NoCache, json, queue, Dispatchers.Unconfined)
         val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
         coEvery { api.setMealEaten(any(), any(), any()) } throws IOException("no network")
         model.setEaten(meal.id, true)

@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.data.repository
 
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import net.whiteravens.dietapp.data.local.CacheDao
 import net.whiteravens.dietapp.data.local.CachedMealPlan
@@ -64,7 +65,7 @@ class CachedRowsTest {
                 CachedPlanList("unreadable", unreadable, 1L),
             ),
         )
-        val plans = MealPlanRepository(api, asking, cache, json, changeQueue())
+        val plans = MealPlanRepository(api, asking, cache, json, changeQueue(), Dispatchers.Unconfined)
 
         assertNull(runBlocking { plans.cachedPlans("unreadable") })
         val readable = runBlocking { plans.cachedPlans("readable") }
@@ -82,7 +83,7 @@ class CachedRowsTest {
                 CachedMealPlan("unreadable", "profile", unreadable, 1L),
             ),
         )
-        val plans = MealPlanRepository(api, asking, cache, json, changeQueue())
+        val plans = MealPlanRepository(api, asking, cache, json, changeQueue(), Dispatchers.Unconfined)
 
         assertNull(runBlocking { plans.cachedPlan("unreadable") })
         assertNotNull(runBlocking { plans.cachedPlan("readable") })
@@ -97,7 +98,7 @@ class CachedRowsTest {
                 CachedShoppingList("unreadable", "plan", unreadable, 1L),
             ),
         )
-        val lists = ShoppingListRepository(api, asking, cache, json, changeQueue())
+        val lists = ShoppingListRepository(api, asking, cache, json, changeQueue(), Dispatchers.Unconfined)
 
         val cached = runBlocking { lists.cachedForPlan("plan") }
 

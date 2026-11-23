@@ -79,10 +79,13 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import net.whiteravens.dietapp.data.remote.CustomMealOfDto
 import net.whiteravens.dietapp.data.remote.DiaryAmountRequest
 import net.whiteravens.dietapp.data.remote.KeepFrozenRequest
 import net.whiteravens.dietapp.data.remote.KeepLeftRequest
+import net.whiteravens.dietapp.di.WorkDispatcher
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 
 /**
@@ -101,22 +104,27 @@ class MealPlanRepository @Inject constructor(
     private val cache: CacheDao,
     private val json: Json,
     private val queue: ChangeQueue,
+    /** Where a whole plan is written for the phone, read back and mapped: off the caller's thread. */
+    @WorkDispatcher private val work: CoroutineDispatcher,
 ) {
     /** The first page of a profile's plans as it was last fetched, or null before the first [plans]. */
     suspend fun cachedPlans(profileId: String): MealPlanPage? =
         cache.planList(profileId)?.let { row ->
-            readOrDrop({ json.decodeFromString<MealPlanPageDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
-                cache.deletePlanList(profileId)
+            withContext(work) {
+                readOrDrop({ json.decodeFromString<MealPlanPageDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
+                    cache.deletePlanList(profileId)
+                }
             }
         }
 
     /** One cached plan by id, or null before it was ever fetched. */
     suspend fun cachedPlan(id: String): MealPlan? = cache.mealPlan(id)?.let { row -> read(row) }
 
-    private suspend fun read(row: CachedMealPlan): MealPlan? =
+    private suspend fun read(row: CachedMealPlan): MealPlan? = withContext(work) {
         readOrDrop({ json.decodeFromString<MealPlanDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
             cache.deleteMealPlan(row.id)
         }
+    }
 
     /**
      * Fetch one plan from the API and mirror it. A plan the API says is not there is gone, or is not
@@ -132,8 +140,7 @@ class MealPlanRepository @Inject constructor(
             }
             throw e
         }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /**
@@ -220,8 +227,7 @@ class MealPlanRepository @Inject constructor(
                 ),
             )
         }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /** What stands in the way of a plan, read from a refusal with `PLAN_NEEDS_RELAXATION`; null for any other. */
@@ -328,8 +334,7 @@ class MealPlanRepository @Inject constructor(
         val plan = apiCall(json) {
             if (reroll.dayId != null) api.regenerateDay(planId, reroll.dayId, body) else api.regeneratePlan(planId, body)
         }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /** What [reroll] would do to the plan as it stands, as the API reads it. Nothing is drawn or written. */
@@ -374,8 +379,7 @@ class MealPlanRepository @Inject constructor(
     /** Takes one of the ways a day was offered; the plan is kept for offline use. A plan changed since the offer is refused with `PLAN_CHANGED`. */
     suspend fun takeDayWay(planId: String, dayId: String, offer: String, together: Boolean = false): MealPlan {
         val plan = apiCall(json) { api.takeDayVariation(planId, dayId, TakeDayVariationRequest(offer, together)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /**
@@ -387,8 +391,7 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun applySet(setId: String, planId: String, dates: List<String>, together: Boolean = false): MealPlan {
         val plan = apiCall(json) { api.applyFavoriteSet(setId, ApplyFavoriteSetRequest(planId, dates, together)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /** Swaps that would use up what the plan opens, put in order by a model where [weigh]. Nothing is written. */
@@ -546,8 +549,7 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun setApart(planId: String, sharedMealId: String, apart: Boolean): MealPlan {
         val plan = apiCall(json) { api.setSharedMeal(planId, sharedMealId, SetSharedMealRequest(apart)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /**
@@ -587,8 +589,7 @@ class MealPlanRepository @Inject constructor(
         spreadShort: Boolean = false,
     ): MealPlan {
         val plan = apiCall(json) { api.applyDaySettings(planId, dayId, settings.toDto(revision, allowRelaxations, together, evenWeek, spreadShort)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /**
@@ -598,8 +599,7 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun evenWeek(planId: String, date: String, revision: Int): MealPlan {
         val plan = apiCall(json) { api.evenWeek(planId, EvenWeekRequestDto(date, revision)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /**
@@ -608,8 +608,7 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun retarget(planId: String, revision: Int): MealPlan {
         val plan = apiCall(json) { api.retarget(planId, RetargetRequestDto(revision)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /**
@@ -618,15 +617,13 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun keepFrozen(planId: String, ingredientId: String, date: String): MealPlan {
         val plan = apiCall(json) { api.keepFrozen(planId, KeepFrozenRequest(ingredientId, date)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /** "Dodaj do spiżarni" of what the pack of [ingredientId] opened on [date] leaves: into the pantry as fresh food, once. */
     suspend fun keepLeft(planId: String, ingredientId: String, date: String): MealPlan {
         val plan = apiCall(json) { api.keepLeft(planId, KeepLeftRequest(ingredientId, date)) }
-        mirror(plan)
-        return plan.toDomain()
+        return keep(plan)
     }
 
     /** Puts the meals [rebalance] scaled back as they were. */
@@ -660,12 +657,14 @@ class MealPlanRepository @Inject constructor(
     suspend fun substitute(substitution: Substitution): Rebalanced {
         val result = apiCall(json) { model.substitute(substitution.toRequest()) }
         mirror(result.plan)
-        return Rebalanced(
-            result.plan.toDomain(),
-            result.rebalance?.toDomain(),
-            result.aiMeta?.fallbackReason,
-            worded = result.aiMeta != null && result.aiMeta.fallbackReason == null,
-        )
+        return withContext(work) {
+            Rebalanced(
+                result.plan.toDomain(),
+                result.rebalance?.toDomain(),
+                result.aiMeta?.fallbackReason,
+                worded = result.aiMeta != null && result.aiMeta.fallbackReason == null,
+            )
+        }
     }
 
     /** An ingredient a model picked for the line of [fromIngredientId], with the note of its pick, or why the engine picked. */
@@ -693,7 +692,13 @@ class MealPlanRepository @Inject constructor(
     /** A plan as a change left it, kept for offline use, with what the change rebalanced. */
     private suspend fun kept(result: RebalanceResultDto): Rebalanced {
         mirror(result.plan)
-        return Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), fallbackReason = null)
+        return withContext(work) { Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), fallbackReason = null) }
+    }
+
+    /** Keeps [plan] for offline use and gives it back as the app shows it. */
+    private suspend fun keep(plan: MealPlanDto): MealPlan {
+        mirror(plan)
+        return withContext(work) { plan.toDomain() }
     }
 
     private companion object {
@@ -714,11 +719,12 @@ class MealPlanRepository @Inject constructor(
     }
 
     private suspend fun mirror(plan: MealPlanDto) {
+        val written = withContext(work) { json.encodeToString(plan) }
         cache.upsertMealPlan(
             CachedMealPlan(
                 id = plan.id,
                 profileId = plan.profileId,
-                json = json.encodeToString(plan),
+                json = written,
                 syncedAt = System.currentTimeMillis(),
             ),
         )

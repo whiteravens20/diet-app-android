@@ -28,6 +28,9 @@ import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingList
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import net.whiteravens.dietapp.di.WorkDispatcher
 
 /**
  * Offline-first shopping-list access. Same cache-mirror pattern as
@@ -42,6 +45,8 @@ class ShoppingListRepository @Inject constructor(
     private val cache: CacheDao,
     private val json: Json,
     private val queue: ChangeQueue,
+    /** Where a whole list is written for the phone, read back and mapped: off the caller's thread. */
+    @WorkDispatcher private val work: CoroutineDispatcher,
 ) {
     /** The cached copy, or null before the first [refresh]. */
     suspend fun cached(id: String): ShoppingList? = cache.shoppingList(id)?.let { row -> read(row) }
@@ -50,10 +55,11 @@ class ShoppingListRepository @Inject constructor(
     suspend fun cachedForPlan(planId: String): List<ShoppingList> =
         cache.shoppingListsForPlan(planId).mapNotNull { row -> read(row) }
 
-    private suspend fun read(row: CachedShoppingList): ShoppingList? =
+    private suspend fun read(row: CachedShoppingList): ShoppingList? = withContext(work) {
         readOrDrop({ json.decodeFromString<ShoppingListDto>(row.json).toDomain(syncedAt = row.syncedAt) }) {
             cache.deleteShoppingList(row.id)
         }
+    }
 
     /**
      * Fetch a plan's lists from the API and mirror them; a list kept of the plan that the API no longer
@@ -152,11 +158,12 @@ class ShoppingListRepository @Inject constructor(
     }
 
     private suspend fun mirror(list: ShoppingListDto) {
+        val written = withContext(work) { json.encodeToString(list) }
         cache.upsertShoppingList(
             CachedShoppingList(
                 id = list.id,
                 planId = list.planId,
-                json = json.encodeToString(list),
+                json = written,
                 syncedAt = System.currentTimeMillis(),
             ),
         )
