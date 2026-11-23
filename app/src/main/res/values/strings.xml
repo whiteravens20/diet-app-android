@@ -1453,6 +1453,8 @@
     <string name="profile_disliked_hint">The planner and the swaps take a recipe with one of these only where nothing else fits the meal. To rule a food out altogether, put it under “Avoid ingredients”.</string>
     <string name="profile_avoided">Avoid ingredients</string>
     <string name="profile_avoided_hint">The planner skips recipes that contain these.</string>
+    <string name="profile_avoided_kin">Avoid as well:</string>
+    <string name="profile_disliked_kin">Add as well:</string>
     <string name="profile_risk_minor">Under 18 the figures of this application are an approximation, and losing weight is something to do with a doctor.</string>
     <string name="profile_risk_underweight">With this height and weight the body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
     <string name="profile_risk_held">Until the box below is ticked, the goal is saved but plans follow maintenance.</string>
@@ -1482,6 +1484,8 @@
     <string name="pickers_none_yet">None yet.</string>
     <string name="pickers_no_matches">No matches.</string>
     <string name="pickers_add_ticked">Add the ticked (%1$d)</string>
+    <string name="pickers_add_kin">+ %1$s</string>
+    <string name="pickers_kin_no">No, thanks</string>
     <string name="pickers_remove">Remove %1$s</string>
     <!-- Two to five meals a day: both languages say any of these numbers as written here. -->
     <string name="catalogue_none" tools:ignore="PluralsCandidate">The catalogue has no recipe on the “%1$s” diet for at least one of the %2$d meals a day. Without a recipe of your own for that meal no plan can be made: choose another diet.</string>

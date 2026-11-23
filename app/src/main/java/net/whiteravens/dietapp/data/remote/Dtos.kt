@@ -956,6 +956,8 @@ data class IngredientDto(
      * in its pieces alone. An amount in another unit is refused with `UNIT_NOT_CONVERTIBLE`.
      */
     val pantryUnits: List<String>,
+    /** The ids of the foods of its kin, offered beside it where it is added to the foods to avoid; none from an API that does not say it. */
+    val kin: List<String> = emptyList(),
 )
 
 // ── Pantry (packages/shared/src/inventory.ts) ───────────────────────────────

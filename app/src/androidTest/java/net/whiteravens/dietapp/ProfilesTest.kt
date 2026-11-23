@@ -297,6 +297,38 @@ class ProfilesTest {
     }
 
     @Test
+    fun aFoodAddedToTheFoodsToAvoidOffersItsKinToAvoidAsWell() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, name = "Ala")
+        val polish = text(R.string.api_language) == "pl"
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.nav_more))
+        screen.onNodeWithText(text(R.string.profiles_title)).performClick()
+        screen.waitForText("Ala")
+        screen.onNode(hasSetTextAction() and hasText(text(R.string.profile_avoided)))
+            .performScrollTo()
+            .performTextInput(if (polish) "cebula" else "onion")
+        val onion = hasText(if (polish) "Cebula" else "Onion") and isToggleable()
+        screen.waitUntil(20_000) { screen.onAllNodes(onion).fetchSemanticsNodes().isNotEmpty() }
+        screen.putKeyboardAway()
+        screen.onNode(onion).performScrollTo().performClick()
+        press(text(R.string.pickers_add_ticked, 1))
+        val avoided = { Instance.profile(account, profileId).optJSONObject("preferences")?.optJSONArray("excludedIngredientIds")?.length() }
+        screen.waitForTheApi { avoided() == 1 }
+
+        // Its kin, the red onion, is offered to avoid as well, and taken.
+        val asks = text(R.string.profile_avoided_kin)
+        screen.waitForText(asks)
+        val kin = hasText(text(R.string.pickers_add_kin, if (polish) "Cebula czerwona" else "Red onion")) and hasClickAction()
+        screen.onNode(kin).performScrollTo()
+        screen.keepScreenshot("profiles-the-kin-of-a-food-to-avoid")
+        screen.onNode(kin).performClick()
+        screen.waitForTheApi { avoided() == 2 }
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(asks).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
     fun theCalculatorIsTheWebApplicationsAndOpensInTheBrowser() {
         val account = Instance.newAccount()
         screen.startSignedIn(account)

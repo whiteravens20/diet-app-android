@@ -323,7 +323,13 @@ data class CalorieQuestion(
 data class CaloriePreview(val calculation: CalorieTarget, val paces: List<CalorieTarget>)
 
 /** An ingredient of the catalogue, as a picker offers it. */
-data class IngredientChoice(val id: String, val name: String, val category: String)
+data class IngredientChoice(
+    val id: String,
+    val name: String,
+    val category: String,
+    /** The ids of the foods of its kin: offered beside it where it is added to the foods to avoid or not liked. */
+    val kin: List<String> = emptyList(),
+)
 
 data class Nutrition(
     val calories: Double,

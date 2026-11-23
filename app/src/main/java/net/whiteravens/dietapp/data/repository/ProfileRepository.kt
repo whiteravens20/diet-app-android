@@ -192,12 +192,12 @@ class ProfileRepository @Inject constructor(
 
     /** The catalogue's ingredients whose name holds [search], in the app's language. */
     suspend fun ingredients(search: String): List<IngredientChoice> =
-        apiCall(json) { api.ingredients(search = search) }.map { IngredientChoice(it.id, it.name, it.category) }
+        apiCall(json) { api.ingredients(search = search) }.map { IngredientChoice(it.id, it.name, it.category, it.kin) }
 
     /** The ingredients of [ids], to show by their names; none asked for, none asked. */
     suspend fun ingredientsOf(ids: List<String>): List<IngredientChoice> =
         if (ids.isEmpty()) emptyList()
-        else apiCall(json) { api.ingredients(ids = ids.joinToString(",")) }.map { IngredientChoice(it.id, it.name, it.category) }
+        else apiCall(json) { api.ingredients(ids = ids.joinToString(",")) }.map { IngredientChoice(it.id, it.name, it.category, it.kin) }
 }
 
 private fun MacroSplit.toDto() = MacroSplitDto(protein = protein, fat = fat, carbs = carbs)

@@ -1580,6 +1580,8 @@
     <string name="profile_disliked_hint">Planer i zamiany sięgają po przepis z którymś z nich tylko wtedy, gdy nic innego nie pasuje do posiłku. Żeby wykluczyć produkt całkowicie, dodaj go do „Unikanych składników”.</string>
     <string name="profile_avoided">Unikane składniki</string>
     <string name="profile_avoided_hint">Planer pomija przepisy zawierające te składniki.</string>
+    <string name="profile_avoided_kin">Wykluczyć też:</string>
+    <string name="profile_disliked_kin">Dopisać też:</string>
     <string name="profile_risk_minor">Poniżej 18 lat wartości w tej aplikacji są przybliżeniem, a odchudzanie to sprawa do omówienia z lekarzem.</string>
     <string name="profile_risk_underweight">Przy takim wzroście i masie wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może zaszkodzić.</string>
     <string name="profile_risk_held">Dopóki pole poniżej nie jest zaznaczone, cel jest zapisany, ale plany trzymają się zapotrzebowania.</string>
@@ -1609,6 +1611,8 @@
     <string name="pickers_none_yet">Jeszcze nic.</string>
     <string name="pickers_no_matches">Brak wyników.</string>
     <string name="pickers_add_ticked">Dodaj zaznaczone (%1$d)</string>
+    <string name="pickers_add_kin">+ %1$s</string>
+    <string name="pickers_kin_no">Nie, dziękuję</string>
     <string name="pickers_remove">Usuń %1$s</string>
     <string name="catalogue_none">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę.</string>
     <string name="catalogue_none_fewer">W katalogu nie ma przepisu w diecie „%1$s” na co najmniej jeden z %2$d posiłków dziennie. Bez własnego przepisu na ten posiłek planu nie da się ułożyć: wybierz inną dietę albo najwyżej %3$d posiłki dziennie.</string>

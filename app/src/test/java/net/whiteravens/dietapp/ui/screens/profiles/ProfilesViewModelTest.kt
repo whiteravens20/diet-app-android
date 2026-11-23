@@ -150,6 +150,62 @@ class ProfilesViewModelTest {
     }
 
     @Test
+    fun `a food added to the foods to avoid offers its kin by name, each taken on its own until the offer is declined, and a favourite offers none`() = runTest(main) {
+        val onion = IngredientChoice("onion", "Onion", "vegetables", kin = listOf("shallot", "leek"))
+        val shallot = IngredientChoice("shallot", "Shallot", "vegetables", kin = listOf("onion"))
+        val leek = IngredientChoice("leek", "Leek", "vegetables", kin = listOf("onion"))
+        coEvery { profiles.ingredients("on") } returns listOf(onion)
+        coEvery { profiles.ingredientsOf(listOf("shallot", "leek")) } returns listOf(shallot, leek)
+        // The API answers the profile as the change leaves it.
+        var now = kept
+        coEvery { profiles.updatePreferences(kept.id, any()) } answers {
+            val change = secondArg<PreferencesChange>()
+            now = now.copy(
+                preferences = now.preferences.copy(
+                    excludedIngredientIds = change.excludedIngredientIds ?: now.preferences.excludedIngredientIds,
+                    favoriteIngredientIds = change.favoriteIngredientIds ?: now.preferences.favoriteIngredientIds,
+                ),
+            )
+            now
+        }
+        val avoided = kept.preferences.excludedIngredientIds
+        val model = loaded()
+        runCurrent()
+
+        model.search(kept.id, IngredientList.AVOIDED, "on")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+        model.tick(kept.id, IngredientList.AVOIDED, "onion")
+        model.addTicked(kept, IngredientList.AVOIDED)
+        runCurrent()
+
+        coVerify { profiles.updatePreferences(kept.id, PreferencesChange(excludedIngredientIds = avoided + "onion")) }
+        assertEquals(listOf(shallot, leek), model.state.value.kin[kept.id to IngredientList.AVOIDED])
+        assertEquals("Leek", model.state.value.names["leek"])
+
+        model.addKin(now, IngredientList.AVOIDED, leek)
+        runCurrent()
+
+        coVerify { profiles.updatePreferences(kept.id, PreferencesChange(excludedIngredientIds = avoided + "onion" + "leek")) }
+        assertEquals(listOf(shallot), model.state.value.kin[kept.id to IngredientList.AVOIDED])
+
+        model.declineKin(kept.id, IngredientList.AVOIDED)
+        assertNull(model.state.value.kin[kept.id to IngredientList.AVOIDED])
+
+        // A favourite brings no kin with it.
+        model.search(kept.id, IngredientList.FAVOURITE, "on")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+        model.tick(kept.id, IngredientList.FAVOURITE, "onion")
+        model.addTicked(now, IngredientList.FAVOURITE)
+        runCurrent()
+
+        coVerify { profiles.updatePreferences(kept.id, PreferencesChange(favoriteIngredientIds = listOf("apple", "onion"))) }
+        assertNull(model.state.value.kin[kept.id to IngredientList.FAVOURITE])
+        coVerify(exactly = 1) { profiles.ingredientsOf(listOf("shallot", "leek")) }
+    }
+
+    @Test
     fun `a tick outlives a new search, but only what the search shows is added`() = runTest(main) {
         val bean = IngredientChoice("bean", "Bean", "legumes")
         val pear = IngredientChoice("pear", "Pear", "fruits")
