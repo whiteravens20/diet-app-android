@@ -377,6 +377,17 @@ class DiaryViewModelTest {
     }
 
     @Test
+    fun `a day holding more entries than may be written, as a removed plan's eaten meals leave it, reads whole and takes none`() {
+        coEvery { diary.day("a", today) } returns day(entries = (1..45).map { entry("e$it") })
+
+        val state = model().state.value
+
+        assertEquals(45, state.entries.size)
+        assertTrue(state.full)
+        assertFalse(state.canAdd)
+    }
+
+    @Test
     fun `the meals a day has are those of its plan and those written for, in the order they are eaten`() {
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e", slot = "snack")), plan = plan(meal("m", slot = "dinner"), meal("n", slot = "breakfast")))
 
