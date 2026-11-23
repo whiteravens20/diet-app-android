@@ -902,6 +902,7 @@
     <string name="shopping_of_total">(of %1$s)</string>
     <string name="shopping_best_before">best before %1$s</string>
     <string name="shopping_from_pantries">From the pantry: %1$s</string>
+    <string name="shopping_frozen_kept">%1$s more stays in the freezer: the plan does not thaw it.</string>
     <string name="shopping_buy_packs">Bought in packs: %1$s of %2$s</string>
     <plurals name="shopping_buy_later">
         <item quantity="one">Of these, buy %1$d pack %2$s (%3$s) at the earliest.</item>

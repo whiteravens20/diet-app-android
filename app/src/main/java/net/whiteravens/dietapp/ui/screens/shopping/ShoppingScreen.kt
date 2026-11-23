@@ -681,6 +681,14 @@ internal fun ShoppingItemRow(
                             laterLines(item).forEach { later ->
                                 Text(later, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
+                            // What the freezer keeps of the food that the row does not count: the plan leaves it there.
+                            if (item.frozenKept > 0) {
+                                Text(
+                                    stringResource(R.string.shopping_frozen_kept, amountLabel(item.frozenKept, item.displayUnit, item.gramsOf(item.frozenKept))),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                             if (waiting) WaitingMark(Modifier.padding(top = 2.dp))
                         }
                     },

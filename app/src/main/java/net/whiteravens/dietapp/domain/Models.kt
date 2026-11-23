@@ -1266,6 +1266,8 @@ data class ShoppingItem(
     val shares: List<ItemShare> = emptyList(),
     /** Whose pantry holds what is at home, where more than the row's own counts. */
     val pantries: List<RowPantry> = emptyList(),
+    /** What the freezer keeps of the food that the row does not count: the plan leaves it there. */
+    val frozenKept: Double = 0.0,
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome

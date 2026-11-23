@@ -2246,6 +2246,11 @@ data class ShoppingListItemDto(
     val purchasedQuantity: Double? = null,
     /** Earliest best-before among contributing pantry rows, or null. */
     val pantryBestBefore: String? = null,
+    /**
+     * What the freezer holds of the food that the row does not count as at home, in the row's unit: packages the plan
+     * leaves frozen; none from an API that does not say it.
+     */
+    val frozenKept: Double = 0.0,
     /** Estimated calories contributed by this line (informational). */
     val estimatedCalories: Double,
     /** What a piece weighs, for a row counted in pieces of some kind; null for one weighed. */

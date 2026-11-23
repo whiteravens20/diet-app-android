@@ -978,6 +978,7 @@
     <string name="shopping_of_total">(z %1$s)</string>
     <string name="shopping_best_before">najlepiej spożyć przed %1$s</string>
     <string name="shopping_from_pantries">Ze spiżarni: %1$s</string>
+    <string name="shopping_frozen_kept">W\u00A0zamrażarce zostaje jeszcze %1$s: plan tego nie rozmraża.</string>
     <string name="shopping_buy_packs">Kupione w opakowaniach: %1$s, %2$s</string>
     <plurals name="shopping_buy_later">
         <item quantity="one">Z tego %1$d opakowanie kup najwcześniej %2$s (%3$s).</item>
