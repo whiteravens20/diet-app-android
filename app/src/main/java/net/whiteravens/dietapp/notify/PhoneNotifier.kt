@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import net.whiteravens.dietapp.MainActivity
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.notify.NewNotifications
 import net.whiteravens.dietapp.domain.AccountNotification
@@ -66,19 +65,19 @@ object PhoneNotifier {
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    /** The intent a tap gives the application. */
-    fun opening(context: Context): Intent = Intent(context, MainActivity::class.java)
+    /** The intent a tap gives the application: to [NotificationTapActivity], which only the application's own intents start. */
+    fun opening(context: Context): Intent = Intent(context, NotificationTapActivity::class.java)
         .setAction(OPEN_NOTIFICATIONS)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-    /** The intent a tap on a reminder of water gives the application. */
-    fun openingWater(context: Context, profileId: String, notificationId: String): Intent = Intent(context, MainActivity::class.java)
+    /** The intent a tap on a reminder of water gives the application, to [NotificationTapActivity] as well. */
+    fun openingWater(context: Context, profileId: String, notificationId: String): Intent = Intent(context, NotificationTapActivity::class.java)
         .setAction(OPEN_WATER)
         // A pending intent is told apart by its data, not by its extras: each reminder its own.
         .setData("dietapp://water/$notificationId".toUri())
         .putExtra(EXTRA_PROFILE, profileId)
         .putExtra(EXTRA_NOTIFICATION, notificationId)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     /**
      * Shows [fresh], each as the profile it is for ([names], by id) and what it says; [private] while the unlock is on,

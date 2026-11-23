@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import net.whiteravens.dietapp.MainActivity
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -64,6 +63,35 @@ sealed interface UpdateStep {
 }
 
 internal class UpdateException(val why: UpdateFailure, message: String? = null) : Exception(message)
+
+/** What an answer of the system's installer means for the application. */
+internal enum class InstallAnswer {
+    /** The system asks the user: its question is to be shown. */
+    ASK,
+
+    /** Installed: the application ends, and starts anew. */
+    DONE,
+
+    /** The user said no. */
+    CANCELLED,
+
+    /** The system's installer refused the build. */
+    FAILED,
+
+    /** A question about a session the application is not waiting on: not the system's, and nothing is shown. */
+    NOT_OURS,
+}
+
+/**
+ * What the answer [status] about the install session [session] means, [ours] the sessions the application is waiting
+ * on (`PackageInstaller.mySessions`): a question is shown only for one of them.
+ */
+internal fun installAnswer(status: Int, session: Int, ours: Set<Int>): InstallAnswer = when (status) {
+    PackageInstaller.STATUS_PENDING_USER_ACTION -> if (session in ours) InstallAnswer.ASK else InstallAnswer.NOT_OURS
+    PackageInstaller.STATUS_SUCCESS -> InstallAnswer.DONE
+    PackageInstaller.STATUS_FAILURE_ABORTED -> InstallAnswer.CANCELLED
+    else -> InstallAnswer.FAILED
+}
 
 /** Downloads a build into a file, held to the size and the SHA-256 its version file gives. */
 internal class ApkDownload(private val client: OkHttpClient) {
@@ -133,6 +161,11 @@ class UpdateInstaller @Inject constructor(@ApplicationContext private val contex
     private val _step = MutableStateFlow<UpdateStep>(UpdateStep.Idle)
     val step: StateFlow<UpdateStep> = _step.asStateFlow()
 
+    private val _question = MutableStateFlow<Intent?>(null)
+
+    /** The question the system's installer asks the user, until the application's screen in front starts it. */
+    val question: StateFlow<Intent?> = _question.asStateFlow()
+
     /** Whether the phone lets this application install applications. */
     fun allowed(): Boolean = context.packageManager.canRequestPackageInstalls()
 
@@ -167,7 +200,7 @@ class UpdateInstaller @Inject constructor(@ApplicationContext private val contex
         apk.delete()
     }
 
-    /** Writes [apk] into an install session and commits it; the system answers [MainActivity] with [STATUS]. */
+    /** Writes [apk] into an install session and commits it; the system answers [UpdateStatusReceiver] with [STATUS]. */
     private fun hand(apk: File) {
         val installer = context.packageManager.packageInstaller
         abandonSessions()
@@ -184,9 +217,9 @@ class UpdateInstaller @Inject constructor(@ApplicationContext private val contex
                         session.fsync(output)
                     }
                 }
-                val answer = Intent(context, MainActivity::class.java).setAction(STATUS).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                // Mutable, for the system writes the session's status into it.
-                val pending = PendingIntent.getActivity(context, id, answer, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+                val answer = Intent(context, UpdateStatusReceiver::class.java).setAction(STATUS)
+                // Mutable, for the system writes the session's status into it; to a receiver nothing else can reach.
+                val pending = PendingIntent.getBroadcast(context, id, answer, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
                 session.commit(pending.intentSender)
             }
         } catch (failure: Exception) {
@@ -196,24 +229,36 @@ class UpdateInstaller @Inject constructor(@ApplicationContext private val contex
     }
 
     /**
-     * What the system answered of a session, sent to the activity: the question it asks the user,
-     * which [ask] starts, or the end of it. A build installed ends the application, which starts anew.
+     * What the system answered of a session ([UpdateStatusReceiver]): the question it asks the user, kept for the
+     * screen in front to start ([question]), or the end of it. A question is kept only for a session the application
+     * is waiting on. A build installed ends the application, which starts anew.
      */
-    fun answered(status: Intent, ask: (Intent) -> Unit) {
-        when (status.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
-            PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                IntentCompat.getParcelableExtra(status, Intent.EXTRA_INTENT, Intent::class.java)?.let(ask)
-            }
-            PackageInstaller.STATUS_SUCCESS -> _step.value = UpdateStep.Idle
-            PackageInstaller.STATUS_FAILURE_ABORTED -> _step.value = UpdateStep.Failed(UpdateFailure.CANCELLED)
-            else -> _step.value = UpdateStep.Failed(UpdateFailure.INSTALL, status.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE))
+    fun received(status: Intent) {
+        val ours = context.packageManager.packageInstaller.mySessions.map { session -> session.sessionId }.toSet()
+        val answer = installAnswer(
+            status.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE),
+            status.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1),
+            ours,
+        )
+        when (answer) {
+            InstallAnswer.ASK -> _question.value = IntentCompat.getParcelableExtra(status, Intent.EXTRA_INTENT, Intent::class.java)
+            InstallAnswer.DONE -> _step.value = UpdateStep.Idle
+            InstallAnswer.CANCELLED -> _step.value = UpdateStep.Failed(UpdateFailure.CANCELLED)
+            InstallAnswer.FAILED -> _step.value = UpdateStep.Failed(UpdateFailure.INSTALL, status.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE))
+            InstallAnswer.NOT_OURS -> Unit
         }
     }
 
-    /** Back to the start, with no file and no session left behind. */
+    /** The screen in front started the system's question: it is not asked again. */
+    fun asked() {
+        _question.value = null
+    }
+
+    /** Back to the start, with no file, no session and no question left behind. */
     fun reset() {
         folder.deleteRecursively()
         abandonSessions()
+        _question.value = null
         _step.value = UpdateStep.Idle
     }
 

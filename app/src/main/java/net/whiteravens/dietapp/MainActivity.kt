@@ -2,7 +2,6 @@
 
 package net.whiteravens.dietapp
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -14,25 +13,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.config.AppearanceStore
 import net.whiteravens.dietapp.data.notify.PhoneNotificationsSwitch
-import net.whiteravens.dietapp.data.repository.NotificationRepository
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.update.UpdateInstaller
 import net.whiteravens.dietapp.data.update.Updates
-import net.whiteravens.dietapp.di.ApplicationScope
 import net.whiteravens.dietapp.domain.Palette
-import net.whiteravens.dietapp.notify.PhoneNotifier
+import net.whiteravens.dietapp.notify.Taps
 import net.whiteravens.dietapp.ui.common.Returns
-import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.DietAppRoot
 import net.whiteravens.dietapp.ui.theme.DietAppTheme
 import net.whiteravens.dietapp.ui.unlock.Gate
@@ -40,7 +36,11 @@ import net.whiteravens.dietapp.ui.unlock.LockedScreen
 import net.whiteravens.dietapp.ui.unlock.Unlock
 import javax.inject.Inject
 
-/** Single-activity host; all navigation is Compose-based (ui/navigation). */
+/**
+ * Single-activity host; all navigation is Compose-based (ui/navigation). It is the launcher, so any application can
+ * start it with an intent of its choosing: it acts on none. What the application's own notifications ask for comes
+ * through [Taps], and what the system's installer asks through [UpdateInstaller.question].
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
@@ -59,11 +59,7 @@ class MainActivity : ComponentActivity() {
     lateinit var installer: UpdateInstaller
 
     @Inject
-    lateinit var notifications: NotificationRepository
-
-    @Inject
-    @ApplicationScope
-    lateinit var application: CoroutineScope
+    lateinit var taps: Taps
 
     @Inject
     lateinit var unlock: Unlock
@@ -71,20 +67,17 @@ class MainActivity : ComponentActivity() {
     /** The one prompt of the unlock, for its gate and its setting: registered as the activity is made, as it must be. */
     private val authentication = registerForAuthenticationResult { result -> unlock.answered(result) }
 
-    /** A tap on a phone's notification asked for the list of notifications, not opened yet. */
-    private var openNotifications by mutableStateOf(false)
-
-    /** A tap on a reminder of water asked for that profile's water, not opened yet. */
-    private var openWaterOf by mutableStateOf<String?>(null)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // Only on a start of its own: an activity made again, the phone turned, has been asked already.
-        if (savedInstanceState == null) {
-            openNotifications = intent?.action == PhoneNotifier.OPEN_NOTIFICATIONS
-            water(intent)
-            intent?.takeIf { it.action == UpdateInstaller.STATUS }?.let { status -> installer.answered(status, ::startActivity) }
+        // The system's installer asks the user about a newer build while the application is in front.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                installer.question.filterNotNull().collect { ask ->
+                    installer.asked()
+                    startActivity(ask)
+                }
+            }
         }
         // The phone's notifications, where they are on, keep the schedule this version asks for.
         lifecycleScope.launch { phoneNotifications.keepScheduled() }
@@ -100,13 +93,15 @@ class MainActivity : ComponentActivity() {
                     Surface(Modifier.fillMaxSize()) {
                         // Nothing of the account is composed until the gate opens: its screens and what they read wait.
                         val gate by unlock.state.collectAsStateWithLifecycle()
+                        val openNotifications by taps.openNotifications.collectAsStateWithLifecycle()
+                        val openWaterOf by taps.openWaterOf.collectAsStateWithLifecycle()
                         LaunchedEffect(gate) { if ((gate as? Gate.Locked)?.askNow == true) unlock.askForTheGate() }
                         when (gate) {
                             Gate.Open -> DietAppRoot(
                                 openNotifications = openNotifications,
-                                onNotificationsOpened = { openNotifications = false },
+                                onNotificationsOpened = taps::notificationsOpened,
                                 openWaterOf = openWaterOf,
-                                onWaterOpened = { openWaterOf = null },
+                                onWaterOpened = taps::waterOpened,
                             )
                             Gate.Reading -> Unit
                             else -> LockedScreen(gate, onUnlock = unlock::askAgain, onSignOut = unlock::leave, onVoidedSeen = unlock::voidedSeen)
@@ -115,22 +110,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        if (intent.action == PhoneNotifier.OPEN_NOTIFICATIONS) openNotifications = true
-        water(intent)
-        // What the system's installer answered of a newer build: the question it asks the user, or how it ended.
-        if (intent.action == UpdateInstaller.STATUS) installer.answered(intent, ::startActivity)
-    }
-
-    /** A tap on a reminder of water: its profile's water is opened, and the reminder read, through the queue without a network. */
-    private fun water(intent: Intent?) {
-        if (intent?.action != PhoneNotifier.OPEN_WATER) return
-        openWaterOf = intent.getStringExtra(PhoneNotifier.EXTRA_PROFILE)
-        val reminder = intent.getStringExtra(PhoneNotifier.EXTRA_NOTIFICATION) ?: return
-        application.launch { attempt { notifications.read(reminder) } }
     }
 
     // Counted before the screens resume, so that they know the application came back to the front.
