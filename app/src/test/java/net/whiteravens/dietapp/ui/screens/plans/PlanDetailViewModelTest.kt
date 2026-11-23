@@ -574,6 +574,43 @@ class PlanDetailViewModelTest {
     }
 
     @Test
+    fun `an eaten mark refused because its meal is not there reads the plan again, and a plan removed elsewhere leaves the screen`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val model = model(api)
+        assertNotNull(model.state.value.plan)
+
+        // Removed on another device: its meal is not found, and the plan read again is not there either.
+        coEvery { api.setMealEaten(any(), any(), any()) } throws refused(404, "MEAL_NOT_FOUND")
+        coEvery { api.mealPlan(plan.id) } throws refused(404, "PLAN_NOT_FOUND")
+        model.setEaten(meal.id, true)
+
+        assertNull(model.state.value.plan)
+        assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
+    }
+
+    @Test
+    fun `a change the queue sent and the server refused as not found reads the plan again`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val queue = changeQueue()
+        val plans = MealPlanRepository(api, mockk(), NoCache, json, queue)
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true))
+        coEvery { api.setMealEaten(any(), any(), any()) } throws IOException("no network")
+        model.setEaten(meal.id, true)
+        assertEquals(1, model.state.value.waiting.size)
+
+        // Sent once the network is back, and refused: the plan was removed meanwhile.
+        coEvery { api.setMealEaten(any(), any(), any()) } throws refused(404, "MEAL_NOT_FOUND")
+        coEvery { api.mealPlan(plan.id) } throws refused(404, "PLAN_NOT_FOUND")
+        runBlocking { queue.drain { plans.send(it as QueuedChange.Eaten) } }
+
+        assertNull(model.state.value.plan)
+        assertEquals("PLAN_NOT_FOUND", (model.state.value.error as ApiException).code)
+    }
+
+    @Test
     fun `the favourites a meal can be swapped to leave out those marked to avoid, and an account without a model says so`() {
         val api = mockk<DietApiService>()
         coEvery { api.mealPlan(plan.id) } returns plan
