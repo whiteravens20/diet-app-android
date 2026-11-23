@@ -583,7 +583,7 @@ private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean,
 
 /** A meal eaten from another plan of the profile: its name, that it is another plan's, and what it comes to; a press on it opens it in its plan. */
 @Composable
-private fun OtherPlanMealRow(meal: DiaryPlanMeal, onOpen: () -> Unit) {
+internal fun OtherPlanMealRow(meal: DiaryPlanMeal, onOpen: () -> Unit) {
     val opens = stringResource(R.string.diary_open_meal)
     Column(Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = opens, onClick = onOpen).padding(vertical = 4.dp)) {
         Text(meal.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)

@@ -170,6 +170,7 @@ import net.whiteravens.dietapp.domain.FrozenRest
 import kotlin.math.pow
 import kotlin.math.roundToLong
 import net.whiteravens.dietapp.domain.EatenElsewhere
+import net.whiteravens.dietapp.domain.FrozenKept
 import net.whiteravens.dietapp.ui.components.held
 
 /**
@@ -927,25 +928,7 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
                     )
                 }
                 // What the freezer holds of the menu's foods that the plan leaves there, and why.
-                if (packs.staysFrozen.isNotEmpty()) {
-                    Fact(stringResource(R.string.plans_stays_frozen_title))
-                    packs.staysFrozen.forEach { kept ->
-                        val amount = amountLabel(kept.amount.toDouble(), kept.unit)
-                        val said = if (kept.later) {
-                            stringResource(R.string.plans_stays_frozen_later, kept.name, amount)
-                        } else {
-                            pluralStringResource(
-                                R.plurals.plans_stays_frozen_whole,
-                                kept.packages,
-                                kept.name,
-                                amount,
-                                formatNumber(kept.packages),
-                                amountLabel(kept.mostInTwoDays.toDouble(), kept.unit),
-                            )
-                        }
-                        Fact("• $said")
-                    }
-                }
+                if (packs.staysFrozen.isNotEmpty()) StaysFrozenLines(packs.staysFrozen)
                 // What the freezer held goes first only in a plan that took something out of it.
                 Fact(stringResource(if (packs.fromFreezer.isNotEmpty()) R.string.plans_packs_explain_freezer else R.string.plans_packs_explain))
                 useUp?.invoke()
@@ -1460,7 +1443,7 @@ private fun DiaryEntryCard(entry: DiaryEntry, onOpen: (() -> Unit)?) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun OtherPlanMealCard(other: EatenElsewhere, onOpen: () -> Unit) {
+internal fun OtherPlanMealCard(other: EatenElsewhere, onOpen: () -> Unit) {
     val meal = other.meal
     AppCard(onClick = onOpen, modifier = Modifier.padding(start = 24.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -2258,9 +2241,31 @@ private fun OffTargetDialog(
 }
 
 /** A chip for what is to be borne in mind: a day off its target, a recipe off the diet, a meal outside a limit. */
+/** What the freezer holds of a plan's foods that the plan leaves there, and why: each package it does not thaw. */
+@Composable
+internal fun StaysFrozenLines(kept: List<FrozenKept>) {
+    Fact(stringResource(R.string.plans_stays_frozen_title))
+    kept.forEach { one ->
+        val amount = amountLabel(one.amount.toDouble(), one.unit)
+        val said = if (one.later) {
+            stringResource(R.string.plans_stays_frozen_later, one.name, amount)
+        } else {
+            pluralStringResource(
+                R.plurals.plans_stays_frozen_whole,
+                one.packages,
+                one.name,
+                amount,
+                formatNumber(one.packages),
+                amountLabel(one.mostInTwoDays.toDouble(), one.unit),
+            )
+        }
+        Fact("• $said")
+    }
+}
+
 /** What a day off its split holds too much and too little of, and each thing that makes it so with what helps. */
 @Composable
-private fun MacrosOffWhyLines(why: MacrosOffWhy, modifier: Modifier = Modifier) {
+internal fun MacrosOffWhyLines(why: MacrosOffWhy, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Fact(stringResource(R.string.plans_macros_lean, macroOf(why.over), macroOf(why.under)), color = MaterialTheme.colorScheme.onSurface)
         why.causes.forEach { cause -> Fact("• ${causeOf(cause)}") }
