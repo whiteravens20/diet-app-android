@@ -1629,6 +1629,24 @@ data class PlanPacksDto(
     val open: List<PlanOpenPackDto>,
     val frozen: List<PlanFrozenRestDto> = emptyList(),
     val fromFreezer: List<PlanFreezerStockDto> = emptyList(),
+    /** What the freezer holds of the menu's foods that the plan leaves there, and why; none from an API that does not say it. */
+    val staysFrozen: List<PlanFrozenKeptDto> = emptyList(),
+)
+
+/**
+ * Packages of [name] the plan leaves in the freezer, [amount] in [unit] together: [why] `whole`, it would not eat one
+ * whole in the days a thawed package keeps ([mostInTwoDays] the most it eats in two), or `later`, frozen after the
+ * plan was made.
+ */
+@Serializable
+data class PlanFrozenKeptDto(
+    val ingredientId: String,
+    val name: String,
+    val unit: String,
+    val amount: Int,
+    val packages: Int,
+    val why: String,
+    val mostInTwoDays: Int,
 )
 
 /** "Dodaj do spiżarni" of the rest the plan freezes of [ingredientId] on [date]: what is left of it goes into the pantry as frozen, once. */

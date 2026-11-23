@@ -343,6 +343,14 @@
     <string name="plans_packs_into_freezer_item">%1$s, %2$s</string>
     <string name="plans_packs_into_freezer_rest">%1$s (%2$s)</string>
     <string name="plans_packs_from_freezer">Z zamrażarki, z tego, co w niej było, gdy plan powstał: %1$s.</string>
+    <string name="plans_stays_frozen_title">Zostaje w\u00A0zamrażarce:</string>
+    <plurals name="plans_stays_frozen_whole">
+        <item quantity="one">%1$s, %2$s: w\u00A0dwa dni plan zje z\u00A0tego najwyżej %4$s, a\u00A0rozmrożone trzeba zjeść w\u00A02\u00A0dni. Mrożąc, dziel na porcje do %4$s.</item>
+        <item quantity="few">%1$s, %2$s, %3$s\u00A0paczki: w\u00A0dwa dni plan zje z\u00A0tego najwyżej %4$s, a\u00A0rozmrożone trzeba zjeść w\u00A02\u00A0dni. Mrożąc, dziel na porcje do %4$s.</item>
+        <item quantity="many">%1$s, %2$s, %3$s\u00A0paczek: w\u00A0dwa dni plan zje z\u00A0tego najwyżej %4$s, a\u00A0rozmrożone trzeba zjeść w\u00A02\u00A0dni. Mrożąc, dziel na porcje do %4$s.</item>
+        <item quantity="other">%1$s, %2$s, %3$s\u00A0paczki: w\u00A0dwa dni plan zje z\u00A0tego najwyżej %4$s, a\u00A0rozmrożone trzeba zjeść w\u00A02\u00A0dni. Mrożąc, dziel na porcje do %4$s.</item>
+    </plurals>
+    <string name="plans_stays_frozen_later">%1$s, %2$s: zamrożone po ułożeniu planu, a\u00A0plan liczy zamrażarkę z\u00A0dnia, w\u00A0którym powstał. Ułóż plan ponownie, żeby z\u00A0tego skorzystał.</string>
     <string name="plans_packs_from_freezer_item_left">%1$s, porcja %2$s, z niej plan zje %3$s</string>
     <string name="plans_use_up_ask">Co by je zużyło?</string>
     <string name="plans_use_up_asking">Szukam…</string>

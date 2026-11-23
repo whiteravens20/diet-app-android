@@ -908,6 +908,18 @@ data class PlanPacks(
     val open: List<OpenPack>,
     val frozen: List<FrozenRest> = emptyList(),
     val fromFreezer: List<FreezerStock> = emptyList(),
+    /** What the freezer holds of the menu's foods that the plan leaves there, and why. */
+    val staysFrozen: List<FrozenKept> = emptyList(),
+)
+
+/** Packages the plan leaves in the freezer: [why] whole (too much for the days a thawed one keeps) or later (frozen after the plan). */
+data class FrozenKept(
+    val name: String,
+    val unit: String,
+    val amount: Int,
+    val packages: Int,
+    val later: Boolean,
+    val mostInTwoDays: Int,
 )
 
 /** What a meal takes out of the freezer on [date] (yyyy-MM-dd); [mealId] null where the meal is none of this plan's. */

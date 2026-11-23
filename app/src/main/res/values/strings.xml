@@ -321,6 +321,12 @@
     <string name="plans_packs_into_freezer_item">%1$s, %2$s</string>
     <string name="plans_packs_into_freezer_rest">%1$s (%2$s)</string>
     <string name="plans_packs_from_freezer">From the freezer, of what it held when the plan was made: %1$s.</string>
+    <string name="plans_stays_frozen_title">Stays in the freezer:</string>
+    <plurals name="plans_stays_frozen_whole">
+        <item quantity="one">%1$s, %2$s: the plan eats at most %4$s of it in 2\u00A0days, and thawed it has to be eaten within 2\u00A0days. Freeze it in portions of up to %4$s.</item>
+        <item quantity="other">%1$s, %2$s, %3$s\u00A0packages: the plan eats at most %4$s of it in 2\u00A0days, and thawed it has to be eaten within 2\u00A0days. Freeze it in portions of up to %4$s.</item>
+    </plurals>
+    <string name="plans_stays_frozen_later">%1$s, %2$s: frozen after the plan was made, and a plan counts the freezer as it was on the day it was made. Make the plan again to use it.</string>
     <string name="plans_packs_from_freezer_item_left">%1$s, a portion of %2$s, of which the plan eats %3$s</string>
     <string name="plans_use_up_ask">What would use them up?</string>
     <string name="plans_use_up_asking">Looking…</string>

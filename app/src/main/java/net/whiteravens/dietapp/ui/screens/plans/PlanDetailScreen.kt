@@ -908,6 +908,26 @@ private fun PacksLine(packs: PlanPacks, together: String?, useUp: (@Composable (
                         ),
                     )
                 }
+                // What the freezer holds of the menu's foods that the plan leaves there, and why.
+                if (packs.staysFrozen.isNotEmpty()) {
+                    Fact(stringResource(R.string.plans_stays_frozen_title))
+                    packs.staysFrozen.forEach { kept ->
+                        val amount = amountLabel(kept.amount.toDouble(), kept.unit)
+                        val said = if (kept.later) {
+                            stringResource(R.string.plans_stays_frozen_later, kept.name, amount)
+                        } else {
+                            pluralStringResource(
+                                R.plurals.plans_stays_frozen_whole,
+                                kept.packages,
+                                kept.name,
+                                amount,
+                                formatNumber(kept.packages),
+                                amountLabel(kept.mostInTwoDays.toDouble(), kept.unit),
+                            )
+                        }
+                        Fact("• $said")
+                    }
+                }
                 // What the freezer held goes first only in a plan that took something out of it.
                 Fact(stringResource(if (packs.fromFreezer.isNotEmpty()) R.string.plans_packs_explain_freezer else R.string.plans_packs_explain))
                 useUp?.invoke()

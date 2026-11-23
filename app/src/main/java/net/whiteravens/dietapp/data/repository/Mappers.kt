@@ -91,6 +91,7 @@ import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.data.remote.HouseholdListDto
 import net.whiteravens.dietapp.data.remote.PlanThawDto
 import net.whiteravens.dietapp.domain.FreezerStock
+import net.whiteravens.dietapp.domain.FrozenKept
 import net.whiteravens.dietapp.domain.FrozenRest
 import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.HouseholdOf
@@ -455,6 +456,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
             )
         },
         fromFreezer = packs.fromFreezer.map { held -> FreezerStock(held.ingredientId, held.name, held.unit, held.date, held.mealId, held.amount, held.eaten) },
+        staysFrozen = packs.staysFrozen.map { kept -> FrozenKept(kept.name, kept.unit, kept.amount, kept.packages, kept.why == "later", kept.mostInTwoDays) },
     ),
     byModel = generationMode == "ai_assisted",
     mayGiveWay = options.allowRelaxations,
