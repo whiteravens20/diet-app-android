@@ -11,7 +11,10 @@ import net.whiteravens.dietapp.domain.Meal
  * the index of the first meal that comes after them in the day, or under -1 after the last one; each list
  * in the order of the day.
  */
-internal fun entriesApart(meals: List<Meal>, written: List<DiaryEntry>): Map<Int, List<DiaryEntry>> =
-    written.filter { entry -> meals.none { it.slot == entry.slot } }
-        .sortedBy { MEAL_TYPES.indexOf(it.slot) }
-        .groupBy { entry -> meals.indexOfFirst { MEAL_TYPES.indexOf(it.slot) > MEAL_TYPES.indexOf(entry.slot) } }
+internal fun entriesApart(meals: List<Meal>, written: List<DiaryEntry>): Map<Int, List<DiaryEntry>> = linesApart(meals, written) { it.slot }
+
+/** As [entriesApart], for any line of the diary that has a time of the day ([slotOf]): a meal eaten from another plan too. */
+internal fun <T> linesApart(meals: List<Meal>, lines: List<T>, slotOf: (T) -> String): Map<Int, List<T>> =
+    lines.filter { line -> meals.none { it.slot == slotOf(line) } }
+        .sortedBy { MEAL_TYPES.indexOf(slotOf(it)) }
+        .groupBy { line -> meals.indexOfFirst { MEAL_TYPES.indexOf(it.slot) > MEAL_TYPES.indexOf(slotOf(line)) } }

@@ -1869,6 +1869,7 @@
     <string name="diary_open_plan">Open the plan</string>
     <string name="diary_open_meal">Open the meal</string>
     <string name="diary_from_plan">From the plan</string>
+    <string name="diary_from_other_plan">From another plan</string>
     <string name="diary_eaten_of">Eaten: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>
     <string name="diary_meal_kcal_from_pot">≈%1$s\u00A0kcal from a shared pot</string>
@@ -1952,6 +1953,8 @@
         <item quantity="one">The diary adds %2$s kcal to this day (%1$d entry).</item>
         <item quantity="other">The diary adds %2$s kcal to this day (%1$d entries).</item>
     </plurals>
+    <string name="plans_other_plans_line">What was eaten from another plan adds %1$s\u00A0kcal to this day.</string>
+    <string name="plans_diary_and_other_plans_line">The diary and what was eaten from another plan add %1$s\u00A0kcal to this day.</string>
     <string name="diary_kind_product">Product</string>
     <string name="diary_pick_product_first">First find and pick a product.</string>
     <string name="diary_product_no_figures_short">This product has no figures to add.</string>
@@ -2177,6 +2180,7 @@
     <string name="recipe_portion_whole_same">Below are the amounts of the original recipe, for %1$s: as much as this cooking in the plan.</string>
     <string name="plans_estimated_chip">≈ estimate</string>
     <string name="plans_from_diary_chip">from the diary</string>
+    <string name="plans_from_other_plan_chip">from another plan</string>
     <string name="plans_custom_estimated_note">Custom meal: what was not entered of its macronutrients is estimated from the day\'s target.</string>
     <string name="plans_custom_macros_optional">The calories are enough. What you leave out is estimated from the day\'s target and marked ≈.</string>
     <string name="plans_custom_total_estimated">The meal adds to the day: %1$s kcal. The macronutrients left out will be estimated from the day\'s target.</string>

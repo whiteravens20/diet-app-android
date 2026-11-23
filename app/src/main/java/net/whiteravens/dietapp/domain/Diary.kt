@@ -65,6 +65,8 @@ data class DiaryDay(
     val eatenLabel: LabelTotals? = null,
     /** The limits of the profile the day crosses. */
     val labelNotes: List<LabelLimitNote> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [eaten]. */
+    val otherPlans: List<EatenElsewhere> = emptyList(),
 )
 
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */
@@ -93,6 +95,9 @@ data class DiaryPlanMeal(
     /** What was put on this person's plate beside the dish, counted in [calories]: its food and amount. */
     val topping: DiaryTopping? = null,
 )
+
+/** A meal eaten on the day from another plan of the profile ([planId]), as that plan has it, with its [macros]. */
+data class EatenElsewhere(val meal: DiaryPlanMeal, val planId: String, val macros: Macros)
 
 /** A topping eaten with a meal of the plan: its food's name and its amount, as shown. */
 data class DiaryTopping(val name: String, val quantity: Double, val unit: String, val grams: Double?)

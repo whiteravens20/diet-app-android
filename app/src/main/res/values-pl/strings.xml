@@ -2020,6 +2020,7 @@
     <string name="diary_open_plan">Otwórz plan</string>
     <string name="diary_open_meal">Otwórz posiłek</string>
     <string name="diary_from_plan">Z planu</string>
+    <string name="diary_from_other_plan">Z\u00A0innego planu</string>
     <string name="diary_eaten_of">Zjedzone: %1$s</string>
     <string name="diary_meal_kcal">%1$s kcal</string>
     <string name="diary_meal_kcal_from_pot">≈%1$s\u00A0kcal z\u00A0podziału garnka</string>
@@ -2111,6 +2112,8 @@
         <item quantity="many">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisów).</item>
         <item quantity="other">Dziennik dodaje do tego dnia %2$s kcal (%1$d wpisu).</item>
     </plurals>
+    <string name="plans_other_plans_line">Zjedzone z\u00A0innego planu dodaje do tego dnia %1$s\u00A0kcal.</string>
+    <string name="plans_diary_and_other_plans_line">Dziennik i\u00A0zjedzone z\u00A0innego planu dodają do tego dnia %1$s\u00A0kcal.</string>
     <string name="diary_kind_product">Produkt</string>
     <string name="diary_pick_product_first">Najpierw znajdź i wybierz produkt.</string>
     <string name="diary_product_no_figures_short">Ten produkt nie ma wartości do dodania.</string>
@@ -2339,6 +2342,7 @@
     <string name="recipe_portion_whole_same">Poniżej podane są ilości z\u00A0oryginalnego przepisu, na %1$s: tyle samo, ile to gotowanie w\u00A0planie.</string>
     <string name="plans_estimated_chip">≈ szacunek</string>
     <string name="plans_from_diary_chip">z dziennika</string>
+    <string name="plans_from_other_plan_chip">z\u00A0innego planu</string>
     <string name="plans_custom_estimated_note">Własny posiłek: makroskładników, których nie wpisano, jest szacunek z celu dnia.</string>
     <string name="plans_custom_macros_optional">Wystarczą kalorie. Czego nie wpiszesz, to oszacujemy z celu dnia i oznaczymy ≈.</string>
     <string name="plans_custom_total_estimated">Posiłek doda do dnia: %1$s kcal. Brakujące makroskładniki zostaną oszacowane z celu dnia.</string>

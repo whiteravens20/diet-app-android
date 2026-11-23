@@ -15,6 +15,7 @@ import net.whiteravens.dietapp.data.remote.LabelTotalsDto
 import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.MacrosDto
 import net.whiteravens.dietapp.data.remote.CookingChangeDto
+import net.whiteravens.dietapp.data.remote.EatenInOtherPlanDto
 import net.whiteravens.dietapp.data.remote.MacrosOffWhyDto
 import net.whiteravens.dietapp.data.remote.MealPlanDayDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
@@ -91,6 +92,9 @@ import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.data.remote.HouseholdListDto
 import net.whiteravens.dietapp.data.remote.PlanThawDto
+import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.DiaryTopping
+import net.whiteravens.dietapp.domain.EatenElsewhere
 import net.whiteravens.dietapp.domain.FreezerStock
 import net.whiteravens.dietapp.domain.FrozenKept
 import net.whiteravens.dietapp.domain.MacrosOffCause
@@ -369,7 +373,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
             useUpBy = overrides?.useUpBy == true,
         )
     },
-    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }) },
+    diary = diary?.let { DayDiary(it.entries, it.nutrition.toDomain(), it.items.map { entry -> entry.toDomain() }, it.otherPlans.map { meal -> meal.toDomain() }) },
     label = dayLabel?.toDomain(),
     labelNotes = labelNotes.toNotes(),
     listed = listed,
@@ -621,4 +625,20 @@ fun MacrosOffWhyDto.toDomain() = MacrosOffWhy(
             else -> null
         }
     }.distinct(),
+)
+
+/** A meal eaten on its day from another plan of the profile, as the diary and a plan's day show it. */
+internal fun EatenInOtherPlanDto.toDomain() = EatenElsewhere(
+    DiaryPlanMeal(
+        id,
+        mealType,
+        name,
+        recipeId,
+        eaten,
+        nutrition.calories,
+        fromPot,
+        topping?.let { DiaryTopping(it.name, it.display.quantity, it.display.unit, it.display.grams) },
+    ),
+    planId,
+    Macros(nutrition.protein, nutrition.fat, nutrition.carbs),
 )

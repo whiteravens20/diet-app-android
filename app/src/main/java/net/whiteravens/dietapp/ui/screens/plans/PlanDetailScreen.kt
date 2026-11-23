@@ -169,6 +169,8 @@ import kotlin.math.roundToInt
 import net.whiteravens.dietapp.domain.FrozenRest
 import kotlin.math.pow
 import kotlin.math.roundToLong
+import net.whiteravens.dietapp.domain.EatenElsewhere
+import net.whiteravens.dietapp.ui.components.held
 
 /**
  * One plan: what it is and what a day of it holds on average, its days, and the selected day's
@@ -180,6 +182,7 @@ fun PlanDetailScreen(
     onOpenRecipe: (recipeId: String, portion: Double, whole: Boolean) -> Unit,
     onTurnAiOn: () -> Unit,
     onOpenDiary: (profileId: String, date: String) -> Unit,
+    onOpenPlanMeal: (planId: String, date: String, mealId: String) -> Unit,
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -628,11 +631,18 @@ fun PlanDetailScreen(
                 val written = day.diary?.items.orEmpty()
                 // The diary of a day that has come opens from what it holds.
                 val openDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today }
+                // What another plan of the profile had eaten that day counts as the diary does, and opens in its plan.
+                val others = day.diary?.otherPlans.orEmpty()
+                val openOther = { other: EatenElsewhere -> onOpenPlanMeal(other.planId, day.date, other.meal.id) }
                 // What the diary holds for a meal the day has none of stands where that meal would in the day.
                 val apart = entriesApart(day.meals, written)
+                val othersApart = linesApart(day.meals, others) { it.meal.slot }
                 day.meals.forEachIndexed { index, meal ->
                     apart[index].orEmpty().forEach { entry ->
                         item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
+                    }
+                    othersApart[index].orEmpty().forEach { other ->
+                        item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
                     }
                     item(key = meal.id) {
                         MealCard(
@@ -673,10 +683,16 @@ fun PlanDetailScreen(
                         written.filter { it.slot == meal.slot }.forEach { entry ->
                             item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
                         }
+                        others.filter { it.meal.slot == meal.slot }.forEach { other ->
+                            item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
+                        }
                     }
                 }
                 apart[-1].orEmpty().forEach { entry ->
                     item(key = "entry-${entry.id}") { DiaryEntryCard(entry, openDiary) }
+                }
+                othersApart[-1].orEmpty().forEach { other ->
+                    item(key = "other-${other.meal.id}") { OtherPlanMealCard(other) { openOther(other) } }
                 }
                 item(key = "add-${day.id}") {
                     TextButton(onClick = { addingTo = day.date }, enabled = !busy) { Text(stringResource(R.string.plans_add_custom_meal)) }
@@ -1101,8 +1117,14 @@ private fun DaySummary(
         frozen.forEach { rest -> FreezeLine(rest, onKeepFrozen) }
         // What the diary adds to the day is counted in the figures above.
         day.diary?.let { diary ->
+            val kcal = formatNumber(diary.nutrition.calories.roundToInt())
             Text(
-                pluralStringResource(R.plurals.plans_diary_line, diary.entries, diary.entries, formatNumber(diary.nutrition.calories.roundToInt())),
+                // What was eaten from the profile's other plans that day counts as the diary does.
+                when {
+                    diary.otherPlans.isEmpty() -> pluralStringResource(R.plurals.plans_diary_line, diary.entries, diary.entries, kcal)
+                    diary.entries == 0 -> stringResource(R.string.plans_other_plans_line, kcal)
+                    else -> stringResource(R.string.plans_diary_and_other_plans_line, kcal)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
@@ -1425,6 +1447,42 @@ private fun DiaryEntryCard(entry: DiaryEntry, onOpen: (() -> Unit)?) {
         )
         Text(
             entryLine(entry),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
+}
+
+/**
+ * A meal eaten that day from another plan of the profile, where the diary's entries stand: its time of the day, that
+ * it is another plan's, its name and what it comes to. A press opens it in its plan.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OtherPlanMealCard(other: EatenElsewhere, onOpen: () -> Unit) {
+    val meal = other.meal
+    AppCard(onClick = onOpen, modifier = Modifier.padding(start = 24.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LabelChip(mealTypeLabel(meal.slot))
+            PlainChip(stringResource(R.string.plans_from_other_plan_chip))
+        }
+        Text(
+            meal.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        val kcal = meal.calories?.let { held(stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt()))) }
+        val macros = stringResource(
+            R.string.diary_entry_macros,
+            formatNumber(other.macros.protein.roundToInt()),
+            formatNumber(other.macros.fat.roundToInt()),
+            formatNumber(other.macros.carbs.roundToInt()),
+        )
+        Text(
+            listOfNotNull(kcal, macros).joinToString(DOT),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp),

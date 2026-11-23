@@ -251,6 +251,7 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
     syncedAt = syncedAt,
     eatenLabel = eatenLabel?.toDomain(),
     labelNotes = labelNotes.toNotes(),
+    otherPlans = otherPlans.map { it.toDomain() },
 )
 
 /** An entry as it was written or changed, with what it did to the day of the plan the diary shows. */

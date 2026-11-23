@@ -33,6 +33,8 @@ import net.whiteravens.dietapp.domain.DiaryDayPlan
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryIngredient
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.EatenElsewhere
+import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.DiaryWritten
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
@@ -103,7 +105,19 @@ class DiaryViewModelTest {
         plan: DiaryDayPlan? = null,
         eaten: Double = 0.0,
         syncedAt: Long? = null,
-    ) = DiaryDay(profileId, date.toString(), Nutrition(2000.0, 100.0, 60.0, 250.0), plan != null, plan, entries, Nutrition(eaten, 0.0, 0.0, 0.0), false, syncedAt)
+        otherPlans: List<EatenElsewhere> = emptyList(),
+    ) = DiaryDay(
+        profileId,
+        date.toString(),
+        Nutrition(2000.0, 100.0, 60.0, 250.0),
+        plan != null,
+        plan,
+        entries,
+        Nutrition(eaten, 0.0, 0.0, 0.0),
+        false,
+        syncedAt,
+        otherPlans = otherPlans,
+    )
 
     private fun plan(vararg meals: DiaryPlanMeal, offTarget: String? = null) = DiaryDayPlan("p", false, meals.toList(), 0.0, offTarget)
 
@@ -361,6 +375,17 @@ class DiaryViewModelTest {
         model.pickDay(LocalDate.parse("1999-12-31"))
 
         assertEquals(LocalDate.parse("2000-01-01"), model.state.value.date)
+    }
+
+    @Test
+    fun `a time of the day that holds only a meal eaten from another plan is shown, with that meal`() {
+        val elsewhere = EatenElsewhere(DiaryPlanMeal("m", "snack", "Owsianka", "r", true, 320.0), planId = "q", Macros(12.0, 8.0, 50.0))
+        coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e1", slot = "breakfast")), otherPlans = listOf(elsewhere))
+
+        val state = model().state.value
+
+        assertEquals(listOf("breakfast", "snack"), state.slots)
+        assertEquals(listOf(elsewhere), state.day?.otherPlans)
     }
 
     @Test

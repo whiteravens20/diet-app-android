@@ -1395,7 +1395,13 @@ data class MealPlanDayDto(
  * themselves, the first written first; none from an instance that does not list them.
  */
 @Serializable
-data class DayDiaryDto(val entries: Int, val nutrition: NutritionDto, val items: List<DiaryEntryDto> = emptyList())
+data class DayDiaryDto(
+    val entries: Int,
+    val nutrition: NutritionDto,
+    val items: List<DiaryEntryDto> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [nutrition]; none from an API that does not say it. */
+    val otherPlans: List<EatenInOtherPlanDto> = emptyList(),
+)
 
 /** The settings of a day of a running plan, as POST `.../settings/preview` and PUT `.../settings` take them. */
 @Serializable
@@ -2665,6 +2671,20 @@ data class DiaryPlanMealDto(
 @Serializable
 data class DiaryToppingDto(val name: String, val display: DisplayAmountDto)
 
+/** A meal eaten on the day from another plan of the profile: as a meal of the plan says it, with the plan it is of. */
+@Serializable
+data class EatenInOtherPlanDto(
+    val id: String,
+    val mealType: String,
+    val name: String,
+    val recipeId: String? = null,
+    val eaten: Boolean,
+    val nutrition: NutritionDto,
+    val fromPot: Boolean = false,
+    val topping: DiaryToppingDto? = null,
+    val planId: String,
+)
+
 /** The plan that holds a day: its meals of the day, and where the day stands with the diary counted as eaten. */
 @Serializable
 data class DiaryDayPlanDto(
@@ -2695,6 +2715,8 @@ data class DiaryDayDto(
     val eatenLabel: LabelTotalsDto? = null,
     /** The limits of the profile the day crosses. */
     val labelNotes: List<LabelLimitNoteDto> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [eaten]; none from an API that does not say it. */
+    val otherPlans: List<EatenInOtherPlanDto> = emptyList(),
 )
 
 /** What a copy of a day did: how many entries it wrote, and the day as it is now. */

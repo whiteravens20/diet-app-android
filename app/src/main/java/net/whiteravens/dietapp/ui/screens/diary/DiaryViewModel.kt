@@ -159,7 +159,9 @@ class DiaryViewModel @Inject constructor(
         val planMeals: List<DiaryPlanMeal> get() = day?.plan?.let { plan -> plan.meals.mealsWithWaiting(plan.id, date.toString(), changes) }.orEmpty()
 
         /** The meals the day has, those of its plan and those something was written for, in the order they are eaten. */
-        val slots: List<String> get() = MEAL_TYPES.filter { slot -> planMeals.any { it.slot == slot } || entries.any { it.slot == slot } }
+        val slots: List<String> get() = MEAL_TYPES.filter { slot ->
+            planMeals.any { it.slot == slot } || entries.any { it.slot == slot } || day?.otherPlans.orEmpty().any { it.meal.slot == slot }
+        }
 
         /** The day holds the most entries it may. */
         val full: Boolean get() = entries.size >= MOST_DIARY_ENTRIES

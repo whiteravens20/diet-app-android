@@ -59,6 +59,7 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.DiaryDay
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.EatenElsewhere
 import net.whiteravens.dietapp.domain.FIRST_DIARY_DAY
 import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
 import net.whiteravens.dietapp.domain.MOST_DIARY_ENTRIES
@@ -316,6 +317,9 @@ private fun LazyListScope.day(
         MealSection(
             slot = slot,
             meals = state.planMeals.filter { it.slot == slot },
+            // What another plan of the profile had eaten at this time of the day counts as eaten too, and opens in its plan.
+            others = state.day?.otherPlans.orEmpty().filter { it.meal.slot == slot },
+            onOpenOther = { other -> onOpenMeal(other.planId, state.date.toString(), other.meal.id) },
             // An entry removed is not shown while it can be taken back, nor until the server has its removal.
             entries = state.entries.filter { it.slot == slot && it.id !in hidden },
             state = state,
@@ -501,6 +505,8 @@ internal fun DayFigures(day: DiaryDay, leftOut: Int, labelLine: Boolean = true) 
 private fun MealSection(
     slot: String,
     meals: List<DiaryPlanMeal>,
+    others: List<EatenElsewhere>,
+    onOpenOther: (EatenElsewhere) -> Unit,
     entries: List<DiaryEntry>,
     state: DiaryViewModel.UiState,
     onAdd: () -> Unit,
@@ -531,8 +537,12 @@ private fun MealSection(
                     onOpen = onOpen?.takeIf { meal.id !in state.waitingOwnMeals }?.let { open -> { open(meal) } },
                 )
             }
-            entries.forEachIndexed { index, entry ->
+            others.forEachIndexed { index, other ->
                 if (index > 0 || meals.isNotEmpty()) HorizontalDivider()
+                OtherPlanMealRow(other.meal, onOpen = { onOpenOther(other) })
+            }
+            entries.forEachIndexed { index, entry ->
+                if (index > 0 || meals.isNotEmpty() || others.isNotEmpty()) HorizontalDivider()
                 EntryRow(
                     entry,
                     waiting = entry.id in state.waitingEntries,
@@ -568,6 +578,21 @@ private fun PlanMealRow(meal: DiaryPlanMeal, waiting: Boolean, enabled: Boolean,
             if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
         }
         Checkbox(checked = meal.eaten, onCheckedChange = { onEaten() }, enabled = enabled, modifier = Modifier.semantics { contentDescription = eaten })
+    }
+}
+
+/** A meal eaten from another plan of the profile: its name, that it is another plan's, and what it comes to; a press on it opens it in its plan. */
+@Composable
+private fun OtherPlanMealRow(meal: DiaryPlanMeal, onOpen: () -> Unit) {
+    val opens = stringResource(R.string.diary_open_meal)
+    Column(Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = opens, onClick = onOpen).padding(vertical = 4.dp)) {
+        Text(meal.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+        val kcal = meal.calories?.let {
+            if (meal.fromPot) stringResource(R.string.diary_meal_kcal_from_pot, formatNumber(it.roundToInt()))
+            else held(stringResource(R.string.diary_meal_kcal, formatNumber(it.roundToInt())))
+        }
+        Note(listOfNotNull(stringResource(R.string.diary_from_other_plan), kcal).joinToString(DOT))
+        meal.topping?.let { Note(stringResource(R.string.diary_meal_topping, it.name, amountLabel(it.quantity, it.unit, it.grams))) }
     }
 }
 

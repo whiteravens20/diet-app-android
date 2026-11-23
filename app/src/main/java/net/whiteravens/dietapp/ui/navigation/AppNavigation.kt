@@ -379,6 +379,7 @@ private fun MainScaffold(
                         onOpenRecipe = { recipe, portion, whole -> navController.navigate(RecipeDetailRoute(recipe, portion.toString(), whole)) },
                         onTurnAiOn = { navController.navigate(AccountRoute(AccountSection.AI.name)) },
                         onOpenDiary = { profileId, date -> navController.navigate(DiaryRoute(profileId, date)) },
+                        onOpenPlanMeal = { planId, day, meal -> navController.navigate(PlanDetailRoute(planId, day, meal)) },
                     )
                 }
                 composable<DiaryRoute> {

@@ -620,7 +620,13 @@ data class PlanDay(
 )
 
 /** What the diary adds to a day of a plan: how many entries, what they come to, and the entries, the first written first. */
-data class DayDiary(val entries: Int, val nutrition: Nutrition, val items: List<DiaryEntry> = emptyList())
+data class DayDiary(
+    val entries: Int,
+    val nutrition: Nutrition,
+    val items: List<DiaryEntry> = emptyList(),
+    /** What was eaten on the day from the profile's other plans, counted in [nutrition]. */
+    val otherPlans: List<EatenElsewhere> = emptyList(),
+)
 
 /**
  * What a day of a running plan is set to: its kind ([dayType] `normal` | `rest` | `training`),
