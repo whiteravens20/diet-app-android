@@ -96,6 +96,7 @@ import net.whiteravens.dietapp.domain.HouseholdList
 import net.whiteravens.dietapp.domain.HouseholdOf
 import net.whiteravens.dietapp.domain.HouseholdPart
 import net.whiteravens.dietapp.domain.ItemShare
+import net.whiteravens.dietapp.domain.RowPantry
 import net.whiteravens.dietapp.domain.LineAmount
 import net.whiteravens.dietapp.domain.Thaw
 
@@ -559,6 +560,7 @@ fun ShoppingListItemDto.toDomain() = ShoppingItem(
     buyLater = buyLater.map { BuyLater(it.packs, it.from) },
     gramsPerPiece = gramsPerPiece,
     shares = shares.map { ItemShare(it.profileId, it.profile, it.totalQuantity) },
+    pantries = pantries.map { RowPantry(it.profileId, it.profile, it.quantity) },
 )
 
 fun ShoppingListGroupDto.toDomain() = ShoppingGroup(

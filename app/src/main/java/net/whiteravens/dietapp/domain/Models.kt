@@ -1264,6 +1264,8 @@ data class ShoppingItem(
     val gramsPerPiece: Double? = null,
     /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
     val shares: List<ItemShare> = emptyList(),
+    /** Whose pantry holds what is at home, where more than the row's own counts. */
+    val pantries: List<RowPantry> = emptyList(),
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome
@@ -1344,6 +1346,9 @@ data class ShoppingList(
 
 /** What a profile's plan needs of a row of a household list, in the row's unit. */
 data class ItemShare(val profileId: String, val profile: String, val totalQuantity: Double)
+
+/** What the pantry of a profile holds of what is at home for a row, in the row's unit. */
+data class RowPantry(val profileId: String, val profile: String, val quantity: Double)
 
 /** The household list a plan's own list is a part of, and the profiles it is for. */
 data class HouseholdOf(val id: String, val profiles: List<String>)

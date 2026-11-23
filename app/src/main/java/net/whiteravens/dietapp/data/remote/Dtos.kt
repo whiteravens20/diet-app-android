@@ -2257,6 +2257,11 @@ data class ShoppingListItemDto(
     val checked: Boolean = false,
     /** What each profile's plan needs of the row, on a household list; none on a plan's own. */
     val shares: List<ItemShareDto> = emptyList(),
+    /**
+     * Whose pantry holds what is at home, where more than the row's own counts: every pantry of a household list's
+     * row, and the others a part counts on; none otherwise, and from an API that does not say it.
+     */
+    val pantries: List<RowPantryDto> = emptyList(),
 )
 
 /** [count] packs of [size] [sizeUnit], which come to [quantity] in the row's unit. */
@@ -2296,6 +2301,10 @@ data class ShoppingListDto(
 /** What a profile's plan needs of a row of a household list, in the row's unit. */
 @Serializable
 data class ItemShareDto(val profileId: String, val profile: String, val totalQuantity: Double)
+
+/** What the pantry of a profile holds of what is at home for a row, in the row's unit. */
+@Serializable
+data class RowPantryDto(val profileId: String, val profile: String, val quantity: Double)
 
 /** The household list a plan's own list is a part of: its id, and the names of the profiles it is for. */
 @Serializable
