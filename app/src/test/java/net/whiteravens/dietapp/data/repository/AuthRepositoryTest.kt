@@ -189,7 +189,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `the end of a session takes the phone's notifications, the account's colours, the icon's shortcuts and the notices put aside away and clears the cached copies, before the tokens, and the unlock after them`() {
+    fun `the end of a session takes the phone's notifications, the account's colours, the icon's shortcuts and the notices put aside away and clears the cached copies, before the tokens and once more after them, and the unlock after them`() {
         val cache = mockk<CacheDatabase>(relaxed = true)
         val tokens = mockk<TokenStore>(relaxed = true)
         val phoneNotifications = mockk<PhoneNotificationsSwitch>(relaxed = true)
@@ -214,6 +214,8 @@ class AuthRepositoryTest {
             waterNote.forget()
             cache.clearAllTables()
             tokens.clear()
+            // Once more: what a request under way at the sign-out wrote back after the first clearing goes too.
+            cache.clearAllTables()
             unlock.forget()
             unlockDevice.deleteKey()
         }
