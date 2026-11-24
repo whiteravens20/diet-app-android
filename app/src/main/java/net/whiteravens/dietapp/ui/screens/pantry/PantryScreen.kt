@@ -67,6 +67,7 @@ import net.whiteravens.dietapp.ui.common.categoryLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.unitName
+import net.whiteravens.dietapp.ui.components.FreezingTips
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.CheckRow
@@ -554,10 +555,21 @@ private fun FreezeDialog(state: PantryViewModel.UiState, viewModel: PantryViewMo
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Scrolled where the rules unfolded make it longer than the screen.
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     pluralStringResource(R.plurals.pantry_freeze_intro, FROZEN_KEEPS_DAYS, FROZEN_KEEPS_DAYS),
                     style = MaterialTheme.typography.bodyMedium,
+                )
+                // The size the profile's plans would take it out in, once the server has said it, and the rules.
+                FreezingTips(
+                    portionLine = state.freezeHint?.let { portion ->
+                        val said = state.freezePortion?.unit ?: row.unit
+                        // Pieces by the row's own name for them: slices of bread.
+                        val unit = if (said == row.unit && row.unit == "piece") row.shownUnit else said
+                        stringResource(R.string.freezing_portion_plans, amountLabel(portion.toDouble(), unit))
+                    },
+                    key = "pantry:${row.id}",
                 )
                 PortionsField(
                     value = state.freezePortions,

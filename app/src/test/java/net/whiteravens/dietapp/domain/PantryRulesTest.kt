@@ -68,4 +68,15 @@ class PantryRulesTest {
         assertNull(portionCount("2.5"))
         assertNull(portionCount(""))
     }
+
+    @Test
+    fun `the portions of a freezing for a plan are the fewest with none bigger than two days eat, as the API counts them`() {
+        assertEquals(2, portionsUpTo(500.0, 300.0))
+        assertEquals(3, portionsUpTo(350.0, 150.0))
+        assertEquals(1, portionsUpTo(300.0, 300.0))
+        assertEquals(1, portionsUpTo(500.0, null))
+        assertEquals(MAX_PORTIONS, portionsUpTo(5000.0, 100.0))
+        // Three pieces at half a piece a portion: three parts of one, not six of a half.
+        assertEquals(3, portionsUpTo(3.0, 0.5))
+    }
 }

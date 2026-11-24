@@ -997,6 +997,13 @@ data class UpsertInventoryItemRequest(
     val portions: Int = 1,
 )
 
+/**
+ * GET `/inventory/{id}/portion`: the size to freeze a row in, the most the profile's plans eat of its food in two days
+ * from tomorrow on, in [unit] (the row's where it converts); null where no plan takes the food from packs.
+ */
+@Serializable
+data class InventoryPortionDto(val portion: Int? = null, val unit: String)
+
 /** POST `/inventory/{id}/freeze`: a fresh row put into the freezer, split into [portions] packages; left out for one. */
 @Serializable
 data class FreezePantryRowRequest(val portions: Int = 1)

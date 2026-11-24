@@ -3,6 +3,7 @@
 package net.whiteravens.dietapp.domain
 
 import java.time.LocalDate
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToLong
 import kotlinx.serialization.Serializable
@@ -90,6 +91,23 @@ fun portionsOf(quantity: Double, portions: Int): List<Double>? {
 
 /** A number of portions as it is typed, or null where it is none the freezer takes. */
 fun portionCount(typed: String): Int? = typed.trim().toIntOrNull()?.takeIf { it in 1..MAX_PORTIONS }
+
+/**
+ * The fewest portions [quantity] goes into with none bigger than [most], at most [MAX_PORTIONS], as the API counts them:
+ * what to split it in for a plan that takes a package out of the freezer only whole, [most] being what two days of it
+ * eat. One where it is no bigger than [most], or where there is no [most]; never parts of less than one of the unit.
+ */
+fun portionsUpTo(quantity: Double, most: Double?): Int {
+    if (most == null || most <= 0.0 || quantity <= most + PORTION_EPSILON) return 1
+    val count = minOf(MAX_PORTIONS, ceil(quantity / most - PORTION_EPSILON).toInt())
+    return maxOf(1, minOf(count, floor(quantity + PORTION_EPSILON).toInt()))
+}
+
+/**
+ * The size the profile's plans would take a row of the pantry out of the freezer in ([portion], in [unit]): the most
+ * they eat of its food on a day and the next from tomorrow on; null where none of them takes it from packs.
+ */
+data class PantryPortion(val portion: Int?, val unit: String)
 
 /** How near a row is to its best-before day. */
 enum class Freshness { FINE, SOON, PAST }

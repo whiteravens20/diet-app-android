@@ -16,6 +16,7 @@ import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.PantryChange
+import net.whiteravens.dietapp.domain.PantryPortion
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.StockableIngredient
 import net.whiteravens.dietapp.domain.frozenUntil
@@ -117,6 +118,9 @@ class PantryRepository @Inject constructor(
      * pantry as it is then, or kept to be sent in its turn, under a key that has the server freeze it once however often
      * it is sent.
      */
+    /** The size to freeze row [id] in, from the profile's plans; asked of the server, never kept. */
+    suspend fun portion(id: String): PantryPortion = apiCall(json) { api.pantryRowPortion(id) }.let { PantryPortion(it.portion, it.unit) }
+
     suspend fun freeze(profileId: String, id: String, portions: Int, today: LocalDate): Submitted<List<PantryRow>> {
         val queued = QueuedChange.PantryFrozen(profileId, id, UUID.randomUUID().toString(), frozenUntil(today).toString(), portions)
         return queue.submit(queued) { send(queued) }

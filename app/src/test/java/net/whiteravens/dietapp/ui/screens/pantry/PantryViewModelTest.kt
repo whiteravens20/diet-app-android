@@ -23,6 +23,7 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.PantryChange
+import net.whiteravens.dietapp.domain.PantryPortion
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.Profile
 import net.whiteravens.dietapp.domain.StockableIngredient
@@ -245,6 +246,49 @@ class PantryViewModelTest {
         // A package is not put into the freezer again.
         model.openFreeze(first)
         assertNull(model.state.value.freezing)
+    }
+
+    @Test
+    fun `the window asks the size the plans eat the food in, and starts its count at the fewest packages none bigger than it`() = runTest(main) {
+        val chicken = PantryRow("chicken-row", "chicken", "Chicken breast", "meat", 500.0, "g", null)
+        val pantry = pantry(chicken)
+        coEvery { pantry.portion("chicken-row") } returns PantryPortion(300, "g")
+        val model = PantryViewModel(pantry, users, queue, application, SavedStateHandle())
+        runCurrent()
+
+        model.openFreeze(chicken)
+        assertEquals("1", model.state.value.freezePortions)
+        runCurrent()
+
+        assertEquals("2", model.state.value.freezePortions)
+        assertEquals(300, model.state.value.freezeHint)
+        assertEquals(listOf(250.0, 250.0), model.state.value.freezeParts)
+    }
+
+    @Test
+    fun `a number typed before the plans answer is kept, and nothing is said of a row no bigger than the size, nor without an answer`() = runTest(main) {
+        val chicken = PantryRow("chicken-row", "chicken", "Chicken breast", "meat", 500.0, "g", null)
+        val pantry = pantry(chicken)
+        coEvery { pantry.portion("chicken-row") } returns PantryPortion(300, "g")
+        val model = PantryViewModel(pantry, users, queue, application, SavedStateHandle())
+        runCurrent()
+
+        model.openFreeze(chicken)
+        model.typeFreezePortions("4")
+        runCurrent()
+        assertEquals("4", model.state.value.freezePortions)
+
+        model.closeFreeze()
+        coEvery { pantry.portion("chicken-row") } returns PantryPortion(500, "g")
+        model.openFreeze(chicken)
+        runCurrent()
+        assertEquals("1" to null, model.state.value.freezePortions to model.state.value.freezeHint)
+
+        model.closeFreeze()
+        coEvery { pantry.portion("chicken-row") } throws IOException("no network")
+        model.openFreeze(chicken)
+        runCurrent()
+        assertEquals("1" to null, model.state.value.freezePortions to model.state.value.freezeHint)
     }
 
     @Test

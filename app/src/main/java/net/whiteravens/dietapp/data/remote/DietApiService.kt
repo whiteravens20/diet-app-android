@@ -330,6 +330,10 @@ interface DietApiService {
     @DELETE("inventory/{id}")
     suspend fun removePantryRow(@Path("id") id: String)
 
+    /** The size to freeze a row of the pantry in, from the profile's plans (`InventoryPortionDto`). */
+    @GET("inventory/{id}/portion")
+    suspend fun pantryRowPortion(@Path("id") id: String): InventoryPortionDto
+
     /**
      * Puts a fresh row of the pantry into the freezer, whole or split into portions, each a package of its own dated 30
      * days from the client's day; answers the pantry of the row's profile as it is then. Sent again with the same [key],

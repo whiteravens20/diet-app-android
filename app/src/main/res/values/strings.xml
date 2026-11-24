@@ -312,6 +312,13 @@
     <string name="plans_freeze_keep">Add to the pantry</string>
     <string name="plans_freeze_keep_for">Add to the pantry as frozen: %1$s, %2$s</string>
     <string name="plans_freeze_in_pantry">Added to the pantry as frozen.</string>
+    <string name="freezing_rules_title">How to freeze</string>
+    <string name="freezing_rule_label">Label the package with what is in it and the day it went into the freezer.</string>
+    <string name="freezing_rule_use_by">Freeze it on its use-by date at the latest.</string>
+    <string name="freezing_rule_thaw">Thaw it in the fridge.</string>
+    <string name="freezing_rule_refreeze">Do not freeze thawed raw meat or fish again.</string>
+    <string name="freezing_portion_plans">Split it into portions of up to %1$s: that is the most your plans eat of it in two days, and a plan takes only whole packages out of the freezer.</string>
+    <string name="freezing_portion_plan">Split the part for later into portions of up to %1$s: that is the most this plan eats of it in two days, and a plan takes only whole packages out of the freezer.</string>
     <string name="plans_thaw_tomorrow">Take out of the freezer for tomorrow: %1$s.</string>
     <string name="plans_thaw_today">Take out of the freezer as early as you can that day: %1$s.</string>
     <string name="plans_thaw_item">%1$s, a portion of %2$s</string>

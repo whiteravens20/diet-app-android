@@ -334,6 +334,13 @@
     <string name="plans_freeze_keep">Dodaj do spiżarni</string>
     <string name="plans_freeze_keep_for">Dodaj do spiżarni jako zamrożone: %1$s, %2$s</string>
     <string name="plans_freeze_in_pantry">Dodano do spiżarni jako zamrożone.</string>
+    <string name="freezing_rules_title">Jak mrozić</string>
+    <string name="freezing_rule_label">Opisz paczkę: co w\u00A0niej jest i\u00A0kiedy trafiła do zamrażarki.</string>
+    <string name="freezing_rule_use_by">Zamroź najpóźniej w\u00A0dniu z\u00A0„Należy spożyć do” na opakowaniu.</string>
+    <string name="freezing_rule_thaw">Rozmrażaj w\u00A0lodówce.</string>
+    <string name="freezing_rule_refreeze">Rozmrożonego surowego mięsa ani ryby nie zamrażaj ponownie.</string>
+    <string name="freezing_portion_plans">Dziel na porcje do %1$s: tyle twoje plany jedzą tego najwyżej w\u00A0dwa dni, a\u00A0z\u00A0zamrażarki plan bierze tylko całe paczki.</string>
+    <string name="freezing_portion_plan">Część na później dziel na porcje do %1$s: tyle ten plan je tego najwyżej w\u00A0dwa dni, a\u00A0z\u00A0zamrażarki plan bierze tylko całe paczki.</string>
     <string name="plans_thaw_tomorrow">Wyjmij z zamrażarki na jutro: %1$s.</string>
     <string name="plans_thaw_today">Tego dnia wyjmij z zamrażarki jak najwcześniej: %1$s.</string>
     <string name="plans_thaw_item">%1$s, porcja %2$s</string>

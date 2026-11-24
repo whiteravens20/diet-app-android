@@ -32,6 +32,8 @@ import net.whiteravens.dietapp.domain.StockableIngredient
 import net.whiteravens.dietapp.domain.frozenUntil
 import net.whiteravens.dietapp.domain.portionCount
 import net.whiteravens.dietapp.domain.portionsOf
+import net.whiteravens.dietapp.domain.portionsUpTo
+import net.whiteravens.dietapp.domain.PantryPortion
 import net.whiteravens.dietapp.ui.common.GONE_WITHIN_MILLIS
 import net.whiteravens.dietapp.ui.common.LaterRemoval
 import net.whiteravens.dietapp.ui.common.ReadingAnew
@@ -130,8 +132,12 @@ class PantryViewModel @Inject constructor(
         val waiting: List<Waiting> = emptyList(),
         /** The fresh row whose window of freezing is open. */
         val freezing: PantryRow? = null,
-        /** How many packages it goes into the freezer in, as typed in its window. */
+        /** How many packages it goes into the freezer in, as typed in its window: until something is, as the plans' portion makes it. */
         val freezePortions: String = "1",
+        /** Whether a number of packages was typed in the window: the plans' portion then changes it no more. */
+        val freezeTyped: Boolean = false,
+        /** The size the profile's plans would take the row out of the freezer in, once the server has said it. */
+        val freezePortion: PantryPortion? = null,
         /** Why the row of the open window could not be put into the freezer. */
         val freezeFailure: Throwable? = null,
     ) {
@@ -190,6 +196,17 @@ class PantryViewModel @Inject constructor(
         val freezeParts: List<Double>? get() {
             val row = freezing ?: return null
             return portionsOf(row.quantity, freezeCount ?: return null)
+        }
+
+        /**
+         * The plans' portion to say in the window: where it splits the row (a row no bigger than it goes in whole as it
+         * is), or where it is in another unit than the row's, which it cannot be held against.
+         */
+        val freezeHint: Int? get() {
+            val row = freezing ?: return null
+            val said = freezePortion ?: return null
+            val portion = said.portion ?: return null
+            return portion.takeIf { said.unit != row.unit || row.quantity > it }
         }
     }
 
@@ -479,16 +496,30 @@ class PantryViewModel @Inject constructor(
         }
     }
 
-    /** Opens the window that puts the fresh [row] into the freezer, whole to begin with. Something put in that waits to be sent is not frozen until it is. */
+    /**
+     * Opens the window that puts the fresh [row] into the freezer, whole to begin with, and asks the size the profile's
+     * plans would take it out in: once that comes, and nothing was typed yet, the window starts at the fewest packages
+     * none bigger than it. Without an answer the window goes on without it. Something put in that waits to be sent is
+     * not frozen until it is.
+     */
     fun openFreeze(row: PantryRow) {
         val current = _state.value
         if (row.frozen || current.busy || row.id in current.waitingAdditions) return
-        _state.update { it.copy(freezing = row, freezePortions = "1", freezeFailure = null) }
+        _state.update { it.copy(freezing = row, freezePortions = "1", freezeTyped = false, freezePortion = null, freezeFailure = null) }
+        viewModelScope.launch {
+            attempt { pantry.portion(row.id) }.onSuccess { said ->
+                _state.update { state ->
+                    if (state.freezing?.id != row.id) return@update state
+                    val count = portionsUpTo(row.quantity, said.portion?.takeIf { said.unit == row.unit }?.toDouble())
+                    state.copy(freezePortion = said, freezePortions = if (state.freezeTyped) state.freezePortions else count.toString())
+                }
+            }
+        }
     }
 
     /** Takes what is typed in the window as its number of portions where it is digits alone, or nothing yet. */
     fun typeFreezePortions(text: String) {
-        if (text.all(Char::isDigit) && text.length <= 2) _state.update { it.copy(freezePortions = text) }
+        if (text.all(Char::isDigit) && text.length <= 2) _state.update { it.copy(freezePortions = text, freezeTyped = true) }
     }
 
     /** Closes the window of freezing; a freezing on its way goes on. */
