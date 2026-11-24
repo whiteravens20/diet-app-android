@@ -1382,6 +1382,8 @@ data class MealPlanDayDto(
     val macrosOff: Boolean = false,
     /** Of a day [macrosOff]: what it holds too much and too little of, and what makes it so; null otherwise and from an API that does not say it. */
     val macrosOffWhy: MacrosOffWhyDto? = null,
+    /** More than a fifth less protein than the day aims at, which its split does not show. */
+    val proteinShort: Boolean = false,
     /** The user skips the day: no shortfall, left out of the plan's averages; what was eaten of it stays. */
     val skipped: Boolean,
     /** A target somebody typed has put the day under the lowest a calculated plan goes. */

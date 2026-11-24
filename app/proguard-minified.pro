@@ -44,7 +44,7 @@
 -keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
--keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpKt { *** DayChangeHelpDialog(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.NewPlanScreenKt { *** getDATE_AND_LENGTH(); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); }

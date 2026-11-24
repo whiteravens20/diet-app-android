@@ -609,6 +609,8 @@ data class PlanDay(
     val macrosOff: Boolean = false,
     /** Of a day [macrosOff]: what it holds too much and too little of, and what makes it so. */
     val macrosOffWhy: MacrosOffWhy? = null,
+    /** More than a fifth less protein than the day aims at, which its split does not show. */
+    val proteinShort: Boolean = false,
     /** What the day aims at in grams under the diet's split. */
     val targetMacros: Macros,
     /** The recipe each meal of the day was locked to when the plan was made, by meal. */

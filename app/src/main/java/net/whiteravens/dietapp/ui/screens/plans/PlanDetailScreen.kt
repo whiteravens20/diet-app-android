@@ -1139,6 +1139,8 @@ private fun DaySummary(
             if (why == null) Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
             else MacrosOffWhyLines(why, Modifier.padding(top = 4.dp))
         }
+        // Far less protein than the day aims at, which its split does not show.
+        if (day.proteinShort && !day.skipped) ProteinShortLine(day.nutrition.protein, day.targetMacros.protein, Modifier.padding(top = 4.dp))
         // Under the day's figures, after what keeps them off where they are: how the day is changed.
         onHelp?.let { help ->
             TextButton(onClick = help, contentPadding = PaddingValues(horizontal = 0.dp)) {
@@ -2354,6 +2356,16 @@ internal fun StaysFrozenLines(kept: List<FrozenKept>) {
         }
         Fact("• $said")
     }
+}
+
+/** A day that lacks more than a fifth of its protein ([target]) with [protein], which its split does not show: it says so. */
+@Composable
+internal fun ProteinShortLine(protein: Double, target: Double, modifier: Modifier = Modifier) {
+    Fact(
+        stringResource(R.string.plans_protein_short, formatNumber(protein.roundToInt()), formatNumber(target.roundToInt())),
+        modifier,
+        color = MaterialTheme.colorScheme.tertiary,
+    )
 }
 
 /** What a day off its split holds too much and too little of, and each thing that makes it so with what helps. */

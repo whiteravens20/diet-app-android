@@ -336,6 +336,7 @@
     <string name="plans_freeze_in_pantry">Dodano do spiżarni jako zamrożone.</string>
     <string name="plans_freeze_rest_loose">Zamroź od razu resztę kupionego na wagę: %1$s, %2$s.</string>
     <string name="plans_freeze_portions_loose">Zamroź od razu resztę kupionego na wagę w\u00A0osobnych porcjach: %1$s, %2$s.</string>
+    <string name="plans_protein_short">Za mało białka: %1$s\u00A0z\u00A0%2$s\u00A0g, ponad jedną piątą mniej, niż zakłada dzień.</string>
     <string name="freezing_rules_title">Jak mrozić</string>
     <string name="freezing_rule_label">Opisz paczkę: co w\u00A0niej jest i\u00A0kiedy trafiła do zamrażarki.</string>
     <string name="freezing_rule_use_by">Zamroź najpóźniej w\u00A0dniu z\u00A0„Należy spożyć do” na opakowaniu.</string>

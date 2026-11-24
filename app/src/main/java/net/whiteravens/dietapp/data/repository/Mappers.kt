@@ -361,6 +361,7 @@ fun MealPlanDayDto.toDomain(report: GenerationReportDto?) = PlanDay(
     belowSafetyFloor = belowSafetyFloor,
     macrosOff = macrosOff,
     macrosOffWhy = macrosOffWhy?.toDomain(),
+    proteinShort = proteinShort,
     targetMacros = targetMacros.toDomain(),
     locks = overrides?.lockedSlots.orEmpty().associate { it.mealType to it.recipeId },
     settings = mealCount?.let { count ->

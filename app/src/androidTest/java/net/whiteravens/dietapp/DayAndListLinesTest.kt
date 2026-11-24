@@ -45,6 +45,7 @@ import net.whiteravens.dietapp.ui.screens.diary.OtherPlanMealRow
 import net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpDialog
 import net.whiteravens.dietapp.ui.screens.plans.MacrosOffWhyLines
 import net.whiteravens.dietapp.ui.screens.plans.OtherPlanMealCard
+import net.whiteravens.dietapp.ui.screens.plans.ProteinShortLine
 import net.whiteravens.dietapp.ui.screens.plans.StaysFrozenLines
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingItemRow
 import net.whiteravens.dietapp.ui.theme.DietAppTheme
@@ -201,6 +202,57 @@ class DayAndListLinesTest {
                 assertTrue(lines.toString(), "Ze spiżarni: Adam 700 g" in lines)
                 assertTrue(lines.toString(), "W zamrażarce zostaje jeszcze 220 g: plan tego nie rozmraża." in lines)
             }
+        }
+    }
+
+    @Test
+    fun aDayThatLacksMuchProteinSaysHowMuchOfWhatItAimsAt() {
+        show { ProteinShortLine(134.4, 178.0) }
+
+        inEachLanguage("plans-protein-short") { language, lines ->
+            val said =
+                if (language == "en") "Too little protein: 134 of 178 g, more than a fifth less than the day aims at."
+                else "Za mało białka: 134 z 178 g, ponad jedną piątą mniej, niż zakłada dzień."
+            assertTrue(lines.toString(), said in lines)
+        }
+    }
+
+    @Test
+    fun aRowBoughtByWeightSaysSoAndKeepsItsBoxUnderItsAmounts() {
+        val names = mapOf("en" to "Turkey breast", "pl" to "Pierś z indyka")
+        show { language ->
+            ShoppingItemRow(
+                ShoppingItem(
+                    id = "turkey-$language",
+                    name = names.getValue(language),
+                    totalQuantity = 240.0,
+                    toBuyQuantity = 240.0,
+                    unit = "g",
+                    displayUnit = "g",
+                    atHome = 0.0,
+                    purchasedQuantity = 1000.0,
+                    pantryBestBefore = null,
+                    estimatedCalories = 260.0,
+                    packs = null,
+                    checked = true,
+                    boughtLooseOn = "2026-11-24",
+                    byWeight = true,
+                ),
+                busy = false,
+                readOnly = false,
+                waiting = false,
+                onChange = {},
+            )
+        }
+
+        inEachLanguage("shopping-bought-by-weight") { language, lines ->
+            val name = names.getValue(language)
+            val (closed, box, amounts) =
+                if (language == "en") Triple("bought by weight 1000 g", "Bought by weight", "Amounts of $name")
+                else Triple("kupione na wagę 1000 g", "Kupione na wagę", "Ilości: $name")
+            assertTrue(lines.toString(), closed in lines)
+            compose.onNodeWithContentDescription(amounts).performClick()
+            compose.onNodeWithText(box).assertIsDisplayed().assertIsOn()
         }
     }
 

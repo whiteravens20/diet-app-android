@@ -314,6 +314,7 @@
     <string name="plans_freeze_in_pantry">Added to the pantry as frozen.</string>
     <string name="plans_freeze_rest_loose">Freeze the rest of what you bought by weight at once: %1$s, %2$s.</string>
     <string name="plans_freeze_portions_loose">Freeze the rest of what you bought by weight at once in separate portions: %1$s, %2$s.</string>
+    <string name="plans_protein_short">Too little protein: %1$s\u00A0of %2$s\u00A0g, more than a fifth less than the day aims at.</string>
     <string name="freezing_rules_title">How to freeze</string>
     <string name="freezing_rule_label">Label the package with what is in it and the day it went into the freezer.</string>
     <string name="freezing_rule_use_by">Freeze it on its use-by date at the latest.</string>
