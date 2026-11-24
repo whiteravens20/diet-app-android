@@ -828,6 +828,7 @@
     <string name="pantry_ingredient">Ingredient</string>
     <string name="pantry_search_placeholder">Search the catalogue…</string>
     <string name="pantry_held_fresh">already in the pantry (%1$s): change the amount</string>
+    <string name="pantry_held_waiting">already in the pantry (%1$s): waiting to be sent</string>
     <string name="pantry_change_pick">Change</string>
     <string name="pantry_quantity">Quantity</string>
     <string name="pantry_quantity_of">Quantity of %1$s</string>

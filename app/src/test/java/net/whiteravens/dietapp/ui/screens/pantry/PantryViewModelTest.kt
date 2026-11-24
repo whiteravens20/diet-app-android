@@ -142,6 +142,35 @@ class PantryViewModelTest {
     }
 
     @Test
+    fun `a food put in that waits to be sent, found again, is its row, which the window does not open until the server has it`() = runTest(main) {
+        val pantry = pantry(egg)
+        val added = QueuedChange.PantryAdded("ada", "eggplant", "Eggplant", "vegetables", 300.0, "g", null, "key")
+        coEvery { pantry.add("ada", eggplant, 300.0, "g", null) } coAnswers { queue.submit(added, offline) }
+        coEvery { pantry.ingredients("eg") } returns listOf(eggs, eggplant)
+        val model = PantryViewModel(pantry, users, queue, application, SavedStateHandle())
+        runCurrent()
+        model.openAdd()
+        model.pick(eggplant)
+        model.typeQuantity("300")
+        model.add()
+        runCurrent()
+        model.search("eg")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+
+        val put = PantryRow("key", "eggplant", "Eggplant", "vegetables", 300.0, "g", null)
+        assertEquals(put, model.state.value.heldFresh(eggplant.id))
+        assertTrue(put.id in model.state.value.waitingAdditions)
+        model.changeInWindow(put)
+        assertNull(model.state.value.inWindow)
+        assertTrue(model.state.value.form.searched)
+
+        // A row the server has is opened there.
+        model.changeInWindow(egg)
+        assertEquals(egg, model.state.value.inWindow)
+    }
+
+    @Test
     fun `a food's frozen row stands after its fresh one, its category by name, and the food is still offered fresh`() = runTest(main) {
         val frozen = PantryRow("chicken-frozen", "chicken", "Chicken breast", "meat", 286.0, "g", LocalDate.parse("2026-12-14"), frozen = true)
         val fresh = PantryRow("chicken-fresh", "chicken", "Chicken breast", "meat", 100.0, "g", LocalDate.parse("2026-11-16"))

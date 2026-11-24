@@ -328,10 +328,12 @@ private fun AddWindow(state: PantryViewModel.UiState, viewModel: PantryViewModel
                                     Column {
                                         offered.forEach { ingredient ->
                                             val held = state.heldFresh(ingredient.id)
+                                            // Something put in that waits to be sent is changed once the server has it, as under its row: said, and not opened.
+                                            val waits = held != null && held.id in state.waitingAdditions
                                             Column(
                                                 Modifier
                                                     .fillMaxWidth()
-                                                    .clickable(enabled = enabled, role = Role.Button) {
+                                                    .clickable(enabled = enabled && !waits, role = Role.Button) {
                                                         if (held != null) viewModel.changeInWindow(held) else viewModel.pick(ingredient)
                                                     }
                                                     .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -340,7 +342,10 @@ private fun AddWindow(state: PantryViewModel.UiState, viewModel: PantryViewModel
                                                 // The amount alone, as the web says it: what the pieces weigh stands in the row's own line.
                                                 held?.let { row ->
                                                     Text(
-                                                        stringResource(R.string.pantry_held_fresh, amountLabel(row.shown, row.shownUnit)),
+                                                        stringResource(
+                                                            if (waits) R.string.pantry_held_waiting else R.string.pantry_held_fresh,
+                                                            amountLabel(row.shown, row.shownUnit),
+                                                        ),
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )

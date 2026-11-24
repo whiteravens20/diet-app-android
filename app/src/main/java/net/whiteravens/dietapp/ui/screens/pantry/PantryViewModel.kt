@@ -369,9 +369,14 @@ class PantryViewModel @Inject constructor(
         it.copy(addWindow = false, lastAdded = null, changingInWindow = null, failed = it.failed?.takeUnless { (what, _) -> what == Failure.ADD })
     }
 
-    /** Shows in the window the amount and day of a fresh row its search found again: changed there, as under the row. */
-    fun changeInWindow(row: PantryRow) =
+    /**
+     * Shows in the window the amount and day of a fresh row its search found again: changed there, as under the row.
+     * Something put in that waits to be sent is changed once the server has it.
+     */
+    fun changeInWindow(row: PantryRow) {
+        if (row.id in _state.value.waitingAdditions) return
         _state.update { it.copy(changingInWindow = row.id, form = it.form.copy(search = "", found = emptyList(), searched = false)) }
+    }
 
     /** Back to the window's search, from the row it showed. */
     fun backToSearch() = _state.update { it.copy(changingInWindow = null) }
