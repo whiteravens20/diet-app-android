@@ -53,6 +53,20 @@ class ShoppingRowsTest {
     }
 
     @Test
+    fun `a row of fresh meat sold in packs sends whether it was bought by weight where its box says other than the server`() {
+        val chicken = feta.copy(id = "chicken", name = "Chicken breast", byWeight = true)
+
+        assertEquals(RowChange(loose = true), rowChange(chicken, home = 100.0, bought = 150.0, loose = true))
+        assertEquals(RowChange(have = 1100.0, loose = true), rowChange(chicken, home = 100.0, bought = 1000.0, loose = true))
+        assertTrue(rowChange(chicken, home = 100.0, bought = 150.0, loose = false).isEmpty)
+        val loose = chicken.copy(boughtLooseOn = "2026-11-24")
+        assertTrue(rowChange(loose, home = 100.0, bought = 150.0).isEmpty)
+        assertEquals(RowChange(loose = false), rowChange(loose, home = 100.0, bought = 150.0, loose = false))
+        // Of any other row the box is none, whatever it says.
+        assertTrue(rowChange(feta, home = 100.0, bought = 150.0, loose = true).isEmpty)
+    }
+
+    @Test
     fun `packs taken for bought give the row what was at home and what the packs hold, and tick it`() {
         val inPacks = feta.copy(purchasedQuantity = null, packs = RowPacks(2, 200.0, "g", 400.0))
 

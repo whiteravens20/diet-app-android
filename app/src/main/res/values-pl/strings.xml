@@ -994,6 +994,9 @@
     <string name="common_how_it_works">Jak to działa</string>
     <string name="shopping_at_home">w domu</string>
     <string name="shopping_bought">kupione</string>
+    <string name="shopping_bought_loose">kupione na wagę</string>
+    <string name="shopping_bought_loose_box">Kupione na wagę</string>
+    <string name="shopping_bought_loose_hint">Plan liczy je od dnia zakupu: czego nie zjesz w\u00A0ciągu 2\u00A0dni, każe tego dnia zamrozić w\u00A0porcjach na później.</string>
     <string name="shopping_of_total">(z %1$s)</string>
     <string name="shopping_best_before">najlepiej spożyć przed %1$s</string>
     <string name="shopping_from_pantries">Ze spiżarni: %1$s</string>

@@ -91,7 +91,7 @@ class HouseholdListRepository @Inject constructor(
 
     /** Changes a row of [householdId] as a row of a plan's list is changed, or keeps that to be sent in its turn. */
     suspend fun change(householdId: String, itemId: String, change: RowChange): Submitted<HouseholdList> {
-        val queued = QueuedChange.HouseholdRow(householdId, itemId, change.checked, change.atHome, change.have)
+        val queued = QueuedChange.HouseholdRow(householdId, itemId, change.checked, change.atHome, change.have, change.loose)
         return queue.submit(queued) { send(queued) }
     }
 
@@ -101,6 +101,7 @@ class HouseholdListRepository @Inject constructor(
             purchasedQuantity = change.have?.let { have -> if (have > 0) JsonPrimitive(have) else JsonNull },
             checked = change.checked,
             alreadyHaveQuantity = change.atHome,
+            boughtLoose = change.loose,
         )
         val list = apiCall(json) { api.updateHouseholdItem(change.householdId, change.itemId, request) }
         mirror(list)

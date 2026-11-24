@@ -76,6 +76,7 @@ import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.unitName
+import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.HowItWorks
 import net.whiteravens.dietapp.ui.components.DateField
@@ -605,19 +606,22 @@ internal fun ShoppingItemRow(
     // without the names a card scrolled back after a new list took the old list's fields, and a row changed elsewhere
     // took its own old ones.
     var editing by rememberSaveable(item.id, key = "shopping-editing:${item.id}") { mutableStateOf(false) }
-    // The two fields as typed, begun anew whenever the server's row changes.
-    val server = listOf(item.atHome, item.purchasedQuantity, item.checked)
+    // The two fields as typed, and the box of a purchase by weight, begun anew whenever the server's row changes.
+    val server = listOf(item.atHome, item.purchasedQuantity, item.checked, item.boughtLooseOn)
     var home by rememberSaveable(item.id, server, key = "shopping-home:${item.id}:$server") {
         mutableStateOf(fieldOf(item.atHome, locale))
     }
     var bought by rememberSaveable(item.id, server, key = "shopping-bought:${item.id}:$server") {
         mutableStateOf(fieldOf(boughtOf(item), locale))
     }
+    var loose by rememberSaveable(item.id, server, key = "shopping-loose:${item.id}:$server") {
+        mutableStateOf(item.boughtLooseOn != null)
+    }
     val homeNow = typed(home) ?: 0.0
     val boughtNow = typed(bought) ?: 0.0
     // What is left to buy follows the fields while they are typed in.
     val remaining = (item.totalQuantity - homeNow - boughtNow).coerceAtLeast(0.0)
-    val pending = rowChange(item, homeNow, boughtNow)
+    val pending = rowChange(item, homeNow, boughtNow, loose)
 
     Column(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -656,7 +660,10 @@ internal fun ShoppingItemRow(
                                 Text(
                                     listOfNotNull(
                                         held("${stringResource(R.string.shopping_at_home)} ${amountLabel(homeNow, item.displayUnit)}").takeIf { homeNow > 0 },
-                                        held("${stringResource(R.string.shopping_bought)} ${amountLabel(boughtNow, item.displayUnit)}").takeIf { boughtNow > 0 },
+                                        held(
+                                            "${stringResource(if (item.boughtLooseOn != null) R.string.shopping_bought_loose else R.string.shopping_bought)} " +
+                                                amountLabel(boughtNow, item.displayUnit),
+                                        ).takeIf { boughtNow > 0 },
                                     ).joinToString(DOT),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -725,11 +732,21 @@ internal fun ShoppingItemRow(
             Column(Modifier.padding(start = 52.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 AmountField(stringResource(R.string.shopping_at_home), home, item.displayUnit, enabled = !readOnly && !busy) { home = it }
                 AmountField(stringResource(R.string.shopping_bought), bought, item.displayUnit, enabled = !readOnly && !busy) { bought = it }
+                // Fresh meat or fish sold in packs, bought by weight this time: the plan says what to freeze of it.
+                if (item.byWeight) {
+                    CheckRow(
+                        label = stringResource(R.string.shopping_bought_loose_box),
+                        hint = stringResource(R.string.shopping_bought_loose_hint),
+                        checked = loose,
+                        enabled = !readOnly && !busy,
+                    ) { loose = it }
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
                         onClick = {
                             home = fieldOf(item.atHome, locale)
                             bought = fieldOf(boughtOf(item), locale)
+                            loose = item.boughtLooseOn != null
                             editing = false
                         },
                     ) { Text(stringResource(R.string.common_cancel)) }

@@ -141,7 +141,7 @@ class ShoppingListRepository @Inject constructor(
      * Without a network, or behind changes waiting, the change is kept to be sent in its turn.
      */
     suspend fun change(listId: String, itemId: String, change: RowChange): Submitted<ShoppingList> {
-        val queued = QueuedChange.ShoppingRow(listId, itemId, change.checked, change.atHome, change.have)
+        val queued = QueuedChange.ShoppingRow(listId, itemId, change.checked, change.atHome, change.have, change.loose)
         return queue.submit(queued) { send(queued) }
     }
 
@@ -151,6 +151,7 @@ class ShoppingListRepository @Inject constructor(
             purchasedQuantity = change.have?.let { have -> if (have > 0) JsonPrimitive(have) else JsonNull },
             checked = change.checked,
             alreadyHaveQuantity = change.atHome,
+            boughtLoose = change.loose,
         )
         val list = apiCall(json) { api.updateShoppingItem(change.listId, change.itemId, request) }
         mirror(list)

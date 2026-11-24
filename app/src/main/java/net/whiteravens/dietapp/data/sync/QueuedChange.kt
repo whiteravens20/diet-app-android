@@ -32,6 +32,8 @@ sealed interface QueuedChange {
         val checked: Boolean? = null,
         val atHome: Double? = null,
         val have: Double? = null,
+        /** Whether what was bought was bought by weight, on the day the change is sent. */
+        val loose: Boolean? = null,
     ) : QueuedChange
 
     /** A row of a household list ticked or not, or what of it is at home or was bought (0 for nothing). */
@@ -43,6 +45,8 @@ sealed interface QueuedChange {
         val checked: Boolean? = null,
         val atHome: Double? = null,
         val have: Double? = null,
+        /** Whether what was bought was bought by weight, on the day the change is sent. */
+        val loose: Boolean? = null,
     ) : QueuedChange
 
     /** A meal of a plan marked eaten or not; [also], of a shared meal, the other person's meal marked with it. */

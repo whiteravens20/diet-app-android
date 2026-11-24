@@ -1327,6 +1327,10 @@ data class ShoppingItem(
     val pantries: List<RowPantry> = emptyList(),
     /** What the freezer keeps of the food that the row does not count: the plan leaves it there. */
     val frozenKept: Double = 0.0,
+    /** The day what was bought for the row was bought by weight ("Kupione na wagę"); null where in packs or not yet. */
+    val boughtLooseOn: String? = null,
+    /** Fresh meat or fish sold in packs, which may be bought by weight instead. */
+    val byWeight: Boolean = false,
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome
@@ -1348,8 +1352,14 @@ data class ShoppingItem(
  * What changes of a shopping row, null for a part that stays: its tick, what is at home, and
  * everything the user has for it, the part at home included, 0 where that is cleared.
  */
-data class RowChange(val checked: Boolean? = null, val atHome: Double? = null, val have: Double? = null) {
-    val isEmpty: Boolean get() = checked == null && atHome == null && have == null
+data class RowChange(
+    val checked: Boolean? = null,
+    val atHome: Double? = null,
+    val have: Double? = null,
+    /** Whether what was bought was bought by weight; null where that does not change. */
+    val loose: Boolean? = null,
+) {
+    val isEmpty: Boolean get() = checked == null && atHome == null && have == null && loose == null
 }
 
 /**

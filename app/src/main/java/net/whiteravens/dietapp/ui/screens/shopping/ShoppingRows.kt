@@ -13,15 +13,16 @@ fun typed(field: String): Double? =
 fun boughtOf(item: ShoppingItem): Double = (item.have - item.atHome).coerceAtLeast(0.0)
 
 /**
- * What a row sends for its two fields, [home] and [bought] as they are typed: what is at home where
- * it changed, sent alone, so that the server leaves what was bought beyond it as it was; and where
- * what was bought changed, everything the user then has for the row, the part at home as the server
- * counts it (no more than the need) and what was bought.
+ * What a row sends for its two fields, [home] and [bought] as they are typed, and its box [loose]: what is at home where
+ * it changed, sent alone, so that the server leaves what was bought beyond it as it was; where what was bought changed,
+ * everything the user then has for the row, the part at home as the server counts it (no more than the need) and what
+ * was bought; and of a row that may be bought by weight, whether it was, where the box says other than the server.
  */
-fun rowChange(item: ShoppingItem, home: Double, bought: Double): RowChange {
+fun rowChange(item: ShoppingItem, home: Double, bought: Double, loose: Boolean = item.boughtLooseOn != null): RowChange {
     val atHome = home.takeIf { it != item.atHome }
-    if (bought == boughtOf(item)) return RowChange(atHome = atHome)
-    return RowChange(atHome = atHome, have = minOf(home, item.totalQuantity) + bought)
+    val byWeight = loose.takeIf { item.byWeight && it != (item.boughtLooseOn != null) }
+    if (bought == boughtOf(item)) return RowChange(atHome = atHome, loose = byWeight)
+    return RowChange(atHome = atHome, have = minOf(home, item.totalQuantity) + bought, loose = byWeight)
 }
 
 /**

@@ -2313,6 +2313,10 @@ data class ShoppingListItemDto(
     val toBuyQuantity: Double,
     /** What the user has obtained, the pantry's share included; null until the row is first edited. */
     val purchasedQuantity: Double? = null,
+    /** The day what was bought for the row was bought by weight ("Kupione na wagę"); null where in packs or not yet. */
+    val boughtLooseOn: String? = null,
+    /** Fresh meat or fish sold in packs, which may be bought by weight instead. */
+    val byWeight: Boolean = false,
     /** Earliest best-before among contributing pantry rows, or null. */
     val pantryBestBefore: String? = null,
     /**
@@ -2471,6 +2475,8 @@ data class UpdateShoppingItemRequest(
     val checked: Boolean? = null,
     /** What is at home of the row, in the place of what the list took from the pantry. */
     val alreadyHaveQuantity: Double? = null,
+    /** Whether what was bought beyond what was at home was bought by weight, on the client's day. */
+    val boughtLoose: Boolean? = null,
 )
 
 // ── Diary (packages/shared/src/diary.ts) ─────────────────────────────────────

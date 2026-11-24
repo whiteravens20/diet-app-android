@@ -916,6 +916,9 @@
     <string name="common_how_it_works">How it works</string>
     <string name="shopping_at_home">at home</string>
     <string name="shopping_bought">bought</string>
+    <string name="shopping_bought_loose">bought by weight</string>
+    <string name="shopping_bought_loose_box">Bought by weight</string>
+    <string name="shopping_bought_loose_hint">The plan counts it from the day you bought it: what you do not eat within 2\u00A0days, it has you freeze that day, in portions for later.</string>
     <string name="shopping_of_total">(of %1$s)</string>
     <string name="shopping_best_before">best before %1$s</string>
     <string name="shopping_from_pantries">From the pantry: %1$s</string>
