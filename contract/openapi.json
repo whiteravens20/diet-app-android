@@ -807,6 +807,36 @@
         }
       }
     },
+    "/api/admin/drafts/ingredient-names/without-ingredient": {
+      "delete": {
+        "operationId": "Drafts_removeNamesWithoutIngredient",
+        "tags": [
+          "admin/drafts"
+        ],
+        "summary": "Remove every draft of a name, of any decision but shipped, for an ingredient this instance's catalogue does not have: no ship takes it.",
+        "description": "Remove every draft of a name, of any decision but shipped, for an ingredient this instance's catalogue does not have: no ship takes it. Answers how many went (`RemovedDrafts`).\n\nAsked by the administrator.",
+        "security": [
+          {
+            "administrator": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedDrafts"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
     "/api/admin/drafts/overview": {
       "get": {
         "operationId": "Drafts_overview",
@@ -4543,8 +4573,8 @@
         "tags": [
           "household-lists"
         ],
-        "summary": "Change a row of a household list, and with it the row of each part: what the household holds, what is at home, or the tick.",
-        "description": "Change a row of a household list, and with it the row of each part: what the household holds, what is at home, or the tick.\n\nAsked by an account.",
+        "summary": "Change a row of a household list, and with it the row of each part: what the household holds, what is at home, the tick, or whether it was bought by weight.",
+        "description": "Change a row of a household list, and with it the row of each part: what the household holds, what is at home, the tick, or whether it was bought by weight.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -4567,6 +4597,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           },
           {
@@ -4947,6 +4987,57 @@
                   "items": {
                     "$ref": "#/components/schemas/InventoryItem"
                   }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
+    "/api/inventory/{id}/portion": {
+      "get": {
+        "operationId": "Inventory_portion",
+        "tags": [
+          "inventory"
+        ],
+        "summary": "The size to freeze a row in before \"Zamroź\": the most the profile's plans that have a day after today eat of its food on a day and the next, from tomorrow on, with the other plan of a joint plan's kitchen, a package coming out of the freezer only whole; in the row's unit where it converts, null where none of them takes the food from packs.",
+        "description": "The size to freeze a row in before \"Zamroź\": the most the profile's plans that have a day after today eat of its food on a day and the next, from tomorrow on, with the other plan of a joint plan's kitchen, a package coming out of the freezer only whole; in the row's unit where it converts, null where none of them takes the food from packs.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryPortion"
                 }
               }
             }
@@ -5735,8 +5826,8 @@
         "tags": [
           "meal-plans"
         ],
-        "summary": "\"Dodaj do spiżarni\": what is left of a rest of meat or fish the plan puts in the freezer goes into the pantry as frozen, once (`KeepFrozenRequest`).",
-        "description": "\"Dodaj do spiżarni\": what is left of a rest of meat or fish the plan puts in the freezer goes into the pantry as frozen, once (`KeepFrozenRequest`).\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "summary": "\"Dodaj do spiżarni\": what is left of a rest of meat or fish the plan puts in the freezer goes into the pantry as frozen, in packages none bigger than the plan's portion of it, once (`KeepFrozenRequest`).",
+        "description": "\"Dodaj do spiżarni\": what is left of a rest of meat or fish the plan puts in the freezer goes into the pantry as frozen, in packages none bigger than the plan's portion of it, once (`KeepFrozenRequest`).\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -10057,8 +10148,8 @@
         "tags": [
           "shopping-lists"
         ],
-        "summary": "Change a row of a list: how much of it is there, what was at home, or its tick.",
-        "description": "Change a row of a list: how much of it is there, what was at home, or its tick. The pantry follows.\n\nAsked by an account.",
+        "summary": "Change a row of a list: how much of it is there, what was at home, its tick, or whether it was bought by weight.",
+        "description": "Change a row of a list: how much of it is there, what was at home, its tick, or whether it was bought by weight. The pantry follows.\n\nAsked by an account.",
         "security": [
           {
             "account": []
@@ -10081,6 +10172,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           },
           {
@@ -11852,6 +11953,10 @@
               "approved": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "withoutIngredient": {
+                "type": "integer",
+                "minimum": 0
               }
             },
             "required": [
@@ -11859,7 +11964,8 @@
               "rejected",
               "pending",
               "unapproved",
-              "approved"
+              "approved",
+              "withoutIngredient"
             ],
             "additionalProperties": false
           },
@@ -16351,6 +16457,21 @@
               }
             ]
           },
+          "boughtLooseOn": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "byWeight": {
+            "default": false,
+            "type": "boolean"
+          },
           "frozenKept": {
             "default": 0,
             "type": "number",
@@ -16471,6 +16592,8 @@
           "pantries",
           "toBuyQuantity",
           "purchasedQuantity",
+          "boughtLooseOn",
+          "byWeight",
           "frozenKept",
           "pantryBestBefore",
           "estimatedCalories",
@@ -17276,6 +17399,30 @@
           "frozen",
           "createdAt",
           "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "InventoryPortion": {
+        "type": "object",
+        "properties": {
+          "portion": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          }
+        },
+        "required": [
+          "portion",
+          "unit"
         ],
         "additionalProperties": false
       },
@@ -18855,6 +19002,10 @@
               }
             ]
           },
+          "proteinShort": {
+            "default": false,
+            "type": "boolean"
+          },
           "skipped": {
             "type": "boolean"
           },
@@ -18895,6 +19046,7 @@
           "resizes",
           "macrosOff",
           "macrosOffWhy",
+          "proteinShort",
           "skipped",
           "belowSafetyFloor",
           "overrides",
@@ -20484,6 +20636,20 @@
             "type": "integer",
             "minimum": 0
           },
+          "portion": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "loose": {
+            "type": "boolean"
+          },
           "inPantry": {
             "type": "boolean"
           }
@@ -20497,6 +20663,8 @@
           "amount",
           "thawed",
           "left",
+          "portion",
+          "loose",
           "inPantry"
         ],
         "additionalProperties": false
@@ -24126,7 +24294,18 @@
             "$ref": "#/components/schemas/LocaleStringMap"
           },
           "steps": {
-            "$ref": "#/components/schemas/LocaleStringsMap"
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/components/schemas/Locale"
+            },
+            "additionalProperties": {
+              "maxItems": 200,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 5000
+              }
+            }
           },
           "servings": {
             "type": "integer",
@@ -25083,6 +25262,19 @@
         ],
         "additionalProperties": false
       },
+      "RemovedDrafts": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "removed"
+        ],
+        "additionalProperties": false
+      },
       "ReplaceIngredientRequest": {
         "type": "object",
         "properties": {
@@ -25265,14 +25457,18 @@
                     "slug": {
                       "type": "string"
                     },
-                    "reason": {
-                      "type": "string"
+                    "reasons": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
                     "file",
                     "slug",
-                    "reason"
+                    "reasons"
                   ],
                   "additionalProperties": false
                 }
@@ -26260,6 +26456,21 @@
               }
             ]
           },
+          "boughtLooseOn": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "byWeight": {
+            "default": false,
+            "type": "boolean"
+          },
           "frozenKept": {
             "default": 0,
             "type": "number",
@@ -26354,6 +26565,8 @@
           "pantries",
           "toBuyQuantity",
           "purchasedQuantity",
+          "boughtLooseOn",
+          "byWeight",
           "frozenKept",
           "pantryBestBefore",
           "estimatedCalories",
@@ -26372,14 +26585,18 @@
           "slug": {
             "type": "string"
           },
-          "reason": {
-            "type": "string"
+          "reasons": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "draftId",
           "slug",
-          "reason"
+          "reasons"
         ],
         "additionalProperties": false
       },
@@ -26972,6 +27189,9 @@
             "type": "number",
             "minimum": 0,
             "maximum": 100000
+          },
+          "boughtLoose": {
+            "type": "boolean"
           }
         }
       },
