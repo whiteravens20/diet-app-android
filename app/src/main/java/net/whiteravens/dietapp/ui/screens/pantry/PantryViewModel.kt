@@ -140,6 +140,8 @@ class PantryViewModel @Inject constructor(
         val freezePortion: PantryPortion? = null,
         /** Why the row of the open window could not be put into the freezer. */
         val freezeFailure: Throwable? = null,
+        /** The fresh row whose amount the window of putting in shows, found again in its search. */
+        val changingInWindow: String? = null,
     ) {
         val busy: Boolean get() = adding || changing != null
 
@@ -180,11 +182,17 @@ class PantryViewModel @Inject constructor(
         }.toMap()
 
         /**
-         * The ingredients found, as many as the web's list offers: those the pantry holds nothing fresh of yet, and any of
-         * them to go into the freezer, as packages of their own.
+         * The ingredients found, as many as the web's list offers. One the pantry holds fresh says so, and is that row's to
+         * change the amount of ([heldFresh]), unless it goes into the freezer, as a package of its own.
          */
-        val offered: List<StockableIngredient> get() =
-            form.found.filter { found -> form.frozen || shownRows.none { it.ingredientId == found.id && !it.frozen } }.take(OFFERED)
+        val offered: List<StockableIngredient> get() = form.found.take(OFFERED)
+
+        /** The fresh row of an ingredient found, where the form does not put it into the freezer: one fresh row a food. */
+        fun heldFresh(ingredientId: String): PantryRow? =
+            if (form.frozen) null else shownRows.firstOrNull { it.ingredientId == ingredientId && !it.frozen }
+
+        /** The row whose amount the window shows, while the pantry has it. */
+        val inWindow: PantryRow? get() = changingInWindow?.let { id -> shownRows.firstOrNull { it.id == id } }
 
         /** Whether what the form holds can be put in: into the freezer, in packages of at least one of its unit each. */
         val canAdd: Boolean get() = form.picked != null && form.amount != null && form.parts != null && profileId != null && !busy
@@ -357,7 +365,16 @@ class PantryViewModel @Inject constructor(
     fun openAdd() = _state.update { it.copy(addWindow = true, lastAdded = null, failed = it.failed?.takeUnless { (what, _) -> what == Failure.ADD }) }
 
     /** Closes the window: what it said of the last thing put in, or why that did not go in, goes with it. */
-    fun closeAdd() = _state.update { it.copy(addWindow = false, lastAdded = null, failed = it.failed?.takeUnless { (what, _) -> what == Failure.ADD }) }
+    fun closeAdd() = _state.update {
+        it.copy(addWindow = false, lastAdded = null, changingInWindow = null, failed = it.failed?.takeUnless { (what, _) -> what == Failure.ADD })
+    }
+
+    /** Shows in the window the amount and day of a fresh row its search found again: changed there, as under the row. */
+    fun changeInWindow(row: PantryRow) =
+        _state.update { it.copy(changingInWindow = row.id, form = it.form.copy(search = "", found = emptyList(), searched = false)) }
+
+    /** Back to the window's search, from the row it showed. */
+    fun backToSearch() = _state.update { it.copy(changingInWindow = null) }
 
     /** Puts what the form holds into the pantry, and empties the form; a refusal leaves it as it is, to be put right. */
     fun add() {

@@ -139,8 +139,28 @@ class PantryTest {
         screen.waitForText(text(R.string.pantry_added, egg, plural(R.plurals.amount_piece, 6, "6")))
         screen.onNode(field(R.string.pantry_quantity)).assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")))
         screen.keepScreenshot("pantry-the-window-after-something-went-in")
+
+        // Found again, the egg the pantry holds fresh now says so, and its row's amount opens in the window: one fresh
+        // row a food, changed there.
+        screen.onNode(hasText(text(R.string.pantry_ingredient)) and hasSetTextAction()).performTextInput(egg.take(4))
+        val heldNote = text(R.string.pantry_held_fresh, "").substringBefore("(").trim()
+        val held = hasText(egg) and hasText(heldNote, substring = true) and hasClickAction() and hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(held).fetchSemanticsNodes().isNotEmpty() }
+        screen.putKeyboardAway()
+        screen.keepScreenshot("pantry-held-fresh-found")
+        screen.onNode(held).performScrollTo().performClick()
+        val amountInWindow = hasContentDescription(text(R.string.pantry_quantity_of, egg)) and hasAnyAncestor(isDialog())
+        screen.waitUntil(20_000) { screen.onAllNodes(amountInWindow).fetchSemanticsNodes().isNotEmpty() }
+        screen.onNode(amountInWindow).performTextReplacement("5")
+        screen.putKeyboardAway()
+        screen.keepScreenshot("pantry-held-fresh-in-the-window")
+        screen.onNode(inTheWindow(text(R.string.common_save))).performScrollTo().performClick()
+        screen.waitForTheApi { Instance.pantry(account, profileId)[eggId]?.first == 5.0 }
+        // Back to the search, for the next.
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(text(R.string.pantry_ingredient)) and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+
         closeTheWindow()
-        screen.scrollToText(weighing(plural(R.plurals.amount_piece, 6, "6"), 330))
+        screen.scrollToText(weighing(plural(R.plurals.amount_piece, 5, "5"), 275))
         screen.keepScreenshot("pantry-two-rows")
 
         // The egg's amount changed in the fields that open under it.

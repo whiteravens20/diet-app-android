@@ -95,7 +95,7 @@ class PantryViewModelTest {
     }
 
     @Test
-    fun `the catalogue is searched once two letters are typed and typing pauses, and what the pantry holds already is not offered`() = runTest(main) {
+    fun `the catalogue is searched once two letters are typed and typing pauses, and what the pantry holds fresh is offered as its row`() = runTest(main) {
         val pantry = pantry(egg)
         coEvery { pantry.ingredients("eg") } returns listOf(eggs, eggplant)
         val model = PantryViewModel(pantry, users, queue, application, SavedStateHandle())
@@ -110,7 +110,35 @@ class PantryViewModelTest {
         runCurrent()
 
         assertTrue(model.state.value.form.searched)
-        assertEquals(listOf(eggplant), model.state.value.offered)
+        assertEquals(listOf(eggs, eggplant), model.state.value.offered)
+        assertEquals(egg, model.state.value.heldFresh(eggs.id))
+        assertNull(model.state.value.heldFresh(eggplant.id))
+    }
+
+    @Test
+    fun `a food held fresh found again shows its row in the window, and the search comes back after it, or with the window shut`() = runTest(main) {
+        val pantry = pantry(egg)
+        coEvery { pantry.ingredients("eg") } returns listOf(eggs, eggplant)
+        val model = PantryViewModel(pantry, users, queue, application, SavedStateHandle())
+        runCurrent()
+        model.openAdd()
+        model.search("eg")
+        advanceTimeBy(ProfilesViewModel.SEARCH_DELAY_MS + 1)
+        runCurrent()
+
+        model.changeInWindow(egg)
+        assertEquals(egg, model.state.value.inWindow)
+        assertEquals("", model.state.value.form.search)
+        model.backToSearch()
+        assertNull(model.state.value.inWindow)
+
+        model.changeInWindow(egg)
+        model.closeAdd()
+        assertNull(model.state.value.inWindow)
+
+        // Into the freezer it is a food like any other: a package of its own.
+        model.freezeIt(true, LocalDate.parse("2026-11-24"))
+        assertNull(model.state.value.heldFresh(eggs.id))
     }
 
     @Test

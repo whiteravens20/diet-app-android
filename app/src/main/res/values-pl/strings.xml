@@ -897,6 +897,7 @@
     <string name="pantry_add_title">Dodaj do spiżarni</string>
     <string name="pantry_ingredient">Składnik</string>
     <string name="pantry_search_placeholder">Szukaj w katalogu…</string>
+    <string name="pantry_held_fresh">jest już w\u00A0spiżarni (%1$s): zmień ilość</string>
     <string name="pantry_change_pick">Zmień</string>
     <string name="pantry_quantity">Ilość</string>
     <string name="pantry_quantity_of">Ilość: %1$s</string>
