@@ -21,6 +21,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.domain.FrozenRest
@@ -88,6 +89,50 @@ class FreezeLineTest {
             said,
         )
         compose.keepScreenshot("plans-freeze-in-portions")
+    }
+
+    @Test
+    fun aRestOfWhatWasBoughtByWeightSaysSoWithTheSizeForLaterAndTheRulesFolded() {
+        // The phone in English too, as the content is: the picture checks its words as a phone in that language does.
+        val phone = Locale.getDefault()
+        Locale.setDefault(Locale.ENGLISH)
+        try {
+            compose.setContent {
+                DietAppTheme {
+                    Surface {
+                        Column(Modifier.padding(16.dp)) {
+                            // In English, whatever language a test before it left the application in.
+                            val configuration = Configuration(LocalConfiguration.current).apply { setLocale(Locale.ENGLISH) }
+                            val context = LocalContext.current.createConfigurationContext(configuration)
+                            CompositionLocalProvider(
+                                LocalContext provides context,
+                                LocalConfiguration provides configuration,
+                                LocalResources provides context.resources,
+                            ) {
+                                // 2026-11-19 is a Thursday. Two days of the plan eat 100 g at most: the 178 g for later go in two.
+                                FreezeLine(rest("Turkey breast", Thaw("2026-11-19", null, 122), left = 178).copy(loose = true, portion = 100), onKeep = {})
+                                // A rest for later no bigger than two days eat is not to be split.
+                                FreezeLine(rest("Chicken breast", left = 90).copy(portion = 100), onKeep = {})
+                            }
+                        }
+                    }
+                }
+            }
+            compose.onNodeWithText(
+                "Freeze the rest of what you bought by weight at once in separate portions: Turkey breast, 122\u00A0g (Thu) and 178\u00A0g for later.",
+            ).assertIsDisplayed()
+            compose.onAllNodesWithText(
+                "Split the part for later into portions of up to 100\u00A0g: that is the most this plan eats of it in two days, and a plan takes only whole packages out of the freezer.",
+            ).assertCountEquals(1)
+            compose.onAllNodesWithText("How to freeze").assertCountEquals(2)
+            // The rules stand behind their line, for whoever asks.
+            compose.onAllNodesWithText("• Do not freeze thawed raw meat or fish again.").assertCountEquals(0)
+            compose.onAllNodesWithText("How to freeze")[0].performClick()
+            compose.onNodeWithText("• Do not freeze thawed raw meat or fish again.").assertIsDisplayed()
+            compose.keepScreenshot("plans-freeze-bought-by-weight")
+        } finally {
+            Locale.setDefault(phone)
+        }
     }
 
     @Test

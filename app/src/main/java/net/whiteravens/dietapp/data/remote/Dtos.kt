@@ -1620,6 +1620,10 @@ data class PlanFrozenRestDto(
     val amount: Int,
     val thawed: List<PlanThawDto> = emptyList(),
     val left: Int,
+    /** What to freeze [left] in: the most the plan eats of the food on a day and the next; null where none of it. */
+    val portion: Int? = null,
+    /** Of what was bought by weight rather than of a pack. */
+    val loose: Boolean = false,
     val inPantry: Boolean = false,
 )
 

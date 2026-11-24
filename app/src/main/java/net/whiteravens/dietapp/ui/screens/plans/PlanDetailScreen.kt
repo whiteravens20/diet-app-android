@@ -94,6 +94,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealTopping
+import net.whiteravens.dietapp.ui.components.FreezingTips
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeShareMenu
 import net.whiteravens.dietapp.ui.screens.recipes.SharedLine
@@ -2581,27 +2582,38 @@ internal fun IntoFreezerLine(frozen: List<FrozenRest>) {
 /**
  * A rest of meat or fish the plan freezes, said where it goes in: in the portions the plan takes later, each with its
  * day, and the one for later, frozen apart; with "Dodaj do spiżarni" for that one from the day it is frozen (before it,
- * the pantry would hold what was not even bought), or that the pantry has it.
+ * the pantry would hold what was not even bought), or that the pantry has it. The rest of a pack, or of what was bought
+ * by weight. Under it, the size to split the one for later into where it is bigger than two days of the plan eat, and
+ * the rules of freezing.
  */
 @Composable
 internal fun FreezeLine(rest: FrozenRest, onKeep: ((FrozenRest) -> Unit)?, today: String = LocalDate.now().toString()) {
-    val left = amountLabel(rest.left.toDouble(), rest.unit)
-    val portions = rest.thawed.map { taken ->
-        stringResource(R.string.plans_freeze_portion_on, amountLabel(taken.amount.toDouble(), rest.unit), weekdayShort(taken.date))
-    } + listOfNotNull(stringResource(R.string.plans_freeze_portion_later, left).takeIf { rest.left > 0 })
-    val said = if (portions.size == 1) stringResource(R.string.plans_freeze_rest, rest.name, portions.single())
-    else stringResource(R.string.plans_freeze_portions, rest.name, ListFormatter.getInstance(LocalConfiguration.current.locales[0]).format(portions))
-    Hint(said, MaterialTheme.colorScheme.onSurface)
-    if (rest.left > 0) {
-        if (rest.inPantry) {
-            Hint(stringResource(R.string.plans_freeze_in_pantry))
-        } else if (rest.date <= today) {
-            val named = stringResource(R.string.plans_freeze_keep_for, rest.name, left)
-            TextButton(
-                onClick = { onKeep?.invoke(rest) },
-                enabled = onKeep != null,
-                modifier = Modifier.semantics { contentDescription = named },
-            ) { Text(stringResource(R.string.plans_freeze_keep)) }
+    // Room above each line: the rules of freezing of the line before end with nothing under them once open.
+    Column(Modifier.padding(top = 8.dp)) {
+        val left = amountLabel(rest.left.toDouble(), rest.unit)
+        val portions = rest.thawed.map { taken ->
+            stringResource(R.string.plans_freeze_portion_on, amountLabel(taken.amount.toDouble(), rest.unit), weekdayShort(taken.date))
+        } + listOfNotNull(stringResource(R.string.plans_freeze_portion_later, left).takeIf { rest.left > 0 })
+        val list = ListFormatter.getInstance(LocalConfiguration.current.locales[0])
+        val said = if (portions.size == 1) stringResource(if (rest.loose) R.string.plans_freeze_rest_loose else R.string.plans_freeze_rest, rest.name, portions.single())
+        else stringResource(if (rest.loose) R.string.plans_freeze_portions_loose else R.string.plans_freeze_portions, rest.name, list.format(portions))
+        Hint(said, MaterialTheme.colorScheme.onSurface)
+        if (rest.left > 0) {
+            if (rest.inPantry) {
+                Hint(stringResource(R.string.plans_freeze_in_pantry))
+            } else if (rest.date <= today) {
+                val named = stringResource(R.string.plans_freeze_keep_for, rest.name, left)
+                TextButton(
+                    onClick = { onKeep?.invoke(rest) },
+                    enabled = onKeep != null,
+                    modifier = Modifier.semantics { contentDescription = named },
+                ) { Text(stringResource(R.string.plans_freeze_keep)) }
+            }
         }
+        val portion = rest.portion?.takeIf { rest.left > it }
+        FreezingTips(
+            portionLine = portion?.let { stringResource(R.string.freezing_portion_plan, amountLabel(it.toDouble(), rest.unit)) },
+            key = "${rest.ingredientId}:${rest.date}",
+        )
     }
 }

@@ -461,6 +461,8 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
                 rest.thawed.map { it.toDomain() },
                 rest.left,
                 rest.inPantry,
+                portion = rest.portion,
+                loose = rest.loose,
             )
         },
         fromFreezer = packs.fromFreezer.map { held -> FreezerStock(held.ingredientId, held.name, held.unit, held.date, held.mealId, held.amount, held.eaten) },

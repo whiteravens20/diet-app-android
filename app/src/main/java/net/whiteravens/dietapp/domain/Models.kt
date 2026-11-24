@@ -985,6 +985,10 @@ data class FrozenRest(
     /** What is left of it once the plan is over: what "Dodaj do spiżarni" gives the pantry. */
     val left: Int,
     val inPantry: Boolean,
+    /** What to freeze [left] in: the most the plan eats of the food on a day and the next; null where none of it. */
+    val portion: Int? = null,
+    /** Of what was bought by weight rather than of a pack. */
+    val loose: Boolean = false,
 )
 
 /**
