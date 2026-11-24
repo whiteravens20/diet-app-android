@@ -570,7 +570,7 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
-    /** Marks a meal of the plan eaten or not, where the day has come; it rebalances its day, and says how, once the server has it. */
+    /** Marks a meal of the plan eaten or not, where the day has come; what the server sized with it, if anything, is said once it has it. */
     fun setEaten(meal: DiaryPlanMeal) {
         val current = _state.value
         val planId = current.day?.plan?.id ?: return
