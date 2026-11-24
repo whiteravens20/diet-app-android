@@ -64,8 +64,10 @@ import net.whiteravens.dietapp.domain.FIRST_DIARY_DAY
 import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
 import net.whiteravens.dietapp.domain.MOST_DIARY_ENTRIES
 import net.whiteravens.dietapp.domain.ProductSource
+import net.whiteravens.dietapp.ui.common.CarbsStanding
 import net.whiteravens.dietapp.ui.common.carbsAim
 import net.whiteravens.dietapp.ui.common.carbsAgainst
+import net.whiteravens.dietapp.ui.common.carbsStanding
 import net.whiteravens.dietapp.ui.common.WhenShownAgain
 import net.whiteravens.dietapp.ui.common.amountLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
@@ -466,8 +468,12 @@ internal fun DayFigures(day: DiaryDay, leftOut: Int, labelLine: Boolean = true) 
             listOf(
                 Triple(R.string.diary_protein, day.eaten.protein, stringResource(R.string.diary_of_target, formatNumber(day.target.protein.roundToInt()))),
                 Triple(R.string.diary_fat, day.eaten.fat, stringResource(R.string.diary_of_target, formatNumber(day.target.fat.roundToInt()))),
-                Triple(R.string.diary_carbs, day.eaten.carbs, carbsAim(day.target.carbs, day.target.carbsFloor)),
+                Triple(R.string.diary_carbs, day.eaten.carbs, carbsAim(day.eaten.carbs, day.target.carbs, day.target.carbsFloor)),
             ).forEach { (name, grams, aim) ->
+                // Over its band the day stays over: said in the colour of a warning, as its kcal over the target are. Under
+                // it, the day goes on.
+                val over = name == R.string.diary_carbs && day.target.carbsFloor != null &&
+                    carbsStanding(day.eaten.carbs, day.target.carbs, day.target.carbsFloor) == CarbsStanding.OVER
                 val named = stringResource(name)
                 val figure = "${formatNumber(grams.roundToInt())}\u00A0${stringResource(R.string.unit_g)}"
                 // Read as one: its name, what was eaten of it and what the day aims at.
@@ -477,7 +483,12 @@ internal fun DayFigures(day: DiaryDay, leftOut: Int, labelLine: Boolean = true) 
                 ) {
                     Text(figure, style = MaterialTheme.typography.titleMedium)
                     Text(named, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                    Text(aim, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(
+                        aim,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (over) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
         }

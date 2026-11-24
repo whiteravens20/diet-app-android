@@ -111,6 +111,19 @@ class FigureLinesTest {
             listOf("Protein 156 of 163 g ·", "fat 152 of 142 g ·", "carbs 20 g, at most 27 g"),
             pieces(english.getValue("plans_day_macros_of").format("156", "163", "152", "142", english.getValue("macros_carbs_ceiling").format("20", "27"))),
         )
+        // Over or under the band, it says so, and breaks nowhere inside that either.
+        assertEquals(
+            listOf("Białko 156 z 163 g ·", "tłuszcz 152 z 142 g ·", "węglowodany 140 g, ponad normę 54–108 g"),
+            pieces(polish.getValue("plans_day_macros_of").format("156", "163", "152", "142", polish.getValue("macros_carbs_band_over").format("140", "54", "108"))),
+        )
+        assertEquals(
+            listOf("Białko 156 z 163 g ·", "tłuszcz 152 z 142 g ·", "węglowodany 40 g, poniżej normy 54–108 g"),
+            pieces(polish.getValue("plans_day_macros_of").format("156", "163", "152", "142", polish.getValue("macros_carbs_band_under").format("40", "54", "108"))),
+        )
+        assertEquals(
+            listOf("Protein 156 of 163 g ·", "fat 152 of 142 g ·", "carbs 35 g, above the limit of 27 g"),
+            pieces(english.getValue("plans_day_macros_of").format("156", "163", "152", "142", english.getValue("macros_carbs_ceiling_over").format("35", "27"))),
+        )
     }
 
     /** A text as the app shows it: a no-break space written as `\u00A0` read as the space it is. */

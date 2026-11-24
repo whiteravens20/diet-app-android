@@ -1299,7 +1299,7 @@ private fun DayMacros(day: PlanDay) {
         listOf(
             Triple(R.string.macros_protein, day.nutrition.protein, stringResource(R.string.diary_of_target, formatNumber(day.targetMacros.protein.roundToInt()))),
             Triple(R.string.macros_fat, day.nutrition.fat, stringResource(R.string.diary_of_target, formatNumber(day.targetMacros.fat.roundToInt()))),
-            Triple(R.string.macros_carbs, day.nutrition.carbs, carbsAim(day.targetMacros.carbs, day.targetMacros.carbsFloor)),
+            Triple(R.string.macros_carbs, day.nutrition.carbs, carbsAim(day.nutrition.carbs, day.targetMacros.carbs, day.targetMacros.carbsFloor)),
         ).forEach { (name, grams, aim) ->
             val named = stringResource(name)
             val figure = "${formatNumber(grams.roundToInt())}\u00A0g"

@@ -39,6 +39,8 @@ import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.OverviewDay
 import net.whiteravens.dietapp.domain.PlanOverview
 import net.whiteravens.dietapp.domain.Share
+import net.whiteravens.dietapp.ui.common.CarbsStanding
+import net.whiteravens.dietapp.ui.common.carbsStanding
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDates
@@ -138,8 +140,21 @@ private fun Overview(overview: PlanOverview, onOpen: () -> Unit) {
                 Text(
                     when {
                         floor == null -> stringResource(R.string.overview_macro_value, formatNumber(planned.roundToInt()), formatNumber(target.roundToInt()))
-                        floor > 0 -> stringResource(R.string.overview_macro_band, formatNumber(planned.roundToInt()), formatNumber(floor.roundToInt()), formatNumber(target.roundToInt()))
-                        else -> stringResource(R.string.overview_macro_ceiling, formatNumber(planned.roundToInt()), formatNumber(target.roundToInt()))
+                        floor > 0 -> stringResource(
+                            when (carbsStanding(planned, target, floor)) {
+                                CarbsStanding.OVER -> R.string.overview_macro_band_over
+                                CarbsStanding.UNDER -> R.string.overview_macro_band_under
+                                CarbsStanding.IN -> R.string.overview_macro_band
+                            },
+                            formatNumber(planned.roundToInt()),
+                            formatNumber(floor.roundToInt()),
+                            formatNumber(target.roundToInt()),
+                        )
+                        else -> stringResource(
+                            if (carbsStanding(planned, target, floor) == CarbsStanding.OVER) R.string.overview_macro_ceiling_over else R.string.overview_macro_ceiling,
+                            formatNumber(planned.roundToInt()),
+                            formatNumber(target.roundToInt()),
+                        )
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
