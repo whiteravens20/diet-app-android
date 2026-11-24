@@ -13,6 +13,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -62,6 +64,9 @@ class DayAndListLinesTest {
     /** The language the content is shown in. */
     private var language by mutableStateOf("en")
 
+    /** Raised to draw the content anew: once the phone's language is set, what follows it comes out in that language. */
+    private var round by mutableIntStateOf(0)
+
     /** [content] in the language shown, given that language. */
     private fun show(content: @Composable (language: String) -> Unit) {
         compose.setContent {
@@ -76,7 +81,7 @@ class DayAndListLinesTest {
                             LocalConfiguration provides configuration,
                             LocalResources provides context.resources,
                         ) {
-                            content(language)
+                            key(language, round) { content(language) }
                         }
                     }
                 }
@@ -92,10 +97,13 @@ class DayAndListLinesTest {
         val phone = Locale.getDefault()
         try {
             for (each in listOf("en", "pl")) {
+                // The phone in that language before the content is drawn in it: what follows the phone's language, a
+                // day's date among it, comes out in that language too.
+                Locale.setDefault(Locale.forLanguageTag(each))
                 language = each
+                round += 1
                 compose.waitForIdle()
                 check(each, said())
-                Locale.setDefault(Locale.forLanguageTag(each))
                 compose.keepScreenshot("$name-$each")
                 Locale.setDefault(phone)
             }
