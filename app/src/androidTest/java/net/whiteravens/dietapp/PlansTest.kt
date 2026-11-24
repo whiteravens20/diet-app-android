@@ -155,6 +155,15 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
 
+        // How a day is changed, from the day's options: and from that window, the day's other ways.
+        screen.dayChange(text(R.string.plans_day_help_link))
+        screen.waitForText(text(R.string.plans_day_help_title))
+        screen.keepScreenshot("plans-how-to-change-a-day")
+        screen.onNode(hasText(text(R.string.plans_other_ways)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_ways_take), timeoutMillis = 60_000)
+        screen.onNode(hasText(text(R.string.common_close)) and hasAnyAncestor(isDialog())).performClick()
+        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_ways_take)).fetchSemanticsNodes().isEmpty() }
+
         // The first meal of the first day is swapped from the ways to change it, named by the meal:
         // one offer is put away for another, which is taken.
         val before = Instance.firstDayRecipes(account, planId)

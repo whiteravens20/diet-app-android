@@ -408,6 +408,24 @@ fun PlanDetailScreen(
         )
     }
 
+    // The day whose way to change it is explained in a window, while it is open.
+    var helpFor by rememberSaveable { mutableStateOf<String?>(null) }
+    plan?.days?.firstOrNull { it.id == helpFor }?.let { day ->
+        DayChangeHelpDialog(
+            date = day.date,
+            joint = plan.joint != null,
+            onVariants = {
+                helpFor = null
+                waysFor = day.id
+            }.takeUnless { readOnly || busy },
+            onReroll = {
+                helpFor = null
+                openReroll(RerollStart(RerollScope.DAY, day = day.date))
+            }.takeUnless { readOnly || busy },
+            onDismiss = { helpFor = null },
+        )
+    }
+
     // The meal an ingredient is being substituted in, while its window is open.
     var substitutingIn by rememberSaveable { mutableStateOf<String?>(null) }
     plan?.days?.flatMap { it.meals }?.firstOrNull { it.id == substitutingIn }?.let { meal ->
@@ -630,6 +648,8 @@ fun PlanDetailScreen(
                         // A day that is over keeps its dishes.
                         onOtherWays = { waysFor = day.id }.takeUnless { readOnly || busy || day.date < today },
                         onChange = { openReroll(RerollStart(RerollScope.DAY, day = day.date)) }.takeUnless { readOnly || busy || day.date < today },
+                        // How the day is changed, for a day it can be changed on.
+                        onHelp = { helpFor = day.id }.takeUnless { readOnly || day.date < today },
                         // A day before today is history, and an instance without day settings has none to change.
                         onSettings = { settingsFor = day.id }.takeUnless { readOnly || busy || day.settings == null || day.date < today },
                         onSpread = { viewModel.spread(if (day.date < today) day.date else today, on = day.date) }.takeUnless { readOnly || busy || !spreadable },
@@ -1054,6 +1074,8 @@ private fun DaySummary(
     over: Boolean,
     onOtherWays: (() -> Unit)?,
     onChange: (() -> Unit)?,
+    /** How the day is changed, in a window; null for a day that is not changed any more. */
+    onHelp: (() -> Unit)? = null,
     onSettings: (() -> Unit)?,
     onSpread: (() -> Unit)?,
     /** A shopping list covers a day that spreading changes. */
@@ -1096,7 +1118,7 @@ private fun DaySummary(
                 color = if (day.offTarget == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f),
             )
-            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onDiary)
+            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onDiary, onHelp)
         }
         DayMacros(day)
         // What the label adds stands behind a tap: the figures above are what a day is planned by.
@@ -1115,6 +1137,12 @@ private fun DaySummary(
             val why = day.macrosOffWhy
             if (why == null) Fact(stringResource(R.string.plans_macros_off_hint), Modifier.padding(top = 4.dp))
             else MacrosOffWhyLines(why, Modifier.padding(top = 4.dp))
+        }
+        // Under the day's figures, after what keeps them off where they are: how the day is changed.
+        onHelp?.let { help ->
+            TextButton(onClick = help, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                Text(stringResource(R.string.plans_day_help_link))
+            }
         }
         if (over) Fact(stringResource(R.string.plans_day_is_over), Modifier.padding(top = 4.dp))
         thaws?.forToday?.takeIf { it.isNotEmpty() }?.let { lines ->
@@ -1227,11 +1255,13 @@ private fun DayChanges(
     onSettings: (() -> Unit)?,
     onToday: (() -> Unit)?,
     onDiary: (() -> Unit)?,
+    onHelp: (() -> Unit)? = null,
 ) {
     val ways = listOfNotNull(
         onOtherWays?.let { R.string.plans_other_ways to it },
         onChange?.let { R.string.plans_change_day to it },
         onSettings?.let { R.string.plans_day_settings to it },
+        onHelp?.let { R.string.plans_day_help_link to it },
         onToday?.let { R.string.plans_go_to_today to it },
         onDiary?.let { R.string.plans_open_diary to it },
     )

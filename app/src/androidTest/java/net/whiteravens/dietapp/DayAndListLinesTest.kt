@@ -35,6 +35,7 @@ import net.whiteravens.dietapp.domain.RowPantry
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.testing.keepScreenshot
 import net.whiteravens.dietapp.ui.screens.diary.OtherPlanMealRow
+import net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpDialog
 import net.whiteravens.dietapp.ui.screens.plans.MacrosOffWhyLines
 import net.whiteravens.dietapp.ui.screens.plans.OtherPlanMealCard
 import net.whiteravens.dietapp.ui.screens.plans.StaysFrozenLines
@@ -50,7 +51,8 @@ import java.util.Locale
 /**
  * What a plan's day says of a day off its macros, what its packs say stays in the freezer, what a list's row says of
  * whose pantry holds what is at home and of what the freezer keeps, and a meal eaten from another plan in the diary
- * and in a plan's day: in English, then in Polish, each kept for the eye as a phone in that language keeps it.
+ * and in a plan's day, and the window on how a day is changed: in English, then in Polish, each kept for the eye as
+ * a phone in that language keeps it.
  */
 @RunWith(AndroidJUnit4::class)
 class DayAndListLinesTest {
@@ -202,6 +204,24 @@ class DayAndListLinesTest {
             val (line, chip) = if (language == "en") "From another plan" to "from another plan" else "Z innego planu" to "z innego planu"
             assertTrue(lines.toString(), lines.any { it.startsWith(line) })
             assertTrue(lines.toString(), chip in lines)
+        }
+    }
+
+    @Test
+    fun theWindowOnHowADayIsChangedSaysWhatStaysTheWaysWhenAndWhatItChangesAndOpensTheWays() {
+        show { DayChangeHelpDialog(date = "2026-11-25", joint = true, onVariants = {}, onReroll = {}, onDismiss = {}) }
+
+        inEachLanguage("plans-how-to-change-a-day") { language, lines ->
+            val (title, ways, change) = if (language == "en") {
+                Triple("Changing a day and keeping your own meals", "Other ways…", "Change day…")
+            } else {
+                Triple("Jak zmienić dzień i zachować własne posiłki", "Inne warianty…", "Zmień dzień…")
+            }
+            assertTrue(lines.toString(), title in lines)
+            assertTrue(lines.toString(), ways in lines)
+            assertTrue(lines.toString(), change in lines)
+            // Four ways, and five things a change takes with it in a joint plan.
+            assertEquals(lines.toString(), 9, lines.count { it.startsWith("• ") })
         }
     }
 }
