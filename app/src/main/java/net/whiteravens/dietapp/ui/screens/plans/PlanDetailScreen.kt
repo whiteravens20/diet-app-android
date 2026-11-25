@@ -200,6 +200,8 @@ fun PlanDetailScreen(
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // The day whose history is open ("Historia dnia").
+    var historyFor by rememberSaveable { mutableStateOf<String?>(null) }
     // Read again on being shown again: the plan may have been changed elsewhere in the meantime.
     WhenShownAgain(viewModel::shownAgain)
     val plan = state.shown
@@ -660,8 +662,9 @@ fun PlanDetailScreen(
                         spreadListed = plan.days.any { it.listed && !it.skipped && it.date >= (if (day.date < today) day.date else today) },
                         // A long plan is a long way along its days to the one it is now: one press takes the reader there.
                         onToday = plan.days.indexOfFirst { it.date == today }.takeIf { it >= 0 && day.date != today }?.let { at -> { viewModel.selectDay(at) } },
-                        // The diary of a day that has come.
+                        // The diary of a day that has come, and the history of every day, in sight.
                         onDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today },
+                        onHistory = { historyFor = day.id },
                         // A day of today or after it is resized with its own meals, where the server says that would move one.
                         onResize = { viewModel.resizeDay(day.date) }.takeUnless {
                             readOnly || busy || day.date < today || !day.resizes ||
@@ -764,13 +767,15 @@ fun PlanDetailScreen(
         if (shownCard) {
             // The day it speaks of: of the swap, or of the first meal sized.
             val about = state.lastSwap?.mealId ?: state.rebalance?.changes?.firstOrNull()?.mealId
+            val cardDay = state.plan?.days?.firstOrNull { day -> day.meals.any { it.id == about } }
             RebalanceCard(
                 rebalance = state.rebalance,
                 swapRevision = state.lastSwap?.revision,
-                day = state.plan?.days?.firstOrNull { day -> day.meals.any { it.id == about } },
+                day = cardDay,
                 effects = state.effects,
                 onOpenList = onOpenList,
                 onShowDay = { date -> plan?.days?.indexOfFirst { it.date == date }?.takeIf { it >= 0 }?.let(viewModel::selectDay) },
+                onHistory = cardDay?.let { day -> { historyFor = day.id } },
                 notice = state.notice,
                 busy = busy,
                 onUndo = viewModel::undoRebalance,
@@ -786,6 +791,21 @@ fun PlanDetailScreen(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
+    }
+    val historyDay = historyFor?.let { id -> plan?.days?.firstOrNull { it.id == id } }
+    if (plan != null && historyDay != null) {
+        val today = LocalDate.now().toString()
+        DayHistoryDialog(
+            planId = plan.id,
+            dayId = historyDay.id,
+            date = historyDay.date,
+            resizes = historyDay.resizes && historyDay.date >= today,
+            today = today,
+            fromDiary = false,
+            onOpenOther = { onOpenDiary(plan.profileId, historyDay.date) }.takeIf { historyDay.date <= today },
+            onChanged = viewModel::changedElsewhere,
+            onDismiss = { historyFor = null },
+        )
     }
 }
 
@@ -1088,7 +1108,10 @@ private fun DaySummary(
     /** A shopping list covers a day that spreading changes. */
     spreadListed: Boolean = false,
     onToday: (() -> Unit)?,
+    /** The diary of the day, for a day that has come: in sight beside its history. */
     onDiary: (() -> Unit)?,
+    /** The history of the day ("Historia dnia"), on every day. */
+    onHistory: () -> Unit,
     onResize: (() -> Unit)?,
     resizeLeft: Double?,
     /** What the day says to take out of the freezer. */
@@ -1106,8 +1129,9 @@ private fun DaySummary(
             // A day the user skips is no shortfall, and there is nothing in it to fill; its settings can bring it back.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.plans_day_skipped), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                DayChanges(day, onOtherWays = null, onChange = null, onSettings, onToday, onDiary)
+                DayChanges(day, onOtherWays = null, onChange = null, onSettings, onToday)
             }
+            DayLinks(onDiary, onHistory)
             return@AppCard
         }
         daySettingsLine(day)?.let { line ->
@@ -1125,9 +1149,10 @@ private fun DaySummary(
                 color = if (day.offTarget == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f),
             )
-            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onDiary, onHelp)
+            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onHelp = onHelp)
         }
         DayMacros(day)
+        DayLinks(onDiary, onHistory)
         // What the label adds stands behind a tap: the figures above are what a day is planned by.
         day.label?.let { label ->
             var labelOpen by rememberSaveable(day.date) { mutableStateOf(false) }
@@ -1253,8 +1278,8 @@ private fun DaySummary(
 
 /**
  * The ways to change a day and to go from it, behind the day's options beside its sum, as the plan's own are beside
- * its name: its other versions, the day made again, its settings, today's day of the plan and the day's diary, each
- * where it has one.
+ * its name: its other versions, the day made again, its settings and today's day of the plan, each where it has one;
+ * the day's diary and history stand in sight under its figures ([DayLinks]).
  */
 @Composable
 private fun DayChanges(
@@ -1263,7 +1288,6 @@ private fun DayChanges(
     onChange: (() -> Unit)?,
     onSettings: (() -> Unit)?,
     onToday: (() -> Unit)?,
-    onDiary: (() -> Unit)?,
     onHelp: (() -> Unit)? = null,
 ) {
     val ways = listOfNotNull(
@@ -1272,7 +1296,6 @@ private fun DayChanges(
         onSettings?.let { R.string.plans_day_settings to it },
         onHelp?.let { R.string.plans_day_help_link to it },
         onToday?.let { R.string.plans_go_to_today to it },
-        onDiary?.let { R.string.plans_open_diary to it },
     )
     if (ways.isEmpty()) return
     var open by remember { mutableStateOf(false) }
@@ -1292,6 +1315,16 @@ private fun DayChanges(
                 )
             }
         }
+    }
+}
+
+/** The diary of a day that has come ([onDiary]) and the day's history, side by side and in sight, as the web's day has them. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DayLinks(onDiary: (() -> Unit)?, onHistory: () -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        onDiary?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_open_diary)) } }
+        TextButton(onClick = onHistory) { Text(stringResource(R.string.plans_history_link)) }
     }
 }
 

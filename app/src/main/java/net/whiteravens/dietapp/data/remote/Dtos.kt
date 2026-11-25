@@ -2017,6 +2017,90 @@ data class PlanChangeEffectsDto(
     val freeze: List<String> = emptyList(),
 )
 
+/** A meal as a change of its day found it, or left it: its dish's name (null for a recipe gone), servings as eaten, kcal. */
+@Serializable
+data class DayEventMealStateDto(
+    val name: String? = null,
+    val servings: Double,
+    val calories: Int,
+    val eaten: Boolean,
+    val leftover: Boolean = false,
+)
+
+/** A meal a change of its day moved: null [before] where the change put it in, null [after] where it took it off. */
+@Serializable
+data class DayEventMealDto(
+    val mealId: String,
+    val mealType: String,
+    val before: DayEventMealStateDto? = null,
+    val after: DayEventMealStateDto? = null,
+)
+
+/** A figure a change moved, before and after. */
+@Serializable
+data class MovedFigureDto(val before: Int, val after: Int)
+
+/** The user's choice of a day's portions before and after a change (`undo` | `spread` | `kept`, null for none). */
+@Serializable
+data class MovedChoiceDto(val before: String? = null, val after: String? = null)
+
+/** A change of a plan's day, as its history tells it. */
+@Serializable
+data class DayEventDto(
+    val id: String,
+    val at: String,
+    /** What made it: `swap`, `eaten`, `diary`, `resize`, `undo`, `spread`, `kept` and the others of the contract. */
+    val cause: String,
+    /** The user changed this day; false where a change of other days moved it through a rest of a pack. */
+    val own: Boolean,
+    /** Of a change of other days: the days it was of. */
+    val from: List<String> = emptyList(),
+    val meals: List<DayEventMealDto> = emptyList(),
+    val target: MovedFigureDto? = null,
+    val choice: MovedChoiceDto? = null,
+    val effects: PlanChangeEffectsDto = PlanChangeEffectsDto(),
+)
+
+/** What takes back the day's last change: `restore` (its portions) or `swap` (the swap's own undo). */
+@Serializable
+data class DayEventUndoDto(
+    val kind: String,
+    val eventId: String,
+    val restore: List<RestoreScaleDto> = emptyList(),
+    val alsoDays: List<String> = emptyList(),
+)
+
+/** The user's choice that holds a day's portions, and when it was made. */
+@Serializable
+data class KeptChoiceDto(val choice: String, val at: String)
+
+/** What no sizing of a day moves: its meals of one's own, eaten meals, leftovers, rests of packs and diary entries. */
+@Serializable
+data class DayHoldsDto(
+    val ownMeals: List<String> = emptyList(),
+    val eatenMeals: List<String> = emptyList(),
+    val leftovers: List<String> = emptyList(),
+    val rests: List<String> = emptyList(),
+    val diaryEntries: Int = 0,
+)
+
+/** GET `/meal-plans/{id}/days/{dayId}/history`: a day of a plan and its changes, the latest first. */
+@Serializable
+data class DayHistoryDto(
+    val planId: String,
+    val dayId: String,
+    val date: String,
+    val revision: Int,
+    val kept: KeptChoiceDto? = null,
+    val holds: DayHoldsDto = DayHoldsDto(),
+    val events: List<DayEventDto> = emptyList(),
+    val undo: DayEventUndoDto? = null,
+)
+
+/** POST `/meal-plans/{id}/days/{dayId}/keep`: "Zostaw porcje jak są", from the plan at [revision]. */
+@Serializable
+data class KeepDayRequest(val revision: Int)
+
 /** An ingredient the catalogue's own rules name in the place of one of a planned meal. */
 @Serializable
 data class SubstituteSuggestionDto(val fromIngredientId: String, val to: IngredientDto, val moved: List<String> = emptyList())
@@ -2760,6 +2844,8 @@ data class EatenInOtherPlanDto(
 @Serializable
 data class DiaryDayPlanDto(
     val id: String,
+    /** The plan's day, whose history the diary opens; null from a server older than it. */
+    val dayId: String? = null,
     val skipped: Boolean,
     val meals: List<DiaryPlanMealDto>,
     val calorieDelta: Double,

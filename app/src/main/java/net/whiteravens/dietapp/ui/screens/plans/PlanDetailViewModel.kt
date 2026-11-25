@@ -790,6 +790,12 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
+    /** The plan changed from the history of one of its days: the card goes, and the plan is the server's again. */
+    fun changedElsewhere() {
+        _state.update { it.copy(rebalance = null, effects = null, lastSwap = null, notice = null) }
+        reload()
+    }
+
     fun dismissRebalance() {
         _state.update { it.copy(rebalance = null, effects = null, lastSwap = null, notice = null) }
     }

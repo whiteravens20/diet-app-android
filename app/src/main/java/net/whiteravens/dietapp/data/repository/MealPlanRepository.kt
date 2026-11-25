@@ -87,6 +87,10 @@ import net.whiteravens.dietapp.data.remote.KeepFrozenRequest
 import net.whiteravens.dietapp.data.remote.KeepLeftRequest
 import net.whiteravens.dietapp.di.WorkDispatcher
 import net.whiteravens.dietapp.domain.NewDiaryEntry
+import net.whiteravens.dietapp.data.remote.KeepDayRequest
+import net.whiteravens.dietapp.domain.DayEventUndo
+import net.whiteravens.dietapp.domain.DayHistory
+import net.whiteravens.dietapp.domain.ScaleChange
 
 /**
  * Offline-first meal-plan access (docs/sync-strategy.md). Reads serve the Room
@@ -625,6 +629,21 @@ class MealPlanRepository @Inject constructor(
         val plan = apiCall(json) { api.keepLeft(planId, KeepLeftRequest(ingredientId, date)) }
         return keep(plan)
     }
+
+    /** A day of a plan and its changes ("Historia dnia"). It needs the network. */
+    suspend fun dayHistory(planId: String, dayId: String): DayHistory =
+        apiCall(json) { api.dayHistory(planId, dayId) }.toDomain()
+
+    /** "Zostaw porcje jak są": the day's portions become the user's choice, from the plan at [revision]. It needs the network. */
+    suspend fun keepDay(planId: String, dayId: String, revision: Int): DayHistory =
+        apiCall(json) { api.keepDay(planId, dayId, KeepDayRequest(revision)) }.toDomain()
+
+    /** Puts back the portions a day's history offers to take its last change back with ([DayEventUndo.restore]). */
+    suspend fun restorePortions(planId: String, restore: List<ScaleChange>): Rebalanced = kept(
+        apiCall(json) {
+            api.rebalancePlan(planId, RebalanceRequest(scope = "day", restore = restore.map { RestoreScaleDto(it.mealId, it.before) }))
+        },
+    )
 
     /** Puts the meals [rebalance] scaled back as they were. */
     suspend fun undo(planId: String, rebalance: Rebalance): Rebalanced = kept(

@@ -2481,10 +2481,76 @@
     <string name="profile_water_tracking_hint">The water card on the dashboard and in the diary, water in the week in sum, and the reminder to drink. Turned off, what was written stays.</string>
     <string name="water_note">No need for the water card? You can turn it off %1$s.</string>
     <string name="water_note_link">in the profile</string>
-    <!-- What a change of a plan did to the shopping lists and the freezer. -->
+    <!-- The history of a plan's day and what a change did to the lists and the freezer. -->
+    <string name="plans_history_link">History of the day</string>
     <string name="plans_effect_list">The shopping list of %1$s no longer matches the plan.</string>
     <string name="plans_effect_open_list">Open the list</string>
     <string name="plans_effect_thaw">What to take out of the freezer changed:</string>
     <string name="plans_effect_freeze">What to freeze changed:</string>
     <string name="plans_effect_day">Show the day %1$s</string>
+    <string name="history_title">History of the day</string>
+    <string name="history_loading">Loading the history of the day…</string>
+    <string name="history_failed">The history of the day could not be loaded. Try again.</string>
+    <string name="history_holds_title">What holds this day</string>
+    <string name="history_kept_undo">Your choice of portions: a resize undone, %1$s.</string>
+    <string name="history_kept_spread">Your choice of portions: spread over the rest of the plan, %1$s.</string>
+    <string name="history_kept_kept">Your choice of portions: “Keep the portions as they are”, %1$s.</string>
+    <string name="history_kept_note">Changes you do not make of this day leave these portions. Your own change of the day ends the choice.</string>
+    <string name="history_adjusts">Every change fits the portions of this day to its target.</string>
+    <string name="history_own_meals">Meals of your own: %1$s.</string>
+    <string name="history_eaten_meals">Eaten: %1$s.</string>
+    <string name="history_leftovers">Leftovers from the day before: %1$s.</string>
+    <string name="history_rests">Rests of packs: %1$s.</string>
+    <string name="history_holds_note">Resizing the portions does not move them.</string>
+    <string name="history_changes_title">Changes</string>
+    <string name="history_no_changes">No change of this day has been kept yet.</string>
+    <string name="history_from_list">After a purchase by weight on a list the rest of a pack of this day moved.</string>
+    <string name="history_meal_changed">%1$s: %2$s, %3$s → %4$s kcal</string>
+    <string name="history_meal_added">%1$s: %2$s added, %3$s kcal</string>
+    <string name="history_meal_removed">%1$s: %2$s removed</string>
+    <string name="history_meal_replaced">%1$s: %2$s → %3$s, %4$s kcal</string>
+    <string name="history_meal_eaten">%1$s: %2$s, eaten</string>
+    <string name="history_meal_not_eaten">%1$s: %2$s, no longer marked as eaten</string>
+    <string name="history_unnamed">a meal</string>
+    <string name="history_target">Target of the day: %1$s → %2$s kcal</string>
+    <string name="history_choice_ended">Your choice of portions for this day ended with this change.</string>
+    <string name="history_undo">Undo this change</string>
+    <string name="history_undo_portions">The portions from before this change come back. Diary entries and meals marked as eaten stay.</string>
+    <string name="history_keep">Keep the portions as they are</string>
+    <string name="history_keep_note">The portions of this day stay as they are: changes you do not make of this day leave them.</string>
+    <string name="history_open_in_plan">The day in the plan</string>
+    <string name="history_action_failed">That did not work. Load the history again and try once more.</string>
+    <string name="history_cause_swap">Meal swapped</string>
+    <string name="history_cause_swap_undo">Swap taken back</string>
+    <string name="history_cause_ingredient_swap">Ingredient swapped</string>
+    <string name="history_cause_own_meal">Meal of your own</string>
+    <string name="history_cause_meal_removed">Meal removed</string>
+    <string name="history_cause_eaten">Marked as eaten</string>
+    <string name="history_cause_not_eaten">No longer marked as eaten</string>
+    <string name="history_cause_diary">Diary entry</string>
+    <string name="history_cause_eaten_elsewhere">Eaten in another plan</string>
+    <string name="history_cause_resize">Portions of the day resized</string>
+    <string name="history_cause_undo">Resize undone</string>
+    <string name="history_cause_spread">Spread over the rest of the plan</string>
+    <string name="history_cause_day_settings">Settings of the day</string>
+    <string name="history_cause_day_variant">Another version of the day</string>
+    <string name="history_cause_leftover">Leftover for the next day</string>
+    <string name="history_cause_leftover_undo">Leftover taken back</string>
+    <string name="history_cause_favorite_set">Favourite set</string>
+    <string name="history_cause_reroll">New recipes</string>
+    <string name="history_cause_retarget">New target of the plan</string>
+    <string name="history_cause_bought_by_weight">Bought by weight</string>
+    <string name="history_cause_kept">Portions kept</string>
+    <plurals name="history_diary_entries">
+        <item quantity="one">%1$d diary entry.</item>
+        <item quantity="other">%1$d diary entries.</item>
+    </plurals>
+    <plurals name="history_from_days">
+        <item quantity="one">After a change of %2$s the rest of a pack this day shares moved.</item>
+        <item quantity="other">After a change of %2$s the rest of a pack this day shares moved.</item>
+    </plurals>
+    <plurals name="history_undo_also">
+        <item quantity="one">It also undoes the change of %2$s.</item>
+        <item quantity="other">It also undoes the changes of %2$s.</item>
+    </plurals>
 </resources>

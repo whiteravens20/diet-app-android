@@ -55,7 +55,7 @@ import net.whiteravens.dietapp.ui.components.Text
  * holds now, what was sized again and whether the day is still off its target, what the week could not
  * take back, and what the change did to the shopping lists and the freezer ([effects]), each a way to
  * the list or the day; the way back, a swap's whole ([swapRevision]) or the portions alone, the rest
- * of the week where the day is off its target, and away. A change
+ * of the week where the day is off its target, the day's history ([onHistory]), and away. A change
  * that says what it did in a sentence of its own ([said]) says that first. It goes by itself after a
  * while, later where the phone is set to give more time to act; a card that speaks of a list or the
  * freezer stays until it is put away.
@@ -79,6 +79,7 @@ internal fun RebalanceCard(
     effects: PlanEffects? = null,
     onOpenList: (EffectList) -> Unit = {},
     onShowDay: (String) -> Unit = {},
+    onHistory: (() -> Unit)? = null,
 ) {
     val dismiss by rememberUpdatedState(onDismiss)
     val timeout = LocalAccessibilityManager.current
@@ -128,6 +129,7 @@ internal fun RebalanceCard(
                 if (spreadable) {
                     OutlinedButton(onClick = onRest, enabled = !busy) { Text(stringResource(R.string.plans_rebalance_rest)) }
                 }
+                onHistory?.let { TextButton(onClick = it) { Text(stringResource(R.string.plans_history_link)) } }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.plans_rebalance_dismiss)) }
             }
         }

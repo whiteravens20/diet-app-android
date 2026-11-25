@@ -79,6 +79,8 @@ data class DiaryDayPlan(
     val offTarget: String?,
     /** Sizing the day again would give a meal another portion, as the server works it out. */
     val resizes: Boolean = true,
+    /** The plan's day, whose history the diary opens; null from a server older than it. */
+    val dayId: String? = null,
 )
 
 /** A meal of the plan that holds a day, as the diary shows it. [calories] is null for one of one's own still on its way. */

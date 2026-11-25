@@ -107,7 +107,15 @@ import net.whiteravens.dietapp.domain.ItemShare
 import net.whiteravens.dietapp.domain.RowPantry
 import net.whiteravens.dietapp.domain.LineAmount
 import net.whiteravens.dietapp.domain.Thaw
+import net.whiteravens.dietapp.data.remote.DayEventMealStateDto
+import net.whiteravens.dietapp.data.remote.DayHistoryDto
 import net.whiteravens.dietapp.data.remote.PlanChangeEffectsDto
+import net.whiteravens.dietapp.domain.DayEvent
+import net.whiteravens.dietapp.domain.DayEventMeal
+import net.whiteravens.dietapp.domain.DayEventMealState
+import net.whiteravens.dietapp.domain.DayEventUndo
+import net.whiteravens.dietapp.domain.DayHistory
+import net.whiteravens.dietapp.domain.DayHolds
 import net.whiteravens.dietapp.domain.EffectList
 import net.whiteravens.dietapp.domain.PlanEffects
 
@@ -502,6 +510,37 @@ fun PlanChangeEffectsDto.toDomain(): PlanEffects? = PlanEffects(
     thaw = thaw,
     freeze = freeze,
 ).takeIf { it.told }
+
+private fun DayEventMealStateDto.toDomain() = DayEventMealState(name, servings, calories, eaten, leftover)
+
+fun DayHistoryDto.toDomain() = DayHistory(
+    planId = planId,
+    dayId = dayId,
+    date = date,
+    revision = revision,
+    kept = kept?.let { it.choice to it.at },
+    holds = DayHolds(holds.ownMeals, holds.eatenMeals, holds.leftovers, holds.rests, holds.diaryEntries),
+    events = events.map { event ->
+        DayEvent(
+            id = event.id,
+            at = event.at,
+            cause = event.cause,
+            own = event.own,
+            from = event.from,
+            meals = event.meals.map { DayEventMeal(it.mealId, it.mealType, it.before?.toDomain(), it.after?.toDomain()) },
+            target = event.target?.let { it.before to it.after },
+            choice = event.choice?.let { it.before to it.after },
+            effects = event.effects.toDomain() ?: PlanEffects(emptyList(), emptyList(), emptyList()),
+        )
+    },
+    undo = undo?.let { undo ->
+        DayEventUndo(
+            swap = undo.kind == "swap",
+            restore = undo.restore.map { ScaleChange(it.mealId, before = it.scale, after = it.scale) },
+            alsoDays = undo.alsoDays,
+        )
+    },
+)
 
 fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
     id = id,

@@ -105,6 +105,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
+import net.whiteravens.dietapp.ui.screens.plans.DayHistoryDialog
 import net.whiteravens.dietapp.domain.EffectList
 
 /**
@@ -127,6 +128,24 @@ fun DiaryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val removed by viewModel.removedLater.collectAsStateWithLifecycle()
+    // Whether the history of the plan's day of the date shown is open ("Historia dnia").
+    var historyOpen by rememberSaveable { mutableStateOf(false) }
+    val historyPlan = state.day?.plan
+    val historyDayId = historyPlan?.dayId
+    if (historyOpen && historyPlan != null && historyDayId != null) {
+        val today = LocalDate.now().toString()
+        DayHistoryDialog(
+            planId = historyPlan.id,
+            dayId = historyDayId,
+            date = state.date.toString(),
+            resizes = historyPlan.resizes && state.date.toString() >= today,
+            today = today,
+            fromDiary = true,
+            onOpenOther = { onOpenPlan(historyPlan.id, state.date.toString()) },
+            onChanged = viewModel::changedElsewhere,
+            onDismiss = { historyOpen = false },
+        )
+    }
     val hidden by viewModel.hidden.collectAsStateWithLifecycle()
     val undoFor = undoForMillis()
     // Read again on being shown again: a plan's page and a recipe change what a day shows.
@@ -239,7 +258,9 @@ fun DiaryScreen(
                                 }
                             }
 
-                            else -> day(state, viewModel, onOpenPlan, onOpenMeal, onEditProfile, hidden) { viewModel.remove(it, undoFor) }
+                            else -> day(state, viewModel, onOpenPlan, onOpenMeal, onEditProfile, hidden, onHistory = { historyOpen = true }) {
+                                viewModel.remove(it, undoFor)
+                            }
                         }
                     }
                 }
@@ -257,6 +278,7 @@ fun DiaryScreen(
                 effects = state.effects,
                 onOpenList = onOpenList,
                 onShowDay = { date -> state.rebalancedPlan?.let { onOpenPlan(it, date) } },
+                onHistory = { historyOpen = true }.takeIf { state.day?.plan?.dayId != null },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
@@ -274,12 +296,13 @@ private fun LazyListScope.day(
     onOpenMeal: (planId: String, day: String, mealId: String) -> Unit,
     onEditProfile: (profileId: String) -> Unit,
     hidden: Set<Any>,
+    onHistory: () -> Unit,
     onRemove: (DiaryEntry) -> Unit,
 ) {
     item(key = "summary") {
         val day = state.day
         if (day != null) {
-            DaySummary(state, day, onResize = viewModel::resize, onOpenPlan = onOpenPlan)
+            DaySummary(state, day, onResize = viewModel::resize, onOpenPlan = onOpenPlan, onHistory = onHistory)
         } else if (state.offline) {
             // Without a network, a day not read on this phone before: what is written waits, and is said to.
             AppCard {
@@ -369,12 +392,15 @@ private fun DayPicker(date: LocalDate, onPick: (LocalDate) -> Unit, onCopy: (() 
 }
 
 /** What was eaten against the day's target, whose target it is, and where the plan's day stands with the diary counted. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DaySummary(
     state: DiaryViewModel.UiState,
     day: DiaryDay,
     onResize: () -> Unit,
     onOpenPlan: (planId: String, day: String) -> Unit,
+    /** Opens the history of the plan's day ("Historia dnia"). */
+    onHistory: () -> Unit,
 ) {
     val plan = day.plan
     // Where nothing is written, the plan's day stands as its own meals put it.
@@ -432,7 +458,10 @@ private fun DaySummary(
                         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
-                TextButton(onClick = { onOpenPlan(plan.id, day.date) }) { Text(stringResource(R.string.diary_open_plan)) }
+                FlowRow {
+                    TextButton(onClick = { onOpenPlan(plan.id, day.date) }) { Text(stringResource(R.string.diary_open_plan)) }
+                    if (plan.dayId != null) TextButton(onClick = onHistory) { Text(stringResource(R.string.plans_history_link)) }
+                }
             }
             // Where the target comes from, what ≈ and the marks of the label mean: once, under the figures they explain.
             var explained by rememberSaveable { mutableStateOf(false) }

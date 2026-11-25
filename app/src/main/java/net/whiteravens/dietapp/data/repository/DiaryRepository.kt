@@ -254,6 +254,7 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
             calorieDelta = plan.calorieDelta,
             offTarget = plan.offTarget,
             resizes = plan.resizes,
+            dayId = plan.dayId,
         )
     },
     entries = entries.map { it.toDomain() },

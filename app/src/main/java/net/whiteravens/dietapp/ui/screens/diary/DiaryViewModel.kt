@@ -621,6 +621,12 @@ class DiaryViewModel @Inject constructor(
 
     fun dismissRebalance() = _state.update { it.copy(rebalance = null, rebalancedPlan = null, effects = null) }
 
+    /** The plan of the day changed from its history: the card goes, and the day is read again. */
+    fun changedElsewhere() {
+        _state.update { it.copy(rebalance = null, rebalancedPlan = null, effects = null) }
+        read(showLoading = false)
+    }
+
     /** A change of the plan that asks the server, one at a time: the day is read again, and what it rebalanced said where [said]. */
     private fun ask(planId: String, said: Boolean = true, resizing: Boolean = false, block: suspend () -> Rebalanced) {
         _state.update { it.copy(changing = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null, effects = null) }

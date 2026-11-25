@@ -506,6 +506,14 @@ interface DietApiService {
     @POST("meal-plans/{id}/rebalance")
     suspend fun rebalancePlan(@Path("id") id: String, @Body body: RebalanceRequest): RebalanceResultDto
 
+    /** A day of a plan and its changes ("Historia dnia"). */
+    @GET("meal-plans/{id}/days/{dayId}/history")
+    suspend fun dayHistory(@Path("id") id: String, @Path("dayId") dayId: String): DayHistoryDto
+
+    /** "Zostaw porcje jak są": the day's portions as they are become the user's choice. */
+    @POST("meal-plans/{id}/days/{dayId}/keep")
+    suspend fun keepDay(@Path("id") id: String, @Path("dayId") dayId: String, @Body body: KeepDayRequest): DayHistoryDto
+
     /** Deletes a plan, and its shopping lists with it. */
     @DELETE("meal-plans/{id}")
     suspend fun deletePlan(@Path("id") id: String)

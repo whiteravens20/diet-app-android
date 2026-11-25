@@ -832,6 +832,52 @@ data class PlanEffects(val lists: List<EffectList>, val thaw: List<String>, val 
     val told: Boolean get() = lists.isNotEmpty() || thaw.isNotEmpty() || freeze.isNotEmpty()
 }
 
+/** A meal as a change of its day found it or left it: its dish ([name] null for a recipe gone), servings as eaten, kcal. */
+data class DayEventMealState(val name: String?, val servings: Double, val calories: Int, val eaten: Boolean, val leftover: Boolean)
+
+/** A meal a change of its day moved: null [before] where it came with the change, null [after] where it left with it. */
+data class DayEventMeal(val mealId: String, val mealType: String, val before: DayEventMealState?, val after: DayEventMealState?)
+
+/**
+ * A change of a plan's day, as its history tells it: when, what made it ([cause], as the contract names
+ * it), whether the user changed this day ([own]) or a change of the days [from] moved it, the meals it
+ * moved, the day's target before and after where it moved, the user's choice of the day's portions
+ * before and after where it made or ended one, and what it did to the lists and the freezer.
+ */
+data class DayEvent(
+    val id: String,
+    val at: String,
+    val cause: String,
+    val own: Boolean,
+    val from: List<String>,
+    val meals: List<DayEventMeal>,
+    val target: Pair<Int, Int>?,
+    val choice: Pair<String?, String?>?,
+    val effects: PlanEffects,
+)
+
+/** What takes back a day's last change: its portions put back ([restore]) or its swap's own undo ([swap]). */
+data class DayEventUndo(val swap: Boolean, val restore: List<ScaleChange>, val alsoDays: List<String>)
+
+/** What no sizing of a day moves. */
+data class DayHolds(val ownMeals: List<String>, val eatenMeals: List<String>, val leftovers: List<String>, val rests: List<String>, val diaryEntries: Int)
+
+/**
+ * A day of a plan and its changes ("Historia dnia"): the plan's [revision] as read, the user's choice
+ * that holds its portions ([kept]: `undo` | `spread` | `kept`, with when), what no sizing moves, the
+ * changes the latest first, and the undo of the last where it is offered.
+ */
+data class DayHistory(
+    val planId: String,
+    val dayId: String,
+    val date: String,
+    val revision: Int,
+    val kept: Pair<String, String>?,
+    val holds: DayHolds,
+    val events: List<DayEvent>,
+    val undo: DayEventUndo?,
+)
+
 /**
  * A substitution of one ingredient of a meal for another: in [mealId] of [planId], the line of
  * [fromIngredientId] takes [toIngredientId]; a model rewords the text where [rewriteWithAi], a

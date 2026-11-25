@@ -728,6 +728,31 @@ object Instance {
         )
     }
 
+    /**
+     * Today of [planId] over its target as the user chose it: a meal of one's own of [calories] written in today's
+     * diary sizes the day, and that sizing taken back (its "before" portions put back) leaves the day over, the user's
+     * choice of its portions. Answers how many meals the sizing had moved.
+     */
+    fun todayOverAsChosen(account: Account, profileId: String, planId: String, calories: Int = 900): Int {
+        val written = call(
+            "POST",
+            "diary/entries",
+            JSONObject().put("profileId", profileId).put("date", LocalDate.now().toString()).put("mealType", "snack").put("kind", "meal")
+                .put("name", "A doughnut").put("nutrition", JSONObject().put("calories", calories)),
+            token = account.accessToken,
+            expect = 201,
+        )
+        val changes = written.optJSONObject("planChange")?.optJSONObject("rebalance")?.optJSONArray("changes") ?: return 0
+        if (changes.length() == 0) return 0
+        val restore = JSONArray()
+        for (at in 0 until changes.length()) {
+            val change = changes.getJSONObject(at)
+            restore.put(JSONObject().put("mealId", change.getString("mealId")).put("scale", change.getDouble("before")))
+        }
+        call("POST", "meal-plans/$planId/rebalance", JSONObject().put("scope", "day").put("restore", restore), token = account.accessToken, expect = 201)
+        return changes.length()
+    }
+
     /** What is written for the day [date] of a profile's diary, in the order it was written. */
     fun diaryEntries(account: Account, profileId: String, date: LocalDate = LocalDate.now()): List<String> {
         val entries = call("GET", "diary/day?profileId=$profileId&date=$date", token = account.accessToken).getJSONArray("entries")
