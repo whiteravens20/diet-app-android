@@ -1452,7 +1452,7 @@
         <item quantity="other">%1$d roku</item>
     </plurals>
     <string name="profiles_summary">%1$s · %2$s cm · %3$s · %4$s</string>
-    <string name="profiles_delete_confirm">Usunąć „%1$s”? Powiązane plany posiłków i listy zakupów również zostaną usunięte.</string>
+    <string name="profiles_delete_confirm">Usunąć „%1$s”? Razem z profilem znikną jego plany posiłków z historią ich dni, listy zakupów, dziennik, pomiary wagi, spiżarnia i ulubione.</string>
     <string name="common_delete">Usuń</string>
     <string name="common_next">Dalej</string>
     <string name="profile_name">Imię</string>

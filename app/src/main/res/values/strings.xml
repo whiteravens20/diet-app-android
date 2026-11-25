@@ -1327,7 +1327,7 @@
         <item quantity="other">%1$d y</item>
     </plurals>
     <string name="profiles_summary">%1$s · %2$s cm · %3$s · %4$s</string>
-    <string name="profiles_delete_confirm">Delete “%1$s”? Its meal plans and shopping lists are removed too.</string>
+    <string name="profiles_delete_confirm">Delete “%1$s”? Its meal plans with the history of their days, shopping lists, diary, logged weights, pantry and favourites go with it.</string>
     <string name="common_delete">Delete</string>
     <string name="common_next">Next</string>
     <string name="profile_name">Name</string>
