@@ -108,7 +108,8 @@ import kotlin.reflect.KClass
 @Serializable object RecipesRoute
 @Serializable data class RecipeDetailRoute(val recipeId: String, val portion: String? = null, val whole: Boolean = false)
 @Serializable data class RecipeFormRoute(val recipeId: String? = null)
-@Serializable object ShoppingRoute
+/** The shopping lists; a link from the card after a change of a plan names the list it leads to, of a profile and a plan. */
+@Serializable data class ShoppingRoute(val profileId: String? = null, val planId: String? = null, val listId: String? = null)
 @Serializable object MoreRoute
 /** The account's settings, at the section a link names (`AccountSection`'s name), or at their list. */
 @Serializable data class AccountRoute(val section: String? = null)
@@ -235,7 +236,7 @@ private val topLevelDestinations = listOf(
     TopLevelDestination(DashboardRoute, DashboardRoute::class, Icons.Default.Home, R.string.tab_dashboard),
     TopLevelDestination(PlansRoute, PlansRoute::class, Icons.Default.DateRange, R.string.tab_meal_plans),
     TopLevelDestination(RecipesRoute, RecipesRoute::class, AppIcons.Restaurant, R.string.nav_recipes),
-    TopLevelDestination(ShoppingRoute, ShoppingRoute::class, Icons.Default.ShoppingCart, R.string.nav_shopping),
+    TopLevelDestination(ShoppingRoute(), ShoppingRoute::class, Icons.Default.ShoppingCart, R.string.nav_shopping),
     TopLevelDestination(MoreRoute, MoreRoute::class, Icons.Default.Menu, R.string.nav_more),
 )
 

@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.shopping
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +31,7 @@ import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import java.io.IOException
 import javax.inject.Inject
+import net.whiteravens.dietapp.ui.navigation.ShoppingRoute
 
 /**
  * Shopping lists as the web page has them: a profile, one of its plans, and the plan's lists, the
@@ -42,6 +44,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ShoppingViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val users: UserRepository,
     private val plans: MealPlanRepository,
     private val lists: ShoppingListRepository,
@@ -100,6 +103,12 @@ class ShoppingViewModel @Inject constructor(
 
     private val again = ReadingAnew()
 
+    // The list a link leads to, read by the route's names (`toRoute` needs Android's own classes, which the tests on
+    // the JVM do not have): its profile, plan and list are chosen once they are read, the first opening only.
+    private var linkedProfile: String? = savedStateHandle.get<String>(ShoppingRoute::profileId.name)
+    private var linkedPlan: String? = savedStateHandle.get<String>(ShoppingRoute::planId.name)
+    private var linkedList: String? = savedStateHandle.get<String>(ShoppingRoute::listId.name)
+
     init {
         load()
         followAiMode()
@@ -139,7 +148,9 @@ class ShoppingViewModel @Inject constructor(
             attempt { users.profilesOrKept() }
                 .onSuccess { profiles ->
                     _state.update { UiState(loading = false, profiles = profiles, aiOn = it.aiOn) }
-                    profiles.firstOrNull()?.let { selectProfile(it.id) }
+                    val linked = profiles.firstOrNull { it.id == linkedProfile }
+                    linkedProfile = null
+                    (linked ?: profiles.firstOrNull())?.let { selectProfile(it.id) }
                 }
                 .onFailure { e -> _state.update { UiState(loading = false, readError = e, aiOn = it.aiOn) } }
         }
@@ -256,8 +267,18 @@ class ShoppingViewModel @Inject constructor(
             }
             attempt { lists.refreshForPlan(planId) }
                 .onSuccess { fresh ->
+                    val linked = linkedList?.takeIf { id -> fresh.any { it.id == id } }
+                    if (linked != null) linkedList = null
                     _state.update {
-                        if (it.selectedPlanId == planId) it.copy(lists = fresh.newestFirst(), listLoading = false, offline = false, readAt = System.currentTimeMillis()) else it
+                        if (it.selectedPlanId == planId) {
+                            it.copy(
+                                lists = fresh.newestFirst(),
+                                listLoading = false,
+                                offline = false,
+                                readAt = System.currentTimeMillis(),
+                                selectedListId = linked ?: it.selectedListId,
+                            )
+                        } else it
                     }
                 }
                 .onFailure { e ->
@@ -369,10 +390,12 @@ class ShoppingViewModel @Inject constructor(
             if (it.selectedProfileId != profileId) return@update it
             it.copy(plans = planList)
         }
-        // Auto-select the newest plan once, so the screen is useful immediately.
+        // Auto-select the plan a link names, else the newest, once, so the screen is useful immediately.
         val current = _state.value
         if (current.selectedProfileId == profileId && current.selectedPlanId == null) {
-            planList.firstOrNull()?.let { selectPlan(it.id) }
+            val linked = planList.firstOrNull { it.id == linkedPlan }
+            if (planList.isNotEmpty()) linkedPlan = null
+            (linked ?: planList.firstOrNull())?.let { selectPlan(it.id) }
         }
     }
 

@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.shopping
 
+import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -78,10 +79,37 @@ class ShoppingViewModelTest {
     }
 
     @Test
+    fun `opens on the list a link names, of the profile and the plan it names`() {
+        coEvery { users.profiles() } returns listOf(
+            Profile("ada", "Ada", "balanced", 3, 70.0, null),
+            Profile("ola", "Ola", "balanced", 3, 60.0, null),
+        )
+        coEvery { plans.plans("ola", any()) } returns MealPlanPage(
+            listOf(
+                MealPlanSummary("other", "2026-10-20", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0), 0.4, false),
+                MealPlanSummary("plan", "2026-10-13", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0), 0.4, false),
+            ),
+            1,
+            1,
+            null,
+        )
+        coEvery { lists.cachedForPlan(any()) } returns emptyList()
+        coEvery { lists.refreshForPlan("other") } returns emptyList()
+        val linked = SavedStateHandle(mapOf("profileId" to "ola", "planId" to "plan", "listId" to "later"))
+
+        val model = ShoppingViewModel(linked, users, plans, lists, changeQueue())
+
+        assertEquals("ola", model.state.value.selectedProfileId)
+        assertEquals("plan", model.state.value.selectedPlanId)
+        // The newest list is shown where none is named (`early`, made last): here the older one, named.
+        assertEquals(later, model.state.value.list)
+    }
+
+    @Test
     fun `a list made for some days stands in the place of the lists that share a day with it, and is the one shown`() {
         val made = list("made", "2026-10-14", "2026-10-16", made = "13")
         coEvery { lists.generate("plan", "2026-10-14", "2026-10-16") } returns made
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
 
         assertEquals(early, model.state.value.list)
 
@@ -96,7 +124,7 @@ class ShoppingViewModelTest {
         coEvery { lists.cachedForPlan("plan") } returns listOf(early, later)
         coEvery { lists.refreshForPlan("plan") } throws ApiException(404, "PLAN_NOT_FOUND", "Meal plan not found.")
 
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
 
         assertEquals(emptyList<ShoppingList>(), model.state.value.lists)
         assertEquals("PLAN_NOT_FOUND", (model.state.value.readError as ApiException).code)
@@ -108,7 +136,7 @@ class ShoppingViewModelTest {
     fun `lists that cannot be read are said with a way to read them again, apart from a list that could not be made`() {
         val refused = ApiException(500, "INTERNAL_ERROR", "Something went wrong.")
         coEvery { lists.refreshForPlan("plan") } throws refused
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
         assertEquals(refused, model.state.value.readError)
 
         coEvery { lists.refreshForPlan("plan") } returns listOf(early, later)
@@ -126,7 +154,7 @@ class ShoppingViewModelTest {
 
     @Test
     fun `a row changed while the lists were read again keeps its change, the older answer left aside`() {
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
         val answer = CompletableDeferred<Unit>()
         coEvery { lists.refreshForPlan("plan") } coAnswers {
             answer.await()
@@ -145,7 +173,7 @@ class ShoppingViewModelTest {
 
     @Test
     fun `read again, a plan the profile no longer has gives way to its newest, whose lists are read`() {
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
         val newer = MealPlanSummary("newer", "2026-10-20", 7, "balanced", Nutrition(2000.0, 100.0, 70.0, 220.0), 0.4, false)
         coEvery { plans.plans(any(), any()) } returns MealPlanPage(listOf(newer), 1, 1, null)
         coEvery { lists.cachedForPlan("newer") } returns emptyList()
@@ -160,7 +188,7 @@ class ShoppingViewModelTest {
     @Test
     fun `a list the plan changed under is made again for its own days`() {
         coEvery { lists.generate("plan", later.fromDate, later.toDate) } returns later.copy(id = "again", createdAt = "2026-10-13T09:00:00.000Z")
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
         model.selectList(later.id)
 
         model.update(later)
@@ -173,7 +201,7 @@ class ShoppingViewModelTest {
     @Test
     fun `a deleted list goes, and the newest list left is shown`() {
         coEvery { lists.delete(any()) } just runs
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
         model.selectList(later.id)
 
         model.delete(later.id)
@@ -188,7 +216,7 @@ class ShoppingViewModelTest {
         val found = ListProposals(listOf(ListProposal.Leftover("Feta", "g", 80, 200.0, null)), weighed = false, fallbackReason = null)
         coEvery { users.me() } returns SessionUser("u", "ala@example.test", "Ala", true, "en", aiMode = "none")
         coEvery { lists.proposals(any(), any()) } returns found
-        val model = ShoppingViewModel(users, plans, lists, changeQueue())
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue())
 
         model.findProposals(weigh = true)
 
@@ -214,7 +242,7 @@ class ShoppingViewModelTest {
         coEvery { lists.change("early", "bread", RowChange(checked = true, have = 400.0)) } coAnswers {
             queue.submit(QueuedChange.ShoppingRow("early", "bread", checked = true, have = 400.0)) { throw IOException("no network") }
         }
-        val model = ShoppingViewModel(users, plans, lists, queue)
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, queue)
 
         model.change("bread", RowChange(checked = true, have = 400.0))
 
@@ -242,7 +270,7 @@ class ShoppingViewModelTest {
         coEvery { lists.change("early", "bread", RowChange(checked = true)) } coAnswers {
             queue.submit(QueuedChange.ShoppingRow("early", "bread", checked = true)) { error("sent before the change waiting") }
         }
-        val model = ShoppingViewModel(users, plans, lists, queue)
+        val model = ShoppingViewModel(SavedStateHandle(), users, plans, lists, queue)
 
         model.change("bread", RowChange(checked = true))
 
