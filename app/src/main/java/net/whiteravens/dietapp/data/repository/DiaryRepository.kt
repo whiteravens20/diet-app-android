@@ -269,7 +269,8 @@ private fun DiaryDayDto.toDomain(syncedAt: Long? = null) = DiaryDay(
 private fun DiaryEntryDto.written() = DiaryWritten(toDomain(), planChange?.toRebalanced())
 
 /** What a change of the diary did to a plan's day, as a change of the plan says it. */
-private fun RebalanceResultDto.toRebalanced() = Rebalanced(plan.toDomain(), rebalance?.toDomain(), fallbackReason = null)
+private fun RebalanceResultDto.toRebalanced() =
+    Rebalanced(plan.toDomain(), rebalance?.toDomain(), fallbackReason = null, effects = effects?.toDomain())
 
 internal fun DiaryEntryDto.toDomain() = DiaryEntry(
     id = id,

@@ -663,6 +663,7 @@ class MealPlanRepository @Inject constructor(
                 result.rebalance?.toDomain(),
                 result.aiMeta?.fallbackReason,
                 worded = result.aiMeta != null && result.aiMeta.fallbackReason == null,
+                effects = result.effects?.toDomain(),
             )
         }
     }
@@ -689,10 +690,12 @@ class MealPlanRepository @Inject constructor(
         pick = pick,
     )
 
-    /** A plan as a change left it, kept for offline use, with what the change rebalanced. */
+    /** A plan as a change left it, kept for offline use, with what the change rebalanced and did to the lists and the freezer. */
     private suspend fun kept(result: RebalanceResultDto): Rebalanced {
         mirror(result.plan)
-        return withContext(work) { Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), fallbackReason = null) }
+        return withContext(work) {
+            Rebalanced(result.plan.toDomain(), result.rebalance?.toDomain(), fallbackReason = null, effects = result.effects?.toDomain())
+        }
     }
 
     /** Keeps [plan] for offline use and gives it back as the app shows it. */

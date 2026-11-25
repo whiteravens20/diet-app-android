@@ -802,7 +802,35 @@ data class ScaleChange(val mealId: String, val before: Double, val after: Double
  * a model where one was asked to do part of the change ([fallbackReason]). [worded]: a model worded
  * the text of the recipe a substitution made.
  */
-data class Rebalanced(val plan: MealPlan, val rebalance: Rebalance?, val fallbackReason: String?, val worded: Boolean = false)
+data class Rebalanced(
+    val plan: MealPlan,
+    val rebalance: Rebalance?,
+    val fallbackReason: String?,
+    val worded: Boolean = false,
+    /** What the change did to the shopping lists and the freezer; null where it did nothing to them. */
+    val effects: PlanEffects? = null,
+)
+
+/** A shopping list a change of a plan made stop matching its plan, of [profileId]'s plan [planId] (yyyy-MM-dd days). */
+data class EffectList(
+    val id: String,
+    val planId: String,
+    val profileId: String,
+    val fromDate: String,
+    val toDate: String,
+    /** A part of a household's list. */
+    val householdId: String?,
+)
+
+/**
+ * What a change of a plan did beside its portions: the [lists] that stopped matching their plans, and
+ * the days from today on whose note of what to take out of the freezer ([thaw]) or to put in it
+ * ([freeze]) it changed.
+ */
+data class PlanEffects(val lists: List<EffectList>, val thaw: List<String>, val freeze: List<String>) {
+    /** Whether it says anything at all: a card that does stays until it is put away. */
+    val told: Boolean get() = lists.isNotEmpty() || thaw.isNotEmpty() || freeze.isNotEmpty()
+}
 
 /**
  * A substitution of one ingredient of a meal for another: in [mealId] of [planId], the line of

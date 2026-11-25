@@ -2653,4 +2653,10 @@
     <string name="profile_water_tracking_hint">Karta wody na Pulpicie i w dzienniku, woda w podsumowaniu tygodnia i przypomnienie o wodzie. Po wyłączeniu to, co zapisane, zostaje.</string>
     <string name="water_note">Nie potrzebujesz karty wody? Wyłączysz ją %1$s.</string>
     <string name="water_note_link">w profilu</string>
+    <!-- What a change of a plan did to the shopping lists and the freezer. -->
+    <string name="plans_effect_list">Lista zakupów %1$s nie odpowiada już planowi.</string>
+    <string name="plans_effect_open_list">Otwórz listę</string>
+    <string name="plans_effect_thaw">Zmieniło się, co wyjąć z zamrażarki:</string>
+    <string name="plans_effect_freeze">Zmieniło się, co zamrozić:</string>
+    <string name="plans_effect_day">Pokaż dzień %1$s</string>
 </resources>

@@ -381,6 +381,7 @@ private fun MainScaffold(
                         onTurnAiOn = { navController.navigate(AccountRoute(AccountSection.AI.name)) },
                         onOpenDiary = { profileId, date -> navController.navigate(DiaryRoute(profileId, date)) },
                         onOpenPlanMeal = { planId, day, meal -> navController.navigate(PlanDetailRoute(planId, day, meal)) },
+                        onOpenList = { list -> navController.navigate(ShoppingRoute(list.profileId, list.planId, list.id)) },
                     )
                 }
                 composable<DiaryRoute> {
@@ -390,6 +391,7 @@ private fun MainScaffold(
                         onOpenPlan = { planId, day -> navController.navigate(PlanDetailRoute(planId, day)) },
                         onOpenMeal = { planId, day, meal -> navController.navigate(PlanDetailRoute(planId, day, meal)) },
                         onEditProfile = { profileId -> navController.navigate(ProfileFormRoute(profileId, ProfileSection.GOAL.name)) },
+                        onOpenList = { list -> navController.navigate(ShoppingRoute(list.profileId, list.planId, list.id)) },
                     )
                 }
                 composable<RecipesRoute> {

@@ -2481,4 +2481,10 @@
     <string name="profile_water_tracking_hint">The water card on the dashboard and in the diary, water in the week in sum, and the reminder to drink. Turned off, what was written stays.</string>
     <string name="water_note">No need for the water card? You can turn it off %1$s.</string>
     <string name="water_note_link">in the profile</string>
+    <!-- What a change of a plan did to the shopping lists and the freezer. -->
+    <string name="plans_effect_list">The shopping list of %1$s no longer matches the plan.</string>
+    <string name="plans_effect_open_list">Open the list</string>
+    <string name="plans_effect_thaw">What to take out of the freezer changed:</string>
+    <string name="plans_effect_freeze">What to freeze changed:</string>
+    <string name="plans_effect_day">Show the day %1$s</string>
 </resources>

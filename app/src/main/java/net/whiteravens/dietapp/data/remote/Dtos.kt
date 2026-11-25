@@ -1986,7 +1986,36 @@ data class RebalanceSummaryDto(
 
 /** What a change of a plan that may balance it answers: a swap, a meal of one's own, a meal marked eaten. */
 @Serializable
-data class RebalanceResultDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null)
+data class RebalanceResultDto(
+    val plan: MealPlanDto,
+    val rebalance: RebalanceSummaryDto? = null,
+    /** What the change did to the shopping lists and the freezer; null where it did nothing to them. */
+    val effects: PlanChangeEffectsDto? = null,
+)
+
+/** A shopping list a change of a plan made stop matching its plan: the list's screen opens on it. */
+@Serializable
+data class EffectListDto(
+    val id: String,
+    val planId: String,
+    val profileId: String,
+    val fromDate: String,
+    val toDate: String,
+    /** A part of a household's list: the household's list is where it is read. */
+    val householdId: String? = null,
+)
+
+/**
+ * What a change of a plan did beside its portions: the lists of the plan that matched it before and
+ * no longer do, and the days from today on whose note of what to take out of the freezer ([thaw]) or
+ * to put in it ([freeze]) it changed (yyyy-MM-dd).
+ */
+@Serializable
+data class PlanChangeEffectsDto(
+    val lists: List<EffectListDto> = emptyList(),
+    val thaw: List<String> = emptyList(),
+    val freeze: List<String> = emptyList(),
+)
 
 /** An ingredient the catalogue's own rules name in the place of one of a planned meal. */
 @Serializable
@@ -2041,7 +2070,12 @@ data class AiSuggestIngredientResponseDto(val toIngredient: IngredientDto, val a
 
 /** What a substitution answers: the plan, what it rebalanced, and who reworded the text where a model was asked to. */
 @Serializable
-data class SwapIngredientResponseDto(val plan: MealPlanDto, val rebalance: RebalanceSummaryDto? = null, val aiMeta: AiGenerationMetaDto? = null)
+data class SwapIngredientResponseDto(
+    val plan: MealPlanDto,
+    val rebalance: RebalanceSummaryDto? = null,
+    val aiMeta: AiGenerationMetaDto? = null,
+    val effects: PlanChangeEffectsDto? = null,
+)
 
 /**
  * POST `/meal-plans/:id/regenerate` and `/meal-plans/:id/days/:dayId/regenerate`: the days from

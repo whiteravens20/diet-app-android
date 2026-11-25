@@ -107,6 +107,9 @@ import net.whiteravens.dietapp.domain.ItemShare
 import net.whiteravens.dietapp.domain.RowPantry
 import net.whiteravens.dietapp.domain.LineAmount
 import net.whiteravens.dietapp.domain.Thaw
+import net.whiteravens.dietapp.data.remote.PlanChangeEffectsDto
+import net.whiteravens.dietapp.domain.EffectList
+import net.whiteravens.dietapp.domain.PlanEffects
 
 /** DTO → domain mappers. The only place wire shapes and domain shapes meet. */
 
@@ -492,6 +495,13 @@ fun RebalanceSummaryDto.toDomain() = Rebalance(
     caloriesBefore = macrosBefore.calories,
     caloriesAfter = macrosAfter.calories,
 )
+
+/** What a change did to the lists and the freezer, where it did anything to them. */
+fun PlanChangeEffectsDto.toDomain(): PlanEffects? = PlanEffects(
+    lists = lists.map { EffectList(it.id, it.planId, it.profileId, it.fromDate, it.toDate, it.householdId) },
+    thaw = thaw,
+    freeze = freeze,
+).takeIf { it.told }
 
 fun MealPlanSummaryDto.toDomain() = MealPlanSummary(
     id = id,

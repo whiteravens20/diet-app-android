@@ -65,6 +65,8 @@ import org.junit.Test
 import java.io.IOException
 import java.time.LocalDate
 import java.time.LocalTime
+import net.whiteravens.dietapp.domain.PlanEffects
+import net.whiteravens.dietapp.domain.EffectList
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DiaryViewModelTest {
@@ -960,6 +962,31 @@ class DiaryViewModelTest {
 
         assertNull(model.state.value.rebalance)
         assertNull(model.state.value.resizeLeft)
+    }
+
+    @Test
+    fun `a meal marked eaten that moved no portion but a list or the freezer says so, until it is put away`() {
+        val effects = PlanEffects(
+            lists = listOf(EffectList("l", "p", "a", "2026-11-24", "2026-11-30", null)),
+            thaw = emptyList(),
+            freeze = listOf("2026-11-26"),
+        )
+        val shownDay = mockk<PlanDay> { every { date } returns today.toString() }
+        val answer = Rebalanced(mockk<MealPlan> { every { id } returns "p"; every { days } returns listOf(shownDay) }, Rebalance("day", false, emptyList(), 0.0, 2000.0, 2000.0), null, effects = effects)
+        coEvery { diary.day("a", today) } returns day(plan = plan(meal("m")))
+        coEvery { plans.setEaten("p", "m", true) } returns Submitted.Sent(answer)
+        val model = model()
+
+        model.setEaten(meal("m"))
+
+        assertNull(model.state.value.rebalance)
+        assertEquals(effects, model.state.value.effects)
+        assertEquals("p", model.state.value.rebalancedPlan)
+        assertSame(shownDay, model.state.value.rebalancedDay)
+
+        model.dismissRebalance()
+
+        assertNull(model.state.value.effects)
     }
 
     @Test

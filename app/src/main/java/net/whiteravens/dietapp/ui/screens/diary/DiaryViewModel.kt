@@ -55,6 +55,7 @@ import java.time.format.DateTimeParseException
 import javax.inject.Inject
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import net.whiteravens.dietapp.domain.PlanEffects
 
 /**
  * The diary, as the web's page keeps it: what a profile ate on a day, the meals its plan marks as
@@ -124,6 +125,8 @@ class DiaryViewModel @Inject constructor(
         val rebalancedPlan: String? = null,
         /** The day it rebalanced, as it stands now. */
         val rebalancedDay: PlanDay? = null,
+        /** What the last change did to the shopping lists and the freezer, until it is put away. */
+        val effects: PlanEffects? = null,
         /** What a press to resize the day left of its gap where it moved nothing: what it says instead of nothing. */
         val resizeLeft: Double? = null,
         /** The day to copy from. */
@@ -363,7 +366,7 @@ class DiaryViewModel @Inject constructor(
         read()
     }
 
-    private fun UiState.left() = copy(failed = null, rebalance = null, rebalancedPlan = null, resizeLeft = null, copied = null)
+    private fun UiState.left() = copy(failed = null, rebalance = null, rebalancedPlan = null, effects = null, resizeLeft = null, copied = null)
 
     // ── The window that adds an entry ───────────────────────────────────────
 
@@ -575,7 +578,7 @@ class DiaryViewModel @Inject constructor(
         val current = _state.value
         val planId = current.day?.plan?.id ?: return
         if (current.changing || current.ahead || meal.id in current.waitingOwnMeals) return
-        _state.update { it.copy(changing = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null) }
+        _state.update { it.copy(changing = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null, effects = null) }
         viewModelScope.launch {
             attempt { plans.setEaten(planId, meal.id, !meal.eaten) }
                 .onSuccess { submitted ->
@@ -616,11 +619,11 @@ class DiaryViewModel @Inject constructor(
         ask(planId) { plans.rebalanceRest(planId) }
     }
 
-    fun dismissRebalance() = _state.update { it.copy(rebalance = null, rebalancedPlan = null) }
+    fun dismissRebalance() = _state.update { it.copy(rebalance = null, rebalancedPlan = null, effects = null) }
 
     /** A change of the plan that asks the server, one at a time: the day is read again, and what it rebalanced said where [said]. */
     private fun ask(planId: String, said: Boolean = true, resizing: Boolean = false, block: suspend () -> Rebalanced) {
-        _state.update { it.copy(changing = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null) }
+        _state.update { it.copy(changing = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null, effects = null) }
         viewModelScope.launch {
             attempt { block() }
                 .onSuccess { rebalanced(planId, it, said, resizing) }
@@ -639,16 +642,25 @@ class DiaryViewModel @Inject constructor(
         if (change != null) rebalanced(change.plan.id, change) else read(showLoading = false)
     }
 
-    /** What a change of the plan left: said where it scaled a meal; a press to resize that moved nothing says what is left. */
+    /**
+     * What a change of the plan left: said where it scaled a meal or did something to the lists or the freezer; a press
+     * to resize that moved nothing says what is left.
+     */
     private fun rebalanced(planId: String, answer: Rebalanced, said: Boolean = true, resizing: Boolean = false) {
         val rebalance = answer.rebalance
         val moved = rebalance?.takeIf { said && it.changes.isNotEmpty() }
+        val effects = answer.effects?.takeIf { said }
+        // A change that did something to the lists or the freezer and sized no meal speaks of the day shown.
+        val shown = _state.value.date.toString()
+        val effectsDay = if (effects != null) answer.plan.days.firstOrNull { day -> day.date == shown } else null
         _state.update {
             it.copy(
                 changing = false,
                 rebalance = moved,
-                rebalancedDay = moved?.changes?.firstOrNull()?.let { change -> answer.plan.days.firstOrNull { day -> day.meals.any { it.id == change.mealId } } },
-                rebalancedPlan = planId.takeIf { moved != null },
+                rebalancedDay = moved?.changes?.firstOrNull()?.let { change -> answer.plan.days.firstOrNull { day -> day.meals.any { it.id == change.mealId } } }
+                    ?: effectsDay,
+                rebalancedPlan = planId.takeIf { moved != null || effects != null },
+                effects = effects,
                 resizeLeft = rebalance?.takeIf { resizing && it.changes.isEmpty() }?.unabsorbedKcal,
             )
         }
@@ -671,7 +683,7 @@ class DiaryViewModel @Inject constructor(
         val profileId = current.profileId ?: return
         val from = current.copyFrom
         if (current.copying || from == current.date || (current.copied?.from == from && current.copied.count > 0)) return
-        _state.update { it.copy(copying = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null) }
+        _state.update { it.copy(copying = true, failed = null, copied = null, resizeLeft = null, rebalance = null, rebalancedPlan = null, effects = null) }
         viewModelScope.launch {
             attempt { diary.copy(profileId, from, current.date) }
                 .onSuccess { copied ->

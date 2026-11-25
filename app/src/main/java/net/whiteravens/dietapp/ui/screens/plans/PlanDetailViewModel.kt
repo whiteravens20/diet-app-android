@@ -37,6 +37,7 @@ import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.inGiveWayOrder
 import net.whiteravens.dietapp.domain.Rebalance
+import net.whiteravens.dietapp.domain.PlanEffects
 import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.RelaxationNeeded
 import net.whiteravens.dietapp.domain.Reroll
@@ -164,6 +165,8 @@ class PlanDetailViewModel @Inject constructor(
         val changing: Boolean = false,
         /** What the last change rebalanced, until it is put away. */
         val rebalance: Rebalance? = null,
+        /** What the last change did to the shopping lists and the freezer, until it is put away. */
+        val effects: PlanEffects? = null,
         /** The swap the last change was, which can be taken back: said until it is put away, even where no portion moved. */
         val lastSwap: LastSwap? = null,
         /** The recipe a substitution made whose words are being corrected in their window. */
@@ -446,7 +449,7 @@ class PlanDetailViewModel @Inject constructor(
                             plan = taken.plan,
                             offer = null,
                             taking = false,
-                            rebalance = taken.rebalance.shown(),
+                            rebalance = taken.rebalance.shown(), effects = taken.effects,
                             lastSwap = LastSwap(offer.mealId, taken.plan.revision),
                         )
                     }
@@ -554,7 +557,7 @@ class PlanDetailViewModel @Inject constructor(
                         s.copy(
                             plan = changed.plan,
                             leftoverWindow = null,
-                            rebalance = null,
+                            rebalance = null, effects = null,
                             lastSwap = null,
                             leftoverWent = LeftoverWent(offer.date, slot, otherPlan = !here),
                             selectedDay = changed.plan.days.indexOfFirst { it.date == offer.date }.takeIf { here && it >= 0 } ?: s.selectedDay,
@@ -604,7 +607,7 @@ class PlanDetailViewModel @Inject constructor(
                             is Submitted.Sent -> it.copy(
                                 plan = submitted.answer.plan,
                                 changing = false,
-                                rebalance = submitted.answer.rebalance.shown(),
+                                rebalance = submitted.answer.rebalance.shown(), effects = submitted.answer.effects,
                                 lastSwap = null,
                                 customMeal = CustomMealSent(added = true),
                             )
@@ -658,7 +661,7 @@ class PlanDetailViewModel @Inject constructor(
                         it.copy(
                             plan = answer.plan,
                             changing = false,
-                            rebalance = answer.rebalance.shown(),
+                            rebalance = answer.rebalance.shown(), effects = answer.effects,
                             lastSwap = null,
                             customMeal = CustomMealSent(added = true),
                         )
@@ -717,7 +720,7 @@ class PlanDetailViewModel @Inject constructor(
                         it.copy(
                             plan = resized.plan,
                             changing = false,
-                            rebalance = resized.rebalance.shown(),
+                            rebalance = resized.rebalance.shown(), effects = resized.effects,
                             lastSwap = null,
                             resizeLeft = resized.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() }?.let { rebalance -> date to rebalance.unabsorbedKcal },
                         )
@@ -744,7 +747,7 @@ class PlanDetailViewModel @Inject constructor(
                         it.copy(
                             plan = spread.plan,
                             changing = false,
-                            rebalance = spread.rebalance.shown(),
+                            rebalance = spread.rebalance.shown(), effects = spread.effects,
                             lastSwap = null,
                             resizeLeft = spread.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() && on != null }?.let { rebalance -> on!! to rebalance.unabsorbedKcal },
                         )
@@ -764,7 +767,7 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null) }
             attempt { plans.evenWeek(planId, week.from, plan.revision) }
-                .onSuccess { evened -> _state.update { it.copy(plan = evened, changing = false, rebalance = null, lastSwap = null) } }
+                .onSuccess { evened -> _state.update { it.copy(plan = evened, changing = false, rebalance = null, effects = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
                     if (e.isPlanChanged() || e.isNotFound()) reload()
@@ -779,7 +782,7 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null) }
             attempt { plans.retarget(planId, plan.revision) }
-                .onSuccess { taken -> _state.update { it.copy(plan = taken, changing = false, rebalance = null, lastSwap = null) } }
+                .onSuccess { taken -> _state.update { it.copy(plan = taken, changing = false, rebalance = null, effects = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
                     if (e.isPlanChanged() || e.isNotFound()) reload()
@@ -788,11 +791,11 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     fun dismissRebalance() {
-        _state.update { it.copy(rebalance = null, lastSwap = null, notice = null) }
+        _state.update { it.copy(rebalance = null, effects = null, lastSwap = null, notice = null) }
     }
 
     /** Opens the window the words of [recipeId], a recipe a substitution made, are corrected in. */
-    fun reword(recipeId: String) = _state.update { it.copy(rewording = recipeId, rebalance = null, lastSwap = null, notice = null) }
+    fun reword(recipeId: String) = _state.update { it.copy(rewording = recipeId, rebalance = null, effects = null, lastSwap = null, notice = null) }
 
     fun stopRewording() = _state.update { it.copy(rewording = null) }
 
@@ -807,7 +810,7 @@ class PlanDetailViewModel @Inject constructor(
         _state.update {
             it.copy(
                 plan = result.plan,
-                rebalance = result.rebalance.shown(),
+                rebalance = result.rebalance.shown(), effects = result.effects,
                 lastSwap = LastSwap(
                     mealId,
                     result.plan.revision,
@@ -861,7 +864,7 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(setWindow = window.copy(applying = true, error = null)) }
         viewModelScope.launch {
             attempt { plans.applySet(setId, planId, dates, together) }
-                .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null, rebalance = null, lastSwap = null) } }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null, rebalance = null, effects = null, lastSwap = null) } }
                 .onFailure { e ->
                     _state.update { it.copy(setWindow = it.setWindow?.copy(applying = false, error = e)) }
                     if (e.isPlanChanged() || e.isNotFound()) reload()
@@ -947,6 +950,7 @@ class PlanDetailViewModel @Inject constructor(
                             plan = changed.plan,
                             changing = false,
                             rebalance = if (said) changed.rebalance.shown() else null,
+                            effects = changed.effects.takeIf { said },
                             lastSwap = swapped?.let { meal -> LastSwap(meal, changed.plan.revision) },
                         )
                     }
@@ -971,7 +975,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { submitted ->
                     _state.update {
                         when (submitted) {
-                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown(), lastSwap = null)
+                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown(), effects = submitted.answer.effects, lastSwap = null)
                             is Submitted.Kept -> it.copy(changing = false, offline = it.offline || submitted.offline)
                         }
                     }

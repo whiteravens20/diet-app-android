@@ -183,6 +183,7 @@ import net.whiteravens.dietapp.ui.screens.diary.EntryWindowOverlays
 import net.whiteravens.dietapp.ui.screens.diary.EntryWindowState
 import net.whiteravens.dietapp.ui.screens.diary.KindChip
 import net.whiteravens.dietapp.ui.screens.diary.missingOf
+import net.whiteravens.dietapp.domain.EffectList
 
 /**
  * One plan: what it is and what a day of it holds on average, its days, and the selected day's
@@ -195,6 +196,7 @@ fun PlanDetailScreen(
     onTurnAiOn: () -> Unit,
     onOpenDiary: (profileId: String, date: String) -> Unit,
     onOpenPlanMeal: (planId: String, date: String, mealId: String) -> Unit,
+    onOpenList: (EffectList) -> Unit,
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -488,7 +490,8 @@ fun PlanDetailScreen(
     // The card of a rebalance stands over the end of the list: the list ends that much higher, so
     // that nothing of it stays under the card.
     var cardHeight by remember { mutableIntStateOf(0) }
-    val shownCard = state.rebalance != null || state.lastSwap != null || state.notice != null || state.leftoverWent != null
+    val shownCard = state.rebalance != null || state.lastSwap != null || state.notice != null || state.leftoverWent != null ||
+        state.effects != null
     // Where the last leftover went, said by the card at the foot of the plan.
     val leftoverNotice = state.leftoverWent?.let { went ->
         val (day, meal) = eatenWhen(went.date, went.slot)
@@ -765,6 +768,9 @@ fun PlanDetailScreen(
                 rebalance = state.rebalance,
                 swapRevision = state.lastSwap?.revision,
                 day = state.plan?.days?.firstOrNull { day -> day.meals.any { it.id == about } },
+                effects = state.effects,
+                onOpenList = onOpenList,
+                onShowDay = { date -> plan?.days?.indexOfFirst { it.date == date }?.takeIf { it >= 0 }?.let(viewModel::selectDay) },
                 notice = state.notice,
                 busy = busy,
                 onUndo = viewModel::undoRebalance,

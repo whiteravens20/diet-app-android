@@ -105,6 +105,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
+import net.whiteravens.dietapp.domain.EffectList
 
 /**
  * The diary, as the web's page keeps it: of a profile and a day, what was eaten against the day's
@@ -121,6 +122,7 @@ fun DiaryScreen(
     /** A meal of the day's plan, opened in its window as the plan shows it. */
     onOpenMeal: (planId: String, day: String, mealId: String) -> Unit = { _, _, _ -> },
     onEditProfile: (profileId: String) -> Unit = {},
+    onOpenList: (EffectList) -> Unit = {},
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -243,15 +245,18 @@ fun DiaryScreen(
                 }
             }
         }
-        state.rebalance?.let { rebalance ->
+        if (state.rebalance != null || state.effects != null) {
             RebalanceCard(
-                rebalance = rebalance,
+                rebalance = state.rebalance,
                 day = state.rebalancedDay,
                 notice = null,
                 busy = state.changing,
                 onUndo = viewModel::undoRebalance,
                 onRest = viewModel::spread,
                 onDismiss = viewModel::dismissRebalance,
+                effects = state.effects,
+                onOpenList = onOpenList,
+                onShowDay = { date -> state.rebalancedPlan?.let { onOpenPlan(it, date) } },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).onSizeChanged { cardHeight = it.height },
             )
         }
