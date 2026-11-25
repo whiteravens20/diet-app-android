@@ -379,7 +379,12 @@
     <string name="plans_delete_confirm">Usunąć ten plan? Tej operacji nie można cofnąć. To, co zjedzono z\u00A0planu, zostanie w\u00A0dzienniku.</string>
     <string name="plans_delete_joint_note">Drugi plan (%1$s) zostanie zwykłym planem, bez wspólnych posiłków.</string>
     <string name="plans_rebalance_title">Przeliczono porcje dnia</string>
-    <string name="plans_rebalance_summary">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</string>
+    <plurals name="plans_rebalance_summary">
+        <item quantity="one">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</item>
+        <item quantity="few">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</item>
+        <item quantity="many">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</item>
+        <item quantity="other">%1$s → %2$s kcal · przeliczono posiłki: %3$s.</item>
+    </plurals>
     <string name="plans_rebalance_best_effort">Dzień nadal jest poza celem: dopasowanie porcji nie wystarczyło.</string>
     <string name="plans_rebalance_left_over">Reszta planu nadal ma %1$s kcal nadwyżki: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>
     <string name="plans_rebalance_left_under">W reszcie planu nadal brakuje %1$s kcal: pozostałe dni nie mają już zapasu w granicach własnych celów.</string>

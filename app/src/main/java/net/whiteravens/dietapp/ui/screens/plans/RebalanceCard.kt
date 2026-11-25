@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -187,8 +188,9 @@ private fun ChangeSaid(rebalance: Rebalance?, swap: Boolean, day: PlanDay?, spre
             }
             if (rebalance != null) {
                 Hint(
-                    stringResource(
-                        R.string.plans_rebalance_summary,
+                    pluralStringResource(
+                        R.plurals.plans_rebalance_summary,
+                        rebalance.changes.size,
                         formatNumber(rebalance.caloriesBefore.roundToInt()),
                         formatNumber(rebalance.caloriesAfter.roundToInt()),
                         formatNumber(rebalance.changes.size),
