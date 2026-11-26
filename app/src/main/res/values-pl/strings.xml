@@ -1360,9 +1360,11 @@
     <string name="target_note_goal_held">Twój cel redukcji jest wstrzymany: poniżej 18\u00A0lat i\u00A0przy niedowadze aplikacja nie planuje redukcji, więc plany trzymają się zapotrzebowania.</string>
     <string name="target_note_minor">Masz mniej niż 18\u00A0lat. Te wartości pochodzą ze wzoru dla dorosłych i\u00A0są dla Ciebie przybliżeniem; poziom aktywności liczy się co najmniej jako „Umiarkowany”, a\u00A0odchudzanie w\u00A0tym wieku to sprawa do omówienia z\u00A0lekarzem.</string>
     <string name="target_note_underweight">Twój wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może Ci zaszkodzić.</string>
+    <string name="target_note_older">Przy BMI poniżej 30\u00A0zalecenia żywieniowe dla osób starszych odradzają odchudzanie. Jeśli chcesz schudnąć, porozmawiaj o\u00A0tym z\u00A0lekarzem.</string>
+    <string name="target_note_pace_held_for_age">Wybrane tempo %1$s\u00A0na tydzień liczy się jako %2$s: od 65\u00A0lat plan zakłada redukcję najwyżej o\u00A0tyle.</string>
     <string name="target_note_maintenance_under_floor">Twoje zapotrzebowanie jest niższe niż %1$d kcal, czyli najniższy cel, jaki wylicza plan, więc redukcja nie jest planowana: celem jest Twoje zapotrzebowanie.</string>
     <string name="target_note_safety_floor_applied">Cel podniesiono do %1$d kcal, czyli najniższego, jaki wylicza plan. Deficyt, który z tego wynika, to %2$d kcal dziennie.</string>
-    <string name="target_note_deficit_capped">Wybrane tempo wymaga %1$d kcal dziennie mniej. To więcej niż jedna czwarta Twojego zapotrzebowania, więc plan odejmuje %2$d.</string>
+    <string name="target_note_deficit_capped">Tempo %4$s\u00A0na tydzień wymaga %1$d\u00A0kcal dziennie mniej. To więcej, niż pozwala plan: jedna czwarta Twojego zapotrzebowania albo 1%% masy ciała na tydzień. Plan odejmuje więc %2$d\u00A0kcal: na początku to około %3$s\u00A0tygodniowo, a\u00A0z\u00A0czasem tempo słabnie.</string>
     <string name="target_note_below_floor">Wpisany cel jest niższy niż %1$d kcal, czyli najniższy, jaki wyliczyłby plan.</string>
     <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
     <string name="plans_day_over">Ponad cel</string>
@@ -1479,7 +1481,10 @@
     <string name="profile_pace_comes_to">%1$s kcal dziennie</string>
     <string name="profile_pace_slowed">spowolnione</string>
     <string name="profile_pace_held">wstrzymane</string>
-    <string name="profile_pace_slowed_note">Tempo oznaczone jako „spowolnione” odebrałoby więcej niż jedną czwartą Twojego zapotrzebowania albo zeszło poniżej najniższego celu, jaki wylicza plan, więc plan odejmuje mniej.</string>
+    <string name="profile_pace_held_for_age">liczone jako %1$s</string>
+    <string name="profile_pace_slowed_note" formatted="false">Tempo oznaczone jako „spowolnione” odebrałoby więcej niż jedną czwartą Twojego zapotrzebowania lub 1% masy ciała na tydzień albo zeszłoby poniżej najniższego celu, jaki wylicza plan. Dlatego plan odejmuje mniej.</string>
+    <string name="profile_pace_age_note">Od 65\u00A0lat plan zakłada redukcję najwyżej o\u00A0%1$s\u00A0na tydzień, żeby razem z\u00A0tłuszczem nie tracić mięśni.</string>
+    <string name="profile_pace_older_note">Przy BMI poniżej 30\u00A0zalecenia żywieniowe dla osób starszych odradzają odchudzanie. Jeśli chcesz schudnąć, porozmawiaj o\u00A0tym z\u00A0lekarzem.</string>
     <string name="profile_own_target">Cel kcal wpisany ręcznie</string>
     <string name="profile_own_target_hint">Najmniej %1$d\u00A0kcal. Zostaw puste, a\u00A0zdecyduje tempo.</string>
     <string name="profile_auto">auto</string>

@@ -294,7 +294,7 @@ private fun ProfileSummary(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     notes.forEach { note ->
                         Text(
-                            noteText(note),
+                            noteText(note, unit),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = if (note.strong) FontWeight.Medium else null,
                             color = if (note.strong) MaterialTheme.colorScheme.onSurface

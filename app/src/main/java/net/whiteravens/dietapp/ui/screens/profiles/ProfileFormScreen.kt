@@ -150,7 +150,7 @@ fun ProfileFormScreen(
                         }
                     }
                 }
-                CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused)
+                CaloriePreviewCard(state.preview, state.behind, state.waiting, state.previewFailed, state.previewRefused, unit = state.unit)
                 state.error?.let { ErrorBanner(errorMessage(it)) }
                 if (keeping) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {

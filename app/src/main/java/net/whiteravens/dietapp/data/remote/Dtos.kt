@@ -507,6 +507,8 @@ data class CalorieCalculationDto(
     val requestedDeficit: Double,
     /** kcal/day subtracted from maintenance. */
     val dailyDeficit: Double,
+    /** What that deficit loses at first, in kilograms a week; nothing for a target at or over maintenance. */
+    val weeklyLossKg: Double = 0.0,
     /** Final daily calorie target. */
     val dailyTarget: Double,
     val targetMacros: MacrosDto,
@@ -514,8 +516,10 @@ data class CalorieCalculationDto(
     val source: String,
     /** The lowest a calculated target goes for this profile. */
     val safetyFloor: Double,
-    /** The pace asked for more than a quarter of maintenance, and was slowed to that. */
+    /** The pace asked for more than a quarter of maintenance, or more than 1 % of the body's weight a week, and was slowed. */
     val deficitCapped: Boolean,
+    /** From 65 the pace chosen is one of the two faster ones, and counts as 0.5 kg a week. */
+    val paceHeldForAge: Boolean = false,
     /** The target was raised to the floor. */
     val safetyFloorApplied: Boolean,
     /** Maintenance itself is under the floor: no loss is planned, the target is maintenance. */
@@ -525,7 +529,7 @@ data class CalorieCalculationDto(
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     /** The least a target this body types may be: 1200 kcal, or its maintenance where that is lower. */
     val leastTypedTarget: Double = 1200.0,
-    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
+    /** `minor` | `underweight` | `older` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
     /** The custom diet's protein per kilogram went past a limit of a split at this weight and target, and is held there. */
     val customSplitHeld: Boolean = false,

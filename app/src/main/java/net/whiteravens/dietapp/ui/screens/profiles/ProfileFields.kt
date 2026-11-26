@@ -67,6 +67,7 @@ import net.whiteravens.dietapp.domain.CaloriePreview
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.LabelLimit
+import net.whiteravens.dietapp.domain.OLDER_FASTEST_PACE_KG
 import net.whiteravens.dietapp.domain.SupplyLevel
 import net.whiteravens.dietapp.domain.notes
 import net.whiteravens.dietapp.ui.common.carbsTarget
@@ -76,6 +77,7 @@ import net.whiteravens.dietapp.ui.common.allergenLabel
 import net.whiteravens.dietapp.ui.common.dietTypeLabel
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.noteText
+import net.whiteravens.dietapp.ui.common.weightAmount
 import net.whiteravens.dietapp.ui.common.numberProblem
 import net.whiteravens.dietapp.ui.common.proteinKindLabel
 import net.whiteravens.dietapp.ui.common.refusalText
@@ -307,7 +309,9 @@ private fun CalorieTarget.slowed(): Boolean = deficitCapped || safetyFloorApplie
 /**
  * The pace of loss, chosen among all of them, each saying what it comes to in a day for the body
  * the form describes ([paces], in the order of the choices, once they are known). A pace that a
- * limit slowed, or that is held for a body planned no loss, says so on its row.
+ * limit slowed, or that is held for a body planned no loss, says so on its row. From 65 the two
+ * faster paces are not offered, unless one of them is the form's already: it says that it counts
+ * as the slower one.
  */
 @Composable
 internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<CalorieTarget>?, onEdit: FormEdit) {
@@ -316,6 +320,7 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
         ProfileChoices.PACES.forEachIndexed { index, pace ->
             val at = paces?.getOrNull(index)
             val chosen = pace == form.weeklyLossTarget
+            if (at?.paceHeldForAge == true && !chosen) return@forEachIndexed
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, if (chosen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
@@ -331,6 +336,8 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
                         if (at != null) {
                             val mark = when {
                                 pace != null && at.goalHeld -> DOT + stringResource(R.string.profile_pace_held)
+                                at.paceHeldForAge ->
+                                    DOT + stringResource(R.string.profile_pace_held_for_age, weightAmount(OLDER_FASTEST_PACE_KG, unit))
                                 pace != null && at.slowed() -> DOT + stringResource(R.string.profile_pace_slowed)
                                 else -> ""
                             }
@@ -345,12 +352,14 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
             }
         }
         val anySlowed = paces?.withIndex()?.any { (index, at) -> ProfileChoices.PACES.getOrNull(index) != null && !at.goalHeld && at.slowed() } == true
-        if (anySlowed) {
-            Text(
-                stringResource(R.string.profile_pace_slowed_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        val notes = listOfNotNull(
+            stringResource(R.string.profile_pace_slowed_note).takeIf { anySlowed },
+            stringResource(R.string.profile_pace_age_note, weightAmount(OLDER_FASTEST_PACE_KG, unit))
+                .takeIf { paces?.any { it.paceHeldForAge } == true },
+            stringResource(R.string.profile_pace_older_note).takeIf { paces?.firstOrNull()?.warnings?.contains("older") == true },
+        )
+        notes.forEach { note ->
+            Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -360,12 +369,8 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
  * to the hundredth; in pounds, where no pace is a round number, to the tenth.
  */
 @Composable
-internal fun paceLabel(pace: String?, unit: WeightUnit): String {
-    if (pace == null) return stringResource(R.string.profile_pace_none)
-    val kg = pace.toDouble()
-    val amount = if (unit == WeightUnit.LB) "${formatNumber(unit.shown(kg), 1)}\u00A0lb" else "${formatNumber(kg, 2)}\u00A0kg"
-    return stringResource(R.string.profile_pace_lose, amount)
-}
+internal fun paceLabel(pace: String?, unit: WeightUnit): String =
+    if (pace == null) stringResource(R.string.profile_pace_none) else stringResource(R.string.profile_pace_lose, weightAmount(pace.toDouble(), unit))
 
 /** The weight the profile works towards, in the account's unit; the chart of weights draws it. */
 @Composable
@@ -804,6 +809,8 @@ internal fun CaloriePreviewCard(
     failed: Boolean,
     refused: Boolean,
     modifier: Modifier = Modifier,
+    /** The account's weight unit: what a pace comes to is said in it. */
+    unit: WeightUnit = WeightUnit.KG,
     withoutTarget: Boolean = false,
 ) {
     val web = rememberWebPages()
@@ -888,7 +895,7 @@ internal fun CaloriePreviewCard(
                         WarningBox {
                             notes.forEach { note ->
                                 Text(
-                                    noteText(note),
+                                    noteText(note, unit),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = if (note.strong) FontWeight.Medium else null,
                                     color = if (note.strong) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,

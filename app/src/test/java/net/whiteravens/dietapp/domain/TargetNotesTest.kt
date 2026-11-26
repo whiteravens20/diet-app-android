@@ -62,10 +62,30 @@ class TargetNotesTest {
     }
 
     @Test
-    fun `a pace slowed to a quarter of maintenance is named with what was asked and what is taken`() {
-        val notes = target(*plain, "deficitCapped" to true, "requestedDeficit" to 1100, "dailyDeficit" to 700).notes()
+    fun `a pace slowed to a quarter of maintenance is named with what was asked, what is taken and what it loses at first`() {
+        val notes = target(*plain, "weeklyLossTarget" to "1.0", "deficitCapped" to true, "requestedDeficit" to 1100, "dailyDeficit" to 700, "weeklyLossKg" to 0.64).notes()
 
-        assertEquals(listOf(TargetNote.DeficitCapped(1100.0, 700.0)), notes)
+        assertEquals(listOf(TargetNote.DeficitCapped(1100.0, 700.0, 0.64, 1.0)), notes)
+    }
+
+    @Test
+    fun `from 65 a faster pace counts as the slower one, and older people under a body-mass index of 30 are told what the guidelines advise`() {
+        val notes = target(*plain, "weeklyLossTarget" to "1.0", "paceHeldForAge" to true, "warnings" to listOf("older"), "dailyDeficit" to 550).notes()
+        assertEquals(listOf(TargetNote.Older, TargetNote.PaceHeldForAge(1.0)), notes)
+        // Slowed further by a quarter of maintenance: what that asked for is the pace as it counts, half a kilogram.
+        val slowed = target(
+            *plain,
+            "weeklyLossTarget" to "1.0",
+            "paceHeldForAge" to true,
+            "deficitCapped" to true,
+            "requestedDeficit" to 550,
+            "dailyDeficit" to 492,
+            "weeklyLossKg" to 0.45,
+        ).notes()
+        assertEquals(listOf(TargetNote.PaceHeldForAge(1.0), TargetNote.DeficitCapped(550.0, 492.0, 0.45, 0.5)), slowed)
+        // Keeping the weight, the advice has nothing to say; a form that gives the body's warnings itself asks for none.
+        assertEquals(emptyList<TargetNote>(), target(*plain, "warnings" to listOf("older"), "dailyDeficit" to 0).notes())
+        assertEquals(emptyList<TargetNote>(), target(*plain, "warnings" to listOf("older"), "dailyDeficit" to 550).notes(risk = false))
     }
 
     @Test

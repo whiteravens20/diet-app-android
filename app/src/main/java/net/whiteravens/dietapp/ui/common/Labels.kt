@@ -24,6 +24,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.domain.NotificationAbout
+import net.whiteravens.dietapp.domain.OLDER_FASTEST_PACE_KG
 import net.whiteravens.dietapp.domain.TargetNote
 import java.io.IOException
 import java.text.DecimalFormat
@@ -38,6 +39,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 import net.whiteravens.dietapp.domain.ThawAhead
+import net.whiteravens.dietapp.ui.screens.profiles.WeightUnit
 
 /**
  * Wire-code → localized-label mapping, mirroring the web's `enums.*` message
@@ -354,9 +356,17 @@ fun unitName(unit: String): String = when (unit) {
     else -> stringResource(R.string.unit_name_piece)
 }
 
-/** What a note of the calorie target says, as the web application's profile summary says it. */
+/** A weight in the account's unit, as the paces to choose from say it: kilograms to the hundredth, pounds, where none is round, to the tenth. */
 @Composable
-fun noteText(note: TargetNote): String = when (note) {
+internal fun weightAmount(kg: Double, unit: WeightUnit): String = weightIn(LocalConfiguration.current.locales[0], kg, unit)
+
+/** [weightAmount] in [locale]. */
+internal fun weightIn(locale: Locale, kg: Double, unit: WeightUnit): String =
+    if (unit == WeightUnit.LB) "${numberIn(locale, unit.shown(kg), 1)}\u00A0lb" else "${numberIn(locale, kg, 2)}\u00A0kg"
+
+/** What a note of the calorie target says, as the web application's profile summary says it; a weight in [unit]. */
+@Composable
+fun noteText(note: TargetNote, unit: WeightUnit = WeightUnit.KG): String = when (note) {
     TargetNote.GoalHeld -> stringResource(R.string.target_note_goal_held)
     TargetNote.Minor -> stringResource(R.string.target_note_minor)
     TargetNote.Underweight -> stringResource(R.string.target_note_underweight)
@@ -365,7 +375,16 @@ fun noteText(note: TargetNote): String = when (note) {
     is TargetNote.SafetyFloorApplied ->
         stringResource(R.string.target_note_safety_floor_applied, note.floor.roundToInt(), note.deficit.roundToInt())
     is TargetNote.DeficitCapped ->
-        stringResource(R.string.target_note_deficit_capped, note.requested.roundToInt(), note.deficit.roundToInt())
+        stringResource(
+            R.string.target_note_deficit_capped,
+            note.requested.roundToInt(),
+            note.deficit.roundToInt(),
+            weightAmount(note.weeklyLossKg, unit),
+            weightAmount(note.countedKg, unit),
+        )
+    TargetNote.Older -> stringResource(R.string.target_note_older)
+    is TargetNote.PaceHeldForAge ->
+        stringResource(R.string.target_note_pace_held_for_age, weightAmount(note.chosenKg, unit), weightAmount(OLDER_FASTEST_PACE_KG, unit))
     is TargetNote.BelowFloor -> stringResource(R.string.target_note_below_floor, note.floor.roundToInt())
     is TargetNote.BelowBmr -> stringResource(R.string.target_note_below_bmr, note.bmr.roundToInt())
 }

@@ -1252,10 +1252,12 @@
     <string name="target_note_goal_held">Your goal to lose weight is on hold: under 18\u00A0and when underweight the application plans no loss, so plans follow your maintenance.</string>
     <string name="target_note_minor">You are under 18. These figures come from an equation for adults and are an approximation for you; the activity level counts as “Moderate” at least, and losing weight at your age is something to do with a doctor.</string>
     <string name="target_note_underweight">Your body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
+    <string name="target_note_older">At a body-mass index under 30\u00A0the nutrition guidelines for older people advise against losing weight. If you want to lose weight, talk to a doctor about it.</string>
+    <string name="target_note_pace_held_for_age">The pace you chose, %1$s\u00A0a week, counts as %2$s: from 65\u00A0a plan is made for a loss of no more than that.</string>
     <!-- "kcal" is a unit's short form, the same for any number: these need no plural. -->
     <string name="target_note_maintenance_under_floor" tools:ignore="PluralsCandidate">Your maintenance is under %1$d kcal, the lowest a calculated plan goes, so no loss is planned: the target is your maintenance.</string>
     <string name="target_note_safety_floor_applied" tools:ignore="PluralsCandidate">The target was raised to %1$d kcal, the lowest a calculated plan goes. The deficit that leaves is %2$d kcal a day.</string>
-    <string name="target_note_deficit_capped" tools:ignore="PluralsCandidate">The pace you chose asks for %1$d kcal a day less. That is more than a quarter of your maintenance, so the plan takes %2$d.</string>
+    <string name="target_note_deficit_capped" tools:ignore="PluralsCandidate">A pace of %4$s\u00A0a week asks for %1$d\u00A0kcal a day less. That is more than a plan allows: a quarter of your maintenance or 1%% of your body weight a week. So the plan takes %2$d\u00A0kcal: at first about %3$s\u00A0a week, and less as time goes on.</string>
     <string name="target_note_below_floor" tools:ignore="PluralsCandidate">The target you typed is under %1$d kcal, the lowest a calculated plan would go.</string>
     <string name="target_note_below_bmr" tools:ignore="PluralsCandidate">The target you typed is under what your body uses at rest (%1$d kcal).</string>
     <string name="plans_day_over">Over target</string>
@@ -1354,7 +1356,10 @@
     <string name="profile_pace_comes_to">%1$s kcal a day</string>
     <string name="profile_pace_slowed">slowed</string>
     <string name="profile_pace_held">on hold</string>
-    <string name="profile_pace_slowed_note">A pace marked “slowed” would take more than a quarter of your maintenance, or go under the lowest a calculated plan goes, so the plan takes less.</string>
+    <string name="profile_pace_held_for_age">counted as %1$s</string>
+    <string name="profile_pace_slowed_note" formatted="false">A pace marked “slowed” would take more than a quarter of your maintenance or 1% of your body weight a week, or go under the lowest a calculated plan goes, so the plan takes less.</string>
+    <string name="profile_pace_age_note">From 65\u00A0a plan is made for a loss of at most %1$s\u00A0a week, so that muscle is not lost with the fat.</string>
+    <string name="profile_pace_older_note">At a body-mass index under 30\u00A0the nutrition guidelines for older people advise against losing weight. If you want to lose weight, talk to a doctor about it.</string>
     <string name="profile_own_target">Manual kcal override</string>
     <string name="profile_own_target_hint" tools:ignore="PluralsCandidate">At least %1$d\u00A0kcal. Leave it empty and the pace decides.</string>
     <string name="profile_auto">auto</string>
