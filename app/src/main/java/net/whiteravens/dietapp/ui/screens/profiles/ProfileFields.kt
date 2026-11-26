@@ -89,6 +89,7 @@ import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.components.rememberWebPages
 import net.whiteravens.dietapp.ui.components.DOT
 import net.whiteravens.dietapp.ui.components.OutlinedField
+import kotlin.math.roundToInt
 
 /*
  * The fields a profile is made of, as every form that asks for them shows them: the form of a
@@ -404,15 +405,15 @@ internal fun WaterTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: Fo
     )
 }
 
-/** A calorie target of one's own, in place of the one the pace comes to. */
+/** A calorie target of one's own, in place of the one the pace comes to: at least [least], what the body may type. */
 @Composable
-internal fun OwnTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit) {
+internal fun OwnTargetField(form: ProfileForm, marks: ProfileMarks, onEdit: FormEdit, least: Double? = null) {
     FormField(
         value = form.ownTarget,
         onValueChange = { typed -> onEdit { it.copy(ownTarget = typed) } },
         label = stringResource(R.string.profile_own_target),
         optional = true,
-        hint = stringResource(R.string.profile_own_target_hint),
+        hint = stringResource(R.string.profile_own_target_hint, (least ?: ProfileChoices.LEAST_TYPED_TARGET).roundToInt()),
         placeholder = stringResource(R.string.profile_auto),
         problem = marks.of(ProfileField.OWN_TARGET),
     )

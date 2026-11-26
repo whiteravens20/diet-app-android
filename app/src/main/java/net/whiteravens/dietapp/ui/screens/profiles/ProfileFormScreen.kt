@@ -212,7 +212,7 @@ private fun GoalFields(state: ProfileFormViewModel.UiState, viewModel: ProfileFo
     TargetWeightField(form, state.unit, marks, viewModel::edit)
     WaterTrackingChoice(form, viewModel::edit)
     if (form.waterTracking) WaterTargetField(form, marks, viewModel::edit)
-    OwnTargetField(form, marks, viewModel::edit)
+    OwnTargetField(form, marks, viewModel::edit, least = state.preview?.calculation?.leastTypedTarget)
     // The correction the real expenditure brought, with the way to take it away; the profile is read again after.
     val correction = state.correction
     val editingId = state.editingId

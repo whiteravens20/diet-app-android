@@ -1481,7 +1481,7 @@
     <string name="profile_pace_held">wstrzymane</string>
     <string name="profile_pace_slowed_note">Tempo oznaczone jako „spowolnione” odebrałoby więcej niż jedną czwartą Twojego zapotrzebowania albo zeszło poniżej najniższego celu, jaki wylicza plan, więc plan odejmuje mniej.</string>
     <string name="profile_own_target">Cel kcal wpisany ręcznie</string>
-    <string name="profile_own_target_hint">Zostaw puste, a zdecyduje tempo.</string>
+    <string name="profile_own_target_hint">Najmniej %1$d\u00A0kcal. Zostaw puste, a\u00A0zdecyduje tempo.</string>
     <string name="profile_auto">auto</string>
     <string name="profile_meals_per_day">Posiłków dziennie</string>
     <string name="profile_custom_split">Twój podział energii dnia</string>

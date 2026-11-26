@@ -368,6 +368,8 @@ data class CalorieTarget(
     /** No loss is planned for a body under 18 or underweight: the target is maintenance. */
     val goalHeld: Boolean,
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
+    /** The least a target this body types may be: 1200 kcal, or its maintenance where that is lower. */
+    val leastTypedTarget: Double = 1200.0,
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
     /** The custom diet's protein per kilogram went past a limit of a split at this weight and target, and is held there. */

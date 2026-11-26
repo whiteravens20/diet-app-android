@@ -58,6 +58,9 @@ enum class WeightUnit(val code: String) {
 object ProfileChoices {
     val MEAL_COUNT = 2..5
 
+    /** The least a target typed by hand may be until the API has said this body's own (`leastTypedTarget`). */
+    const val LEAST_TYPED_TARGET = 1200.0
+
     /** The paces of loss, slowest first: none at all, then the four in kilograms a week. */
     val PACES: List<String?> = listOf(null, "0.25", "0.5", "0.75", "1.0")
     val ACTIVITY_LEVELS = listOf("sedentary", "light", "moderate", "active", "very_active")

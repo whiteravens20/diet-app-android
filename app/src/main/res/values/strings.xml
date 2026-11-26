@@ -1356,7 +1356,7 @@
     <string name="profile_pace_held">on hold</string>
     <string name="profile_pace_slowed_note">A pace marked “slowed” would take more than a quarter of your maintenance, or go under the lowest a calculated plan goes, so the plan takes less.</string>
     <string name="profile_own_target">Manual kcal override</string>
-    <string name="profile_own_target_hint">Leave it empty and the pace decides.</string>
+    <string name="profile_own_target_hint" tools:ignore="PluralsCandidate">At least %1$d\u00A0kcal. Leave it empty and the pace decides.</string>
     <string name="profile_auto">auto</string>
     <string name="profile_meals_per_day">Meals per day</string>
     <string name="profile_custom_split">Your split of a day\'s energy</string>

@@ -253,7 +253,7 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
                     PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
                     RiskNote(reasons = state.risks)
                     TargetWeightField(form, state.unit, marks, viewModel::edit)
-                    OwnTargetField(form, marks, viewModel::edit)
+                    OwnTargetField(form, marks, viewModel::edit, least = state.preview?.calculation?.leastTypedTarget)
                 }
 
                 else -> {
