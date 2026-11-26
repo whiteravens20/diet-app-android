@@ -102,7 +102,7 @@ class ProfileFormViewModelTest {
         advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS)
         runCurrent()
 
-        coVerify(exactly = 1) { profiles.preview(match { !it.acknowledgeRisk && it.age == 30 && it.weightKg == 64.5 }) }
+        coVerify(exactly = 1) { profiles.preview(match { it.age == 30 && it.weightKg == 64.5 }) }
         assertEquals(5, model.state.value.preview?.paces?.size)
         assertFalse(model.state.value.behind)
     }
@@ -170,13 +170,13 @@ class ProfileFormViewModelTest {
 
         assertTrue(model.state.value.showProblems)
         assertEquals(setOf(ProfileField.AGE), model.state.value.marks.notNumbers)
-        coVerify(exactly = 0) { profiles.create(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { profiles.create(any(), any(), any()) }
     }
 
     @Test
     fun `a form the API refuses is marked field by field, kinds of protein by their row, and a mark goes once its field changes`() = runTest(main) {
         coEvery { profiles.preview(any()) } returns answer
-        coEvery { profiles.create(any(), any(), any(), any()) } throws refusal("profile-refused")
+        coEvery { profiles.create(any(), any(), any()) } throws refusal("profile-refused")
         val model = model()
         runCurrent()
 
@@ -235,7 +235,7 @@ class ProfileFormViewModelTest {
     @Test
     fun `a new profile is sent with the limits from labels turned on, and not while one turned on holds no number`() = runTest(main) {
         coEvery { profiles.preview(any()) } returns preview("profile-calories-preview-minor-keeping")
-        coEvery { profiles.create(any(), any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
+        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
         val model = model()
         runCurrent()
 
@@ -243,20 +243,20 @@ class ProfileFormViewModelTest {
         model.edit { it.copy(labels = it.labels + (LabelLimit.SUGARS_AT_MOST to LabelLimitTyped(on = true, grams = ""))) }
         model.save()
         runCurrent()
-        coVerify(exactly = 0) { profiles.create(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { profiles.create(any(), any(), any()) }
         assertTrue(ProfileField.LABEL_SUGARS in model.state.value.marks)
 
         model.edit { it.copy(labels = it.labels + (LabelLimit.SUGARS_AT_MOST to LabelLimitTyped(on = true, grams = "45,5"))) }
         model.save()
         runCurrent()
-        coVerify { profiles.create(any(), any(), any(), LabelLimits(sugarsAtMost = 45.5)) }
+        coVerify { profiles.create(any(), any(), LabelLimits(sugarsAtMost = 45.5)) }
     }
 
     @Test
-    fun `the risk of a loss is the API's to say, and a new profile says it acknowledged only when the form showed it`() = runTest(main) {
+    fun `the risk of a loss is the API's to say, and a new profile is sent with no word about it`() = runTest(main) {
         coEvery { profiles.preview(match { it.weeklyLossTarget != null }) } returns preview("profile-calories-preview-minor-losing")
         coEvery { profiles.preview(match { it.weeklyLossTarget == null }) } returns preview("profile-calories-preview-minor-keeping")
-        coEvery { profiles.create(any(), any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
+        coEvery { profiles.create(any(), any(), any()) } returns Profile("p", "Ala", "balanced", 3, 70.0, null)
         val model = model()
         runCurrent()
 
@@ -270,7 +270,7 @@ class ProfileFormViewModelTest {
         model.save()
         runCurrent()
 
-        coVerify { profiles.create(any(), ProfileChoices.FIRST_LIMITS, false, LabelLimits()) }
+        coVerify { profiles.create(any(), ProfileChoices.FIRST_LIMITS, LabelLimits()) }
         assertEquals("p", model.state.value.saved?.id)
 
         // With no loss asked for the API sees no risk in it, although it warns of the age, and nothing is said of it.
@@ -283,29 +283,23 @@ class ProfileFormViewModelTest {
         assertEquals(emptyList<String>(), keep.state.value.risks)
         keep.save()
         runCurrent()
-        coVerify { profiles.create(match { it.weeklyLossTarget == null }, any(), null, LabelLimits()) }
+        coVerify { profiles.create(match { it.weeklyLossTarget == null }, any(), LabelLimits()) }
         assertNull(keep.state.value.error)
     }
 
     @Test
-    fun `the box ticked is said to the API with the figures, and stays while the API still sees the risk`() = runTest(main) {
-        coEvery { profiles.preview(match { !it.acknowledgeRisk }) } returns preview("profile-calories-preview-minor-losing")
-        coEvery { profiles.preview(match { it.acknowledgeRisk }) } returns preview("profile-calories-preview-minor-losing-acknowledged")
+    fun `a body planned no loss is told so by the API, and the form asks nothing of it`() = runTest(main) {
+        coEvery { profiles.preview(any()) } returns preview("profile-calories-preview-minor-losing")
         val model = model()
         runCurrent()
         model.type()
         model.edit { it.copy(age = "16") }
         advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
         runCurrent()
+
         assertTrue(model.state.value.preview!!.calculation.goalHeld)
-
-        model.edit { it.copy(acknowledgeRisk = true) }
-        advanceTimeBy(ProfileFormViewModel.PREVIEW_DELAY_MS * 2)
-        runCurrent()
-
-        coVerify { profiles.preview(match { it.acknowledgeRisk && it.age == 16 }) }
-        assertFalse(model.state.value.preview!!.calculation.goalHeld)
         assertEquals(listOf("minor"), model.state.value.risks)
+        coVerify { profiles.preview(match { it.age == 16 }) }
     }
 
     /** The form of the kept profile of the fixture, open, on an API that keeps each change it is sent, the answers given in [kept]. */
@@ -315,7 +309,7 @@ class ProfileFormViewModelTest {
         coEvery { profiles.profile(first.id) } returns first
         coEvery { profiles.preview(any()) } returns answer
         // As the API does, the parts named and no other.
-        coEvery { profiles.change(first.id, any(), any(), any()) } answers {
+        coEvery { profiles.change(first.id, any(), any()) } answers {
             kept.last().let { it.copy(figures = it.figures.withParts(secondArg(), thirdArg())) }.also { kept += it }
         }
         coEvery { profiles.changeLimits(first.id, any(), any(), any()) } answers {
@@ -339,16 +333,16 @@ class ProfileFormViewModelTest {
 
         model.edit { it.copy(weight = "70") }
         runCurrent()
-        coVerify(exactly = 0) { profiles.change(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { profiles.change(any(), any(), any()) }
         model.keep()
         runCurrent()
 
-        coVerify(exactly = 1) { profiles.change(first.id, match { it.weightKg == 70.0 && it.name == first.figures.name }, setOf("weightKg"), null) }
+        coVerify(exactly = 1) { profiles.change(first.id, match { it.weightKg == 70.0 && it.name == first.figures.name }, setOf("weightKg")) }
         assertEquals(Autosave.SAVED, model.state.value.autosave)
         // Left again with nothing new in it, the field sends nothing.
         model.keep()
         runCurrent()
-        coVerify(exactly = 1) { profiles.change(any(), any(), any(), any()) }
+        coVerify(exactly = 1) { profiles.change(any(), any(), any()) }
     }
 
     @Test
@@ -360,30 +354,30 @@ class ProfileFormViewModelTest {
         model.edit { it.copy(dietType = "custom") }
         runCurrent()
 
-        coVerify { profiles.change(first.id, match { it.activityLevel == "active" }, setOf("activityLevel"), null) }
+        coVerify { profiles.change(first.id, match { it.activityLevel == "active" }, setOf("activityLevel")) }
         coVerify {
-            profiles.change(first.id, match { it.dietType == "custom" && it.customMacroSplit == ProfileChoices.FIRST_SPLIT }, setOf("dietType", "customMacroSplit"), null)
+            profiles.change(first.id, match { it.dietType == "custom" && it.customMacroSplit == ProfileChoices.FIRST_SPLIT }, setOf("dietType", "customMacroSplit"))
         }
     }
 
     @Test
     fun `a part the API refuses is marked at its field, and the other parts are kept`() = runTest(main) {
         val (model, first) = editing()
-        coEvery { profiles.change(first.id, any(), setOf("age"), any()) } throws
+        coEvery { profiles.change(first.id, any(), setOf("age")) } throws
             ApiException(400, "VALIDATION_FAILED", "Request payload failed validation.", listOf(ApiErrorIssueDto("age", "Too big", "too_big", maximum = 120.0, inclusive = true)))
 
         model.edit { it.copy(age = "200", height = "175") }
         model.keep()
         runCurrent()
 
-        coVerify { profiles.change(first.id, match { it.heightCm == 175.0 }, setOf("heightCm"), null) }
+        coVerify { profiles.change(first.id, match { it.heightCm == 175.0 }, setOf("heightCm")) }
         assertEquals(FieldRefusal.TooBig(120.0, inclusive = true), model.state.value.marks.refusals.fields[ProfileField.AGE])
         assertEquals(Autosave.NOT_SAVED, model.state.value.autosave)
         assertNull(model.state.value.error)
         // The refused age is not sent again until it changes.
         model.keep()
         runCurrent()
-        coVerify(exactly = 1) { profiles.change(first.id, any(), setOf("age"), any()) }
+        coVerify(exactly = 1) { profiles.change(first.id, any(), setOf("age")) }
     }
 
     @Test
@@ -394,8 +388,8 @@ class ProfileFormViewModelTest {
         model.keep()
         runCurrent()
 
-        coVerify { profiles.change(first.id, any(), setOf("heightCm"), null) }
-        coVerify(exactly = 0) { profiles.change(first.id, any(), setOf("age"), any()) }
+        coVerify { profiles.change(first.id, any(), setOf("heightCm")) }
+        coVerify(exactly = 0) { profiles.change(first.id, any(), setOf("age")) }
         assertEquals(setOf(ProfileField.AGE), model.state.value.marks.notNumbers)
         assertEquals(Autosave.NOT_SAVED, model.state.value.autosave)
     }
@@ -421,7 +415,7 @@ class ProfileFormViewModelTest {
     fun `a change that met no network is said, sent again a while later, and kept once the network is back`() = runTest(main) {
         val (model, first) = editing()
         var tries = 0
-        coEvery { profiles.change(first.id, any(), setOf("weightKg"), any()) } answers {
+        coEvery { profiles.change(first.id, any(), setOf("weightKg")) } answers {
             tries += 1
             if (tries == 1) throw IOException("no network") else first.copy(figures = secondArg())
         }
@@ -442,11 +436,11 @@ class ProfileFormViewModelTest {
     fun `a value put back as the profile has it is kept, whether it met no network or was refused, and leaving asks nothing`() = runTest(main) {
         val (model, first) = editing()
         var tries = 0
-        coEvery { profiles.change(first.id, any(), setOf("weightKg"), any()) } answers {
+        coEvery { profiles.change(first.id, any(), setOf("weightKg")) } answers {
             tries += 1
             throw IOException("no network")
         }
-        coEvery { profiles.change(first.id, any(), setOf("age"), any()) } throws
+        coEvery { profiles.change(first.id, any(), setOf("age")) } throws
             ApiException(400, "VALIDATION_FAILED", "Request payload failed validation.", listOf(ApiErrorIssueDto("age", "Too big", "too_big", maximum = 120.0, inclusive = true)))
 
         model.edit { it.copy(weight = "70", age = "200") }
@@ -477,10 +471,10 @@ class ProfileFormViewModelTest {
         model.leave()
         runCurrent()
         assertTrue(model.state.value.left)
-        coVerify { profiles.change(first.id, any(), setOf("weightKg"), null) }
+        coVerify { profiles.change(first.id, any(), setOf("weightKg")) }
 
         val (offline, kept) = editing()
-        coEvery { profiles.change(kept.id, any(), any(), any()) } throws IOException("no network")
+        coEvery { profiles.change(kept.id, any(), any()) } throws IOException("no network")
         offline.edit { it.copy(weight = "71") }
         offline.leave()
         runCurrent()
@@ -499,8 +493,8 @@ class ProfileFormViewModelTest {
         coEvery { profiles.preview(any()) } returns answer
         val made = Profile("p", "Ala", "balanced", 3, 70.0, null)
         // As the API's answer had it: a name of 81 letters.
-        coEvery { profiles.create(match { it.name.length > 80 }, any(), any(), any()) } throws refusal("profile-name-too-long")
-        coEvery { profiles.create(match { it.name == "Ala" }, any(), any(), any()) } returns made
+        coEvery { profiles.create(match { it.name.length > 80 }, any(), any()) } throws refusal("profile-name-too-long")
+        coEvery { profiles.create(match { it.name == "Ala" }, any(), any()) } returns made
         val model = model()
         runCurrent()
 
@@ -532,7 +526,7 @@ class ProfileFormViewModelTest {
         runCurrent()
 
         // The allergens chosen, and every other preference the API's own.
-        coVerify { profiles.create(match { it.allergens == listOf("peanuts") && it.weightReminderCadence == "weekly" }, null, null, null) }
+        coVerify { profiles.create(match { it.allergens == listOf("peanuts") && it.weightReminderCadence == "weekly" }, null, null) }
         assertEquals("p", model.state.value.saved?.id)
 
         model.startOver()

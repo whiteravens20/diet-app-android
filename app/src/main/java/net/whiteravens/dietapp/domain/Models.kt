@@ -291,20 +291,16 @@ data class PlanLimits(
     val inventoryBiasResetEvery: Int,
 )
 
-/** A profile as it is kept: its figures, its preferences, and whether it said it understands the risk of its goal. */
+/** A profile as it is kept: its figures and its preferences. */
 data class ProfileDetails(
     val id: String,
     val figures: ProfileFigures,
     val preferences: ProfilePreferences,
-    val riskAcknowledged: Boolean,
     /** The correction of the target the real expenditure brought, kcal a day; null where none is kept. */
     val expenditureCorrectionKcal: Int? = null,
 )
 
-/**
- * What a calorie target is worked out from: the parts of a profile the API's engine reads, and
- * whether somebody under 18 or underweight who asks to lose weight has said they understand the risk.
- */
+/** What a calorie target is worked out from: the parts of a profile the API's engine reads. */
 data class CalorieQuestion(
     val age: Int,
     val sex: String?,
@@ -315,7 +311,6 @@ data class CalorieQuestion(
     val customMacroSplit: MacroSplit?,
     val weeklyLossTarget: String?,
     val manualCalorieTarget: Int?,
-    val acknowledgeRisk: Boolean,
     val customProteinPerKg: Double? = null,
 )
 
@@ -370,7 +365,9 @@ data class CalorieTarget(
     val safetyFloorApplied: Boolean,
     val deficitCapped: Boolean,
     val maintenanceUnderFloor: Boolean,
+    /** No loss is planned for a body under 18 or underweight: the target is maintenance. */
     val goalHeld: Boolean,
+    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
     /** The custom diet's protein per kilogram went past a limit of a split at this weight and target, and is held there. */
@@ -379,8 +376,8 @@ data class CalorieTarget(
     /**
      * Why the loss this target was asked for is a risk, of the API's warnings: under 18, underweight,
      * both or neither. None where no loss is asked for: no pace, or a target of one's own that is
-     * not under maintenance. Such a target under maintenance is held at maintenance while the risk
-     * is not acknowledged (`goalHeld`), and is the target once it is.
+     * not under maintenance. No loss is planned for such a body: the goal is held at maintenance
+     * (`goalHeld`).
      */
     val lossRisks: List<String>
         get() {

@@ -119,8 +119,8 @@ fun ProfileFormScreen(
             else -> {
                 val form = state.form
                 val marks = state.marks
-                // A section that needs an answer opens by itself: a field to fix, or a risk to acknowledge.
-                val needing = sectionsNeeding(marks, state.risks, form.acknowledgeRisk)
+                // A section that needs an answer opens by itself: a field to fix.
+                val needing = sectionsNeeding(marks)
                 LaunchedEffect(needing) { if (!opened.containsAll(needing)) opened = opened + needing }
                 // A section folded while one of its fields is typed in keeps what the field holds: the field is left as it goes.
                 val section = @Composable { which: ProfileSection, first: Boolean ->
@@ -202,7 +202,7 @@ private fun FormSection(section: ProfileSection, line: String, open: Boolean, fi
 
 /**
  * The goal: the pace, the weight to work towards, water, a target typed by hand, the correction the real expenditure
- * brought, the risks to acknowledge and the reminders.
+ * brought, what the goal means for a body planned no loss, and the reminders.
  */
 @Composable
 private fun GoalFields(state: ProfileFormViewModel.UiState, viewModel: ProfileFormViewModel) {
@@ -219,11 +219,7 @@ private fun GoalFields(state: ProfileFormViewModel.UiState, viewModel: ProfileFo
     if (correction != null && editingId != null) {
         KeptCorrection(profileId = editingId, correction = correction, onDecided = viewModel::load)
     }
-    RiskBox(
-        reasons = state.risks,
-        acknowledged = form.acknowledgeRisk,
-        onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
-    )
+    RiskNote(reasons = state.risks)
     ReminderField(form, viewModel::edit)
     ReminderChoices(form, viewModel::edit)
 }

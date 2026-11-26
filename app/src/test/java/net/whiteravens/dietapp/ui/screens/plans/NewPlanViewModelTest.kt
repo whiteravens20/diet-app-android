@@ -199,7 +199,7 @@ class NewPlanViewModelTest {
 
     /** The API keeps the targets it is sent, and answers the profile with them. */
     private fun keepsTargets() {
-        coEvery { profiles.change(profile.id, capture(keptFigures), capture(keptParts), any()) } answers {
+        coEvery { profiles.change(profile.id, capture(keptFigures), capture(keptParts)) } answers {
             profile.copy(figures = keptFigures.last())
         }
     }
@@ -220,7 +220,7 @@ class NewPlanViewModelTest {
         // A split sent alone is the split's way: protein per kilogram is not named.
         assertEquals(setOf("customMacroSplit"), keptParts.single())
         coVerifyOrder {
-            profiles.change(profile.id, any(), any(), any())
+            profiles.change(profile.id, any(), any())
             plans.generate(any())
         }
         assertEquals("custom", asked.single().dietType)
@@ -240,7 +240,7 @@ class NewPlanViewModelTest {
         model.generate()
 
         assertEquals(OwnFault.PER_KG, model.state.value.ownFault)
-        coVerify(exactly = 0) { profiles.change(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { profiles.change(any(), any(), any()) }
         coVerify(exactly = 0) { plans.generate(any()) }
 
         model.edit { it.copy(own = it.own.copy(perKg = "1,6")) }
@@ -254,7 +254,7 @@ class NewPlanViewModelTest {
 
     @Test
     fun `no plan is made when the targets could not be kept, and the form says so until they change`() {
-        coEvery { profiles.change(profile.id, any(), any(), any()) } throws IOException("down")
+        coEvery { profiles.change(profile.id, any(), any()) } throws IOException("down")
         val model = model()
 
         model.edit { it.copy(dietType = "custom") }

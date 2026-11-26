@@ -1249,8 +1249,8 @@
     <string name="plans_no_recipe_in_catalogue">There is no recipe for \"%1$s\" on the \"%2$s\" diet, so the plan could not be made. Choose another diet, in the form above for this plan or in the profile for every plan.</string>
 
     <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
-    <string name="target_note_goal_held">Your goal to lose weight is on hold: plans follow your maintenance until you confirm on your profile that you understand the risk.</string>
-    <string name="target_note_minor">You are under 18. These figures come from an equation for adults and are an approximation for you; losing weight at your age is something to do with a doctor.</string>
+    <string name="target_note_goal_held">Your goal to lose weight is on hold: under 18\u00A0and when underweight the application plans no loss, so plans follow your maintenance.</string>
+    <string name="target_note_minor">You are under 18. These figures come from an equation for adults and are an approximation for you; the activity level counts as “Moderate” at least, and losing weight at your age is something to do with a doctor.</string>
     <string name="target_note_underweight">Your body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
     <!-- "kcal" is a unit's short form, the same for any number: these need no plural. -->
     <string name="target_note_maintenance_under_floor" tools:ignore="PluralsCandidate">Your maintenance is under %1$d kcal, the lowest a calculated plan goes, so no loss is planned: the target is your maintenance.</string>
@@ -1476,12 +1476,10 @@
     <string name="profile_avoided_hint">The planner skips recipes that contain these.</string>
     <string name="profile_avoided_kin">Avoid as well:</string>
     <string name="profile_disliked_kin">Add as well:</string>
-    <string name="profile_risk_minor">Under 18 the figures of this application are an approximation, and losing weight is something to do with a doctor.</string>
-    <string name="profile_risk_underweight">With this height and weight the body-mass index is under 18.5, which is underweight. Losing more weight can harm you.</string>
-    <string name="profile_risk_held">Until the box below is ticked, the goal is saved but plans follow maintenance.</string>
-    <string name="profile_risk_acknowledge">I understand the risk and want plans made for this goal.</string>
-    <string name="profile_risk_held_here">Until the box below is ticked, the figures show maintenance: that is what plans would follow.</string>
-    <string name="profile_risk_acknowledge_here">I understand the risk: show what this goal comes to.</string>
+    <string name="profile_risk_minor">Under 18\u00A0the application plans no loss: the target is keeping the weight, and the activity level counts as “Moderate” at least. The figures come from an equation for adults and are an approximation, and losing weight at this age is something to do with a doctor.</string>
+    <string name="profile_risk_underweight">With this height and weight the body-mass index is under 18.5, which is underweight. Losing more weight can harm you, so the application plans no loss.</string>
+    <string name="profile_risk_held">The goal is saved, but plans follow maintenance.</string>
+    <string name="profile_risk_help">If controlling food has become a way to cope with feelings, talk to a doctor.</string>
     <string name="calorie_preview_title">What this comes to</string>
     <string name="calorie_preview_pending">Type an age, a height and a weight to see what they come to.</string>
     <string name="calorie_preview_waiting">Working out the figures…</string>
@@ -1493,7 +1491,7 @@
     <string name="calorie_preview_target_next">You will see the daily target on the next step, once you choose a pace.</string>
     <string name="calorie_preview_kcal">%1$s kcal</string>
     <string name="calorie_preview_at_maintenance">The target is your maintenance: no loss is planned.</string>
-    <string name="calorie_preview_held">The goal to lose weight is on hold until its risk is acknowledged in the form, so the target is your maintenance.</string>
+    <string name="calorie_preview_held">The goal to lose weight is on hold: under 18\u00A0and when underweight the application plans no loss, so the target is your maintenance.</string>
     <string name="calorie_preview_under">%1$s kcal a day under your maintenance.</string>
     <string name="calorie_preview_over">%1$s kcal a day over your maintenance.</string>
     <string name="calorie_preview_macros">Protein %1$s g · fat %2$s g · %3$s a day.</string>

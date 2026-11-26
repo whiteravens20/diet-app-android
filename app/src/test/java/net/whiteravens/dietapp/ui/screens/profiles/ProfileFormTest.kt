@@ -33,7 +33,6 @@ class ProfileFormTest {
         perKg: Double? = null,
         limits: PlanLimits = ProfileChoices.FIRST_LIMITS,
         labelLimits: LabelLimits = LabelLimits(),
-        riskAcknowledged: Boolean = false,
         waterTargetMl: Int? = 1500,
         waterTracking: Boolean = true,
     ) = ProfileDetails(
@@ -52,7 +51,6 @@ class ProfileFormTest {
             maxMealsPerWeekSameKind = limits.maxMealsPerWeekSameKind, kindLimits = limits.kindLimits,
             inventoryBiasResetEvery = limits.inventoryBiasResetEvery, labelLimits = labelLimits,
         ),
-        riskAcknowledged = riskAcknowledged,
     )
 
     @Test
@@ -400,9 +398,9 @@ class ProfileFormTest {
     }
 
     @Test
-    fun `a kept profile's form holds its choices, limits and whether it acknowledged the risk`() {
+    fun `a kept profile's form holds its choices and limits`() {
         val limits = PlanLimits(1, 2, null, 4, listOf(KindLimit("eggs", 1, null)), 0)
-        val form = ProfileForm.of(kept(limits = limits, riskAcknowledged = true), WeightUnit.KG)
+        val form = ProfileForm.of(kept(limits = limits), WeightUnit.KG)
 
         assertEquals("female", form.sex)
         assertEquals("light", form.activityLevel)
@@ -413,7 +411,6 @@ class ProfileFormTest {
         assertTrue(form.waterReminders)
         assertEquals(setOf("gluten"), form.allergens)
         assertEquals(limits, form.planLimits())
-        assertTrue(form.acknowledgeRisk)
         // A profile with no water target shows the field empty, and gives none back.
         val dry = ProfileForm.of(kept(waterTargetMl = null), WeightUnit.KG)
         assertEquals("", dry.waterTarget)
@@ -471,10 +468,6 @@ class ProfileFormTest {
         assertEquals(64.5, asked.weightKg, 0.0)
         assertNull(untitled.figures(WeightUnit.KG))
         assertNull(untitled.planLimits())
-        // Ticked while the API says of no risk, the box is not on the form: nothing is acknowledged.
-        assertFalse(filled.copy(age = "16", acknowledgeRisk = true).question(WeightUnit.KG)!!.acknowledgeRisk)
-        assertTrue(filled.copy(age = "16", acknowledgeRisk = true).question(WeightUnit.KG, riskShown = true)!!.acknowledgeRisk)
-        assertFalse(filled.copy(age = "16").question(WeightUnit.KG, riskShown = true)!!.acknowledgeRisk)
     }
 
     @Test

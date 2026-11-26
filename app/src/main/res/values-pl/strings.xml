@@ -1357,8 +1357,8 @@
     <string name="plans_no_recipe_in_catalogue">W diecie „%2$s” nie ma przepisu na posiłek „%1$s”, więc planu nie udało się ułożyć. Zmień dietę: w formularzu powyżej dla tego planu albo w profilu dla wszystkich planów.</string>
 
     <!-- The plan as planned, and what the target and the list say: worded as the web application words them. -->
-    <string name="target_note_goal_held">Twój cel redukcji jest wstrzymany: plany trzymają się zapotrzebowania, dopóki w profilu nie potwierdzisz, że rozumiesz ryzyko.</string>
-    <string name="target_note_minor">Masz mniej niż 18 lat. Te wartości pochodzą ze wzoru dla dorosłych i są dla Ciebie przybliżeniem; odchudzanie w tym wieku to sprawa do omówienia z lekarzem.</string>
+    <string name="target_note_goal_held">Twój cel redukcji jest wstrzymany: poniżej 18\u00A0lat i\u00A0przy niedowadze aplikacja nie planuje redukcji, więc plany trzymają się zapotrzebowania.</string>
+    <string name="target_note_minor">Masz mniej niż 18\u00A0lat. Te wartości pochodzą ze wzoru dla dorosłych i\u00A0są dla Ciebie przybliżeniem; poziom aktywności liczy się co najmniej jako „Umiarkowany”, a\u00A0odchudzanie w\u00A0tym wieku to sprawa do omówienia z\u00A0lekarzem.</string>
     <string name="target_note_underweight">Twój wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może Ci zaszkodzić.</string>
     <string name="target_note_maintenance_under_floor">Twoje zapotrzebowanie jest niższe niż %1$d kcal, czyli najniższy cel, jaki wylicza plan, więc redukcja nie jest planowana: celem jest Twoje zapotrzebowanie.</string>
     <string name="target_note_safety_floor_applied">Cel podniesiono do %1$d kcal, czyli najniższego, jaki wylicza plan. Deficyt, który z tego wynika, to %2$d kcal dziennie.</string>
@@ -1605,12 +1605,10 @@
     <string name="profile_avoided_hint">Planer pomija przepisy zawierające te składniki.</string>
     <string name="profile_avoided_kin">Wykluczyć też:</string>
     <string name="profile_disliked_kin">Dopisać też:</string>
-    <string name="profile_risk_minor">Poniżej 18 lat wartości w tej aplikacji są przybliżeniem, a odchudzanie to sprawa do omówienia z lekarzem.</string>
-    <string name="profile_risk_underweight">Przy takim wzroście i masie wskaźnik masy ciała jest poniżej 18,5, czyli w zakresie niedowagi. Dalsza utrata masy może zaszkodzić.</string>
-    <string name="profile_risk_held">Dopóki pole poniżej nie jest zaznaczone, cel jest zapisany, ale plany trzymają się zapotrzebowania.</string>
-    <string name="profile_risk_acknowledge">Rozumiem ryzyko i chcę, aby plany były układane pod ten cel.</string>
-    <string name="profile_risk_held_here">Dopóki pole poniżej nie jest zaznaczone, liczby pokazują zapotrzebowanie: tego trzymałyby się plany.</string>
-    <string name="profile_risk_acknowledge_here">Rozumiem ryzyko: pokaż, co wynika z tego celu.</string>
+    <string name="profile_risk_minor">Poniżej 18\u00A0lat aplikacja nie planuje redukcji: celem jest utrzymanie wagi, a\u00A0poziom aktywności liczy się co najmniej jako „Umiarkowany”. Wartości pochodzą ze wzoru dla dorosłych i\u00A0są przybliżeniem, a\u00A0odchudzanie w\u00A0tym wieku to sprawa do omówienia z\u00A0lekarzem.</string>
+    <string name="profile_risk_underweight">Przy takim wzroście i\u00A0masie wskaźnik masy ciała jest poniżej 18,5, czyli w\u00A0zakresie niedowagi. Dalsza utrata masy może zaszkodzić, więc aplikacja nie planuje redukcji.</string>
+    <string name="profile_risk_held">Wybrany cel zostaje zapisany, ale plany trzymają się zapotrzebowania.</string>
+    <string name="profile_risk_help">Jeśli kontrola jedzenia stała się sposobem radzenia sobie z\u00A0emocjami, porozmawiaj z\u00A0lekarzem.</string>
     <string name="calorie_preview_title">Co z tego wynika</string>
     <string name="calorie_preview_pending">Wpisz wiek, wzrost i wagę, aby zobaczyć, co z nich wynika.</string>
     <string name="calorie_preview_waiting">Liczę wartości…</string>
@@ -1622,7 +1620,7 @@
     <string name="calorie_preview_target_next">Cel dzienny zobaczysz w następnym kroku, gdy wybierzesz tempo.</string>
     <string name="calorie_preview_kcal">%1$s kcal</string>
     <string name="calorie_preview_at_maintenance">Celem jest Twoje zapotrzebowanie: redukcja nie jest planowana.</string>
-    <string name="calorie_preview_held">Cel redukcji jest wstrzymany, dopóki w formularzu nie potwierdzisz, że rozumiesz ryzyko, więc celem jest Twoje zapotrzebowanie.</string>
+    <string name="calorie_preview_held">Cel redukcji jest wstrzymany: poniżej 18\u00A0lat i\u00A0przy niedowadze aplikacja nie planuje redukcji, więc celem jest Twoje zapotrzebowanie.</string>
     <string name="calorie_preview_under">%1$s kcal dziennie poniżej Twojego zapotrzebowania.</string>
     <string name="calorie_preview_over">%1$s kcal dziennie powyżej Twojego zapotrzebowania.</string>
     <string name="calorie_preview_macros">Białko %1$s g · tłuszcz %2$s g · %3$s dziennie.</string>

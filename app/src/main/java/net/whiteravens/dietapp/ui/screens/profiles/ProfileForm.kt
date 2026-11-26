@@ -258,7 +258,6 @@ data class ProfileForm(
     val limits: LimitsTyped = LimitsTyped.of(ProfileChoices.FIRST_LIMITS),
     /** The limits from labels, each turned on or off. */
     val labels: Map<LabelLimit, LabelLimitTyped> = LabelLimitTyped.NONE,
-    val acknowledgeRisk: Boolean = false,
     val keptWeightKg: Double? = null,
     val keptTargetWeightKg: Double? = null,
     val keptSplit: MacroSplit? = null,
@@ -300,10 +299,9 @@ data class ProfileForm(
     /**
      * What a calorie target is worked out from, as the form holds it at this moment: null while one
      * of those fields holds no number, so that the form asks with the figures it would save, and
-     * the API refuses what it does not take. The risk is said acknowledged only by a form that shows
-     * the box for it, which it does where the API's answer says there is a risk ([riskShown]).
+     * the API refuses what it does not take.
      */
-    fun question(unit: WeightUnit, riskShown: Boolean = false): CalorieQuestion? {
+    fun question(unit: WeightUnit): CalorieQuestion? {
         if (questionProblems(unit).isNotEmpty()) return null
         return CalorieQuestion(
             age = age.trim().toInt(),
@@ -315,7 +313,6 @@ data class ProfileForm(
             customMacroSplit = if (dietType == "custom") own.split() else null,
             weeklyLossTarget = weeklyLossTarget,
             manualCalorieTarget = ownTarget.trim().toIntOrNull(),
-            acknowledgeRisk = acknowledgeRisk && riskShown,
             customProteinPerKg = if (dietType == "custom") own.perKgValue() else null,
         )
     }
@@ -487,7 +484,6 @@ data class ProfileForm(
             waterTracking != after.waterTracking ||
             cookingReminders != after.cookingReminders ||
             waterReminders != after.waterReminders ||
-            acknowledgeRisk != after.acknowledgeRisk ||
             labels.mapValues { it.value.on } != after.labels.mapValues { it.value.on } ||
             limits.kindLimits.map { it.kind } != after.limits.kindLimits.map { it.kind }
 
@@ -556,7 +552,6 @@ data class ProfileForm(
                 waterReminders = figures.waterReminders,
                 limits = LimitsTyped.of(kept.preferences.limits),
                 labels = LabelLimit.entries.associateWith { LabelLimitTyped.of(it, kept.preferences.labelLimits[it]) },
-                acknowledgeRisk = kept.riskAcknowledged,
                 keptWeightKg = figures.weightKg,
                 keptTargetWeightKg = figures.targetWeightKg,
                 keptSplit = figures.customMacroSplit,

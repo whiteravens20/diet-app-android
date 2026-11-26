@@ -306,7 +306,7 @@ private fun CalorieTarget.slowed(): Boolean = deficitCapped || safetyFloorApplie
 /**
  * The pace of loss, chosen among all of them, each saying what it comes to in a day for the body
  * the form describes ([paces], in the order of the choices, once they are known). A pace that a
- * limit slowed, or that is held until a risk is acknowledged, says so on its row.
+ * limit slowed, or that is held for a body planned no loss, says so on its row.
  */
 @Composable
 internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<CalorieTarget>?, onEdit: FormEdit) {
@@ -432,12 +432,11 @@ internal fun WarningBox(modifier: Modifier = Modifier, content: @Composable () -
 }
 
 /**
- * Why losing weight is a risk for the body the form describes, and the box by which somebody says
- * they understand it. Until it is ticked the goal is kept and plans follow maintenance. A form that
- * keeps nothing ([kept] false) says what the box does to the figures it shows, and no more.
+ * Why losing weight is a risk for the body the form describes, when a loss is asked for: no loss is
+ * planned for it, and plans follow maintenance. For an underweight body it says where to turn.
  */
 @Composable
-internal fun RiskBox(reasons: List<String>, acknowledged: Boolean, onAcknowledge: (Boolean) -> Unit, kept: Boolean = true) {
+internal fun RiskNote(reasons: List<String>) {
     if (reasons.isEmpty()) return
     WarningBox {
         reasons.forEach { reason ->
@@ -450,20 +449,15 @@ internal fun RiskBox(reasons: List<String>, acknowledged: Boolean, onAcknowledge
             )
         }
         Text(
-            stringResource(if (kept) R.string.profile_risk_held else R.string.profile_risk_held_here),
+            stringResource(R.string.profile_risk_held),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(value = acknowledged, role = Role.Checkbox, onValueChange = onAcknowledge),
-        ) {
-            Checkbox(checked = acknowledged, onCheckedChange = null)
+        if ("underweight" in reasons) {
             Text(
-                stringResource(if (kept) R.string.profile_risk_acknowledge else R.string.profile_risk_acknowledge_here),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 8.dp),
+                stringResource(R.string.profile_risk_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

@@ -251,11 +251,7 @@ private fun FirstProfile(rules: InstanceRules?, onMade: (Profile) -> Unit) {
                 1 -> {
                     Lead(R.string.profile_wizard_goal_lead)
                     PaceChoice(form, state.unit, state.preview?.paces, viewModel::edit)
-                    RiskBox(
-                        reasons = state.risks,
-                        acknowledged = form.acknowledgeRisk,
-                        onAcknowledge = { ticked -> viewModel.edit { it.copy(acknowledgeRisk = ticked) } },
-                    )
+                    RiskNote(reasons = state.risks)
                     TargetWeightField(form, state.unit, marks, viewModel::edit)
                     OwnTargetField(form, marks, viewModel::edit)
                 }

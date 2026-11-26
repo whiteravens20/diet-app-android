@@ -14,8 +14,8 @@ import org.junit.Test
 
 /**
  * Why the loss a calorie target was asked for is a risk, as the API's answer says it. The answers
- * are those a running backend gave for a girl of 16 losing weight, losing it with the risk
- * acknowledged, and keeping it; a target of her own is the last with the fields of that case set.
+ * are those a running backend gave for a girl of 16 losing weight and keeping it; a target of her
+ * own is the last with the fields of that case set.
  */
 class LossRisksTest {
     private val json = AppModule.json()
@@ -33,9 +33,10 @@ class LossRisksTest {
     }
 
     @Test
-    fun `a loss asked for by a pace is a risk under 18, held or acknowledged`() {
-        assertEquals(listOf("minor"), target("profile-calories-preview-minor-losing").lossRisks)
-        assertEquals(listOf("minor"), target("profile-calories-preview-minor-losing-acknowledged").lossRisks)
+    fun `a loss asked for by a pace is a risk under 18, and held`() {
+        val losing = target("profile-calories-preview-minor-losing")
+        assertEquals(listOf("minor"), losing.lossRisks)
+        assertEquals(true, losing.goalHeld)
     }
 
     @Test

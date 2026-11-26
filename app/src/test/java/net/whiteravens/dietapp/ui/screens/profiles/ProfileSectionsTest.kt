@@ -10,32 +10,26 @@ import org.junit.Test
 class ProfileSectionsTest {
     @Test
     fun nothingToAnswerOpensNothing() {
-        assertEquals(emptySet<ProfileSection>(), sectionsNeeding(ProfileMarks(), risks = emptyList(), acknowledged = false))
+        assertEquals(emptySet<ProfileSection>(), sectionsNeeding(ProfileMarks()))
     }
 
     @Test
     fun aFieldWithNoNumberOpensItsOwnSection() {
-        assertEquals(setOf(ProfileSection.GOAL), sectionsNeeding(ProfileMarks(notNumbers = setOf(ProfileField.TARGET_WEIGHT)), emptyList(), false))
-        assertEquals(setOf(ProfileSection.BODY), sectionsNeeding(ProfileMarks(notNumbers = setOf(ProfileField.HEIGHT)), emptyList(), false))
+        assertEquals(setOf(ProfileSection.GOAL), sectionsNeeding(ProfileMarks(notNumbers = setOf(ProfileField.TARGET_WEIGHT))))
+        assertEquals(setOf(ProfileSection.BODY), sectionsNeeding(ProfileMarks(notNumbers = setOf(ProfileField.HEIGHT))))
     }
 
     @Test
     fun aFieldTheApiRefusedOpensItsOwnSection() {
         val refused = ProfileRefusals(fields = mapOf(ProfileField.LABEL_SALT to FieldRefusal.Other, ProfileField.PER_KG to FieldRefusal.Other))
-        assertEquals(setOf(ProfileSection.LABELS, ProfileSection.FOOD), sectionsNeeding(ProfileMarks(refusals = refused), emptyList(), false))
+        assertEquals(setOf(ProfileSection.LABELS, ProfileSection.FOOD), sectionsNeeding(ProfileMarks(refusals = refused)))
     }
 
     @Test
     fun aKindOfProteinsLimitOpensTheVariety() {
-        assertEquals(setOf(ProfileSection.VARIETY), sectionsNeeding(ProfileMarks(kindNotNumbers = mapOf("poultry" to setOf(KindPart.DAY))), emptyList(), false))
+        assertEquals(setOf(ProfileSection.VARIETY), sectionsNeeding(ProfileMarks(kindNotNumbers = mapOf("poultry" to setOf(KindPart.DAY)))))
         val refused = ProfileRefusals(kinds = mapOf("fish" to mapOf(KindPart.WEEK to FieldRefusal.Other)))
-        assertEquals(setOf(ProfileSection.VARIETY), sectionsNeeding(ProfileMarks(refusals = refused), emptyList(), false))
-    }
-
-    @Test
-    fun aRiskOpensTheGoalUntilItIsAcknowledged() {
-        assertEquals(setOf(ProfileSection.GOAL), sectionsNeeding(ProfileMarks(), risks = listOf("pace"), acknowledged = false))
-        assertEquals(emptySet<ProfileSection>(), sectionsNeeding(ProfileMarks(), risks = listOf("pace"), acknowledged = true))
+        assertEquals(setOf(ProfileSection.VARIETY), sectionsNeeding(ProfileMarks(refusals = refused)))
     }
 
     @Test

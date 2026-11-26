@@ -55,10 +55,9 @@ diet-app's `dev`, whose AI routes are those of `0fb1cef`; `profile-created-as-th
 diet-app's `dev` at `6a055f3`; `recipes-mine.json` (a recipe an Ollama server standing in for the
 instance's model wrote, and one made by swapping an ingredient) from API 0.108.0, captured on
 2026-10-26 from a local build of diet-app's `dev` at `b84affc`;
-`profile-calories-preview-minor-losing.json`,
-`profile-calories-preview-minor-losing-acknowledged.json` and
-`profile-calories-preview-minor-keeping.json` (a girl of 16 losing weight, the same with the risk
-acknowledged, and keeping her weight) from the same build, captured on 2026-10-27;
+`profile-calories-preview-minor-losing.json` and
+`profile-calories-preview-minor-keeping.json` (a girl of 16 losing weight, and keeping her weight)
+from the same build, captured on 2026-10-27;
 `notifications-unread.json`, `notification-unknown.json`, `notifications-read-all.json` and
 `notifications-none.json` from API 0.108.0, captured on 2026-10-27 from a local build of
 diet-app's `dev` at `a1c7df4`: the worker's first pass reminded two profiles of their weights,

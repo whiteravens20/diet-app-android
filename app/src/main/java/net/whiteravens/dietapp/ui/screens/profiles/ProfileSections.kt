@@ -40,12 +40,11 @@ internal fun sectionOf(field: ProfileField): ProfileSection = when (field) {
 
 /**
  * The sections that need an answer, which open by themselves: a field that holds no number where one is needed or
- * that the API refused, a kind of protein's limit of either, and a risk not acknowledged, which the goal asks about.
+ * that the API refused, and a kind of protein's limit of either.
  */
-internal fun sectionsNeeding(marks: ProfileMarks, risks: List<String>, acknowledged: Boolean): Set<ProfileSection> =
+internal fun sectionsNeeding(marks: ProfileMarks): Set<ProfileSection> =
     (marks.notNumbers + marks.refusals.fields.keys).map(::sectionOf).toSet() +
-        (if (marks.kindNotNumbers.isNotEmpty() || marks.refusals.kinds.isNotEmpty()) setOf(ProfileSection.VARIETY) else emptySet()) +
-        (if (risks.isNotEmpty() && !acknowledged) setOf(ProfileSection.GOAL) else emptySet())
+        (if (marks.kindNotNumbers.isNotEmpty() || marks.refusals.kinds.isNotEmpty()) setOf(ProfileSection.VARIETY) else emptySet())
 
 /** What [section] of [form] holds, in one line, as the form holds it now; a figure not typed yet is left out. */
 @Composable

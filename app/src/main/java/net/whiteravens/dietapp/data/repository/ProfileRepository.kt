@@ -52,11 +52,8 @@ class ProfileRepository @Inject constructor(
     /** Puts [id]'s offer to keep the weight off for two weeks. */
     suspend fun putOffKeepingWeight(id: String): Profile = apiCall(json) { api.putOffKeepingWeight(id) }.toDomain()
 
-    /**
-     * Makes a profile, with [limits] on how often its plans repeat themselves, or the API's own
-     * where they are null; [acknowledgeRisk] is said only by a form that showed the risk of its goal.
-     */
-    suspend fun create(figures: ProfileFigures, limits: PlanLimits?, acknowledgeRisk: Boolean?, labelLimits: LabelLimits? = null): Profile =
+    /** Makes a profile, with [limits] on how often its plans repeat themselves, or the API's own where they are null. */
+    suspend fun create(figures: ProfileFigures, limits: PlanLimits?, labelLimits: LabelLimits? = null): Profile =
         apiCall(json) {
             api.createProfile(
                 NewProfileDto(
@@ -78,7 +75,6 @@ class ProfileRepository @Inject constructor(
                     waterReminders = figures.waterReminders,
                     customMacroSplit = figures.customMacroSplit?.toDto(),
                     customProteinPerKg = figures.customProteinPerKg,
-                    acknowledgeRisk = acknowledgeRisk,
                     preferences = NewProfilePreferencesDto(
                         allergens = figures.allergens,
                         maxConsecutiveDaysSameMeal = limits?.maxConsecutiveDaysSameMeal,
@@ -98,10 +94,9 @@ class ProfileRepository @Inject constructor(
     /**
      * Keeps the parts of [figures] that [parts] names, by their names in the API, and no other part of the profile,
      * its preferences least of all: a form that keeps each change as it is made sends what it changed. A part named
-     * that [figures] holds empty is emptied. [acknowledgeRisk] is said where it is not null. The answer is the
-     * profile as it is now.
+     * that [figures] holds empty is emptied. The answer is the profile as it is now.
      */
-    suspend fun change(id: String, figures: ProfileFigures, parts: Set<String>, acknowledgeRisk: Boolean? = null): ProfileDetails =
+    suspend fun change(id: String, figures: ProfileFigures, parts: Set<String>): ProfileDetails =
         apiCall(json) {
             /** A part named: its value, or JSON null where it is empty; a part not named is left out. */
             fun <T : Any> part(name: String, value: T?, of: (T) -> JsonElement): JsonElement? =
@@ -127,7 +122,6 @@ class ProfileRepository @Inject constructor(
                     weightReminderCadence = part("weightReminderCadence", figures.weightReminderCadence) { JsonPrimitive(it) },
                     cookingReminders = part("cookingReminders", figures.cookingReminders) { JsonPrimitive(it) },
                     waterReminders = part("waterReminders", figures.waterReminders) { JsonPrimitive(it) },
-                    acknowledgeRisk = acknowledgeRisk?.let { JsonPrimitive(it) },
                 ),
             )
         }.toDetails()
@@ -184,7 +178,6 @@ class ProfileRepository @Inject constructor(
                     customMacroSplit = question.customMacroSplit?.toDto(),
                     weeklyLossTarget = question.weeklyLossTarget,
                     manualCalorieTarget = question.manualCalorieTarget,
-                    acknowledgeRisk = question.acknowledgeRisk,
                     customProteinPerKg = question.customProteinPerKg,
                 ),
             )
@@ -240,6 +233,5 @@ fun ProfileDto.toDetails() = ProfileDetails(
         inventoryBiasResetEvery = preferences.inventoryBiasResetEvery,
         labelLimits = preferences.labelLimits.toDomain(),
     ),
-    riskAcknowledged = riskAcknowledgedAt != null,
     expenditureCorrectionKcal = expenditureCorrectionKcal,
 )

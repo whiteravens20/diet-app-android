@@ -520,11 +520,9 @@ data class CalorieCalculationDto(
     val safetyFloorApplied: Boolean,
     /** Maintenance itself is under the floor: no loss is planned, the target is maintenance. */
     val maintenanceUnderFloor: Boolean,
-    /**
-     * The profile asks to lose weight, is under 18 or underweight, and has not said it
-     * understands the risk: the target is held at maintenance until it does.
-     */
+    /** The profile asks to lose weight and is under 18 or underweight: no loss is planned, the target is maintenance. */
     val goalHeld: Boolean,
+    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
     val warnings: List<String>,
     /** The custom diet's protein per kilogram went past a limit of a split at this weight and target, and is held there. */
@@ -645,8 +643,6 @@ data class ProfileDto(
     /** The custom diet's protein in grams a kilogram of the weight; null where the split is the way. */
     val customProteinPerKg: Double? = null,
     val preferences: ProfilePreferencesDto = ProfilePreferencesDto(),
-    /** When the profile said it understands the risk of a target held at maintenance, or null. */
-    val riskAcknowledgedAt: String? = null,
     /** The correction of the target the real expenditure brought, in kcal a day; null where none is kept. */
     val expenditureCorrectionKcal: Int? = null,
     /** The newest weight came down to the target weight while the pace still loses, the target not typed in. */
@@ -660,7 +656,7 @@ data class ProfileDto(
 /**
  * A new profile (`POST /profiles`). Every field the form shows is sent, an empty one as null, so
  * that a choice of none (no pace of loss, no sex given, no own target) is the profile's own and not
- * the API's default; [acknowledgeRisk] only by a form that showed the risk of losing weight.
+ * the API's default.
  */
 @Serializable
 data class NewProfileDto(
@@ -683,7 +679,6 @@ data class NewProfileDto(
     val customMacroSplit: MacroSplitDto?,
     /** Sent only where protein is per kilogram: an API that came before it refuses no profile that leaves it out. */
     val customProteinPerKg: Double? = null,
-    val acknowledgeRisk: Boolean? = null,
     val preferences: NewProfilePreferencesDto,
 )
 
@@ -747,7 +742,6 @@ data class ProfilePatchDto(
     val weightReminderCadence: JsonElement? = null,
     val cookingReminders: JsonElement? = null,
     val waterReminders: JsonElement? = null,
-    val acknowledgeRisk: JsonElement? = null,
 )
 
 /**
@@ -765,7 +759,6 @@ data class CaloriePreviewRequestDto(
     val customMacroSplit: MacroSplitDto?,
     val weeklyLossTarget: String?,
     val manualCalorieTarget: Int?,
-    val acknowledgeRisk: Boolean,
     /** Sent only where protein is per kilogram. */
     val customProteinPerKg: Double? = null,
 )

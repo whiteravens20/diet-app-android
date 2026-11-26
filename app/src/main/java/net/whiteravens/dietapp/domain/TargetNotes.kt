@@ -36,7 +36,7 @@ sealed interface TargetNote {
     data class BelowBmr(val bmr: Double) : TargetNote
 }
 
-/** The notes of this target; a form that gives the risk of a loss itself, with the box that answers it, asks for the rest alone ([risk] false). */
+/** The notes of this target; a form that gives the risks of the body itself, beside the pace, asks for the rest alone ([risk] false). */
 fun CalorieTarget.notes(risk: Boolean = true): List<TargetNote> = buildList {
     if (risk && goalHeld) add(TargetNote.GoalHeld)
     for (warning in warnings) {

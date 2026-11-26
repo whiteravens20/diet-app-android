@@ -68,7 +68,7 @@ class ProfileRepositoryTest {
     fun `a new profile is sent with its choices of none, and its allergens alone of the preferences`() {
         server.enqueue(answer(fixture("profile"), 201))
 
-        runBlocking { repository().create(figures, limits = null, acknowledgeRisk = null) }
+        runBlocking { repository().create(figures, limits = null) }
 
         val sent = server.takeRequest()
         assertEquals("POST", sent.method)
@@ -99,10 +99,10 @@ class ProfileRepositoryTest {
             inventoryBiasResetEvery = 0,
         )
 
-        runBlocking { repository().create(figures, limits, acknowledgeRisk = true) }
+        runBlocking { repository().create(figures, limits) }
 
         val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
-        assertEquals("true", body.getValue("acknowledgeRisk").jsonPrimitive.content)
+        assertFalse("acknowledgeRisk" in body)
         val preferences = body.getValue("preferences").jsonObject
         assertEquals("1", preferences.getValue("maxConsecutiveDaysSameMeal").jsonPrimitive.content)
         assertEquals("2", preferences.getValue("maxTimesPerWeekSameMeal").jsonPrimitive.content)
@@ -242,7 +242,7 @@ class ProfileRepositoryTest {
 
         val question = CalorieQuestion(
             age = 30, sex = null, heightCm = 168.0, weightKg = 64.5, activityLevel = "light", dietType = "balanced",
-            customMacroSplit = null, weeklyLossTarget = null, manualCalorieTarget = null, acknowledgeRisk = false,
+            customMacroSplit = null, weeklyLossTarget = null, manualCalorieTarget = null,
         )
 
         val preview = runBlocking { repository().preview(question) }
@@ -251,7 +251,7 @@ class ProfileRepositoryTest {
         assertEquals("/api/profiles/calories", sent.path)
         val body = json.parseToJsonElement(sent.body.readUtf8()).jsonObject
         assertEquals(JsonNull, body["weeklyLossTarget"])
-        assertEquals("false", body.getValue("acknowledgeRisk").jsonPrimitive.content)
+        assertFalse("acknowledgeRisk" in body)
         assertEquals(5, preview.paces.size)
         assertEquals(preview.calculation.dailyTarget, preview.paces.first().dailyTarget, 0.0)
     }

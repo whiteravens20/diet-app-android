@@ -93,7 +93,7 @@ class ProfileFormViewModel @Inject constructor(
             get() = if (form.question(unit) == null) emptyList() else answer?.calculation?.lossRisks.orEmpty()
 
         val question: CalorieQuestion?
-            get() = form.question(unit, riskShown = risks.isNotEmpty())
+            get() = form.question(unit)
 
         /** What the form's figures come to: none while they cannot be worked out, rather than what earlier ones came to. */
         val preview: CaloriePreview?
@@ -226,12 +226,10 @@ class ProfileFormViewModel @Inject constructor(
         val figures = now.form.keepable(details.figures, now.unit, refused, target)
         val limits = now.form.keepableLimits(details.preferences.limits, refused)
         val labels = now.form.keepableLabels(details.preferences.labelLimits, refused)
-        // Said only where the form shows the risk, and only when it changes.
-        val risk = now.form.acknowledgeRisk.takeIf { now.risks.isNotEmpty() && it != details.riskAcknowledged }
         val own = partsChanged(details.figures, figures)
         val preferences = limitPartsChanged(details.preferences.limits, limits, details.preferences.labelLimits, labels)
         val held = now.form.notKept(now.unit, target).isNotEmpty() || now.form.kindProblems().isNotEmpty()
-        if (own.isEmpty() && preferences.isEmpty() && risk == null) {
+        if (own.isEmpty() && preferences.isEmpty()) {
             // Nothing differs from the profile: what the form holds is kept, a value put back as it was among it.
             _state.update {
                 val left = held || it.refusals.fields.isNotEmpty() || it.refusals.kinds.isNotEmpty()
@@ -282,7 +280,6 @@ class ProfileFormViewModel @Inject constructor(
             if (offline) break
             send(part.flatMap { FIELDS_OF_PARTS[it].orEmpty() }.toSet(), preferencesRoute = false) { profiles.change(details.id, figures, part) }
         }
-        if (!offline && risk != null) send(emptySet(), preferencesRoute = false) { profiles.change(details.id, figures, emptySet(), risk) }
         for (part in preferences) {
             if (offline) break
             send(FIELDS_OF_PARTS[part].orEmpty(), preferencesRoute = true) { profiles.changeLimits(details.id, limits, labels, setOf(part)) }
@@ -402,9 +399,7 @@ class ProfileFormViewModel @Inject constructor(
             _state.update { it.copy(showProblems = true) }
             return
         }
-        // Said only by a form that showed the risk: ticked is yes, not ticked is no.
-        val acknowledged = current.form.acknowledgeRisk.takeIf { current.risks.isNotEmpty() }
-        send(current.form) { profiles.create(figures, limits, acknowledged, labels) }
+        send(current.form) { profiles.create(figures, limits, labels) }
     }
 
     /** The first profile's next step, once the fields of this one hold numbers and none the API refused. */
@@ -437,8 +432,7 @@ class ProfileFormViewModel @Inject constructor(
             return
         }
         val figures = current.form.figures(current.unit) ?: return
-        val acknowledged = current.form.acknowledgeRisk.takeIf { current.risks.isNotEmpty() }
-        send(current.form) { profiles.create(figures, limits = null, acknowledgeRisk = acknowledged) }
+        send(current.form) { profiles.create(figures, limits = null) }
     }
 
     /** Sends [form] as [request] asks; a field the API refuses is marked, on the step that shows it. */
