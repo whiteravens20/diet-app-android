@@ -114,8 +114,9 @@ class ShoppingTest {
         // Two profiles: the card of household lists, whose form begins with each profile's plan of the days chosen.
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.household_open))) }.isSuccess }
         screen.onNode(hasText(text(R.string.household_open)) and hasClickAction()).performClick()
+        // The form comes once the plans of the days chosen are read: the button is waited for, not taken as there.
         val make = hasText(text(R.string.household_make)) and hasClickAction()
-        list.performScrollToNode(make)
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(make) }.isSuccess }
         screen.waitUntil(30_000) { runCatching { screen.onNode(make).assertIsEnabled() }.isSuccess }
         screen.onNodeWithText(text(R.string.household_replaces)).performScrollTo()
         screen.keepScreenshot("shopping-a-household-list-asked-for")
