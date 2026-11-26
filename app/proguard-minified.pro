@@ -47,7 +47,13 @@
 -keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpKt { *** DayChangeHelpDialog(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.NewPlanScreenKt { *** getDATE_AND_LENGTH(); }
--keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); }
+-keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); *** RiskNote(...); *** PaceChoice(...); *** OwnTargetField(...); *** CaloriePreviewCard(...); }
+-keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileForm { *; }
+-keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileMarks { *; }
+-keep class net.whiteravens.dietapp.domain.CalorieTarget { *; }
+-keep class net.whiteravens.dietapp.domain.CaloriePreview { *; }
+-keep class net.whiteravens.dietapp.domain.Expenditure { *; }
+-keep class net.whiteravens.dietapp.ui.components.ExpenditureCardKt { *** ExpenditureProposal(...); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileChoices { *; }
 -keep class net.whiteravens.dietapp.ui.screens.recipes.RecipeFormScreenKt { *** getSERVINGS_AND_TIMES(); *** getDIFFICULTY_AND_CUISINE(); }
 -keep class net.whiteravens.dietapp.ui.components.SideBySideKt { *** SideBySide(...); }

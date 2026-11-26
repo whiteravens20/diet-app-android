@@ -19,6 +19,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.Expenditure
 import net.whiteravens.dietapp.ui.common.errorMessage
 import kotlin.math.abs
 
@@ -28,7 +29,6 @@ import kotlin.math.abs
  * to accept or put off. Nothing where nothing is proposed. [onDecided] is told once a decision is
  * saved, so that the profile's target is read again.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExpenditureCard(
     profileId: String,
@@ -43,6 +43,19 @@ fun ExpenditureCard(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.decided) { if (state.decided > 0) onDecided() }
     val shown = state.expenditure?.takeIf { it.proposed } ?: return
+    ExpenditureProposal(
+        shown = shown,
+        deciding = state.deciding,
+        failed = state.failed?.let { "${stringResource(R.string.expenditure_act_failed)} ${errorMessage(it)}" },
+        onAccept = { viewModel.decide(ExpenditureViewModel.Decision.ACCEPT) },
+        onLater = { viewModel.decide(ExpenditureViewModel.Decision.LATER) },
+    )
+}
+
+/** The card of a proposal [shown], with its two answers; [failed] says why the last one was not saved. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ExpenditureProposal(shown: Expenditure, deciding: Boolean, failed: String?, onAccept: () -> Unit, onLater: () -> Unit) {
     val correction = shown.correction ?: return
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -69,12 +82,10 @@ fun ExpenditureCard(
             }
             Text(stringResource(R.string.expenditure_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { viewModel.decide(ExpenditureViewModel.Decision.ACCEPT) }, enabled = !state.deciding) { Text(stringResource(R.string.expenditure_accept)) }
-                OutlinedButton(onClick = { viewModel.decide(ExpenditureViewModel.Decision.LATER) }, enabled = !state.deciding) { Text(stringResource(R.string.expenditure_later)) }
+                Button(onClick = onAccept, enabled = !deciding) { Text(stringResource(R.string.expenditure_accept)) }
+                OutlinedButton(onClick = onLater, enabled = !deciding) { Text(stringResource(R.string.expenditure_later)) }
             }
-            state.failed?.let {
-                Text("${stringResource(R.string.expenditure_act_failed)} ${errorMessage(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            }
+            failed?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
         }
     }
 }

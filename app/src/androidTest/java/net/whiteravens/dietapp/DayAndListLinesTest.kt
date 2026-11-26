@@ -2,34 +2,12 @@
 
 package net.whiteravens.dietapp
 
-import android.content.res.Configuration
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.EatenElsewhere
@@ -40,7 +18,7 @@ import net.whiteravens.dietapp.domain.MacrosOffCause
 import net.whiteravens.dietapp.domain.MacrosOffWhy
 import net.whiteravens.dietapp.domain.RowPantry
 import net.whiteravens.dietapp.domain.ShoppingItem
-import net.whiteravens.dietapp.testing.keepScreenshot
+import net.whiteravens.dietapp.testing.EachLanguage
 import net.whiteravens.dietapp.ui.screens.diary.OtherPlanMealRow
 import net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpDialog
 import net.whiteravens.dietapp.ui.screens.plans.MacrosOffWhyLines
@@ -48,13 +26,11 @@ import net.whiteravens.dietapp.ui.screens.plans.OtherPlanMealCard
 import net.whiteravens.dietapp.ui.screens.plans.ProteinShortLine
 import net.whiteravens.dietapp.ui.screens.plans.StaysFrozenLines
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingItemRow
-import net.whiteravens.dietapp.ui.theme.DietAppTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Locale
 
 /**
  * What a plan's day says of a day off its macros, what its packs say stays in the freezer, what a list's row says of
@@ -67,62 +43,7 @@ class DayAndListLinesTest {
     @get:Rule
     val compose = createComposeRule()
 
-    /** The language the content is shown in. */
-    private var language by mutableStateOf("en")
-
-    /** Raised to draw the content anew: once the phone's language is set, what follows it comes out in that language. */
-    private var round by mutableIntStateOf(0)
-
-    /** [content] in the language shown, given that language. */
-    private fun show(content: @Composable (language: String) -> Unit) {
-        compose.setContent {
-            DietAppTheme {
-                Surface {
-                    // Clear of the phone's bars, as a screen of the app is.
-                    Column(Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        val configuration = Configuration(LocalConfiguration.current).apply { setLocale(Locale.forLanguageTag(language)) }
-                        val context = LocalContext.current.createConfigurationContext(configuration)
-                        CompositionLocalProvider(
-                            LocalContext provides context,
-                            LocalConfiguration provides configuration,
-                            LocalResources provides context.resources,
-                        ) {
-                            key(language, round) { content(language) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Each language in turn: what is shown in it, as the eye reads it ([check]), and its picture, [name] and the
-     * language, checked as a phone in that language checks its words: Polish holds its words of one letter to the next.
-     */
-    private fun inEachLanguage(name: String, check: (language: String, said: List<String>) -> Unit) {
-        val phone = Locale.getDefault()
-        try {
-            for (each in listOf("en", "pl")) {
-                // The phone in that language before the content is drawn in it: what follows the phone's language, a
-                // day's date among it, comes out in that language too.
-                Locale.setDefault(Locale.forLanguageTag(each))
-                language = each
-                round += 1
-                compose.waitForIdle()
-                check(each, said())
-                compose.keepScreenshot("$name-$each")
-                Locale.setDefault(phone)
-            }
-        } finally {
-            Locale.setDefault(phone)
-        }
-    }
-
-    /** Every text shown, as the eye reads it: a no-break space as a space. */
-    private fun said(): List<String> =
-        compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true)
-            .fetchSemanticsNodes()
-            .flatMap { node -> node.config[SemanticsProperties.Text].map { it.text.replace('\u00A0', ' ') } }
+    private val eye = EachLanguage(compose)
 
     @Test
     fun aDayOffItsMacrosSaysWhatItHoldsTooMuchAndTooLittleOfAndEachThingThatMakesItSo() {
@@ -131,9 +52,9 @@ class DayAndListLinesTest {
             under = "protein",
             causes = listOf(MacrosOffCause.Fixed(26), MacrosOffCause.CookTime(15), MacrosOffCause.NoWaste, MacrosOffCause.Repeats(1), MacrosOffCause.ProteinKinds),
         )
-        show { MacrosOffWhyLines(why) }
+        eye.show { MacrosOffWhyLines(why) }
 
-        inEachLanguage("plans-macros-off-why") { language, lines ->
+        eye.check("plans-macros-off-why") { language, lines ->
             val lean = if (language == "en") "Too much fat, too little protein." else "Za dużo tłuszczu, za mało białka."
             assertTrue(lines.toString(), lean in lines)
             // Each cause on a line of its own.
@@ -144,7 +65,7 @@ class DayAndListLinesTest {
     @Test
     fun thePacksSayWhatOfThePlansFoodsStaysInTheFreezerAndWhy() {
         val names = mapOf("en" to "Bacon", "pl" to "Boczek")
-        show { language ->
+        eye.show { language ->
             StaysFrozenLines(
                 listOf(
                     FrozenKept(names.getValue(language), "g", amount = 220, packages = 1, later = false, mostInTwoDays = 130),
@@ -153,7 +74,7 @@ class DayAndListLinesTest {
             )
         }
 
-        inEachLanguage("plans-stays-frozen") { language, lines ->
+        eye.check("plans-stays-frozen") { language, lines ->
             if (language == "en") {
                 assertTrue(lines.toString(), "Stays in the freezer:" in lines)
                 assertTrue(lines.toString(), lines.any { it.startsWith("• Bacon, 220 g: the plan eats at most 130 g of it in 2 days") })
@@ -168,7 +89,7 @@ class DayAndListLinesTest {
     @Test
     fun aRowSaysWhosePantryHoldsWhatIsAtHomeAndWhatTheFreezerStillKeeps() {
         val names = mapOf("en" to "Firm tofu", "pl" to "Tofu naturalne")
-        show { language ->
+        eye.show { language ->
             ShoppingItemRow(
                 ShoppingItem(
                     id = "row-$language",
@@ -194,7 +115,7 @@ class DayAndListLinesTest {
             )
         }
 
-        inEachLanguage("shopping-from-pantries-and-the-freezer") { language, lines ->
+        eye.check("shopping-from-pantries-and-the-freezer") { language, lines ->
             if (language == "en") {
                 assertTrue(lines.toString(), "From the pantry: Adam 700 g" in lines)
                 assertTrue(lines.toString(), "220 g more stays in the freezer: the plan does not thaw it." in lines)
@@ -207,9 +128,9 @@ class DayAndListLinesTest {
 
     @Test
     fun aDayThatLacksMuchProteinSaysHowMuchOfWhatItAimsAt() {
-        show { ProteinShortLine(134.4, 178.0) }
+        eye.show { ProteinShortLine(134.4, 178.0) }
 
-        inEachLanguage("plans-protein-short") { language, lines ->
+        eye.check("plans-protein-short") { language, lines ->
             val said =
                 if (language == "en") "Too little protein: 134 of 178 g, more than a fifth less than the day aims at."
                 else "Za mało białka: 134 z 178 g, ponad jedną piątą mniej, niż zakłada dzień."
@@ -220,7 +141,7 @@ class DayAndListLinesTest {
     @Test
     fun aRowBoughtByWeightSaysSoAndKeepsItsBoxUnderItsAmounts() {
         val names = mapOf("en" to "Turkey breast", "pl" to "Pierś z indyka")
-        show { language ->
+        eye.show { language ->
             ShoppingItemRow(
                 ShoppingItem(
                     id = "turkey-$language",
@@ -245,7 +166,7 @@ class DayAndListLinesTest {
             )
         }
 
-        inEachLanguage("shopping-bought-by-weight") { language, lines ->
+        eye.check("shopping-bought-by-weight") { language, lines ->
             val name = names.getValue(language)
             val (closed, box, amounts) =
                 if (language == "en") Triple("bought by weight 1000 g", "Bought by weight", "Amounts of $name")
@@ -259,13 +180,13 @@ class DayAndListLinesTest {
     @Test
     fun aMealEatenFromAnotherPlanStandsInTheDiaryAndInAPlansDay() {
         val names = mapOf("en" to "Porridge with apple", "pl" to "Owsianka z jabłkiem")
-        show { language ->
+        eye.show { language ->
             val meal = DiaryPlanMeal("m-$language", "breakfast", names.getValue(language), "r", eaten = true, calories = 420.0)
             OtherPlanMealRow(meal, onOpen = {})
             OtherPlanMealCard(EatenElsewhere(meal, "plan", Macros(14.0, 12.0, 62.0)), onOpen = {})
         }
 
-        inEachLanguage("diary-and-plan-a-meal-from-another-plan") { language, lines ->
+        eye.check("diary-and-plan-a-meal-from-another-plan") { language, lines ->
             val (line, chip) = if (language == "en") "From another plan" to "from another plan" else "Z innego planu" to "z innego planu"
             assertTrue(lines.toString(), lines.any { it.startsWith(line) })
             assertTrue(lines.toString(), chip in lines)
@@ -274,9 +195,9 @@ class DayAndListLinesTest {
 
     @Test
     fun theWindowOnHowADayIsChangedSaysWhatStaysTheWaysWhenAndWhatItChangesAndOpensTheWays() {
-        show { DayChangeHelpDialog(date = "2026-11-25", joint = true, onVariants = {}, onReroll = {}, onDismiss = {}) }
+        eye.show { DayChangeHelpDialog(date = "2026-11-25", joint = true, onVariants = {}, onReroll = {}, onDismiss = {}) }
 
-        inEachLanguage("plans-how-to-change-a-day") { language, lines ->
+        eye.check("plans-how-to-change-a-day") { language, lines ->
             val (title, ways, change) = if (language == "en") {
                 Triple("Changing a day and keeping your own meals", "Other ways…", "Change day…")
             } else {
