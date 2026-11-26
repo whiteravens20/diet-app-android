@@ -1368,6 +1368,8 @@
     <string name="target_note_correction_held">Poprawka z\u00A0rzeczywistego wydatku obniżyłaby cel bardziej, niż pozwala aplikacja, więc cel zatrzymano na %1$d\u00A0kcal. Dziennik z\u00A0dniami zapisanymi tylko w\u00A0części daje za niską liczbę.</string>
     <string name="target_note_below_floor">Wpisany cel jest niższy niż %1$d kcal, czyli najniższy, jaki wyliczyłby plan.</string>
     <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
+    <string name="target_note_low_target">Przy tak niskim celu trudno pokryć z\u00A0jedzenia wszystkie potrzebne witaminy i\u00A0składniki mineralne, a\u00A0aplikacja ich nie liczy.</string>
+    <string name="target_note_help">Jeśli kontrola jedzenia stała się sposobem radzenia sobie z\u00A0emocjami, porozmawiaj z\u00A0lekarzem.</string>
     <string name="plans_day_over">Ponad cel</string>
     <string name="plans_day_under">Poniżej celu</string>
     <string name="plans_day_over_hint">Ten dzień ma o ponad jedną dziesiątą więcej kalorii niż jego cel. Dopasuj porcje, zamień posiłek albo usuń jeden.</string>
@@ -1486,6 +1488,7 @@
     <string name="profile_pace_slowed_note" formatted="false">Tempo oznaczone jako „spowolnione” odebrałoby więcej niż jedną czwartą Twojego zapotrzebowania lub 1% masy ciała na tydzień albo zeszłoby poniżej najniższego celu, jaki wylicza plan. Dlatego plan odejmuje mniej.</string>
     <string name="profile_pace_age_note">Od 65\u00A0lat plan zakłada redukcję najwyżej o\u00A0%1$s\u00A0na tydzień, żeby razem z\u00A0tłuszczem nie tracić mięśni.</string>
     <string name="profile_pace_older_note">Przy BMI poniżej 30\u00A0zalecenia żywieniowe dla osób starszych odradzają odchudzanie. Jeśli chcesz schudnąć, porozmawiaj o\u00A0tym z\u00A0lekarzem.</string>
+    <string name="profile_pace_pregnancy_note">W\u00A0ciąży i\u00A0w\u00A0czasie karmienia piersią nie planuj redukcji: zapytaj lekarza.</string>
     <string name="profile_own_target">Cel kcal wpisany ręcznie</string>
     <string name="profile_own_target_hint">Najmniej %1$d\u00A0kcal. Zostaw puste, a\u00A0zdecyduje tempo.</string>
     <string name="profile_auto">auto</string>

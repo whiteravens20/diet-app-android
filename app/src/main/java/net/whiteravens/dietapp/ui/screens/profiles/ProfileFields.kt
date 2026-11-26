@@ -357,6 +357,7 @@ internal fun PaceChoice(form: ProfileForm, unit: WeightUnit, paces: List<Calorie
             stringResource(R.string.profile_pace_age_note, weightAmount(OLDER_FASTEST_PACE_KG, unit))
                 .takeIf { paces?.any { it.paceHeldForAge } == true },
             stringResource(R.string.profile_pace_older_note).takeIf { paces?.firstOrNull()?.warnings?.contains("older") == true },
+            stringResource(R.string.profile_pace_pregnancy_note).takeIf { form.sex != "male" },
         )
         notes.forEach { note ->
             Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

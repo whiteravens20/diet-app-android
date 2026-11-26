@@ -9,8 +9,8 @@ const val OLDER_FASTEST_PACE_KG = 0.5
  * What stands behind a calorie target that is not simply maintenance less the chosen pace, in
  * the order and on the terms the web application's profile summary says it: a goal that is held,
  * the warnings for somebody under 18, underweight or from 65, a pace that counts as a slower one,
- * a floor, a pace that was slowed, a correction held, and a target typed below the floor or below
- * the body's needs at rest. [strong] notes are the ones to heed.
+ * a floor, a pace that was slowed, a correction held, a target typed below the floor or below the
+ * body's needs at rest, a low target, and where to turn. [strong] notes are the ones to heed.
  */
 sealed interface TargetNote {
     val strong: Boolean get() = false
@@ -51,6 +51,12 @@ sealed interface TargetNote {
     }
 
     data class BelowBmr(val bmr: Double) : TargetNote
+
+    /** Under this target vitamins and minerals are hard to cover from food, and the application counts none. */
+    data object LowTarget : TargetNote
+
+    /** Where to turn if controlling food has become a way to cope. */
+    data object Help : TargetNote
 }
 
 /** The notes of this target; a form that gives the risks of the body itself, beside the pace, asks for the rest alone ([risk] false). */
@@ -77,4 +83,6 @@ fun CalorieTarget.notes(risk: Boolean = true): List<TargetNote> = buildList {
     if (correctionHeld) add(TargetNote.CorrectionHeld(dailyTarget))
     if ("below_floor" in warnings) add(TargetNote.BelowFloor(safetyFloor))
     if ("below_bmr" in warnings && source == "manual_override") add(TargetNote.BelowBmr(bmr))
+    if ("low_target" in warnings) add(TargetNote.LowTarget)
+    if ((risk && "underweight" in warnings) || "below_floor" in warnings) add(TargetNote.Help)
 }

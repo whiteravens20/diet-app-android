@@ -58,7 +58,7 @@ class TargetNotesTest {
     fun `a form that gives the risk of a loss itself asks for the other notes alone`() {
         val notes = target(*plain, "goalHeld" to true, "warnings" to listOf("minor", "underweight", "below_floor"), "safetyFloor" to 1200).notes(risk = false)
 
-        assertEquals(listOf(TargetNote.BelowFloor(1200.0)), notes)
+        assertEquals(listOf(TargetNote.BelowFloor(1200.0), TargetNote.Help), notes)
     }
 
     @Test
@@ -95,6 +95,17 @@ class TargetNotesTest {
     }
 
     @Test
+    fun `a low target says what it means, and a typed one under the floor or an underweight body where to turn`() {
+        assertEquals(listOf(TargetNote.LowTarget), target(*plain, "warnings" to listOf("low_target")).notes())
+        assertEquals(
+            listOf(TargetNote.BelowFloor(1500.0), TargetNote.LowTarget, TargetNote.Help),
+            target(*plain, "source" to "manual_override", "safetyFloor" to 1500, "warnings" to listOf("below_floor", "low_target")).notes(),
+        )
+        assertEquals(listOf(TargetNote.Underweight, TargetNote.Help), target(*plain, "warnings" to listOf("underweight")).notes())
+        assertEquals(emptyList<TargetNote>(), target(*plain, "warnings" to listOf("underweight")).notes(risk = false))
+    }
+
+    @Test
     fun `a target raised to the floor names the floor and not the slowed pace`() {
         val notes = target(
             *plain,
@@ -112,7 +123,7 @@ class TargetNotesTest {
         val typed = target(*plain, "source" to "manual_override", "warnings" to listOf("below_floor", "below_bmr"))
         val calculated = target(*plain, "source" to "calculated", "warnings" to listOf("below_bmr"))
 
-        assertEquals(listOf(TargetNote.BelowFloor(typed.safetyFloor), TargetNote.BelowBmr(typed.bmr)), typed.notes())
+        assertEquals(listOf(TargetNote.BelowFloor(typed.safetyFloor), TargetNote.BelowBmr(typed.bmr), TargetNote.Help), typed.notes())
         assertEquals(emptyList<TargetNote>(), calculated.notes())
     }
 }

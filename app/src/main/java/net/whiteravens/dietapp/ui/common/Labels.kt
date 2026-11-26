@@ -388,6 +388,8 @@ fun noteText(note: TargetNote, unit: WeightUnit = WeightUnit.KG): String = when 
     is TargetNote.CorrectionHeld -> stringResource(R.string.target_note_correction_held, note.target.roundToInt())
     is TargetNote.BelowFloor -> stringResource(R.string.target_note_below_floor, note.floor.roundToInt())
     is TargetNote.BelowBmr -> stringResource(R.string.target_note_below_bmr, note.bmr.roundToInt())
+    TargetNote.LowTarget -> stringResource(R.string.target_note_low_target)
+    TargetNote.Help -> stringResource(R.string.target_note_help)
 }
 
 /**
