@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -56,6 +57,16 @@ fun ExpenditureCard(
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            if (shown.held) {
+                Text(
+                    stringResource(R.string.expenditure_held, shown.targetCorrected ?: shown.target),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            if (correction < 0) {
+                Text(stringResource(R.string.expenditure_caution), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Text(stringResource(R.string.expenditure_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { viewModel.decide(ExpenditureViewModel.Decision.ACCEPT) }, enabled = !state.deciding) { Text(stringResource(R.string.expenditure_accept)) }

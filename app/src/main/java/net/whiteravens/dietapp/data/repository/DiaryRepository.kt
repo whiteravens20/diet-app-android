@@ -336,4 +336,5 @@ private fun ExpenditureDto.toDomain() = Expenditure(
     correction = correction,
     target = target,
     targetCorrected = targetCorrected,
+    held = held,
 )

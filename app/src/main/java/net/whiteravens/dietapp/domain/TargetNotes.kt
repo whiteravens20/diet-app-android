@@ -9,8 +9,8 @@ const val OLDER_FASTEST_PACE_KG = 0.5
  * What stands behind a calorie target that is not simply maintenance less the chosen pace, in
  * the order and on the terms the web application's profile summary says it: a goal that is held,
  * the warnings for somebody under 18, underweight or from 65, a pace that counts as a slower one,
- * a floor, a pace that was slowed, and a target typed below the floor or below the body's needs at
- * rest. [strong] notes are the ones to heed.
+ * a floor, a pace that was slowed, a correction held, and a target typed below the floor or below
+ * the body's needs at rest. [strong] notes are the ones to heed.
  */
 sealed interface TargetNote {
     val strong: Boolean get() = false
@@ -43,6 +43,9 @@ sealed interface TargetNote {
      */
     data class DeficitCapped(val requested: Double, val deficit: Double, val weeklyLossKg: Double, val countedKg: Double) : TargetNote
 
+    /** A correction from the real expenditure would take the target lower: it stops at [target]. */
+    data class CorrectionHeld(val target: Double) : TargetNote
+
     data class BelowFloor(val floor: Double) : TargetNote {
         override val strong get() = true
     }
@@ -71,6 +74,7 @@ fun CalorieTarget.notes(risk: Boolean = true): List<TargetNote> = buildList {
     if (deficitCapped && !safetyFloorApplied && !maintenanceUnderFloor && !goalHeld) {
         add(TargetNote.DeficitCapped(requestedDeficit, dailyDeficit, weeklyLossKg, counted))
     }
+    if (correctionHeld) add(TargetNote.CorrectionHeld(dailyTarget))
     if ("below_floor" in warnings) add(TargetNote.BelowFloor(safetyFloor))
     if ("below_bmr" in warnings && source == "manual_override") add(TargetNote.BelowBmr(bmr))
 }

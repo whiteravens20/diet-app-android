@@ -385,6 +385,7 @@ fun noteText(note: TargetNote, unit: WeightUnit = WeightUnit.KG): String = when 
     TargetNote.Older -> stringResource(R.string.target_note_older)
     is TargetNote.PaceHeldForAge ->
         stringResource(R.string.target_note_pace_held_for_age, weightAmount(note.chosenKg, unit), weightAmount(OLDER_FASTEST_PACE_KG, unit))
+    is TargetNote.CorrectionHeld -> stringResource(R.string.target_note_correction_held, note.target.roundToInt())
     is TargetNote.BelowFloor -> stringResource(R.string.target_note_below_floor, note.floor.roundToInt())
     is TargetNote.BelowBmr -> stringResource(R.string.target_note_below_bmr, note.bmr.roundToInt())
 }

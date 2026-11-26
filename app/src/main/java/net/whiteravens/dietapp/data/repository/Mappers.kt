@@ -175,6 +175,7 @@ fun CalorieCalculationDto.toDomain() = CalorieTarget(
     paceHeldForAge = paceHeldForAge,
     maintenanceUnderFloor = maintenanceUnderFloor,
     goalHeld = goalHeld,
+    correctionHeld = correctionHeld,
     leastTypedTarget = leastTypedTarget,
     warnings = warnings,
     customSplitHeld = customSplitHeld,

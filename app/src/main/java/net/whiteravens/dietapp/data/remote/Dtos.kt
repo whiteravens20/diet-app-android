@@ -526,7 +526,8 @@ data class CalorieCalculationDto(
     val maintenanceUnderFloor: Boolean,
     /** The profile asks to lose weight and is under 18 or underweight: no loss is planned, the target is maintenance. */
     val goalHeld: Boolean,
-    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
+    /** A correction from the real expenditure would take the target lower than the engine lets it go, and it is held there. */
+    val correctionHeld: Boolean = false,
     /** The least a target this body types may be: 1200 kcal, or its maintenance where that is lower. */
     val leastTypedTarget: Double = 1200.0,
     /** `minor` | `underweight` | `older` | `below_floor` | `below_bmr`. */
@@ -879,6 +880,8 @@ data class ExpenditureDto(
     /** The daily target as it stands, and as it would with the correction proposed. */
     val target: Int,
     val targetCorrected: Int?,
+    /** The correction would take the target lower than the engine lets it go, and it stops there. */
+    val held: Boolean = false,
     val checkedOn: String?,
     val laterUntil: String?,
 )

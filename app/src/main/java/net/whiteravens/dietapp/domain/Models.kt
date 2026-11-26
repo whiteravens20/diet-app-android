@@ -373,7 +373,8 @@ data class CalorieTarget(
     val maintenanceUnderFloor: Boolean,
     /** No loss is planned for a body under 18 or underweight: the target is maintenance. */
     val goalHeld: Boolean,
-    /** `minor` | `underweight` | `below_floor` | `below_bmr`. */
+    /** A correction from the real expenditure would take the target lower than the engine lets it go, and it is held there. */
+    val correctionHeld: Boolean = false,
     /** The least a target this body types may be: 1200 kcal, or its maintenance where that is lower. */
     val leastTypedTarget: Double = 1200.0,
     /** `minor` | `underweight` | `older` | `below_floor` | `below_bmr`. */

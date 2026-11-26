@@ -25,6 +25,8 @@ data class Expenditure(
     val correction: Int?,
     val target: Int,
     val targetCorrected: Int?,
+    /** The correction would take the target lower than the engine lets it go, and it stops there. */
+    val held: Boolean = false,
 ) {
     /** A correction is proposed, with what it comes of. */
     val proposed: Boolean get() = state == "proposed" && estimate != null && correction != null

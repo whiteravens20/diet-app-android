@@ -1258,6 +1258,7 @@
     <string name="target_note_maintenance_under_floor" tools:ignore="PluralsCandidate">Your maintenance is under %1$d kcal, the lowest a calculated plan goes, so no loss is planned: the target is your maintenance.</string>
     <string name="target_note_safety_floor_applied" tools:ignore="PluralsCandidate">The target was raised to %1$d kcal, the lowest a calculated plan goes. The deficit that leaves is %2$d kcal a day.</string>
     <string name="target_note_deficit_capped" tools:ignore="PluralsCandidate">A pace of %4$s\u00A0a week asks for %1$d\u00A0kcal a day less. That is more than a plan allows: a quarter of your maintenance or 1%% of your body weight a week. So the plan takes %2$d\u00A0kcal: at first about %3$s\u00A0a week, and less as time goes on.</string>
+    <string name="target_note_correction_held" tools:ignore="PluralsCandidate">The correction from the real expenditure would lower the target further than the application allows, so the target stops at %1$d\u00A0kcal. A diary with days written in part gives a figure too low.</string>
     <string name="target_note_below_floor" tools:ignore="PluralsCandidate">The target you typed is under %1$d kcal, the lowest a calculated plan would go.</string>
     <string name="target_note_below_bmr" tools:ignore="PluralsCandidate">The target you typed is under what your body uses at rest (%1$d kcal).</string>
     <string name="plans_day_over">Over target</string>
@@ -2420,6 +2421,8 @@
     <string name="expenditure_proposed_more">Your diary and weights of the last 3\u00A0weeks come to about %1$d\u00A0kcal a day, %2$d\u00A0kcal more than the formula says. The daily target would be %3$d\u00A0kcal instead of %4$d.</string>
     <string name="expenditure_proposed_less">Your diary and weights of the last 3\u00A0weeks come to about %1$d\u00A0kcal a day, %2$d\u00A0kcal less than the formula says. The daily target would be %3$d\u00A0kcal instead of %4$d.</string>
     <string name="expenditure_note">Only a proposal. Plans already made keep their target.</string>
+    <string name="expenditure_caution">A diary with days written in part gives a figure too low. Before you accept, check that you write down everything you eat.</string>
+    <string name="expenditure_held" tools:ignore="PluralsCandidate">The application goes no lower: the target stops at %1$d\u00A0kcal.</string>
     <string name="expenditure_accept">Accept</string>
     <string name="expenditure_later">Not now</string>
     <string name="expenditure_kept">The target holds a correction from the real expenditure: %1$s\u00A0kcal a day.</string>

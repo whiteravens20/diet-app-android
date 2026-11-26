@@ -89,6 +89,12 @@ class TargetNotesTest {
     }
 
     @Test
+    fun `a correction held at the body's rest names the target it stops at`() {
+        val held = target(*plain, "correctionHeld" to true, "dailyTarget" to 1780)
+        assertEquals(listOf(TargetNote.CorrectionHeld(1780.0)), held.notes())
+    }
+
+    @Test
     fun `a target raised to the floor names the floor and not the slowed pace`() {
         val notes = target(
             *plain,

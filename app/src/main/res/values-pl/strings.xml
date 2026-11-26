@@ -1365,6 +1365,7 @@
     <string name="target_note_maintenance_under_floor">Twoje zapotrzebowanie jest niższe niż %1$d kcal, czyli najniższy cel, jaki wylicza plan, więc redukcja nie jest planowana: celem jest Twoje zapotrzebowanie.</string>
     <string name="target_note_safety_floor_applied">Cel podniesiono do %1$d kcal, czyli najniższego, jaki wylicza plan. Deficyt, który z tego wynika, to %2$d kcal dziennie.</string>
     <string name="target_note_deficit_capped">Tempo %4$s\u00A0na tydzień wymaga %1$d\u00A0kcal dziennie mniej. To więcej, niż pozwala plan: jedna czwarta Twojego zapotrzebowania albo 1%% masy ciała na tydzień. Plan odejmuje więc %2$d\u00A0kcal: na początku to około %3$s\u00A0tygodniowo, a\u00A0z\u00A0czasem tempo słabnie.</string>
+    <string name="target_note_correction_held">Poprawka z\u00A0rzeczywistego wydatku obniżyłaby cel bardziej, niż pozwala aplikacja, więc cel zatrzymano na %1$d\u00A0kcal. Dziennik z\u00A0dniami zapisanymi tylko w\u00A0części daje za niską liczbę.</string>
     <string name="target_note_below_floor">Wpisany cel jest niższy niż %1$d kcal, czyli najniższy, jaki wyliczyłby plan.</string>
     <string name="target_note_below_bmr">Wpisany cel jest niższy niż to, co organizm zużywa w spoczynku (%1$d kcal).</string>
     <string name="plans_day_over">Ponad cel</string>
@@ -2594,6 +2595,8 @@
     <string name="expenditure_proposed_more">Z dziennika i wag z ostatnich 3\u00A0tygodni wychodzi około %1$d\u00A0kcal dziennie, o %2$d\u00A0kcal więcej niż liczy wzór. Cel dzienny byłby %3$d\u00A0kcal zamiast %4$d.</string>
     <string name="expenditure_proposed_less">Z dziennika i wag z ostatnich 3\u00A0tygodni wychodzi około %1$d\u00A0kcal dziennie, o %2$d\u00A0kcal mniej niż liczy wzór. Cel dzienny byłby %3$d\u00A0kcal zamiast %4$d.</string>
     <string name="expenditure_note">To tylko propozycja. Plany już ułożone zostają przy swoim celu.</string>
+    <string name="expenditure_caution">Dziennik z\u00A0dniami zapisanymi tylko w\u00A0części daje za niską liczbę. Zanim przyjmiesz, sprawdź, czy zapisujesz wszystko, co jesz.</string>
+    <string name="expenditure_held">Niżej aplikacja nie zejdzie: cel zatrzymuje się na %1$d\u00A0kcal.</string>
     <string name="expenditure_accept">Przyjmij</string>
     <string name="expenditure_later">Nie teraz</string>
     <string name="expenditure_kept">Cel uwzględnia poprawkę z rzeczywistego wydatku: %1$s\u00A0kcal dziennie.</string>
