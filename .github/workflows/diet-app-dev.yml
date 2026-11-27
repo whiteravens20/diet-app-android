@@ -101,6 +101,8 @@ jobs:
       # started afresh.
       - name: Run the screens' tests, part 1 of 3
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          PART: 1
         with:
           emulator-build: 16428233
           api-level: 34
@@ -116,13 +118,7 @@ jobs:
           # Turned off by settle-emulator.sh, once the settings service answers.
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            .github/scripts/keep-emulator-log.sh
-            .github/scripts/settle-emulator.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
-            .github/scripts/wait-for-play-services.sh
-            free -m
-            ./gradlew $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=0 connectedDebugAndroidTest
+          script: .github/scripts/run-screens-part.sh
 
       - name: Keep the results of part 1
         if: ${{ !cancelled() }}
@@ -131,6 +127,8 @@ jobs:
       - name: Run the screens' tests, part 2 of 3
         if: ${{ !cancelled() }}
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          PART: 2
         with:
           emulator-build: 16428233
           api-level: 34
@@ -146,13 +144,7 @@ jobs:
           # Turned off by settle-emulator.sh, once the settings service answers.
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            .github/scripts/keep-emulator-log.sh
-            .github/scripts/settle-emulator.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
-            .github/scripts/wait-for-play-services.sh
-            free -m
-            ./gradlew $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=1 connectedDebugAndroidTest
+          script: .github/scripts/run-screens-part.sh
 
       - name: Keep the results of part 2
         if: ${{ !cancelled() }}
@@ -161,6 +153,8 @@ jobs:
       - name: Run the screens' tests, part 3 of 3
         if: ${{ !cancelled() }}
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          PART: 3
         with:
           emulator-build: 16428233
           api-level: 34
@@ -176,13 +170,7 @@ jobs:
           # Turned off by settle-emulator.sh, once the settings service answers.
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            .github/scripts/keep-emulator-log.sh
-            .github/scripts/settle-emulator.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/debug/app-debug.apk net.whiteravens.dietapp
-            .github/scripts/wait-for-play-services.sh
-            free -m
-            ./gradlew $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=2 connectedDebugAndroidTest
+          script: .github/scripts/run-screens-part.sh
 
       - name: Keep the results of part 3
         if: ${{ !cancelled() }}

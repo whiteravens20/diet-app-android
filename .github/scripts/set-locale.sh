@@ -14,7 +14,7 @@ language=${1:-}
 as_root() {
   for _ in $(seq 1 20); do
     adb root > /dev/null 2>&1 || true
-    adb wait-for-device
+    timeout 60 adb wait-for-device || true
     if [ "$(adb shell id -u 2> /dev/null | tr -d '\r')" = 0 ]; then
       return 0
     fi
@@ -27,7 +27,12 @@ as_root() {
 as_root
 adb shell setprop persist.sys.locale "$language"
 adb reboot
-adb wait-for-device
-until [ "$(adb shell getprop sys.boot_completed 2> /dev/null | tr -d '\r')" = "1" ]; do sleep 3; done
+# Back from the reboot within five minutes (it takes about half a minute), or the part stops here with its logs: a
+# wait without an end ran on to the job's limit, which ends the steps that keep them as well.
+# shellcheck disable=SC2016 # the inner shell expands it, each time it asks.
+if ! timeout 300 bash -c 'adb wait-for-device && until [ "$(adb shell getprop sys.boot_completed 2> /dev/null | tr -d "\r")" = 1 ]; do sleep 3; done'; then
+  echo "::error::The emulator did not come back from its reboot into $language within five minutes"
+  exit 1
+fi
 as_root
 echo "The emulator speaks $(adb shell getprop persist.sys.locale | tr -d '\r')."

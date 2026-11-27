@@ -21,9 +21,12 @@ for attempt in $(seq 1 10); do
     exit 1
   fi
   sleep 3
-  adb wait-for-device
+  timeout 60 adb wait-for-device || true
 done
-adb wait-for-device
+if ! timeout 120 adb wait-for-device; then
+  echo "::error::The emulator was not back within two minutes of adbd starting again as root"
+  exit 1
+fi
 adb shell mkdir -p "$store"
 adb push "$TEST_AUTHORITY/authority.pem" "$store/$name" > /dev/null
 adb shell chown -R system:system "$store"
@@ -34,7 +37,10 @@ echo "The test authority is on the emulator as one the user installed: $store/$n
 
 # adbd started again as root: the log is taken up again, and the tests start once the system
 # says it has booted and its package manager answers.
-adb wait-for-device
+if ! timeout 120 adb wait-for-device; then
+  echo "::error::The emulator was not back within two minutes of adbd starting again as root"
+  exit 1
+fi
 "$(dirname "$0")/keep-emulator-log.sh"
 for _ in $(seq 1 60); do
   if [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && adb shell pm path android > /dev/null 2>&1; then

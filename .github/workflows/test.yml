@@ -247,15 +247,9 @@ jobs:
           # Turned off by settle-emulator.sh, once the settings service answers.
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ matrix.config.emulator-features }}
-          script: |
-            .github/scripts/set-locale.sh "$LOCALE"
-            .github/scripts/keep-emulator-log.sh
-            .github/scripts/settle-emulator.sh
-            .github/scripts/install-test-authority.sh
-            .github/scripts/wait-for-installs.sh app/build/outputs/apk/$BUILD_TYPE/app-$BUILD_TYPE.apk net.whiteravens.dietapp
-            .github/scripts/wait-for-play-services.sh
-            free -m
-            ./gradlew -PtestBuildType=$BUILD_TYPE $AUTHORITY_ARGUMENT $NOTIFIED_ACCOUNT -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=$((PART - 1)) connected${VARIANT}AndroidTest
+          # The part as one script, which stops the emulator itself however the part ends: the action's own stop
+          # waits for the emulator's process without an end.
+          script: .github/scripts/run-screens-part.sh
 
       - name: Keep the results of the part
         if: ${{ !cancelled() }}
