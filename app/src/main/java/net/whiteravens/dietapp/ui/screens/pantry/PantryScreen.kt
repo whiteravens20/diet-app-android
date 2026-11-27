@@ -458,7 +458,7 @@ private fun addedLine(added: PantryViewModel.Added): String {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RowItem(
+internal fun RowItem(
     row: PantryRow,
     number: Int?,
     waiting: Boolean,

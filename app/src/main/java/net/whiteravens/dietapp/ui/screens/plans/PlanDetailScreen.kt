@@ -1399,7 +1399,7 @@ private fun mealName(meal: Meal): String = meal.name.ifEmpty { stringResource(R.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MealCard(
+internal fun MealCard(
     meal: Meal,
     date: String,
     today: String,

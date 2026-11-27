@@ -44,7 +44,7 @@
 -keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
--keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); *** MealCard(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpKt { *** DayChangeHelpDialog(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.NewPlanScreenKt { *** getDATE_AND_LENGTH(); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); *** RiskNote(...); *** PaceChoice(...); *** OwnTargetField(...); *** CaloriePreviewCard(...); }
@@ -68,7 +68,7 @@
 -keep class net.whiteravens.dietapp.ui.navigation.TabBarKt { *** TabBar*(...); }
 -keep class net.whiteravens.dietapp.ui.navigation.Tab { *; }
 -keep class net.whiteravens.dietapp.domain.Palette { *; }
--keep class net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreenKt { *** ShoppingItemRow(...); }
+-keep class net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreenKt { *** ShoppingItemRow(...); *** PastInPantryBanner(...); }
 -keep class net.whiteravens.dietapp.domain.ShoppingItem { *; }
 -keep class net.whiteravens.dietapp.domain.RowPacks { *; }
 -keep class net.whiteravens.dietapp.domain.BuyLater { *; }
@@ -101,3 +101,33 @@
 -keep class net.whiteravens.dietapp.data.auth.UnlockStandIn { *; }
 -keep class net.whiteravens.dietapp.data.auth.StandInPhone { *; }
 -keep class net.whiteravens.dietapp.data.auth.UnlockDevice { *; }
+# The pot of a meal, the leftover's window, the card after a change and the pantry's stock past its day, drawn alone by
+# the screens' look tests (SeamsLinesTest): the composables they call and every class they build or pass.
+-keep class net.whiteravens.dietapp.ui.screens.plans.LeftoverDialogKt { *** LeftoverDialog(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailViewModel$LeftoverWindow { *; }
+-keep class net.whiteravens.dietapp.ui.screens.plans.RebalanceCardKt { *** RebalanceCard(...); }
+-keep class net.whiteravens.dietapp.ui.screens.pantry.PantryScreenKt { *** RowItem(...); *** StillGoodDialog(...); }
+-keep class net.whiteravens.dietapp.domain.Meal { *; }
+-keep class net.whiteravens.dietapp.domain.MealLine { *; }
+-keep class net.whiteravens.dietapp.domain.Pot { *; }
+-keep class net.whiteravens.dietapp.domain.CarriedTo { *; }
+-keep class net.whiteravens.dietapp.domain.MealPlace { *; }
+-keep class net.whiteravens.dietapp.domain.PlanEffects { *; }
+-keep class net.whiteravens.dietapp.domain.EffectList { *; }
+-keep class net.whiteravens.dietapp.domain.LeftoverOffer { *; }
+-keep class net.whiteravens.dietapp.domain.LeftoverPlace { *; }
+-keep class net.whiteravens.dietapp.domain.LeftoverOther { *; }
+-keep class net.whiteravens.dietapp.domain.CookedPlace { *; }
+-keep class net.whiteravens.dietapp.domain.Portion { *; }
+-keep class net.whiteravens.dietapp.domain.PantryRow { *; }
+-keep class net.whiteravens.dietapp.domain.LabelTotals { *; }
+-keep class net.whiteravens.dietapp.domain.LeftoverOf { *; }
+-keep class net.whiteravens.dietapp.domain.MealCooking { *; }
+-keep class net.whiteravens.dietapp.domain.MealTopping { *; }
+-keep class net.whiteravens.dietapp.domain.ModelPart { *; }
+-keep class net.whiteravens.dietapp.domain.ModelPart$* { *; }
+-keep class net.whiteravens.dietapp.domain.RecipeSource { *; }
+-keep class net.whiteravens.dietapp.domain.SharedMeal { *; }
+-keep class net.whiteravens.dietapp.domain.OtherPortion { *; }
+-keep class net.whiteravens.dietapp.domain.Rebalance { *; }
+-keep class net.whiteravens.dietapp.domain.PlanDay { *; }
