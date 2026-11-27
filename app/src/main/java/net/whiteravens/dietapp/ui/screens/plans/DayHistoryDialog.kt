@@ -281,5 +281,8 @@ private fun causeText(cause: String): Int? =
         "retarget" -> R.string.history_cause_retarget
         "bought-by-weight" -> R.string.history_cause_bought_by_weight
         "kept" -> R.string.history_cause_kept
+        "week-evened" -> R.string.history_cause_week_evened
+        "joint-removed" -> R.string.history_cause_joint_removed
+        "preferences" -> R.string.history_cause_preferences
         else -> null
     }

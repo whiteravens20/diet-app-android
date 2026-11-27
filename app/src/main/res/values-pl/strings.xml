@@ -2727,6 +2727,9 @@
     <string name="history_cause_retarget">Nowy cel planu</string>
     <string name="history_cause_bought_by_weight">Zakup na wagę</string>
     <string name="history_cause_kept">Zostawione porcje</string>
+    <string name="history_cause_week_evened">Wyrównanie tygodnia</string>
+    <string name="history_cause_joint_removed">Dodatki zdjęte: plan wspólny usunięty — dzień może odbiegać od podziału, dopóki nie ułożysz go od nowa</string>
+    <string name="history_cause_preferences">Dodatki zdjęte: nie pasują do zmienionych preferencji</string>
     <plurals name="history_diary_entries">
         <item quantity="one">%1$d wpis w dzienniku.</item>
         <item quantity="few">%1$d wpisy w dzienniku.</item>

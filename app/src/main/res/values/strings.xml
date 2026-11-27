@@ -2553,6 +2553,9 @@
     <string name="history_cause_retarget">New target of the plan</string>
     <string name="history_cause_bought_by_weight">Bought by weight</string>
     <string name="history_cause_kept">Portions kept</string>
+    <string name="history_cause_week_evened">Week evened out</string>
+    <string name="history_cause_joint_removed">Toppings off: the plan made together was removed — the day may be off its split until you make it again</string>
+    <string name="history_cause_preferences">Toppings off: they do not fit the changed preferences</string>
     <plurals name="history_diary_entries">
         <item quantity="one">%1$d diary entry.</item>
         <item quantity="other">%1$d diary entries.</item>
