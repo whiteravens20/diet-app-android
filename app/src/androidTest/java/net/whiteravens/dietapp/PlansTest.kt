@@ -933,7 +933,7 @@ class PlansTest {
 
         // The card after the change says, under the change's name, that the list no longer matches the plan.
         screen.waitForText(text(R.string.history_cause_day_settings))
-        screen.waitForText(text(R.string.plans_effect_open_list))
+        screen.waitForText(text(R.string.plans_effect_open_list), substring = true)
         screen.keepScreenshot("plans-a-day-changed-and-its-list")
         putAwayRebalance()
 

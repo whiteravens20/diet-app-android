@@ -35,6 +35,13 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
@@ -156,11 +163,25 @@ internal fun RebalanceCard(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Effects(effects: PlanEffects, onOpenList: (EffectList) -> Unit, onShowDay: (String) -> Unit) {
+    val linked = MaterialTheme.colorScheme.primary
     effects.lists.forEach { list ->
-        FlowRow(verticalArrangement = Arrangement.Center, itemVerticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.plans_effect_list, formatDates(list.fromDate, list.toDate)), style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = { onOpenList(list) }) { Text(stringResource(R.string.plans_effect_open_list)) }
-        }
+        // The way to the list ends its sentence as a link, as the web has it: a button of its own took a row, which
+        // stood empty above the card's buttons.
+        val said = stringResource(R.string.plans_effect_list, formatDates(list.fromDate, list.toDate))
+        val open = stringResource(R.string.plans_effect_open_list)
+        Text(
+            buildAnnotatedString {
+                append(said)
+                append(' ')
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = "list",
+                        styles = TextLinkStyles(SpanStyle(color = linked, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline)),
+                    ) { onOpenList(list) },
+                ) { append(open) }
+            },
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
     listOf(R.string.plans_effect_thaw to effects.thaw, R.string.plans_effect_freeze to effects.freeze).forEach { (said, days) ->
         if (days.isEmpty()) return@forEach

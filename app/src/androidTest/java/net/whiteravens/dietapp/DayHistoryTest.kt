@@ -62,7 +62,8 @@ class DayHistoryTest {
 
         // The card says the list no longer matches the plan, with the way to it, and leads to the day's history.
         val list = text(R.string.plans_effect_open_list)
-        screen.waitUntil(30_000) { screen.onAllNodes(hasText(list) and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+        // The way to it is a link at the end of the list's sentence.
+        screen.waitUntil(30_000) { screen.onAllNodes(hasText(list, substring = true)).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("history-the-card-after-a-change")
 
         // The history from the card: the day sized again is its latest change, the user's choice it ended said with it.
