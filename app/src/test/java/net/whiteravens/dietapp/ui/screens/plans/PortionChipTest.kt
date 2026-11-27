@@ -4,6 +4,7 @@ package net.whiteravens.dietapp.ui.screens.plans
 
 import io.mockk.every
 import io.mockk.mockk
+import net.whiteravens.dietapp.domain.CarriedTo
 import net.whiteravens.dietapp.domain.Meal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -11,11 +12,17 @@ import org.junit.Test
 
 /** The portion a meal's card says in words: from a tenth off its plan's portion, as the web's card says it. */
 class PortionChipTest {
-    private fun meal(servings: Double, scale: Double, leftover: Boolean = false, carried: Boolean = false) = mockk<Meal>().also { meal ->
+    private fun meal(
+        servings: Double,
+        scale: Double,
+        leftover: Boolean = false,
+        carried: Boolean = false,
+        fromPot: Boolean = false,
+    ) = mockk<Meal>().also { meal ->
         every { meal.servings } returns servings
         every { meal.quantityScale } returns scale
         every { meal.leftover } returns if (leftover) mockk() else null
-        every { meal.carriedTo } returns if (carried) mockk() else null
+        every { meal.carriedTo } returns if (carried) CarriedTo("2026-10-15", "lunch", fromPot) else null
     }
 
     @Test
@@ -35,5 +42,10 @@ class PortionChipTest {
     fun `says nothing of a leftover or of the meal it was left of`() {
         assertNull(portionChip(meal(1.0, 0.5, leftover = true)))
         assertNull(portionChip(meal(1.0, 0.5, carried = true)))
+    }
+
+    @Test
+    fun `keeps the portion of a meal whose pot gave its rest to the next day`() {
+        assertEquals(1.9, portionChip(meal(1.0, 1.9, carried = true, fromPot = true))!!, 0.0)
     }
 }

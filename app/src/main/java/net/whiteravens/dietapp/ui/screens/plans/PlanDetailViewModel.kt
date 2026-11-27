@@ -121,7 +121,8 @@ class PlanDetailViewModel @Inject constructor(
 
     /**
      * The window that carries what is left of [meal] of [date] to the next day: where it can go once the
-     * API said ([offer]), why it could not say, and the leftover on its way.
+     * API said ([offer]), why it could not say, and the leftover on its way. [fromPot]: what the meal's pot
+     * cooked already will have left beside its portion goes, and the meal stays as it is.
      */
     data class LeftoverWindow(
         val meal: Meal,
@@ -129,6 +130,7 @@ class PlanDetailViewModel @Inject constructor(
         val offer: LeftoverOffer? = null,
         val error: Throwable? = null,
         val sending: Boolean = false,
+        val fromPot: Boolean = false,
     )
 
     /** Where the last leftover went: the day and time of day, and whether to the next plan. */
@@ -532,13 +534,13 @@ class PlanDetailViewModel @Inject constructor(
     }
 
     /**
-     * Opens the window that carries what is left of [meal] of [date] to the next day, and asks the API
-     * where it can go. It needs the network.
+     * Opens the window that carries what is left of [meal] of [date] to the next day, or, [fromPot], what its
+     * pot cooked already will have left, and asks the API where it can go. It needs the network.
      */
-    fun openLeftover(meal: Meal, date: String) {
-        _state.update { it.copy(leftoverWindow = LeftoverWindow(meal, date), leftoverWent = null) }
+    fun openLeftover(meal: Meal, date: String, fromPot: Boolean = false) {
+        _state.update { it.copy(leftoverWindow = LeftoverWindow(meal, date, fromPot = fromPot), leftoverWent = null) }
         viewModelScope.launch {
-            attempt { plans.leftoverOffer(planId, meal.id) }
+            attempt { plans.leftoverOffer(planId, meal.id, fromPot) }
                 .onSuccess { offer -> _state.update { s -> s.copy(leftoverWindow = s.leftoverWindow?.takeIf { it.meal.id == meal.id }?.copy(offer = offer)) } }
                 .onFailure { e -> _state.update { s -> s.copy(leftoverWindow = s.leftoverWindow?.takeIf { it.meal.id == meal.id }?.copy(error = e)) } }
         }
@@ -560,7 +562,7 @@ class PlanDetailViewModel @Inject constructor(
         if (window.sending) return
         viewModelScope.launch {
             _state.update { it.copy(leftoverWindow = window.copy(sending = true, error = null)) }
-            attempt { plans.putLeftover(planId, window.meal.id, slot, left, theirLeft) }
+            attempt { plans.putLeftover(planId, window.meal.id, slot, left, theirLeft, fromPot = window.fromPot) }
                 .onSuccess { changed ->
                     val here = offer.planId == planId
                     _state.update { s ->

@@ -1277,8 +1277,11 @@ data class PlannedMealDto(
      * the dish planned; null for every other meal.
      */
     val leftover: LeftoverOfDto? = null,
-    /** Where what was left of this meal is eaten, a leftover; null where nothing of it was carried. */
-    val carriedTo: MealPlaceDto? = null,
+    /**
+     * Where what was left of this meal is eaten, a leftover, and whether that is the rest of a pot cooked already,
+     * beside a portion that stays the meal's own; null where nothing of it was carried.
+     */
+    val carriedTo: CarriedToDto? = null,
     /**
      * Whether what is left of this meal can go to a meal of the next day: null where it cannot at all;
      * `ok`, or why the next day cannot take it: `no_day` | `skipped` | `no_meal`.
@@ -1289,6 +1292,30 @@ data class PlannedMealDto(
      * day off its split; null where nothing is. Not in [nutrition], which is the dish's: the day counts both.
      */
     val topping: MealToppingDto? = null,
+    /**
+     * Of a meal eaten from a pot cooked already, not eaten itself: what was cooked for it, what its portion leaves in
+     * the pot, whether the pot holds its portion where its day would give it more, and where the rest could go.
+     */
+    val pot: PotDto? = null,
+)
+
+/** Where a meal's rest is eaten (`PlannedMeal.carriedTo`); [fromPot] where it is the rest of the meal's pot. */
+@Serializable
+data class CarriedToDto(val date: String, val mealType: String, val fromPot: Boolean = false)
+
+/**
+ * The pot cooked already a meal is eaten from (`PlannedMeal.pot`): the day it was cooked, what it holds for the meal
+ * and what the meal's portion leaves in it, in servings as eaten; [held] where the pot holds the portion that its day
+ * would make bigger; [offer] where the rest could go: `ok`, or why the next day cannot take it (`no_day` | `skipped` |
+ * `no_meal`), null where nothing is left or it went already.
+ */
+@Serializable
+data class PotDto(
+    val cookedOn: String,
+    val cooked: Double,
+    val rest: Double,
+    val held: Boolean = false,
+    val offer: String? = null,
 )
 
 /** A topping on one person's plate: the food and amount, and what that holds. */
@@ -2380,6 +2407,8 @@ data class PutLeftoverRequest(
     val left: Double,
     val forAll: Boolean? = null,
     val theirLeft: Double? = null,
+    /** The rest of the meal's pot cooked already goes, beside its portion: [left] is 1, and nobody else's. */
+    val fromPot: Boolean? = null,
 )
 
 /** POST `/meal-plans/:id/days/:date/custom-meal`: a meal of the user's own, what one serving holds, and how many servings it is. */

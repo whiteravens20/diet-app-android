@@ -111,7 +111,9 @@ private fun shown(servings: Double): Double = (servings * 10).roundToInt() / 10.
  * a time of day chosen. It says first whether anything of the meal was eaten: nothing, and the meal
  * leaves its day with the whole portion going; a part, and the meal stays marked eaten with the part
  * eaten, what is left told as a part of the portion or by two weights. Of a shared meal the other
- * person's portion may go as well, with what is left of it. It needs the network.
+ * person's portion may go as well, with what is left of it. Of a pot cooked already ([window]'s
+ * `fromPot`) the rest of the pot goes, asked nothing of what was eaten, and the meal stays as it is. It
+ * needs the network.
  */
 @Composable
 internal fun LeftoverDialog(
@@ -126,11 +128,13 @@ internal fun LeftoverDialog(
     // For both while the other person has not marked their portion eaten, unless the user says otherwise.
     var forAllSaid by rememberSaveable { mutableStateOf<Boolean?>(null) }
     var slot by rememberSaveable { mutableStateOf<String?>(null) }
-    val other = offer?.other
+    val pot = window.fromPot
+    val other = offer?.other?.takeUnless { pot }
     val forAll = other != null && (forAllSaid ?: !other.eaten)
     val places = offer?.places.orEmpty().filter { !forAll || it.slot in other!!.places }
     val chosen = places.firstOrNull { it.slot == slot }
-    val myLeft = mine.share
+    // The rest of a pot goes whole: the offer's portion is that rest.
+    val myLeft = if (pot) 1.0 else mine.share
     val theirLeft = if (forAll) theirs.share else 1.0
     val ready = offer != null && chosen != null && myLeft != null && theirLeft != null && !window.sending
     val today = LocalDate.now().toString()
@@ -138,7 +142,10 @@ internal fun LeftoverDialog(
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.plans_leftover_title), style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        stringResource(if (pot) R.string.plans_leftover_pot_title else R.string.plans_leftover_title),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
                     Text(
                         "${mealTypeLabel(meal.slot)}$DOT${formatDayDate(window.date)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -146,7 +153,7 @@ internal fun LeftoverDialog(
                     )
                 }
                 Text(
-                    stringResource(R.string.plans_leftover_intro, meal.name),
+                    stringResource(if (pot) R.string.plans_leftover_pot_intro else R.string.plans_leftover_intro, meal.name),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -155,7 +162,7 @@ internal fun LeftoverDialog(
                         Text(errorMessage(window.error), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                     offer == null -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                     else -> {
-                        PortionLeft(stringResource(R.string.plans_leftover_eaten_legend), offer.portion, mine) { mine = it }
+                        if (!pot) PortionLeft(stringResource(R.string.plans_leftover_eaten_legend), offer.portion, mine) { mine = it }
                         if (other != null) {
                             CheckRow(
                                 label = stringResource(R.string.plans_leftover_for_all, other.profileName),
@@ -189,7 +196,9 @@ internal fun LeftoverDialog(
                         }
                         myLeft?.let { left ->
                             Hint(
-                                if (left >= 1.0) {
+                                if (pot) {
+                                    stringResource(R.string.plans_leftover_pot_summary)
+                                } else if (left >= 1.0) {
                                     stringResource(R.string.plans_leftover_summary_gone)
                                 } else {
                                     stringResource(

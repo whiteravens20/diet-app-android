@@ -2212,6 +2212,12 @@
     <string name="plans_leftover_off_no_day">No plan holds the next day.</string>
     <string name="plans_leftover_off_skipped">The next day is skipped.</string>
     <string name="plans_leftover_off_no_meal">The next day has no meal a leftover could take the place of.</string>
+    <string name="plans_leftover_pot_title">The rest of the pot</string>
+    <string name="plans_leftover_pot_intro">%1$s: what the pot will have left beside this meal\'s portion takes the place of a meal of the next day. The dish is cooked already, so it goes on no shopping list.</string>
+    <string name="plans_leftover_pot_summary">This meal stays as it is.</string>
+    <string name="plans_pot_rest">The pot will have %1$s left, %2$s\u00A0kcal: it can be eaten the next day.</string>
+    <string name="plans_pot_held">From the pot at most %1$s: no more was cooked.</string>
+    <string name="plans_pot_action">The rest of the pot…</string>
     <string name="plans_leftover_offline">Needs a network connection.</string>
     <string-array name="plans_leftover_meal_of">
         <item>breakfast</item>

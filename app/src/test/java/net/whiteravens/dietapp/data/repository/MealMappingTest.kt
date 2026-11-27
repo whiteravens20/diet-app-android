@@ -33,13 +33,15 @@ import net.whiteravens.dietapp.data.remote.LeftoverOfferDto
 import net.whiteravens.dietapp.data.remote.LeftoverOtherDto
 import net.whiteravens.dietapp.data.remote.LeftoverPlaceDto
 import net.whiteravens.dietapp.data.remote.LeftoverPortionDto
-import net.whiteravens.dietapp.data.remote.MealPlaceDto
+import net.whiteravens.dietapp.data.remote.CarriedToDto
+import net.whiteravens.dietapp.data.remote.PotDto
 import net.whiteravens.dietapp.domain.CookedPlace
 import net.whiteravens.dietapp.domain.LeftoverOf
 import net.whiteravens.dietapp.domain.LeftoverOffer
 import net.whiteravens.dietapp.domain.LeftoverOther
 import net.whiteravens.dietapp.domain.LeftoverPlace
-import net.whiteravens.dietapp.domain.MealPlace
+import net.whiteravens.dietapp.domain.CarriedTo
+import net.whiteravens.dietapp.domain.Pot
 import net.whiteravens.dietapp.domain.Portion
 import net.whiteravens.dietapp.data.remote.DisplayAmountDto
 import net.whiteravens.dietapp.data.remote.MealToppingDto
@@ -226,6 +228,34 @@ class MealMappingTest {
     }
 
     @Test
+    fun `a meal eaten from a pot cooked already reads what the pot holds for it, and whether a rest carried was the pot's`() {
+        val first = plan.days.first()
+        val (fromPot, parted) = first.meals.filter { it.recipe != null }.take(2)
+        val read = plan.copy(
+            days = plan.days.map { day ->
+                if (day != first) day else day.copy(
+                    meals = day.meals.map {
+                        when (it.id) {
+                            fromPot.id -> it.copy(
+                                pot = PotDto(cookedOn = "2026-10-12", cooked = 2.2, rest = 0.3, held = false, offer = "ok"),
+                                carriedTo = CarriedToDto("2026-10-14", "lunch", fromPot = true),
+                            )
+                            parted.id -> it.copy(carriedTo = CarriedToDto("2026-10-14", "dinner"))
+                            else -> it
+                        }
+                    },
+                )
+            },
+        ).toDomain()
+
+        val meals = read.days.first().meals.associateBy { it.id }
+        assertEquals(Pot(cooked = 2.2, rest = 0.3, held = false, offer = "ok"), meals.getValue(fromPot.id).pot)
+        assertTrue(meals.getValue(fromPot.id).carriedTo!!.fromPot)
+        assertFalse(meals.getValue(parted.id).carriedTo!!.fromPot)
+        assertNull(meals.getValue(parted.id).pot)
+    }
+
+    @Test
     fun `a model's pick of a meal goes before what it had to do with the recipe, and a plan made with one says so`() {
         val day = plan.days.first()
         val planned = day.meals.first { it.recipe != null }
@@ -339,7 +369,7 @@ class MealMappingTest {
                     meals = day.meals.map {
                         when (it.id) {
                             leftover.id -> it.copy(leftover = LeftoverOfDto("2026-10-12", "dinner", undoable = true))
-                            source.id -> it.copy(carriedTo = MealPlaceDto("2026-10-14", "lunch"))
+                            source.id -> it.copy(carriedTo = CarriedToDto("2026-10-14", "lunch"))
                             other.id -> it.copy(leftoverOffer = "no_day")
                             else -> it
                         }
@@ -350,7 +380,7 @@ class MealMappingTest {
 
         val meals = marked.days.first().meals.associateBy { it.id }
         assertEquals(LeftoverOf("2026-10-12", "dinner", undoable = true), meals.getValue(leftover.id).leftover)
-        assertEquals(MealPlace("2026-10-14", "lunch"), meals.getValue(source.id).carriedTo)
+        assertEquals(CarriedTo("2026-10-14", "lunch", fromPot = false), meals.getValue(source.id).carriedTo)
         assertEquals("no_day", meals.getValue(other.id).leftoverOffer)
         assertNull(meals.getValue(other.id).leftover)
         assertNull(meals.getValue(leftover.id).carriedTo)

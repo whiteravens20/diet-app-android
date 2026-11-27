@@ -721,6 +721,7 @@ fun PlanDetailScreen(
                             onRemove = { removing = meal.id },
                             onOpen = { openMealId = meal.id },
                             onLeftover = { viewModel.openLeftover(meal, day.date) },
+                            onPotLeftover = { viewModel.openLeftover(meal, day.date, fromPot = true) },
                             onUndoLeftover = { viewModel.askUndoLeftover(meal) },
                             frozen = frozenAt[meal.id].orEmpty(),
                             onKeepFrozen = keepFrozen,
@@ -1419,6 +1420,7 @@ private fun MealCard(
     onEatenTogether: () -> Unit = {},
     onSetApart: (Boolean) -> Unit = {},
     onLeftover: () -> Unit = {},
+    onPotLeftover: () -> Unit = {},
     onUndoLeftover: () -> Unit = {},
     /** The rests of meat or fish of packs this meal opens, which go in the freezer. */
     frozen: List<FrozenRest> = emptyList(),
@@ -1470,6 +1472,7 @@ private fun MealCard(
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 leftoverHint(meal)?.let { Hint(it) }
+                potLine(meal)?.let { Hint(it) }
                 sameAgainHint(meal)?.let { Hint(it) }
                 frozen.forEach { rest -> FreezeLine(rest, onKeepFrozen) }
                 // What is put on this person's plate beside the dish both eat: the day counts it, the dish's figures do not.
@@ -1502,10 +1505,33 @@ private fun MealCard(
                     onSubstitute = onSubstitute,
                     onRemove = onRemove,
                     onLeftover = onLeftover,
+                    onPotLeftover = onPotLeftover,
                     onUndoLeftover = onUndoLeftover,
                 )
             }
         }
+    }
+}
+
+/** A tenth of a serving, as a portion is said. */
+private fun tenth(servings: Double): Double = (servings * 10).roundToInt() / 10.0
+
+/**
+ * What the pot cooked already a meal is eaten from says under it: what it will have left beside the portion, which can
+ * go to the next day, or that it holds the portion where the day would have given it more. Nothing where the meal
+ * takes what was cooked for it, nor once its rest went to the next day, which the leftover's line says.
+ */
+@Composable
+internal fun potLine(meal: Meal): String? {
+    val pot = meal.pot ?: return null
+    return when {
+        pot.rest > 0 -> stringResource(
+            R.string.plans_pot_rest,
+            servingsWord(tenth(pot.rest)),
+            formatNumber((meal.nutrition.calories / (meal.servings * meal.quantityScale) * pot.rest).roundToInt()),
+        )
+        pot.held && meal.carriedTo == null -> stringResource(R.string.plans_pot_held, servingsWord(tenth(pot.cooked)))
+        else -> null
     }
 }
 
@@ -1591,10 +1617,14 @@ internal fun portionOf(meal: Meal): Double = (meal.servings * meal.quantityScale
 
 /**
  * The portion a meal's card says in words, once it is a tenth off its plan's; null for a smaller sizing, and for a
- * leftover and the meal it was left of, which are parts of a portion, not resized.
+ * leftover and the meal it was left of, which are parts of a portion, not resized. The rest of a pot is none of the
+ * meal's portion, which keeps its mark.
  */
 internal fun portionChip(meal: Meal): Double? =
-    if (abs(meal.quantityScale - 1.0) >= PORTION_CHIP_FROM && meal.leftover == null && meal.carriedTo == null) portionOf(meal) else null
+    if (abs(meal.quantityScale - 1.0) >= PORTION_CHIP_FROM && meal.leftover == null && partOfItsPortionStays(meal)) portionOf(meal) else null
+
+/** Nothing of the meal's own portion went to the next day: no rest went, or the rest of its pot did. */
+internal fun partOfItsPortionStays(meal: Meal): Boolean = meal.carriedTo?.fromPot ?: true
 
 /** How near its target a day stays as it is, as a share of the target: the API does not fit it then. */
 private const val DAY_ON_TARGET = 0.02
@@ -1824,6 +1854,7 @@ private fun MealChanges(
     onSubstitute: () -> Unit,
     onRemove: () -> Unit,
     onLeftover: () -> Unit,
+    onPotLeftover: () -> Unit,
     onUndoLeftover: () -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
@@ -1874,6 +1905,18 @@ private fun MealChanges(
                     },
                     enabled = !readOnly && offer == "ok",
                 ) { pick(onLeftover) }
+            }
+            // What the pot cooked already will have left beside the portion goes to the next day; why it cannot is said under it.
+            meal.pot?.offer?.let { offer ->
+                Change(
+                    stringResource(R.string.plans_pot_action),
+                    when {
+                        readOnly -> stringResource(R.string.plans_leftover_offline)
+                        offer == "ok" -> null
+                        else -> stringResource(leftoverOff(offer))
+                    },
+                    enabled = !readOnly && offer == "ok",
+                ) { pick(onPotLeftover) }
             }
             if (meal.leftover?.undoable == true) {
                 Change(
@@ -2138,7 +2181,7 @@ private fun MealDialog(
                     cookChip(meal, date)?.let { PlainChip(it) }
                     leftoverChip(meal)?.let { PlainChip(it) }
                     // The factor the planner sized the meal by, which its card says as the portion in words.
-                    if (abs(meal.quantityScale - 1.0) >= SCALED_FROM && meal.leftover == null && meal.carriedTo == null) {
+                    if (abs(meal.quantityScale - 1.0) >= SCALED_FROM && meal.leftover == null && partOfItsPortionStays(meal)) {
                         PlainChip(stringResource(R.string.plans_auto_balanced_chip, formatNumber(meal.quantityScale, fractionDigits = 2)))
                     }
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
@@ -2171,6 +2214,7 @@ private fun MealDialog(
                 }
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 leftoverHint(meal)?.let { Hint(it) }
+                potLine(meal)?.let { Hint(it) }
                 if (meal.custom) Hint(stringResource(if (meal.estimated) R.string.plans_custom_estimated_note else R.string.plans_custom_macros_note))
                 if (toCook.lines.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

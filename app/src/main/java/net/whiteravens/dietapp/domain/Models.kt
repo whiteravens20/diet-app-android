@@ -493,12 +493,24 @@ data class Meal(
     /** A leftover: what was left of another meal, eaten here; null for every other meal. */
     val leftover: LeftoverOf? = null,
     /** Where what was left of this meal is eaten; null where nothing of it was carried. */
-    val carriedTo: MealPlace? = null,
+    val carriedTo: CarriedTo? = null,
     /** Whether what is left of it can go to the next day: null where not at all; `ok`, `no_day`, `skipped` or `no_meal`. */
     val leftoverOffer: String? = null,
     /** What is put on this person's plate beside a dish both eat; null where nothing is. Not in [nutrition]. */
     val topping: MealTopping? = null,
+    /** The pot cooked already the meal is eaten from, not eaten itself; null for every other meal. */
+    val pot: Pot? = null,
 )
+
+/** Where a meal's rest is eaten; [fromPot] where it is the rest of the meal's pot, beside a portion that stays its own. */
+data class CarriedTo(val date: String, val slot: String, val fromPot: Boolean = false)
+
+/**
+ * The pot cooked already a meal is eaten from: what it holds for the meal ([cooked]) and what the meal's portion leaves
+ * in it ([rest]), in servings as eaten; [held] where it holds a portion its day would make bigger; [offer] where the
+ * rest could go (`ok`, `no_day`, `skipped`, `no_meal`), null where nothing is left or it went already.
+ */
+data class Pot(val cooked: Double, val rest: Double, val held: Boolean, val offer: String?)
 
 /** A topping on one person's plate: its food and amount ([line]), and what it holds. */
 data class MealTopping(val line: MealLine, val nutrition: Nutrition)

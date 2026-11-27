@@ -2376,6 +2376,12 @@
     <string name="plans_leftover_off_no_day">Następnego dnia nie ma w żadnym planie.</string>
     <string name="plans_leftover_off_skipped">Następny dzień jest pominięty.</string>
     <string name="plans_leftover_off_no_meal">Następny dzień nie ma posiłku, który resztka mogłaby zastąpić.</string>
+    <string name="plans_leftover_pot_title">Resztka z\u00A0garnka</string>
+    <string name="plans_leftover_pot_intro">%1$s: to, co zostanie w\u00A0garnku obok porcji tego posiłku, zajmie miejsce posiłku następnego dnia. Danie jest już ugotowane, więc nie trafi na listę zakupów.</string>
+    <string name="plans_leftover_pot_summary">Ten posiłek zostaje taki, jaki jest.</string>
+    <string name="plans_pot_rest">W\u00A0garnku zostanie %1$s, %2$s\u00A0kcal: to można zjeść następnego dnia.</string>
+    <string name="plans_pot_held">Z\u00A0garnka najwyżej %1$s: więcej nie ugotowano.</string>
+    <string name="plans_pot_action">Resztka z\u00A0garnka…</string>
     <string name="plans_leftover_offline">Wymaga połączenia z siecią.</string>
     <string-array name="plans_leftover_meal_of">
         <item>śniadania</item>

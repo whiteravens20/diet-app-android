@@ -455,9 +455,16 @@ interface DietApiService {
         @Query("forAll") forAll: Boolean? = null,
     ): RebalanceResultDto
 
-    /** Where what is left of a meal of today or yesterday can go: the next day and the meals of it a leftover may replace. */
+    /**
+     * Where what is left of a meal of today or yesterday can go: the next day and the meals of it a leftover may
+     * replace; [fromPot], where the rest of the meal's pot cooked already can go instead.
+     */
     @GET("meal-plans/{id}/meals/{mealId}/leftover")
-    suspend fun leftoverOffer(@Path("id") id: String, @Path("mealId") mealId: String): LeftoverOfferDto
+    suspend fun leftoverOffer(
+        @Path("id") id: String,
+        @Path("mealId") mealId: String,
+        @Query("fromPot") fromPot: Boolean? = null,
+    ): LeftoverOfferDto
 
     /** Puts what is left of a meal in as a meal of the next day, in the place of the dish at a time of day. */
     @POST("meal-plans/{id}/meals/{mealId}/leftover")

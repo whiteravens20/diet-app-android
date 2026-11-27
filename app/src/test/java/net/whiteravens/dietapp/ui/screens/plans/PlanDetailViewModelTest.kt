@@ -789,6 +789,31 @@ class PlanDetailViewModelTest {
     }
 
     @Test
+    fun `what a pot cooked already will have left goes to the next day from its own window, the meal kept as it is`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.leftoverOffer(plan.id, meal.id, true) } returns LeftoverOfferDto(
+            planId = plan.id,
+            date = plan.days[1].date,
+            portion = LeftoverPortionDto(0.4, 180.0),
+            places = listOf(LeftoverPlaceDto("lunch", "Soup", 600.0, cookedWith = emptyList())),
+        )
+        val sent = slot<PutLeftoverRequest>()
+        coEvery { api.putLeftover(plan.id, meal.id, capture(sent)) } returns swapped
+        val model = model(api)
+
+        model.openLeftover(model.shownMeal(), plan.days.first().date, fromPot = true)
+
+        assertTrue(model.state.value.leftoverWindow!!.fromPot)
+        assertEquals(0.4, model.state.value.leftoverWindow?.offer?.portion?.servings)
+
+        model.putLeftover("lunch", 1.0)
+
+        assertEquals(PutLeftoverRequest(mealType = "lunch", left = 1.0, fromPot = true), sent.captured)
+        assertNull(model.state.value.leftoverWindow)
+    }
+
+    @Test
     fun `a re-roll refused for a lock that no longer holds, or for days that have all passed, is asked again with that allowed`() {
         val api = mockk<DietApiService>()
         val asked = mutableListOf<RegenerateRequest>()

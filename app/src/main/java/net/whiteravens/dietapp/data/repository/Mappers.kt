@@ -47,6 +47,8 @@ import net.whiteravens.dietapp.domain.LeftoverOther
 import net.whiteravens.dietapp.domain.LeftoverPlace
 import net.whiteravens.dietapp.domain.MealCooking
 import net.whiteravens.dietapp.domain.MealPlace
+import net.whiteravens.dietapp.domain.CarriedTo
+import net.whiteravens.dietapp.domain.Pot
 import net.whiteravens.dietapp.domain.CalorieTarget
 import net.whiteravens.dietapp.domain.DayDiary
 import net.whiteravens.dietapp.domain.JointPlan
@@ -303,9 +305,10 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
             )
         },
         leftover = leftover?.let { LeftoverOf(it.date, it.mealType, it.undoable) },
-        carriedTo = carriedTo?.let { MealPlace(it.date, it.mealType) },
+        carriedTo = carriedTo?.let { CarriedTo(it.date, it.mealType, it.fromPot) },
         leftoverOffer = leftoverOffer,
         topping = topping?.let { MealTopping(it.ingredient.toLine(), it.nutrition.toDomain()) },
+        pot = pot?.let { Pot(it.cooked, it.rest, it.held, it.offer) },
     )
 }
 

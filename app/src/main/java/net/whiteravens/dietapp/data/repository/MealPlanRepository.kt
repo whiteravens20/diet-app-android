@@ -524,21 +524,34 @@ class MealPlanRepository @Inject constructor(
         kept(apiCall(json) { api.removeMeal(change.planId, change.mealId, forAll = true.takeIf { change.also != null }) })
 
     /** Where what is left of a meal can go, and the meals of the next day it may replace. It needs the network. */
-    suspend fun leftoverOffer(planId: String, mealId: String): LeftoverOffer =
-        apiCall(json) { api.leftoverOffer(planId, mealId) }.toDomain()
+    suspend fun leftoverOffer(planId: String, mealId: String, fromPot: Boolean = false): LeftoverOffer =
+        apiCall(json) { api.leftoverOffer(planId, mealId, fromPot = true.takeIf { fromPot }) }.toDomain()
 
     /**
      * Puts what is left of a meal, the part [left] of its portion, in the place of the meal of the next day
      * at [slot]; [theirLeft] where the other person's leftover goes too. It needs the network; the plan as
      * the server then has it is kept and given back.
      */
-    suspend fun putLeftover(planId: String, mealId: String, slot: String, left: Double, theirLeft: Double? = null): Rebalanced =
+    suspend fun putLeftover(
+        planId: String,
+        mealId: String,
+        slot: String,
+        left: Double,
+        theirLeft: Double? = null,
+        fromPot: Boolean = false,
+    ): Rebalanced =
         kept(
             apiCall(json) {
                 api.putLeftover(
                     planId,
                     mealId,
-                    PutLeftoverRequest(mealType = slot, left = left, forAll = true.takeIf { theirLeft != null }, theirLeft = theirLeft),
+                    PutLeftoverRequest(
+                        mealType = slot,
+                        left = left,
+                        forAll = true.takeIf { theirLeft != null },
+                        theirLeft = theirLeft,
+                        fromPot = true.takeIf { fromPot },
+                    ),
                 )
             },
         )
