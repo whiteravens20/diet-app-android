@@ -4177,7 +4177,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -4449,6 +4449,16 @@
         ],
         "parameters": [
           {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "Accept-Language",
             "in": "header",
             "required": false,
@@ -4509,6 +4519,16 @@
             }
           },
           {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "Accept-Language",
             "in": "header",
             "required": false,
@@ -4554,6 +4574,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           }
         ],
@@ -5048,6 +5078,76 @@
         }
       }
     },
+    "/api/inventory/{id}/still-good": {
+      "post": {
+        "operationId": "Inventory_stillGood",
+        "tags": [
+          "inventory"
+        ],
+        "summary": "\"Nadal dobre\": fresh stock past its best-before day is still good, with a new day or without one; either way it counts at home again, without one until its day or amount changes.",
+        "description": "\"Nadal dobre\": fresh stock past its best-before day is still good, with a new day or without one; either way it counts at home again, without one until its day or amount changes. 400 `BEST_BEFORE_PAST` for a new day before the client's, 409 `FROZEN_KEEPS_ITS_DAY` for a package of the freezer.\n\nAsked by an account.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StillGoodRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItem"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        }
+      }
+    },
     "/api/meal-plans": {
       "get": {
         "operationId": "MealPlans_list",
@@ -5224,6 +5324,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           },
           {
@@ -5554,7 +5664,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -5711,7 +5821,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -5951,7 +6061,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -6280,8 +6390,8 @@
         "tags": [
           "meal-plans"
         ],
-        "summary": "Where what is left of a meal of today or yesterday can go: the next day, and the meals of it a leftover may replace.",
-        "description": "Where what is left of a meal of today or yesterday can go: the next day, and the meals of it a leftover may replace.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "summary": "Where what is left of a meal of today or yesterday can go, or the rest of the pot cooked already a meal is eaten from (`fromPot`): the next day, and the meals of it a leftover may replace.",
+        "description": "Where what is left of a meal of today or yesterday can go, or the rest of the pot cooked already a meal is eaten from (`fromPot`): the next day, and the meals of it a leftover may replace.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
         "security": [
           {
             "account": []
@@ -6304,6 +6414,18 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "fromPot",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -6716,7 +6838,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -6855,7 +6977,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -7072,7 +7194,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
+                  "$ref": "#/components/schemas/ChangedPlan"
                 }
               }
             }
@@ -8319,6 +8441,16 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
           }
         ],
         "requestBody": {
@@ -8399,6 +8531,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           }
         ],
@@ -8591,6 +8733,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           }
         ],
@@ -10230,6 +10382,16 @@
             }
           },
           {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "Accept-Language",
             "in": "header",
             "required": false,
@@ -10275,6 +10437,16 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           }
         ],
@@ -10455,6 +10627,16 @@
           }
         ],
         "parameters": [
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
           {
             "name": "Accept-Language",
             "in": "header",
@@ -13909,6 +14091,195 @@
           "newPassword"
         ]
       },
+      "ChangedPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "profileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "durationDays": {
+            "type": "integer"
+          },
+          "dietType": {
+            "$ref": "#/components/schemas/DietType"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MealPlanDay"
+            }
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanWeek"
+            }
+          },
+          "targetMoved": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profileTarget": {
+                    "type": "integer"
+                  },
+                  "planTarget": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "profileTarget",
+                  "planTarget"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "averageDailyNutrition": {
+            "$ref": "#/components/schemas/Nutrition"
+          },
+          "targetMacros": {
+            "$ref": "#/components/schemas/TargetMacros"
+          },
+          "averageOff": {
+            "type": "object",
+            "properties": {
+              "calories": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "over",
+                      "under"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "macros": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "calories",
+              "macros"
+            ],
+            "additionalProperties": false
+          },
+          "ingredientReuseScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "packs": {
+            "$ref": "#/components/schemas/PlanPacks"
+          },
+          "generationMode": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "ai_assisted"
+            ]
+          },
+          "options": {
+            "$ref": "#/components/schemas/PlanOptions"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GenerationReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "joint": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "planId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profileId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "profileName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "profileId",
+                  "profileName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effects": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanChangeEffects"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "profileId",
+          "startDate",
+          "durationDays",
+          "dietType",
+          "days",
+          "weeks",
+          "targetMoved",
+          "averageDailyNutrition",
+          "targetMacros",
+          "averageOff",
+          "ingredientReuseScore",
+          "packs",
+          "generationMode",
+          "options",
+          "report",
+          "revision",
+          "createdAt",
+          "joint",
+          "effects"
+        ],
+        "additionalProperties": false
+      },
       "Complexity": {
         "type": "string",
         "enum": [
@@ -14509,6 +14880,7 @@
           "undo",
           "spread",
           "day-settings",
+          "week-evened",
           "day-variant",
           "leftover",
           "leftover-undo",
@@ -14516,7 +14888,9 @@
           "reroll",
           "retarget",
           "bought-by-weight",
-          "kept"
+          "kept",
+          "joint-removed",
+          "preferences"
         ]
       },
       "DayEventMeal": {
@@ -16761,6 +17135,26 @@
               "additionalProperties": false
             }
           },
+          "sameAgain": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "slot": {
+                  "$ref": "#/components/schemas/MealType"
+                }
+              },
+              "required": [
+                "date",
+                "slot"
+              ],
+              "additionalProperties": false
+            }
+          },
           "pantry": {
             "$ref": "#/components/schemas/PantryUse"
           },
@@ -16774,6 +17168,7 @@
         "required": [
           "relaxations",
           "singleCandidate",
+          "sameAgain",
           "pantry",
           "apart"
         ],
@@ -17035,6 +17430,10 @@
               }
             ]
           },
+          "pastInPantry": {
+            "default": false,
+            "type": "boolean"
+          },
           "estimatedCalories": {
             "type": "number",
             "minimum": 0
@@ -17142,6 +17541,7 @@
           "byWeight",
           "frozenKept",
           "pantryBestBefore",
+          "pastInPantry",
           "estimatedCalories",
           "packs",
           "buyLater",
@@ -17922,6 +18322,10 @@
               }
             ]
           },
+          "keptPastDate": {
+            "default": false,
+            "type": "boolean"
+          },
           "frozen": {
             "default": false,
             "type": "boolean"
@@ -17942,6 +18346,7 @@
           "unit",
           "display",
           "bestBefore",
+          "keptPastDate",
           "frozen",
           "createdAt",
           "updatedAt"
@@ -22090,11 +22495,15 @@
                   },
                   "mealType": {
                     "$ref": "#/components/schemas/MealType"
+                  },
+                  "fromPot": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
                   "date",
-                  "mealType"
+                  "mealType",
+                  "fromPot"
                 ],
                 "additionalProperties": false
               },
@@ -22113,6 +22522,55 @@
                   "skipped",
                   "no_meal"
                 ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pot": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "cookedOn": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "cooked": {
+                    "type": "number"
+                  },
+                  "rest": {
+                    "type": "number"
+                  },
+                  "held": {
+                    "type": "boolean"
+                  },
+                  "offer": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ok",
+                          "no_day",
+                          "skipped",
+                          "no_meal"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "cookedOn",
+                  "cooked",
+                  "rest",
+                  "held",
+                  "offer"
+                ],
+                "additionalProperties": false
               },
               {
                 "type": "null"
@@ -22170,6 +22628,7 @@
           "leftover",
           "carriedTo",
           "leftoverOffer",
+          "pot",
           "topping"
         ],
         "additionalProperties": false
@@ -24270,6 +24729,10 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 1
+          },
+          "fromPot": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
@@ -27120,6 +27583,10 @@
               }
             ]
           },
+          "pastInPantry": {
+            "default": false,
+            "type": "boolean"
+          },
           "estimatedCalories": {
             "type": "number",
             "minimum": 0
@@ -27201,6 +27668,7 @@
           "byWeight",
           "frozenKept",
           "pantryBestBefore",
+          "pastInPantry",
           "estimatedCalories",
           "packs",
           "buyLater",
@@ -27242,6 +27710,22 @@
           "groats",
           "bread"
         ]
+      },
+      "StillGoodRequest": {
+        "type": "object",
+        "properties": {
+          "bestBefore": {
+            "default": null,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
       },
       "StoredImportRejection": {
         "type": "object",
