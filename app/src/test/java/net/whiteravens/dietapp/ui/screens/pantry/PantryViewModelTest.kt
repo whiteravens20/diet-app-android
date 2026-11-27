@@ -280,6 +280,34 @@ class PantryViewModelTest {
     }
 
     @Test
+    fun `fresh stock past its day is said to be still good from its window, with a day or without one, and a refusal stays in the window`() = runTest(main) {
+        val past = egg.copy(bestBefore = LocalDate.parse("2026-11-20"))
+        val kept = past.copy(keptPastDate = true)
+        val pantry = pantry(past, oats)
+        coEvery { pantry.keep("egg-row", null) } returns kept
+        coEvery { pantry.keep("egg-row", LocalDate.parse("2026-11-25")) } throws refused("BEST_BEFORE_PAST")
+        val model = PantryViewModel(pantry, users, queue, application, SavedStateHandle())
+        runCurrent()
+
+        model.openKeep(past)
+        model.chooseKeepDay(LocalDate.parse("2026-11-25"))
+        model.keep()
+        runCurrent()
+
+        assertEquals(past, model.state.value.keeping)
+        assertEquals("BEST_BEFORE_PAST", (model.state.value.keepFailure as ApiException).code)
+        assertFalse(model.state.value.keepSending)
+
+        model.chooseKeepDay(null)
+        assertNull(model.state.value.keepFailure)
+        model.keep()
+        runCurrent()
+
+        assertNull(model.state.value.keeping)
+        assertEquals(listOf(kept, oats), model.state.value.rows)
+    }
+
+    @Test
     fun `a fresh row goes into the freezer from its window, in the portions typed, and the pantry is shown as the API answers it`() = runTest(main) {
         val today = LocalDate.parse("2026-11-18")
         val first = milk.copy(id = "milk-1", shown = 500.0, bestBefore = LocalDate.parse("2026-12-18"), frozen = true)

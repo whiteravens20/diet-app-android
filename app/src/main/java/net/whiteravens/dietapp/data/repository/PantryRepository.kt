@@ -10,6 +10,7 @@ import net.whiteravens.dietapp.data.remote.FreezePantryRowRequest
 import net.whiteravens.dietapp.data.remote.IngredientDto
 import net.whiteravens.dietapp.data.remote.InventoryItemDto
 import net.whiteravens.dietapp.data.remote.PatchInventoryItemRequest
+import net.whiteravens.dietapp.data.remote.StillGoodRequest
 import net.whiteravens.dietapp.data.remote.UpsertInventoryItemRequest
 import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
@@ -95,6 +96,13 @@ class PantryRepository @Inject constructor(
         return queue.submit(queued) { send(queued) }
     }
 
+    /**
+     * "Nadal dobre": fresh stock [id] past its day is still good, until [bestBefore] where one is given, or until its day
+     * or amount changes; the row as it is kept now. It needs the network.
+     */
+    suspend fun keep(id: String, bestBefore: LocalDate?): PantryRow =
+        apiCall(json) { api.keepPantryRow(id, StillGoodRequest(bestBefore?.toString())) }.toDomain()
+
     /** Sends a row's change; answers the row as it is kept now. */
     suspend fun send(change: QueuedChange.PantryChanged): PantryRow {
         val request = PatchInventoryItemRequest(
@@ -143,6 +151,7 @@ private fun InventoryItemDto.toDomain() = PantryRow(
     frozen = frozen,
     quantity = quantity,
     unit = unit,
+    keptPastDate = keptPastDate,
 )
 
 private fun IngredientDto.toStockable() = StockableIngredient(id, name, category, pantryUnits, pantryUnits.first(), displayUnit ?: "piece")

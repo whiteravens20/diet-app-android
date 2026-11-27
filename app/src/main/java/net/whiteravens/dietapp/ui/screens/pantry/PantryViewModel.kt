@@ -142,6 +142,14 @@ class PantryViewModel @Inject constructor(
         val freezeFailure: Throwable? = null,
         /** The fresh row whose amount the window of putting in shows, found again in its search. */
         val changingInWindow: String? = null,
+        /** The row past its day whose "Nadal dobre" window is open, until it is saved or put away. */
+        val keeping: PantryRow? = null,
+        /** The day typed in that window, where one is: none keeps the row until its day or amount changes. */
+        val keepDay: LocalDate? = null,
+        /** The "Nadal dobre" on its way. */
+        val keepSending: Boolean = false,
+        /** Why the last "Nadal dobre" was refused, shown in its window. */
+        val keepFailure: Throwable? = null,
     ) {
         val busy: Boolean get() = adding || changing != null
 
@@ -415,6 +423,28 @@ class PantryViewModel @Inject constructor(
      * Sends what [change] says of [row]; the row is shown as the API then keeps it. Something put in
      * that waits to be sent is not changed until it is.
      */
+    /** Opens the "Nadal dobre" window of [row], fresh stock past its day. */
+    fun openKeep(row: PantryRow) = _state.update { it.copy(keeping = row, keepDay = null, keepFailure = null, keepSending = false) }
+
+    /** The day typed in the "Nadal dobre" window; null for none. */
+    fun chooseKeepDay(day: LocalDate?) = _state.update { it.copy(keepDay = day, keepFailure = null) }
+
+    /** The "Nadal dobre" window put away. */
+    fun closeKeep() = _state.update { it.copy(keeping = null, keepFailure = null, keepSending = false) }
+
+    /** Says the row of the window is still good, until the day typed or, without one, until its day or amount changes. */
+    fun keep() {
+        val current = _state.value
+        val row = current.keeping ?: return
+        if (current.keepSending) return
+        _state.update { it.copy(keepSending = true, keepFailure = null) }
+        viewModelScope.launch {
+            attempt { pantry.keep(row.id, current.keepDay) }
+                .onSuccess { kept -> _state.update { it.copy(keeping = null, keepSending = false, rows = it.rows.withRow(kept)) } }
+                .onFailure { e -> _state.update { it.copy(keepSending = false, keepFailure = e) } }
+        }
+    }
+
     fun change(row: PantryRow, change: PantryChange) {
         val profileId = _state.value.profileId ?: return
         if (change.isEmpty || _state.value.busy || row.id in _state.value.waitingAdditions) return

@@ -31,6 +31,8 @@ data class PantryRow(
     val quantity: Double = shown,
     /** `g` | `ml` | `piece`: the unit the API keeps it in. */
     val unit: String = shownUnit,
+    /** Fresh stock past [bestBefore] the user said is still good: it counts at home until its day or amount changes. */
+    val keptPastDate: Boolean = false,
 )
 
 /**

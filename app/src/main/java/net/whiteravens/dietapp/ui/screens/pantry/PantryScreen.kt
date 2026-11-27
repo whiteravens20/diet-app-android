@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -234,6 +235,8 @@ fun PantryScreen(
                                             onChange = { viewModel.change(row, it) },
                                             onRemove = { viewModel.remove(row, undoFor) },
                                             onFreeze = { viewModel.openFreeze(row) },
+                                            online = !state.offline,
+                                            onKeep = { viewModel.openKeep(row) },
                                         )
                                     }
                                 }
@@ -249,6 +252,17 @@ fun PantryScreen(
     }
     if (state.addWindow) AddWindow(state, viewModel)
     if (state.freezing != null) FreezeDialog(state, viewModel)
+    state.keeping?.let { row ->
+        StillGoodDialog(
+            row = row,
+            day = state.keepDay,
+            sending = state.keepSending,
+            failure = state.keepFailure,
+            onDay = viewModel::chooseKeepDay,
+            onKeep = viewModel::keep,
+            onDismiss = viewModel::closeKeep,
+        )
+    }
 }
 
 /**
@@ -453,6 +467,8 @@ private fun RowItem(
     onChange: (PantryChange) -> Unit,
     onRemove: () -> Unit,
     onFreeze: () -> Unit,
+    online: Boolean = true,
+    onKeep: () -> Unit = {},
 ) {
     var editing by rememberSaveable(row.id) { mutableStateOf(false) }
     // A package in the freezer has a row of its own beside the fresh one and the other packages: each control says which it is of.
@@ -485,11 +501,13 @@ private fun RowItem(
         }
         // The day on a line of its own, the width of the row, so that a narrow screen does not break it, after the
         // mark of what is frozen.
+        // Fresh stock past its day counts nowhere until it is said to be still good, and says so until it is.
+        val pastFresh = !row.frozen && row.bestBefore?.let { freshness(it, LocalDate.now()) } == Freshness.PAST
         if (row.bestBefore != null || row.frozen) {
             val day = row.bestBefore
             val near = when (day?.let { freshness(it, LocalDate.now()) }) {
                 Freshness.SOON -> R.string.pantry_expiring_soon
-                Freshness.PAST -> R.string.pantry_past_date
+                Freshness.PAST -> R.string.pantry_past_date.takeUnless { pastFresh && row.keptPastDate }
                 Freshness.FINE, null -> null
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -517,7 +535,24 @@ private fun RowItem(
                         content = MaterialTheme.colorScheme.onErrorContainer,
                     )
                 }
+                if (pastFresh && row.keptPastDate) {
+                    LabelChip(stringResource(R.string.pantry_kept_past_date), modifier = Modifier.align(Alignment.CenterVertically))
+                }
             }
+        }
+        if (pastFresh && !row.keptPastDate) {
+            Text(
+                stringResource(R.string.pantry_past_date_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            val label = stringResource(R.string.pantry_still_good_label, name)
+            OutlinedButton(
+                onClick = onKeep,
+                enabled = enabled && online && !added,
+                modifier = Modifier.padding(top = 4.dp).semantics { contentDescription = label },
+            ) { Text(stringResource(R.string.pantry_still_good)) }
         }
         if (waiting) WaitingMark(Modifier.padding(top = 4.dp))
         if (editing && !added) {
@@ -624,6 +659,61 @@ private fun FreezeDialog(state: PantryViewModel.UiState, viewModel: PantryViewMo
             }
         },
         dismissButton = { TextButton(onClick = viewModel::closeFreeze) { Text(stringResource(R.string.common_cancel)) } },
+    )
+}
+
+/**
+ * The "Nadal dobre" window of fresh stock past its day: a new best-before day, or none, after which the stock counts
+ * at home again, without a day until its day or amount changes. It needs the network.
+ */
+@Composable
+internal fun StillGoodDialog(
+    row: PantryRow,
+    day: LocalDate?,
+    sending: Boolean,
+    failure: Throwable?,
+    onDay: (LocalDate?) -> Unit,
+    onKeep: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(stringResource(R.string.pantry_still_good_title))
+                Text(
+                    "${row.name}, ${amountLabel(row.shown, row.shownUnit, row.shownGrams)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.pantry_still_good_intro), style = MaterialTheme.typography.bodyMedium)
+                DateField(
+                    stringResource(R.string.pantry_still_good_date),
+                    day,
+                    onPick = { if (!sending) onDay(it) },
+                    optional = true,
+                )
+                if (day != null) {
+                    TextButton(onClick = { onDay(null) }, enabled = !sending) {
+                        Text(stringResource(R.string.common_clear))
+                    }
+                }
+                failure?.let { error ->
+                    ErrorBanner(
+                        "${stringResource(R.string.pantry_err_still_good)} ${errorMessage(error)}",
+                        Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onKeep, enabled = !sending) { Text(stringResource(R.string.pantry_still_good)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } },
     )
 }
 

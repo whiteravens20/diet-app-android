@@ -943,7 +943,7 @@
         <item quantity="many">Od 1 do %1$d porcji.</item>
         <item quantity="other">Od 1 do %1$d porcji.</item>
     </plurals>
-    <string name="pantry_past_date">po terminie</string>
+    <string name="pantry_past_date">termin minął</string>
     <string name="pantry_add">Dodaj</string>
     <string name="pantry_added">Dodano: %1$s, %2$s.</string>
     <string name="pantry_added_frozen">Dodano do zamrażarki: %1$s, %2$s.</string>
@@ -959,6 +959,14 @@
     <string name="pantry_err_change">Nie udało się zaktualizować pozycji.</string>
     <string name="pantry_err_remove">Nie udało się usunąć pozycji.</string>
     <string name="pantry_err_freeze">Nie udało się zamrozić pozycji.</string>
+    <string name="pantry_kept_past_date">po terminie, nadal dobre</string>
+    <string name="pantry_past_date_note">Nie liczy się jako „w\u00A0domu” na listach ani w\u00A0planach, dopóki nie potwierdzisz, że jest nadal dobre.</string>
+    <string name="pantry_still_good">Nadal dobre</string>
+    <string name="pantry_still_good_label">Nadal dobre: %1$s</string>
+    <string name="pantry_still_good_title">Nadal dobre</string>
+    <string name="pantry_still_good_intro">Podaj nową datę ważności albo zostaw pole puste. Zapas znów będzie liczony jako „w\u00A0domu”, bez nowej daty do czasu, aż zmienisz jego datę albo ilość.</string>
+    <string name="pantry_still_good_date">Nowa data ważności</string>
+    <string name="pantry_err_still_good">Nie udało się zapisać, że jest nadal dobre.</string>
 
     <!-- Weight log -->
     <string name="weight_title">Dziennik wagi</string>
@@ -2668,6 +2676,9 @@
     <string name="shopping_part_of">Ta lista to część listy dla domu: %1$s. Odhaczenie tutaj zmienia tylko część tego planu.</string>
     <string name="shopping_open_household">Otwórz listę dla domu</string>
     <string name="shopping_replaces_part">Lista z tych dni jest częścią listy dla domu: %1$s. Nowa lista zajmie jej miejsce, a lista dla domu straci część tego planu.</string>
+    <string name="shopping_past_in_pantry">Część tego w\u00A0domu jest po terminie.</string>
+    <string name="shopping_past_in_pantry_banner">Część zapasu, na który liczy ta lista, jest po terminie.</string>
+    <string name="shopping_past_in_pantry_hint">Zaktualizowana lista policzy go dopiero, gdy w\u00A0spiżarni potwierdzisz, że jest nadal dobry.</string>
     <!-- Under a reminder of water's amounts in the list of notifications, as the web's bell has it -->
     <string name="notifications_water_go">Przejdź do pulpitu</string>
     <!-- Whether a profile tracks water, and the water card's note on turning it off, as the web says them -->

@@ -979,7 +979,19 @@ data class InventoryItemDto(
     val bestBefore: String? = null,
     /** In the freezer: a package of its own beside what is fresh of the ingredient; a food may have many. */
     val frozen: Boolean = false,
+    /**
+     * Fresh stock past [bestBefore] that the user said is still good: it counts at home again until its day or
+     * amount is changed; none from an API that does not say it.
+     */
+    val keptPastDate: Boolean = false,
 )
+
+/**
+ * POST `/inventory/:id/still-good`: fresh stock past its day is still good, until [bestBefore] where one is given,
+ * or until its day or amount is changed where none is.
+ */
+@Serializable
+data class StillGoodRequest(val bestBefore: String? = null)
 
 /**
  * POST `/inventory`: some of an ingredient put into a profile's pantry, in [unit], and added to the
@@ -2481,6 +2493,11 @@ data class ShoppingListItemDto(
     val byWeight: Boolean = false,
     /** Earliest best-before among contributing pantry rows, or null. */
     val pantryBestBefore: String? = null,
+    /**
+     * Part of what the row counts at home is fresh stock past its day that nobody said is still good: a list made
+     * now would not count it. None from an API that does not say it.
+     */
+    val pastInPantry: Boolean = false,
     /**
      * What the freezer holds of the food that the row does not count as at home, in the row's unit: packages the plan
      * leaves frozen; none from an API that does not say it.

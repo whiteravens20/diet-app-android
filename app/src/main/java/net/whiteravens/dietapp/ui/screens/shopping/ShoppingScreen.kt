@@ -409,6 +409,15 @@ fun ShoppingScreen(
                             }
                         }
                     }
+                    // Stock the list counts at home that has passed its day since: an updated list counts it no more.
+                    if (list.groups.any { group -> group.items.any { it.pastInPantry } }) {
+                        item(key = "past-in-pantry") {
+                            PastInPantryBanner(
+                                onUpdate = { viewModel.update(list) }.takeIf { !state.offline && !list.stale },
+                                busy = busy,
+                            )
+                        }
+                    }
                     val everyItem = list.groups.flatMap { it.items }
                     if (everyItem.any { it.packsStand }) {
                         item(key = "packs") { HowItWorks(stringResource(R.string.shopping_packs_hint), packsHow) { packsHow = it } }
@@ -585,6 +594,28 @@ private fun ListDaysDialog(plan: MealPlanSummary, parts: List<ShoppingList>, onM
 }
 
 /**
+ * The note of a list that counts at home stock past its day nobody said is still good: an updated list counts it no
+ * more, and [onUpdate] makes one where the list can be updated here (online, and not stale, whose own note offers it).
+ */
+@Composable
+internal fun PastInPantryBanner(onUpdate: (() -> Unit)?, busy: Boolean) {
+    AppCard {
+        Text(stringResource(R.string.shopping_past_in_pantry_banner), style = MaterialTheme.typography.bodyMedium)
+        Text(
+            stringResource(R.string.shopping_past_in_pantry_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        onUpdate?.let {
+            Button(onClick = it, enabled = !busy, modifier = Modifier.padding(top = 8.dp)) {
+                Text(stringResource(R.string.shopping_stale_update))
+            }
+        }
+    }
+}
+
+/**
  * A row of the list: what is still to be bought of it, ticked with a tap; the packs it takes, taken
  * for bought with a tap; and what is at home and what was bought, told in a part that opens under
  * it. The API keeps one number for everything the user has for a row; the row shows it as its two
@@ -671,6 +702,13 @@ internal fun ShoppingItemRow(
                             }
                             item.pantryBestBefore?.takeIf { item.atHome > 0 }?.let { day ->
                                 LabelChip(stringResource(R.string.shopping_best_before, formatDate(day)), modifier = Modifier.padding(top = 2.dp))
+                            }
+                            if (item.pastInPantry) {
+                                Text(
+                                    stringResource(R.string.shopping_past_in_pantry),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                )
                             }
                             // On a household list, what each profile's plan needs of the row.
                             if (item.shares.isNotEmpty()) {

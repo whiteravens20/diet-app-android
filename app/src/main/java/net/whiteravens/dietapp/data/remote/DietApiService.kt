@@ -330,6 +330,14 @@ interface DietApiService {
     @DELETE("inventory/{id}")
     suspend fun removePantryRow(@Path("id") id: String)
 
+    /**
+     * "Nadal dobre": fresh stock past its day is still good, until a new day or, without one, until its day or amount
+     * is changed; answers the row as it is kept now. 400 `BEST_BEFORE_PAST` for a day before the client's, 409
+     * `FROZEN_KEEPS_ITS_DAY` for a package of the freezer.
+     */
+    @POST("inventory/{id}/still-good")
+    suspend fun keepPantryRow(@Path("id") id: String, @Body body: StillGoodRequest): InventoryItemDto
+
     /** The size to freeze a row of the pantry in, from the profile's plans (`InventoryPortionDto`). */
     @GET("inventory/{id}/portion")
     suspend fun pantryRowPortion(@Path("id") id: String): InventoryPortionDto

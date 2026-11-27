@@ -879,6 +879,14 @@
     <string name="pantry_err_change">Could not update the item.</string>
     <string name="pantry_err_remove">Could not remove the item.</string>
     <string name="pantry_err_freeze">Could not freeze the item.</string>
+    <string name="pantry_kept_past_date">past its date, still good</string>
+    <string name="pantry_past_date_note">It counts at home on no list and in no plan until you say it is still good.</string>
+    <string name="pantry_still_good">Still good</string>
+    <string name="pantry_still_good_label">Still good: %1$s</string>
+    <string name="pantry_still_good_title">Still good</string>
+    <string name="pantry_still_good_intro">Give a new best-before day or leave the field empty. The stock counts at home again, without a new day until you change its day or amount.</string>
+    <string name="pantry_still_good_date">New best-before day</string>
+    <string name="pantry_err_still_good">Could not save that it is still good.</string>
 
     <!-- Weight log -->
     <string name="weight_title">Weight log</string>
@@ -2494,6 +2502,9 @@
     <string name="shopping_part_of">This list is a part of a household list: %1$s. A tick here changes this plan\'s part only.</string>
     <string name="shopping_open_household">Open the household list</string>
     <string name="shopping_replaces_part">A list of these days is a part of a household list: %1$s. A new list takes its place, and the household list loses this plan\'s part.</string>
+    <string name="shopping_past_in_pantry">Some of this at home is past its best-before day.</string>
+    <string name="shopping_past_in_pantry_banner">Some of the stock this list counts at home is past its best-before day.</string>
+    <string name="shopping_past_in_pantry_hint">An updated list counts it again only once you say in the pantry that it is still good.</string>
     <!-- Under a reminder of water's amounts in the list of notifications, as the web's bell has it -->
     <string name="notifications_water_go">Go to the dashboard</string>
     <!-- Whether a profile tracks water, and the water card's note on turning it off, as the web says them -->

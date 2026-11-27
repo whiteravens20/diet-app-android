@@ -634,6 +634,7 @@ fun ShoppingListItemDto.toDomain() = ShoppingItem(
     shares = shares.map { ItemShare(it.profileId, it.profile, it.totalQuantity) },
     pantries = pantries.map { RowPantry(it.profileId, it.profile, it.quantity) },
     frozenKept = frozenKept,
+    pastInPantry = pastInPantry,
     boughtLooseOn = boughtLooseOn,
     byWeight = byWeight,
 )

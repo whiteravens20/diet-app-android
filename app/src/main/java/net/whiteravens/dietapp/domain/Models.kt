@@ -1432,6 +1432,8 @@ data class ShoppingItem(
     val boughtLooseOn: String? = null,
     /** Fresh meat or fish sold in packs, which may be bought by weight instead. */
     val byWeight: Boolean = false,
+    /** Part of what it counts at home is fresh stock past its day nobody said is still good: a list made now would not count it. */
+    val pastInPantry: Boolean = false,
 ) {
     /** Everything the user has for the row. */
     val have: Double get() = purchasedQuantity ?: atHome
