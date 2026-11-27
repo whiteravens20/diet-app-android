@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.int
@@ -28,6 +29,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.di.AppModule
 import net.whiteravens.dietapp.domain.WaterEntry
 import net.whiteravens.dietapp.domain.WaterPoint
+import net.whiteravens.dietapp.notify.WaterReminderShade
 import net.whiteravens.dietapp.testing.changeQueue
 import net.whiteravens.dietapp.testing.clientHeaders
 import net.whiteravens.dietapp.testing.fixture
@@ -61,6 +63,9 @@ class WaterRepositoryTest {
 
     private val watered by lazy { WateredStore(PreferenceDataStoreFactory.create(scope = scope, produceFile = { File(folder.root, "watered.preferences_pb") })) }
 
+    /** What the phone shows of the reminders of water. */
+    private val shade = mockk<WaterReminderShade>(relaxed = true)
+
     private val profileId = "5c52d79a-1aa4-4614-8005-ff8210b3bc3b"
     private val day = LocalDate.parse("2026-11-07")
 
@@ -79,7 +84,7 @@ class WaterRepositoryTest {
     private fun repository(queue: ChangeQueue = changeQueue()): WaterRepository {
         val config = mockk<ServerConfigStore>()
         coEvery { config.current() } returns server.url("/api/").toString()
-        return WaterRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json, queue, watered)
+        return WaterRepository(AppModule.api(AppModule.baseOkHttp(BaseUrlInterceptor(config), clientHeaders()), json), json, queue, watered, shade)
     }
 
     private fun answer(status: Int, name: String) =
@@ -119,6 +124,8 @@ class WaterRepositoryTest {
         assertEquals(330, body.getValue("ml").jsonPrimitive.int)
         UUID.fromString(sent.getHeader("Idempotency-Key"))
         assertEquals(930, (added as Submitted.Sent).answer.ml)
+        // Who just drank is not told to drink: the phone's reminder of that day goes.
+        verify(exactly = 1) { shade.takeDown(profileId, day) }
         // The icon's shortcuts add to it next, of the account's profiles; before any water, to the first.
         val ala = Profile("a", "Ala", "balanced", 4, 64.0, null)
         val other = Profile(profileId, "Adam", "balanced", 4, 90.0, null)
@@ -138,6 +145,8 @@ class WaterRepositoryTest {
         val water = repository(queue)
 
         assertEquals(Submitted.Kept(offline = true), runBlocking { water.add(profileId, day, 330) })
+        // Kept to be sent, it was drunk all the same.
+        verify(exactly = 1) { shade.takeDown(profileId, day) }
         val kept = runBlocking { queue.waiting.first() }.single().change as QueuedChange.WaterAdded
         assertEquals(QueuedChange.WaterAdded(profileId, "2026-11-07", 330, kept.key), kept)
 

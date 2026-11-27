@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.os.bundleOf
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.data.notify.NewNotifications
 import net.whiteravens.dietapp.domain.AccountNotification
@@ -48,6 +49,14 @@ object PhoneNotifier {
 
     /** How long a reminder of water says what a press added before it goes, as the web's does. */
     private const val ADDED_SHOWN_MS = 4_000L
+
+    /** What marks a reminder of water with its profile and its day, by which [remindsOfWater] knows it. */
+    private const val EXTRA_WATER_PROFILE = "net.whiteravens.dietapp.extra.WATER_PROFILE"
+    private const val EXTRA_WATER_DAY = "net.whiteravens.dietapp.extra.WATER_DAY"
+
+    /** Whether [shown] is the reminder of water of [profileId]'s [day]. */
+    fun remindsOfWater(shown: Notification, profileId: String, day: LocalDate): Boolean =
+        shown.extras.getString(EXTRA_WATER_PROFILE) == profileId && shown.extras.getString(EXTRA_WATER_DAY) == day.toString()
 
     fun ensureChannel(context: Context) {
         val channel = NotificationChannelCompat.Builder(CHANNEL, NotificationManagerCompat.IMPORTANCE_DEFAULT)
@@ -136,6 +145,7 @@ object PhoneNotifier {
     /** A reminder of water saying [text], with an amount of the water card on each of its buttons. */
     private fun waterReminder(context: Context, reminder: WaterReminderShown, text: String, private: Boolean): Notification =
         shownAs(context, reminder.name, text, reminder.at, openWater(context, reminder), private).apply {
+            addExtras(bundleOf(EXTRA_WATER_PROFILE to reminder.profileId, EXTRA_WATER_DAY to reminder.day.toString()))
             WATER_AMOUNTS_ML.forEach { ml ->
                 val press = PendingIntent.getBroadcast(context, reminder.key, reminder.press(ml).intent(context), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 addAction(0, context.getString(R.string.water_add_ml, ml), press)

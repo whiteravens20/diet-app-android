@@ -14,6 +14,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.domain.WaterDay
 import net.whiteravens.dietapp.domain.WaterEntry
 import net.whiteravens.dietapp.domain.WaterPoint
+import net.whiteravens.dietapp.notify.WaterReminderShade
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -32,15 +33,22 @@ class WaterRepository @Inject constructor(
     private val json: Json,
     private val queue: ChangeQueue,
     private val watered: WateredStore,
+    private val shade: WaterReminderShade,
 ) {
     /** The water of [profileId]'s [day], with the seven days that end with it. */
     suspend fun day(profileId: String, day: LocalDate): WaterDay =
         apiCall(json) { api.water(profileId, day.toString()) }.toDomain()
 
-    /** Adds [ml] to [profileId]'s [day]: the day as the API then has it, or kept to be sent in its turn. */
+    /**
+     * Adds [ml] to [profileId]'s [day]: the day as the API then has it, or kept to be sent in its turn. The phone's
+     * reminder of water of that day goes, sent or kept: who just drank is not told to drink.
+     */
     suspend fun add(profileId: String, day: LocalDate, ml: Int): Submitted<WaterDay> {
         val queued = QueuedChange.WaterAdded(profileId, day.toString(), ml, UUID.randomUUID().toString())
-        return queue.submit(queued) { send(queued) }.also { watered.watered(profileId) }
+        return queue.submit(queued) { send(queued) }.also {
+            watered.watered(profileId)
+            shade.takeDown(profileId, day)
+        }
     }
 
     /** Sends water added; answers its day as the API then has it. */
