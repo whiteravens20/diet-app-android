@@ -994,6 +994,34 @@ data class InventoryItemDto(
 data class StillGoodRequest(val bestBefore: String? = null)
 
 /**
+ * A food of what eating took, or would take, off the pantry, each amount as a row of the pantry shows it: what is
+ * counted in its pieces, the rest to the gram or millilitre. What is shown as taken is what is taken.
+ */
+@Serializable
+data class EatenFromPantryDto(
+    val ingredientId: String,
+    val name: String,
+    /** What the meal or the entry ate of it, rounded as it is taken. */
+    val eaten: DisplayAmountDto,
+    /** What the pantry holds of it fresh now. */
+    val held: DisplayAmountDto,
+    /** What is taken: of an offer the lesser of the two, of what was taken what it took. */
+    val taken: DisplayAmountDto,
+)
+
+/**
+ * What eating a meal of a plan, or an entry of the diary of an ingredient or a recipe, does to the pantry on a day no
+ * shopping list covers ("Zdejmij ze spiżarni to, co zjedzono"): nothing by itself. [offer] is what taking it would
+ * take now; [taken] what was taken, which giving it back returns. [profileName] says whose pantry it is.
+ */
+@Serializable
+data class EatenPantryDto(
+    val profileName: String = "",
+    val offer: List<EatenFromPantryDto> = emptyList(),
+    val taken: List<EatenFromPantryDto> = emptyList(),
+)
+
+/**
  * POST `/inventory`: some of an ingredient put into a profile's pantry, in [unit], and added to the
  * row of that ingredient and unit where there is one. A [bestBefore] left out leaves that row's day.
  */
@@ -2846,6 +2874,8 @@ data class DiaryEntryDto(
     val estimated: Boolean,
     /** Of a meal of one's own, which macronutrients (`protein`, `fat`, `carbs`) were estimated. */
     val estimatedMacros: List<String> = emptyList(),
+    /** Something was taken off the pantry for it, as the user confirmed: its removal offers to give that back first. */
+    val takenFromPantry: Boolean = false,
     /**
      * Of an entry as it is written or changed (`WrittenDiaryEntry`): where it is of today, what it did to the day of
      * the plan the diary shows, sized again with the entry counted as eaten; null otherwise, and in a day's list.

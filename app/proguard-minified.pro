@@ -101,8 +101,9 @@
 -keep class net.whiteravens.dietapp.data.auth.UnlockStandIn { *; }
 -keep class net.whiteravens.dietapp.data.auth.StandInPhone { *; }
 -keep class net.whiteravens.dietapp.data.auth.UnlockDevice { *; }
-# The pot of a meal, the leftover's window, the card after a change and the pantry's stock past its day, drawn alone by
-# the screens' look tests (SeamsLinesTest): the composables they call and every class they build or pass.
+# The pot of a meal, the leftover's window, the card after a change, the pantry's stock past its day and the window of
+# what eating takes off the pantry, drawn alone by the screens' look tests (SeamsLinesTest): the composables they call
+# and every class they build or pass.
 -keep class net.whiteravens.dietapp.ui.screens.plans.LeftoverDialogKt { *** LeftoverDialog(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailViewModel$LeftoverWindow { *; }
 -keep class net.whiteravens.dietapp.ui.screens.plans.RebalanceCardKt { *** RebalanceCard(...); }
@@ -131,3 +132,12 @@
 -keep class net.whiteravens.dietapp.domain.OtherPortion { *; }
 -keep class net.whiteravens.dietapp.domain.Rebalance { *; }
 -keep class net.whiteravens.dietapp.domain.PlanDay { *; }
+-keep class net.whiteravens.dietapp.ui.components.EatenPantryDialogKt { *** EatenPantryDialog(...); }
+-keep class net.whiteravens.dietapp.ui.common.PantryWindow { *; }
+-keep class net.whiteravens.dietapp.ui.common.EatenPortion { *; }
+-keep class net.whiteravens.dietapp.ui.common.PantryQuestion { *; }
+-keep class net.whiteravens.dietapp.domain.EatenPantry { *; }
+-keep class net.whiteravens.dietapp.domain.EatenFood { *; }
+-keep class net.whiteravens.dietapp.domain.ShownAmount { *; }
+-keep class net.whiteravens.dietapp.domain.EatenOf { *; }
+-keep class net.whiteravens.dietapp.domain.EatenOf$* { *; }

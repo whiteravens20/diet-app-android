@@ -6,6 +6,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import net.whiteravens.dietapp.data.remote.DietApiService
+import net.whiteravens.dietapp.data.remote.DisplayAmountDto
+import net.whiteravens.dietapp.data.remote.EatenFromPantryDto
+import net.whiteravens.dietapp.data.remote.EatenPantryDto
 import net.whiteravens.dietapp.data.remote.FreezePantryRowRequest
 import net.whiteravens.dietapp.data.remote.IngredientDto
 import net.whiteravens.dietapp.data.remote.InventoryItemDto
@@ -16,9 +19,13 @@ import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
+import net.whiteravens.dietapp.domain.EatenFood
+import net.whiteravens.dietapp.domain.EatenOf
+import net.whiteravens.dietapp.domain.EatenPantry
 import net.whiteravens.dietapp.domain.PantryChange
 import net.whiteravens.dietapp.domain.PantryPortion
 import net.whiteravens.dietapp.domain.PantryRow
+import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.domain.StockableIngredient
 import net.whiteravens.dietapp.domain.frozenUntil
 import java.time.LocalDate
@@ -137,7 +144,43 @@ class PantryRepository @Inject constructor(
     /** Sends a row's freezing; answers the pantry of its profile as it is then. */
     suspend fun send(change: QueuedChange.PantryFrozen): List<PantryRow> =
         apiCall(json) { api.freezePantryRow(change.key, change.id, FreezePantryRowRequest(change.portions)) }.map { it.toDomain() }
+
+    /**
+     * What eating the meal or the entry [of] does to its profile's pantry on a day no shopping list covers: what taking
+     * it would take, and what it took. Asked of the server, never kept: it needs the network.
+     */
+    suspend fun eaten(of: EatenOf): EatenPantry =
+        apiCall(json) {
+            when (of) {
+                is EatenOf.Meal -> api.mealPantry(of.planId, of.mealId)
+                is EatenOf.Entry -> api.entryPantry(of.id)
+            }
+        }.toDomain()
+
+    /** Takes what [of] ate off the pantry, as offered: once, until it is given back. It needs the network. */
+    suspend fun takeEaten(of: EatenOf) =
+        apiCall(json) {
+            when (of) {
+                is EatenOf.Meal -> api.takeMealPantry(of.planId, of.mealId)
+                is EatenOf.Entry -> api.takeEntryPantry(of.id)
+            }
+        }
+
+    /** Gives back to the pantry what [of] took off it ("Oddaj do spiżarni"). It needs the network. */
+    suspend fun giveBackEaten(of: EatenOf) =
+        apiCall(json) {
+            when (of) {
+                is EatenOf.Meal -> api.returnMealPantry(of.planId, of.mealId)
+                is EatenOf.Entry -> api.returnEntryPantry(of.id)
+            }
+        }
 }
+
+private fun EatenPantryDto.toDomain() = EatenPantry(profileName, offer.map { it.toDomain() }, taken.map { it.toDomain() })
+
+private fun EatenFromPantryDto.toDomain() = EatenFood(ingredientId, name, eaten.shown(), held.shown(), taken.shown())
+
+private fun DisplayAmountDto.shown() = ShownAmount(quantity, unit, grams)
 
 private fun InventoryItemDto.toDomain() = PantryRow(
     id = id,

@@ -2,12 +2,18 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasStateDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.domain.CarriedTo
+import net.whiteravens.dietapp.domain.EatenFood
+import net.whiteravens.dietapp.domain.EatenOf
+import net.whiteravens.dietapp.domain.EatenPantry
 import net.whiteravens.dietapp.domain.EffectList
 import net.whiteravens.dietapp.domain.LeftoverOffer
 import net.whiteravens.dietapp.domain.LeftoverPlace
@@ -20,7 +26,13 @@ import net.whiteravens.dietapp.domain.PlanEffects
 import net.whiteravens.dietapp.domain.Portion
 import net.whiteravens.dietapp.domain.Pot
 import net.whiteravens.dietapp.domain.ShoppingItem
+import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.testing.EachLanguage
+import net.whiteravens.dietapp.testing.shown
+import net.whiteravens.dietapp.ui.common.EatenPortion
+import net.whiteravens.dietapp.ui.common.PantryQuestion
+import net.whiteravens.dietapp.ui.common.PantryWindow
+import net.whiteravens.dietapp.ui.components.EatenPantryDialog
 import net.whiteravens.dietapp.ui.screens.pantry.RowItem
 import net.whiteravens.dietapp.ui.screens.pantry.StillGoodDialog
 import net.whiteravens.dietapp.ui.screens.plans.LeftoverDialog
@@ -38,7 +50,8 @@ import java.time.LocalDate
 /**
  * What a meal eaten from a pot cooked already says of the pot, the window its rest goes from, the card after a change
  * answered with the plan and after a day made again, the pantry's stock past its day and its window, and a list that
- * counts such stock: in English, then in Polish, each kept for the eye as a phone in that language keeps it.
+ * counts such stock, and the window that takes what was eaten off the pantry: in English, then in Polish, each kept for
+ * the eye as a phone in that language keeps it.
  */
 @RunWith(AndroidJUnit4::class)
 class SeamsLinesTest {
@@ -310,6 +323,91 @@ class SeamsLinesTest {
                 else "Część zapasu, na który liczy ta lista, jest po terminie." to "Część tego w domu jest po terminie."
             assertTrue(lines.toString(), banner in lines)
             assertTrue(lines.toString(), row in lines)
+        }
+    }
+
+    private fun food(id: String, name: String, eaten: ShownAmount, held: ShownAmount, taken: ShownAmount = eaten) = EatenFood(id, name, eaten, held, taken)
+
+    /** What a breakfast of oats with milk and two eggs ate, as a pantry that counts eggs in pieces shows it; less milk held than drunk. */
+    private fun breakfast(language: String) = listOf(
+        food("eggs", if (language == "en") "Eggs" else "Jajka", ShownAmount(2.0, "piece", 110.0), ShownAmount(6.0, "piece", 330.0)),
+        food("oats", if (language == "en") "Rolled oats" else "Płatki owsiane", ShownAmount(60.0, "g"), ShownAmount(500.0, "g")),
+        food("milk", if (language == "en") "Milk" else "Mleko", ShownAmount(250.0, "ml"), ShownAmount(150.0, "ml"), ShownAmount(150.0, "ml")),
+    )
+
+    /** What an entry of a shakshuka took off the pantry. */
+    private fun shakshuka(language: String) = listOf(
+        food("eggs", if (language == "en") "Eggs" else "Jajka", ShownAmount(3.0, "piece", 165.0), ShownAmount(6.0, "piece", 330.0)),
+        food("passata", if (language == "en") "Tomato passata" else "Passata pomidorowa", ShownAmount(400.0, "g"), ShownAmount(800.0, "g")),
+    )
+
+    private fun portion(name: String, offer: List<EatenFood> = emptyList(), taken: List<EatenFood> = emptyList(), of: EatenOf = EatenOf.Meal("plan", "meal")) =
+        EatenPortion(of, EatenPantry(name, offer, taken))
+
+    @Test
+    fun theWindowOffersToTakeWhatAMealAteOffThePantryFoodByFood() {
+        eye.show { language ->
+            EatenPantryDialog(PantryWindow(PantryQuestion.TAKE, listOf(portion("Paweł", offer = breakfast(language)))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+        }
+
+        eye.check("pantry-eaten-take") { language, lines ->
+            val (title, milk) =
+                if (language == "en") "Take what was eaten off the pantry" to "eaten 250 ml · in the pantry 150 ml · you take 150 ml"
+                else "Zdejmij ze spiżarni to, co zjedzono" to "zjedzone 250 ml · w spiżarni 150 ml · zdejmiesz 150 ml"
+            assertTrue(lines.toString(), title in lines)
+            assertTrue(lines.toString(), milk in lines)
+            // One person's portion is named by nobody.
+            assertTrue(lines.toString(), "Paweł" !in lines)
+        }
+    }
+
+    @Test
+    fun aMarkTakenBackOffersToGiveBackWhatItTook() {
+        eye.show { language ->
+            EatenPantryDialog(PantryWindow(PantryQuestion.GIVE_BACK, listOf(portion("Paweł", taken = breakfast(language)))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+        }
+
+        eye.check("pantry-eaten-give-back") { language, lines ->
+            val (note, milk) =
+                if (language == "en") "This meal took what is below off the pantry. Unmarking it gives nothing back by itself." to "Milk: 150 ml"
+                else "Ten posiłek zdjął ze spiżarni to, co poniżej. Samo odznaczenie niczego nie oddaje." to "Mleko: 150 ml"
+            assertTrue(lines.toString(), note in lines)
+            assertTrue(lines.toString(), milk in lines)
+        }
+    }
+
+    @Test
+    fun anEntryThatTookFoodAsksBeforeItGoesWhetherToGiveItBack() {
+        eye.show { language ->
+            EatenPantryDialog(
+                // A window of its own takes the phone's configuration, not the language the look draws in: a name with a
+                // word of one letter would be held only on a phone in Polish. HeldLettersTest sees the window write
+                // through the app's Text, which holds it there.
+                PantryWindow(PantryQuestion.REMOVE, listOf(portion("Paweł", taken = shakshuka(language), of = EatenOf.Entry("entry")))),
+                onConfirm = {},
+                onRemoveOnly = {},
+                onDismiss = {},
+            )
+        }
+
+        eye.check("pantry-eaten-remove") { language, lines ->
+            assertTrue(lines.toString(), (if (language == "en") "Tomato passata: 400 g" else "Passata pomidorowa: 400 g") in lines)
+            val buttons = if (language == "en") listOf("Give back and remove", "Remove without giving back", "Cancel") else listOf("Oddaj i usuń", "Usuń bez oddawania", "Anuluj")
+            for (button in buttons) compose.onNode(hasText(shown(button)) and hasClickAction() and hasAnyAncestor(isDialog())).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun aLongListScrollsInsideTheWindowItsTitleAndButtonsInSight() {
+        eye.show { language ->
+            val many = (1..14).map { at -> food("food-$at", (if (language == "en") "Ingredient " else "Składnik ") + at, ShownAmount(40.0 + at, "g"), ShownAmount(500.0, "g")) }
+            EatenPantryDialog(PantryWindow(PantryQuestion.TAKE, listOf(portion("Paweł", offer = many))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+        }
+
+        eye.check("pantry-eaten-long") { language, _ ->
+            val (title, take) = if (language == "en") "Take what was eaten off the pantry" to "Take off the pantry" else "Zdejmij ze spiżarni to, co zjedzono" to "Zdejmij ze spiżarni"
+            compose.onNode(hasText(shown(title)) and hasAnyAncestor(isDialog())).assertIsDisplayed()
+            compose.onNode(hasText(shown(take)) and hasClickAction() and hasAnyAncestor(isDialog())).assertIsDisplayed()
         }
     }
 }

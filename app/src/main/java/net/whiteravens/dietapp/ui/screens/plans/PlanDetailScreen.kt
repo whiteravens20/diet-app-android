@@ -94,6 +94,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.MealTopping
+import net.whiteravens.dietapp.ui.components.EatenPantryDialog
 import net.whiteravens.dietapp.ui.components.FreezingTips
 import net.whiteravens.dietapp.ui.components.Text
 import net.whiteravens.dietapp.ui.screens.recipes.RecipeShareMenu
@@ -242,6 +243,11 @@ fun PlanDetailScreen(
     }
     state.undoingLeftover?.let { meal ->
         UndoLeftoverDialog(meal = meal, onUndo = viewModel::undoLeftover, onDismiss = { viewModel.askUndoLeftover(null) })
+    }
+    // What eating a meal does to the pantry, asked once the server has its mark.
+    val pantryWindow by viewModel.pantryWindow.collectAsStateWithLifecycle()
+    pantryWindow?.let { window ->
+        EatenPantryDialog(window = window, onConfirm = viewModel::confirmPantry, onRemoveOnly = {}, onDismiss = viewModel::closePantry)
     }
 
     addingTo?.let { date ->

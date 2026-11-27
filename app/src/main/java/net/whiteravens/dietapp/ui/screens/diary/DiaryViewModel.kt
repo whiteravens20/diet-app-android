@@ -20,6 +20,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -32,6 +33,7 @@ import net.whiteravens.dietapp.domain.DIARY_DAYS_BACK
 import net.whiteravens.dietapp.domain.DiaryDay
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
+import net.whiteravens.dietapp.domain.EatenOf
 import net.whiteravens.dietapp.domain.FIRST_DIARY_DAY
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LAST_DIARY_DAY
@@ -45,6 +47,9 @@ import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.mealAt
 import net.whiteravens.dietapp.ui.common.GONE_WITHIN_MILLIS
 import net.whiteravens.dietapp.ui.common.LaterRemoval
+import net.whiteravens.dietapp.ui.common.PantryQuestion
+import net.whiteravens.dietapp.ui.common.PantryQuestions
+import net.whiteravens.dietapp.ui.common.PantryWindow
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.DiaryRoute
@@ -75,6 +80,7 @@ class DiaryViewModel @Inject constructor(
     private val queue: ChangeQueue,
     private val server: ServerRepository,
     @ApplicationScope private val application: CoroutineScope,
+    private val pantry: PantryRepository,
 ) : ViewModel() {
 
     /** What could not be done. */
@@ -408,7 +414,14 @@ class DiaryViewModel @Inject constructor(
                 .onSuccess { submitted ->
                     // Kept to be sent: shown among the entries as one of the changes waiting.
                     _state.update { it.copy(sending = false, form = null, showProblems = false, offline = it.offline || (submitted as? Submitted.Kept)?.offline == true) }
-                    if (submitted is Submitted.Sent) planChanged(submitted.answer.planChange)
+                    if (submitted is Submitted.Sent) {
+                        planChanged(submitted.answer.planChange)
+                        // On a day no list covers, what an ingredient or a recipe written was may come off the pantry: never by itself.
+                        val written = submitted.answer.entry
+                        if (written.kind == "ingredient" || written.kind == "recipe") {
+                            pantryQuestions.ask(listOf(EatenOf.Entry(written.id)), PantryQuestion.TAKE)
+                        }
+                    }
                 }
                 .onFailure(::windowRefused)
         }
@@ -519,8 +532,26 @@ class DiaryViewModel @Inject constructor(
      */
     fun remove(entry: DiaryEntry, after: Long = 0) {
         val removal = Removal(_state.value.profileId ?: return, entry)
-        if (entry.id in _state.value.waitingAdditions) later.removeAtOnce(removal) else later.remove(removal, after)
+        when {
+            entry.id in _state.value.waitingAdditions -> later.removeAtOnce(removal)
+            // What an entry took off the pantry is offered back before it goes: never by itself.
+            entry.takenFromPantry -> pantryQuestions.ask(listOf(EatenOf.Entry(entry.id)), PantryQuestion.REMOVE) { later.remove(removal, after) }
+            else -> later.remove(removal, after)
+        }
     }
+
+    /** What eating does to the pantry, asked once the server has the entry or the mark (`EatenPantryDialog`); the day read again once it moved. */
+    private val pantryQuestions = PantryQuestions(viewModelScope, pantry, changed = { read(showLoading = false) })
+    val pantryWindow: StateFlow<PantryWindow?> = pantryQuestions.window
+
+    /** The window's press: what was eaten taken off the pantry, or what was taken given back (and then the entry removed). */
+    fun confirmPantry() = pantryQuestions.confirm()
+
+    /** "Usuń bez oddawania": the entry goes, what it took stays off the pantry. */
+    fun removeWithoutGivingBack() = pantryQuestions.removeOnly()
+
+    /** The window put away: the pantry stays as it is, and an entry asked about stays. */
+    fun closePantry() = pantryQuestions.close()
 
     /** Takes the removal back: the entry stays, and nothing is sent. */
     fun keepRemoved() = later.undo()
@@ -583,7 +614,14 @@ class DiaryViewModel @Inject constructor(
             attempt { plans.setEaten(planId, meal.id, !meal.eaten) }
                 .onSuccess { submitted ->
                     when (submitted) {
-                        is Submitted.Sent -> rebalanced(planId, submitted.answer)
+                        is Submitted.Sent -> {
+                            rebalanced(planId, submitted.answer)
+                            // On a day no list covers, what was eaten may come off the pantry, or what was taken go back.
+                            pantryQuestions.ask(
+                                listOf(EatenOf.Meal(planId, meal.id)),
+                                if (meal.eaten) PantryQuestion.GIVE_BACK else PantryQuestion.TAKE,
+                            )
+                        }
                         is Submitted.Kept -> _state.update { it.copy(changing = false, offline = it.offline || submitted.offline) }
                     }
                 }

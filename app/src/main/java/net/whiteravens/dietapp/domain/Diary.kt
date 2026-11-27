@@ -131,6 +131,8 @@ data class DiaryEntry(
     val productCode: String? = null,
     /** Of a meal of one's own, which macronutrients (`protein`, `fat`, `carbs`) were estimated. */
     val estimatedMacros: List<String> = emptyList(),
+    /** Something was taken off the pantry for it, as the user confirmed: its removal offers to give that back first. */
+    val takenFromPantry: Boolean = false,
 )
 
 /** What is written for a day of the diary, under the meal [slot]. */

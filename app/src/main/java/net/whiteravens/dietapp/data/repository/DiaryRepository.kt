@@ -286,6 +286,7 @@ internal fun DiaryEntryDto.toDomain() = DiaryEntry(
     productSource = productSource?.let(::productSourceOf),
     productCode = productCode,
     estimatedMacros = estimatedMacros,
+    takenFromPantry = takenFromPantry,
 )
 
 private fun productSourceOf(source: String) = when (source) {

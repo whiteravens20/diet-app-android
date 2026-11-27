@@ -112,6 +112,13 @@ import net.whiteravens.dietapp.data.remote.LeftoverPlaceDto
 import net.whiteravens.dietapp.data.remote.LeftoverPortionDto
 import net.whiteravens.dietapp.data.remote.PutLeftoverRequest
 import net.whiteravens.dietapp.data.repository.RecipeRepository
+import net.whiteravens.dietapp.data.repository.PantryRepository
+import net.whiteravens.dietapp.data.remote.DisplayAmountDto
+import net.whiteravens.dietapp.data.remote.EatenFromPantryDto
+import net.whiteravens.dietapp.data.remote.EatenPantryDto
+import net.whiteravens.dietapp.domain.EatenFood
+import net.whiteravens.dietapp.domain.ShownAmount
+import net.whiteravens.dietapp.ui.common.PantryQuestion
 import net.whiteravens.dietapp.domain.NewDiaryEntry
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.ui.screens.diary.EntryField
@@ -178,6 +185,7 @@ class PlanDetailViewModelTest {
         // The screen's saved state, as Android gives it back to a screen it ended the app under.
         kept: SavedStateHandle? = null,
         recipes: RecipeRepository = mockk(relaxed = true),
+        pantry: PantryRepository = mockk(relaxed = true),
     ) = PlanDetailViewModel(
         kept ?: SavedStateHandle(at),
         MealPlanRepository(api, asking, cache, json, queue, Dispatchers.Unconfined),
@@ -188,6 +196,7 @@ class PlanDetailViewModelTest {
         mockk(relaxed = true),
         mockk(relaxed = true),
         recipes,
+        pantry,
     )
 
     private fun refused(status: Int, code: String, details: String? = null) = HttpException(
@@ -373,7 +382,7 @@ class PlanDetailViewModelTest {
         }
         val queue = changeQueue()
         val plans = MealPlanRepository(api, mockk(), kept, json, queue, Dispatchers.Unconfined)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
 
         model.setEaten(meal.id, true)
 
@@ -622,7 +631,7 @@ class PlanDetailViewModelTest {
         coEvery { api.mealPlan(plan.id) } returns plan
         val queue = changeQueue()
         val plans = MealPlanRepository(api, mockk(), NoCache, json, queue, Dispatchers.Unconfined)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, server, queue, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
         coEvery { api.setMealEaten(any(), any(), any()) } throws IOException("no network")
         model.setEaten(meal.id, true)
         assertEquals(1, model.state.value.waiting.size)
@@ -1135,7 +1144,7 @@ class PlanDetailViewModelTest {
         coEvery { plans.resizeDay(plan.id, "2026-10-31") } returns Rebalanced(plan, moved, null)
         val users = mockk<UserRepository>(relaxed = true)
         val favorites = mockk<FavoriteRepository>(relaxed = true)
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue(), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, favorites, users, mockk(relaxed = true), changeQueue(), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
 
         model.resizeDay("2026-10-31")
 
@@ -1159,7 +1168,7 @@ class PlanDetailViewModelTest {
         coEvery { plans.cachedPlan(any()) } returns null
         val plan = json.decodeFromString<MealPlanDto>(fixture("meal-plan-with-diary")).toDomain()
         coEvery { plans.refreshPlan(any()) } returns plan
-        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue(), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        val model = PlanDetailViewModel(SavedStateHandle(mapOf("planId" to plan.id)), plans, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), changeQueue(), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
         val meal = plan.days.flatMap { it.meals }.first { it.recipeId != null }
 
         model.substituted(Rebalanced(plan, null, null), meal.id)
@@ -1314,5 +1323,56 @@ class PlanDetailViewModelTest {
         model.undoLeftover(forAll = false)
 
         coVerify { api.undoLeftover(plan.id, meal.id, null) }
+    }
+
+    // ── What eating takes off the pantry ────────────────────────────────
+
+    private val oats = EatenFromPantryDto("oats", "Rolled oats", DisplayAmountDto(60.0, "g"), DisplayAmountDto(500.0, "g"), DisplayAmountDto(60.0, "g"))
+
+    @Test
+    fun `a meal marked eaten asks, once the server has the mark, what eating it takes off the pantry, and its mark taken back what to give back, each only on a press`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setMealEaten(plan.id, meal.id, any()) } returns swapped
+        coEvery { api.mealPantry(plan.id, meal.id) } returns EatenPantryDto("Ala", offer = listOf(oats))
+        coEvery { api.takeMealPantry(plan.id, meal.id) } just runs
+        coEvery { api.returnMealPantry(plan.id, meal.id) } just runs
+        val model = model(api, pantry = PantryRepository(api, json, changeQueue()))
+
+        model.setEaten(meal.id, true)
+
+        val window = model.pantryWindow.value!!
+        assertEquals(PantryQuestion.TAKE, window.question)
+        assertEquals(
+            listOf(EatenFood("oats", "Rolled oats", ShownAmount(60.0, "g"), ShownAmount(500.0, "g"), ShownAmount(60.0, "g"))),
+            window.portions.single().foods(PantryQuestion.TAKE),
+        )
+        coVerify(exactly = 0) { api.takeMealPantry(any(), any()) }
+        model.confirmPantry()
+        coVerify(exactly = 1) { api.takeMealPantry(plan.id, meal.id) }
+        assertNull(model.pantryWindow.value)
+
+        coEvery { api.mealPantry(plan.id, meal.id) } returns EatenPantryDto("Ala", taken = listOf(oats))
+        model.setEaten(meal.id, false)
+
+        assertEquals(PantryQuestion.GIVE_BACK, model.pantryWindow.value!!.question)
+        coVerify(exactly = 0) { api.returnMealPantry(any(), any()) }
+        model.confirmPantry()
+        coVerify(exactly = 1) { api.returnMealPantry(plan.id, meal.id) }
+        assertNull(model.pantryWindow.value)
+    }
+
+    @Test
+    fun `a mark kept to be sent asks nothing of the pantry`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setMealEaten(plan.id, meal.id, any()) } throws IOException("no network")
+        val model = model(api, pantry = PantryRepository(api, json, changeQueue()))
+
+        model.setEaten(meal.id, true)
+
+        assertTrue(model.state.value.offline)
+        coVerify(exactly = 0) { api.mealPantry(any(), any()) }
+        assertNull(model.pantryWindow.value)
     }
 }

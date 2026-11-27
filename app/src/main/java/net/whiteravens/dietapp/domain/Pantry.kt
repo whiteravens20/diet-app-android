@@ -128,3 +128,28 @@ fun freshness(bestBefore: LocalDate?, today: LocalDate): Freshness = when {
 
 /** How many days before its best-before day a row is said to go soon. */
 private const val SOON_DAYS = 2L
+
+/** An amount as the API shows it: rounded, a piece called what the food calls it, with what pieces weigh. */
+data class ShownAmount(val quantity: Double, val unit: String, val grams: Double? = null)
+
+/** A food of what eating took, or would take, off the pantry: what was eaten, what the pantry holds fresh, what is taken. */
+data class EatenFood(
+    val ingredientId: String,
+    val name: String,
+    val eaten: ShownAmount,
+    val held: ShownAmount,
+    val taken: ShownAmount,
+)
+
+/**
+ * What eating a meal or an entry does to its profile's pantry ([profileName] says whose) on a day no shopping list
+ * covers: what taking it would take now ([offer]), and what it took ([taken]), which giving it back returns.
+ */
+data class EatenPantry(val profileName: String, val offer: List<EatenFood>, val taken: List<EatenFood>)
+
+/** What eaten food came off the pantry for: a meal of a plan, or an entry of the diary. */
+sealed interface EatenOf {
+    data class Meal(val planId: String, val mealId: String) : EatenOf
+
+    data class Entry(val id: String) : EatenOf
+}

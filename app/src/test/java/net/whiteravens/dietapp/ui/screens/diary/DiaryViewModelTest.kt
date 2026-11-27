@@ -6,7 +6,9 @@ import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +22,7 @@ import net.whiteravens.dietapp.data.remote.ApiErrorIssueDto
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.DiaryRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -36,6 +39,9 @@ import net.whiteravens.dietapp.domain.DiaryPlanMeal
 import net.whiteravens.dietapp.domain.EatenElsewhere
 import net.whiteravens.dietapp.domain.Macros
 import net.whiteravens.dietapp.domain.DiaryWritten
+import net.whiteravens.dietapp.domain.EatenFood
+import net.whiteravens.dietapp.domain.EatenOf
+import net.whiteravens.dietapp.domain.EatenPantry
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.domain.Meal
@@ -51,9 +57,11 @@ import net.whiteravens.dietapp.domain.Rebalanced
 import net.whiteravens.dietapp.domain.Recipe
 import net.whiteravens.dietapp.domain.RecipePage
 import net.whiteravens.dietapp.domain.ScaleChange
+import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.domain.mealAt
 import net.whiteravens.dietapp.testing.HeldChanges
 import net.whiteravens.dietapp.testing.changeQueue
+import net.whiteravens.dietapp.ui.common.PantryQuestion
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -129,6 +137,7 @@ class DiaryViewModelTest {
         adding: Boolean = false,
         // The screen's saved state, as Android gives it back to a screen it ended the app under.
         kept: SavedStateHandle? = null,
+        pantry: PantryRepository = mockk(relaxed = true),
     ) = DiaryViewModel(
         kept ?: SavedStateHandle(buildMap {
             profileId?.let { put("profileId", it) }
@@ -142,6 +151,7 @@ class DiaryViewModelTest {
         queue,
         server,
         application,
+        pantry,
     )
 
     private val server = mockk<ServerRepository>().also {
@@ -247,7 +257,7 @@ class DiaryViewModelTest {
         val handle = SavedStateHandle(mapOf("profileId" to "a", "adding" to true))
         val before = mealAt(LocalTime.now())
 
-        val model = DiaryViewModel(handle, diary, users, plans, recipes, queue, server, application)
+        val model = DiaryViewModel(handle, diary, users, plans, recipes, queue, server, application, mockk(relaxed = true))
 
         assertTrue(model.state.value.form?.slot == before || model.state.value.form?.slot == mealAt(LocalTime.now()))
         assertEquals(false, handle.get<Boolean>("adding"))
@@ -470,7 +480,7 @@ class DiaryViewModelTest {
             diaryQueue.submit(change) { throw offline }
         }
         coEvery { diary.day("a", today) } returns day(eaten = 100.0)
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
         model.openWindow("dinner")
         model.typeOwnMeal()
 
@@ -493,7 +503,7 @@ class DiaryViewModelTest {
     fun `once what waits is sent, the screen is no longer offline, and the day is read as the server has it`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
         assertTrue(model.state.value.offline)
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("kept", slot = "dinner", name = "Soup")), eaten = 300.0)
@@ -781,7 +791,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.change("a", "e", null, 2.0, null) } coAnswers { diaryQueue.submit(QueuedChange.DiaryChanged("a", "e", null, 2.0, null)) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
 
         model.openEdit(entry("e"))
         model.typeEdit { it.copy(servings = "2") }
@@ -797,7 +807,7 @@ class DiaryViewModelTest {
     @Test
     fun `an entry that waits to be written is changed once the server has it`() {
         val diaryQueue = changeQueue()
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.openEdit(model.state.value.entries.single())
@@ -809,7 +819,7 @@ class DiaryViewModelTest {
     fun `an entry that waits to be written is taken out of the queue, unsent, and nothing is read for it`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.remove(model.state.value.entries.single())
@@ -824,7 +834,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.remove("a", "e") } coAnswers { diaryQueue.submit(QueuedChange.DiaryRemoved("a", "e")) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
 
         model.remove(entry("e"))
 
@@ -994,7 +1004,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } returns day(plan = plan(meal("m")), eaten = 0.0)
         coEvery { plans.setEaten("p", "m", true) } coAnswers { diaryQueue.submit(QueuedChange.Eaten("p", "m", true)) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
 
         model.setEaten(meal("m"))
 
@@ -1103,7 +1113,7 @@ class DiaryViewModelTest {
     @Test
     fun `a profile's changes that wait are shown over its own diary alone`() {
         val diaryQueue = changeQueue()
-        val model = DiaryViewModel(SavedStateHandle(mapOf("profileId" to "b")), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(mapOf("profileId" to "b")), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
 
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Ala's", calories = 1.0, key = "k")) { throw offline } }
 
@@ -1233,6 +1243,7 @@ class DiaryViewModelTest {
             queue,
             server,
             application,
+            mockk(relaxed = true),
         )
         assertTrue(model.state.value.scanning)
         assertEquals(EntryKind.PRODUCT, model.state.value.form?.kind)
@@ -1287,7 +1298,7 @@ class DiaryViewModelTest {
     fun `an entry that waits to be written leaves the queue at once, with nothing held to take back`() {
         val diaryQueue = changeQueue()
         coEvery { diary.day("a", today) } throws offline
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
         runBlocking { diaryQueue.submit(QueuedChange.DiaryAdded("a", today.toString(), "dinner", "Soup", calories = 300.0, key = "k")) { throw offline } }
 
         model.remove(model.state.value.entries.single(), after = 6_000)
@@ -1360,7 +1371,7 @@ class DiaryViewModelTest {
         val diaryQueue = changeQueue(held)
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("e")))
         coEvery { diary.remove("a", "e") } coAnswers { diaryQueue.submit(QueuedChange.DiaryRemoved("a", "e")) { throw offline } }
-        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application)
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, mockk(relaxed = true))
         held.open.value = false
 
         model.remove(entry("e"), after = 6_000)
@@ -1373,5 +1384,153 @@ class DiaryViewModelTest {
         held.open.value = true
         assertEquals(emptyList<DiaryEntry>(), model.state.value.entries)
         assertTrue(model.hidden.value.isEmpty())
+    }
+
+    // ── What eating takes off the pantry ────────────────────────────────
+
+    private val oats = EatenFood("oats", "Rolled oats", ShownAmount(60.0, "g"), ShownAmount(500.0, "g"), ShownAmount(60.0, "g"))
+
+    @Test
+    fun `a recipe written asks, once the server has it, what eating it takes off the pantry, takes it only when told to, and reads the day again`() {
+        val pantry = mockk<PantryRepository>()
+        coEvery { pantry.eaten(EatenOf.Entry("new")) } returns EatenPantry("Ala", listOf(oats), emptyList())
+        coEvery { pantry.takeEaten(EatenOf.Entry("new")) } just runs
+        coEvery { diary.add(any(), any(), any()) } returns Submitted.Sent(DiaryWritten(entry("new"), null))
+        val model = model(pantry = pantry)
+        model.openWindow("dinner")
+        model.typeOwnMeal()
+
+        model.addEntry()
+
+        assertEquals(PantryQuestion.TAKE, model.pantryWindow.value!!.question)
+        assertEquals(listOf(oats), model.pantryWindow.value!!.portions.single().foods(PantryQuestion.TAKE))
+        coVerify(exactly = 0) { pantry.takeEaten(any()) }
+        coEvery { diary.day("a", today) } returns day(entries = listOf(entry("new").copy(takenFromPantry = true)))
+        assertFalse(model.state.value.entries.any { it.takenFromPantry })
+
+        model.confirmPantry()
+
+        coVerify(exactly = 1) { pantry.takeEaten(EatenOf.Entry("new")) }
+        assertNull(model.pantryWindow.value)
+        assertTrue(model.state.value.entries.single().takenFromPantry)
+    }
+
+    @Test
+    fun `an ingredient written asks of the pantry as a recipe does, and a meal of one's own or a product asks nothing`() {
+        val pantry = mockk<PantryRepository>()
+        coEvery { pantry.eaten(any()) } returns EatenPantry("Ala", emptyList(), emptyList())
+        val model = model(pantry = pantry)
+
+        for (kind in listOf("ingredient", "meal", "product")) {
+            coEvery { diary.add(any(), any(), any()) } returns Submitted.Sent(DiaryWritten(entry(kind).copy(kind = kind), null))
+            model.openWindow("dinner")
+            model.typeOwnMeal()
+            model.addEntry()
+        }
+
+        coVerify(exactly = 1) { pantry.eaten(EatenOf.Entry("ingredient")) }
+        coVerify(exactly = 1) { pantry.eaten(any()) }
+        // Nothing to take: no window.
+        assertNull(model.pantryWindow.value)
+    }
+
+    @Test
+    fun `a meal of the plan marked eaten asks what it takes off the pantry, and its mark taken back what to give back`() {
+        val pantry = mockk<PantryRepository>()
+        coEvery { diary.day("a", today) } returns day(plan = plan(meal("m")))
+        coEvery { plans.setEaten("p", "m", any()) } returns Submitted.Sent(rebalanced())
+        coEvery { pantry.eaten(EatenOf.Meal("p", "m")) } returns EatenPantry("Ala", listOf(oats), emptyList())
+        val model = model(pantry = pantry)
+
+        model.setEaten(meal("m"))
+
+        assertEquals(PantryQuestion.TAKE, model.pantryWindow.value!!.question)
+        model.closePantry()
+        coEvery { pantry.eaten(EatenOf.Meal("p", "m")) } returns EatenPantry("Ala", emptyList(), listOf(oats))
+
+        model.setEaten(meal("m", eaten = true))
+
+        assertEquals(PantryQuestion.GIVE_BACK, model.pantryWindow.value!!.question)
+        coVerify(exactly = 0) { pantry.takeEaten(any()) }
+        coVerify(exactly = 0) { pantry.giveBackEaten(any()) }
+    }
+
+    @Test
+    fun `a mark kept to be sent asks nothing of the pantry`() {
+        val pantry = mockk<PantryRepository>(relaxed = true)
+        val diaryQueue = changeQueue()
+        coEvery { diary.day("a", today) } returns day(plan = plan(meal("m")))
+        coEvery { plans.setEaten("p", "m", true) } coAnswers { diaryQueue.submit(QueuedChange.Eaten("p", "m", true)) { throw offline } }
+        val model = DiaryViewModel(SavedStateHandle(), diary, users, plans, recipes, diaryQueue, server, application, pantry)
+
+        model.setEaten(meal("m"))
+
+        assertTrue("m" in model.state.value.waitingMeals)
+        coVerify(exactly = 0) { pantry.eaten(any()) }
+        assertNull(model.pantryWindow.value)
+    }
+
+    @Test
+    fun `an entry that took food off the pantry asks before it goes, gives the food back first, and stays where the window is put away`() {
+        val pantry = mockk<PantryRepository>()
+        val taken = entry("e").copy(takenFromPantry = true)
+        val done = mutableListOf<String>()
+        coEvery { pantry.eaten(EatenOf.Entry("e")) } returns EatenPantry("Ala", emptyList(), listOf(oats))
+        coEvery { pantry.giveBackEaten(EatenOf.Entry("e")) } answers { done += "given back" }
+        coEvery { diary.day("a", today) } returns day(entries = listOf(taken))
+        coEvery { diary.remove("a", "e") } answers {
+            done += "removed"
+            Submitted.Sent(Unit)
+        }
+        val model = model(pantry = pantry)
+
+        model.remove(taken)
+        main.scheduler.runCurrent()
+
+        // Nothing goes before it is answered; put away, the entry stays.
+        assertEquals(PantryQuestion.REMOVE, model.pantryWindow.value!!.question)
+        assertEquals(listOf(oats), model.pantryWindow.value!!.portions.single().foods(PantryQuestion.REMOVE))
+        model.closePantry()
+        main.scheduler.runCurrent()
+        assertTrue(done.isEmpty())
+        assertTrue(model.state.value.entries.any { it.id == "e" })
+
+        model.remove(taken)
+        model.confirmPantry()
+        main.scheduler.runCurrent()
+
+        assertEquals(listOf("given back", "removed"), done)
+        assertNull(model.pantryWindow.value)
+    }
+
+    @Test
+    fun `removed without giving back, the entry goes and what it took stays off the pantry`() {
+        val pantry = mockk<PantryRepository>()
+        val taken = entry("e").copy(takenFromPantry = true)
+        coEvery { pantry.eaten(EatenOf.Entry("e")) } returns EatenPantry("Ala", emptyList(), listOf(oats))
+        coEvery { pantry.giveBackEaten(any()) } just runs
+        coEvery { diary.remove("a", "e") } returns Submitted.Sent(Unit)
+        val model = model(pantry = pantry)
+
+        model.remove(taken)
+        model.removeWithoutGivingBack()
+        main.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { diary.remove("a", "e") }
+        coVerify(exactly = 0) { pantry.giveBackEaten(any()) }
+        assertNull(model.pantryWindow.value)
+    }
+
+    @Test
+    fun `an entry that took nothing off the pantry goes without asking it`() {
+        val pantry = mockk<PantryRepository>(relaxed = true)
+        coEvery { diary.remove("a", "e") } returns Submitted.Sent(Unit)
+        val model = model(pantry = pantry)
+
+        model.remove(entry("e"))
+        main.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { diary.remove("a", "e") }
+        coVerify(exactly = 0) { pantry.eaten(any()) }
     }
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import net.whiteravens.dietapp.data.remote.ApiException
 import net.whiteravens.dietapp.data.repository.FavoriteRepository
 import net.whiteravens.dietapp.data.repository.MealPlanRepository
+import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.repository.ProfileRepository
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.repository.UserRepository
@@ -25,6 +26,7 @@ import net.whiteravens.dietapp.data.sync.Submitted
 import net.whiteravens.dietapp.data.sync.Waiting
 import net.whiteravens.dietapp.domain.AiModes
 import net.whiteravens.dietapp.domain.CustomMeal
+import net.whiteravens.dietapp.domain.EatenOf
 import net.whiteravens.dietapp.domain.FavoriteSet
 import net.whiteravens.dietapp.domain.FieldRefusal
 import net.whiteravens.dietapp.domain.LeftoverOffer
@@ -47,6 +49,9 @@ import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
+import net.whiteravens.dietapp.ui.common.PantryQuestion
+import net.whiteravens.dietapp.ui.common.PantryQuestions
+import net.whiteravens.dietapp.ui.common.PantryWindow
 import net.whiteravens.dietapp.ui.common.ReadingAnew
 import net.whiteravens.dietapp.ui.common.attempt
 import net.whiteravens.dietapp.ui.navigation.PlanDetailRoute
@@ -89,6 +94,7 @@ class PlanDetailViewModel @Inject constructor(
     private val profiles: ProfileRepository,
     private val diary: DiaryRepository,
     private val recipes: RecipeRepository,
+    private val pantry: PantryRepository,
 ) : ViewModel() {
 
     // The route's arguments, read by their names: `toRoute` needs Android's own classes, which the
@@ -474,12 +480,31 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    /** Marks a meal eaten or not; a meal of one's own that waits to be added is marked once the server has it. */
+    /**
+     * Marks a meal eaten or not; a meal of one's own that waits to be added is marked once the server has it. Once the
+     * server has the mark, on a day no list covers, what was eaten may come off the pantry, or what was taken go back:
+     * never by itself.
+     */
     fun setEaten(mealId: String, eaten: Boolean, forAll: Boolean = false) {
         if (mealId in _state.value.waitingAdditions) return
         val also = shared(mealId)?.takeIf { forAll }?.let { QueuedChange.OtherMeal(it.with.planId, it.with.mealId) }
-        queued { plans.setEaten(planId, mealId, eaten, also) }
+        queued(sent = {
+            pantryQuestions.ask(
+                listOf(EatenOf.Meal(planId, mealId)),
+                if (eaten) PantryQuestion.TAKE else PantryQuestion.GIVE_BACK,
+            )
+        }) { plans.setEaten(planId, mealId, eaten, also) }
     }
+
+    /** What eating a meal does to the pantry, asked once the server has its mark (`EatenPantryDialog`). */
+    private val pantryQuestions = PantryQuestions(viewModelScope, pantry)
+    val pantryWindow: StateFlow<PantryWindow?> = pantryQuestions.window
+
+    /** The window's press: what was eaten taken off the pantry, or what was taken given back. */
+    fun confirmPantry() = pantryQuestions.confirm()
+
+    /** The window put away: the pantry stays as it is. */
+    fun closePantry() = pantryQuestions.close()
 
     /** Says how a shared meal is cooked, in both plans: each portion apart, or in one pot. It needs the network. */
     fun setApart(sharedMealId: String, apart: Boolean) {
@@ -1010,7 +1035,7 @@ class PlanDetailViewModel @Inject constructor(
      * leaves is shown with how its day was balanced, or, kept to be sent, the change is shown over the
      * plan as one of the changes waiting.
      */
-    private fun queued(block: suspend () -> Submitted<Rebalanced>) {
+    private fun queued(sent: () -> Unit = {}, block: suspend () -> Submitted<Rebalanced>) {
         if (_state.value.changing) return
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null) }
@@ -1022,6 +1047,7 @@ class PlanDetailViewModel @Inject constructor(
                             is Submitted.Kept -> it.copy(changing = false, offline = it.offline || submitted.offline)
                         }
                     }
+                    if (submitted is Submitted.Sent) sent()
                 }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }

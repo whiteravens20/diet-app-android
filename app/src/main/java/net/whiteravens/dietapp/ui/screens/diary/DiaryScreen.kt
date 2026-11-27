@@ -74,6 +74,7 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
+import net.whiteravens.dietapp.ui.components.EatenPantryDialog
 import net.whiteravens.dietapp.ui.components.AppCard
 import net.whiteravens.dietapp.ui.components.AppIcons
 import net.whiteravens.dietapp.ui.components.LabelLegend
@@ -153,6 +154,16 @@ fun DiaryScreen(
 
     state.form?.let { form -> AddEntryDialog(form, state.date, state.window, viewModel.window) }
     state.edit?.let { edit -> EditEntryDialog(edit, state, viewModel) }
+    // What eating does to the pantry, asked once the server has the entry or the mark; before an entry that took food goes.
+    val pantryWindow by viewModel.pantryWindow.collectAsStateWithLifecycle()
+    pantryWindow?.let { window ->
+        EatenPantryDialog(
+            window = window,
+            onConfirm = viewModel::confirmPantry,
+            onRemoveOnly = viewModel::removeWithoutGivingBack,
+            onDismiss = viewModel::closePantry,
+        )
+    }
     if (state.copyOpen) CopyDay(state, onChoose = viewModel::chooseCopyFrom, onCopy = viewModel::copy, onClose = viewModel::closeCopy)
     // A correction of the product of the entry being changed, which the entry then goes on to.
     state.edit?.found?.takeIf { it.source != ProductSource.OWN }?.let { base ->

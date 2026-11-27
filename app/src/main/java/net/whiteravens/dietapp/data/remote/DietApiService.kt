@@ -338,6 +338,33 @@ interface DietApiService {
     @POST("inventory/{id}/still-good")
     suspend fun keepPantryRow(@Path("id") id: String, @Body body: StillGoodRequest): InventoryItemDto
 
+    /**
+     * What eating a meal of a plan takes off its profile's pantry on a day no shopping list covers, offered once it is
+     * marked eaten, and what it took ("Zdejmij ze spiżarni to, co zjedzono"). Nothing changes by itself.
+     */
+    @GET("meal-plans/{id}/meals/{mealId}/pantry")
+    suspend fun mealPantry(@Path("id") planId: String, @Path("mealId") mealId: String): EatenPantryDto
+
+    /** Takes what eating the meal ate off the pantry, as offered: once, until it is given back. */
+    @POST("meal-plans/{id}/meals/{mealId}/pantry-take")
+    suspend fun takeMealPantry(@Path("id") planId: String, @Path("mealId") mealId: String)
+
+    /** Gives back to the pantry what eating the meal took off it ("Oddaj do spiżarni"). */
+    @POST("meal-plans/{id}/meals/{mealId}/pantry-return")
+    suspend fun returnMealPantry(@Path("id") planId: String, @Path("mealId") mealId: String)
+
+    /** What an entry of the diary of an ingredient or a recipe takes off the pantry, and what it took, as for a meal. */
+    @GET("diary/entries/{id}/pantry")
+    suspend fun entryPantry(@Path("id") id: String): EatenPantryDto
+
+    /** Takes what the entry ate off the pantry, as offered: once, until it is given back. */
+    @POST("diary/entries/{id}/pantry-take")
+    suspend fun takeEntryPantry(@Path("id") id: String)
+
+    /** Gives back to the pantry what the entry took off it ("Oddaj do spiżarni"). */
+    @POST("diary/entries/{id}/pantry-return")
+    suspend fun returnEntryPantry(@Path("id") id: String)
+
     /** The size to freeze a row of the pantry in, from the profile's plans (`InventoryPortionDto`). */
     @GET("inventory/{id}/portion")
     suspend fun pantryRowPortion(@Path("id") id: String): InventoryPortionDto

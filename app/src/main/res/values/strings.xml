@@ -2587,4 +2587,18 @@
         <item quantity="one">It also undoes the change of %2$s.</item>
         <item quantity="other">It also undoes the changes of %2$s.</item>
     </plurals>
+    <string name="eaten_pantry_take_title">Take what was eaten off the pantry</string>
+    <string name="eaten_pantry_take_note">No shopping list covers this day, so the pantry does not take off what was eaten by itself.</string>
+    <string name="eaten_pantry_line">eaten\u00A0%1$s\u00A0· in the pantry\u00A0%2$s\u00A0· you take\u00A0%3$s</string>
+    <string name="eaten_pantry_take">Take off the pantry</string>
+    <string name="eaten_pantry_not_now">Not now</string>
+    <string name="eaten_pantry_give_back_title">Give back to the pantry</string>
+    <string name="eaten_pantry_give_back_note">This meal took what is below off the pantry. Unmarking it gives nothing back by itself.</string>
+    <string name="eaten_pantry_taken_line">%1$s: %2$s</string>
+    <string name="eaten_pantry_give_back">Give back</string>
+    <string name="eaten_pantry_keep">Leave it</string>
+    <string name="eaten_pantry_remove_title">Give back to the pantry before removing it?</string>
+    <string name="eaten_pantry_remove_note">This entry took what is below off the pantry.</string>
+    <string name="eaten_pantry_give_back_and_remove">Give back and remove</string>
+    <string name="eaten_pantry_remove_only">Remove without giving back</string>
 </resources>
