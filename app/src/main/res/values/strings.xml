@@ -2589,6 +2589,7 @@
     </plurals>
     <string name="eaten_pantry_take_title">Take what was eaten off the pantry</string>
     <string name="eaten_pantry_take_note">No shopping list covers this day, so the pantry does not take off what was eaten by itself.</string>
+    <string name="eaten_pantry_by_person">Each person\'s portion comes off their own pantry.</string>
     <string name="eaten_pantry_line">eaten\u00A0%1$s\u00A0· in the pantry\u00A0%2$s\u00A0· you take\u00A0%3$s</string>
     <string name="eaten_pantry_take">Take off the pantry</string>
     <string name="eaten_pantry_not_now">Not now</string>

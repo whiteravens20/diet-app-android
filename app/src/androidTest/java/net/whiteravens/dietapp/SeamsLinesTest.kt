@@ -2,6 +2,8 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
@@ -358,6 +360,29 @@ class SeamsLinesTest {
             assertTrue(lines.toString(), milk in lines)
             // One person's portion is named by nobody.
             assertTrue(lines.toString(), "Paweł" !in lines)
+        }
+    }
+
+    @Test
+    fun aMealBothAteIsTwoPortionsEachUnderItsPersonsName() {
+        eye.show { language ->
+            EatenPantryDialog(
+                PantryWindow(
+                    PantryQuestion.TAKE,
+                    listOf(portion("Paweł", offer = breakfast(language)), portion("Ewa", offer = breakfast(language).take(2), of = EatenOf.Meal("plan-2", "meal-9"))),
+                ),
+                onConfirm = {},
+                onRemoveOnly = {},
+                onDismiss = {},
+            )
+        }
+
+        eye.check("pantry-eaten-both") { language, lines ->
+            val note = if (language == "en") "Each person's portion comes off their own pantry." else "Porcja każdej osoby schodzi z jej spiżarni."
+            assertTrue(lines.toString(), note in lines)
+            for (name in listOf("Paweł", "Ewa")) {
+                compose.onNode(hasText(name) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading) and hasAnyAncestor(isDialog())).assertExists()
+            }
         }
     }
 

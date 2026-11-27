@@ -2769,6 +2769,7 @@
     </plurals>
     <string name="eaten_pantry_take_title">Zdejmij ze spiżarni to, co zjedzono</string>
     <string name="eaten_pantry_take_note">Na ten dzień nie ma listy zakupów, więc spiżarnia sama nie odejmie tego, co zjedzono.</string>
+    <string name="eaten_pantry_by_person">Porcja każdej osoby schodzi z\u00A0jej spiżarni.</string>
     <string name="eaten_pantry_line">zjedzone\u00A0%1$s\u00A0· w\u00A0spiżarni\u00A0%2$s\u00A0· zdejmiesz\u00A0%3$s</string>
     <string name="eaten_pantry_take">Zdejmij ze spiżarni</string>
     <string name="eaten_pantry_not_now">Nie teraz</string>

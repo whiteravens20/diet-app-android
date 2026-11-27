@@ -20,6 +20,7 @@ import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.remote.PublicConfigDto
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -116,6 +117,8 @@ import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.remote.DisplayAmountDto
 import net.whiteravens.dietapp.data.remote.EatenFromPantryDto
 import net.whiteravens.dietapp.data.remote.EatenPantryDto
+import net.whiteravens.dietapp.data.remote.OtherPortionDto
+import net.whiteravens.dietapp.data.remote.SharedMealOfDto
 import net.whiteravens.dietapp.domain.EatenFood
 import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.ui.common.PantryQuestion
@@ -1373,6 +1376,46 @@ class PlanDetailViewModelTest {
 
         assertTrue(model.state.value.offline)
         coVerify(exactly = 0) { api.mealPantry(any(), any()) }
+        assertNull(model.pantryWindow.value)
+    }
+
+    @Test
+    fun `a meal both people ate, marked for both, asks of each person's portion and takes both on one press, and marked for one, of that one's alone`() {
+        val api = mockk<DietApiService>()
+        val first = plan.days.first()
+        val joint = plan.copy(
+            days = plan.days.map { day ->
+                if (day != first) day else day.copy(
+                    meals = day.meals.map {
+                        if (it.id != meal.id) it else it.copy(
+                            shared = SharedMealOfDto("shared-1", false, OtherPortionDto("meal-9", "plan-2", "Ewa", 1.0, 500.0, false), emptyList()),
+                        )
+                    },
+                )
+            },
+        )
+        coEvery { api.mealPlan(plan.id) } returns joint
+        coEvery { api.setMealEaten(plan.id, meal.id, any()) } returns swapped.copy(plan = joint)
+        coEvery { api.mealPantry(plan.id, meal.id) } returns EatenPantryDto("Ala", offer = listOf(oats))
+        coEvery { api.mealPantry("plan-2", "meal-9") } returns EatenPantryDto("Ewa", offer = listOf(oats))
+        coEvery { api.takeMealPantry(any(), any()) } just runs
+        val model = model(api, pantry = PantryRepository(api, json, changeQueue()))
+
+        model.setEaten(meal.id, true)
+
+        assertEquals(listOf("Ala"), model.pantryWindow.value!!.portions.map { it.pantry.profileName })
+        model.closePantry()
+        coVerify(exactly = 0) { api.mealPantry("plan-2", any()) }
+
+        model.setEaten(meal.id, true, forAll = true)
+
+        assertEquals(listOf("Ala", "Ewa"), model.pantryWindow.value!!.portions.map { it.pantry.profileName })
+        coVerify(exactly = 0) { api.takeMealPantry(any(), any()) }
+        model.confirmPantry()
+        coVerifyOrder {
+            api.takeMealPantry(plan.id, meal.id)
+            api.takeMealPantry("plan-2", "meal-9")
+        }
         assertNull(model.pantryWindow.value)
     }
 }
