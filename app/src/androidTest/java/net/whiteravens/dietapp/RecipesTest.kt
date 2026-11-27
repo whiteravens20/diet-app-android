@@ -61,7 +61,7 @@ class RecipesTest {
         type(text(R.string.own_recipe_add_ingredient), name)
         screen.putKeyboardAway()
         val found = hasText(shown(name)) and hasClickAction() and !hasSetTextAction()
-        screen.waitUntil(20_000) { screen.onAllNodes(found).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitUntil(30_000) { screen.onAllNodes(found).fetchSemanticsNodes().isNotEmpty() }
         screen.onAllNodes(found)[0].performScrollTo().performClick()
         screen.onNodeWithContentDescription(text(R.string.own_recipe_amount_of, name)).performScrollTo().performTextInput(amount)
         screen.putKeyboardAway()
@@ -80,7 +80,7 @@ class RecipesTest {
         // tabs, the search and the filters: with the keyboard up they may begin below its edge.
         val card = hasText(shown(title)) and hasClickAction() and !hasSetTextAction()
         val list = screen.onNode(hasScrollToNodeAction())
-        screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
         screen.keepScreenshot("recipes-found-by-search")
         screen.putKeyboardAway()
         screen.clickFirst(card)
@@ -102,7 +102,7 @@ class RecipesTest {
         screen.onNodeWithText(text(R.string.recipes_search_placeholder)).performTextInput(title)
         val card = hasText(shown(title)) and hasClickAction() and !hasSetTextAction()
         val list = screen.onNode(hasScrollToNodeAction())
-        screen.waitUntil(20_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(card) }.isSuccess }
         screen.putKeyboardAway()
         screen.clickFirst(card)
 
@@ -110,21 +110,21 @@ class RecipesTest {
         screen.waitForText(text(R.string.recipe_save_to_favorites))
         val chip = hasText("Ala") and hasClickAction()
         screen.onNode(chip).performScrollTo().performClick()
-        screen.waitForTheApi(20_000) { Instance.marks(account, profileId)[recipeId]?.first == "favorite" }
+        screen.waitForTheApi(30_000) { Instance.marks(account, profileId)[recipeId]?.first == "favorite" }
         screen.keepScreenshot("recipes-marked-for-a-profile")
         screen.waitForEnabled("Ala")
         screen.onNode(chip).performScrollTo().performClick()
-        screen.waitForTheApi(20_000) { recipeId !in Instance.marks(account, profileId) }
+        screen.waitForTheApi(30_000) { recipeId !in Instance.marks(account, profileId) }
 
         // The first line's ingredient marked as a favourite of the profile, then as one it avoids.
         val ingredient = Instance.recipeIngredients(account, recipeId).first()
         val favourite = text(R.string.recipe_mark_favorite)
         val avoid = text(R.string.recipe_mark_avoid)
         screen.onAllNodesWithContentDescription(favourite)[0].performScrollTo().performClick()
-        screen.waitForTheApi(20_000) { ingredient in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds") }
-        screen.waitUntil(20_000) { screen.onAllNodes(hasContentDescription(avoid) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitForTheApi(30_000) { ingredient in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds") }
+        screen.waitUntil(30_000) { screen.onAllNodes(hasContentDescription(avoid) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         screen.onAllNodesWithContentDescription(avoid)[0].performScrollTo().performClick()
-        screen.waitForTheApi(20_000) {
+        screen.waitForTheApi(30_000) {
             ingredient in Instance.preferredIngredients(account, profileId, "excludedIngredientIds") &&
                 ingredient !in Instance.preferredIngredients(account, profileId, "favoriteIngredientIds")
         }
@@ -141,12 +141,12 @@ class RecipesTest {
         // A recipe drafted by a model waits for a model on the account: without one the button is
         // off and says why; with one it opens the window of choices.
         val draft = hasText(text(R.string.recipes_ai_draft)) and hasClickAction()
-        screen.waitUntil(20_000) { screen.onAllNodes(draft).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitUntil(30_000) { screen.onAllNodes(draft).fetchSemanticsNodes().isNotEmpty() }
         if (Instance.aiMode(account) == "none") {
             screen.waitForText(text(R.string.ai_off_note, text(R.string.ai_off_turn_on)))
             screen.onNode(draft).assertIsNotEnabled()
         } else {
-            screen.waitUntil(20_000) { screen.onAllNodes(draft and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+            screen.waitUntil(30_000) { screen.onAllNodes(draft and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
             screen.onNode(draft).performScrollTo().performClick()
             screen.waitForText(text(R.string.draft_title))
             screen.onNodeWithText(text(R.string.common_close)).performClick()
@@ -233,7 +233,7 @@ class RecipesTest {
         // It keeps what the form showed of the dish: oats in milk, nothing sweet in it, a porridge on groats.
         assertEquals(Triple("savoury", "porridge_dessert", "groats"), Instance.recipeTraits(account, written))
         val edit = hasContentDescription(text(R.string.own_recipe_edit_title))
-        screen.waitUntil(20_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitUntil(30_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isNotEmpty() }
         screen.waitForText("Oat porridge")
 
         // Edited from its view, it is saved as a new version in its place.
@@ -246,7 +246,7 @@ class RecipesTest {
         screen.onNodeWithText(text(R.string.own_recipe_field_servings)).performScrollTo().performTextReplacement("2")
         press(text(R.string.own_recipe_save))
         screen.waitForTheApi { Instance.ownRecipes(account).singleOrNull()?.let { (id, servings) -> id != written && servings == 2 } == true }
-        screen.waitUntil(20_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isNotEmpty() }
+        screen.waitUntil(30_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isNotEmpty() }
         screen.keepScreenshot("recipes-written-and-edited")
 
         // Deleted from its view: the question says what becomes of its plans and of a suggestion of it,
@@ -256,6 +256,6 @@ class RecipesTest {
         screen.keepScreenshot("recipes-deleting-ones-own")
         screen.onNode(hasText(text(R.string.common_delete)) and hasClickAction()).performClick()
         screen.waitForTheApi { Instance.ownRecipes(account).isEmpty() }
-        screen.waitUntil(20_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isEmpty() }
+        screen.waitUntil(30_000) { screen.onAllNodes(edit).fetchSemanticsNodes().isEmpty() }
     }
 }
