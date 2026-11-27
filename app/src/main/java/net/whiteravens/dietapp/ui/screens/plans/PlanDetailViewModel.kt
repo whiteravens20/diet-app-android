@@ -33,6 +33,7 @@ import net.whiteravens.dietapp.domain.MEAL_TYPES
 import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.MealPlan
+import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.Nutrition
 import net.whiteravens.dietapp.domain.PlanWeek
 import net.whiteravens.dietapp.domain.inGiveWayOrder
@@ -134,6 +135,13 @@ class PlanDetailViewModel @Inject constructor(
     data class LeftoverWent(val date: String, val slot: String, val otherPlan: Boolean)
 
     /**
+     * A change answered with the plan as it left it: what it was, as the day's history names it ([cause], the card's
+     * title), the day it was of where it was of one, and of days made again the meals that got their recipe again for
+     * want of another ([same]).
+     */
+    data class Changed(val cause: String, val date: String? = null, val same: List<MealPlace> = emptyList())
+
+    /**
      * A swap that can be taken back: the meal it was of, and the revision it left the plan at; and the
      * recipe a substitution made where no model worded its text, whose words can be corrected.
      */
@@ -167,6 +175,8 @@ class PlanDetailViewModel @Inject constructor(
         val rebalance: Rebalance? = null,
         /** What the last change did to the shopping lists and the freezer, until it is put away. */
         val effects: PlanEffects? = null,
+        /** The last change, where it answered with the plan as it left it, until it is put away. */
+        val changed: Changed? = null,
         /** The swap the last change was, which can be taken back: said until it is put away, even where no portion moved. */
         val lastSwap: LastSwap? = null,
         /** The recipe a substitution made whose words are being corrected in their window. */
@@ -449,7 +459,7 @@ class PlanDetailViewModel @Inject constructor(
                             plan = taken.plan,
                             offer = null,
                             taking = false,
-                            rebalance = taken.rebalance.shown(), effects = taken.effects,
+                            rebalance = taken.rebalance.shown(), changed = null, effects = taken.effects,
                             lastSwap = LastSwap(offer.mealId, taken.plan.revision),
                         )
                     }
@@ -557,7 +567,7 @@ class PlanDetailViewModel @Inject constructor(
                         s.copy(
                             plan = changed.plan,
                             leftoverWindow = null,
-                            rebalance = null, effects = null,
+                            rebalance = null, changed = null, effects = null,
                             lastSwap = null,
                             leftoverWent = LeftoverWent(offer.date, slot, otherPlan = !here),
                             selectedDay = changed.plan.days.indexOfFirst { it.date == offer.date }.takeIf { here && it >= 0 } ?: s.selectedDay,
@@ -607,7 +617,7 @@ class PlanDetailViewModel @Inject constructor(
                             is Submitted.Sent -> it.copy(
                                 plan = submitted.answer.plan,
                                 changing = false,
-                                rebalance = submitted.answer.rebalance.shown(), effects = submitted.answer.effects,
+                                rebalance = submitted.answer.rebalance.shown(), changed = null, effects = submitted.answer.effects,
                                 lastSwap = null,
                                 customMeal = CustomMealSent(added = true),
                             )
@@ -661,7 +671,7 @@ class PlanDetailViewModel @Inject constructor(
                         it.copy(
                             plan = answer.plan,
                             changing = false,
-                            rebalance = answer.rebalance.shown(), effects = answer.effects,
+                            rebalance = answer.rebalance.shown(), changed = null, effects = answer.effects,
                             lastSwap = null,
                             customMeal = CustomMealSent(added = true),
                         )
@@ -720,7 +730,7 @@ class PlanDetailViewModel @Inject constructor(
                         it.copy(
                             plan = resized.plan,
                             changing = false,
-                            rebalance = resized.rebalance.shown(), effects = resized.effects,
+                            rebalance = resized.rebalance.shown(), changed = null, effects = resized.effects,
                             lastSwap = null,
                             resizeLeft = resized.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() }?.let { rebalance -> date to rebalance.unabsorbedKcal },
                         )
@@ -747,7 +757,7 @@ class PlanDetailViewModel @Inject constructor(
                         it.copy(
                             plan = spread.plan,
                             changing = false,
-                            rebalance = spread.rebalance.shown(), effects = spread.effects,
+                            rebalance = spread.rebalance.shown(), changed = null, effects = spread.effects,
                             lastSwap = null,
                             resizeLeft = spread.rebalance?.takeIf { rebalance -> rebalance.changes.isEmpty() && on != null }?.let { rebalance -> on!! to rebalance.unabsorbedKcal },
                         )
@@ -767,7 +777,7 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null) }
             attempt { plans.evenWeek(planId, week.from, plan.revision) }
-                .onSuccess { evened -> _state.update { it.copy(plan = evened, changing = false, rebalance = null, effects = null, lastSwap = null) } }
+                .onSuccess { evened -> changedTo(evened, Changed("week-evened")) }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
                     if (e.isPlanChanged() || e.isNotFound()) reload()
@@ -782,7 +792,7 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null) }
             attempt { plans.retarget(planId, plan.revision) }
-                .onSuccess { taken -> _state.update { it.copy(plan = taken, changing = false, rebalance = null, effects = null, lastSwap = null) } }
+                .onSuccess { taken -> changedTo(taken, Changed("retarget")) }
                 .onFailure { e ->
                     _state.update { it.copy(changing = false, error = e) }
                     if (e.isPlanChanged() || e.isNotFound()) reload()
@@ -792,16 +802,16 @@ class PlanDetailViewModel @Inject constructor(
 
     /** The plan changed from the history of one of its days: the card goes, and the plan is the server's again. */
     fun changedElsewhere() {
-        _state.update { it.copy(rebalance = null, effects = null, lastSwap = null, notice = null) }
+        _state.update { it.copy(rebalance = null, changed = null, effects = null, lastSwap = null, notice = null) }
         reload()
     }
 
     fun dismissRebalance() {
-        _state.update { it.copy(rebalance = null, effects = null, lastSwap = null, notice = null) }
+        _state.update { it.copy(rebalance = null, changed = null, effects = null, lastSwap = null, notice = null) }
     }
 
     /** Opens the window the words of [recipeId], a recipe a substitution made, are corrected in. */
-    fun reword(recipeId: String) = _state.update { it.copy(rewording = recipeId, rebalance = null, effects = null, lastSwap = null, notice = null) }
+    fun reword(recipeId: String) = _state.update { it.copy(rewording = recipeId, rebalance = null, changed = null, effects = null, lastSwap = null, notice = null) }
 
     fun stopRewording() = _state.update { it.copy(rewording = null) }
 
@@ -816,7 +826,7 @@ class PlanDetailViewModel @Inject constructor(
         _state.update {
             it.copy(
                 plan = result.plan,
-                rebalance = result.rebalance.shown(), effects = result.effects,
+                rebalance = result.rebalance.shown(), changed = null, effects = result.effects,
                 lastSwap = LastSwap(
                     mealId,
                     result.plan.revision,
@@ -870,7 +880,10 @@ class PlanDetailViewModel @Inject constructor(
         _state.update { it.copy(setWindow = window.copy(applying = true, error = null)) }
         viewModelScope.launch {
             attempt { plans.applySet(setId, planId, dates, together) }
-                .onSuccess { plan -> _state.update { it.copy(plan = plan, setWindow = null, rebalance = null, effects = null, lastSwap = null) } }
+                .onSuccess { plan ->
+                    _state.update { it.copy(setWindow = null) }
+                    changedTo(plan, Changed("favorite-set", date = dates.minOrNull()))
+                }
                 .onFailure { e ->
                     _state.update { it.copy(setWindow = it.setWindow?.copy(applying = false, error = e)) }
                     if (e.isPlanChanged() || e.isNotFound()) reload()
@@ -878,9 +891,28 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    /** A day filled another way, taken in its window, or set otherwise in its settings. */
-    fun dayTaken(plan: MealPlan) {
-        _state.update { it.copy(plan = plan) }
+    /** A day of [date] filled another way, taken in its window, or set otherwise in its settings: [cause] says which. */
+    fun dayTaken(plan: MealPlan, cause: String, date: String) {
+        changedTo(plan, Changed(cause, date = date))
+    }
+
+    /**
+     * A change answered with the plan as it left it, [changed]: the plan shown, and a card where the change made a list
+     * stop matching it, moved what the freezer gives, or, of days made again, gave a meal its recipe again.
+     */
+    private fun changedTo(plan: MealPlan, changed: Changed) {
+        val effects = plan.effects?.takeIf { it.told }
+        _state.update {
+            it.copy(
+                plan = plan,
+                changing = false,
+                rebalance = null,
+                lastSwap = null,
+                notice = null,
+                effects = effects,
+                changed = changed.takeIf { effects != null || changed.same.isNotEmpty() },
+            )
+        }
     }
 
     /** The plan read anew: another request may have changed it first. */
@@ -892,7 +924,10 @@ class PlanDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(changing = true, error = null, refused = null, inTheWay = null) }
             attempt { plans.reroll(planId, asked) }
-                .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
+                .onSuccess { plan ->
+                    val day = plan.days.firstOrNull { it.id == asked.dayId }?.date
+                    changedTo(plan, Changed("reroll", date = day, same = sameAgainOf(plan, day, asked)))
+                }
                 .onFailure { e ->
                     val allow = when ((e as? ApiException)?.code) {
                         "LOCKED_RECIPE_INELIGIBLE" -> DROP_LOCKS.takeUnless { asked.dropIneligibleLocks }
@@ -956,7 +991,7 @@ class PlanDetailViewModel @Inject constructor(
                             plan = changed.plan,
                             changing = false,
                             rebalance = if (said) changed.rebalance.shown() else null,
-                            effects = changed.effects.takeIf { said },
+                            changed = null, effects = changed.effects.takeIf { said },
                             lastSwap = swapped?.let { meal -> LastSwap(meal, changed.plan.revision) },
                         )
                     }
@@ -981,7 +1016,7 @@ class PlanDetailViewModel @Inject constructor(
                 .onSuccess { submitted ->
                     _state.update {
                         when (submitted) {
-                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown(), effects = submitted.answer.effects, lastSwap = null)
+                            is Submitted.Sent -> it.copy(plan = submitted.answer.plan, changing = false, rebalance = submitted.answer.rebalance.shown(), changed = null, effects = submitted.answer.effects, lastSwap = null)
                             is Submitted.Kept -> it.copy(changing = false, offline = it.offline || submitted.offline)
                         }
                     }
@@ -1105,3 +1140,18 @@ private fun QueuedChange.OwnMealAdded.ownMeal() = Meal(
 
 /** Where the screen's saved state keeps the window of a meal of one's own, what it is of. */
 private const val KEPT_MEAL_WINDOW = "keptMealWindow"
+
+/**
+ * The meals of the days [asked] made again that got the recipe they held, for want of another: of the day [day] where
+ * one day was, of the days from `from` to `to` where those were; none where the whole plan was made again.
+ */
+internal fun sameAgainOf(plan: MealPlan, day: String?, asked: Reroll): List<MealPlace> =
+    plan.days
+        .filter { d ->
+            when {
+                day != null -> d.date == day
+                asked.from == null && asked.to == null -> false
+                else -> (asked.from == null || d.date >= asked.from) && (asked.to == null || d.date <= asked.to)
+            }
+        }
+        .flatMap { d -> d.meals.filter { it.sameAgain }.map { MealPlace(d.date, it.slot) } }

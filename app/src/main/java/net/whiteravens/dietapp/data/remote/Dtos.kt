@@ -1566,6 +1566,12 @@ data class MealPlanDto(
     /** The plan of the other profile this one was made together with; null for a plan of one person. */
     val joint: JointPlanDto? = null,
     val createdAt: String,
+    /**
+     * Of a change answered with the plan as it left it (`ChangedPlan`: a day's settings, a week evened, a target
+     * taken, days made again, a day's variant, a favourite set): what it did to the lists and the freezer; null where
+     * it did nothing to them, and on every plan that is only read.
+     */
+    val effects: PlanChangeEffectsDto? = null,
 )
 
 /** The profile's target now, and the one a running plan counts, in kcal a day. */
@@ -1728,6 +1734,11 @@ data class SingleCandidateDto(val date: String, val slot: String)
 data class GenerationReportDto(
     val relaxations: List<RelaxedMealDto>,
     val singleCandidate: List<SingleCandidateDto>,
+    /**
+     * Meals of days made again by themselves that got the recipe they held: the diet, the profile and the plan's
+     * limits left them no other. None from an API that does not say it.
+     */
+    val sameAgain: List<SingleCandidateDto> = emptyList(),
     /** `counted` | `left_out` | `unused` | `empty` | `not_asked`. */
     val pantry: String,
     /** Of a joint plan, the times of day both have that are planned apart: no recipe both may be given was left. */

@@ -207,6 +207,25 @@ class MealMappingTest {
     }
 
     @Test
+    fun `a meal its day made again gave the recipe it held says so, of that day and time of day alone`() {
+        val day = plan.days[1]
+        val meal = day.meals.first { it.recipe != null }
+        val report = GenerationReportDto(
+            relaxations = emptyList(),
+            singleCandidate = emptyList(),
+            sameAgain = listOf(SingleCandidateDto(day.date, meal.mealType)),
+            pantry = "empty",
+        )
+
+        val said = plan.copy(report = report).toDomain()
+
+        assertTrue(said.days[1].meals.single { it.id == meal.id }.sameAgain)
+        assertTrue(said.days[0].meals.none { it.sameAgain })
+        // A report of an API that does not say it says it of no meal.
+        assertTrue(plan.toDomain().days.flatMap { it.meals }.none { it.sameAgain })
+    }
+
+    @Test
     fun `a model's pick of a meal goes before what it had to do with the recipe, and a plan made with one says so`() {
         val day = plan.days.first()
         val planned = day.meals.first { it.recipe != null }

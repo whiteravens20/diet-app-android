@@ -77,6 +77,8 @@ class DaySettingsViewModel @Inject constructor(
         val inTheWay: RelaxationNeeded? = null,
         /** The plan with the settings saved: the window is done. */
         val saved: MealPlan? = null,
+        /** What the save was, as the day's history names it: the settings of the day, or its week evened out alone. */
+        val savedCause: String = "day-settings",
         /** A save was refused as the plan had changed: it is to be read anew. */
         val stale: Boolean = false,
     ) {
@@ -171,7 +173,7 @@ class DaySettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(saving = true, error = null, stale = false) }
             attempt { plans.evenWeek(current.planId, current.date, preview.revision) }
-                .onSuccess { plan -> _state.update { it.copy(saving = false, saved = plan) } }
+                .onSuccess { plan -> _state.update { it.copy(saving = false, saved = plan, savedCause = "week-evened") } }
                 .onFailure { e ->
                     val changed = e is ApiException && e.code == "PLAN_CHANGED"
                     _state.update { it.copy(saving = false, error = e, stale = changed) }

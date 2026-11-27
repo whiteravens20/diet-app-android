@@ -327,9 +327,9 @@ fun PlanDetailScreen(
             planId = plan.id,
             day = day,
             week = plan.weeks.weekOf(day.date),
-            onSaved = { saved ->
+            onSaved = { saved, cause ->
                 settingsFor = null
-                viewModel.dayTaken(saved)
+                viewModel.dayTaken(saved, cause, day.date)
             },
             onStale = viewModel::readAgain,
             onDismiss = { settingsFor = null },
@@ -405,7 +405,7 @@ fun PlanDetailScreen(
             day = day,
             onTaken = { taken ->
                 waysFor = null
-                viewModel.dayTaken(taken)
+                viewModel.dayTaken(taken, "day-variant", day.date)
             },
             onStale = viewModel::readAgain,
             onDismiss = { waysFor = null },
@@ -493,7 +493,7 @@ fun PlanDetailScreen(
     // that nothing of it stays under the card.
     var cardHeight by remember { mutableIntStateOf(0) }
     val shownCard = state.rebalance != null || state.lastSwap != null || state.notice != null || state.leftoverWent != null ||
-        state.effects != null
+        state.effects != null || state.changed != null
     // Where the last leftover went, said by the card at the foot of the plan.
     val leftoverNotice = state.leftoverWent?.let { went ->
         val (day, meal) = eatenWhen(went.date, went.slot)
@@ -765,13 +765,16 @@ fun PlanDetailScreen(
             }
         }
         if (shownCard) {
-            // The day it speaks of: of the swap, or of the first meal sized.
+            // The day it speaks of: of the swap, of the first meal sized, or of the change answered with the plan.
             val about = state.lastSwap?.mealId ?: state.rebalance?.changes?.firstOrNull()?.mealId
             val cardDay = state.plan?.days?.firstOrNull { day -> day.meals.any { it.id == about } }
+                ?: state.changed?.date?.let { date -> state.plan?.days?.firstOrNull { it.date == date } }
             RebalanceCard(
                 rebalance = state.rebalance,
                 swapRevision = state.lastSwap?.revision,
                 day = cardDay,
+                cause = state.changed?.cause,
+                same = state.changed?.same.orEmpty(),
                 effects = state.effects,
                 onOpenList = onOpenList,
                 onShowDay = { date -> plan?.days?.indexOfFirst { it.date == date }?.takeIf { it >= 0 }?.let(viewModel::selectDay) },
@@ -1467,6 +1470,7 @@ private fun MealCard(
                 )
                 notCookedNote(meal, date, today)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) }
                 leftoverHint(meal)?.let { Hint(it) }
+                sameAgainHint(meal)?.let { Hint(it) }
                 frozen.forEach { rest -> FreezeLine(rest, onKeepFrozen) }
                 // What is put on this person's plate beside the dish both eat: the day counts it, the dish's figures do not.
                 meal.topping?.let {
@@ -1504,6 +1508,11 @@ private fun MealCard(
         }
     }
 }
+
+/** Why a meal its day made again gave the recipe it held has it still; said by the single recipe where the diet left one. */
+@Composable
+internal fun sameAgainHint(meal: Meal): String? =
+    stringResource(R.string.plans_same_again_hint).takeIf { meal.sameAgain && !meal.onlyRecipe }
 
 /**
  * An entry of the day's diary in a plan, under the meal it was written for: what it is, how much, what
@@ -2219,6 +2228,7 @@ private fun MealDialog(
                 if (meal.disliked.isNotEmpty()) Hint(stringResource(R.string.plans_disliked_hint, formatList(meal.disliked)))
                 if (meal.outsideLimits.isNotEmpty()) Hint(stringResource(R.string.plans_outside_limit_hint, limitNames(meal.outsideLimits)))
                 if (meal.onlyRecipe) Hint(stringResource(R.string.plans_only_recipe_hint))
+                sameAgainHint(meal)?.let { Hint(it) }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }

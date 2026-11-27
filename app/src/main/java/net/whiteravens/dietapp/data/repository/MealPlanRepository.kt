@@ -717,9 +717,12 @@ class MealPlanRepository @Inject constructor(
         }
     }
 
-    /** Keeps [plan] for offline use and gives it back as the app shows it. */
+    /**
+     * Keeps [plan] for offline use and gives it back as the app shows it, with what the change it answers did to the
+     * lists and the freezer; the copy kept says nothing of a change.
+     */
     private suspend fun keep(plan: MealPlanDto): MealPlan {
-        mirror(plan)
+        mirror(plan.copy(effects = null))
         return withContext(work) { plan.toDomain() }
     }
 

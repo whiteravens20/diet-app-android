@@ -60,6 +60,11 @@ import net.whiteravens.dietapp.data.remote.RebalanceResultDto
 import net.whiteravens.dietapp.data.remote.RebalanceSummaryDto
 import net.whiteravens.dietapp.data.remote.RecipeRefDto
 import net.whiteravens.dietapp.data.remote.RegenerateRequest
+import net.whiteravens.dietapp.data.remote.EffectListDto
+import net.whiteravens.dietapp.data.remote.GenerationReportDto
+import net.whiteravens.dietapp.data.remote.PlanChangeEffectsDto
+import net.whiteravens.dietapp.data.remote.SingleCandidateDto
+import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.UndoSwapRequest
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
@@ -729,6 +734,58 @@ class PlanDetailViewModelTest {
         assertEquals(RegenerateRequest(replaceEaten = true), asked.single())
         assertEquals(swapped.plan.revision, model.state.value.plan?.revision)
         assertFalse(model.state.value.changing)
+    }
+
+    @Test
+    fun `a day made again says on a card which of its meals got their recipe again, though no list changed`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val day = plan.days[2]
+        val kept = day.meals.first { it.recipe != null }
+        // The report speaks of the day made again and of another one: the card names the meals of the day alone.
+        val report = GenerationReportDto(
+            relaxations = emptyList(),
+            singleCandidate = emptyList(),
+            sameAgain = listOf(SingleCandidateDto(day.date, kept.mealType), SingleCandidateDto(plan.days[1].date, kept.mealType)),
+            pantry = "empty",
+        )
+        coEvery { api.regenerateDay(plan.id, day.id, any()) } returns plan.copy(revision = plan.revision + 1, report = report)
+        val model = model(api)
+
+        model.reroll(Reroll(dayId = day.id))
+
+        val changed = model.state.value.changed!!
+        assertEquals("reroll", changed.cause)
+        assertEquals(day.date, changed.date)
+        assertEquals(listOf(MealPlace(day.date, kept.mealType)), changed.same)
+        assertNull(model.state.value.effects)
+
+        model.dismissRebalance()
+
+        assertNull(model.state.value.changed)
+    }
+
+    @Test
+    fun `a week evened out that made a list stop matching says so on a card named as the history names it, and one that did not says nothing`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        val list = EffectListDto("list-1", plan.id, plan.profileId, plan.startDate, plan.days.last().date)
+        coEvery { api.evenWeek(plan.id, any()) } returns plan.copy(revision = plan.revision + 1, effects = PlanChangeEffectsDto(lists = listOf(list))) andThen
+            plan.copy(revision = plan.revision + 2)
+        val model = model(api)
+        val week = PlanWeek(plan.startDate, plan.days.last().date, target = 2135.0, average = 2179.0, uneven = true)
+
+        model.evenWeek(week)
+
+        assertEquals("week-evened", model.state.value.changed?.cause)
+        assertEquals(listOf("list-1"), model.state.value.effects?.lists?.map { it.id })
+
+        model.dismissRebalance()
+        model.evenWeek(week)
+
+        assertNull(model.state.value.changed)
+        assertNull(model.state.value.effects)
+        assertEquals(plan.revision + 2, model.state.value.plan?.revision)
     }
 
     @Test

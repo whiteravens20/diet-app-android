@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.whiteravens.dietapp.R
 import net.whiteravens.dietapp.domain.EffectList
+import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.PlanDay
 import net.whiteravens.dietapp.domain.PlanEffects
 import net.whiteravens.dietapp.domain.Rebalance
@@ -47,6 +48,7 @@ import net.whiteravens.dietapp.ui.common.formatDates
 import net.whiteravens.dietapp.ui.common.formatDayDate
 import net.whiteravens.dietapp.ui.common.formatDayMonth
 import net.whiteravens.dietapp.ui.common.formatNumber
+import net.whiteravens.dietapp.ui.common.mealTypeLabel
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import net.whiteravens.dietapp.ui.components.Text
@@ -81,12 +83,16 @@ internal fun RebalanceCard(
     onOpenList: (EffectList) -> Unit = {},
     onShowDay: (String) -> Unit = {},
     onHistory: (() -> Unit)? = null,
+    /** A change answered with the plan as it left it, as the day's history names it: the card's title. */
+    cause: String? = null,
+    /** Of days made again, the meals that got their recipe again for want of another. */
+    same: List<MealPlace> = emptyList(),
 ) {
     val dismiss by rememberUpdatedState(onDismiss)
     val timeout = LocalAccessibilityManager.current
         ?.calculateRecommendedTimeoutMillis(REBALANCE_SHOWN_MILLIS, containsIcons = true, containsText = true, containsControls = true)
         ?: REBALANCE_SHOWN_MILLIS
-    val lasting = effects?.told == true
+    val lasting = effects?.told == true || same.isNotEmpty()
     LaunchedEffect(rebalance, swapRevision, notice, said, lasting) {
         if (lasting) return@LaunchedEffect
         delay(timeout)
@@ -114,8 +120,13 @@ internal fun RebalanceCard(
             said?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             // Why the engine's plain replacement stands where a model was asked to reword the text.
             notice?.let { reason -> fallbackText(reason)?.let { Hint(it, MaterialTheme.colorScheme.tertiary) } }
-            if (rebalance != null || swap) ChangeSaid(rebalance, swap, day, spreadable)
+            if (rebalance != null || swap) {
+                ChangeSaid(rebalance, swap, day, spreadable)
+            } else if (cause != null) {
+                CauseSaid(cause, day)
+            }
             effects?.let { Effects(it, onOpenList, onShowDay) }
+            if (same.isNotEmpty()) Text(stringResource(R.string.plans_same_again_line, sameWords(same)), style = MaterialTheme.typography.bodyMedium)
             // A recipe a substitution made without a model holds the catalogue's name as it is.
             if (reword != null) Hint(stringResource(R.string.plans_reword_note))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
@@ -213,6 +224,36 @@ private fun ChangeSaid(rebalance: Rebalance?, swap: Boolean, day: PlanDay?, spre
             )
         }
     }
+}
+
+/** A change answered with the plan as it left it: its name, as the day's history has it, and what its [day] holds now. */
+@Composable
+private fun CauseSaid(cause: String, day: PlanDay?) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Title(causeText(cause)?.let { stringResource(it) } ?: stringResource(R.string.plans_rebalance_title))
+        day?.let {
+            Hint(
+                stringResource(
+                    R.string.plans_word_day,
+                    formatNumber(it.nutrition.calories.roundToInt()),
+                    formatNumber(it.calorieTarget.roundToInt()),
+                    formatNumber(it.nutrition.protein.roundToInt()),
+                    formatNumber(it.targetMacros.protein.roundToInt()),
+                ),
+            )
+        }
+    }
+}
+
+/** The meals that got their recipe again, by their time of day, and by their day where they are of more than one. */
+@Composable
+private fun sameWords(same: List<MealPlace>): String {
+    val days = same.map { it.date }.distinct()
+    // `map`, being inline, lets the labels be read where `joinToString` would not.
+    return days.map { date ->
+        val meals = same.filter { it.date == date }.map { mealTypeLabel(it.slot).lowercase() }.joinToString(", ")
+        if (days.size > 1) "${formatDayMonth(date)}: $meals" else meals
+    }.joinToString("; ")
 }
 
 /** The card's title, larger than its lines, with the sign of portions sized again before it. */

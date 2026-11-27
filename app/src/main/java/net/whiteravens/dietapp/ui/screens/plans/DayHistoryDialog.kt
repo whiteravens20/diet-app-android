@@ -258,7 +258,7 @@ private fun nameOf(state: DayEventMealState?): String = state?.name ?: stringRes
 @Composable
 private fun causeLabel(cause: String): String = causeText(cause)?.let { stringResource(it) } ?: cause
 
-private fun causeText(cause: String): Int? =
+internal fun causeText(cause: String): Int? =
     when (cause) {
         "swap" -> R.string.history_cause_swap
         "swap-undo" -> R.string.history_cause_swap_undo

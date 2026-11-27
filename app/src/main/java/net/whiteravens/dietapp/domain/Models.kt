@@ -472,6 +472,8 @@ data class Meal(
     val outsideLimits: List<String>,
     /** For this meal on the plan's diet the profile left one recipe to choose from. */
     val onlyRecipe: Boolean,
+    /** Made again with its day, it got the recipe it held: the profile and the plan's limits left it no other. */
+    val sameAgain: Boolean = false,
     /** The other meals of its cooking and what all of them together take; null where it is cooked for itself. */
     val cooking: MealCooking? = null,
     /** A macronutrient of a meal of one's own was left out and estimated. */
@@ -779,6 +781,11 @@ data class MealPlan(
     val joint: JointPlan? = null,
     /** Of a joint plan, the times of day both have that are planned apart: no dish both may be given was left. */
     val apart: List<String> = emptyList(),
+    /**
+     * Of a plan a change answered with as it left it (a day's settings, a week evened, a target taken, days made again,
+     * a day's variant, a favourite set): what the change did to the lists and the freezer; null on a plan only read.
+     */
+    val effects: PlanEffects? = null,
 ) {
     /** The meals that hold something the profile has ruled out since the plan was made. */
     val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }

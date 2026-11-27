@@ -928,7 +928,14 @@ class PlansTest {
         screen.keepScreenshot("plans-a-day-and-its-week-more")
         screen.onNode(saveDay).performClick()
         screen.waitForTheApi(60_000) { Instance.firstWeek(account, planId).getBoolean("uneven") }
-        screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_settings_title)).fetchSemanticsNodes().isEmpty() }
+        // The window's title, not the card's after it, which in Polish has the same words.
+        screen.waitUntil(20_000) { screen.onAllNodes(hasText(text(R.string.plans_settings_title)) and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isEmpty() }
+
+        // The card after the change says, under the change's name, that the list no longer matches the plan.
+        screen.waitForText(text(R.string.history_cause_day_settings))
+        screen.waitForText(text(R.string.plans_effect_open_list))
+        screen.keepScreenshot("plans-a-day-changed-and-its-list")
+        putAwayRebalance()
 
         // The plan says the week stands off its target, and evens it out.
         val evenWeek = hasText(text(R.string.plans_even_week)) and hasClickAction()
@@ -938,6 +945,9 @@ class PlansTest {
         screen.onNode(evenWeek).performClick()
         screen.waitForTheApi(60_000) { !Instance.firstWeek(account, planId).getBoolean("uneven") }
         screen.waitUntil(20_000) { screen.onAllNodes(evenWeek).fetchSemanticsNodes().isEmpty() }
+        // Evened out, the week has no card: the list stopped matching the plan before, which the plan says already,
+        // and a change's card says only what the change did itself.
+        screen.onNodeWithText(text(R.string.history_cause_week_evened)).assertDoesNotExist()
 
         // A meal of a day the list covers is to be taken off it: the window says the list goes out of date.
         val (title, _) = Instance.firstMeal(account, planId)

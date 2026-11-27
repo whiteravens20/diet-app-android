@@ -282,6 +282,8 @@
     <string name="plans_outside_limit_hint">No recipe was left for this meal inside: %1$s.</string>
     <string name="plans_only_recipe_chip">Only recipe</string>
     <string name="plans_only_recipe_hint">For this meal on this diet the profile leaves one recipe to choose from.</string>
+    <string name="plans_same_again_hint">The same recipe as before the day was made again: no other fits the profile and the plan\'s limits.</string>
+    <string name="plans_same_again_line">The same recipe as before: %1$s. No other fits the profile and the plan\'s limits.</string>
     <string name="plans_auto_balanced_chip">auto-balanced ×%1$s</string>
     <string name="plans_packs_line">Packs that do not keep once opened: the menu uses %1$s%% of what it buys.</string>
     <plurals name="plans_packs_line_wasted">

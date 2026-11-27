@@ -77,7 +77,7 @@ fun DaySettingsDialog(
     planId: String,
     day: PlanDay,
     week: PlanWeek?,
-    onSaved: (MealPlan) -> Unit,
+    onSaved: (MealPlan, cause: String) -> Unit,
     onStale: () -> Unit,
     onDismiss: () -> Unit,
     viewModel: DaySettingsViewModel = hiltViewModel(key = "settings-${day.id}"),
@@ -86,7 +86,7 @@ fun DaySettingsDialog(
     LaunchedEffect(day.id) { viewModel.open(planId, day, week) }
     // The window's model outlives it: what the model holds now is read, so that a save of an
     // earlier opening on the same day is not handed back before the state on the screen catches up.
-    LaunchedEffect(state.saved) { viewModel.state.value.saved?.let(onSaved) }
+    LaunchedEffect(state.saved) { viewModel.state.value.let { now -> now.saved?.let { onSaved(it, now.savedCause) } } }
     LaunchedEffect(state.stale) { if (viewModel.state.value.stale) onStale() }
     val skipped = state.kind == DaySettingsViewModel.SKIP
 

@@ -280,6 +280,7 @@ fun PlannedMealDto.toDomain(date: String, report: GenerationReportDto?): Meal {
         byModel = modelPart(),
         outsideLimits = report?.relaxations?.firstOrNull { said(it.date, it.slot) }?.gaveWay.orEmpty(),
         onlyRecipe = report?.singleCandidate?.any { said(it.date, it.slot) } == true,
+        sameAgain = report?.sameAgain?.any { said(it.date, it.slot) } == true,
         cooking = cooking?.let { cooked ->
             MealCooking(
                 with = cooked.with.map { CookedPlace(it.mealId, it.date, it.mealType, it.eaten) },
@@ -498,6 +499,7 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     targetMoved = targetMoved?.let { TargetMoved(it.profileTarget, it.planTarget) },
     joint = joint?.toDomain(),
     apart = report?.apart.orEmpty(),
+    effects = effects?.toDomain(),
 )
 
 fun RebalanceSummaryDto.toDomain() = Rebalance(

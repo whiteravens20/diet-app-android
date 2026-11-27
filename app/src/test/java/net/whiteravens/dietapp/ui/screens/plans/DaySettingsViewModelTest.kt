@@ -150,6 +150,7 @@ class DaySettingsViewModelTest {
 
         coVerify(exactly = 1) { plans.applyDaySettings("plan", "day", training, 7, null, false, false) }
         assertSame(alone, second.state.value.saved)
+        assertEquals("day-settings", second.state.value.savedCause)
     }
 
     @Test
@@ -201,6 +202,8 @@ class DaySettingsViewModelTest {
 
         coVerify(exactly = 1) { plans.evenWeek("plan", "2026-01-06", 7) }
         assertSame(evened, model.state.value.saved)
+        // The day's history and the card after it name it as a week evened out, not as the day's settings.
+        assertEquals("week-evened", model.state.value.savedCause)
     }
 
     @Test
