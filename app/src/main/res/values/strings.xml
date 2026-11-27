@@ -1901,8 +1901,8 @@
     <string name="diary_over_ceiling">above the limit of %1$s g</string>
     <string name="water_chart_later">The week’s chart shows from the second day with water.</string>
     <string name="diary_target_from_plan">The target is that of the plan\'s day.</string>
-    <string name="diary_target_from_profile">No plan holds this day: the target is the profile\'s own.</string>
-    <string name="diary_target_from_skipped">The plan skips this day: the target is the profile\'s own.</string>
+    <string name="diary_target_from_profile">No plan holds this day: the target is the profile\'s own as it stood that day.</string>
+    <string name="diary_target_from_skipped">The plan skips this day: the target is the profile\'s own as it stood that day.</string>
     <string name="diary_estimated_note">≈ Some figures are estimates: a meal written by its calories alone has its protein, fat and carbohydrate estimated from the proportions of the day\'s target.</string>
     <string name="diary_plan_over">Over target</string>
     <string name="diary_plan_under">Under target</string>

@@ -2054,8 +2054,8 @@
     <string name="diary_over_ceiling">ponad normę do %1$s g</string>
     <string name="water_chart_later">Wykres tygodnia pojawi się od drugiego dnia z wodą.</string>
     <string name="diary_target_from_plan">Cel to cel dnia planu.</string>
-    <string name="diary_target_from_profile">Żaden plan nie obejmuje tego dnia: cel to cel profilu.</string>
-    <string name="diary_target_from_skipped">Plan pomija ten dzień: cel to cel profilu.</string>
+    <string name="diary_target_from_profile">Żaden plan nie obejmuje tego dnia: cel to cel profilu z\u00A0tego dnia.</string>
+    <string name="diary_target_from_skipped">Plan pomija ten dzień: cel to cel profilu z\u00A0tego dnia.</string>
     <string name="diary_estimated_note">≈ Część wartości to szacunek: posiłek wpisany po samych kaloriach ma białko, tłuszcz i węglowodany oszacowane z proporcji celu dnia.</string>
     <string name="diary_plan_over">Ponad cel</string>
     <string name="diary_plan_under">Poniżej celu</string>
