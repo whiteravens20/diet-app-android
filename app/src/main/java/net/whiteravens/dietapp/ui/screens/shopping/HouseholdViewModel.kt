@@ -122,10 +122,13 @@ class HouseholdViewModel @Inject constructor(
     /** Opens [id] whatever is opened, as a plan's part asks. */
     fun show(id: String) = _state.update { it.copy(openedId = id, error = null) }
 
-    /** Opens the form for [profiles], from today through the six days after it, and reads each profile's plans. */
-    fun startForm(profiles: List<Profile>) {
-        val today = LocalDate.now()
-        _state.update { it.copy(form = Form(today, today.plusDays(6), profiles), error = null) }
+    /**
+     * Opens the form for [profiles], from [from] through [to] (today and the six days after it unless said), and reads
+     * each profile's plans; [chosen] holds the plan of a profile chosen already, null for none: a plan made together
+     * proposes its two plans and no other profile's.
+     */
+    fun startForm(profiles: List<Profile>, from: LocalDate = LocalDate.now(), to: LocalDate = from.plusDays(6), chosen: Map<String, String?> = emptyMap()) {
+        _state.update { it.copy(form = Form(from, to, profiles, chosen = chosen), error = null) }
         profiles.forEach { profile ->
             viewModelScope.launch {
                 val read = attempt { plans.plans(profile.id).plans }.getOrDefault(emptyList())

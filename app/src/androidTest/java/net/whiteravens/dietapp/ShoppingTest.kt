@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isOn
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -36,8 +37,10 @@ import net.whiteravens.dietapp.testing.opensSignedInTheBrowser
 import net.whiteravens.dietapp.testing.plural
 import net.whiteravens.dietapp.testing.putKeyboardAway
 import net.whiteravens.dietapp.testing.scrollTo
+import net.whiteravens.dietapp.testing.scrollToText
 import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.testing.signIn
+import net.whiteravens.dietapp.testing.startSignedIn
 import net.whiteravens.dietapp.testing.text
 import net.whiteravens.dietapp.testing.waitForEnabled
 import net.whiteravens.dietapp.testing.waitForText
@@ -48,6 +51,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import androidx.test.platform.app.InstrumentationRegistry
+import net.whiteravens.dietapp.ui.common.formatDate
 import net.whiteravens.dietapp.ui.common.formatDayMonth
 import java.time.LocalDate
 
@@ -145,6 +149,40 @@ class ShoppingTest {
         screen.onNode(hasText(text(R.string.shopping_open_household)) and hasClickAction()).performClick()
         screen.waitUntil(20_000) { runCatching { screen.onNode(hasText(text(R.string.household_title))).assertIsDisplayed() }.isSuccess }
         screen.keepScreenshot("shopping-the-household-lists-from-a-part")
+    }
+
+    @Test
+    fun aPlanMadeTogetherProposesTheHouseholdListOfBothPlansFromItsMenuAndFromItsOwnList() {
+        val account = Instance.newAccount()
+        val adam = Instance.newProfile(account, name = "Adam")
+        val ewa = Instance.newProfile(account, name = "Ewa")
+        Instance.planTogether(account, adam, ewa)
+        screen.startSignedIn(account)
+
+        // The plan's menu leads to the household list of both plans: its form on the plan's days, both plans chosen.
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+        screen.waitForText(text(R.string.plans_joint_with, "Ewa"))
+        screen.onNodeWithContentDescription(text(R.string.plans_options)).performClick()
+        screen.onNode(hasText(text(R.string.plans_joint_list)) and hasAnyAncestor(isPopup())).assertExists()
+        screen.keepScreenshot("plans-the-household-list-in-the-menu")
+        screen.onNode(hasText(text(R.string.plans_joint_list)) and hasAnyAncestor(isPopup())).performClick()
+        val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+        // The form comes once the plans of its days are read: both chosen, it can be made at once.
+        val make = hasText(text(R.string.household_make)) and hasClickAction()
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(make) }.isSuccess }
+        screen.waitUntil(30_000) { runCatching { screen.onNode(make).assertIsEnabled() }.isSuccess }
+        for (name in listOf("Adam", "Ewa")) screen.onNode(hasText(name) and isToggleable()).assertIsOn()
+        screen.onNodeWithText(text(R.string.household_replaces)).performScrollTo()
+        screen.keepScreenshot("shopping-the-household-list-proposed")
+
+        // The plan's own list says that it buys one plate of a shared dish, and proposes the household list.
+        val note = text(R.string.shopping_joint_note, "Ewa")
+        screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(shown(note))) }.isSuccess }
+        screen.onNode(hasText(text(R.string.shopping_joint_household)) and hasClickAction()).performScrollTo()
+        screen.keepScreenshot("shopping-a-list-of-a-plan-made-together")
     }
 
     @Test

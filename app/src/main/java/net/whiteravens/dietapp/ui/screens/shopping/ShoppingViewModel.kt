@@ -56,6 +56,8 @@ class ShoppingViewModel @Inject constructor(
         val profiles: List<Profile> = emptyList(),
         val selectedProfileId: String? = null,
         val plans: List<MealPlanSummary> = emptyList(),
+        /** The plan's own screen asked for the household list of both plans of a plan made together: proposed once. */
+        val togetherAsked: Boolean = false,
         val selectedPlanId: String? = null,
         /** The lists of the chosen plan, the newest first. */
         val lists: List<ShoppingList> = emptyList(),
@@ -108,6 +110,7 @@ class ShoppingViewModel @Inject constructor(
     private var linkedProfile: String? = savedStateHandle.get<String>(ShoppingRoute::profileId.name)
     private var linkedPlan: String? = savedStateHandle.get<String>(ShoppingRoute::planId.name)
     private var linkedList: String? = savedStateHandle.get<String>(ShoppingRoute::listId.name)
+    private var linkedTogether: Boolean = savedStateHandle.get<Boolean>(ShoppingRoute::together.name) == true
 
     init {
         load()
@@ -396,8 +399,14 @@ class ShoppingViewModel @Inject constructor(
             val linked = planList.firstOrNull { it.id == linkedPlan }
             if (planList.isNotEmpty()) linkedPlan = null
             (linked ?: planList.firstOrNull())?.let { selectPlan(it.id) }
+            // Asked for from the plan's own screen: the household list of both plans, proposed once.
+            if (linked != null && linkedTogether) _state.update { it.copy(togetherAsked = true) }
+            if (planList.isNotEmpty()) linkedTogether = false
         }
     }
+
+    /** The household list of both plans was proposed, as the plan's own screen asked. */
+    fun togetherProposed() = _state.update { it.copy(togetherAsked = false) }
 
     private fun List<ShoppingList>.newestFirst(): List<ShoppingList> = sortedByDescending { it.createdAt }
 }

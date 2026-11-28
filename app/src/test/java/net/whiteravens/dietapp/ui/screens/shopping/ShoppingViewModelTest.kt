@@ -106,6 +106,25 @@ class ShoppingViewModelTest {
     }
 
     @Test
+    fun `a link from a plan made together asks once for the household list of both plans, the plan it names chosen`() {
+        val linked = SavedStateHandle(mapOf("profileId" to "ada", "planId" to "plan", "together" to true))
+
+        val model = ShoppingViewModel(linked, users, plans, lists, changeQueue())
+
+        assertEquals("plan", model.state.value.selectedPlanId)
+        assertTrue(model.state.value.togetherAsked)
+        model.togetherProposed()
+        assertFalse(model.state.value.togetherAsked)
+        // Read again, the screen asks nothing more.
+        model.load()
+        assertFalse(model.state.value.togetherAsked)
+
+        // A link that does not ask for it, or no link, asks nothing.
+        assertFalse(ShoppingViewModel(SavedStateHandle(mapOf("profileId" to "ada", "planId" to "plan")), users, plans, lists, changeQueue()).state.value.togetherAsked)
+        assertFalse(ShoppingViewModel(SavedStateHandle(), users, plans, lists, changeQueue()).state.value.togetherAsked)
+    }
+
+    @Test
     fun `a list made for some days stands in the place of the lists that share a day with it, and is the one shown`() {
         val made = list("made", "2026-10-14", "2026-10-16", made = "13")
         coEvery { lists.generate("plan", "2026-10-14", "2026-10-16") } returns made

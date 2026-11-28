@@ -109,7 +109,13 @@ import kotlin.reflect.KClass
 @Serializable data class RecipeDetailRoute(val recipeId: String, val portion: String? = null, val whole: Boolean = false)
 @Serializable data class RecipeFormRoute(val recipeId: String? = null)
 /** The shopping lists; a link from the card after a change of a plan names the list it leads to, of a profile and a plan. */
-@Serializable data class ShoppingRoute(val profileId: String? = null, val planId: String? = null, val listId: String? = null)
+@Serializable data class ShoppingRoute(
+    val profileId: String? = null,
+    val planId: String? = null,
+    val listId: String? = null,
+    /** Of a plan made together: the household list of both plans is proposed once the plan is read. */
+    val together: Boolean = false,
+)
 @Serializable object MoreRoute
 /** The account's settings, at the section a link names (`AccountSection`'s name), or at their list. */
 @Serializable data class AccountRoute(val section: String? = null)
@@ -382,6 +388,7 @@ private fun MainScaffold(
                         onOpenDiary = { profileId, date -> navController.navigate(DiaryRoute(profileId, date)) },
                         onOpenPlanMeal = { planId, day, meal -> navController.navigate(PlanDetailRoute(planId, day, meal)) },
                         onOpenList = { list -> navController.navigate(ShoppingRoute(list.profileId, list.planId, list.id)) },
+                        onOpenHouseholdList = { profileId, planId -> navController.navigate(ShoppingRoute(profileId, planId, together = true)) },
                     )
                 }
                 composable<DiaryRoute> {

@@ -413,6 +413,17 @@ object Instance {
             expect = 201,
         ).getString("id")
 
+    /** A plan of [days] days from today for [profileId] made together with [withProfileId], as the API makes it: its id. */
+    fun planTogether(account: Account, profileId: String, withProfileId: String, days: Int = 2): String =
+        call(
+            "POST",
+            "meal-plans/generate",
+            JSONObject().put("profileId", profileId).put("withProfileId", withProfileId).put("startDate", LocalDate.now().toString())
+                .put("durationDays", days),
+            token = account.accessToken,
+            expect = 201,
+        ).getString("id")
+
     /** A meal of a plan that takes the rest of a pack: its id, its title, the food of the pack and the meal's day. */
     data class Rest(val mealId: String, val title: String, val food: String, val date: String)
 

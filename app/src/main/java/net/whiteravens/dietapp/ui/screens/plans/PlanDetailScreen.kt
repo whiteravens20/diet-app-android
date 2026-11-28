@@ -198,6 +198,8 @@ fun PlanDetailScreen(
     onOpenDiary: (profileId: String, date: String) -> Unit,
     onOpenPlanMeal: (planId: String, date: String, mealId: String) -> Unit,
     onOpenList: (EffectList) -> Unit,
+    /** The shopping screen proposing the household list of both plans of a plan made together. */
+    onOpenHouseholdList: (profileId: String, planId: String) -> Unit = { _, _ -> },
     viewModel: PlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -521,6 +523,7 @@ fun PlanDetailScreen(
                         onTableAndPrint = { plan?.let { web.open("meal-plans", "profile" to it.profileId, "plan" to it.id) } },
                         onApplySet = { viewModel.openSetWindow() }.takeUnless { readOnly || busy },
                         onDelete = { confirmingDelete = true }.takeUnless { readOnly || busy },
+                        onHouseholdList = plan?.takeIf { it.joint != null }?.let { together -> { onOpenHouseholdList(together.profileId, together.id) } },
                     )
                 }
 
@@ -822,7 +825,15 @@ fun PlanDetailScreen(
 
 /** What the plan is, when it begins, what a day of it holds on average, and whether a model had a hand in it; and what can be done with it. */
 @Composable
-private fun Header(plan: MealPlan?, onBack: () -> Unit, onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
+private fun Header(
+    plan: MealPlan?,
+    onBack: () -> Unit,
+    onTableAndPrint: () -> Unit,
+    onApplySet: (() -> Unit)?,
+    onDelete: (() -> Unit)?,
+    /** Of a plan made together: its shopping as one, by a household list of both plans. */
+    onHouseholdList: (() -> Unit)? = null,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
@@ -849,16 +860,17 @@ private fun Header(plan: MealPlan?, onBack: () -> Unit, onTableAndPrint: () -> U
                 if (plan.byModel) AiMark(stringResource(R.string.ai_mark_plan), Modifier.padding(top = 6.dp), spelledOut = true)
             }
         }
-        if (plan != null) PlanActions(onTableAndPrint, onApplySet, onDelete)
+        if (plan != null) PlanActions(onTableAndPrint, onApplySet, onDelete, onHouseholdList)
     }
 }
 
 /**
  * What can be done with the plan as a whole, behind one button: a favourite set put on its days,
- * the plan as a table or printed in the web application, or the plan deleted.
+ * the plan as a table or printed in the web application, of a plan made together the household list
+ * of both plans, or the plan deleted.
  */
 @Composable
-private fun PlanActions(onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?) {
+private fun PlanActions(onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, onDelete: (() -> Unit)?, onHouseholdList: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -871,6 +883,8 @@ private fun PlanActions(onTableAndPrint: () -> Unit, onApplySet: (() -> Unit)?, 
             }
             DropdownMenuItem(text = { Text(stringResource(R.string.favorite_sets_apply)) }, onClick = { onApplySet?.let(::pick) }, enabled = onApplySet != null)
             DropdownMenuItem(text = { Text(stringResource(R.string.web_table_and_print)) }, onClick = { pick(onTableAndPrint) })
+            // A plan made together is bought as one: the pot of its shared dishes by a household list of both plans.
+            onHouseholdList?.let { DropdownMenuItem(text = { Text(stringResource(R.string.plans_joint_list)) }, onClick = { pick(it) }) }
             DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { onDelete?.let(::pick) }, enabled = onDelete != null)
         }
     }

@@ -40,6 +40,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.whiteravens.dietapp.R
+import net.whiteravens.dietapp.domain.JointPlan
 import net.whiteravens.dietapp.domain.MealPlanSummary
 import net.whiteravens.dietapp.domain.RowChange
 import net.whiteravens.dietapp.domain.ShoppingItem
@@ -129,6 +131,30 @@ fun ShoppingScreen(
     var deletingHousehold by rememberSaveable { mutableStateOf<String?>(null) }
     val rows = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    // The household list a plan made together proposes: both plans, for the plan's days, in the household card's form.
+    val together = { plan: MealPlanSummary, joint: JointPlan ->
+        val first = LocalDate.parse(plan.startDate)
+        household.startForm(
+            state.profiles,
+            from = first,
+            to = first.plusDays(plan.durationDays - 1L),
+            chosen = state.profiles.associate { profile ->
+                profile.id to when (profile.id) {
+                    state.selectedProfileId -> plan.id
+                    joint.profileId -> joint.planId
+                    else -> null
+                }
+            },
+        )
+        scope.launch { rows.scrollToKey(HOUSEHOLD_CARD) }
+    }
+    // Asked for from the plan's own screen: proposed once, as soon as the plan is read.
+    LaunchedEffect(state.togetherAsked, state.plan) {
+        val plan = state.plan ?: return@LaunchedEffect
+        if (!state.togetherAsked) return@LaunchedEffect
+        viewModel.togetherProposed()
+        plan.joint?.takeIf { state.profiles.size > 1 }?.let { together(plan, it) }
+    }
     // A household list made or deleted changed the plans' own lists of its days; a plan's list made or
     // deleted may have taken a household list's part: each side is read again.
     LaunchedEffect(households.changed) { if (households.changed > 0) viewModel.retry() }
@@ -270,6 +296,11 @@ fun ShoppingScreen(
                     }
                 }
             }
+            // A plan made together buys a shared dish as one pot: its own list takes this person's plate alone.
+            state.plan?.let { plan -> plan.joint?.takeIf { state.profiles.size > 1 && state.shown?.household == null }?.let { joint -> plan to joint } }
+                ?.let { (plan, joint) ->
+                    item(key = "joint-note") { JointListNote(joint.profileName, enabled = !households.offline) { together(plan, joint) } }
+                }
 
             // What could not be read is read again on asking; what could not be done is done again by its own control.
             state.readError?.let { error ->
@@ -820,6 +851,20 @@ private fun AmountField(label: String, value: String, unit: String, enabled: Boo
 /** A field's text for an amount: empty for none, the number in the language's own way otherwise, without grouping. */
 private fun fieldOf(amount: Double, locale: Locale): String =
     if (amount <= 0.0) "" else NumberFormat.getNumberInstance(locale).apply { isGroupingUsed = false; maximumFractionDigits = 2 }.format(amount)
+
+/**
+ * What the list of one plan of a plan made together with [name] buys of a dish both eat, one plate of it, and the way to
+ * the household list of both plans, which buys the whole pot.
+ */
+@Composable
+internal fun JointListNote(name: String, enabled: Boolean, onHousehold: () -> Unit) {
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.shopping_joint_note, name), style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = onHousehold, enabled = enabled) { Text(stringResource(R.string.shopping_joint_household)) }
+        }
+    }
+}
 
 /** The key of the household card among the screen's items, under the plan's list. */
 private const val HOUSEHOLD_CARD = "household"

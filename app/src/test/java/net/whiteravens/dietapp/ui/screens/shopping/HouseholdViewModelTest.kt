@@ -96,6 +96,27 @@ class HouseholdViewModelTest {
     }
 
     @Test
+    fun `a plan made together proposes the form on its days with its two plans chosen, and no plan of another profile`() {
+        val households = mockk<HouseholdListRepository>(relaxed = true)
+        coEvery { households.refresh() } returns emptyList()
+        val plans = mockk<MealPlanRepository>()
+        val ola = Profile("ola", "Ola", "balanced", 3, 55.0, null)
+        coEvery { plans.plans("adam") } returns MealPlanPage(listOf(plan("adams", today.minusDays(1), days = 7), plan("adams-alone", today)), 1, 1, null)
+        coEvery { plans.plans("ewa") } returns MealPlanPage(listOf(plan("ewas", today)), 1, 1, null)
+        coEvery { plans.plans("ola") } returns MealPlanPage(listOf(plan("olas", today)), 1, 1, null)
+        val model = HouseholdViewModel(households, plans, changeQueue())
+
+        model.startForm(listOf(adam, ewa, ola), from = today, to = today.plusDays(2), chosen = mapOf("adam" to "adams", "ewa" to "ewas", "ola" to null))
+
+        val form = model.state.value.form!!
+        assertEquals(today to today.plusDays(2), form.from to form.to)
+        // Adam's plan made together, not his plan that begins last, which is offered first; Ola's plan offered, not chosen.
+        assertEquals(listOf("adams-alone", "adams"), form.offered("adam")!!.map { it.id })
+        assertEquals(listOf("adams", "ewas"), form.planIds)
+        assertEquals(listOf("olas"), form.offered("ola")!!.map { it.id })
+    }
+
+    @Test
     fun `one made is opened and the form closed, and one made again with its plans and days replaces it`() {
         val households = mockk<HouseholdListRepository>(relaxed = true)
         coEvery { households.refresh() } returns emptyList()

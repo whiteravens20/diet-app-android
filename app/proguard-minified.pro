@@ -68,7 +68,7 @@
 -keep class net.whiteravens.dietapp.ui.navigation.TabBarKt { *** TabBar*(...); }
 -keep class net.whiteravens.dietapp.ui.navigation.Tab { *; }
 -keep class net.whiteravens.dietapp.domain.Palette { *; }
--keep class net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreenKt { *** ShoppingItemRow(...); *** PastInPantryBanner(...); }
+-keep class net.whiteravens.dietapp.ui.screens.shopping.ShoppingScreenKt { *** ShoppingItemRow(...); *** PastInPantryBanner(...); *** JointListNote(...); }
 -keep class net.whiteravens.dietapp.domain.ShoppingItem { *; }
 -keep class net.whiteravens.dietapp.domain.RowPacks { *; }
 -keep class net.whiteravens.dietapp.domain.BuyLater { *; }

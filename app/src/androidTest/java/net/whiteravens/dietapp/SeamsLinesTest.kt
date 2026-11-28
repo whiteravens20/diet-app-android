@@ -46,6 +46,7 @@ import net.whiteravens.dietapp.ui.screens.plans.MealCard
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailViewModel
 import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
 import net.whiteravens.dietapp.ui.screens.plans.SplitDialog
+import net.whiteravens.dietapp.ui.screens.shopping.JointListNote
 import net.whiteravens.dietapp.ui.screens.shopping.PastInPantryBanner
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingItemRow
 import org.junit.Assert.assertTrue
@@ -215,6 +216,24 @@ class SeamsLinesTest {
                 else "Jeden składnik" to "Talerze tego posiłku mają różne proporcje: dziel go składnik po składniku."
             assertTrue(lines.toString(), plated in lines)
             compose.onNode(hasText(part) and isSelected() and hasAnyAncestor(isDialog())).assertExists()
+        }
+    }
+
+    @Test
+    fun aListOfOnePlanOfAPlanMadeTogetherSaysItBuysOnePlateOfASharedDishAndOffersTheHouseholdList() {
+        eye.show { _ -> JointListNote("Ewa", enabled = true, onHousehold = {}) }
+
+        eye.check("shopping-joint-note") { language, lines ->
+            val (note, both) =
+                if (language == "en") {
+                    "This plan is shared with Ewa. A list of this plan alone buys only your part of the shared dishes; a household list covers the whole pot." to
+                        "A household list of both plans"
+                } else {
+                    "Wspólny plan z: Ewa. Lista samego planu kupi tylko Twoją część wspólnych dań, a cały garnek obejmie lista dla domu." to
+                        "Lista dla domu dla obu planów"
+                }
+            assertTrue(lines.toString(), note in lines)
+            compose.onNode(hasText(both) and hasClickAction()).assertExists()
         }
     }
 

@@ -2251,6 +2251,7 @@
     <string name="plans_offer_for_all">For both: you and %1$s</string>
     <string name="plans_offer_for_me">For me only: the meal stops being shared that day</string>
     <string name="plans_joint_with">Planned together with: %1$s</string>
+    <string name="plans_joint_list">Household list</string>
     <string name="plans_joint_apart">Planned apart, as no dish suits both: %1$s.</string>
     <string name="plans_joint_plan_with">Plan together with</string>
     <string name="plans_joint_plan_none">Nobody</string>
@@ -2496,6 +2497,8 @@
     <string name="household_title">Household lists</string>
     <string name="household_subhead">One list from the plans of several profiles for the same days. Each plan keeps its part, and what you buy beyond the needs goes into the profiles\' pantries by what their plans need.</string>
     <string name="household_open">New household list</string>
+    <string name="shopping_joint_note">This plan is shared with %1$s. A list of this plan alone buys only your part of the shared dishes; a household list covers the whole pot.</string>
+    <string name="shopping_joint_household">A household list of both plans</string>
     <string name="household_plans">Plans</string>
     <string name="household_plan_of">%1$s\'s plan</string>
     <string name="household_no_plan">No plan on these days</string>

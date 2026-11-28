@@ -2415,6 +2415,7 @@
     <string name="plans_offer_for_all">Dla obu osób: Ty i\u00A0%1$s</string>
     <string name="plans_offer_for_me">Tylko dla mnie: posiłek przestanie być wspólny tego dnia</string>
     <string name="plans_joint_with">Wspólny plan z: %1$s</string>
+    <string name="plans_joint_list">Lista dla domu</string>
     <string name="plans_joint_apart">Osobno, bo żadne danie nie pasuje obu osobom: %1$s.</string>
     <string name="plans_joint_plan_with">Wspólny plan z</string>
     <string name="plans_joint_plan_none">Z\u00A0nikim</string>
@@ -2670,6 +2671,8 @@
     <string name="household_title">Listy dla domu</string>
     <string name="household_subhead">Jedna lista z planów kilku profili na te same dni. Każdy plan ma w niej swoją część, a to, co kupisz ponad potrzeby, trafia do spiżarni profili według potrzeb ich planów.</string>
     <string name="household_open">Nowa lista dla domu</string>
+    <string name="shopping_joint_note">Wspólny plan z: %1$s. Lista samego planu kupi tylko Twoją część wspólnych dań, a\u00A0cały garnek obejmie lista dla domu.</string>
+    <string name="shopping_joint_household">Lista dla domu dla obu planów</string>
     <string name="household_plans">Plany</string>
     <string name="household_plan_of">Plan: %1$s</string>
     <string name="household_no_plan">Brak planu w te dni</string>
