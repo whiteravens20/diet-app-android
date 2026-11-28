@@ -483,16 +483,18 @@ class PlanDetailViewModel @Inject constructor(
     /**
      * Marks a meal eaten or not; a meal of one's own that waits to be added is marked once the server has it. Once the
      * server has the mark, on a day no list covers, what was eaten may come off the pantry, or what was taken go back:
-     * never by itself. Eaten by both, the other person's portion too, from that person's pantry.
+     * never by itself. Eaten by both, both portions, as the server works them out together; a mark is taken back for
+     * one person at a time.
      */
     fun setEaten(mealId: String, eaten: Boolean, forAll: Boolean = false) {
         if (mealId in _state.value.waitingAdditions) return
         val also = shared(mealId)?.takeIf { forAll }?.let { QueuedChange.OtherMeal(it.with.planId, it.with.mealId) }
+        val meal = EatenOf.Meal(planId, mealId)
         queued(sent = {
-            pantryQuestions.ask(
-                listOfNotNull(EatenOf.Meal(planId, mealId), also?.let { EatenOf.Meal(it.planId, it.mealId) }),
-                if (eaten) PantryQuestion.TAKE else PantryQuestion.GIVE_BACK,
-            )
+            when {
+                eaten && also != null -> pantryQuestions.askBoth(meal)
+                else -> pantryQuestions.ask(meal, if (eaten) PantryQuestion.TAKE else PantryQuestion.GIVE_BACK)
+            }
         }) { plans.setEaten(planId, mealId, eaten, also) }
     }
 

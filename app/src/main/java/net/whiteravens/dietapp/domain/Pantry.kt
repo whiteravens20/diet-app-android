@@ -132,14 +132,21 @@ private const val SOON_DAYS = 2L
 /** An amount as the API shows it: rounded, a piece called what the food calls it, with what pieces weigh. */
 data class ShownAmount(val quantity: Double, val unit: String, val grams: Double? = null)
 
-/** A food of what eating took, or would take, off the pantry: what was eaten, what the pantry holds fresh, what is taken. */
+/**
+ * A food of what eating took, or would take, off the pantry: what was eaten, what the pantry holds fresh, what is taken,
+ * and of a meal of a joint plan the part of it the other person's pantry lends ([borrowed]), null where none.
+ */
 data class EatenFood(
     val ingredientId: String,
     val name: String,
     val eaten: ShownAmount,
     val held: ShownAmount,
     val taken: ShownAmount,
+    val borrowed: Borrowed? = null,
 )
+
+/** A part of what is taken that the other person of a joint plan lends from their pantry: how much, and whose it is. */
+data class Borrowed(val amount: ShownAmount, val from: String)
 
 /**
  * What eating a meal or an entry does to its profile's pantry ([profileName] says whose) on a day no shopping list

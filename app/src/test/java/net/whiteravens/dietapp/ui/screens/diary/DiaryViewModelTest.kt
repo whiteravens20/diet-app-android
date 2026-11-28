@@ -1403,7 +1403,7 @@ class DiaryViewModelTest {
         model.addEntry()
 
         assertEquals(PantryQuestion.TAKE, model.pantryWindow.value!!.question)
-        assertEquals(listOf(oats), model.pantryWindow.value!!.portions.single().foods(PantryQuestion.TAKE))
+        assertEquals(listOf(oats), model.pantryWindow.value!!.let { it.foods(it.pantries.single()) })
         coVerify(exactly = 0) { pantry.takeEaten(any()) }
         coEvery { diary.day("a", today) } returns day(entries = listOf(entry("new").copy(takenFromPantry = true)))
         assertFalse(model.state.value.entries.any { it.takenFromPantry })
@@ -1489,7 +1489,7 @@ class DiaryViewModelTest {
 
         // Nothing goes before it is answered; put away, the entry stays.
         assertEquals(PantryQuestion.REMOVE, model.pantryWindow.value!!.question)
-        assertEquals(listOf(oats), model.pantryWindow.value!!.portions.single().foods(PantryQuestion.REMOVE))
+        assertEquals(listOf(oats), model.pantryWindow.value!!.let { it.foods(it.pantries.single()) })
         model.closePantry()
         main.scheduler.runCurrent()
         assertTrue(done.isEmpty())

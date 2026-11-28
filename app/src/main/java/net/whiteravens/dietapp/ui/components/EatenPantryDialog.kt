@@ -27,13 +27,14 @@ import net.whiteravens.dietapp.ui.common.errorMessage
 /**
  * The window that takes what a meal or an entry ate off the pantry ("Zdejmij ze spiżarni to, co zjedzono"), or gives
  * back what it took ("Oddaj do spiżarni"): food by food, in the amounts the API shows, and nothing until it is
- * confirmed. A meal eaten by both people of a joint plan is two portions, each under its person's name. Before an
- * entry that took food is removed, it offers to give that back first. The buttons stand one under another.
+ * confirmed. A meal eaten by both people of a joint plan is two portions, each under its person's name; a part the
+ * other person's pantry lends is said under its food, with whose it is. Before an entry that took food is removed, it
+ * offers to give that back first. The buttons stand one under another.
  */
 @Composable
 fun EatenPantryDialog(window: PantryWindow, onConfirm: () -> Unit, onRemoveOnly: () -> Unit, onDismiss: () -> Unit) {
     val question = window.question
-    val both = window.portions.size > 1
+    val both = window.pantries.size > 1
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -64,19 +65,19 @@ fun EatenPantryDialog(window: PantryWindow, onConfirm: () -> Unit, onRemoveOnly:
                     Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    for (portion in window.portions) {
+                    for (pantry in window.pantries) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (both) {
                                 Text(
-                                    portion.pantry.profileName,
+                                    pantry.profileName,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.semantics { heading() },
                                 )
                             }
-                            for (food in portion.foods(question)) {
-                                if (question == PantryQuestion.TAKE) {
-                                    Column {
+                            for (food in window.foods(pantry)) {
+                                Column {
+                                    if (question == PantryQuestion.TAKE) {
                                         Text(
                                             food.name,
                                             style = MaterialTheme.typography.bodyMedium,
@@ -88,13 +89,20 @@ fun EatenPantryDialog(window: PantryWindow, onConfirm: () -> Unit, onRemoveOnly:
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
+                                    } else {
+                                        Text(
+                                            stringResource(R.string.eaten_pantry_taken_line, food.name, shown(food.taken)),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
                                     }
-                                } else {
-                                    Text(
-                                        stringResource(R.string.eaten_pantry_taken_line, food.name, shown(food.taken)),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
+                                    food.borrowed?.let { lent ->
+                                        Text(
+                                            stringResource(R.string.eaten_pantry_borrowed, shown(lent.amount), lent.from),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                             }
                         }

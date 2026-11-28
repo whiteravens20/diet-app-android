@@ -14,28 +14,31 @@ import net.whiteravens.dietapp.domain.EatenPantry
 /** What the window asks: to take what was eaten, to give back what was taken, or that before an entry is removed. */
 enum class PantryQuestion { TAKE, GIVE_BACK, REMOVE }
 
-/** A meal's or an entry's eaten food and what it does to its own profile's pantry. */
-data class EatenPortion(val of: EatenOf, val pantry: EatenPantry) {
-    /** The food the window names: what taking it would take, or, to be given back, what it took. */
-    fun foods(question: PantryQuestion) = if (question == PantryQuestion.TAKE) pantry.offer else pantry.taken
-}
-
-/** The window of what eating does to the pantry: its question, each portion, and a take or a giving back on its way or refused. */
+/**
+ * The window of what eating does to the pantry: its question, the meal or the entry it asks about ([of]), each
+ * person's pantry it names ([pantries]: one, or of a meal eaten by both [both] portions, this plan's first), and a
+ * take or a giving back on its way or refused.
+ */
 data class PantryWindow(
     val question: PantryQuestion,
-    val portions: List<EatenPortion>,
+    val of: EatenOf,
+    val pantries: List<EatenPantry>,
+    val both: Boolean = false,
     val sending: Boolean = false,
     val error: Throwable? = null,
-)
+) {
+    /** The food the window names of [pantry]: what taking it would take, or, to be given back, what it took. */
+    fun foods(pantry: EatenPantry) = if (question == PantryQuestion.TAKE) pantry.offer else pantry.taken
+}
 
 /**
  * What eating a meal of a plan, or an entry of the diary, does to the pantry, asked once the server has the change: a
  * mark set or an entry written opens the window that offers to take what was eaten off the pantry, a mark taken back
  * the one that offers to give back what was taken, and the removal of an entry that took food asks first. A meal eaten
- * by both people of a joint plan is two portions, each from its own person's pantry, taken on one press. The window
- * opens only where the API says there is something to take or to give back: on a day a shopping list covers it says
- * nothing, and where the API cannot be asked nothing is asked and nothing changes. [changed] is told once the pantry
- * moved.
+ * by both people of a joint plan is both portions, worked out together by the server, each from its own person's
+ * pantry first and what that lacks from the other's, asked once and taken on one press. The window opens only where
+ * the API says there is something to take or to give back: on a day a shopping list covers it says nothing, and where
+ * the API cannot be asked nothing is asked and nothing changes. [changed] is told once the pantry moved.
  */
 class PantryQuestions(
     private val scope: CoroutineScope,
@@ -49,35 +52,43 @@ class PantryQuestions(
     private var remove: (() -> Unit)? = null
 
     /**
-     * Asks of [of] (one meal or entry, or each person's meal of a meal eaten by both) what [question] is about; with
-     * [remove], the entry's removal, which goes at once where nothing is to be given back.
+     * Asks of [of], one meal or entry, what [question] is about; with [remove], the entry's removal, which goes at once
+     * where nothing is to be given back.
      */
-    fun ask(of: List<EatenOf>, question: PantryQuestion, remove: (() -> Unit)? = null) {
+    fun ask(of: EatenOf, question: PantryQuestion, remove: (() -> Unit)? = null) =
+        open(of, question, both = false, remove) { listOf(pantry.eaten(of)) }
+
+    /** Asks of [meal], of a joint plan and marked eaten by both, what taking both portions would take. */
+    fun askBoth(meal: EatenOf.Meal) = open(meal, PantryQuestion.TAKE, both = true, remove = null) { pantry.eatenByBoth(meal) }
+
+    private fun open(of: EatenOf, question: PantryQuestion, both: Boolean, remove: (() -> Unit)?, read: suspend () -> List<EatenPantry>) {
         scope.launch {
-            val portions = of.mapNotNull { one ->
-                attempt { pantry.eaten(one) }.getOrNull()?.let { EatenPortion(one, it) }
-            }.filter { it.foods(question).isNotEmpty() }
-            if (portions.isEmpty()) {
+            val asked = PantryWindow(question, of, emptyList(), both)
+            val pantries = attempt { read() }.getOrDefault(emptyList()).filter { asked.foods(it).isNotEmpty() }
+            if (pantries.isEmpty()) {
                 remove?.invoke()
                 return@launch
             }
             this@PantryQuestions.remove = remove
-            _window.value = PantryWindow(question, portions)
+            _window.value = asked.copy(pantries = pantries)
         }
     }
 
     /**
-     * "Zdejmij ze spiżarni", "Oddaj do spiżarni", "Oddaj i usuń": each portion in turn, a portion taken already
-     * offering nothing, so that a press again takes only what is left; the entry goes once its food is back.
+     * "Zdejmij ze spiżarni", "Oddaj do spiżarni", "Oddaj i usuń": once, a press again after a refusal taking only what
+     * is left; the entry goes once its food is back.
      */
     fun confirm() {
         val window = _window.value ?: return
         if (window.sending) return
         _window.value = window.copy(sending = true, error = null)
         scope.launch {
+            val of = window.of
             val done = attempt {
-                for (portion in window.portions) {
-                    if (window.question == PantryQuestion.TAKE) pantry.takeEaten(portion.of) else pantry.giveBackEaten(portion.of)
+                when {
+                    window.both && of is EatenOf.Meal -> pantry.takeEatenByBoth(of)
+                    window.question == PantryQuestion.TAKE -> pantry.takeEaten(of)
+                    else -> pantry.giveBackEaten(of)
                 }
             }
             changed()

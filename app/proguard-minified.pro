@@ -134,10 +134,10 @@
 -keep class net.whiteravens.dietapp.domain.PlanDay { *; }
 -keep class net.whiteravens.dietapp.ui.components.EatenPantryDialogKt { *** EatenPantryDialog(...); }
 -keep class net.whiteravens.dietapp.ui.common.PantryWindow { *; }
--keep class net.whiteravens.dietapp.ui.common.EatenPortion { *; }
 -keep class net.whiteravens.dietapp.ui.common.PantryQuestion { *; }
 -keep class net.whiteravens.dietapp.domain.EatenPantry { *; }
 -keep class net.whiteravens.dietapp.domain.EatenFood { *; }
+-keep class net.whiteravens.dietapp.domain.Borrowed { *; }
 -keep class net.whiteravens.dietapp.domain.ShownAmount { *; }
 -keep class net.whiteravens.dietapp.domain.EatenOf { *; }
 -keep class net.whiteravens.dietapp.domain.EatenOf$* { *; }

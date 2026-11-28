@@ -419,7 +419,7 @@ class DiaryViewModel @Inject constructor(
                         // On a day no list covers, what an ingredient or a recipe written was may come off the pantry: never by itself.
                         val written = submitted.answer.entry
                         if (written.kind == "ingredient" || written.kind == "recipe") {
-                            pantryQuestions.ask(listOf(EatenOf.Entry(written.id)), PantryQuestion.TAKE)
+                            pantryQuestions.ask(EatenOf.Entry(written.id), PantryQuestion.TAKE)
                         }
                     }
                 }
@@ -535,7 +535,7 @@ class DiaryViewModel @Inject constructor(
         when {
             entry.id in _state.value.waitingAdditions -> later.removeAtOnce(removal)
             // What an entry took off the pantry is offered back before it goes: never by itself.
-            entry.takenFromPantry -> pantryQuestions.ask(listOf(EatenOf.Entry(entry.id)), PantryQuestion.REMOVE) { later.remove(removal, after) }
+            entry.takenFromPantry -> pantryQuestions.ask(EatenOf.Entry(entry.id), PantryQuestion.REMOVE) { later.remove(removal, after) }
             else -> later.remove(removal, after)
         }
     }
@@ -618,7 +618,7 @@ class DiaryViewModel @Inject constructor(
                             rebalanced(planId, submitted.answer)
                             // On a day no list covers, what was eaten may come off the pantry, or what was taken go back.
                             pantryQuestions.ask(
-                                listOf(EatenOf.Meal(planId, meal.id)),
+                                EatenOf.Meal(planId, meal.id),
                                 if (meal.eaten) PantryQuestion.GIVE_BACK else PantryQuestion.TAKE,
                             )
                         }

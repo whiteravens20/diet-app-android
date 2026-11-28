@@ -1007,7 +1007,16 @@ data class EatenFromPantryDto(
     val held: DisplayAmountDto,
     /** What is taken: of an offer the lesser of the two, of what was taken what it took. */
     val taken: DisplayAmountDto,
+    /**
+     * Of a meal of a joint plan: the part of [taken] the other person's pantry lends, what this person's own pantry
+     * lacks, and whose pantry that is; null where nothing is lent.
+     */
+    val borrowed: BorrowedFromPantryDto? = null,
 )
+
+/** A part of what eating took, or would take, off the pantry of the other person of a joint plan, and their name. */
+@Serializable
+data class BorrowedFromPantryDto(val amount: DisplayAmountDto, val from: String)
 
 /**
  * What eating a meal of a plan, or an entry of the diary of an ingredient or a recipe, does to the pantry on a day no

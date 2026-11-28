@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import net.whiteravens.dietapp.domain.Borrowed
 import net.whiteravens.dietapp.domain.CarriedTo
 import net.whiteravens.dietapp.domain.EatenFood
 import net.whiteravens.dietapp.domain.EatenOf
@@ -31,7 +32,6 @@ import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.testing.EachLanguage
 import net.whiteravens.dietapp.testing.shown
-import net.whiteravens.dietapp.ui.common.EatenPortion
 import net.whiteravens.dietapp.ui.common.PantryQuestion
 import net.whiteravens.dietapp.ui.common.PantryWindow
 import net.whiteravens.dietapp.ui.components.EatenPantryDialog
@@ -343,13 +343,16 @@ class SeamsLinesTest {
         food("passata", if (language == "en") "Tomato passata" else "Passata pomidorowa", ShownAmount(400.0, "g"), ShownAmount(800.0, "g")),
     )
 
-    private fun portion(name: String, offer: List<EatenFood> = emptyList(), taken: List<EatenFood> = emptyList(), of: EatenOf = EatenOf.Meal("plan", "meal")) =
-        EatenPortion(of, EatenPantry(name, offer, taken))
+    private fun pantry(name: String, offer: List<EatenFood> = emptyList(), taken: List<EatenFood> = emptyList()) = EatenPantry(name, offer, taken)
+
+    /** The window of [question] about [of], naming [pantries]: two of a meal both ate. */
+    private fun window(question: PantryQuestion, vararg pantries: EatenPantry, of: EatenOf = EatenOf.Meal("plan", "meal")) =
+        PantryWindow(question, of, pantries.toList(), both = pantries.size > 1)
 
     @Test
     fun theWindowOffersToTakeWhatAMealAteOffThePantryFoodByFood() {
         eye.show { language ->
-            EatenPantryDialog(PantryWindow(PantryQuestion.TAKE, listOf(portion("Paweł", offer = breakfast(language)))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+            EatenPantryDialog(window(PantryQuestion.TAKE, pantry("Paweł", offer = breakfast(language))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
         }
 
         eye.check("pantry-eaten-take") { language, lines ->
@@ -367,10 +370,7 @@ class SeamsLinesTest {
     fun aMealBothAteIsTwoPortionsEachUnderItsPersonsName() {
         eye.show { language ->
             EatenPantryDialog(
-                PantryWindow(
-                    PantryQuestion.TAKE,
-                    listOf(portion("Paweł", offer = breakfast(language)), portion("Ewa", offer = breakfast(language).take(2), of = EatenOf.Meal("plan-2", "meal-9"))),
-                ),
+                window(PantryQuestion.TAKE, pantry("Paweł", offer = breakfast(language)), pantry("Ewa", offer = breakfast(language).take(2))),
                 onConfirm = {},
                 onRemoveOnly = {},
                 onDismiss = {},
@@ -378,7 +378,9 @@ class SeamsLinesTest {
         }
 
         eye.check("pantry-eaten-both") { language, lines ->
-            val note = if (language == "en") "Each person's portion comes off their own pantry." else "Porcja każdej osoby schodzi z jej spiżarni."
+            val note =
+                if (language == "en") "Each person's portion comes off their own pantry first, and what it lacks off the other person's."
+                else "Porcja każdej osoby schodzi najpierw z jej spiżarni, a to, czego w niej brakuje, ze spiżarni drugiej osoby."
             assertTrue(lines.toString(), note in lines)
             for (name in listOf("Paweł", "Ewa")) {
                 compose.onNode(hasText(name) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading) and hasAnyAncestor(isDialog())).assertExists()
@@ -387,9 +389,28 @@ class SeamsLinesTest {
     }
 
     @Test
+    fun whatAPortionsOwnPantryLacksComesOffTheOtherPersonsAndItsLineSaysWhose() {
+        eye.show { language ->
+            // Paweł's pantry holds one egg of the two he ate: the other comes off Ewa's, as her milk does of his.
+            val eggs = food("eggs", if (language == "en") "Eggs" else "Jajka", ShownAmount(2.0, "piece", 110.0), ShownAmount(1.0, "piece", 55.0))
+                .copy(borrowed = Borrowed(ShownAmount(1.0, "piece", 55.0), "Ewa"))
+            val his = breakfast(language).map { if (it.ingredientId == "eggs") eggs else it }
+            EatenPantryDialog(window(PantryQuestion.TAKE, pantry("Paweł", offer = his), pantry("Ewa", offer = breakfast(language).take(2))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+        }
+
+        eye.check("pantry-eaten-borrowed") { language, lines ->
+            val (eggs, lent) =
+                if (language == "en") "eaten 2 pieces (110 g) · in the pantry 1 piece (55 g) · you take 2 pieces (110 g)" to "of which 1 piece (55 g) from Ewa's pantry"
+                else "zjedzone 2 sztuki (110 g) · w spiżarni 1 sztuka (55 g) · zdejmiesz 2 sztuki (110 g)" to "w tym 1 sztuka (55 g) ze spiżarni: Ewa"
+            assertTrue(lines.toString(), eggs in lines)
+            assertTrue(lines.toString(), lent in lines)
+        }
+    }
+
+    @Test
     fun aMarkTakenBackOffersToGiveBackWhatItTook() {
         eye.show { language ->
-            EatenPantryDialog(PantryWindow(PantryQuestion.GIVE_BACK, listOf(portion("Paweł", taken = breakfast(language)))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+            EatenPantryDialog(window(PantryQuestion.GIVE_BACK, pantry("Paweł", taken = breakfast(language))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
         }
 
         eye.check("pantry-eaten-give-back") { language, lines ->
@@ -408,7 +429,7 @@ class SeamsLinesTest {
                 // A window of its own takes the phone's configuration, not the language the look draws in: a name with a
                 // word of one letter would be held only on a phone in Polish. HeldLettersTest sees the window write
                 // through the app's Text, which holds it there.
-                PantryWindow(PantryQuestion.REMOVE, listOf(portion("Paweł", taken = shakshuka(language), of = EatenOf.Entry("entry")))),
+                window(PantryQuestion.REMOVE, pantry("Paweł", taken = shakshuka(language)), of = EatenOf.Entry("entry")),
                 onConfirm = {},
                 onRemoveOnly = {},
                 onDismiss = {},
@@ -426,7 +447,7 @@ class SeamsLinesTest {
     fun aLongListScrollsInsideTheWindowItsTitleAndButtonsInSight() {
         eye.show { language ->
             val many = (1..14).map { at -> food("food-$at", (if (language == "en") "Ingredient " else "Składnik ") + at, ShownAmount(40.0 + at, "g"), ShownAmount(500.0, "g")) }
-            EatenPantryDialog(PantryWindow(PantryQuestion.TAKE, listOf(portion("Paweł", offer = many))), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
+            EatenPantryDialog(window(PantryQuestion.TAKE, pantry("Paweł", offer = many)), onConfirm = {}, onRemoveOnly = {}, onDismiss = {})
         }
 
         eye.check("pantry-eaten-long") { language, _ ->

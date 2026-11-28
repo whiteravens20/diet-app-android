@@ -19,6 +19,7 @@ import net.whiteravens.dietapp.data.remote.apiCall
 import net.whiteravens.dietapp.data.sync.ChangeQueue
 import net.whiteravens.dietapp.data.sync.QueuedChange
 import net.whiteravens.dietapp.data.sync.Submitted
+import net.whiteravens.dietapp.domain.Borrowed
 import net.whiteravens.dietapp.domain.EatenFood
 import net.whiteravens.dietapp.domain.EatenOf
 import net.whiteravens.dietapp.domain.EatenPantry
@@ -174,11 +175,22 @@ class PantryRepository @Inject constructor(
                 is EatenOf.Entry -> api.returnEntryPantry(of.id)
             }
         }
+
+    /**
+     * What eating [meal], of a joint plan and marked eaten by both, does to the pantries: both portions worked out
+     * together, its own plan's first, so that no food is offered twice. Asked of the server, never kept.
+     */
+    suspend fun eatenByBoth(meal: EatenOf.Meal): List<EatenPantry> =
+        apiCall(json) { api.mealPantries(meal.planId, meal.mealId) }.map { it.toDomain() }
+
+    /** Takes both portions of [meal] off the pantries, as offered: once, until each is given back. It needs the network. */
+    suspend fun takeEatenByBoth(meal: EatenOf.Meal) = apiCall(json) { api.takeMealPantries(meal.planId, meal.mealId) }
 }
 
 private fun EatenPantryDto.toDomain() = EatenPantry(profileName, offer.map { it.toDomain() }, taken.map { it.toDomain() })
 
-private fun EatenFromPantryDto.toDomain() = EatenFood(ingredientId, name, eaten.shown(), held.shown(), taken.shown())
+private fun EatenFromPantryDto.toDomain() =
+    EatenFood(ingredientId, name, eaten.shown(), held.shown(), taken.shown(), borrowed?.let { Borrowed(it.amount.shown(), it.from) })
 
 private fun DisplayAmountDto.shown() = ShownAmount(quantity, unit, grams)
 

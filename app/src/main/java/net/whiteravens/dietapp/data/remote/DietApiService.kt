@@ -353,6 +353,17 @@ interface DietApiService {
     @POST("meal-plans/{id}/meals/{mealId}/pantry-return")
     suspend fun returnMealPantry(@Path("id") planId: String, @Path("mealId") mealId: String)
 
+    /**
+     * Of a meal of a joint plan marked eaten by both: what eating it takes off the pantries, both portions worked out
+     * together, this plan's first, each from its own person's pantry first and what that lacks from the other's.
+     */
+    @GET("meal-plans/{id}/meals/{mealId}/pantry/both")
+    suspend fun mealPantries(@Path("id") planId: String, @Path("mealId") mealId: String): List<EatenPantryDto>
+
+    /** Takes both portions of a meal of a joint plan eaten by both off the pantries, as offered: once, until given back. */
+    @POST("meal-plans/{id}/meals/{mealId}/pantry-take/both")
+    suspend fun takeMealPantries(@Path("id") planId: String, @Path("mealId") mealId: String)
+
     /** What an entry of the diary of an ingredient or a recipe takes off the pantry, and what it took, as for a meal. */
     @GET("diary/entries/{id}/pantry")
     suspend fun entryPantry(@Path("id") id: String): EatenPantryDto

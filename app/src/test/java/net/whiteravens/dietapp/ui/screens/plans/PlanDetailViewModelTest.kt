@@ -20,7 +20,6 @@ import net.whiteravens.dietapp.domain.InstanceRules
 import net.whiteravens.dietapp.data.repository.ServerRepository
 import net.whiteravens.dietapp.data.remote.PublicConfigDto
 import io.mockk.coVerify
-import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -115,10 +114,12 @@ import net.whiteravens.dietapp.data.remote.PutLeftoverRequest
 import net.whiteravens.dietapp.data.repository.RecipeRepository
 import net.whiteravens.dietapp.data.repository.PantryRepository
 import net.whiteravens.dietapp.data.remote.DisplayAmountDto
+import net.whiteravens.dietapp.data.remote.BorrowedFromPantryDto
 import net.whiteravens.dietapp.data.remote.EatenFromPantryDto
 import net.whiteravens.dietapp.data.remote.EatenPantryDto
 import net.whiteravens.dietapp.data.remote.OtherPortionDto
 import net.whiteravens.dietapp.data.remote.SharedMealOfDto
+import net.whiteravens.dietapp.domain.Borrowed
 import net.whiteravens.dietapp.domain.EatenFood
 import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.ui.common.PantryQuestion
@@ -1348,7 +1349,7 @@ class PlanDetailViewModelTest {
         assertEquals(PantryQuestion.TAKE, window.question)
         assertEquals(
             listOf(EatenFood("oats", "Rolled oats", ShownAmount(60.0, "g"), ShownAmount(500.0, "g"), ShownAmount(60.0, "g"))),
-            window.portions.single().foods(PantryQuestion.TAKE),
+            window.foods(window.pantries.single()),
         )
         coVerify(exactly = 0) { api.takeMealPantry(any(), any()) }
         model.confirmPantry()
@@ -1380,7 +1381,7 @@ class PlanDetailViewModelTest {
     }
 
     @Test
-    fun `a meal both people ate, marked for both, asks of each person's portion and takes both on one press, and marked for one, of that one's alone`() {
+    fun `a meal both people ate, marked for both, asks of both portions at once and takes both on one press, and marked for one, of that one's alone`() {
         val api = mockk<DietApiService>()
         val first = plan.days.first()
         val joint = plan.copy(
@@ -1397,25 +1398,29 @@ class PlanDetailViewModelTest {
         coEvery { api.mealPlan(plan.id) } returns joint
         coEvery { api.setMealEaten(plan.id, meal.id, any()) } returns swapped.copy(plan = joint)
         coEvery { api.mealPantry(plan.id, meal.id) } returns EatenPantryDto("Ala", offer = listOf(oats))
-        coEvery { api.mealPantry("plan-2", "meal-9") } returns EatenPantryDto("Ewa", offer = listOf(oats))
+        // What Ala's pantry lacks of her portion comes off Ewa's, and the line says so.
+        val lent = oats.copy(borrowed = BorrowedFromPantryDto(DisplayAmountDto(20.0, "g"), "Ewa"))
+        coEvery { api.mealPantries(plan.id, meal.id) } returns listOf(EatenPantryDto("Ala", offer = listOf(lent)), EatenPantryDto("Ewa", offer = listOf(oats)))
         coEvery { api.takeMealPantry(any(), any()) } just runs
+        coEvery { api.takeMealPantries(any(), any()) } just runs
         val model = model(api, pantry = PantryRepository(api, json, changeQueue()))
 
         model.setEaten(meal.id, true)
 
-        assertEquals(listOf("Ala"), model.pantryWindow.value!!.portions.map { it.pantry.profileName })
+        assertEquals(listOf("Ala"), model.pantryWindow.value!!.pantries.map { it.profileName })
         model.closePantry()
-        coVerify(exactly = 0) { api.mealPantry("plan-2", any()) }
+        coVerify(exactly = 0) { api.mealPantries(any(), any()) }
 
         model.setEaten(meal.id, true, forAll = true)
 
-        assertEquals(listOf("Ala", "Ewa"), model.pantryWindow.value!!.portions.map { it.pantry.profileName })
-        coVerify(exactly = 0) { api.takeMealPantry(any(), any()) }
+        val window = model.pantryWindow.value!!
+        assertEquals(listOf("Ala", "Ewa"), window.pantries.map { it.profileName })
+        assertEquals(Borrowed(ShownAmount(20.0, "g"), "Ewa"), window.pantries.first().offer.single().borrowed)
+        coVerify(exactly = 1) { api.mealPantry(any(), any()) }
+        coVerify(exactly = 0) { api.takeMealPantries(any(), any()) }
         model.confirmPantry()
-        coVerifyOrder {
-            api.takeMealPantry(plan.id, meal.id)
-            api.takeMealPantry("plan-2", "meal-9")
-        }
+        coVerify(exactly = 1) { api.takeMealPantries(plan.id, meal.id) }
+        coVerify(exactly = 0) { api.takeMealPantry(any(), any()) }
         assertNull(model.pantryWindow.value)
     }
 }
