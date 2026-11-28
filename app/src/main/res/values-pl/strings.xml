@@ -2244,6 +2244,7 @@
     <string name="split_way_part">Jeden składnik</string>
     <string name="split_way_pieces">Sztuki</string>
     <string name="split_way_whole_hint">Danie mieszane, jak zupa, gulasz albo makaron w sosie. Zamieszaj dokładnie, zanim zważysz i nałożysz porcje.</string>
+    <string name="split_whole_plated">Talerze tego posiłku mają różne proporcje: dziel go składnik po składniku.</string>
     <string name="split_way_part_hint">Danie w częściach, na przykład kurczak, ryż i brokuł. Zważ jeden ugotowany składnik i podziel go tymi samymi udziałami, potem kolejny.</string>
     <string name="split_way_pieces_hint">Jajka, kotlety, placki. Sztuk nie podzielisz dokładnie: zaokrąglenie zmienia porcję.</string>
     <string name="split_piece_count">Liczba sztuk</string>

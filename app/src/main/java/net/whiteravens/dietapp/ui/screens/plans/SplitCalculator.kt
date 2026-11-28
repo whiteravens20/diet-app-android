@@ -82,15 +82,16 @@ private fun typed(text: String): Double? = text.trim().replace(',', '.').toDoubl
  * or one part of it at a time, or its pieces counted; a dish weighed in its pot is the scale's
  * weight less the empty pot's. A part weighed alone of portions that say what they take of each
  * ingredient is split by what each takes of the ingredient chosen: each plate of a dish both people eat
- * holds its parts in proportions of its own. Whole grams and pieces, the last portion taking what is left.
+ * holds its parts in proportions of its own, and such a dish ([plated]) is split one part at a time from the
+ * start. Whole grams and pieces, the last portion taking what is left.
  * Nothing is kept beyond the screen, and nothing is asked of the server.
  */
 @Composable
-internal fun SplitCalculator(planned: List<SplitPortion>?) {
+internal fun SplitCalculator(planned: List<SplitPortion>?, plated: Boolean = false) {
     var count by rememberSaveable { mutableIntStateOf(2) }
     var byKcal by rememberSaveable { mutableStateOf(false) }
     var kcalTexts by rememberSaveable { mutableStateOf(List(MOST_PORTIONS) { "" }) }
-    var way by rememberSaveable { mutableStateOf(Way.WHOLE) }
+    var way by rememberSaveable { mutableStateOf(if (plated) Way.PART else Way.WHOLE) }
     var scaleText by rememberSaveable { mutableStateOf("") }
     var inPot by rememberSaveable { mutableStateOf(false) }
     var potText by rememberSaveable { mutableStateOf("") }
@@ -156,7 +157,7 @@ internal fun SplitCalculator(planned: List<SplitPortion>?) {
                     ),
                     hint = stringResource(
                         when (option) {
-                            Way.WHOLE -> R.string.split_way_whole_hint
+                            Way.WHOLE -> if (plated) R.string.split_whole_plated else R.string.split_way_whole_hint
                             Way.PART -> if (ingredients.isNotEmpty()) R.string.split_way_part_own_hint else R.string.split_way_part_hint
                             Way.PIECES -> R.string.split_way_pieces_hint
                         },
@@ -299,8 +300,12 @@ internal data class PotPart(
 /** What stays in a pot beyond the portions its meals take now: its energy and what it holds of each ingredient. */
 internal data class PotRest(val kcal: Double, val lines: List<SplitLine>)
 
-/** What a dish is split into ([split]), the portions of it eaten already ([eaten]), and the pot's surplus ([rest]). */
-internal data class PotParts(val split: List<PotPart>, val eaten: List<PotPart>, val rest: PotRest?)
+/**
+ * What a dish is split into ([split]), the portions of it eaten already ([eaten]), the pot's surplus ([rest]), and
+ * whether a plate of either person holds its parts in proportions of its own ([plated]), so that it is split one part
+ * at a time.
+ */
+internal data class PotParts(val split: List<PotPart>, val eaten: List<PotPart>, val rest: PotRest?, val plated: Boolean)
 
 /**
  * What a dish is split into, of the meals it is eaten at ([cooked]: every meal of a dish cooked ahead, or the one meal
@@ -337,6 +342,7 @@ internal fun partsOfPot(cooked: List<Pair<Meal, String>>, ownName: String): PotP
         split = parts.filterNot { it.eaten },
         eaten = parts.filter { it.eaten },
         rest = PotRest(restKcal, restLines.values.toList()).takeIf { restKcal > 0.0 },
+        plated = cooked.any { (meal, _) -> (meal.lines + meal.shared?.with?.lines.orEmpty()).any { it.share != null } },
     )
 }
 
@@ -372,7 +378,7 @@ internal fun SplitDialog(cooked: List<Pair<Meal, String>>, ownName: String, onDi
                 Hint(stringResource(if (splitsByParts(portions)) R.string.split_plan_intro_parts else R.string.split_plan_intro))
                 if (eaten.isNotEmpty()) Hint(stringResource(R.string.split_eaten_left_out, formatList(eaten)))
                 if (portions.isNotEmpty()) {
-                    SplitCalculator(portions)
+                    SplitCalculator(portions, plated = parts.plated)
                 } else {
                     Text(stringResource(R.string.split_all_eaten), style = MaterialTheme.typography.bodyMedium)
                 }

@@ -10,7 +10,9 @@ import net.whiteravens.dietapp.domain.Pot
 import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.SplitLine
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -101,5 +103,15 @@ class SplitPartsTest {
         assertEquals(152.0 * 0.75, rest.lines[1].quantity, 1e-9)
         // Nothing stays in a pot whose meals take all of it.
         assertNull(partsOfPot(listOf(meal("first", pot = Pot(1.0, 0.0, held = false, offer = null)) to "2026-12-01"), "Paweł").rest)
+    }
+
+    @Test
+    fun `a dish whose plates hold their parts otherwise than the recipe is split one part at a time, either person's plate`() {
+        val mine = meal("mine", shared = ewa()).copy(lines = listOf(rice.copy(share = 1.2), chicken))
+        assertTrue(partsOfPot(listOf(mine to "2026-11-30"), "Paweł").plated)
+        val hers = ewa().let { it.copy(with = it.with.copy(lines = it.with.lines.map { line -> line.copy(share = 0.8) })) }
+        assertTrue(partsOfPot(listOf(meal("mine", shared = hers) to "2026-11-30"), "Paweł").plated)
+        // Both plates the recipe's: the whole dish is weighed.
+        assertFalse(partsOfPot(listOf(meal("mine", shared = ewa()) to "2026-11-30"), "Paweł").plated)
     }
 }

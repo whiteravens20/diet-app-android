@@ -2086,6 +2086,7 @@
     <string name="split_way_part">One part</string>
     <string name="split_way_pieces">Pieces</string>
     <string name="split_way_whole_hint">A mixed dish such as a soup, a stew or pasta in its sauce. Stir well before you weigh and serve the portions.</string>
+    <string name="split_whole_plated">The plates of this meal hold their parts in different proportions: split it one part at a time.</string>
     <string name="split_way_part_hint">A dish in parts, chicken, rice and broccoli for example. Weigh one cooked part and split it by the same shares, then the next.</string>
     <string name="split_way_pieces_hint">Eggs, cutlets, pancakes. Pieces cannot be split exactly: rounding changes a portion.</string>
     <string name="split_piece_count">Number of pieces</string>

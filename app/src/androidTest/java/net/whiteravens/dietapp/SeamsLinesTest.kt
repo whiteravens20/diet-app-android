@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.domain.Borrowed
@@ -193,6 +194,24 @@ class SeamsLinesTest {
             val (leftOut, rest) = if (language == "en") "Leaving out the portions eaten already: " to "Left in the pot" else "Bez porcji już zjedzonych: " to "Zostaje w garnku"
             assertTrue(lines.toString(), lines.any { it.startsWith(leftOut) })
             assertTrue(lines.toString(), rest in lines)
+        }
+    }
+
+    @Test
+    fun aSplitOfADishWhosePlatesDifferOpensOnOnePartAndSaysWhyTheWholeDishDoesNotFit() {
+        val ewa = OtherPortion("meal-9", "plan-2", "Ewa", 1.0, 520.0, eaten = false, lines = listOf(MealLine("lentils", "Lentils", 90.0, "g", share = 0.8)))
+        eye.show { language ->
+            val stew = if (language == "en") "Lentil stew" else "Gulasz z soczewicy"
+            val mine = meal("mine", stew).let { it.copy(lines = it.lines.map { line -> line.copy(share = 1.2) }, shared = SharedMeal("s-1", apart = false, with = ewa, pot = emptyList())) }
+            SplitDialog(listOf(mine to today), ownName = "Paweł", onDismiss = {})
+        }
+
+        eye.check("split-plated") { language, lines ->
+            val (part, plated) =
+                if (language == "en") "One part" to "The plates of this meal hold their parts in different proportions: split it one part at a time."
+                else "Jeden składnik" to "Talerze tego posiłku mają różne proporcje: dziel go składnik po składniku."
+            assertTrue(lines.toString(), plated in lines)
+            compose.onNode(hasText(part) and isSelected() and hasAnyAncestor(isDialog())).assertExists()
         }
     }
 
