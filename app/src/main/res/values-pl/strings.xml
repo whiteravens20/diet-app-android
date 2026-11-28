@@ -1826,6 +1826,8 @@
     <string name="web_no_browser_title">Brak przeglądarki</string>
     <string name="web_no_browser_body">Żadna przeglądarka na tym telefonie nie otwiera tej strony. Jej adres, do otwarcia gdzie indziej:</string>
     <string name="plans_day_settings">Ustawienia dnia…</string>
+    <string name="plans_day_cook_apart">Gotuj ten dzień osobno</string>
+    <string name="plans_day_cook_together">Gotuj ten dzień w\u00A0jednym garnku</string>
     <string name="plans_day_kind_chip_training">Trening</string>
     <string name="plans_day_kind_chip_rest">Odpoczynek</string>
     <string name="plans_day_kind_normal">Zwykły</string>
@@ -2424,6 +2426,9 @@
     <string name="plans_joint_plan_with">Wspólny plan z</string>
     <string name="plans_joint_plan_none">Z\u00A0nikim</string>
     <string name="plans_joint_plan_hint">Każda osoba dostaje swój plan na te same dni. O\u00A0porach, które mają obie osoby, oba plany mają to samo danie, każdy swoją porcję. Druga osoba ma dietę, liczbę posiłków i\u00A0cel ze swojego profilu.</string>
+    <string name="plans_joint_cook_apart">Wspólne dania gotuj osobno</string>
+    <string name="plans_joint_cook_apart_hint">Każda osoba gotuje swoją porcję z\u00A0dokładnych ilości dla swojego talerza. Odznacz, by gotować danie w\u00A0jednym garnku i\u00A0dzielić je wagą.</string>
+    <string name="plans_joint_cook_apart_from_today">Od dziś, bez posiłków już zjedzonych. Dzień albo posiłek zmienisz osobno.</string>
     <string name="recipe_portion_meal">Poniżej podane są ilości z\u00A0oryginalnego przepisu, na %1$s. Twój posiłek w\u00A0planie to %2$s.</string>
     <string name="recipe_portion_meal_same">Poniżej podane są ilości z\u00A0oryginalnego przepisu, na %1$s: tyle samo, ile Twój posiłek w\u00A0planie.</string>
     <string name="recipe_portion_whole">Poniżej podane są ilości z\u00A0oryginalnego przepisu, na %1$s. To gotowanie w\u00A0planie to %2$s.</string>

@@ -44,7 +44,7 @@
 -keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
--keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); *** MealCard(...); *** ProfileMovedNote(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); *** MealCard(...); *** ProfileMovedNote(...); *** DayChangesMenu(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpKt { *** DayChangeHelpDialog(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.NewPlanScreenKt { *** getDATE_AND_LENGTH(); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); *** RiskNote(...); *** PaceChoice(...); *** OwnTargetField(...); *** CaloriePreviewCard(...); }
@@ -137,6 +137,7 @@
 -keep class net.whiteravens.dietapp.domain.Rebalance { *; }
 -keep class net.whiteravens.dietapp.domain.PlanDay { *; }
 -keep class net.whiteravens.dietapp.ui.components.EatenPantryDialogKt { *** EatenPantryDialog(...); }
+-keep class net.whiteravens.dietapp.ui.components.CheckRowKt { *** CheckRow(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.SplitCalculatorKt { *** SplitDialog(...); }
 -keep class net.whiteravens.dietapp.ui.common.PantryWindow { *; }
 -keep class net.whiteravens.dietapp.ui.common.PantryQuestion { *; }

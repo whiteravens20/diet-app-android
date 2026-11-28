@@ -3,7 +3,9 @@
 package net.whiteravens.dietapp
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -43,9 +45,11 @@ import net.whiteravens.dietapp.testing.EachLanguage
 import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.ui.common.PantryQuestion
 import net.whiteravens.dietapp.ui.common.PantryWindow
+import net.whiteravens.dietapp.ui.components.CheckRow
 import net.whiteravens.dietapp.ui.components.EatenPantryDialog
 import net.whiteravens.dietapp.ui.screens.pantry.RowItem
 import net.whiteravens.dietapp.ui.screens.pantry.StillGoodDialog
+import net.whiteravens.dietapp.ui.screens.plans.DayChangesMenu
 import net.whiteravens.dietapp.ui.screens.plans.LeftoverDialog
 import net.whiteravens.dietapp.ui.screens.plans.MealCard
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailViewModel
@@ -56,6 +60,7 @@ import net.whiteravens.dietapp.ui.screens.plans.SplitDialog
 import net.whiteravens.dietapp.ui.screens.shopping.JointListNote
 import net.whiteravens.dietapp.ui.screens.shopping.PastInPantryBanner
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingItemRow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -290,6 +295,40 @@ class SeamsLinesTest {
 
         eye.check("plan-outside-the-diet") { language, lines ->
             assertTrue(lines.toString(), (if (language == "en") "Outside the diet" else "Poza dietą") in lines)
+        }
+    }
+
+    @Test
+    fun aPlanMadeTogetherAsksInItsFormAndOnItselfHowItsSharedDishesAreCookedAndADayOffersTheOtherWayOnOneLine() {
+        eye.show { _ ->
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                CheckRow(label = stringResource(R.string.plans_joint_cook_apart), hint = stringResource(R.string.plans_joint_cook_apart_hint), checked = true) {}
+                CheckRow(label = stringResource(R.string.plans_joint_cook_apart), hint = stringResource(R.string.plans_joint_cook_apart_from_today), checked = false) {}
+                Box {
+                    DayChangesMenu(
+                        listOf(
+                            R.string.plans_other_ways to {},
+                            R.string.plans_change_day to {},
+                            R.string.plans_day_settings to {},
+                            R.string.plans_day_cook_together to {},
+                            R.string.plans_day_help_link to {},
+                            R.string.plans_go_to_today to {},
+                        ),
+                        expanded = true,
+                        onDismiss = {},
+                    )
+                }
+            }
+        }
+
+        eye.check("together-switches") { language, lines ->
+            val (box, together, settings) =
+                if (language == "en") Triple("Cook the shared dishes apart", "Cook this day in one pot", "Day settings…")
+                else Triple("Wspólne dania gotuj osobno", "Gotuj ten dzień w jednym garnku", "Ustawienia dnia…")
+            assertTrue(lines.toString(), box in lines)
+            // The day's way stands on one line, as high as the others of its menu.
+            val height = { label: String -> compose.onNode(hasText(shown(label)) and hasClickAction()).fetchSemanticsNode().boundsInRoot.height }
+            assertEquals(height(settings), height(together), 0.5f)
         }
     }
 

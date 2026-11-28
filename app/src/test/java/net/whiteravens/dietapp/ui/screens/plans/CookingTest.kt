@@ -154,6 +154,22 @@ class CookingTest {
     }
 
     @Test
+    fun `a day of a plan made together is switched by how its shared dishes neither ate are cooked, and a day without one is not`() {
+        fun shared(apart: Boolean, theirsEaten: Boolean = false) =
+            SharedMeal("s", apart = apart, with = OtherPortion("theirs", "plan-2", "Ewa", 1.0, 600.0, eaten = theirsEaten), pot = own)
+        fun day(vararg meals: Meal) = mockk<PlanDay>().also { every { it.meals } returns meals.toList() }
+        val apart = meal("a", 1.0, null, null).copy(shared = shared(apart = true))
+        val pot = meal("b", 1.0, null, null).copy(shared = shared(apart = false))
+
+        assertEquals(true, dayCooking(day(apart, apart.copy(id = "c"))))
+        assertEquals(false, dayCooking(day(apart, pot)))
+        // A dish eaten by either is cooked as it was: it decides nothing.
+        assertEquals(true, dayCooking(day(apart, pot.copy(eaten = true))))
+        assertEquals(true, dayCooking(day(apart, pot.copy(shared = shared(apart = false, theirsEaten = true)))))
+        assertEquals(null, dayCooking(day(meal("alone", 1.0, null, null), pot.copy(eaten = true))))
+    }
+
+    @Test
     fun `the plates of a dish each person cooks apart are every line, each with what both plates take of it`() {
         val chicken = MealLine("chicken", "Chicken", 155.0, "g", share = 1.3)
         val oil = MealLine("oil", "Oil", 10.0, "ml")

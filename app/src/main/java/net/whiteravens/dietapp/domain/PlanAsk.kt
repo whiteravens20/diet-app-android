@@ -34,6 +34,8 @@ data class PlanAsk(
      * same days, by its own profile, the times of day both have holding the same dish.
      */
     val withProfileId: String? = null,
+    /** Of a plan made together: the dishes both eat are cooked each portion apart, unless asked for in one pot. */
+    val cookApart: Boolean = true,
 )
 
 /** One day of a plan asked for, where it differs from the plan. */

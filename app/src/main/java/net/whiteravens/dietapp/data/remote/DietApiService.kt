@@ -535,6 +535,13 @@ interface DietApiService {
         @Query("forAll") forAll: Boolean? = null,
     ): RebalanceResultDto
 
+    /**
+     * Says how the dishes both people of a joint plan eat are cooked, in both plans: from today, the meals neither ate,
+     * and the plan's own setting; or on one day alone.
+     */
+    @PATCH("meal-plans/{id}/cook-apart")
+    suspend fun setCookApart(@Path("id") id: String, @Body body: SetCookApartRequest): MealPlanDto
+
     /** Says how a shared meal is cooked, in both plans: each portion apart, or in one pot. */
     @PATCH("meal-plans/{id}/shared-meals/{sharedMealId}")
     suspend fun setSharedMeal(

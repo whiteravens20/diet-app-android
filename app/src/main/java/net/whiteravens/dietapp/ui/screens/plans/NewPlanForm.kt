@@ -101,6 +101,8 @@ data class NewPlanForm(
     val days: Map<LocalDate, DayDraft> = emptyMap(),
     /** Another profile of the account the plan is made together with; such a plan is made without settings of its days. */
     val withProfileId: String? = null,
+    /** Of a plan made together: the dishes both eat cooked each portion apart, unless unticked. */
+    val cookApart: Boolean = true,
     /** The custom diet's targets, asked for where the plan is made to the custom diet and the profile has none. */
     val own: OwnTargetsTyped = OwnTargetsTyped(),
 ) {
@@ -174,6 +176,7 @@ data class NewPlanForm(
             allowRelaxations = mayGiveWay,
             days = asked.takeIf { withProfileId == null }.orEmpty(),
             withProfileId = withProfileId,
+            cookApart = cookApart,
         )
     }
 }

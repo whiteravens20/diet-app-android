@@ -511,6 +511,20 @@ class PlanDetailViewModel @Inject constructor(
     /** The window put away: the pantry stays as it is. */
     fun closePantry() = pantryQuestions.close()
 
+    /**
+     * Says how the dishes both people of a joint plan eat are cooked, [apart] or in one pot, in both plans: from today,
+     * the meals neither ate, and the plan's own setting; with [date], that day alone. It needs the network.
+     */
+    fun setCookApart(apart: Boolean, date: String? = null) {
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.setCookApart(planId, apart, date) }
+                .onSuccess { plan -> _state.update { it.copy(plan = plan, changing = false) } }
+                .onFailure { e -> _state.update { it.copy(changing = false, error = e) } }
+        }
+    }
+
     /** Says how a shared meal is cooked, in both plans: each portion apart, or in one pot. It needs the network. */
     fun setApart(sharedMealId: String, apart: Boolean) {
         if (_state.value.changing) return

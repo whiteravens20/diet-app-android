@@ -567,7 +567,13 @@ data class OtherPortion(
 data class SharedMeal(val id: String, val apart: Boolean, val with: OtherPortion, val pot: List<MealLine>)
 
 /** The plan of the other profile a plan was made together with. */
-data class JointPlan(val planId: String, val profileId: String, val profileName: String)
+data class JointPlan(
+    val planId: String,
+    val profileId: String,
+    val profileName: String,
+    /** The dishes both eat are cooked each portion apart: the plan's own setting, which a dish shared from now takes. */
+    val cookApart: Boolean = false,
+)
 
 /** Another meal of a meal's cooking: of which day and time of day, and whether it was eaten. */
 data class CookedPlace(val mealId: String, val date: String, val slot: String, val eaten: Boolean)

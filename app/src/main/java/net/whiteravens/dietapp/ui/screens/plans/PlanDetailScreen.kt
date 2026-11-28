@@ -528,6 +528,17 @@ fun PlanDetailScreen(
                         onHouseholdList = plan?.takeIf { it.joint != null }?.let { together -> { onOpenHouseholdList(together.profileId, together.id) } },
                     )
                 }
+                // How the dishes both eat are cooked, from today: a day, or a meal, is changed on its own.
+                plan?.joint?.let { joint ->
+                    item(key = "cook-apart") {
+                        CheckRow(
+                            label = stringResource(R.string.plans_joint_cook_apart),
+                            hint = stringResource(R.string.plans_joint_cook_apart_from_today),
+                            checked = joint.cookApart,
+                            enabled = !readOnly && !busy,
+                        ) { apart -> viewModel.setCookApart(apart) }
+                    }
+                }
 
                 state.error?.let {
                     item {
@@ -678,6 +689,9 @@ fun PlanDetailScreen(
                         // The diary of a day that has come, and the history of every day, in sight.
                         onDiary = { onOpenDiary(plan.profileId, day.date) }.takeIf { day.date <= today },
                         onHistory = { historyFor = day.id },
+                        onCookDay = dayCooking(day).takeUnless { readOnly || busy }?.let { apart ->
+                            (if (apart) R.string.plans_day_cook_together else R.string.plans_day_cook_apart) to { viewModel.setCookApart(!apart, day.date) }
+                        },
                         // A day of today or after it is resized with its own meals, where the server says that would move one.
                         onResize = { viewModel.resizeDay(day.date) }.takeUnless {
                             readOnly || busy || day.date < today || !day.resizes ||
@@ -1141,6 +1155,8 @@ private fun DaySummary(
     onDiary: (() -> Unit)?,
     /** The history of the day ("Historia dnia"), on every day. */
     onHistory: () -> Unit,
+    /** Of a joint plan, its shared dishes neither ate cooked the other way, by what it is called; null for none. */
+    onCookDay: Pair<Int, () -> Unit>? = null,
     onResize: (() -> Unit)?,
     resizeLeft: Double?,
     /** What the day says to take out of the freezer. */
@@ -1178,7 +1194,7 @@ private fun DaySummary(
                 color = if (day.offTarget == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f),
             )
-            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onHelp = onHelp)
+            DayChanges(day, onOtherWays, onChange, onSettings, onToday, onHelp = onHelp, onCookDay = onCookDay)
         }
         DayMacros(day)
         DayLinks(onDiary, onHistory)
@@ -1307,7 +1323,8 @@ private fun DaySummary(
 
 /**
  * The ways to change a day and to go from it, behind the day's options beside its sum, as the plan's own are beside
- * its name: its other versions, the day made again, its settings and today's day of the plan, each where it has one;
+ * its name: its other versions, the day made again, its settings, of a joint plan its shared dishes cooked the other
+ * way, and today's day of the plan, each where it has one;
  * the day's diary and history stand in sight under its figures ([DayLinks]).
  */
 @Composable
@@ -1318,11 +1335,13 @@ private fun DayChanges(
     onSettings: (() -> Unit)?,
     onToday: (() -> Unit)?,
     onHelp: (() -> Unit)? = null,
+    onCookDay: Pair<Int, () -> Unit>? = null,
 ) {
     val ways = listOfNotNull(
         onOtherWays?.let { R.string.plans_other_ways to it },
         onChange?.let { R.string.plans_change_day to it },
         onSettings?.let { R.string.plans_day_settings to it },
+        onCookDay,
         onHelp?.let { R.string.plans_day_help_link to it },
         onToday?.let { R.string.plans_go_to_today to it },
     )
@@ -1333,19 +1352,34 @@ private fun DayChanges(
         IconButton(onClick = { open = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = named, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            ways.forEach { (label, action) ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(label)) },
-                    onClick = {
-                        open = false
-                        action()
-                    },
-                )
-            }
+        DayChangesMenu(ways, expanded = open, onDismiss = { open = false })
+    }
+}
+
+/** The ways to change a day, each by what it is called, in the menu its options open: a pick closes the menu first. */
+@Composable
+internal fun DayChangesMenu(ways: List<Pair<Int, () -> Unit>>, expanded: Boolean, onDismiss: () -> Unit) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        ways.forEach { (label, action) ->
+            DropdownMenuItem(
+                text = { Text(stringResource(label)) },
+                onClick = {
+                    onDismiss()
+                    action()
+                },
+            )
         }
     }
 }
+
+/**
+ * How the shared dishes of [day] that neither person ate are cooked: true where all of them are apart, false where one
+ * is in one pot; null for a day without such a dish, which has nothing to switch.
+ */
+internal fun dayCooking(day: PlanDay): Boolean? =
+    day.meals.mapNotNull { meal -> meal.shared?.takeIf { !meal.eaten && !it.with.eaten } }
+        .takeIf { it.isNotEmpty() }
+        ?.all { it.apart }
 
 /** The diary of a day that has come ([onDiary]) and the day's history, side by side and in sight, as the web's day has them. */
 @OptIn(ExperimentalLayoutApi::class)

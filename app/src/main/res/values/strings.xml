@@ -1686,6 +1686,8 @@
     <string name="web_no_browser_title">No browser</string>
     <string name="web_no_browser_body">No browser on this phone opens the page. Its address, to open elsewhere:</string>
     <string name="plans_day_settings">Day settings…</string>
+    <string name="plans_day_cook_apart">Cook this day apart</string>
+    <string name="plans_day_cook_together">Cook this day in one pot</string>
     <string name="plans_day_kind_chip_training">Training</string>
     <string name="plans_day_kind_chip_rest">Rest</string>
     <string name="plans_day_kind_normal">Normal</string>
@@ -2260,6 +2262,9 @@
     <string name="plans_joint_plan_with">Plan together with</string>
     <string name="plans_joint_plan_none">Nobody</string>
     <string name="plans_joint_plan_hint">Each person gets a plan of their own on the same days. At the times of day both have, both plans hold the same dish, a portion for each. The other person\'s diet, meals a day and target come from their profile.</string>
+    <string name="plans_joint_cook_apart">Cook the shared dishes apart</string>
+    <string name="plans_joint_cook_apart_hint">Each person cooks their own portion from the exact amounts of their plate. Untick to cook the dish in one pot and split it by weight.</string>
+    <string name="plans_joint_cook_apart_from_today">From today, meals eaten aside. A day or a meal can be changed on its own.</string>
     <string name="recipe_portion_meal">Below are the amounts of the original recipe, for %1$s. Your meal in the plan is %2$s.</string>
     <string name="recipe_portion_meal_same">Below are the amounts of the original recipe, for %1$s: as much as your meal in the plan.</string>
     <string name="recipe_portion_whole">Below are the amounts of the original recipe, for %1$s. This cooking in the plan comes to %2$s.</string>

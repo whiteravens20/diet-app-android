@@ -144,6 +144,14 @@ fun NewPlanScreen(onBack: () -> Unit, onMade: (String) -> Unit, viewModel: NewPl
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                            // Of a plan made together: the dishes both eat cooked each portion apart, unless unticked.
+                            if (form.withProfileId != null) {
+                                CheckRow(
+                                    label = stringResource(R.string.plans_joint_cook_apart),
+                                    hint = stringResource(R.string.plans_joint_cook_apart_hint),
+                                    checked = form.cookApart,
+                                ) { ticked -> viewModel.edit { it.copy(cookApart = ticked) } }
+                            }
                         }
 
                         val custom = profile.figures.customMacroSplit

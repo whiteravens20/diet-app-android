@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import net.whiteravens.dietapp.data.remote.SetCookApartRequest
 import net.whiteravens.dietapp.data.remote.MealCountMovedDto
 import net.whiteravens.dietapp.data.remote.TakeMealCountRequest
 import net.whiteravens.dietapp.domain.MealCountMoved
@@ -598,6 +599,22 @@ class PlanDetailViewModelTest {
 
         coVerify(exactly = 2) { api.mealPlan(plan.id) }
         assertNotNull(model.state.value.error)
+    }
+
+    @Test
+    fun `the shared dishes of a plan made together are switched for the whole plan, or for a day, and the plan answered is shown`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan
+        coEvery { api.setCookApart(plan.id, any()) } returns plan.copy(revision = plan.revision + 1)
+        val model = model(api)
+
+        model.setCookApart(false)
+        model.setCookApart(true, date = plan.startDate)
+
+        coVerify(exactly = 1) { api.setCookApart(plan.id, SetCookApartRequest(apart = false)) }
+        coVerify(exactly = 1) { api.setCookApart(plan.id, SetCookApartRequest(apart = true, date = plan.startDate)) }
+        assertEquals(plan.revision + 1, model.state.value.plan?.revision)
+        assertNull(model.state.value.error)
     }
 
     @Test

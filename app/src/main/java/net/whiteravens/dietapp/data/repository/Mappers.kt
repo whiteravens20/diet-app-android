@@ -332,7 +332,7 @@ fun LeftoverOfferDto.toDomain() = LeftoverOffer(
     other = other?.let { LeftoverOther(it.profileName, it.eaten, Portion(it.portion.servings, it.portion.calories), it.places) },
 )
 
-fun JointPlanDto.toDomain() = JointPlan(planId = planId, profileId = profileId, profileName = profileName)
+fun JointPlanDto.toDomain() = JointPlan(planId = planId, profileId = profileId, profileName = profileName, cookApart = cookApart)
 
 /** What a change of a dish does to the other meals of its cooking. */
 fun CookingChangeDto.toDomain() = CookingChange(

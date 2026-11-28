@@ -31,6 +31,7 @@ import net.whiteravens.dietapp.data.remote.RegenerateRequest
 import net.whiteravens.dietapp.data.remote.RelaxationNeededDto
 import net.whiteravens.dietapp.data.remote.RestoreScaleDto
 import net.whiteravens.dietapp.data.remote.SetMealEatenRequest
+import net.whiteravens.dietapp.data.remote.SetCookApartRequest
 import net.whiteravens.dietapp.data.remote.SetSharedMealRequest
 import net.whiteravens.dietapp.data.remote.SwapIngredientRequest
 import net.whiteravens.dietapp.data.remote.SwapOfferRequest
@@ -229,6 +230,7 @@ class MealPlanRepository @Inject constructor(
                     // A joint plan is made without settings of its days: each person changes their own after.
                     dayOverrides = ask.days.map { it.toDto() }.takeIf { it.isNotEmpty() && ask.withProfileId == null },
                     withProfileId = ask.withProfileId,
+                    cookApart = ask.cookApart,
                 ),
             )
         }
@@ -565,6 +567,15 @@ class MealPlanRepository @Inject constructor(
      * Says how a shared meal is cooked, in both plans: each portion [apart], or in one pot. It needs
      * the network; the plan as the server then has it is kept and given back.
      */
+    /**
+     * Says how the dishes both people of the joint plan [planId] eat are cooked, [apart] or in one pot: from today, the
+     * meals neither ate, and the plan's own setting; with [date], that day alone. It needs the network.
+     */
+    suspend fun setCookApart(planId: String, apart: Boolean, date: String? = null): MealPlan {
+        val plan = apiCall(json) { api.setCookApart(planId, SetCookApartRequest(apart, date)) }
+        return keep(plan)
+    }
+
     suspend fun setApart(planId: String, sharedMealId: String, apart: Boolean): MealPlan {
         val plan = apiCall(json) { api.setSharedMeal(planId, sharedMealId, SetSharedMealRequest(apart)) }
         return keep(plan)

@@ -198,6 +198,9 @@ class NewPlanFormTest {
 
         assertEquals("q", ask.withProfileId)
         assertEquals(emptyList<DayAsk>(), ask.days)
+        // Its shared dishes cooked apart unless unticked.
+        assertTrue(ask.cookApart)
+        assertFalse(rest.copy(cookApart = false).ask("p", profileMealCount = 3, sets = sets, mealSlots)!!.cookApart)
         assertNotNull(wrong.ask("p", profileMealCount = 3, sets = sets, mealSlots))
         assertNull(wrong.copy(withProfileId = null).ask("p", profileMealCount = 3, sets = sets, mealSlots))
     }

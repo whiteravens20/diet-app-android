@@ -1401,9 +1401,12 @@ data class SharedMealOfDto(
     val pot: List<PlannedIngredientDto>,
 )
 
-/** The plan of the other profile a plan was made together with. */
+/**
+ * The plan of the other profile a plan was made together with, and whether the dishes both eat are cooked each portion
+ * apart ([cookApart]), the plan's own setting, which a dish shared from now takes; false from an API that does not say it.
+ */
 @Serializable
-data class JointPlanDto(val planId: String, val profileId: String, val profileName: String)
+data class JointPlanDto(val planId: String, val profileId: String, val profileName: String, val cookApart: Boolean = false)
 
 /** Another meal of a meal's cooking. */
 @Serializable
@@ -1894,6 +1897,11 @@ data class GeneratePlanRequest(
      * without [dayOverrides]; counted as two makings of a plan.
      */
     val withProfileId: String? = null,
+    /**
+     * Of a plan made together: the dishes both eat are cooked each portion apart, as the API takes it unless told;
+     * sent only where it is not, false.
+     */
+    val cookApart: Boolean = true,
 )
 
 /** The days of a profile's plans in a span of days: those no plan holds are left out. */
@@ -2421,6 +2429,13 @@ data class SetMealEatenRequest(
     /** Of a shared meal: the other person's meal is marked as well, their day balanced as this one is. */
     val forAll: Boolean = false,
 )
+
+/**
+ * PATCH `/meal-plans/:id/cook-apart`: the dishes both people of a joint plan eat cooked [apart] or in one pot, in both
+ * plans: those from today that neither portion of is eaten, and the plan's own setting; with [date] that day's alone.
+ */
+@Serializable
+data class SetCookApartRequest(val apart: Boolean, val date: String? = null)
 
 /** PATCH `/meal-plans/:id/shared-meals/:sharedMealId`: a shared meal cooked [apart], each portion on its own, or in one pot. */
 @Serializable

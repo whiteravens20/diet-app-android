@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
@@ -492,8 +493,12 @@ class PlansTest {
         screen.putKeyboardAway()
         screen.onNodeWithText(text(R.string.plans_joint_plan_with)).performScrollTo().performClick()
         screen.onNode(hasText("Ewa") and hasClickAction()).performClick()
-        screen.onNodeWithText(text(R.string.plans_joint_plan_hint)).performScrollTo()
+        // Its shared dishes cooked apart unless unticked: here in one pot, split by weight.
+        val cookApart = hasText(text(R.string.plans_joint_cook_apart)) and isToggleable()
+        screen.onNode(cookApart).performScrollTo().assertIsOn()
         screen.keepScreenshot("plans-a-plan-made-together")
+        screen.onNode(cookApart).performClick()
+        screen.onNode(cookApart).assertIsOff()
         screen.onNode(hasText(text(R.string.plans_generate_button)) and hasClickAction()).performScrollTo().performClick()
 
         // Each person gets a plan of their own; the one opened says with whom it is made.
@@ -507,8 +512,7 @@ class PlansTest {
         screen.scrollToText(countedTogether, substring = true)
         screen.keepScreenshot("plans-packs-counted-together")
 
-        // A meal both eat says so; among its changes it is marked eaten for both, and cooked apart, as a plan made
-        // together cooks its shared dishes unless asked otherwise: here in one pot, from among its changes.
+        // A meal both eat says so; among its changes it is marked eaten for both and cooked apart, in one pot as asked.
         val shared = Instance.sharedMeal(account, planId)
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), shared.title))
         val inTheMenu = hasAnyAncestor(isPopup())
@@ -516,14 +520,11 @@ class PlansTest {
         screen.onAllNodes(change)[0].performScrollTo()
         screen.keepScreenshot("plans-a-shared-meal")
         screen.onAllNodes(change)[0].performClick()
-        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).assertIsOn()
+        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).assertIsOff()
         screen.onNode(hasText(text(R.string.plans_eaten_together)) and inTheMenu).assertExists()
         screen.keepScreenshot("plans-a-shared-meal-changes")
-        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).performClick()
-        screen.waitForTheApi(20_000) { !Instance.cooksApart(account, planId, shared.mealId) }
 
         // Another dish for it is asked for both, and the offer says it can be for this plan alone.
-        screen.onAllNodes(change)[0].performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.plans_swap)) and inTheMenu).performClick()
         screen.waitForText(text(R.string.plans_offer_for_all, "Ewa"))
         screen.keepScreenshot("plans-a-shared-swap")
@@ -595,6 +596,49 @@ class PlansTest {
         val fromPot = text(R.string.diary_meal_kcal_from_pot, "\u0000").split("\u0000")[1].trim()
         screen.scrollToText(fromPot, substring = true)
         screen.keepScreenshot("diary-a-pot-portion")
+    }
+
+    @Test
+    fun theSharedDishesOfAPlanMadeTogetherAreCookedApartUntilSwitchedForTheWholePlanFromTodayOrForADay() {
+        val account = Instance.newAccount()
+        // Adam eats once more a day than Ewa: that meal is his alone.
+        val adam = Instance.newProfile(account, name = "Adam", mealCount = 4)
+        val ewa = Instance.newProfile(account, name = "Ewa", mealCount = 3)
+        val planId = Instance.planTogether(account, adam, ewa)
+        val shared = Instance.sharedMeal(account, planId)
+        screen.startSignedIn(account)
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+
+        // Made together, its shared dishes are cooked apart: the switch of the whole plan says so, under its head.
+        val whole = hasText(text(R.string.plans_joint_cook_apart)) and isToggleable()
+        screen.scrollTo(whole)
+        screen.onNode(whole).assertIsOn()
+        screen.keepScreenshot("plans-cooked-apart-the-whole-plan")
+
+        // The meal Adam alone eats says whose it is.
+        screen.scrollToText(shown(text(R.string.plans_only_chip, "Adam")))
+        screen.keepScreenshot("plans-a-meal-only-one-eats")
+        screen.scrollTo(whole)
+
+        // Switched off, from today: in one pot in both plans, as the app shows once the plan is back.
+        screen.onNode(whole).performClick()
+        screen.waitForTheApi(20_000) { !Instance.cooksApart(account, planId, shared.mealId) && !Instance.cooksApart(account, shared.theirPlanId, shared.theirMealId) }
+        screen.waitUntil(20_000) { screen.onAllNodes(whole and isOff() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+
+        // A day is switched on its own, from its menu.
+        val day = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_day_options), formatDayDate(LocalDate.now().toString())))
+        screen.scrollTo(day)
+        screen.onAllNodes(day)[0].performClick()
+        screen.onNode(hasText(text(R.string.plans_day_cook_apart)) and hasAnyAncestor(isPopup())).assertExists()
+        screen.keepScreenshot("plans-a-day-cooked-apart-from-its-menu")
+        screen.onNode(hasText(text(R.string.plans_day_cook_apart)) and hasAnyAncestor(isPopup())).performClick()
+        screen.waitForTheApi(20_000) { Instance.cooksApart(account, planId, shared.mealId) }
+        // The whole plan stays in one pot.
+        screen.waitUntil(20_000) { screen.onAllNodes(whole and isOff() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test

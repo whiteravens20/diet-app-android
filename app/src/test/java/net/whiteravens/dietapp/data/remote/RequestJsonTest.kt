@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import net.whiteravens.dietapp.di.AppModule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 /** What the app writes into a request: what the API asks to be sent is sent, and nothing it leaves optional is invented. */
@@ -97,6 +98,19 @@ class RequestJsonTest {
         assertEquals(setOf("profileId", "date", "mealType", "kind", "name", "servings", "nutrition"), meal.keys)
         // A macronutrient left out is one the API estimates: it is not sent at all, not sent as nothing.
         assertEquals(setOf("calories"), meal.getValue("nutrition").jsonObject.keys)
+    }
+
+    @Test
+    fun `a plan made together sends its shared dishes in one pot where asked, and leaves apart to the API's own way`() {
+        val ask = GeneratePlanRequest(profileId = "p", startDate = "2026-11-30", durationDays = 3, withProfileId = "q")
+        assertFalse("cookApart" in written(ask).keys)
+        assertEquals(JsonPrimitive(false), written(ask.copy(cookApart = false))["cookApart"])
+    }
+
+    @Test
+    fun `how the shared dishes are cooked is sent for the whole plan without a day, and for a day with it`() {
+        assertEquals(setOf("apart"), written(SetCookApartRequest(apart = false)).keys)
+        assertEquals(JsonPrimitive("2026-11-30"), written(SetCookApartRequest(apart = true, date = "2026-11-30"))["date"])
     }
 
     @Test
