@@ -457,6 +457,8 @@ class PlansTest {
         screen.scrollToText(text(R.string.plans_cook_days))
         val title = Instance.mealToCook(account, planId)
         screen.onAllNodesWithText(shown(title))[0].performScrollTo().performClick()
+        // Split once it is cooked, it asks for the empty pot to be weighed first.
+        screen.onNode(hasText(text(R.string.split_empty_pot_hint)) and hasAnyAncestor(isDialog())).assertExists()
         screen.onNode(hasText(text(R.string.split_open)) and hasAnyAncestor(isDialog())).performScrollTo().performClick()
         screen.waitForText(text(R.string.split_plan_intro_parts))
         screen.onNode(hasText(text(R.string.split_on_scale)) and hasSetTextAction()).performTextInput("2660")

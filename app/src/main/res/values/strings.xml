@@ -2093,6 +2093,7 @@
     <string name="split_on_scale">Weight on the scale (g)</string>
     <string name="split_in_pot">I weigh it in the pot</string>
     <string name="split_empty_pot">Weight of the empty pot (g)</string>
+    <string name="split_empty_pot_hint">Weigh the empty pot before you start cooking: the split needs it.</string>
     <string name="split_pot_too_heavy">The empty pot cannot weigh as much as the full one or more.</string>
     <string name="split_food_alone">The food alone: %1$s g.</string>
     <string name="split_share_unknown">Type in each portion\'s calories.</string>

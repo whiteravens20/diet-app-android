@@ -191,7 +191,8 @@ internal fun SplitCalculator(planned: List<SplitPortion>?, plated: Boolean = fal
                 label = stringResource(R.string.split_on_scale),
                 keyboardType = KeyboardType.Decimal,
             )
-            CheckRow(label = stringResource(R.string.split_in_pot), checked = inPot, onChange = { inPot = it })
+            // No pot is kept: its weight has to be known before it is filled.
+            CheckRow(label = stringResource(R.string.split_in_pot), hint = stringResource(R.string.split_empty_pot_hint), checked = inPot, onChange = { inPot = it })
             if (inPot) {
                 FormField(
                     value = potText,

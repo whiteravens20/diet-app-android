@@ -2235,6 +2235,8 @@ private fun MealDialog(
                         meal.recipeServings?.let { servings ->
                             Hint(toCook.pot?.let { potNote(servings, toCook.servings, it) } ?: portionNote(servings, toCook.servings, toCook.whole))
                         }
+                        // A cooking of several portions is split once it is cooked: in the pot it is weighed in, empty first.
+                        if (toCook.whole) Hint(stringResource(R.string.split_empty_pot_hint))
                         toCook.lines.forEach { line ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f)) {

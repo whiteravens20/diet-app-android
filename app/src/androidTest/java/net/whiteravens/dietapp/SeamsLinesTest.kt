@@ -194,6 +194,9 @@ class SeamsLinesTest {
             val (leftOut, rest) = if (language == "en") "Leaving out the portions eaten already: " to "Left in the pot" else "Bez porcji już zjedzonych: " to "Zostaje w garnku"
             assertTrue(lines.toString(), lines.any { it.startsWith(leftOut) })
             assertTrue(lines.toString(), rest in lines)
+            // No pot is kept: it is weighed before it is filled.
+            val emptyPot = if (language == "en") "Weigh the empty pot before you start cooking: the split needs it." else "Zważ pusty garnek, zanim zaczniesz gotować: przyda się przy podziale."
+            assertTrue(lines.toString(), emptyPot in lines)
         }
     }
 

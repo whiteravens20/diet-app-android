@@ -2251,6 +2251,7 @@
     <string name="split_on_scale">Waga na wadze (g)</string>
     <string name="split_in_pot">Ważę w garnku</string>
     <string name="split_empty_pot">Waga pustego garnka (g)</string>
+    <string name="split_empty_pot_hint">Zważ pusty garnek, zanim zaczniesz gotować: przyda się przy podziale.</string>
     <string name="split_pot_too_heavy">Pusty garnek nie może ważyć tyle co pełny ani więcej.</string>
     <string name="split_food_alone">Samo danie: %1$s g.</string>
     <string name="split_share_unknown">Wpisz kalorie każdej porcji.</string>
