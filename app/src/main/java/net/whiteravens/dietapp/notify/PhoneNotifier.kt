@@ -116,6 +116,13 @@ object PhoneNotifier {
         }
     }
 
+    /** Takes down what the phone shows of the notifications of [keys], each the key [NewNotifications.keyOf] gives it. */
+    fun takeDown(context: Context, keys: Set<String>) {
+        if (keys.isEmpty()) return
+        val manager = NotificationManagerCompat.from(context)
+        keys.forEach { manager.cancel(it.hashCode()) }
+    }
+
     /** The water [press] added, said for a moment before the reminder goes. */
     fun waterAdded(context: Context, press: WaterPress, private: Boolean) {
         val reminder = press.reminder

@@ -111,6 +111,13 @@ class PhoneNotificationsTest {
         runCatching { screen.waitUntil(10_000) { shown() == four } }
         assertEquals(four, shown())
 
+        // One read elsewhere, in the web application or on another phone, goes from this phone at the next read.
+        val readBy = Instance.readElsewhere(account, "preferences_review")
+        runTheWork()
+        val three = four - (readBy to review)
+        runCatching { screen.waitUntil(10_000) { shown() == three } }
+        assertEquals(three, shown())
+
         // Each is shown once: put away, the next run does not show them again.
         context.getSystemService(NotificationManager::class.java).cancelAll()
         runTheWork()

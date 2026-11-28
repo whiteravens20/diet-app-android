@@ -219,6 +219,16 @@ object Instance {
     fun water(account: Account, profileId: String, day: LocalDate): Int =
         JSONObject(send("GET", "water?profileId=$profileId&day=$day", null, account.accessToken, 200, null)).getInt("ml")
 
+    /** Marks read the newest unread notification of [account] of [type], as the web application would: its profile's name. */
+    fun readElsewhere(account: Account, type: String): String {
+        val list = JSONArray(send("GET", "notifications/unread", null, account.accessToken, 200, null))
+        val one = (0 until list.length()).map(list::getJSONObject).first { it.getString("type") == type }
+        // A POST carries a body, if an empty one.
+        send("POST", "notifications/${one.getString("id")}/read", JSONObject(), account.accessToken, 204, null)
+        val profiles = JSONArray(send("GET", "profiles", null, account.accessToken, 200, null))
+        return (0 until profiles.length()).map(profiles::getJSONObject).first { it.getString("id") == one.getString("profileId") }.getString("name")
+    }
+
     /** How many notifications of [account] are not read yet. */
     fun unreadNotifications(account: Account): Int =
         JSONArray(send("GET", "notifications/unread", null, account.accessToken, 200, null)).length()

@@ -19,9 +19,9 @@ import net.whiteravens.dietapp.data.repository.UserRepository
 
 /**
  * Reads the account's unread notifications in the background, as often as Android lets periodic
- * work run and whenever the application comes to the front, and shows on the phone those it has not
- * shown yet. Nothing while the notifications are off or nobody is signed in; a read that fails waits
- * for the next run.
+ * work run and whenever the application comes to the front, shows on the phone those it has not
+ * shown yet, and takes down those it showed that were read since, anywhere. Nothing while the
+ * notifications are off or nobody is signed in; a read that fails waits for the next run.
  */
 class NotificationsWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     /** What the work takes from the application's graph: WorkManager makes the worker itself. */
@@ -42,13 +42,16 @@ class NotificationsWorker(context: Context, params: WorkerParameters) : Coroutin
     override suspend fun doWork(): Result {
         val parts = EntryPointAccessors.fromApplication(applicationContext, Parts::class.java)
         if (!parts.store().isOn() || parts.tokens().session.first() == null) return Result.success()
-        val fresh = try {
+        val read = try {
             parts.newNotifications().read()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             return Result.success()
         }
+        // Read elsewhere, in the web application or on another phone: it goes from this one too.
+        PhoneNotifier.takeDown(applicationContext, read.gone)
+        val fresh = read.fresh
         if (fresh.isEmpty()) return Result.success()
         // A name that cannot be read leaves the notification under the application's.
         val names = try {

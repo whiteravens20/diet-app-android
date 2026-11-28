@@ -59,8 +59,8 @@ class NewNotificationsTest {
         coEvery { notifications.unread() } returns unread
         val fresh = NewNotifications(notifications, store)
 
-        assertEquals(unread, fresh.read())
-        assertEquals(emptyList<Any>(), fresh.read())
+        assertEquals(unread, fresh.read().fresh)
+        assertEquals(emptyList<Any>(), fresh.read().fresh)
     }
 
     @Test
@@ -71,7 +71,7 @@ class NewNotificationsTest {
 
         coEvery { notifications.unread() } returns unread
 
-        assertEquals(listOf(unread.first()), fresh.read())
+        assertEquals(listOf(unread.first()), fresh.read().fresh)
     }
 
     @Test
@@ -96,7 +96,7 @@ class NewNotificationsTest {
         assertTrue(runCatching { fresh.read() }.isFailure)
 
         coEvery { notifications.unread() } returns unread
-        assertEquals(emptyList<Any>(), fresh.read())
+        assertEquals(emptyList<Any>(), fresh.read().fresh)
     }
 
     @Test
@@ -107,7 +107,7 @@ class NewNotificationsTest {
         }
         val fresh = NewNotifications(notifications, store)
 
-        val given = listOf(async(Dispatchers.IO) { fresh.read() }, async(Dispatchers.IO) { fresh.read() }).awaitAll().flatten()
+        val given = listOf(async(Dispatchers.IO) { fresh.read() }, async(Dispatchers.IO) { fresh.read() }).awaitAll().flatMap { it.fresh }
 
         assertEquals(unread.sortedBy { it.id }, given.sortedBy { it.id })
     }
@@ -134,7 +134,37 @@ class NewNotificationsTest {
         ).awaitAll()
 
         coEvery { notifications.unread() } returns unread
-        assertEquals(emptyList<Any>(), fresh.read())
+        assertEquals(emptyList<Any>(), fresh.read().fresh)
+    }
+
+    @Test
+    fun `what the phone showed and is read since, anywhere, is said to be taken down, once`() = runBlocking {
+        coEvery { notifications.unread() } returns unread
+        val fresh = NewNotifications(notifications, store)
+        assertEquals(emptySet<String>(), fresh.read().gone)
+
+        // The first read elsewhere: it goes, the others stay; read again, nothing more goes.
+        coEvery { notifications.unread() } returns unread.drop(1)
+        assertEquals(setOf(NewNotifications.keyOf(unread.first())), fresh.read().gone)
+        assertEquals(emptySet<String>(), fresh.read().gone)
+    }
+
+    @Test
+    fun `of a list as long as the API gives, one shown that is older than its last may be unread still, and stays`() = runBlocking {
+        val base = unread.first()
+        fun made(at: Int) = base.copy(id = "n-$at", createdAt = base.createdAt.plusSeconds(at.toLong()))
+        // The newest fifty, of fifty-one unread: the oldest was shown before newer ones came.
+        val oldest = made(0)
+        coEvery { notifications.unread() } returns listOf(oldest)
+        val fresh = NewNotifications(notifications, store)
+        fresh.read()
+        val newest = (1..NewNotifications.MOST_UNREAD_LISTED).map(::made).reversed()
+        coEvery { notifications.unread() } returns newest
+
+        assertEquals(emptySet<String>(), fresh.read().gone)
+        // Kept as shown: once it is among the listed again, it is not shown twice.
+        coEvery { notifications.unread() } returns newest.drop(1) + oldest
+        assertEquals(emptyList<Any>(), fresh.read().fresh.filter { it.id == oldest.id })
     }
 
     @Test
