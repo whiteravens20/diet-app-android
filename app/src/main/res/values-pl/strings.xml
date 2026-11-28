@@ -2223,8 +2223,8 @@
     <string name="plans_cooking_only_chosen">Tylko wybrane dni</string>
     <string name="plans_split_link">Podział dania</string>
     <string name="plans_split_line">%1$s: ugotowane danie podzielisz na porcje, zważone albo w sztukach.</string>
-    <string name="split_title">Podziel ugotowane</string>
-    <string name="split_open">Podziel ugotowane…</string>
+    <string name="split_title">Podziel danie</string>
+    <string name="split_open">Podziel danie…</string>
     <string name="split_plan_intro">Udział każdej porcji wynika z jej kalorii w planie.</string>
     <string name="split_plan_intro_parts">Udział każdej porcji wynika z planu: z jej kalorii, a przy jednym składniku z tego, ile go dostaje.</string>
     <string name="split_eaten_left_out">Bez porcji już zjedzonych: %1$s.</string>
@@ -2245,7 +2245,7 @@
     <string name="split_way_pieces">Sztuki</string>
     <string name="split_way_whole_hint">Danie mieszane, jak zupa, gulasz albo makaron w sosie. Zamieszaj dokładnie, zanim zważysz i nałożysz porcje.</string>
     <string name="split_whole_plated">Talerze tego posiłku mają różne proporcje: dziel go składnik po składniku.</string>
-    <string name="split_way_part_hint">Danie w częściach, na przykład kurczak, ryż i brokuł. Zważ jeden ugotowany składnik i podziel go tymi samymi udziałami, potem kolejny.</string>
+    <string name="split_way_part_hint">Danie w częściach, na przykład kurczak, ryż i brokuł. Zważ jeden składnik, surowy albo ugotowany, i podziel go tymi samymi udziałami, potem kolejny.</string>
     <string name="split_way_pieces_hint">Jajka, kotlety, placki. Sztuk nie podzielisz dokładnie: zaokrąglenie zmienia porcję.</string>
     <string name="split_piece_count">Liczba sztuk</string>
     <string name="split_on_scale">Waga na wadze (g)</string>
@@ -2263,8 +2263,8 @@
     <string name="split_part_which">Który składnik ważysz?</string>
     <string name="split_part_choose">Wybierz składnik</string>
     <string name="split_part_unknown">Wybierz składnik, który ważysz.</string>
-    <string name="split_part_risk">Mięso i rybę najdokładniej podzielisz na surowo, przed smażeniem. Ryż, makaron i kaszę odważ dla każdego na sucho, ugotuj razem i podziel w tych samych proporcjach: to podział przybliżony, bo nie każde ziarno wchłania tyle samo wody. Warzywa i sos podziel wagą.</string>
-    <string name="split_way_part_own_hint">Danie w częściach, na przykład kurczak, ryż i brokuł. Zważ jeden ugotowany składnik i wybierz go poniżej: każda porcja dostaje tyle, ile przewiduje dla niej plan. Potem kolejny.</string>
+    <string name="split_part_risk">Mięso i rybę najdokładniej podzielisz na surowo, przed smażeniem. Ryż, makaron i kaszę ugotuj razem, zważ po ugotowaniu i podziel jako jeden składnik: to podział przybliżony, bo nie każde ziarno wchłania tyle samo wody. Warzywa i sos podziel wagą.</string>
+    <string name="split_way_part_own_hint">Danie w częściach, na przykład kurczak, ryż i brokuł. Zważ jeden składnik, surowy albo ugotowany, i wybierz go poniżej: każda porcja dostaje tyle, ile przewiduje dla niej plan. Potem kolejny.</string>
     <plurals name="split_pieces">
         <item quantity="one">%1$s sztuka</item>
         <item quantity="few">%1$s sztuki</item>

@@ -2065,8 +2065,8 @@
     <string name="plans_cooking_only_chosen">The chosen days only</string>
     <string name="plans_split_link">Splitting a dish</string>
     <string name="plans_split_line">%1$s: split a cooked dish into portions, by weight or in pieces.</string>
-    <string name="split_title">Split what you cooked</string>
-    <string name="split_open">Split what you cooked…</string>
+    <string name="split_title">Split the dish</string>
+    <string name="split_open">Split the dish…</string>
     <string name="split_plan_intro">Each portion\'s share comes from its calories in the plan.</string>
     <string name="split_plan_intro_parts">Each portion\'s share comes from the plan: from its calories, and for one part weighed alone from how much of it the portion gets.</string>
     <string name="split_eaten_left_out">Leaving out the portions eaten already: %1$s.</string>
@@ -2087,7 +2087,7 @@
     <string name="split_way_pieces">Pieces</string>
     <string name="split_way_whole_hint">A mixed dish such as a soup, a stew or pasta in its sauce. Stir well before you weigh and serve the portions.</string>
     <string name="split_whole_plated">The plates of this meal hold their parts in different proportions: split it one part at a time.</string>
-    <string name="split_way_part_hint">A dish in parts, chicken, rice and broccoli for example. Weigh one cooked part and split it by the same shares, then the next.</string>
+    <string name="split_way_part_hint">A dish in parts, chicken, rice and broccoli for example. Weigh one part, raw or cooked, and split it by the same shares, then the next.</string>
     <string name="split_way_pieces_hint">Eggs, cutlets, pancakes. Pieces cannot be split exactly: rounding changes a portion.</string>
     <string name="split_piece_count">Number of pieces</string>
     <string name="split_on_scale">Weight on the scale (g)</string>
@@ -2105,8 +2105,8 @@
     <string name="split_part_which">Which part are you weighing?</string>
     <string name="split_part_choose">Choose an ingredient</string>
     <string name="split_part_unknown">Choose the ingredient you are weighing.</string>
-    <string name="split_part_risk">Meat and fish are split most exactly raw, before frying. Weigh rice, pasta and groats dry for each person, cook them together and split them in the same proportions: an approximate split, as not every grain takes up as much water. Split vegetables and sauce by weight.</string>
-    <string name="split_way_part_own_hint">A dish in parts, chicken, rice and broccoli for example. Weigh one cooked part and choose it below: each portion gets as much of it as the plan gives it. Then the next.</string>
+    <string name="split_part_risk">Meat and fish are split most exactly raw, before frying. Cook rice, pasta and groats together, weigh them once cooked and split them as one part: an approximate split, as not every grain takes up as much water. Split vegetables and sauce by weight.</string>
+    <string name="split_way_part_own_hint">A dish in parts, chicken, rice and broccoli for example. Weigh one part, raw or cooked, and choose it below: each portion gets as much of it as the plan gives it. Then the next.</string>
     <plurals name="split_pieces">
         <item quantity="one">%1$s piece</item>
         <item quantity="other">%1$s pieces</item>
