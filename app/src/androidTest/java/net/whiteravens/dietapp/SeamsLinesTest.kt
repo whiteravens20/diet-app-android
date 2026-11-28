@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -24,10 +25,12 @@ import net.whiteravens.dietapp.domain.Meal
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.Nutrition
+import net.whiteravens.dietapp.domain.OtherPortion
 import net.whiteravens.dietapp.domain.PantryRow
 import net.whiteravens.dietapp.domain.PlanEffects
 import net.whiteravens.dietapp.domain.Portion
 import net.whiteravens.dietapp.domain.Pot
+import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShownAmount
 import net.whiteravens.dietapp.testing.EachLanguage
@@ -99,7 +102,7 @@ class SeamsLinesTest {
     )
 
     @androidx.compose.runtime.Composable
-    private fun Card(meal: Meal) = MealCard(
+    private fun Card(meal: Meal, onlyFor: String? = null) = MealCard(
         meal = meal,
         date = tomorrow,
         today = today,
@@ -117,6 +120,7 @@ class SeamsLinesTest {
         onSubstitute = {},
         onRemove = {},
         onOpen = {},
+        onlyFor = onlyFor,
     )
 
     @Test
@@ -150,6 +154,24 @@ class SeamsLinesTest {
 
     // The window is one of its own, drawn in the phone's configuration rather than the test's: the names put in it hold
     // no word of one letter, which only a Polish configuration holds.
+    @Test
+    fun aMealOfAPlanMadeTogetherSaysWhetherBothEatItAndHowItIsCookedOrWhoseAloneItIs() {
+        val ewa = OtherPortion("meal-9", "plan-2", "Ewa", 1.0, 520.0, eaten = false)
+        eye.show { language ->
+            val (stew, soup, oats) = if (language == "en") Triple("Lentil stew", "Tomato soup", "Porridge") else Triple("Gulasz z soczewicy", "Zupa pomidorowa", "Owsianka")
+            Column {
+                Card(meal("apart", stew).copy(shared = SharedMeal("s-1", apart = true, with = ewa, pot = emptyList())), onlyFor = "Paweł")
+                Card(meal("pot", soup).copy(shared = SharedMeal("s-2", apart = false, with = ewa, pot = emptyList())), onlyFor = "Paweł")
+                Card(meal("alone", oats).copy(slot = "breakfast"), onlyFor = "Paweł")
+            }
+        }
+
+        eye.check("together-chips") { language, lines ->
+            val chips = if (language == "en") listOf("Shared · apart", "Shared", "Only Paweł") else listOf("Wspólne · osobno", "Wspólne", "Tylko Paweł")
+            for (chip in chips) assertTrue(lines.toString(), chip in lines)
+        }
+    }
+
     @Test
     fun theRestOfAPotGoesToTheNextDayFromItsOwnWindowAskingNothingOfWhatWasEaten() {
         eye.show { language ->

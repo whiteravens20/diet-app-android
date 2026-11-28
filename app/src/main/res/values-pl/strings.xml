@@ -2338,6 +2338,8 @@
     <string name="plans_portion_pot_same">Poniżej podane są ilości na cały garnek: %2$s, z\u00A0tego Ty %3$s, %4$s %5$s. Oryginalny przepis też jest na %1$s.</string>
     <string name="plans_portion_you">Ty</string>
     <string name="plans_shared_chip">Wspólne</string>
+    <string name="plans_shared_apart_chip">Wspólne\u00A0· osobno</string>
+    <string name="plans_only_chip">Tylko %1$s</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
     <string name="plans_plates_title">Talerze</string>
     <string name="plans_plates_intro">Plan dzieli te składniki inaczej niż przepis, żeby dzień każdej osoby trzymał jej podział makroskładników.</string>

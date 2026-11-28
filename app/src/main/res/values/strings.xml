@@ -2174,6 +2174,8 @@
     <string name="plans_portion_pot_same">Below are the amounts for the whole pot: %2$s, of which you %3$s, %4$s %5$s. The original recipe makes %1$s too.</string>
     <string name="plans_portion_you">You</string>
     <string name="plans_shared_chip">Shared</string>
+    <string name="plans_shared_apart_chip">Shared\u00A0· apart</string>
+    <string name="plans_only_chip">Only %1$s</string>
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
     <string name="plans_plates_title">The plates</string>
     <string name="plans_plates_intro">The plan shares these ingredients out otherwise than the recipe, so that each person\'s day keeps their split of macronutrients.</string>

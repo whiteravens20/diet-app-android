@@ -421,7 +421,10 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
-    /** The name of the plan's profile, for the portions of a pot; what fails to come leaves the portion named as the user's. */
+    /**
+     * The name of the plan's profile, for the portions of a pot and the meals only this person eats; what fails to come
+     * leaves the portion named as the user's, and such a meal unmarked.
+     */
     private fun readProfileName(profileId: String) {
         if (_state.value.profileName != null) return
         viewModelScope.launch {

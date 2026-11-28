@@ -731,6 +731,7 @@ fun PlanDetailScreen(
                             onUndoLeftover = { viewModel.askUndoLeftover(meal) },
                             frozen = frozenAt[meal.id].orEmpty(),
                             onKeepFrozen = keepFrozen,
+                            onlyFor = state.profileName.takeIf { plan.joint != null },
                         )
                     }
                     // What the diary holds for this meal of the day follows its last meal of that kind.
@@ -1431,6 +1432,8 @@ internal fun MealCard(
     /** The rests of meat or fish of packs this meal opens, which go in the freezer. */
     frozen: List<FrozenRest> = emptyList(),
     onKeepFrozen: ((FrozenRest) -> Unit)? = null,
+    /** Of a plan made together: the name of its person, which marks a meal only they eat; null for a plan of one. */
+    onlyFor: String? = null,
 ) {
     val markEaten = stringResource(R.string.plans_action_for, stringResource(R.string.plans_mark_eaten), mealName(meal))
     AppCard(onClick = onOpen) {
@@ -1459,7 +1462,11 @@ internal fun MealCard(
                     portionChip(meal)?.let { PlainChip(servingsWord(it)) }
                     cookChip(meal, date)?.let { PlainChip(it) }
                     leftoverChip(meal)?.let { PlainChip(it) }
-                    if (meal.shared != null) PlainChip(stringResource(R.string.plans_shared_chip))
+                    // In a plan made together, whether both eat the dish and how it is cooked, or that it is one person's alone.
+                    when {
+                        meal.shared != null -> PlainChip(stringResource(if (meal.shared.apart) R.string.plans_shared_apart_chip else R.string.plans_shared_chip))
+                        onlyFor != null -> PlainChip(stringResource(R.string.plans_only_chip, onlyFor))
+                    }
                     if (meal.eaten) AccentChip(stringResource(R.string.plans_eaten))
                     if (waiting) WaitingMark()
                 }
