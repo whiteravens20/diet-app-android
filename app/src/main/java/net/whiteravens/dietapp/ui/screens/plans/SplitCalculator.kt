@@ -44,6 +44,7 @@ import net.whiteravens.dietapp.domain.ingredientsOf
 import net.whiteravens.dietapp.domain.sharesOf
 import net.whiteravens.dietapp.domain.sharesOfIngredient
 import net.whiteravens.dietapp.domain.splitWhole
+import net.whiteravens.dietapp.ui.common.formatList
 import net.whiteravens.dietapp.ui.common.formatNumber
 import net.whiteravens.dietapp.ui.common.formatPercent
 import net.whiteravens.dietapp.ui.common.mealTypeLabel
@@ -281,59 +282,86 @@ private fun WayRow(label: String, hint: String, selected: Boolean, onClick: () -
     }
 }
 
-/** The portions a dish cooked ahead is split into: its meals, named by their day and time of day, with the energy the plan gives each. */
-@Composable
-internal fun portionsOfCooking(meals: List<Pair<Meal, String>>): List<SplitPortion> {
-    val locale = LocalConfiguration.current.locales[0]
-    return meals.map { (meal, date) ->
-        val day = LocalDate.parse(date).dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale)
-            .replaceFirstChar { it.titlecase(locale) }
-        SplitPortion(
-            key = meal.id,
-            label = stringResource(R.string.split_portion_of, day, mealTypeLabel(meal.slot).lowercase(locale)),
-            kcal = meal.nutrition.calories,
-            lines = splitLines(meal.lines),
-        )
+/**
+ * A portion of a dish to split, before it is named: whose it is in a pot both people of a joint plan cook ([who], null
+ * for a dish of one person), when it is eaten, the energy the plan gives it and what it takes of each ingredient.
+ */
+internal data class PotPart(
+    val key: String,
+    val who: String?,
+    val date: String,
+    val slot: String,
+    val kcal: Double,
+    val lines: List<SplitLine>,
+    val eaten: Boolean,
+)
+
+/** What stays in a pot beyond the portions its meals take now: its energy and what it holds of each ingredient. */
+internal data class PotRest(val kcal: Double, val lines: List<SplitLine>)
+
+/** What a dish is split into ([split]), the portions of it eaten already ([eaten]), and the pot's surplus ([rest]). */
+internal data class PotParts(val split: List<PotPart>, val eaten: List<PotPart>, val rest: PotRest?)
+
+/**
+ * What a dish is split into, of the meals it is eaten at ([cooked]: every meal of a dish cooked ahead, or the one meal
+ * of a pot both people cook), as the web works it out: each meal's portion, and in a pot both cook the other person's
+ * portion of it as well, under [ownName] and their name. A portion eaten already is left out of the split; what the
+ * pot holds beyond the portions its meals take now (a meal sized down after the pot was cooked, [Meal.pot]) is a
+ * portion of its own, in the dish's make-up.
+ */
+internal fun partsOfPot(cooked: List<Pair<Meal, String>>, ownName: String): PotParts {
+    val parts = cooked.flatMap { (meal, date) ->
+        val together = meal.shared?.takeUnless { it.apart }
+        val own = PotPart(meal.id, together?.let { ownName }, date, meal.slot, meal.nutrition.calories, splitLines(meal.lines), meal.eaten)
+        if (together == null) {
+            listOf(own)
+        } else {
+            val other = together.with
+            listOf(own, PotPart(other.mealId, other.profileName, date, meal.slot, other.calories, splitLines(other.lines), other.eaten))
+        }
     }
+    // What stays in the pot beyond the portions its meals take now: their rests together, in servings as eaten.
+    var restKcal = 0.0
+    val restLines = linkedMapOf<String, SplitLine>()
+    for ((meal, _) in cooked) {
+        val rest = meal.pot?.rest ?: 0.0
+        if (rest <= 0.0 || meal.servings <= 0.0) continue
+        val factor = rest / meal.servings
+        restKcal += meal.nutrition.calories * factor
+        for (line in meal.lines) {
+            val was = restLines[line.ingredientId]?.quantity ?: 0.0
+            restLines[line.ingredientId] = SplitLine(line.ingredientId, line.name, was + line.exact * factor)
+        }
+    }
+    return PotParts(
+        split = parts.filterNot { it.eaten },
+        eaten = parts.filter { it.eaten },
+        rest = PotRest(restKcal, restLines.values.toList()).takeIf { restKcal > 0.0 },
+    )
+}
+
+/** What a portion of a dish is called: when it is eaten, and in a pot both people cook whose it is. */
+@Composable
+private fun partLabel(part: PotPart): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val day = LocalDate.parse(part.date).dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale)
+        .replaceFirstChar { it.titlecase(locale) }
+    val whenEaten = stringResource(R.string.split_portion_of, day, mealTypeLabel(part.slot).lowercase(locale))
+    return part.who?.let { stringResource(R.string.split_portion_of_who, it, whenEaten) } ?: whenEaten
 }
 
 /**
- * The portions a pot both people of a joint plan cook is split into: of each meal it is eaten at, this
- * plan's portion under [ownName] and the other person's under theirs, with the energy the plans give each.
+ * The window a dish cooked ahead, or a pot both people cook, is split in, into the portions of the plan of the meals it
+ * is eaten at ([cooked]), by the plan's shares: their energy, or what each takes of a part weighed alone. Portions eaten
+ * already are left out and named; the pot's surplus is a portion of its own. [ownName] is what this plan's portion of
+ * a pot both people cook is called.
  */
 @Composable
-internal fun portionsOfPot(meals: List<Pair<Meal, String>>, ownName: String): List<SplitPortion> {
-    val locale = LocalConfiguration.current.locales[0]
-    return meals.flatMap { (meal, date) ->
-        val day = LocalDate.parse(date).dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale)
-            .replaceFirstChar { it.titlecase(locale) }
-        val whenEaten = stringResource(R.string.split_portion_of, day, mealTypeLabel(meal.slot).lowercase(locale))
-        val other = meal.shared?.takeUnless { it.apart }?.with
-        listOfNotNull(
-            SplitPortion(
-                key = meal.id,
-                label = stringResource(R.string.split_portion_of_who, ownName, whenEaten),
-                kcal = meal.nutrition.calories,
-                lines = splitLines(meal.lines),
-            ),
-            other?.let {
-                SplitPortion(
-                    key = it.mealId,
-                    label = stringResource(R.string.split_portion_of_who, it.profileName, whenEaten),
-                    kcal = it.calories,
-                    lines = splitLines(it.lines),
-                )
-            },
-        )
-    }
-}
-
-/**
- * The window a dish cooked ahead, or a pot both people cook, is split in, into the portions of the plan, by the
- * plan's shares: their energy, or what each takes of a part weighed alone.
- */
-@Composable
-internal fun SplitDialog(portions: List<SplitPortion>, onDismiss: () -> Unit) {
+internal fun SplitDialog(cooked: List<Pair<Meal, String>>, ownName: String, onDismiss: () -> Unit) {
+    val parts = partsOfPot(cooked, ownName)
+    val portions = parts.split.map { SplitPortion(it.key, partLabel(it), it.kcal, it.lines) } +
+        listOfNotNull(parts.rest?.let { SplitPortion("rest", stringResource(R.string.split_rest_in_pot), it.kcal, it.lines) })
+    val eaten = parts.eaten.map { partLabel(it) }
     ScreenDialog(onDismiss) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -342,7 +370,12 @@ internal fun SplitDialog(portions: List<SplitPortion>, onDismiss: () -> Unit) {
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Hint(stringResource(if (splitsByParts(portions)) R.string.split_plan_intro_parts else R.string.split_plan_intro))
-                SplitCalculator(portions)
+                if (eaten.isNotEmpty()) Hint(stringResource(R.string.split_eaten_left_out, formatList(eaten)))
+                if (portions.isNotEmpty()) {
+                    SplitCalculator(portions)
+                } else {
+                    Text(stringResource(R.string.split_all_eaten), style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }

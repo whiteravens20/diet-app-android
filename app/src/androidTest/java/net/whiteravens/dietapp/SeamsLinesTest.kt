@@ -44,6 +44,7 @@ import net.whiteravens.dietapp.ui.screens.plans.LeftoverDialog
 import net.whiteravens.dietapp.ui.screens.plans.MealCard
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailViewModel
 import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
+import net.whiteravens.dietapp.ui.screens.plans.SplitDialog
 import net.whiteravens.dietapp.ui.screens.shopping.PastInPantryBanner
 import net.whiteravens.dietapp.ui.screens.shopping.ShoppingItemRow
 import org.junit.Assert.assertTrue
@@ -169,6 +170,29 @@ class SeamsLinesTest {
         eye.check("together-chips") { language, lines ->
             val chips = if (language == "en") listOf("Shared · apart", "Shared", "Only Paweł") else listOf("Wspólne · osobno", "Wspólne", "Tylko Paweł")
             for (chip in chips) assertTrue(lines.toString(), chip in lines)
+        }
+    }
+
+    @Test
+    fun aSplitLeavesOutThePortionsEatenAlreadyNamingThemAndSplitsWhatStaysInThePotAsAPortionOfItsOwn() {
+        eye.show { language ->
+            val stew = if (language == "en") "Lentil stew" else "Gulasz z soczewicy"
+            // Cooked today for three days: today's portion eaten, the pot holding half a serving more than tomorrow takes.
+            SplitDialog(
+                listOf(
+                    meal("today", stew).copy(eaten = true, cookAhead = "cook") to today,
+                    meal("tomorrow", stew, pot = Pot(cooked = 1.5, rest = 0.5, held = false, offer = "ok")) to tomorrow,
+                    meal("after", stew) to dayAfter,
+                ),
+                ownName = "Paweł",
+                onDismiss = {},
+            )
+        }
+
+        eye.check("split-eaten-and-rest") { language, lines ->
+            val (leftOut, rest) = if (language == "en") "Leaving out the portions eaten already: " to "Left in the pot" else "Bez porcji już zjedzonych: " to "Zostaje w garnku"
+            assertTrue(lines.toString(), lines.any { it.startsWith(leftOut) })
+            assertTrue(lines.toString(), rest in lines)
         }
     }
 

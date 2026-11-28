@@ -133,6 +133,7 @@
 -keep class net.whiteravens.dietapp.domain.Rebalance { *; }
 -keep class net.whiteravens.dietapp.domain.PlanDay { *; }
 -keep class net.whiteravens.dietapp.ui.components.EatenPantryDialogKt { *** EatenPantryDialog(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.SplitCalculatorKt { *** SplitDialog(...); }
 -keep class net.whiteravens.dietapp.ui.common.PantryWindow { *; }
 -keep class net.whiteravens.dietapp.ui.common.PantryQuestion { *; }
 -keep class net.whiteravens.dietapp.domain.EatenPantry { *; }

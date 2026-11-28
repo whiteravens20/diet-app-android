@@ -2227,6 +2227,9 @@
     <string name="split_open">Podziel ugotowane…</string>
     <string name="split_plan_intro">Udział każdej porcji wynika z jej kalorii w planie.</string>
     <string name="split_plan_intro_parts">Udział każdej porcji wynika z planu: z jej kalorii, a przy jednym składniku z tego, ile go dostaje.</string>
+    <string name="split_eaten_left_out">Bez porcji już zjedzonych: %1$s.</string>
+    <string name="split_all_eaten">Wszystkie porcje tego dania są już zjedzone.</string>
+    <string name="split_rest_in_pot">Zostaje w\u00A0garnku</string>
     <string name="split_page_title">Podział dania</string>
     <string name="split_page_intro">Podziel ugotowane danie na porcje: równe albo według kalorii każdej z nich. Danie gotowane na zapas podzielisz też w planie, przy nim samym.</string>
     <string name="split_portions">Porcje</string>

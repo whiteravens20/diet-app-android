@@ -2069,6 +2069,9 @@
     <string name="split_open">Split what you cooked…</string>
     <string name="split_plan_intro">Each portion\'s share comes from its calories in the plan.</string>
     <string name="split_plan_intro_parts">Each portion\'s share comes from the plan: from its calories, and for one part weighed alone from how much of it the portion gets.</string>
+    <string name="split_eaten_left_out">Leaving out the portions eaten already: %1$s.</string>
+    <string name="split_all_eaten">Every portion of this dish has been eaten.</string>
+    <string name="split_rest_in_pot">Left in the pot</string>
     <string name="split_page_title">Splitting a dish</string>
     <string name="split_page_intro">Split a cooked dish into portions: equal ones, or by each portion\'s calories. A dish cooked ahead can be split in the plan as well, beside it.</string>
     <string name="split_portions">Portions</string>

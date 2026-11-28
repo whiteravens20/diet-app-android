@@ -2157,7 +2157,7 @@ private fun MealDialog(
     val split = cooking.ifEmpty { listOf(meal to date).takeIf { pot }.orEmpty() }
     // The dish cooked at this meal being split into the meals of its cooking, while its window is open.
     var splitting by rememberSaveable { mutableStateOf(false) }
-    if (splitting) SplitDialog(if (pot) portionsOfPot(split, ownName) else portionsOfCooking(split), onDismiss = { splitting = false })
+    if (splitting) SplitDialog(split, ownName, onDismiss = { splitting = false })
     ScreenDialog(onDismiss) {
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
