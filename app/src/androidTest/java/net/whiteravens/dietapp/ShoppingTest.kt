@@ -115,9 +115,12 @@ class ShoppingTest {
         screen.openTab(text(R.string.nav_shopping))
         val list = screen.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
 
-        // Two profiles: the card of household lists, whose form begins with each profile's plan of the days chosen.
+        // Two profiles: the card of household lists, whose form begins with each profile's plan of the days chosen. The
+        // plan's part above the card is read first: a press while it still grows lands where the button no longer is.
+        screen.waitForText(text(R.string.shopping_no_lists_title))
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(hasText(text(R.string.household_open))) }.isSuccess }
         screen.onNode(hasText(text(R.string.household_open)) and hasClickAction()).performClick()
+        screen.waitForText(text(R.string.household_plans))
         // The form comes once the plans of the days chosen are read: the button is waited for, not taken as there.
         val make = hasText(text(R.string.household_make)) and hasClickAction()
         screen.waitUntil(30_000) { runCatching { list.performScrollToNode(make) }.isSuccess }
