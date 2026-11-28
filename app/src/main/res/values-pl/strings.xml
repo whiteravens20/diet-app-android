@@ -2341,6 +2341,7 @@
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
     <string name="plans_plates_title">Talerze</string>
     <string name="plans_plates_intro">Plan dzieli te składniki inaczej niż przepis, żeby dzień każdej osoby trzymał jej podział makroskładników.</string>
+    <string name="plans_plates_apart">Gotowane osobno: każdy składnik w\u00A0ilości na każdy talerz.</string>
     <string name="plans_plates_pot">Resztę garnka podziel według wielkości porcji.</string>
     <string name="plans_plates_ingredient">Składnik</string>
     <string name="plans_plates_you">Ty</string>

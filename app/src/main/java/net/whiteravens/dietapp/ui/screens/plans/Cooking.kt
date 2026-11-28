@@ -195,14 +195,16 @@ internal data class PotPortions(val mine: Double, val name: String, val theirs: 
 internal data class PlateRow(val ingredientId: String, val name: String, val mine: MealLine, val theirs: MealLine)
 
 /**
- * The lines of a dish both people eat that a plate of either holds otherwise than the recipe's proportion: what
- * each plate takes of them. None where both plates are the recipe's, and for a meal of one plan alone.
+ * The lines of a dish both people eat, with what each plate takes of them: of a dish cooked in one pot, those a plate
+ * of either holds otherwise than the recipe's proportion, none where both plates are the recipe's; of one each person
+ * cooks apart, every line, since each cooks a plate of their own. None for a meal of one plan alone.
  */
 internal fun platesOf(meal: Meal): List<PlateRow> {
     val theirs = meal.shared?.with?.lines.orEmpty()
+    val every = meal.shared?.apart == true
     return meal.lines.mapIndexedNotNull { index, line ->
         val other = theirs.getOrNull(index)?.takeIf { it.ingredientId == line.ingredientId } ?: return@mapIndexedNotNull null
-        if (line.share == null && other.share == null) null else PlateRow(line.ingredientId, line.name, line, other)
+        if (!every && line.share == null && other.share == null) null else PlateRow(line.ingredientId, line.name, line, other)
     }
 }
 

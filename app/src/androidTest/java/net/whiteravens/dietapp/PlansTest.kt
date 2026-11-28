@@ -1167,15 +1167,21 @@ class PlansTest {
         screen.onNode(hasText(text(R.string.common_close)) and inAWindow).performClick()
         screen.waitUntil(20_000) { screen.onAllNodesWithText(text(R.string.plans_plates_title)).fetchSemanticsNodes().isEmpty() }
 
-        // Cooked apart, from among its changes: its window says Ewa's portion and both plates, with no pot to split.
+        // Cooked apart, from among its changes: its window says Ewa's portion and both plates of every line, with no pot to split.
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), plated.title))
         screen.onAllNodes(change)[0].performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.plans_cook_apart)) and hasAnyAncestor(isPopup())).performClick()
         screen.waitForTheApi(20_000) { Instance.cooksApart(account, planId, plated.mealId) }
         screen.onAllNodesWithText(shown(plated.title))[0].performScrollTo().performClick()
         screen.waitUntil(10_000) { screen.onAllNodes(hasText("Ewa: ", substring = true) and inAWindow).fetchSemanticsNodes().isNotEmpty() }
-        screen.onNode(hasText(text(R.string.plans_plates_intro)) and inAWindow).performScrollTo()
+        screen.onNode(hasText(text(R.string.plans_plates_apart)) and inAWindow).performScrollTo()
         screen.keepScreenshot("plans-the-plates-cooked-apart")
+        // Each line of the dish is a row of the plates, one the recipe's proportion as well, beside its line among the ingredients.
+        plated.lines.firstOrNull { it.share == null }?.let { same ->
+            // A recipe may name one ingredient on two lines: each line is a row of both.
+            val lines = plated.lines.count { it.name == same.name }
+            check(screen.onAllNodes(hasText(shown(same.name)) and inAWindow).fetchSemanticsNodes().size == 2 * lines) { "${same.name} is no row of the plates" }
+        }
         check(screen.onAllNodes(hasText(text(R.string.split_part_risk)) and inAWindow).fetchSemanticsNodes().isEmpty()) {
             "a dish cooked apart has no pot to split"
         }

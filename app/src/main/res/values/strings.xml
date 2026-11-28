@@ -2177,6 +2177,7 @@
     <string name="plans_shared_line">%1$s: %2$s\u00A0· %3$s\u00A0kcal</string>
     <string name="plans_plates_title">The plates</string>
     <string name="plans_plates_intro">The plan shares these ingredients out otherwise than the recipe, so that each person\'s day keeps their split of macronutrients.</string>
+    <string name="plans_plates_apart">Cooked apart: every ingredient in the amount for each plate.</string>
     <string name="plans_plates_pot">Split the rest of the pot by the size of each portion.</string>
     <string name="plans_plates_ingredient">Ingredient</string>
     <string name="plans_plates_you">You</string>

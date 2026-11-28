@@ -2214,7 +2214,7 @@ private fun MealDialog(
                 meal.topping?.let { Text(toppingWords(R.string.plans_topping_note, it), style = MaterialTheme.typography.bodyMedium) }
                 // Whose plates differ from the recipe: those of the pot, or of a dish each person cooks apart.
                 val plated = toCook.pot?.let { it.name to it.plates } ?: meal.shared?.let { it.with.profileName to platesOf(meal) }
-                plated?.takeIf { it.second.isNotEmpty() }?.let { (name, plates) -> Plates(name, plates, pot) }
+                plated?.takeIf { it.second.isNotEmpty() }?.let { (name, plates) -> Plates(name, plates, pot, apart = meal.shared?.apart == true) }
                 if (split.isNotEmpty()) {
                     TextButton(onClick = { splitting = true }) { Text(stringResource(R.string.split_open)) }
                 }
@@ -2308,17 +2308,21 @@ internal fun servingsWord(servings: Double, fractionDigits: Int = 1): String =
     }
 
 /**
- * The lines of a dish both people eat whose plates differ from the recipe: what each plate takes of them, under
- * whose [name]; of a [pot], how the rest of it and each part are split, as near as a split comes.
+ * The lines of a dish both people eat whose plates differ from the recipe, or every line of one each cooks [apart]:
+ * what each plate takes of them, under whose [name]; of a [pot], how the rest of it and each part are split, as near
+ * as a split comes.
  */
 @Composable
-private fun Plates(name: String, plates: List<PlateRow>, pot: Boolean) {
+private fun Plates(name: String, plates: List<PlateRow>, pot: Boolean, apart: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.plans_plates_title), style = MaterialTheme.typography.titleMedium)
         // A dish each person cooks apart has no pot to split.
         Hint(
-            if (pot) "${stringResource(R.string.plans_plates_intro)} ${stringResource(R.string.plans_plates_pot)}"
-            else stringResource(R.string.plans_plates_intro),
+            when {
+                pot -> "${stringResource(R.string.plans_plates_intro)} ${stringResource(R.string.plans_plates_pot)}"
+                apart -> stringResource(R.string.plans_plates_apart)
+                else -> stringResource(R.string.plans_plates_intro)
+            },
         )
         PlateRowLine(stringResource(R.string.plans_plates_ingredient), stringResource(R.string.plans_plates_you), name, head = true)
         plates.forEach { row ->
@@ -2342,15 +2346,18 @@ private fun Plates(name: String, plates: List<PlateRow>, pot: Boolean) {
     }
 }
 
-/** A row of the plates: the ingredient, then this plate's amount and the other's, or the heads of the three. */
+/**
+ * A row of the plates: the ingredient, then this plate's amount and the other's, or the heads of the three. Each amount
+ * keeps a gap before it: one as wide as its column, pieces with their weight, would touch the amount before it.
+ */
 @Composable
 private fun PlateRowLine(name: String, mine: String, theirs: String, head: Boolean = false) {
     val style = if (head) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium
     val color = if (head) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(name, style = style, color = color, modifier = Modifier.weight(1f))
-        Text(mine, style = style, color = color, textAlign = TextAlign.End, modifier = Modifier.width(88.dp))
-        Text(theirs, style = style, color = color, textAlign = TextAlign.End, modifier = Modifier.width(88.dp))
+        Text(mine, style = style, color = color, textAlign = TextAlign.End, modifier = Modifier.width(96.dp).padding(start = 8.dp))
+        Text(theirs, style = style, color = color, textAlign = TextAlign.End, modifier = Modifier.width(96.dp).padding(start = 8.dp))
     }
 }
 

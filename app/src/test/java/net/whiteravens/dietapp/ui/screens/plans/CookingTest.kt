@@ -152,4 +152,22 @@ class CookingTest {
         assertEquals(emptyList<PlateRow>(), platesOf(plain))
         assertEquals(emptyList<PlateRow>(), platesOf(meal.copy(shared = null)))
     }
+
+    @Test
+    fun `the plates of a dish each person cooks apart are every line, each with what both plates take of it`() {
+        val chicken = MealLine("chicken", "Chicken", 155.0, "g", share = 1.3)
+        val oil = MealLine("oil", "Oil", 10.0, "ml")
+        val theirs = listOf(chicken.copy(quantity = 85.0, share = 0.7), oil.copy(quantity = 9.0))
+        val apart = SharedMeal("s", apart = true, with = OtherPortion("theirs", "plan-2", "Ewa", 1.0, 600.0, eaten = false, lines = theirs), pot = own)
+        val meal = meal("alone", 1.0, null, null).copy(lines = listOf(chicken, oil), shared = apart)
+
+        assertEquals(
+            listOf(PlateRow("chicken", "Chicken", chicken, theirs[0]), PlateRow("oil", "Oil", oil, theirs[1])),
+            platesOf(meal),
+        )
+        // Both plates the recipe's: every line still, as each cooks a plate of their own.
+        val plain = meal.copy(lines = listOf(chicken.copy(share = null), oil))
+            .let { it.copy(shared = apart.copy(with = apart.with.copy(lines = theirs.map { line -> line.copy(share = null) }))) }
+        assertEquals(listOf("chicken", "oil"), platesOf(plain).map { it.ingredientId })
+    }
 }
