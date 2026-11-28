@@ -5568,6 +5568,80 @@
         }
       }
     },
+    "/api/meal-plans/{id}/cook-apart": {
+      "patch": {
+        "operationId": "MealPlans_setCookApart",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "Say how the dishes both people of a joint plan eat are cooked, many at once: from today and for every shared dish made later, or on one day; the shared meals either of them has eaten stay (`SetCookApartRequest`).",
+        "description": "Say how the dishes both people of a joint plan eat are cooked, many at once: from today and for every shared dish made later, or on one day; the shared meals either of them has eaten stay (`SetCookApartRequest`).\n\nAsked by an account.\n\nLimited to 30 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCookApartRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 30,
+          "seconds": 60
+        }
+      }
+    },
     "/api/meal-plans/{id}/days/{date}/custom-meal": {
       "post": {
         "operationId": "MealPlans_addCustomMeal",
@@ -6436,6 +6510,80 @@
         }
       }
     },
+    "/api/meal-plans/{id}/meal-count": {
+      "post": {
+        "operationId": "MealPlans_takeMealCount",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "Take the profile's number of meals a day from today (\"Uzupełnij lub odejmij\"): the times of day it adds filled, a time the other plan of a joint plan holds a dish at with that dish, shared; the dishes of the times it drops that were not eaten gone; every other dish staying, and the days sized again (`TakeMealCountRequest`).",
+        "description": "Take the profile's number of meals a day from today (\"Uzupełnij lub odejmij\"): the times of day it adds filled, a time the other plan of a joint plan holds a dish at with that dish, shared; the dishes of the times it drops that were not eaten gone; every other dish staying, and the days sized again (`TakeMealCountRequest`).\n\nAsked by an account.\n\nLimited to 20 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeMealCountRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangedPlan"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 20,
+          "seconds": 60
+        }
+      }
+    },
     "/api/meal-plans/{id}/meals/{mealId}": {
       "delete": {
         "operationId": "MealPlans_removeMeal",
@@ -7060,6 +7208,152 @@
         },
         "x-rate-limit": {
           "times": 30,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/meal-plans/{id}/meals/{mealId}/pantry-take/both": {
+      "post": {
+        "operationId": "MealPlans_takeMealPantries",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "Take what both portions of a shared meal ate off the pantries, as offered together: once, until it is given back.",
+        "description": "Take what both portions of a shared meal ate off the pantries, as offered together: once, until it is given back.\n\nAsked by an account.\n\nLimited to 30 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EatenPantries"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 30,
+          "seconds": 60
+        }
+      }
+    },
+    "/api/meal-plans/{id}/meals/{mealId}/pantry/both": {
+      "get": {
+        "operationId": "MealPlans_mealPantries",
+        "tags": [
+          "meal-plans"
+        ],
+        "summary": "What eating the meal takes off the pantry and took, and of a shared meal of a joint plan the other person's portion with it, this plan's first: both worked out at once, each from its own pantry first and then what it lacks from the other's, so that no food is offered twice.",
+        "description": "What eating the meal takes off the pantry and took, and of a shared meal of a joint plan the other person's portion with it, this plan's first: both worked out at once, each from its own pantry first and then what it lacks from the other's, so that no food is offered twice. Nothing changes by itself.\n\nAsked by an account.\n\nLimited to 60 in a minute, for each sender.",
+        "security": [
+          {
+            "account": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Client-Date",
+            "in": "header",
+            "required": false,
+            "description": "The day it is for the client, as `2026-03-01`. Without it the route goes by the server's day.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "The language names and texts are answered in. English without it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What was asked for.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EatenPantries"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Refused"
+          }
+        },
+        "x-rate-limit": {
+          "times": 60,
           "seconds": 60
         }
       }
@@ -14620,6 +14914,55 @@
               }
             ]
           },
+          "splitMoved": {
+            "type": "boolean"
+          },
+          "dietMoved": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profileDiet": {
+                    "$ref": "#/components/schemas/DietType"
+                  },
+                  "planDiet": {
+                    "$ref": "#/components/schemas/DietType"
+                  }
+                },
+                "required": [
+                  "profileDiet",
+                  "planDiet"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mealCountMoved": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profileCount": {
+                    "type": "integer"
+                  },
+                  "planCount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "profileCount",
+                  "planCount"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "averageDailyNutrition": {
             "$ref": "#/components/schemas/Nutrition"
           },
@@ -14704,12 +15047,16 @@
                   },
                   "profileName": {
                     "type": "string"
+                  },
+                  "cookApart": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
                   "planId",
                   "profileId",
-                  "profileName"
+                  "profileName",
+                  "cookApart"
                 ],
                 "additionalProperties": false
               },
@@ -14738,6 +15085,9 @@
           "days",
           "weeks",
           "targetMoved",
+          "splitMoved",
+          "dietMoved",
+          "mealCountMoved",
           "averageDailyNutrition",
           "targetMacros",
           "averageOff",
@@ -15360,6 +15710,7 @@
           "favorite-set",
           "reroll",
           "retarget",
+          "meal-count",
           "bought-by-weight",
           "kept",
           "joint-removed",
@@ -16933,6 +17284,29 @@
           },
           "taken": {
             "$ref": "#/components/schemas/DisplayAmount"
+          },
+          "borrowed": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "$ref": "#/components/schemas/DisplayAmount"
+                  },
+                  "from": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "from"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -16940,7 +17314,8 @@
           "name",
           "eaten",
           "held",
-          "taken"
+          "taken",
+          "borrowed"
         ],
         "additionalProperties": false
       },
@@ -17021,6 +17396,14 @@
           "planId"
         ],
         "additionalProperties": false
+      },
+      "EatenPantries": {
+        "minItems": 1,
+        "maxItems": 2,
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/EatenPantry"
+        }
       },
       "EatenPantry": {
         "type": "object",
@@ -17612,6 +17995,10 @@
           "withProfileId": {
             "type": "string",
             "format": "uuid"
+          },
+          "cookApart": {
+            "default": true,
+            "type": "boolean"
           }
         },
         "required": [
@@ -20274,6 +20661,55 @@
               }
             ]
           },
+          "splitMoved": {
+            "type": "boolean"
+          },
+          "dietMoved": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profileDiet": {
+                    "$ref": "#/components/schemas/DietType"
+                  },
+                  "planDiet": {
+                    "$ref": "#/components/schemas/DietType"
+                  }
+                },
+                "required": [
+                  "profileDiet",
+                  "planDiet"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mealCountMoved": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profileCount": {
+                    "type": "integer"
+                  },
+                  "planCount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "profileCount",
+                  "planCount"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "averageDailyNutrition": {
             "$ref": "#/components/schemas/Nutrition"
           },
@@ -20358,12 +20794,16 @@
                   },
                   "profileName": {
                     "type": "string"
+                  },
+                  "cookApart": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
                   "planId",
                   "profileId",
-                  "profileName"
+                  "profileName",
+                  "cookApart"
                 ],
                 "additionalProperties": false
               },
@@ -20382,6 +20822,9 @@
           "days",
           "weeks",
           "targetMoved",
+          "splitMoved",
+          "dietMoved",
+          "mealCountMoved",
           "averageDailyNutrition",
           "targetMacros",
           "averageOff",
@@ -20712,12 +21155,16 @@
                   },
                   "profileName": {
                     "type": "string"
+                  },
+                  "cookApart": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
                   "planId",
                   "profileId",
-                  "profileName"
+                  "profileName",
+                  "cookApart"
                 ],
                 "additionalProperties": false
               },
@@ -22868,7 +23315,8 @@
               "enum": [
                 "allergen",
                 "excluded_ingredient",
-                "avoided"
+                "avoided",
+                "diet"
               ]
             }
           },
@@ -27605,6 +28053,20 @@
         ],
         "additionalProperties": false
       },
+      "SetCookApartRequest": {
+        "type": "object",
+        "properties": {
+          "apart": {
+            "type": "boolean"
+          },
+          "date": {
+            "$ref": "#/components/schemas/CalendarDay"
+          }
+        },
+        "required": [
+          "apart"
+        ]
+      },
       "SetMealEatenRequest": {
         "type": "object",
         "properties": {
@@ -28638,6 +29100,19 @@
         },
         "required": [
           "offer"
+        ]
+      },
+      "TakeMealCountRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "revision"
         ]
       },
       "TargetLocale": {

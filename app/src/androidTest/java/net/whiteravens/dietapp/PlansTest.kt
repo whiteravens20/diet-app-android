@@ -11,7 +11,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
@@ -504,7 +504,8 @@ class PlansTest {
         screen.scrollToText(countedTogether, substring = true)
         screen.keepScreenshot("plans-packs-counted-together")
 
-        // A meal both eat says so; among its changes it is marked eaten for both and cooked apart, in one pot until then.
+        // A meal both eat says so; among its changes it is marked eaten for both, and cooked apart, as a plan made
+        // together cooks its shared dishes unless asked otherwise: here in one pot, from among its changes.
         val shared = Instance.sharedMeal(account, planId)
         val change = hasContentDescription(text(R.string.plans_action_for, text(R.string.plans_change_meal), shared.title))
         val inTheMenu = hasAnyAncestor(isPopup())
@@ -512,11 +513,14 @@ class PlansTest {
         screen.onAllNodes(change)[0].performScrollTo()
         screen.keepScreenshot("plans-a-shared-meal")
         screen.onAllNodes(change)[0].performClick()
-        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).assertIsOff()
+        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).assertIsOn()
         screen.onNode(hasText(text(R.string.plans_eaten_together)) and inTheMenu).assertExists()
         screen.keepScreenshot("plans-a-shared-meal-changes")
+        screen.onNode(hasText(text(R.string.plans_cook_apart)) and inTheMenu).performClick()
+        screen.waitForTheApi(20_000) { !Instance.cooksApart(account, planId, shared.mealId) }
 
         // Another dish for it is asked for both, and the offer says it can be for this plan alone.
+        screen.onAllNodes(change)[0].performScrollTo().performClick()
         screen.onNode(hasText(text(R.string.plans_swap)) and inTheMenu).performClick()
         screen.waitForText(text(R.string.plans_offer_for_all, "Ewa"))
         screen.keepScreenshot("plans-a-shared-swap")

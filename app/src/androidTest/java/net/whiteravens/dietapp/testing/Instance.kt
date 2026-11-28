@@ -499,8 +499,9 @@ object Instance {
         val theirs = call(
             "POST",
             "meal-plans/generate",
+            // Its shared dishes in one pot, as the journeys of a pot ask: a plan made together cooks them apart unless asked.
             JSONObject().put("profileId", withProfileId).put("withProfileId", profileId).put("startDate", today.toString())
-                .put("durationDays", 3),
+                .put("durationDays", 3).put("cookApart", false),
             token = account.accessToken,
             expect = 201,
         )
@@ -547,8 +548,9 @@ object Instance {
         val theirs = call(
             "POST",
             "meal-plans/generate",
+            // Its shared dishes in one pot, as the journeys of a pot ask: a plan made together cooks them apart unless asked.
             JSONObject().put("profileId", withProfileId).put("withProfileId", profileId).put("startDate", today.toString())
-                .put("durationDays", 3),
+                .put("durationDays", 3).put("cookApart", false),
             token = account.accessToken,
             expect = 201,
         )
