@@ -486,6 +486,13 @@ interface DietApiService {
     @POST("meal-plans/{id}/retarget")
     suspend fun retarget(@Path("id") id: String, @Body body: RetargetRequestDto): MealPlanDto
 
+    /**
+     * Takes the profile's number of meals a day into a running plan from today ("Uzupełnij lub odejmij"): its dishes
+     * stay, the times of day it moves are added or taken away; refused with `PLAN_CHANGED` from an older revision.
+     */
+    @POST("meal-plans/{id}/meal-count")
+    suspend fun takeMealCount(@Path("id") id: String, @Body body: TakeMealCountRequest): MealPlanDto
+
     /** "Dodaj do spiżarni": what is left of a rest the plan freezes goes into the pantry as frozen, once. */
     @POST("meal-plans/{id}/frozen")
     suspend fun keepFrozen(@Path("id") id: String, @Body body: KeepFrozenRequest): MealPlanDto

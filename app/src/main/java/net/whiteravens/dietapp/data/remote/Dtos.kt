@@ -1296,8 +1296,8 @@ data class PlannedMealDto(
     /** True when a swapped-in favourite is off the plan's diet type. */
     val dietOverride: Boolean,
     /**
-     * What the profile has ruled out since the meal was planned (`allergen` |
-     * `excluded_ingredient` | `avoided`): the meal stays, and says so.
+     * What the profile has ruled out since the meal was planned (`allergen` | `excluded_ingredient` | `avoided`), or
+     * that the dish does not fit the diet the profile has now (`diet`): the meal stays, and says so.
      */
     val restrictionConflicts: List<String>,
     /** The meal's ingredients the profile would rather not eat, as the profile has them now. */
@@ -1639,6 +1639,12 @@ data class MealPlanDto(
     val revision: Int,
     /** A running plan whose profile's target moved since it was made, by 100 kcal or more: both targets; null otherwise. */
     val targetMoved: TargetMovedDto? = null,
+    /** A running plan on the custom diet whose profile's split or protein per kilogram moved since it was made. */
+    val splitMoved: Boolean = false,
+    /** A running plan made for a diet the profile has no more, none chosen for the plan itself: both diets; null otherwise. */
+    val dietMoved: DietMovedDto? = null,
+    /** A running plan made for another number of meals a day than its profile has now: both numbers; null otherwise. */
+    val mealCountMoved: MealCountMovedDto? = null,
     /** The plan of the other profile this one was made together with; null for a plan of one person. */
     val joint: JointPlanDto? = null,
     val createdAt: String,
@@ -1657,6 +1663,18 @@ data class TargetMovedDto(val profileTarget: Int, val planTarget: Int)
 /** Takes the profile's target into a running plan from today, on the plan at [revision]. */
 @Serializable
 data class RetargetRequestDto(val revision: Int)
+
+/** The profile's diet now, and the one a running plan was made for. */
+@Serializable
+data class DietMovedDto(val profileDiet: String, val planDiet: String)
+
+/** The profile's number of meals a day now, and the one a running plan was made for. */
+@Serializable
+data class MealCountMovedDto(val profileCount: Int, val planCount: Int)
+
+/** POST `/meal-plans/:id/meal-count`: the profile's number of meals a day taken into a running plan from today, on the plan at [revision]. */
+@Serializable
+data class TakeMealCountRequest(val revision: Int)
 
 /** Where a plan's averages stand: [calories] `over` | `under` outside a tenth of the target, [macros] far from the share aimed at. */
 @Serializable

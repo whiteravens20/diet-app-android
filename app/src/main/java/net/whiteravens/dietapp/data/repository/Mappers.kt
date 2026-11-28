@@ -92,6 +92,8 @@ import net.whiteravens.dietapp.domain.ShoppingList
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
 import net.whiteravens.dietapp.domain.TargetMoved
+import net.whiteravens.dietapp.domain.DietMoved
+import net.whiteravens.dietapp.domain.MealCountMoved
 import net.whiteravens.dietapp.data.remote.HouseholdListDto
 import net.whiteravens.dietapp.data.remote.PlanThawDto
 import net.whiteravens.dietapp.domain.DiaryPlanMeal
@@ -500,6 +502,9 @@ fun MealPlanDto.toDomain(syncedAt: Long? = null) = MealPlan(
     noWaste = options.noWaste,
     ownDiet = options.dietType,
     targetMoved = targetMoved?.let { TargetMoved(it.profileTarget, it.planTarget) },
+    splitMoved = splitMoved,
+    dietMoved = dietMoved?.let { DietMoved(it.profileDiet, it.planDiet) },
+    mealCountMoved = mealCountMoved?.let { MealCountMoved(it.profileCount, it.planCount) },
     joint = joint?.toDomain(),
     apart = report?.apart.orEmpty(),
     effects = effects?.toDomain(),

@@ -279,6 +279,7 @@ internal fun causeText(cause: String): Int? =
         "favorite-set" -> R.string.history_cause_favorite_set
         "reroll" -> R.string.history_cause_reroll
         "retarget" -> R.string.history_cause_retarget
+        "meal-count" -> R.string.history_cause_meal_count
         "bought-by-weight" -> R.string.history_cause_bought_by_weight
         "kept" -> R.string.history_cause_kept
         "week-evened" -> R.string.history_cause_week_evened

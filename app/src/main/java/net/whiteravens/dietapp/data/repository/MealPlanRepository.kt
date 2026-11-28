@@ -37,6 +37,7 @@ import net.whiteravens.dietapp.data.remote.SwapOfferRequest
 import net.whiteravens.dietapp.data.remote.TakeDayVariationRequest
 import net.whiteravens.dietapp.data.remote.EnteredNutritionDto
 import net.whiteravens.dietapp.data.remote.RetargetRequestDto
+import net.whiteravens.dietapp.data.remote.TakeMealCountRequest
 import net.whiteravens.dietapp.data.remote.UndoSwapRequest
 import net.whiteravens.dietapp.data.remote.WeighRequest
 import net.whiteravens.dietapp.data.remote.apiCall
@@ -625,6 +626,16 @@ class MealPlanRepository @Inject constructor(
      */
     suspend fun retarget(planId: String, revision: Int): MealPlan {
         val plan = apiCall(json) { api.retarget(planId, RetargetRequestDto(revision)) }
+        return keep(plan)
+    }
+
+    /**
+     * Takes the profile's number of meals a day into the running plan [planId] from today, on the plan at [revision]: the
+     * dishes stay, the times of day it moves are added or taken away. The plan as it then is, kept for offline use; a
+     * plan changed since is refused with `PLAN_CHANGED`.
+     */
+    suspend fun takeMealCount(planId: String, revision: Int): MealPlan {
+        val plan = apiCall(json) { api.takeMealCount(planId, TakeMealCountRequest(revision)) }
         return keep(plan)
     }
 

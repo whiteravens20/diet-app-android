@@ -468,6 +468,8 @@
     <string name="plans_reroll_whole">The whole plan</string>
     <string name="plans_reroll_whole_hint">Made again the way it was asked for, with the profile as it is now: a diet and a calorie target the plan left to the profile follow the profile.</string>
     <string name="plans_reroll_from_today">From today on</string>
+    <string name="plans_take_count">Add or take away</string>
+    <string name="plans_take_count_note">The dishes stay: from today only times of day are added or taken away, and the days get new portions. The days before them stay as they were.</string>
     <string name="plans_reroll_from_today_not_begun">The plan has not begun, so that is the whole of it.</string>
     <string name="plans_reroll_from_today_over">Every day of this plan has passed.</string>
     <string name="plans_reroll_range">From one day to another</string>
@@ -1284,6 +1286,8 @@
     <string name="plans_conflict_excluded_ingredient_hint">This recipe uses an ingredient the profile now skips. Swap the meal or the ingredient.</string>
     <string name="plans_conflict_avoided">Marked to avoid</string>
     <string name="plans_conflict_avoided_hint">This recipe is marked to avoid for the profile. Swap the meal.</string>
+    <string name="plans_conflict_diet">Outside the diet</string>
+    <string name="plans_conflict_diet_hint">This recipe does not fit the diet the profile has now. Swap the meal, or make the days from today again.</string>
     <string name="plans_disliked">Rather not</string>
     <string name="plans_disliked_hint">Holds %1$s, which this profile would rather not eat: nothing else fit the meal when it was planned, or the profile came to dislike it since. Swap the meal to change it.</string>
     <string name="shopping_stale">The plan\'s menu changed after this list was made, so it no longer matches what the plan needs.</string>
@@ -2465,8 +2469,16 @@
     <string name="keep_weight_act_failed">The choice could not be saved.</string>
     <!-- A running plan whose profile target moved -->
     <string name="plans_target_moved">The profile\'s target is now %1$d\u00A0kcal, this plan counts %2$d\u00A0kcal.</string>
+    <string name="plans_moved_split">The profile has another split of the macros than this plan now.</string>
+    <plurals name="plans_moved_meals">
+        <item quantity="one">The profile eats %1$d\u00A0meal a day now, and this plan %2$d.</item>
+        <item quantity="other">The profile eats %1$d\u00A0meals a day now, and this plan %2$d.</item>
+    </plurals>
+    <string name="plans_moved_diet">The profile is on the %1$s diet now, and this plan was made for the %2$s diet.</string>
     <string name="plans_retarget">Take it from today</string>
-    <string name="plans_retarget_note">The days from today get targets from the profile\'s target, with the same dishes in other portions. The days before them stay as they were.</string>
+    <string name="plans_retarget_note">The days from today get targets from the profile (calories and macros), with the same dishes in other portions. The days before them stay as they were.</string>
+    <string name="plans_moved_reroll">Make the days from today again</string>
+    <string name="plans_moved_reroll_note">The days from today get new dishes with the profile\'s diet, its number of meals a day and its target. The days before them stay as they were.</string>
     <!-- The profile form's water target and reminders -->
     <string name="profile_water_target">Water a day (ml)</string>
     <string name="profile_water_target_hint">Empty: no target.</string>
@@ -2581,6 +2593,7 @@
     <string name="history_cause_favorite_set">Favourite set</string>
     <string name="history_cause_reroll">New recipes</string>
     <string name="history_cause_retarget">New target of the plan</string>
+    <string name="history_cause_meal_count">The profile\'s number of meals</string>
     <string name="history_cause_bought_by_weight">Bought by weight</string>
     <string name="history_cause_kept">Portions kept</string>
     <string name="history_cause_week_evened">Week evened out</string>

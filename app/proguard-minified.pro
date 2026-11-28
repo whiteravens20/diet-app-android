@@ -44,7 +44,7 @@
 -keep class net.whiteravens.dietapp.data.local.CachedHouseholdList { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeDao { *; }
 -keep class net.whiteravens.dietapp.data.local.PendingChangeRow { *; }
--keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); *** MealCard(...); }
+-keep class net.whiteravens.dietapp.ui.screens.plans.PlanDetailScreenKt { *** FreezeLine(...); *** FoodLeftLine(...); *** IntoFreezerLine(...); *** getMACROS_SIDE_BY_SIDE(); *** StaysFrozenLines(...); *** MacrosOffWhyLines(...); *** OtherPlanMealCard(...); *** ProteinShortLine(...); *** MealCard(...); *** ProfileMovedNote(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.DayChangeHelpKt { *** DayChangeHelpDialog(...); }
 -keep class net.whiteravens.dietapp.ui.screens.plans.NewPlanScreenKt { *** getDATE_AND_LENGTH(); }
 -keep class net.whiteravens.dietapp.ui.screens.profiles.ProfileFieldsKt { *** getBODY_FIGURES(); *** FormField(...); *** ChoiceField(...); *** RiskNote(...); *** PaceChoice(...); *** OwnTargetField(...); *** CaloriePreviewCard(...); }
@@ -111,6 +111,10 @@
 -keep class net.whiteravens.dietapp.domain.Meal { *; }
 -keep class net.whiteravens.dietapp.domain.MealLine { *; }
 -keep class net.whiteravens.dietapp.domain.Pot { *; }
+-keep class net.whiteravens.dietapp.ui.screens.plans.ProfileMoved { *; }
+-keep class net.whiteravens.dietapp.domain.TargetMoved { *; }
+-keep class net.whiteravens.dietapp.domain.DietMoved { *; }
+-keep class net.whiteravens.dietapp.domain.MealCountMoved { *; }
 -keep class net.whiteravens.dietapp.domain.CarriedTo { *; }
 -keep class net.whiteravens.dietapp.domain.MealPlace { *; }
 -keep class net.whiteravens.dietapp.domain.PlanEffects { *; }

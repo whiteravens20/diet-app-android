@@ -456,7 +456,10 @@ data class Meal(
     val lines: List<MealLine>,
     /** The allergens of the meal's recipe. */
     val allergens: List<String>,
-    /** What the profile has ruled out since the meal was planned: `allergen` | `excluded_ingredient` | `avoided`. */
+    /**
+     * What the profile has ruled out since the meal was planned (`allergen` | `excluded_ingredient` | `avoided`), or that
+     * the dish does not fit the diet the profile has now (`diet`).
+     */
     val conflicts: List<String>,
     /** The names of the meal's ingredients the profile would rather not eat. */
     val disliked: List<String>,
@@ -749,6 +752,12 @@ data class PlanWeek(
 /** The profile's target now ([profileTarget]), and the one a running plan counts ([planTarget]), kcal a day. */
 data class TargetMoved(val profileTarget: Int, val planTarget: Int)
 
+/** The profile's diet now, and the one a running plan was made for. */
+data class DietMoved(val profileDiet: String, val planDiet: String)
+
+/** The profile's number of meals a day now, and the one a running plan was made for. */
+data class MealCountMoved(val profileCount: Int, val planCount: Int)
+
 data class MealPlan(
     val id: String,
     val profileId: String,
@@ -789,6 +798,12 @@ data class MealPlan(
     val ownDiet: String? = null,
     /** A running plan whose profile's target moved since it was made: both targets; null otherwise. */
     val targetMoved: TargetMoved? = null,
+    /** A running plan on the custom diet whose profile's split or protein per kilogram moved since it was made. */
+    val splitMoved: Boolean = false,
+    /** A running plan made for a diet its profile has no more: both diets; null otherwise. */
+    val dietMoved: DietMoved? = null,
+    /** A running plan made for another number of meals a day than its profile has now: both numbers; null otherwise. */
+    val mealCountMoved: MealCountMoved? = null,
     /** The plan of the other profile this one was made together with; null for a plan of one person. */
     val joint: JointPlan? = null,
     /** Of a joint plan, the times of day both have that are planned apart: no dish both may be given was left. */
@@ -800,7 +815,7 @@ data class MealPlan(
     val effects: PlanEffects? = null,
 ) {
     /** The meals that hold something the profile has ruled out since the plan was made. */
-    val conflicts: Int get() = days.sumOf { day -> day.meals.count { it.conflicts.isNotEmpty() } }
+    val conflicts: Int get() = days.sumOf { day -> day.meals.count { meal -> meal.conflicts.any { it != "diet" } } }
 }
 
 /**

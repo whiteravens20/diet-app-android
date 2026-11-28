@@ -832,6 +832,21 @@ class PlanDetailViewModel @Inject constructor(
         }
     }
 
+    /** Takes the profile's number of meals a day into the plan from today ("Uzupełnij lub odejmij"), the dishes staying. */
+    fun takeMealCount() {
+        val plan = _state.value.plan ?: return
+        if (_state.value.changing) return
+        viewModelScope.launch {
+            _state.update { it.copy(changing = true, error = null) }
+            attempt { plans.takeMealCount(planId, plan.revision) }
+                .onSuccess { taken -> changedTo(taken, Changed("meal-count")) }
+                .onFailure { e ->
+                    _state.update { it.copy(changing = false, error = e) }
+                    if (e.isPlanChanged() || e.isNotFound()) reload()
+                }
+        }
+    }
+
     /** The plan changed from the history of one of its days: the card goes, and the plan is the server's again. */
     fun changedElsewhere() {
         _state.update { it.copy(rebalance = null, changed = null, effects = null, lastSwap = null, notice = null) }

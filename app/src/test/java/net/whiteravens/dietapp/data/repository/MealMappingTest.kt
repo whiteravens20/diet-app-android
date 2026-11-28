@@ -2,6 +2,10 @@
 
 package net.whiteravens.dietapp.data.repository
 
+import net.whiteravens.dietapp.data.remote.DietMovedDto
+import net.whiteravens.dietapp.data.remote.MealCountMovedDto
+import net.whiteravens.dietapp.domain.DietMoved
+import net.whiteravens.dietapp.domain.MealCountMoved
 import net.whiteravens.dietapp.data.remote.GenerationReportDto
 import net.whiteravens.dietapp.data.remote.MealPlanDto
 import net.whiteravens.dietapp.data.remote.ModelPickDto
@@ -276,11 +280,28 @@ class MealMappingTest {
         val mapped = plan.copy(days = listOf(ruledOut) + plan.days.drop(1), options = plan.options.copy(allowRelaxations = listOf("cook_time"))).toDomain()
 
         assertEquals(2, mapped.conflicts)
+        // A dish outside the profile's diet now is marked, and named by the plan's note: no meal ruled out by it.
+        val offDiet = day.copy(meals = day.meals.mapIndexed { i, meal -> if (i < 2) meal.copy(restrictionConflicts = listOf("diet")) else meal })
+        assertEquals(0, plan.copy(days = listOf(offDiet) + plan.days.drop(1)).toDomain().conflicts)
+        assertEquals(listOf("diet"), plan.copy(days = listOf(offDiet) + plan.days.drop(1)).toDomain().days.first().meals.first().conflicts)
         assertEquals(listOf("cook_time"), mapped.mayGiveWay)
         assertEquals(plan.targetMacros.protein, mapped.targetMacros.protein, 0.0)
         assertEquals(day.targetMacros.carbs, mapped.days.first().targetMacros.carbs, 0.0)
         assertEquals(plan.packs.open.map { it.name to it.wasted }, mapped.packs.open.map { it.name to it.wasted })
         assertEquals(plan.ingredientReuseScore, mapped.ingredientReuse, 0.0)
+    }
+
+    @Test
+    fun `a plan says what of its profile moved since it was made, the split, the diet and the number of meals, and one from before says nothing moved`() {
+        val before = plan.toDomain()
+        assertFalse(before.splitMoved)
+        assertNull(before.dietMoved)
+        assertNull(before.mealCountMoved)
+
+        val moved = plan.copy(splitMoved = true, dietMoved = DietMovedDto("vegan", "balanced"), mealCountMoved = MealCountMovedDto(5, 3)).toDomain()
+        assertTrue(moved.splitMoved)
+        assertEquals(DietMoved(profileDiet = "vegan", planDiet = "balanced"), moved.dietMoved)
+        assertEquals(MealCountMoved(profileCount = 5, planCount = 3), moved.mealCountMoved)
     }
 
     @Test

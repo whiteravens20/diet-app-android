@@ -152,6 +152,23 @@ object Instance {
         call("PATCH", "profiles/$profileId", parts, token = account.accessToken)
     }
 
+    /** Gives a profile of [account] another diet or number of meals a day, as its form keeps a change. */
+    fun moveProfile(account: Account, profileId: String, dietType: String? = null, mealCount: Int? = null) =
+        changeProfile(account, profileId, JSONObject().apply { dietType?.let { put("dietType", it) }; mealCount?.let { put("mealCount", it) } })
+
+    /** Whether the API says of a plan of [account] that its profile moved away from it since: [what] `dietMoved`, `mealCountMoved`. */
+    fun moved(account: Account, planId: String, what: String): Boolean =
+        call("GET", "meal-plans/$planId", token = account.accessToken).optJSONObject(what) != null
+
+    /** How many meals of the day [day] of a plan of [account] are marked as outside the diet its profile has now. */
+    fun outsideTheDiet(account: Account, planId: String, day: Int): Int {
+        val meals = call("GET", "meal-plans/$planId", token = account.accessToken).getJSONArray("days").getJSONObject(day).getJSONArray("meals")
+        return (0 until meals.length()).count { m ->
+            val marks = meals.getJSONObject(m).getJSONArray("restrictionConflicts")
+            (0 until marks.length()).any { marks.getString(it) == "diet" }
+        }
+    }
+
     /** The account's way of using a model: `none` where it has none to ask. */
     fun aiMode(account: Account): String = call("GET", "users/me", token = account.accessToken).getString("aiMode")
 

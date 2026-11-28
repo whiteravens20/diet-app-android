@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
@@ -899,6 +900,53 @@ class PlansTest {
         screen.onNode(take).performScrollTo().performClick()
         screen.waitForTheApi(60_000) { Instance.targetMoved(account, planId) == null }
         screen.waitUntil(20_000) { screen.onAllNodesWithText(moved).fetchSemanticsNodes().isEmpty() }
+    }
+
+    @Test
+    fun aPlanWhoseProfileMovedSaysWhatMovedMarksWhatLeftItsDietAndTakesItFromToday() {
+        val account = Instance.newAccount()
+        val profileId = Instance.newProfile(account, mealCount = 3)
+        val planId = Instance.newPlan(account, profileId, days = 3)
+        // A meal more a day: the note says both numbers, and adds the times of day from today, the dishes staying.
+        Instance.moveProfile(account, profileId, mealCount = 4)
+        screen.startSignedIn(account)
+        val back = hasContentDescription(text(R.string.common_back))
+
+        screen.openTab(text(R.string.tab_meal_plans))
+        val card = formatDate(LocalDate.now().toString())
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+        screen.scrollToText(shown(plural(R.plurals.plans_moved_meals, 4, 4, 3)))
+        val take = hasText(text(R.string.plans_take_count)) and hasClickAction()
+        screen.scrollTo(take)
+        screen.waitForText(text(R.string.plans_take_count_note))
+        screen.keepScreenshot("plans-a-number-of-meals-moved")
+        screen.onNode(take).performScrollTo().performClick()
+        screen.waitForTheApi(60_000) { !Instance.moved(account, planId, "mealCountMoved") }
+        putAwayRebalance()
+
+        // Another diet: the dishes from today outside it are marked, and one way takes the diet with the rest.
+        Instance.moveProfile(account, profileId, dietType = "vegetarian")
+        screen.scrollTo(back)
+        screen.onNode(back).performClick()
+        screen.scrollToText(card, substring = true)
+        screen.onNodeWithText(card, substring = true).performClick()
+        val reroll = hasText(text(R.string.plans_moved_reroll)) and hasClickAction()
+        screen.scrollTo(reroll)
+        screen.waitForText(text(R.string.plans_moved_reroll_note))
+        screen.keepScreenshot("plans-a-diet-moved")
+        // The day it opens on, today, the plan's first: its dishes outside the diet, where the draw gave it some.
+        if (Instance.outsideTheDiet(account, planId, day = 0) > 0) {
+            screen.scrollToText(text(R.string.plans_conflict_diet))
+            screen.keepScreenshot("plans-a-dish-outside-the-diet")
+            screen.scrollTo(reroll)
+        }
+        screen.onNode(reroll).performScrollTo().performClick()
+        screen.waitForText(text(R.string.plans_reroll_title))
+        val confirm = hasText(text(R.string.plans_reroll_confirm)) and hasAnyAncestor(isDialog())
+        screen.waitUntil(30_000) { runCatching { screen.onNode(confirm).assertIsEnabled() }.isSuccess }
+        screen.onNode(confirm).performClick()
+        screen.waitForTheApi(90_000) { !Instance.moved(account, planId, "dietMoved") }
     }
 
     @Test

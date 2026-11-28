@@ -2,6 +2,7 @@
 
 package net.whiteravens.dietapp
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -13,9 +14,11 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import net.whiteravens.dietapp.domain.Borrowed
 import net.whiteravens.dietapp.domain.CarriedTo
+import net.whiteravens.dietapp.domain.DietMoved
 import net.whiteravens.dietapp.domain.EatenFood
 import net.whiteravens.dietapp.domain.EatenOf
 import net.whiteravens.dietapp.domain.EatenPantry
@@ -23,6 +26,7 @@ import net.whiteravens.dietapp.domain.EffectList
 import net.whiteravens.dietapp.domain.LeftoverOffer
 import net.whiteravens.dietapp.domain.LeftoverPlace
 import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.MealCountMoved
 import net.whiteravens.dietapp.domain.MealLine
 import net.whiteravens.dietapp.domain.MealPlace
 import net.whiteravens.dietapp.domain.Nutrition
@@ -34,6 +38,7 @@ import net.whiteravens.dietapp.domain.Pot
 import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.ShoppingItem
 import net.whiteravens.dietapp.domain.ShownAmount
+import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.testing.EachLanguage
 import net.whiteravens.dietapp.testing.shown
 import net.whiteravens.dietapp.ui.common.PantryQuestion
@@ -44,6 +49,8 @@ import net.whiteravens.dietapp.ui.screens.pantry.StillGoodDialog
 import net.whiteravens.dietapp.ui.screens.plans.LeftoverDialog
 import net.whiteravens.dietapp.ui.screens.plans.MealCard
 import net.whiteravens.dietapp.ui.screens.plans.PlanDetailViewModel
+import net.whiteravens.dietapp.ui.screens.plans.ProfileMoved
+import net.whiteravens.dietapp.ui.screens.plans.ProfileMovedNote
 import net.whiteravens.dietapp.ui.screens.plans.RebalanceCard
 import net.whiteravens.dietapp.ui.screens.plans.SplitDialog
 import net.whiteravens.dietapp.ui.screens.shopping.JointListNote
@@ -220,6 +227,46 @@ class SeamsLinesTest {
     }
 
     @Test
+    fun aPlanWhoseProfileMovedSaysWhatMovedAndOffersWhatTakesItFromToday() {
+        eye.show { _ ->
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // The diet moved: one way, which takes the rest with it.
+                ProfileMovedNote(
+                    ProfileMoved(TargetMoved(2156, 2416), split = false, diet = DietMoved("vegan", "balanced"), mealCount = MealCountMoved(4, 3)),
+                    listed = false,
+                    enabled = true,
+                    onRetarget = {},
+                    onTakeMealCount = {},
+                    onReroll = {},
+                )
+                // The target and the number of meals moved: a way for each.
+                ProfileMovedNote(
+                    ProfileMoved(TargetMoved(2156, 2416), split = false, diet = null, mealCount = MealCountMoved(4, 3)),
+                    listed = true,
+                    enabled = true,
+                    onRetarget = {},
+                    onTakeMealCount = {},
+                    onReroll = {},
+                )
+            }
+        }
+
+        eye.check("plan-profile-moved") { language, lines ->
+            val (diet, count, ways) =
+                if (language == "en") {
+                    Triple("The profile is on the ", "The profile eats 4 meals a day now, and this plan 3.", listOf("Make the days from today again", "Take it from today", "Add or take away"))
+                } else {
+                    Triple("Profil ma teraz dietę „", "Profil ma teraz 4 posiłki dziennie, a ten plan 3.", listOf("Ułóż dni od dziś od nowa", "Przyjmij od dziś", "Uzupełnij lub odejmij"))
+                }
+            assertTrue(lines.toString(), lines.any { it.startsWith(diet) })
+            assertTrue(lines.toString(), count in lines)
+            for (way in ways) compose.onNode(hasText(way) and hasClickAction()).assertExists()
+            // The way that takes the diet is offered alone where the diet moved: the other two once each.
+            assertTrue(compose.onAllNodes(hasText(ways[1]) and hasClickAction()).fetchSemanticsNodes().size == 1)
+        }
+    }
+
+    @Test
     fun aListOfOnePlanOfAPlanMadeTogetherSaysItBuysOnePlateOfASharedDishAndOffersTheHouseholdList() {
         eye.show { _ -> JointListNote("Ewa", enabled = true, onHousehold = {}) }
 
@@ -234,6 +281,15 @@ class SeamsLinesTest {
                 }
             assertTrue(lines.toString(), note in lines)
             compose.onNode(hasText(both) and hasClickAction()).assertExists()
+        }
+    }
+
+    @Test
+    fun aDishOutsideTheDietTheProfileHasNowIsMarkedSo() {
+        eye.show { language -> Card(meal("off", if (language == "en") "Chicken curry" else "Kurczak curry").copy(conflicts = listOf("diet"))) }
+
+        eye.check("plan-outside-the-diet") { language, lines ->
+            assertTrue(lines.toString(), (if (language == "en") "Outside the diet" else "Poza dietą") in lines)
         }
     }
 

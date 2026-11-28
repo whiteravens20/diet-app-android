@@ -496,6 +496,8 @@
     <string name="plans_reroll_whole">Cały plan</string>
     <string name="plans_reroll_whole_hint">Układany od nowa z tymi samymi ustawieniami i z profilem w obecnym kształcie: dieta i cel kaloryczny, których plan nie nadpisał, są brane z profilu.</string>
     <string name="plans_reroll_from_today">Od dziś do końca planu</string>
+    <string name="plans_take_count">Uzupełnij lub odejmij</string>
+    <string name="plans_take_count_note">Dania zostaną: od dziś dojdą albo odpadną tylko pory posiłków, a\u00A0dni dostaną nowe porcje. Wcześniejsze dni zostaną, jak były.</string>
     <string name="plans_reroll_from_today_not_begun">Plan jeszcze się nie zaczął, więc to cały plan.</string>
     <string name="plans_reroll_from_today_over">Wszystkie dni tego planu już minęły.</string>
     <string name="plans_reroll_range">Od dnia do dnia</string>
@@ -1391,6 +1393,8 @@
     <string name="plans_conflict_excluded_ingredient_hint">Ten przepis zawiera składnik, który profil teraz pomija. Zamień posiłek albo składnik.</string>
     <string name="plans_conflict_avoided">Do unikania</string>
     <string name="plans_conflict_avoided_hint">Ten przepis jest w profilu oznaczony do unikania. Zamień posiłek.</string>
+    <string name="plans_conflict_diet">Poza dietą</string>
+    <string name="plans_conflict_diet_hint">Ten przepis nie pasuje do diety, którą profil ma teraz. Zamień posiłek albo ułóż dni od dziś od nowa.</string>
     <string name="plans_disliked">Nielubiane</string>
     <string name="plans_disliked_hint">Zawiera: %1$s. Ten profil woli tego nie jeść: przy układaniu nic innego nie pasowało do posiłku albo profil dodał to później. Zamień posiłek, żeby to zmienić.</string>
     <string name="shopping_stale">Jadłospis planu zmienił się po utworzeniu tej listy, więc nie odpowiada już temu, czego plan potrzebuje.</string>
@@ -2639,8 +2643,18 @@
     <string name="keep_weight_act_failed">Nie udało się zapisać decyzji.</string>
     <!-- A running plan whose profile target moved -->
     <string name="plans_target_moved">Cel profilu to teraz %1$d\u00A0kcal, ten plan liczy %2$d\u00A0kcal.</string>
+    <string name="plans_moved_split">Profil ma teraz inny podział makroskładników niż ten plan.</string>
+    <plurals name="plans_moved_meals">
+        <item quantity="one">Profil ma teraz %1$d\u00A0posiłek dziennie, a\u00A0ten plan %2$d.</item>
+        <item quantity="few">Profil ma teraz %1$d\u00A0posiłki dziennie, a\u00A0ten plan %2$d.</item>
+        <item quantity="many">Profil ma teraz %1$d\u00A0posiłków dziennie, a\u00A0ten plan %2$d.</item>
+        <item quantity="other">Profil ma teraz %1$d\u00A0posiłku dziennie, a\u00A0ten plan %2$d.</item>
+    </plurals>
+    <string name="plans_moved_diet">Profil ma teraz dietę „%1$s”, a\u00A0ten plan ułożono dla diety „%2$s”.</string>
     <string name="plans_retarget">Przyjmij od dziś</string>
-    <string name="plans_retarget_note">Dni od dziś dostaną cele z celu profilu, z tymi samymi daniami w innych porcjach. Wcześniejsze dni zostaną, jak były.</string>
+    <string name="plans_retarget_note">Dni od dziś dostaną cele z\u00A0profilu (kalorie i\u00A0makroskładniki), z\u00A0tymi samymi daniami w\u00A0innych porcjach. Wcześniejsze dni zostaną, jak były.</string>
+    <string name="plans_moved_reroll">Ułóż dni od dziś od nowa</string>
+    <string name="plans_moved_reroll_note">Dni od dziś dostaną nowe dania z\u00A0dietą, liczbą posiłków i\u00A0celem profilu. Wcześniejsze dni zostaną, jak były.</string>
     <!-- The profile form's water target and reminders -->
     <string name="profile_water_target">Cel wody na dzień (ml)</string>
     <string name="profile_water_target_hint">Puste: bez celu.</string>
@@ -2755,6 +2769,7 @@
     <string name="history_cause_favorite_set">Ulubiony zestaw</string>
     <string name="history_cause_reroll">Nowe przepisy</string>
     <string name="history_cause_retarget">Nowy cel planu</string>
+    <string name="history_cause_meal_count">Liczba posiłków z\u00A0profilu</string>
     <string name="history_cause_bought_by_weight">Zakup na wagę</string>
     <string name="history_cause_kept">Zostawione porcje</string>
     <string name="history_cause_week_evened">Wyrównanie tygodnia</string>

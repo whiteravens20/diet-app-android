@@ -104,6 +104,9 @@ import net.whiteravens.dietapp.domain.CustomMeal
 import net.whiteravens.dietapp.domain.DiaryEntry
 import net.whiteravens.dietapp.domain.MarkedRecipe
 import net.whiteravens.dietapp.domain.Meal
+import net.whiteravens.dietapp.domain.DietMoved
+import net.whiteravens.dietapp.domain.MealCountMoved
+import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.domain.MealPlan
 import net.whiteravens.dietapp.domain.ModelPart
 import net.whiteravens.dietapp.domain.Nutrition
@@ -117,7 +120,6 @@ import net.whiteravens.dietapp.domain.Rebalance
 import net.whiteravens.dietapp.domain.SharedMeal
 import net.whiteravens.dietapp.domain.SwapAsk
 import net.whiteravens.dietapp.domain.SwapOffer
-import net.whiteravens.dietapp.domain.TargetMoved
 import net.whiteravens.dietapp.domain.UseUpFound
 import net.whiteravens.dietapp.domain.UseUpSwap
 import net.whiteravens.dietapp.domain.fitsDiet
@@ -588,15 +590,17 @@ fun PlanDetailScreen(
                 if (plan.conflicts > 0) {
                     item { ErrorBanner(pluralStringResource(R.plurals.plans_conflicts_notice, plan.conflicts, plan.conflicts)) }
                 }
-                // The profile's target moved since the plan was made: both said, and taken from today at a press.
-                plan.targetMoved?.let { moved ->
-                    item(key = "target-moved") {
+                // The profile moved away from the plan since it was made: what moved said, and taken from today at a press.
+                if (plan.targetMoved != null || plan.splitMoved || plan.dietMoved != null || plan.mealCountMoved != null) {
+                    item(key = "profile-moved") {
                         val today = LocalDate.now().toString()
-                        TargetMovedNote(
-                            moved,
+                        ProfileMovedNote(
+                            ProfileMoved(plan.targetMoved, plan.splitMoved, plan.dietMoved, plan.mealCountMoved),
                             listed = plan.days.any { it.date >= today && !it.skipped && it.listed },
                             enabled = !readOnly && !busy,
-                            onTake = viewModel::retarget,
+                            onRetarget = viewModel::retarget,
+                            onTakeMealCount = viewModel::takeMealCount,
+                            onReroll = { openReroll(RerollStart(RerollScope.WHOLE)) },
                         )
                     }
                 }
@@ -2560,6 +2564,7 @@ private fun conflictLabel(conflict: String): String = stringResource(
     when (conflict) {
         "excluded_ingredient" -> R.string.plans_conflict_excluded_ingredient
         "avoided" -> R.string.plans_conflict_avoided
+        "diet" -> R.string.plans_conflict_diet
         else -> R.string.plans_conflict_allergen
     },
 )
@@ -2569,6 +2574,7 @@ private fun conflictHint(conflict: String): String = stringResource(
     when (conflict) {
         "excluded_ingredient" -> R.string.plans_conflict_excluded_ingredient_hint
         "avoided" -> R.string.plans_conflict_avoided_hint
+        "diet" -> R.string.plans_conflict_diet_hint
         else -> R.string.plans_conflict_allergen_hint
     },
 )
@@ -2611,19 +2617,54 @@ private fun WeekLine(week: PlanWeek, enabled: Boolean, onEven: () -> Unit) {
 }
 
 /**
- * A running plan whose profile's target moved since it was made (a change of activity, the newest
- * weight, a correction of the real expenditure), as the web says it: both targets, and the way to
- * take the profile's from today, said beforehand with what it does to a shopping list.
+ * One note for a running plan whose profile moved away from it since it was made, as the web says it: its target (a
+ * change of activity, the newest weight, a correction of the real expenditure), its split on the custom diet, its diet
+ * or its number of meals a day. It names each, and offers what takes them from today: where the diet moved, the whole
+ * plan made again ("Ułóż dni od dziś od nowa", in the window that makes a plan again), which takes the diet, the number
+ * of meals and the target together; otherwise "Przyjmij od dziś" for the target and the split and "Uzupełnij lub
+ * odejmij" for the number of meals, both where both moved. Each says beforehand what it does, and what it does to a
+ * shopping list.
  */
 @Composable
-private fun TargetMovedNote(moved: TargetMoved, listed: Boolean, enabled: Boolean, onTake: () -> Unit) {
+internal fun ProfileMovedNote(
+    moved: ProfileMoved,
+    listed: Boolean,
+    enabled: Boolean,
+    onRetarget: () -> Unit,
+    onTakeMealCount: () -> Unit,
+    onReroll: () -> Unit,
+) {
+    val said = MaterialTheme.typography.bodyMedium
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.plans_target_moved, moved.profileTarget, moved.planTarget), style = MaterialTheme.typography.bodyMedium)
-            OutlinedButton(onClick = onTake, enabled = enabled) { Text(stringResource(R.string.plans_retarget)) }
-            Text(stringResource(R.string.plans_retarget_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            moved.diet?.let { Text(stringResource(R.string.plans_moved_diet, dietTypeLabel(it.profileDiet), dietTypeLabel(it.planDiet)), style = said) }
+            moved.mealCount?.let { Text(pluralStringResource(R.plurals.plans_moved_meals, it.profileCount, it.profileCount, it.planCount), style = said) }
+            moved.target?.let { Text(stringResource(R.string.plans_target_moved, it.profileTarget, it.planTarget), style = said) }
+            if (moved.split && moved.target == null) Text(stringResource(R.string.plans_moved_split), style = said)
+            if (moved.diet != null) {
+                MovedAction(stringResource(R.string.plans_moved_reroll), stringResource(R.string.plans_moved_reroll_note), enabled, onReroll)
+            } else {
+                if (moved.target != null || moved.split) {
+                    MovedAction(stringResource(R.string.plans_retarget), stringResource(R.string.plans_retarget_note), enabled, onRetarget)
+                }
+                if (moved.mealCount != null) {
+                    MovedAction(stringResource(R.string.plans_take_count), stringResource(R.string.plans_take_count_note), enabled, onTakeMealCount)
+                }
+            }
             ListNote(listed, several = true)
         }
+    }
+}
+
+/** What of a running plan's profile moved since the plan was made: its target, its split, its diet, its number of meals. */
+internal data class ProfileMoved(val target: TargetMoved?, val split: Boolean, val diet: DietMoved?, val mealCount: MealCountMoved?)
+
+/** What takes a change of the profile into the plan from today, with what it does said under it. */
+@Composable
+private fun MovedAction(label: String, note: String, enabled: Boolean, onClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedButton(onClick = onClick, enabled = enabled) { Text(label) }
+        Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

@@ -2,6 +2,9 @@
 
 package net.whiteravens.dietapp.ui.screens.plans
 
+import net.whiteravens.dietapp.data.remote.MealCountMovedDto
+import net.whiteravens.dietapp.data.remote.TakeMealCountRequest
+import net.whiteravens.dietapp.domain.MealCountMoved
 import net.whiteravens.dietapp.data.remote.EvenWeekRequestDto
 import net.whiteravens.dietapp.data.remote.OfferedToppingDto
 import net.whiteravens.dietapp.data.remote.RetargetRequestDto
@@ -557,6 +560,44 @@ class PlanDetailViewModelTest {
         assertEquals(plan.revision + 1, model.state.value.plan?.revision)
         assertNull(model.state.value.plan?.targetMoved)
         assertNull(model.state.value.error)
+    }
+
+    @Test
+    fun `a moved number of meals is taken from today on the plan at the revision it was read at, its card named by it where a list changed`() {
+        val api = mockk<DietApiService>()
+        val list = EffectListDto("list-1", plan.id, plan.profileId, plan.startDate, plan.days.last().date)
+        coEvery { api.mealPlan(plan.id) } returns plan.copy(mealCountMoved = MealCountMovedDto(profileCount = 4, planCount = 3))
+        coEvery { api.takeMealCount(plan.id, TakeMealCountRequest(plan.revision)) } returns
+            plan.copy(revision = plan.revision + 1, effects = PlanChangeEffectsDto(lists = listOf(list))) andThen plan.copy(revision = plan.revision + 2)
+        val model = model(api)
+        assertEquals(MealCountMoved(profileCount = 4, planCount = 3), model.state.value.plan?.mealCountMoved)
+
+        model.takeMealCount()
+
+        coVerify(exactly = 1) { api.takeMealCount(plan.id, TakeMealCountRequest(plan.revision)) }
+        coVerify(exactly = 0) { api.retarget(any(), any()) }
+        assertEquals(plan.revision + 1, model.state.value.plan?.revision)
+        assertNull(model.state.value.plan?.mealCountMoved)
+        assertEquals("meal-count", model.state.value.changed?.cause)
+        assertNull(model.state.value.error)
+
+        // No list changed: no card.
+        model.dismissRebalance()
+        model.takeMealCount()
+        assertNull(model.state.value.changed)
+    }
+
+    @Test
+    fun `a moved number of meals refused because the plan changed meanwhile loads the plan again and says why`() {
+        val api = mockk<DietApiService>()
+        coEvery { api.mealPlan(plan.id) } returns plan.copy(mealCountMoved = MealCountMovedDto(profileCount = 4, planCount = 3))
+        coEvery { api.takeMealCount(plan.id, any()) } throws refused(409, "PLAN_CHANGED")
+        val model = model(api)
+
+        model.takeMealCount()
+
+        coVerify(exactly = 2) { api.mealPlan(plan.id) }
+        assertNotNull(model.state.value.error)
     }
 
     @Test
